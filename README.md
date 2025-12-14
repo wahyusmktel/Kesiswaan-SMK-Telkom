@@ -1,4 +1,71 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Aplikasi Izin Sekolah
+
+Pengelolaan izin siswa multi-tahap untuk SMA/SMK dengan alur persetujuan berbasis peran. Dikembangkan oleh **Wahyu Rahmat Hidayat**.
+
+## Fitur Utama
+
+-   Perizinan umum (sakit, keperluan keluarga) dengan status pending/approved/rejected/completed.
+-   Izin Meninggalkan Kelas: alur Guru Kelas → Guru Piket → Security.
+-   Keterlambatan: pencatatan oleh Security, verifikasi sesuai peran.
+-   Dispensasi: persetujuan Kesiswaan.
+-   Prakerin: penempatan industri, jurnal, monitoring pembimbing.
+-   Notifikasi database untuk persetujuan/penolakan.
+-   QR code untuk verifikasi publik (UUID link).
+-   Import Excel (guru, siswa, mata pelajaran) via Maatwebsite/Excel.
+-   PDF surat izin via DOMPDF.
+
+## Teknologi
+
+-   Laravel 12, Blade, Vite, TailwindCSS, Alpine.js.
+-   Spatie Laravel-Permission untuk role & permission.
+-   SweetAlert untuk umpan balik UI.
+-   Chart.js untuk visual dashboard.
+
+## Peran & Akses
+
+-   Admin, Kesiswaan, Guru Kelas, Guru Piket, Security, Wali Kelas, Siswa, Kurikulum, BK, Prakerin Supervisor.
+-   Cek konfigurasi di `config/permission.php`.
+
+## Setup Cepat
+
+```bash
+cp .env.example .env
+php artisan key:generate
+composer install
+npm install
+php artisan migrate
+npm run build   # atau npm run dev untuk hot reload
+```
+
+## Menjalankan
+
+```bash
+php artisan serve      # backend
+npm run dev            # frontend (Vite)
+```
+
+## Pengujian
+
+```bash
+php artisan test
+# atau
+./vendor/bin/phpunit
+```
+
+## Konvensi Proyek
+
+-   Tabel menggunakan nama eksplisit (bahasa Indonesia) di model.
+-   Alur persetujuan disimpan dengan kolom `{role}_approval_id`, `{role}_approved_at`, `alasan_penolakan`.
+-   Gunakan scopes status sebelum transisi state.
+-   Blade per peran di `app/Http/Controllers/{Role}` dan `resources/views/pages/{role}`.
+
+## Hak Cipta
+
+© 2025 Wahyu Rahmat Hidayat. Semua hak cipta dilindungi. Kontak: WhatsApp 082185903635.
+
+## Lisensi
+
+Kode aplikasi ini merupakan karya milik Wahyu Rahmat Hidayat. Hak cipta dilindungi dan tidak untuk distribusi ulang tanpa izin tertulis.<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">
 <a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
@@ -11,13 +78,13 @@
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+-   [Simple, fast routing engine](https://laravel.com/docs/routing).
+-   [Powerful dependency injection container](https://laravel.com/docs/container).
+-   Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
+-   Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
+-   Database agnostic [schema migrations](https://laravel.com/docs/migrations).
+-   [Robust background job processing](https://laravel.com/docs/queues).
+-   [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
 
 Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
@@ -35,14 +102,14 @@ We would like to extend our thanks to the following sponsors for funding Laravel
 
 ### Premium Partners
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+-   **[Vehikl](https://vehikl.com)**
+-   **[Tighten Co.](https://tighten.co)**
+-   **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
+-   **[64 Robots](https://64robots.com)**
+-   **[Curotec](https://www.curotec.com/services/technologies/laravel)**
+-   **[DevSquad](https://devsquad.com/hire-laravel-developers)**
+-   **[Redberry](https://redberry.international/laravel-development)**
+-   **[Active Logic](https://activelogic.com)**
 
 ## Contributing
 
