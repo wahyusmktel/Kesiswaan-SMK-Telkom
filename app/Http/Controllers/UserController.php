@@ -17,7 +17,8 @@ class UserController extends Controller
     {
         try {
             $users = User::with('roles')->latest()->paginate(10);
-            return view('pages.users.index', compact('users'));
+            $roles = \Spatie\Permission\Models\Role::pluck('name'); // Ambil list role
+            return view('pages.users.index', compact('users', 'roles'));
         } catch (\Exception $e) {
             Log::error('Error fetching users: ' . $e->getMessage());
             toast('Gagal memuat data pengguna.', 'error');
@@ -134,7 +135,7 @@ class UserController extends Controller
             toast('Anda tidak bisa menghapus akun Anda sendiri.', 'error');
             return redirect()->route('users.index');
         }
-        
+
         try {
             $user->delete();
             toast('Pengguna berhasil dihapus!', 'success');

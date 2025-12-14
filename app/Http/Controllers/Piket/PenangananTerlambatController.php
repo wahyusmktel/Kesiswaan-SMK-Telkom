@@ -17,12 +17,12 @@ class PenangananTerlambatController extends Controller
     public function index(Request $request)
     {
         $hasilPencarian = null;
-        if ($request->filled('search')) {
-            $hasilPencarian = MasterSiswa::with('rombels.kelas')
-                ->where('nama_lengkap', 'like', '%' . $request->search . '%')
-                ->orWhere('nis', 'like', '%' . $request->search . '%')
-                ->get();
-        }
+        // if ($request->filled('search')) {
+        //     $hasilPencarian = MasterSiswa::with('rombels.kelas')
+        //         ->where('nama_lengkap', 'like', '%' . $request->search . '%')
+        //         ->orWhere('nis', 'like', '%' . $request->search . '%')
+        //         ->get();
+        // }
         return view('pages.piket.penanganan-terlambat.index', compact('hasilPencarian'));
     }
 
@@ -44,10 +44,12 @@ class PenangananTerlambatController extends Controller
             ]);
 
             // Kirim Notifikasi ke Wali Kelas & Guru BK
-            $this->kirimNotifikasi($keterlambatan);
+            // $this->kirimNotifikasi($keterlambatan);
 
-            toast('Data keterlambatan berhasil disimpan.', 'success');
-            return redirect()->route('piket.penanganan-terlambat.print', $keterlambatan->id);
+            toast('Data keterlambatan berhasil dicatat.', 'success');
+            // return redirect()->route('piket.penanganan-terlambat.print', $keterlambatan->id);
+            return redirect()->route('piket.penanganan-terlambat.index')
+                ->with('print_url', route('piket.penanganan-terlambat.print', $keterlambatan->id));
         } catch (\Exception $e) {
             Log::error('Error storing late record: ' . $e->getMessage());
             toast('Gagal menyimpan data keterlambatan.', 'error');
@@ -77,6 +79,39 @@ class PenangananTerlambatController extends Controller
         $guruBKs = User::role('Guru BK')->get();
         foreach ($guruBKs as $bk) {
             // $bk->notify(new SiswaTerlambatNotification($keterlambatan));
+        }
+    }
+
+    /**
+     * API Internal untuk Live Search Siswa via AJAX
+     */
+    public function search(Request $request)
+    {
+        $query = $request->get('query');
+
+        // Validasi minimal 3 karakter biar query ga berat
+        if (strlen($query) < 3) {
+            return response()->json([]);
+        }
+
+        try {
+            $siswa = MasterSiswa::with('rombels.kelas')
+                ->where('nama_lengkap', 'like', "%{$query}%")
+                ->orWhere('nis', 'like', "%{$query}%")
+                ->limit(10) // Batasi 10 hasil biar cepat
+                ->get()
+                ->map(function ($s) {
+                    return [
+                        'id' => $s->id,
+                        'nis' => $s->nis,
+                        'nama_lengkap' => $s->nama_lengkap,
+                        'kelas' => $s->rombels->first()?->kelas->nama_kelas ?? 'Tanpa Kelas',
+                    ];
+                });
+
+            return response()->json($siswa);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 }

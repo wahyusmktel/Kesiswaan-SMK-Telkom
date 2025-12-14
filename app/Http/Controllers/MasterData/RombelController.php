@@ -12,25 +12,36 @@ use Illuminate\Support\Facades\Log;
 
 class RombelController extends Controller
 {
+    /**
+     * Menampilkan daftar rombel + Data untuk Dropdown Modal
+     */
     public function index(Request $request)
     {
-        $query = Rombel::with(['kelas', 'waliKelas']); // Eager load relasi
+        // withCount('siswa') penting agar kita tidak perlu load seluruh data siswa
+        // hanya untuk menghitung jumlahnya di halaman index.
+        // Pastikan nama relasi di Model Rombel adalah 'siswa' atau 'siswas' (sesuaikan)
+        $query = Rombel::with(['kelas', 'waliKelas'])->withCount('siswa');
 
+        // Filter Pencarian
         if ($request->filled('search')) {
-            $query->where('tahun_ajaran', 'like', '%' . $request->search . '%');
+            $query->where('tahun_ajaran', 'like', '%' . $request->search . '%')
+                ->orWhereHas('kelas', function ($q) use ($request) {
+                    $q->where('nama_kelas', 'like', '%' . $request->search . '%');
+                });
         }
 
         $rombel = $query->latest()->paginate(10);
-        return view('pages.master-data.rombel.index', compact('rombel'));
-    }
 
-    public function create()
-    {
+        // Data untuk Dropdown di Modal Tambah/Edit
         $kelas = Kelas::orderBy('nama_kelas')->pluck('nama_kelas', 'id');
         $wali_kelas = User::role('Wali Kelas')->orderBy('name')->pluck('name', 'id');
-        
-        return view('pages.master-data.rombel.create', compact('kelas', 'wali_kelas'));
+
+        return view('pages.master-data.rombel.index', compact('rombel', 'kelas', 'wali_kelas'));
     }
+
+    /**
+     * Method create() dan edit() DIHAPUS karena sudah pakai Modal.
+     */
 
     public function store(Request $request)
     {
@@ -49,14 +60,6 @@ class RombelController extends Controller
             toast('Gagal menambahkan data rombel.', 'error');
             return back()->withInput();
         }
-    }
-
-    public function edit(Rombel $rombel)
-    {
-        $kelas = Kelas::orderBy('nama_kelas')->pluck('nama_kelas', 'id');
-        $wali_kelas = User::role('Wali Kelas')->orderBy('name')->pluck('name', 'id');
-
-        return view('pages.master-data.rombel.edit', compact('rombel', 'kelas', 'wali_kelas'));
     }
 
     public function update(Request $request, Rombel $rombel)
@@ -80,12 +83,12 @@ class RombelController extends Controller
 
     public function destroy(Rombel $rombel)
     {
-        // Pengecekan penting: jangan hapus rombel jika masih ada siswa di dalamnya
+        // Validasi: Jangan hapus jika ada siswa
         if ($rombel->siswa()->exists()) {
             toast('Gagal menghapus! Masih ada siswa terdaftar di rombel ini.', 'error');
             return back();
         }
-        
+
         try {
             $rombel->delete();
             toast('Data rombel berhasil dihapus.', 'success');
@@ -98,27 +101,27 @@ class RombelController extends Controller
     }
 
     /**
-     * Menampilkan halaman detail rombel untuk memetakan siswa.
+     * Halaman Detail untuk Add/Remove Siswa
      */
     public function show(Rombel $rombel)
     {
         // 1. Ambil siswa yang sudah ada di rombel ini
         $siswaDiRombel = $rombel->siswa()->orderBy('nama_lengkap')->get();
-        $siswaDiRombelIds = $siswaDiRombel->pluck('id')->toArray();
 
-        // 2. Ambil siswa yang tersedia (yang belum masuk rombel manapun di tahun ajaran yang sama)
-        $siswaTersedia = MasterSiswa::whereNotIn('id', function($query) use ($rombel) {
+        // 2. Ambil siswa yang tersedia (Belum punya rombel di Tahun Ajaran yang sama)
+        // Logika: Siswa tidak boleh ganda di tahun ajaran yang sama
+        $siswaTersedia = MasterSiswa::whereNotIn('id', function ($query) use ($rombel) {
             $query->select('master_siswa_id')
-                  ->from('rombel_siswa')
-                  ->join('rombels', 'rombels.id', '=', 'rombel_siswa.rombel_id')
-                  ->where('rombels.tahun_ajaran', $rombel->tahun_ajaran);
+                ->from('rombel_siswa')
+                ->join('rombels', 'rombels.id', '=', 'rombel_siswa.rombel_id')
+                ->where('rombels.tahun_ajaran', $rombel->tahun_ajaran);
         })->orderBy('nama_lengkap')->get();
 
         return view('pages.master-data.rombel.show', compact('rombel', 'siswaDiRombel', 'siswaTersedia'));
     }
 
     /**
-     * Menambahkan satu atau lebih siswa ke dalam rombel.
+     * Tambah Siswa ke Rombel
      */
     public function addSiswa(Request $request, Rombel $rombel)
     {
@@ -128,9 +131,10 @@ class RombelController extends Controller
         ]);
 
         try {
-            // attach() akan menambahkan relasi baru tanpa duplikasi
+            // attach() menambahkan relasi many-to-many
             $rombel->siswa()->attach($request->siswa_ids);
-            toast('Siswa berhasil ditambahkan ke rombel.', 'success');
+
+            toast(count($request->siswa_ids) . ' Siswa berhasil ditambahkan.', 'success');
             return back();
         } catch (\Exception $e) {
             Log::error('Error adding students to rombel: ' . $e->getMessage());
@@ -140,13 +144,14 @@ class RombelController extends Controller
     }
 
     /**
-     * Mengeluarkan seorang siswa dari rombel.
+     * Hapus Siswa dari Rombel
      */
     public function removeSiswa(Rombel $rombel, MasterSiswa $siswa)
     {
         try {
-            // detach() akan menghapus relasi
+            // detach() menghapus relasi
             $rombel->siswa()->detach($siswa->id);
+
             toast('Siswa berhasil dikeluarkan dari rombel.', 'success');
             return back();
         } catch (\Exception $e) {

@@ -1,105 +1,192 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Jadwal Pelajaran: {{ $rombel->kelas->nama_kelas }} ({{ $rombel->tahun_ajaran }})
-        </h2>
+        <div class="flex items-center justify-between">
+            <h2 class="font-bold text-xl text-gray-800 leading-tight">
+                Editor Jadwal: <span class="text-indigo-600">{{ $rombel->kelas->nama_kelas }}</span>
+            </h2>
+            <span
+                class="text-sm font-bold text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm">
+                T.A. {{ $rombel->tahun_ajaran }}
+            </span>
+        </div>
     </x-slot>
 
-    <div class="py-12" x-data="jadwalEditor()">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+    <div class="py-20 w-full" x-data="jadwalEditor()">
+        <div class="w-full px-4 sm:px-6 lg:px-8">
+
             <form action="{{ route('kurikulum.jadwal-pelajaran.store', $rombel->id) }}" method="POST">
                 @csrf
 
-                <div class="bg-white p-4 rounded-lg shadow-md mb-6">
-                    <h3 class="font-semibold text-lg mb-2">Pengaturan Jadwal</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label for="selectedMapel" class="block text-sm font-medium text-gray-700">Pilih Mata
+                <div
+                    class="bg-white border border-gray-200 shadow-md rounded-xl p-6 mb-6 sticky top-20 z-30 transition-shadow duration-300">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
+
+                        <div class="lg:col-span-4">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">1. Pilih Mata
                                 Pelajaran</label>
-                            <select id="selectedMapel" x-model.number="selectedMapelId"
-                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                                <option value="">-- Pilih Mapel --</option>
-                                <template x-for="mapel in availableMapel" :key="mapel.id">
-                                    <option :value="mapel.id"
-                                        x-text="mapel.nama_mapel + ' (Sisa ' + mapel.sisa_jam + ' Jam)'"></option>
-                                </template>
-                            </select>
+                            <div class="relative">
+                                <select x-model.number="selectedMapelId"
+                                    class="block w-full pl-10 rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-11 bg-gray-50 focus:bg-white transition-colors">
+                                    <option value="">-- Pilih Mapel --</option>
+                                    <template x-for="mapel in availableMapel" :key="mapel.id">
+                                        <option :value="mapel.id"
+                                            x-text="mapel.nama_mapel + ' (Sisa ' + mapel.sisa_jam + ' JP)'"></option>
+                                    </template>
+                                </select>
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24"
+                                        stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                    </svg>
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <label for="selectedGuru" class="block text-sm font-medium text-gray-700">Pilih Guru</label>
-                            <select id="selectedGuru" x-model.number="selectedGuruId"
-                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                                <option value="">-- Pilih Guru --</option>
-                                @foreach ($guru as $g)
-                                    <option value="{{ $g->id }}">{{ $g->nama_lengkap }}</option>
-                                @endforeach
-                            </select>
+
+                        <div class="lg:col-span-4">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">2. Pilih Guru
+                                Pengajar</label>
+                            <div class="relative">
+                                <select x-model.number="selectedGuruId"
+                                    class="block w-full pl-10 rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-11 bg-gray-50 focus:bg-white transition-colors">
+                                    <option value="">-- Pilih Guru --</option>
+                                    @foreach ($guru as $g)
+                                        <option value="{{ $g->id }}">{{ $g->nama_lengkap }}</option>
+                                    @endforeach
+                                </select>
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24"
+                                        stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                </div>
+                            </div>
                         </div>
-                        <div class="flex items-end">
-                            <x-primary-button type="submit">{{ __('Simpan Seluruh Jadwal') }}</x-primary-button>
+
+                        <div class="lg:col-span-4 flex justify-end gap-3">
+                            <a href="{{ route('kurikulum.jadwal-pelajaran.index') }}"
+                                class="h-11 px-6 inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-700 font-semibold hover:bg-gray-50 transition-colors">
+                                Kembali
+                            </a>
+                            <button type="submit"
+                                class="h-11 px-6 inline-flex items-center justify-center rounded-lg bg-indigo-600 text-white font-bold shadow-lg hover:bg-indigo-500 hover:shadow-indigo-500/30 transition-all transform hover:-translate-y-0.5">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                                </svg>
+                                Simpan Jadwal
+                            </button>
                         </div>
+                    </div>
+
+                    <div
+                        class="mt-4 flex items-center gap-2 text-xs text-indigo-600 bg-indigo-50 p-2.5 rounded-lg border border-indigo-100">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span><strong>Petunjuk:</strong> Pilih Mapel dan Guru di atas, lalu klik kotak-kotak pada tabel
+                            jadwal di bawah untuk mengisi jadwal. Klik lagi untuk menghapus.</span>
                     </div>
                 </div>
 
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6 text-gray-900">
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full border-collapse">
-                                <thead class="bg-gray-100">
+                <div class="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden mb-20">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm border-collapse">
+                            <thead class="bg-gray-100 text-gray-600 uppercase text-xs">
+                                <tr>
+                                    <th
+                                        class="border-b border-r border-gray-200 p-4 w-32 font-bold text-center bg-gray-50 sticky left-0 z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                                        Waktu
+                                    </th>
+                                    @foreach ($days as $day)
+                                        <th
+                                            class="border-b border-gray-200 p-4 font-bold text-center min-w-[160px] {{ $day == 'Jumat' ? 'bg-emerald-50/50 text-emerald-700' : '' }}">
+                                            {{ $day }}
+                                        </th>
+                                    @endforeach
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                @foreach ($jamSlots as $slot)
                                     <tr>
-                                        <th class="border p-2 w-24">Waktu</th>
+                                        <td
+                                            class="border-r border-gray-100 p-4 bg-gray-50/80 sticky left-0 z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] backdrop-blur-sm">
+                                            <div class="flex flex-col items-center justify-center h-full">
+                                                <span
+                                                    class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Jam
+                                                    Ke-{{ $slot->jam_ke }}</span>
+                                                <span class="font-mono text-gray-800 font-bold text-lg">
+                                                    {{ \Carbon\Carbon::parse($slot->jam_mulai)->format('H:i') }}
+                                                </span>
+                                                <span class="text-gray-300 text-xs my-0.5">-</span>
+                                                <span class="font-mono text-gray-500 font-medium">
+                                                    {{ \Carbon\Carbon::parse($slot->jam_selesai)->format('H:i') }}
+                                                </span>
+                                                @if ($slot->keterangan)
+                                                    <span
+                                                        class="mt-2 px-2 py-0.5 bg-yellow-100 text-yellow-700 text-[10px] rounded-full font-bold uppercase tracking-wide border border-yellow-200">
+                                                        {{ $slot->keterangan }}
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </td>
+
                                         @foreach ($days as $day)
-                                            <th class="border p-2">{{ $day }}</th>
+                                            <td class="border-r border-b border-gray-100 p-1 align-top h-32 relative group transition-all duration-200 hover:bg-gray-50/50"
+                                                :class="getCellClass('{{ $day }}', {{ $slot->jam_ke }})"
+                                                data-cell="{{ $day }}-{{ $slot->jam_ke }}">
+
+                                                <label
+                                                    class="flex flex-col justify-center items-center h-full w-full cursor-pointer relative z-0 p-2 select-none">
+
+                                                    <input type="checkbox" class="absolute opacity-0 w-0 h-0"
+                                                        :disabled="isSlotDisabled('{{ $day }}', {{ $slot->jam_ke }})"
+                                                        @change="toggleSlot('{{ $day }}', {{ $slot->jam_ke }}, $event)">
+
+                                                    <div x-show="!jadwal['{{ $day }}-{{ $slot->jam_ke }}']"
+                                                        class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <div
+                                                            class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shadow-md transform scale-50 group-hover:scale-100 transition-transform duration-200">
+                                                            <svg class="w-6 h-6" fill="none" stroke="currentColor"
+                                                                viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2" d="M12 4v16m8-8H4" />
+                                                            </svg>
+                                                        </div>
+                                                    </div>
+
+                                                    <div x-show="jadwal['{{ $day }}-{{ $slot->jam_ke }}']"
+                                                        class="text-center w-full relative z-10">
+                                                        <div class="font-bold text-sm leading-tight mb-1.5 break-words"
+                                                            x-text="getMapelName('{{ $day }}', {{ $slot->jam_ke }})">
+                                                        </div>
+                                                        <div class="text-[10px] uppercase font-bold tracking-wide bg-white/60 px-2 py-1 rounded inline-block shadow-sm backdrop-blur-sm"
+                                                            x-text="getGuruName('{{ $day }}', {{ $slot->jam_ke }})">
+                                                        </div>
+                                                    </div>
+
+                                                    <template
+                                                        x-if="jadwal['{{ $day }}-{{ $slot->jam_ke }}']">
+                                                        <div>
+                                                            <input type="hidden"
+                                                                name="jadwal[{{ $day }}][{{ $slot->jam_ke }}][mata_pelajaran_id]"
+                                                                :value="jadwal['{{ $day }}-{{ $slot->jam_ke }}']
+                                                                    .mata_pelajaran_id">
+                                                            <input type="hidden"
+                                                                name="jadwal[{{ $day }}][{{ $slot->jam_ke }}][master_guru_id]"
+                                                                :value="jadwal['{{ $day }}-{{ $slot->jam_ke }}']
+                                                                    .master_guru_id">
+                                                        </div>
+                                                    </template>
+                                                </label>
+                                            </td>
                                         @endforeach
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($jamSlots as $slot)
-                                        <tr>
-                                            <td class="border p-2 text-center text-sm">
-                                                <span class="font-bold">Jam Ke-{{ $slot->jam_ke }}</span><br>
-                                                <span>{{ \Carbon\Carbon::parse($slot->jam_mulai)->format('H:i') }} -
-                                                    {{ \Carbon\Carbon::parse($slot->jam_selesai)->format('H:i') }}</span>
-                                            </td>
-                                            @foreach ($days as $day)
-                                                @php
-                                                    $currentJadwal = $jadwalFormatted->get($day . '-' . $slot->jam_ke);
-                                                @endphp
-                                                <td class="border p-1 align-top h-24 w-40"
-                                                    :class="getCellClass('{{ $day }}', {{ $slot->jam_ke }})"
-                                                    data-cell="{{ $day }}-{{ $slot->jam_ke }}">
-                                                    <label
-                                                        class="flex flex-col justify-center items-center h-full w-full cursor-pointer">
-                                                        <input type="checkbox" class="rounded"
-                                                            :disabled="isSlotDisabled('{{ $day }}', {{ $slot->jam_ke }})"
-                                                            @change="toggleSlot('{{ $day }}', {{ $slot->jam_ke }}, $event)">
-
-                                                        <div x-show="jadwal['{{ $day }}-{{ $slot->jam_ke }}']"
-                                                            class="text-center mt-1">
-                                                            <p class="text-xs font-bold"
-                                                                x-text="getMapelName('{{ $day }}', {{ $slot->jam_ke }})">
-                                                            </p>
-                                                            <p class="text-xs"
-                                                                x-text="getGuruName('{{ $day }}', {{ $slot->jam_ke }})">
-                                                            </p>
-                                                        </div>
-
-                                                        <input type="hidden"
-                                                            :name="'jadwal[{{ $day }}][{{ $slot->jam_ke }}][mata_pelajaran_id]'"
-                                                            :value="jadwal['{{ $day }}-{{ $slot->jam_ke }}']
-                                                                ?.mata_pelajaran_id">
-                                                        <input type="hidden"
-                                                            :name="'jadwal[{{ $day }}][{{ $slot->jam_ke }}][master_guru_id]'"
-                                                            :value="jadwal['{{ $day }}-{{ $slot->jam_ke }}']
-                                                                ?.master_guru_id">
-                                                    </label>
-                                                </td>
-                                            @endforeach
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
+                                @endforeach
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </form>
@@ -109,97 +196,94 @@
     <script>
         function jadwalEditor() {
             return {
-                // Data dari PHP
                 mataPelajaran: @json($mataPelajaran),
                 guru: @json($guru),
                 jadwal: @json($jadwalFormatted),
-                jamSlots: @json($jamSlots), // <-- Ambil juga jamSlots ke JS
 
-                // State
                 selectedMapelId: '',
                 selectedGuruId: '',
 
                 init() {
-                    // Inisialisasi checkbox berdasarkan data jadwal yang ada
-                    this.$nextTick(() => {
-                        document.querySelectorAll('input[type=checkbox]').forEach(cb => {
-                            const [day, jamKe] = cb.closest('td').dataset.cell.split('-');
-                            if (this.jadwal[`${day}-${jamKe}`]) {
-                                cb.checked = true;
-                            }
-                        });
-                    });
+                    // Init logic jika diperlukan
                 },
 
-                // Computed property untuk mapel yang tersedia di dropdown
                 get availableMapel() {
-                    return this.mataPelajaran.filter(mapel => mapel.sisa_jam > 0);
+                    // Filter mapel: Tampilkan jika sisa jam > 0 ATAU sedang dipilih
+                    return this.mataPelajaran.filter(mapel => mapel.sisa_jam > 0 || this.selectedMapelId == mapel.id);
                 },
 
-                // Logika saat checkbox di-klik
                 toggleSlot(day, jamKe, event) {
                     const key = `${day}-${jamKe}`;
                     const slotData = this.jadwal[key];
 
                     if (slotData) {
+                        // HAPUS JADWAL (Klik pada slot terisi)
                         const mapelId = slotData.mata_pelajaran_id;
+                        // Kembalikan sisa jam
+                        const mapel = this.mataPelajaran.find(m => m.id == mapelId);
+                        if (mapel) mapel.sisa_jam++;
+
                         this.jadwal[key] = null;
-                        this.getMapelById(mapelId).sisa_jam++;
+                        event.target.checked = false;
                     } else {
+                        // TAMBAH JADWAL (Klik pada slot kosong)
                         if (!this.selectedMapelId || !this.selectedGuruId) {
-                            alert('Pilih Mata Pelajaran dan Guru terlebih dahulu!');
-                            event.target.checked = false;
-                            return;
-                        }
-                        const selectedMapel = this.getMapelById(this.selectedMapelId);
-                        if (selectedMapel.sisa_jam <= 0) {
-                            alert('Jumlah jam untuk mata pelajaran ini sudah habis.');
+                            alert('Silakan pilih Mata Pelajaran dan Guru terlebih dahulu di panel atas.');
                             event.target.checked = false;
                             return;
                         }
 
+                        const selectedMapel = this.mataPelajaran.find(m => m.id == this.selectedMapelId);
+
+                        if (selectedMapel.sisa_jam <= 0) {
+                            alert('Kuota jam untuk mata pelajaran ini sudah habis.');
+                            event.target.checked = false;
+                            return;
+                        }
+
+                        // Simpan ke state
                         this.jadwal[key] = {
                             mata_pelajaran_id: this.selectedMapelId,
                             master_guru_id: this.selectedGuruId,
                             mata_pelajaran: selectedMapel,
-                            guru: this.getGuruById(this.selectedGuruId)
+                            guru: this.guru.find(g => g.id == this.selectedGuruId)
                         };
+
+                        // Kurangi sisa jam
                         selectedMapel.sisa_jam--;
                     }
                 },
 
-                // Logika untuk men-disable checkbox
                 isSlotDisabled(day, jamKe) {
-                    const key = `${day}-${jamKe}`;
-                    const slotData = this.jadwal[key];
-                    if (slotData) return false;
-                    if (!this.selectedMapelId) return true;
-                    const selectedMapel = this.getMapelById(this.selectedMapelId);
-                    return selectedMapel.sisa_jam <= 0;
+                    // Selalu enable checkbox agar bisa diklik untuk memicu alert atau toggle
+                    return false;
                 },
 
-                // Helper untuk mendapatkan data
-                getMapelById(id) {
-                    return this.mataPelajaran.find(m => m.id == id);
-                },
-                getGuruById(id) {
-                    return this.guru.find(g => g.id == id);
-                },
                 getMapelName(day, jamKe) {
                     return this.jadwal[`${day}-${jamKe}`]?.mata_pelajaran?.nama_mapel || '';
                 },
+
                 getGuruName(day, jamKe) {
                     return this.jadwal[`${day}-${jamKe}`]?.guru?.nama_lengkap || '';
                 },
 
-                // Helper untuk styling
                 getCellClass(day, jamKe) {
-                    const mapelId = this.jadwal[`${day}-${jamKe}`]?.mata_pelajaran_id;
-                    if (!mapelId) return 'bg-white hover:bg-gray-50';
-                    const colors = ['bg-blue-100', 'bg-green-100', 'bg-yellow-100', 'bg-purple-100', 'bg-pink-100',
-                        'bg-indigo-100'
+                    const data = this.jadwal[`${day}-${jamKe}`];
+                    if (!data) return 'bg-white'; // Kosong
+
+                    // Warna-warni pastel berdasarkan ID Mapel
+                    const colors = [
+                        'bg-blue-100 border-blue-200 text-blue-900',
+                        'bg-emerald-100 border-emerald-200 text-emerald-900',
+                        'bg-amber-100 border-amber-200 text-amber-900',
+                        'bg-violet-100 border-violet-200 text-violet-900',
+                        'bg-rose-100 border-rose-200 text-rose-900',
+                        'bg-cyan-100 border-cyan-200 text-cyan-900',
+                        'bg-fuchsia-100 border-fuchsia-200 text-fuchsia-900',
+                        'bg-lime-100 border-lime-200 text-lime-900',
                     ];
-                    return colors[mapelId % colors.length];
+
+                    return colors[data.mata_pelajaran_id % colors.length] + ' shadow-sm border-b-2';
                 }
             }
         }

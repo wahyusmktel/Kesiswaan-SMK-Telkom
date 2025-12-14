@@ -1,123 +1,184 @@
 <x-app-layout>
+    {{-- CSS Gradient Animation --}}
+    @push('styles')
+        <style>
+            @keyframes gradient-xy {
+                0% {
+                    background-position: 0% 50%;
+                }
+
+                50% {
+                    background-position: 100% 50%;
+                }
+
+                100% {
+                    background-position: 0% 50%;
+                }
+            }
+
+            .animate-gradient {
+                background-size: 200% 200%;
+                animation: gradient-xy 6s ease infinite;
+            }
+        </style>
+    @endpush
+
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Dashboard Guru Piket') }}
-        </h2>
+        <h2 class="font-bold text-xl text-gray-800 leading-tight">Dashboard Piket</h2>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <h3 class="text-lg font-semibold text-gray-700 mb-4">Statistik Umum Izin Tidak Masuk</h3>
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                <div class="lg:col-span-2 bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6 text-gray-900">
-                        <h3 class="font-semibold text-lg mb-4">Daftar Izin Tidak Masuk Hari Ini</h3>
-                        <div class="overflow-y-auto max-h-72">
-                            <table class="min-w-full">
-                                <tbody class="divide-y divide-gray-200">
+    <div class="py-6 w-full">
+        <div class="w-full px-4 sm:px-6 lg:px-8 space-y-8">
+
+            <div
+                class="relative rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 shadow-lg overflow-hidden p-8 animate-gradient">
+                <div class="absolute right-0 top-0 h-full w-1/3 bg-white/10 transform skew-x-12 blur-2xl"></div>
+                <div class="relative z-10 text-white">
+                    <h3 class="text-3xl font-extrabold tracking-tight">Halo, {{ Auth::user()->name }}! 👮‍♂️</h3>
+                    <p class="mt-2 text-amber-100 font-medium text-lg">Siap memantau aktivitas siswa hari ini? Tetap
+                        semangat!</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div
+                    class="bg-white rounded-2xl p-6 border border-indigo-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+                    <div class="absolute right-0 top-0 p-4 opacity-10">
+                        <svg class="w-16 h-16 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-indigo-500 uppercase tracking-wider">Anda Proses</p>
+                        <h3 class="mt-2 text-3xl font-black text-gray-800">{{ $totalIzinDiprosesPiket }}</h3>
+                        <p class="text-xs text-gray-500 mt-1">Total Izin Keluar</p>
+                    </div>
+                </div>
+
+                <div
+                    class="bg-white rounded-2xl p-6 border border-amber-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+                    <div class="absolute right-0 top-0 p-4 opacity-10">
+                        <svg class="w-16 h-16 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-amber-500 uppercase tracking-wider">Izin Hari Ini</p>
+                        <h3 class="mt-2 text-3xl font-black text-gray-800">{{ $izinHariIni->count() }}</h3>
+                        <p class="text-xs text-gray-500 mt-1">Tidak Masuk Sekolah</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                <div class="lg:col-span-2 space-y-8">
+
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+                            <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                                <span class="w-1.5 h-6 bg-red-500 rounded-full"></span>
+                                Izin Tidak Masuk (Hari Ini)
+                            </h3>
+                            <span
+                                class="text-xs font-medium text-gray-500 bg-white border px-2 py-1 rounded">{{ date('d M Y') }}</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left">
+                                <thead class="bg-gray-50 text-gray-500 uppercase text-xs font-bold">
+                                    <tr>
+                                        <th class="px-6 py-3">Siswa</th>
+                                        <th class="px-6 py-3">Kelas</th>
+                                        <th class="px-6 py-3 text-right">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
                                     @forelse ($izinHariIni as $izin)
-                                        <tr>
-                                            <td class="py-2 whitespace-nowrap">{{ $izin->user->name }}
-                                                ({{ $izin->user->masterSiswa?->rombels->first()?->kelas->nama_kelas ?? 'N/A' }})
+                                        <tr class="hover:bg-gray-50 transition-colors">
+                                            <td class="px-6 py-3 font-medium text-gray-900">{{ $izin->user->name }}</td>
+                                            <td class="px-6 py-3 text-gray-500">
+                                                {{ $izin->user->masterSiswa?->rombels->first()?->kelas->nama_kelas ?? '-' }}
                                             </td>
-                                            <td class="py-2 whitespace-nowrap text-right">
+                                            <td class="px-6 py-3 text-right">
+                                                @php
+                                                    $statusClass = match ($izin->status) {
+                                                        'diajukan' => 'bg-yellow-100 text-yellow-800',
+                                                        'disetujui' => 'bg-green-100 text-green-800',
+                                                        'ditolak' => 'bg-red-100 text-red-800',
+                                                        default => 'bg-gray-100 text-gray-800',
+                                                    };
+                                                @endphp
                                                 <span
-                                                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ ['diajukan' => 'bg-yellow-100 text-yellow-800', 'disetujui' => 'bg-green-100 text-green-800', 'ditolak' => 'bg-red-100 text-red-800'][$izin->status] }}">
-                                                    {{ ucfirst($izin->status) }}
+                                                    class="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase {{ $statusClass }}">
+                                                    {{ $izin->status }}
                                                 </span>
                                             </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td class="py-2 text-center text-gray-500">Tidak ada data izin tidak masuk
-                                                hari ini.</td>
+                                            <td colspan="3" class="px-6 py-8 text-center text-gray-400">
+                                                <div class="flex flex-col items-center">
+                                                    <svg class="w-10 h-10 mb-2 opacity-50" fill="none"
+                                                        stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    <span>Semua siswa hadir (atau belum ada data).</span>
+                                                </div>
+                                            </td>
                                         </tr>
                                     @endforelse
                                 </tbody>
                             </table>
                         </div>
                     </div>
-                </div>
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6 text-gray-900">
-                        <h3 class="font-semibold mb-4">Proporsi Status Izin</h3>
-                        <canvas id="statusIzinChart"></canvas>
-                    </div>
-                </div>
-            </div>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6 text-gray-900">
-                        <h3 class="font-semibold mb-4">Total Izin per Kelas</h3>
-                        <canvas id="rombelIzinChart"></canvas>
-                    </div>
-                </div>
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6 text-gray-900">
-                        <h3 class="font-semibold mb-4">Tren Izin Harian (30 Hari)</h3>
-                        <canvas id="trenIzinChart"></canvas>
-                    </div>
-                </div>
-            </div>
 
-            <!-- ================================================== -->
-            <!--   BAGIAN 2: STATISTIK IZIN KELUAR KELAS   -->
-            <!-- ================================================== -->
-            <h3 class="text-lg font-semibold text-gray-700 mb-4 mt-12 pt-4 border-t">Statistik Izin Meninggalkan Kelas
-            </h3>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Widget Top 10 Siswa (GLOBAL) -->
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <h3 class="font-semibold mb-4">Top 10 Siswa Izin Keluar (Global)</h3>
-                    <div class="space-y-3 max-h-80 overflow-y-auto">
-                        @forelse ($topSiswaIzinKeluarGlobal as $siswa)
-                            <div class="flex justify-between items-center text-sm">
-                                <span>{{ $loop->iteration }}. {{ $siswa->name }}</span>
-                                <span class="font-bold text-gray-700">{{ $siswa->izin_meninggalkan_kelas_count }}
-                                    kali</span>
-                            </div>
-                        @empty
-                            <p class="text-sm text-gray-500">Belum ada data.</p>
-                        @endforelse
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                        <h4 class="font-bold text-gray-800 mb-6">Tren Izin Keluar (30 Hari Terakhir)</h4>
+                        <div class="h-64 w-full">
+                            <canvas id="trenIzinPribadiChart"></canvas>
+                        </div>
                     </div>
+
                 </div>
 
-                <!-- Widget Top 10 Siswa (PERSONAL) -->
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <h3 class="font-semibold mb-4">Top 10 Siswa (Anda Proses)</h3>
-                    <div class="space-y-3 max-h-80 overflow-y-auto">
-                        @forelse ($topSiswaIzinKeluarPersonal as $siswa)
-                            <div class="flex justify-between items-center text-sm">
-                                <span>{{ $loop->iteration }}. {{ $siswa->name }}</span>
-                                <span class="font-bold text-gray-700">{{ $siswa->izin_meninggalkan_kelas_count }}
-                                    kali</span>
-                            </div>
-                        @empty
-                            <p class="text-sm text-gray-500">Belum ada data.</p>
-                        @endforelse
-                    </div>
-                </div>
-            </div>
+                <div class="lg:col-span-1 space-y-8">
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-                <div
-                    class="lg:col-span-1 bg-indigo-500 text-white p-6 rounded-lg shadow-lg flex flex-col justify-center">
-                    <h4 class="text-lg font-semibold">Total Izin Anda Proses</h4>
-                    <p class="text-4xl font-bold mt-2">{{ $totalIzinDiprosesPiket }}</p>
-                    <p class="text-sm opacity-80">Sepanjang waktu</p>
-                </div>
-                <div class="lg:col-span-2 bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6 text-gray-900">
-                        <h3 class="font-semibold text-lg mb-4">Top 5 Tujuan Izin yang Anda Setujui</h3>
-                        <canvas id="tujuanIzinPribadiChart"></canvas>
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                        <h4 class="font-bold text-gray-800 mb-4 text-center">Proporsi Status</h4>
+                        <div class="h-48 flex justify-center">
+                            <canvas id="statusIzinChart"></canvas>
+                        </div>
                     </div>
-                </div>
-            </div>
 
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mt-6">
-                <div class="p-6 text-gray-900">
-                    <h3 class="font-semibold text-lg mb-4">Tren Izin yang Anda Proses (30 Hari Terakhir)</h3>
-                    <canvas id="trenIzinPribadiChart"></canvas>
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
+                            <h4 class="font-bold text-gray-800 text-sm uppercase">Top Siswa Sering Keluar</h4>
+                        </div>
+                        <div class="divide-y divide-gray-100 max-h-[400px] overflow-y-auto custom-scrollbar">
+                            @forelse ($topSiswaIzinKeluarGlobal as $siswa)
+                                <div
+                                    class="px-6 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                                    <div class="flex items-center gap-3">
+                                        <span
+                                            class="w-6 h-6 flex items-center justify-center rounded bg-gray-200 text-xs font-bold text-gray-600">{{ $loop->iteration }}</span>
+                                        <div>
+                                            <p class="text-sm font-semibold text-gray-900 truncate w-32">
+                                                {{ $siswa->name }}</p>
+                                            <p class="text-[10px] text-gray-500">Global Stats</p>
+                                        </div>
+                                    </div>
+                                    <span
+                                        class="text-xs font-bold px-2 py-1 bg-red-50 text-red-600 rounded-full">{{ $siswa->izin_meninggalkan_kelas_count }}x</span>
+                                </div>
+                            @empty
+                                <div class="p-6 text-center text-sm text-gray-400">Belum ada data.</div>
+                            @endforelse
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
@@ -127,48 +188,74 @@
     @push('scripts')
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                // Data dari Controller
-                const statusData = @json($statusChartData);
-                const dailyData = @json($dailyChartData);
-                const rombelData = @json($rombelChartData);
-                const dailyDataPiket = @json($dailyChartDataPiket);
-                const tujuanDataPiket = @json($tujuanChartDataPiket);
+                // Config Defaults
+                Chart.defaults.font.family = "'Figtree', 'Inter', sans-serif";
+                Chart.defaults.color = '#64748b';
 
-                // Inisialisasi Chart Lama (Izin Tidak Masuk)
-                if (document.getElementById('statusIzinChart')) new Chart(document.getElementById('statusIzinChart')
-                    .getContext('2d'), {
-                        type: 'pie',
+                // Data
+                const statusData = @json($statusChartData);
+                const dailyDataPiket = @json($dailyChartDataPiket);
+
+                // 1. Doughnut Chart: Status Izin
+                if (document.getElementById('statusIzinChart')) {
+                    new Chart(document.getElementById('statusIzinChart'), {
+                        type: 'doughnut',
                         data: {
                             labels: statusData.labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
                             datasets: [{
                                 data: statusData.data,
-                                backgroundColor: ['rgba(255, 205, 86, 0.8)', 'rgba(75, 192, 192, 0.8)',
-                                    'rgba(255, 99, 132, 0.8)'
-                                ]
+                                backgroundColor: ['#f59e0b', '#10b981', '#ef4444'], // Amber, Green, Red
+                                borderWidth: 0,
+                                hoverOffset: 4
                             }]
                         },
                         options: {
                             responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '70%',
                             plugins: {
                                 legend: {
-                                    position: 'top'
+                                    position: 'bottom',
+                                    labels: {
+                                        usePointStyle: true,
+                                        boxWidth: 8,
+                                        padding: 15,
+                                        font: {
+                                            size: 11
+                                        }
+                                    }
                                 }
                             }
                         }
                     });
-                if (document.getElementById('rombelIzinChart')) new Chart(document.getElementById('rombelIzinChart')
-                    .getContext('2d'), {
-                        type: 'bar',
+                }
+
+                // 2. Line Chart: Tren Izin Keluar (Smooth)
+                if (document.getElementById('trenIzinPribadiChart')) {
+                    const ctx = document.getElementById('trenIzinPribadiChart').getContext('2d');
+                    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                    gradient.addColorStop(0, 'rgba(99, 102, 241, 0.2)'); // Indigo pudar
+                    gradient.addColorStop(1, 'rgba(99, 102, 241, 0)');
+
+                    new Chart(ctx, {
+                        type: 'line',
                         data: {
-                            labels: rombelData.labels,
+                            labels: dailyDataPiket.labels,
                             datasets: [{
-                                label: 'Jumlah Izin',
-                                data: rombelData.data,
-                                backgroundColor: 'rgba(54, 162, 235, 0.7)'
+                                label: 'Diproses',
+                                data: dailyDataPiket.data,
+                                borderColor: '#6366f1',
+                                backgroundColor: gradient,
+                                borderWidth: 3,
+                                tension: 0.4,
+                                fill: true,
+                                pointRadius: 0,
+                                pointHoverRadius: 6
                             }]
                         },
                         options: {
                             responsive: true,
+                            maintainAspectRatio: false,
                             plugins: {
                                 legend: {
                                     display: false
@@ -176,85 +263,23 @@
                             },
                             scales: {
                                 y: {
-                                    beginAtZero: true
-                                }
-                            }
-                        }
-                    });
-                if (document.getElementById('trenIzinChart')) new Chart(document.getElementById('trenIzinChart')
-                    .getContext('2d'), {
-                        type: 'line',
-                        data: {
-                            labels: dailyData.labels,
-                            datasets: [{
-                                label: 'Jumlah Pengajuan',
-                                data: dailyData.data,
-                                borderColor: 'rgb(75, 192, 192)',
-                                tension: 0.1
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            scales: {
-                                y: {
                                     beginAtZero: true,
                                     ticks: {
                                         stepSize: 1
+                                    },
+                                    grid: {
+                                        borderDash: [2, 4]
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        display: false
                                     }
                                 }
                             }
                         }
                     });
-
-                // Inisialisasi Chart Baru (Izin Keluar Kelas - Personal)
-                if (document.getElementById('trenIzinPribadiChart')) new Chart(document.getElementById(
-                    'trenIzinPribadiChart').getContext('2d'), {
-                    type: 'line',
-                    data: {
-                        labels: dailyDataPiket.labels,
-                        datasets: [{
-                            label: 'Jumlah Izin Diproses',
-                            data: dailyDataPiket.data,
-                            borderColor: 'rgba(153, 102, 255, 1)',
-                            tension: 0.1,
-                            backgroundColor: 'rgba(153, 102, 255, 0.2)',
-                            fill: true
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: {
-                                    stepSize: 1
-                                }
-                            }
-                        }
-                    }
-                });
-                if (document.getElementById('tujuanIzinPribadiChart') && tujuanDataPiket.data.length > 0) new Chart(
-                    document.getElementById('tujuanIzinPribadiChart').getContext('2d'), {
-                        type: 'pie',
-                        data: {
-                            labels: tujuanDataPiket.labels,
-                            datasets: [{
-                                data: tujuanDataPiket.data,
-                                backgroundColor: ['rgba(255, 99, 132, 0.8)', 'rgba(54, 162, 235, 0.8)',
-                                    'rgba(255, 206, 86, 0.8)', 'rgba(75, 192, 192, 0.8)',
-                                    'rgba(201, 203, 207, 0.8)'
-                                ]
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            plugins: {
-                                legend: {
-                                    position: 'left'
-                                }
-                            }
-                        }
-                    });
+                }
             });
         </script>
     @endpush

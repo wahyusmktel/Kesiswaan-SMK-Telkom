@@ -157,6 +157,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/verifikasi-terlambat/{keterlambatan}', [VerifikasiTerlambatController::class, 'update'])->name('verifikasi-terlambat.update');
     });
 
+    // Route ini kita namakan 'api.siswa.search' sesuai panggilan di JavaScript
+    Route::get('/api/siswa/search', [PenangananTerlambatController::class, 'search'])
+        ->middleware(['auth']) // Pastikan hanya user login yang bisa akses
+        ->name('api.siswa.search');
+
     // Grup Route untuk Kurikulum
     Route::middleware(['role:Kurikulum'])->prefix('kurikulum')->name('kurikulum.')->group(function () {
         Route::get('/dashboard', [KurikulumDashboardController::class, 'index'])->name('dashboard.index');
