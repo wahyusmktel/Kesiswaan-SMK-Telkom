@@ -1,62 +1,89 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Hasil Pindai QR Code') }}
-        </h2>
+        <h2 class="font-bold text-xl text-gray-800 leading-tight">Detail Izin Siswa</h2>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-2xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-8 text-gray-900">
-                    <h3 class="text-xl font-bold border-b pb-3 mb-6">Detail Izin Siswa</h3>
+    <div class="py-6 w-full">
+        <div class="max-w-2xl mx-auto px-4">
+            <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
 
-                    <div class="space-y-3 text-lg">
-                        <p><strong class="w-24 inline-block">Nama</strong>: {{ $izin->siswa->name }}</p>
-                        <p><strong class="w-24 inline-block">Kelas</strong>:
-                            {{ $izin->siswa->masterSiswa?->rombels->first()?->kelas->nama_kelas ?? 'N/A' }}</p>
-                        <p><strong class="w-24 inline-block">Tujuan</strong>: {{ $izin->tujuan }}</p>
-                        <p><strong class="w-24 inline-block">Status</strong>:
-                            <span
-                                class="px-2 py-1 text-sm font-semibold rounded-full 
-                                @if (in_array($izin->status, ['diverifikasi_security', 'selesai'])) bg-green-100 text-green-800
-                                @elseif($izin->status == 'ditolak') bg-red-100 text-red-800
-                                @else bg-yellow-100 text-yellow-800 @endif">
-                                {{ str_replace('_', ' ', Str::title($izin->status)) }}
-                            </span>
-                        </p>
+                <div class="bg-gray-800 p-6 text-center">
+                    <div
+                        class="mx-auto h-20 w-20 rounded-full bg-white flex items-center justify-center text-3xl font-bold text-gray-800 mb-3 border-4 border-gray-600">
+                        {{ substr($izin->siswa->name, 0, 1) }}
+                    </div>
+                    <h2 class="text-2xl font-bold text-white">{{ $izin->siswa->name }}</h2>
+                    <p class="text-gray-400">
+                        {{ $izin->siswa->masterSiswa?->rombels->first()?->kelas->nama_kelas ?? 'Kelas Tidak Diketahui' }}
+                    </p>
+                </div>
+
+                <div class="p-8 space-y-6">
+                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Tujuan Keluar</p>
+                        <p class="text-lg font-bold text-gray-800">{{ $izin->tujuan }}</p>
                     </div>
 
-                    <div class="mt-8 border-t pt-6 text-center">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Status Saat Ini
+                            </p>
+                            @php
+                                $statusColor = match ($izin->status) {
+                                    'disetujui_guru_piket' => 'text-blue-600',
+                                    'diverifikasi_security' => 'text-orange-600',
+                                    'selesai' => 'text-green-600',
+                                    default => 'text-gray-600',
+                                };
+                            @endphp
+                            <p class="font-bold {{ $statusColor }} text-sm uppercase">
+                                {{ str_replace('_', ' ', $izin->status) }}</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Waktu Keluar</p>
+                            <p class="font-mono font-bold text-gray-800">
+                                {{ $izin->waktu_keluar_sebenarnya ? \Carbon\Carbon::parse($izin->waktu_keluar_sebenarnya)->format('H:i') : '--:--' }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-gray-100">
                         @if ($izin->status == 'disetujui_guru_piket')
-                            <h4 class="text-md font-semibold mb-3">Aksi yang Diperlukan:</h4>
                             <form action="{{ route('security.verifikasi.keluar', $izin->id) }}" method="POST">
                                 @csrf
                                 @method('PATCH')
                                 <button type="submit"
-                                    class="w-full inline-flex justify-center items-center px-6 py-3 bg-blue-600 border border-transparent rounded-md font-semibold text-white uppercase tracking-widest hover:bg-blue-500 text-lg">
-                                    Verifikasi Siswa Keluar
+                                    class="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 flex flex-col items-center justify-center gap-1 group">
+                                    <span class="text-lg font-black uppercase tracking-wider">IZINKAN KELUAR</span>
+                                    <span class="text-xs text-blue-200 group-hover:text-white">Klik untuk mencatat jam
+                                        keluar</span>
                                 </button>
                             </form>
                         @elseif ($izin->status == 'diverifikasi_security')
-                            <h4 class="text-md font-semibold mb-3">Aksi yang Diperlukan:</h4>
                             <form action="{{ route('security.verifikasi.kembali', $izin->id) }}" method="POST">
                                 @csrf
                                 @method('PATCH')
                                 <button type="submit"
-                                    class="w-full inline-flex justify-center items-center px-6 py-3 bg-green-600 border border-transparent rounded-md font-semibold text-white uppercase tracking-widest hover:bg-green-500 text-lg">
-                                    Verifikasi Siswa Kembali
+                                    class="w-full py-4 bg-green-600 hover:bg-green-500 text-white rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 flex flex-col items-center justify-center gap-1 group">
+                                    <span class="text-lg font-black uppercase tracking-wider">SISWA KEMBALI</span>
+                                    <span class="text-xs text-green-200 group-hover:text-white">Klik untuk mencatat
+                                        kepulangan</span>
                                 </button>
                             </form>
                         @else
-                            <p class="text-gray-600">Tidak ada aksi yang diperlukan untuk status izin ini.</p>
+                            <div class="text-center p-4 bg-gray-100 rounded-xl text-gray-500 font-medium">
+                                Tidak ada aksi yang diperlukan.
+                            </div>
                         @endif
                     </div>
+
+                    <div class="text-center">
+                        <a href="{{ route('security.verifikasi.scan') }}"
+                            class="text-indigo-600 font-bold hover:underline">
+                            &larr; Scan Lagi
+                        </a>
+                    </div>
                 </div>
-            </div>
-            <div class="text-center mt-4">
-                <a href="{{ route('security.verifikasi.scan') }}"
-                    class="text-sm text-indigo-600 hover:underline">Kembali ke Halaman Pindai</a>
             </div>
         </div>
     </div>
