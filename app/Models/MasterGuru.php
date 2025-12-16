@@ -9,7 +9,7 @@ class MasterGuru extends Model
 {
     use HasFactory;
 
-    protected $table = 'master_gurus';
+    // protected $table = 'master_gurus';
 
     protected $fillable = [
         'nuptk',
