@@ -147,48 +147,106 @@ class MasterSiswaController extends Controller
     /**
      * Fitur untuk membuat akun login untuk semua siswa yang belum punya.
      */
+    // public function generateAkunMasal()
+    // {
+    //     $siswaTanpaAkun = MasterSiswa::whereNull('user_id')->get();
+
+    //     if ($siswaTanpaAkun->isEmpty()) {
+    //         toast('Semua siswa sudah memiliki akun.', 'info');
+    //         return back();
+    //     }
+
+    //     $berhasil = 0;
+    //     $gagal = 0;
+    //     $roleSiswa = Role::findByName('Siswa');
+    //     $passwordDefault = 'smktelkom';
+
+    //     DB::beginTransaction();
+    //     try {
+    //         foreach ($siswaTanpaAkun as $siswa) {
+    //             // Cek jika email (berdasarkan NIS) sudah ada di tabel users
+    //             $email = $siswa->nis . '@smktelkom-lpg.sch.id';
+    //             if (User::where('email', $email)->exists()) {
+    //                 $gagal++;
+    //                 continue; // Lanjut ke siswa berikutnya jika email sudah ada
+    //             }
+
+    //             $user = User::create([
+    //                 'name' => $siswa->nama_lengkap,
+    //                 'email' => $email,
+    //                 'password' => Hash::make($passwordDefault),
+    //             ]);
+
+    //             $user->assignRole($roleSiswa);
+    //             $siswa->update(['user_id' => $user->id]);
+    //             $berhasil++;
+    //         }
+
+    //         DB::commit();
+    //         toast("Proses selesai! $berhasil akun berhasil dibuat, $gagal gagal (email duplikat).", 'success')->autoClose(10000);
+    //         return redirect()->route('master-data.siswa.index');
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+    //         Log::error('Error generating mass student accounts: ' . $e->getMessage());
+    //         toast('Terjadi kesalahan fatal saat proses generate akun masal.', 'error');
+    //         return back();
+    //     }
+    // }
+
     public function generateAkunMasal()
     {
-        $siswaTanpaAkun = MasterSiswa::whereNull('user_id')->get();
+        // Set unlimited time agar tidak timeout
+        set_time_limit(0);
+        ini_set('memory_limit', '-1');
 
-        if ($siswaTanpaAkun->isEmpty()) {
+        // Cek siswa yang belum punya user_id
+        $totalSiswa = MasterSiswa::whereNull('user_id')->count();
+
+        if ($totalSiswa == 0) {
             toast('Semua siswa sudah memiliki akun.', 'info');
             return back();
         }
 
-        $berhasil = 0;
-        $gagal = 0;
         $roleSiswa = Role::findByName('Siswa');
-        $passwordDefault = 'smktelkom';
+        $passwordDefault = 'smktelkom'; // Password default
+        $berhasil = 0;
 
         DB::beginTransaction();
         try {
-            foreach ($siswaTanpaAkun as $siswa) {
-                // Cek jika email (berdasarkan NIS) sudah ada di tabel users
-                $email = $siswa->nis . '@smktelkom-lpg.sch.id';
-                if (User::where('email', $email)->exists()) {
-                    $gagal++;
-                    continue; // Lanjut ke siswa berikutnya jika email sudah ada
+            // Proses per 100 data agar hemat memori (Chunking)
+            MasterSiswa::whereNull('user_id')->chunk(100, function ($siswaCollection) use ($roleSiswa, $passwordDefault, &$berhasil) {
+                foreach ($siswaCollection as $siswa) {
+                    $email = $siswa->nis . '@smktelkom-lpg.sch.id';
+
+                    // Cek duplikat email manual untuk performa
+                    // (firstOrCreate agak berat di dalam loop besar, lebih baik cek exist)
+                    if (User::where('email', $email)->exists()) {
+                        continue;
+                    }
+
+                    $user = User::create([
+                        'name' => $siswa->nama_lengkap,
+                        'email' => $email,
+                        'password' => Hash::make($passwordDefault),
+                    ]);
+
+                    $user->assignRole($roleSiswa);
+
+                    // Update master siswa tanpa mentrigger event model lain
+                    $siswa->user_id = $user->id;
+                    $siswa->saveQuietly();
+
+                    $berhasil++;
                 }
-
-                $user = User::create([
-                    'name' => $siswa->nama_lengkap,
-                    'email' => $email,
-                    'password' => Hash::make($passwordDefault),
-                ]);
-
-                $user->assignRole($roleSiswa);
-                $siswa->update(['user_id' => $user->id]);
-                $berhasil++;
-            }
+            });
 
             DB::commit();
-            toast("Proses selesai! $berhasil akun berhasil dibuat, $gagal gagal (email duplikat).", 'success')->autoClose(10000);
+            toast("Proses selesai! $berhasil akun baru berhasil dibuat.", 'success');
             return redirect()->route('master-data.siswa.index');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error generating mass student accounts: ' . $e->getMessage());
-            toast('Terjadi kesalahan fatal saat proses generate akun masal.', 'error');
+            Log::error('Error generating mass accounts: ' . $e->getMessage());
+            toast('Terjadi kesalahan saat generate akun.', 'error');
             return back();
         }
     }
@@ -274,20 +332,39 @@ class MasterSiswaController extends Controller
     /**
      * Method baru untuk menangani import Excel
      */
+    // public function import(Request $request)
+    // {
+    //     $request->validate([
+    //         'file_import' => 'required|mimes:xlsx,xls,csv|max:2048', // Maks 2MB
+    //     ]);
+
+    //     try {
+    //         Excel::import(new SiswaImport, $request->file('file_import'));
+
+    //         toast('Data siswa berhasil diimpor!', 'success');
+    //         return redirect()->route('master-data.siswa.index');
+    //     } catch (\Exception $e) {
+    //         Log::error('Import Error: ' . $e->getMessage());
+    //         toast('Gagal mengimpor data. Pastikan format file benar.', 'error');
+    //         return back();
+    //     }
+    // }
+
     public function import(Request $request)
     {
         $request->validate([
-            'file_import' => 'required|mimes:xlsx,xls,csv|max:2048', // Maks 2MB
+            'file_import' => 'required|mimes:xlsx,xls,csv|max:2048',
         ]);
 
         try {
+            // Import data mentah
             Excel::import(new SiswaImport, $request->file('file_import'));
 
-            toast('Data siswa berhasil diimpor!', 'success');
+            toast('Data siswa berhasil diimpor! Silakan klik "Generate Masal" untuk membuat akun login.', 'success')->autoClose(5000);
             return redirect()->route('master-data.siswa.index');
         } catch (\Exception $e) {
             Log::error('Import Error: ' . $e->getMessage());
-            toast('Gagal mengimpor data. Pastikan format file benar.', 'error');
+            toast('Gagal mengimpor data. Cek format file.', 'error');
             return back();
         }
     }
