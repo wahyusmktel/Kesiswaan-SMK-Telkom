@@ -34,7 +34,7 @@ class GuruImport implements ToModel, WithHeadingRow, WithValidation
     {
         return [
             // 'nuptk' harus diisi, unik (tidak boleh ada duplikat di DB), dan 16 digit
-            'nuptk' => 'required|string|unique:master_gurus,nuptk|digits:16',
+            'nuptk' => 'string|unique:master_gurus,nuptk|digits:16',
 
             // 'nama_lengkap' harus diisi
             'nama_lengkap' => 'required|string|max:255',
