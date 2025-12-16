@@ -147,8 +147,61 @@ class MasterSiswaController extends Controller
     /**
      * Fitur untuk membuat akun login untuk semua siswa yang belum punya.
      */
+    // public function generateAkunMasal()
+    // {
+    //     $siswaTanpaAkun = MasterSiswa::whereNull('user_id')->get();
+
+    //     if ($siswaTanpaAkun->isEmpty()) {
+    //         toast('Semua siswa sudah memiliki akun.', 'info');
+    //         return back();
+    //     }
+
+    //     $berhasil = 0;
+    //     $gagal = 0;
+    //     $roleSiswa = Role::findByName('Siswa');
+    //     $passwordDefault = 'smktelkom';
+
+    //     DB::beginTransaction();
+    //     try {
+    //         foreach ($siswaTanpaAkun as $siswa) {
+    //             // Cek jika email (berdasarkan NIS) sudah ada di tabel users
+    //             $email = $siswa->nis . '@smktelkom-lpg.sch.id';
+    //             if (User::where('email', $email)->exists()) {
+    //                 $gagal++;
+    //                 continue; // Lanjut ke siswa berikutnya jika email sudah ada
+    //             }
+
+    //             $user = User::create([
+    //                 'name' => $siswa->nama_lengkap,
+    //                 'email' => $email,
+    //                 'password' => Hash::make($passwordDefault),
+    //             ]);
+
+    //             $user->assignRole($roleSiswa);
+    //             $siswa->update(['user_id' => $user->id]);
+    //             $berhasil++;
+    //         }
+
+    //         DB::commit();
+    //         toast("Proses selesai! $berhasil akun berhasil dibuat, $gagal gagal (email duplikat).", 'success')->autoClose(10000);
+    //         return redirect()->route('master-data.siswa.index');
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+    //         Log::error('Error generating mass student accounts: ' . $e->getMessage());
+    //         toast('Terjadi kesalahan fatal saat proses generate akun masal.', 'error');
+    //         return back();
+    //     }
+    // }
+
+    /**
+     * Fitur untuk membuat akun login untuk semua siswa yang belum punya.
+     */
     public function generateAkunMasal()
     {
+        // TAMBAHKAN BARIS INI (0 artinya tidak ada batas waktu)
+        set_time_limit(0);
+        ini_set('memory_limit', '-1'); // Opsional: Agar tidak kehabisan memori jika data banyak
+
         $siswaTanpaAkun = MasterSiswa::whereNull('user_id')->get();
 
         if ($siswaTanpaAkun->isEmpty()) {
