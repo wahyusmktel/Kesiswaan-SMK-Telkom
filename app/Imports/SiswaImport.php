@@ -59,15 +59,23 @@ class SiswaImport implements ToModel, WithHeadingRow
     }
 
     /**
-     * Konversi format tanggal Excel ke Y-m-d MySQL
+     * Konversi format tanggal Excel (Serial Number) atau String ke Y-m-d MySQL
      */
     private function transformDate($value)
     {
         if (!$value) return null;
+
         try {
-            return \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value)->format('Y-m-d');
+            // Skenario 1: Jika formatnya Angka (Serial Date Excel, misal: 44562)
+            if (is_numeric($value)) {
+                return \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value)->format('Y-m-d');
+            }
+
+            // Skenario 2: Jika formatnya Teks (misal: "2007-05-12" atau "12/05/2007")
+            return \Carbon\Carbon::parse($value)->format('Y-m-d');
         } catch (\Exception $e) {
-            return null; // Jika format kacau, biarkan null
+            // Jika data benar-benar kacau, kembalikan null biar tidak error 500
+            return null;
         }
     }
 }
