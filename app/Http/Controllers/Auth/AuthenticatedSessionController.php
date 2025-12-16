@@ -28,6 +28,39 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        // Ambil user yang baru login
+        $user = $request->user();
+
+        // Cek Role dan Redirect sesuai Dashboard masing-masing
+        if ($user->hasRole('Siswa')) {
+            return redirect()->intended(route('siswa.dashboard.index', absolute: false));
+        }
+
+        if ($user->hasRole('Guru Kelas')) {
+            return redirect()->intended(route('guru-kelas.dashboard.index', absolute: false));
+        }
+
+        if ($user->hasRole('Wali Kelas')) {
+            return redirect()->intended(route('wali-kelas.dashboard.index', absolute: false));
+        }
+
+        if ($user->hasRole('Guru BK')) {
+            return redirect()->intended(route('bk.dashboard.index', absolute: false));
+        }
+
+        if ($user->hasRole('Guru Piket')) {
+            return redirect()->intended(route('piket.dashboard.index', absolute: false));
+        }
+
+        if ($user->hasRole('Waka Kesiswaan')) {
+            return redirect()->intended(route('kesiswaan.dashboard.index', absolute: false));
+        }
+
+        if ($user->hasRole('Kurikulum')) {
+            return redirect()->intended(route('kurikulum.dashboard.index', absolute: false));
+        }
+
+        // Default untuk Super Admin / Kepala Sekolah / Role lain yang tidak didefinisikan
         return redirect()->intended(route('dashboard', absolute: false));
     }
 
