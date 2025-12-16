@@ -19,6 +19,7 @@ class GuruImport implements ToModel, WithHeadingRow, WithValidation
         return new MasterGuru([
             'nuptk'         => $row['nuptk'],
             'nama_lengkap'  => $row['nama_lengkap'],
+            'jenis_kelamin'  => $row['jenis_kelamin'],
         ]);
     }
 
