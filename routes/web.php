@@ -38,6 +38,7 @@ use App\Http\Controllers\Prakerin\IndustriController;
 use App\Http\Controllers\Prakerin\PenempatanController;
 use App\Http\Controllers\Prakerin\JurnalSiswaController;
 use App\Http\Controllers\Prakerin\MonitoringPembimbingController;
+use App\Http\Controllers\Admin\RoleController;
 
 // ==================================
 //     ROUTE PUBLIK UNTUK VERIFIKASI
@@ -63,6 +64,11 @@ Route::get('/', function () {
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::middleware(['auth', 'role:Waka Kesiswaan'])->prefix('admin')->name('admin.')->group(function () {
+    // ... route lain ...
+    Route::resource('roles', RoleController::class)->except(['create', 'edit', 'show']);
+});
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // ... route dashboard dan profile dari Breeze
