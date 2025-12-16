@@ -24,6 +24,16 @@
                     </form>
 
                     <div class="flex items-center gap-2">
+
+                        <button @click="$dispatch('open-import-modal')"
+                            class="inline-flex items-center px-4 py-2 bg-emerald-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-emerald-500 focus:outline-none shadow-sm transition ease-in-out duration-150 gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Import Excel
+                        </button>
+
                         <form action="{{ route('master-data.siswa.generate-akun-masal') }}" method="POST"
                             class="action-form">
                             @csrf
@@ -175,6 +185,57 @@
                 <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
                     {{ $siswa->withQueryString()->links() }}
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div x-data="{ isOpen: false }" @open-import-modal.window="isOpen = true" x-show="isOpen" style="display: none;"
+        class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+
+        <div x-show="isOpen" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity"
+            @click="isOpen = false"></div>
+
+        <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+            <div x-show="isOpen"
+                class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-gray-100">
+
+                <div class="bg-emerald-600 px-4 py-3 sm:px-6 flex justify-between items-center">
+                    <h3 class="text-lg font-bold leading-6 text-white">Import Data Siswa</h3>
+                    <button @click="isOpen = false" class="text-emerald-100 hover:text-white focus:outline-none"><svg
+                            class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg></button>
+                </div>
+
+                <form action="{{ route('master-data.siswa.import') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="px-4 py-5 sm:p-6 space-y-4">
+                        <div class="bg-emerald-50 border border-emerald-100 rounded-lg p-3 text-sm text-emerald-800">
+                            <p class="font-bold mb-1">Format File Excel:</p>
+                            <ul class="list-disc list-inside">
+                                <li>Pastikan header baris pertama adalah:</li>
+                                <li class="font-mono text-xs mt-1 bg-white p-1 rounded border border-emerald-200">nis,
+                                    nama_lengkap, jenis_kelamin, tanggal_lahir, alamat</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Pilih File Excel</label>
+                            <input type="file" name="file_import" required accept=".xlsx, .xls, .csv"
+                                class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 transition-colors border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 border-t border-gray-100">
+                        <button type="submit"
+                            class="inline-flex w-full justify-center rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 sm:ml-3 sm:w-auto transition-colors">
+                            Upload & Proses
+                        </button>
+                        <button type="button" @click="isOpen = false"
+                            class="mt-3 inline-flex w-full justify-center rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto transition-colors">Batal</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

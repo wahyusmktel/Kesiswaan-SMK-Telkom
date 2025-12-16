@@ -99,6 +99,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('rombel/{rombel}/add-siswa', [RombelController::class, 'addSiswa'])->name('rombel.add-siswa');
         Route::delete('rombel/{rombel}/remove-siswa/{siswa}', [RombelController::class, 'removeSiswa'])->name('rombel.remove-siswa');
         Route::resource('rombel', RombelController::class);
+        Route::post('/siswa/import', [MasterSiswaController::class, 'import'])->name('siswa.import');
     });
 
     // Grup Route untuk Kesiswaan

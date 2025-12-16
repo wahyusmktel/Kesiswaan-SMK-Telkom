@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Spatie\Permission\Models\Role;
+use App\Imports\SiswaImport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class MasterSiswaController extends Controller
 {
@@ -19,7 +21,7 @@ class MasterSiswaController extends Controller
 
         if ($request->filled('search')) {
             $query->where('nama_lengkap', 'like', '%' . $request->search . '%')
-                  ->orWhere('nis', 'like', '%' . $request->search . '%');
+                ->orWhere('nis', 'like', '%' . $request->search . '%');
         }
 
         $siswa = $query->latest()->paginate(10);
@@ -129,15 +131,14 @@ class MasterSiswaController extends Controller
             DB::commit();
             toast('Akun berhasil dibuat! Email: ' . $email . ' | Pass: ' . $password, 'success')->autoClose(10000);
             return redirect()->route('master-data.siswa.index');
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error generating student account: ' . $e->getMessage());
             // Cek jika error karena email duplikat
             if (str_contains($e->getMessage(), 'Duplicate entry')) {
-                 toast('Gagal! Email atau data lain sudah terdaftar.', 'error');
+                toast('Gagal! Email atau data lain sudah terdaftar.', 'error');
             } else {
-                 toast('Terjadi kesalahan saat membuat akun.', 'error');
+                toast('Terjadi kesalahan saat membuat akun.', 'error');
             }
             return back();
         }
@@ -184,7 +185,6 @@ class MasterSiswaController extends Controller
             DB::commit();
             toast("Proses selesai! $berhasil akun berhasil dibuat, $gagal gagal (email duplikat).", 'success')->autoClose(10000);
             return redirect()->route('master-data.siswa.index');
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error generating mass student accounts: ' . $e->getMessage());
@@ -211,10 +211,30 @@ class MasterSiswaController extends Controller
 
             toast('Password berhasil direset ke: ' . $passwordDefault, 'success');
             return redirect()->route('master-data.siswa.index');
-
         } catch (\Exception $e) {
             Log::error('Error resetting student password: ' . $e->getMessage());
             toast('Gagal mereset password.', 'error');
+            return back();
+        }
+    }
+
+    /**
+     * Method baru untuk menangani import Excel
+     */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file_import' => 'required|mimes:xlsx,xls,csv|max:2048', // Maks 2MB
+        ]);
+
+        try {
+            Excel::import(new SiswaImport, $request->file('file_import'));
+
+            toast('Data siswa berhasil diimpor!', 'success');
+            return redirect()->route('master-data.siswa.index');
+        } catch (\Exception $e) {
+            Log::error('Import Error: ' . $e->getMessage());
+            toast('Gagal mengimpor data. Pastikan format file benar.', 'error');
             return back();
         }
     }
