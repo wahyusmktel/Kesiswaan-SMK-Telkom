@@ -13,11 +13,30 @@ use Spatie\Permission\Models\Role;
 class UserController extends Controller
 {
     // Menampilkan daftar user
-    public function index()
+    // Method Index yang Diperbarui
+    public function index(Request $request)
     {
         try {
-            $users = User::with('roles')->latest()->paginate(10);
-            $roles = \Spatie\Permission\Models\Role::pluck('name'); // Ambil list role
+            // 1. Ambil nilai 'per_page' dari request, default 10
+            $perPage = $request->input('per_page', 10);
+
+            // 2. Query dasar dengan Eager Loading
+            $query = User::with('roles')->latest();
+
+            // 3. Logika Pencarian
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                });
+            }
+
+            // 4. Eksekusi Paginasi (tambahkan parameter ke URL pagination)
+            $users = $query->paginate($perPage)->withQueryString();
+
+            $roles = \Spatie\Permission\Models\Role::pluck('name');
+
             return view('pages.users.index', compact('users', 'roles'));
         } catch (\Exception $e) {
             Log::error('Error fetching users: ' . $e->getMessage());

@@ -8,15 +8,51 @@
 
             <div class="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
 
-                <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                    <h3 class="font-bold text-gray-700">Daftar Pengguna</h3>
-                    <button @click="$dispatch('open-user-modal')"
-                        class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-500 focus:outline-none shadow-sm transition ease-in-out duration-150 gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                        Tambah Data
-                    </button>
+                <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                    <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+
+                        <div class="flex items-center gap-4 w-full md:w-auto">
+                            <h3 class="font-bold text-gray-700 whitespace-nowrap">Daftar Pengguna</h3>
+
+                            <button @click="$dispatch('open-user-modal')"
+                                class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-500 focus:outline-none shadow-sm transition ease-in-out duration-150 gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4v16m8-8H4" />
+                                </svg>
+                                <span class="hidden sm:inline">Tambah</span>
+                            </button>
+                        </div>
+
+                        <form method="GET" action="{{ route('users.index') }}"
+                            class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-gray-500">Show</span>
+                                <select name="per_page" onchange="this.form.submit()"
+                                    class="text-xs border-gray-300 focus:border-red-500 focus:ring-red-500 rounded-lg shadow-sm">
+                                    <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
+                                    <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>
+                                    <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
+                                    <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="relative w-full sm:w-64">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24"
+                                        stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                </div>
+                                <input type="text" name="search" value="{{ request('search') }}"
+                                    class="pl-10 block w-full rounded-lg border-gray-300 text-xs focus:border-red-500 focus:ring-red-500 shadow-sm h-9"
+                                    placeholder="Cari Nama / Email..." onblur="this.form.submit()">
+                            </div>
+                        </form>
+                    </div>
                 </div>
 
                 <div class="overflow-x-auto">
@@ -63,7 +99,7 @@
                                                     id: '{{ $user->id }}',
                                                     name: '{{ addslashes($user->name) }}',
                                                     email: '{{ $user->email }}',
-                                                    roles: {{ json_encode($user->getRoleNames()) }}, 
+                                                    roles: {{ json_encode($user->getRoleNames()) }},
                                                     updateUrl: '{{ route('users.update', $user->id) }}'
                                                 })"
                                                 class="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-xs font-semibold border border-gray-200">
