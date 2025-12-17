@@ -25,7 +25,9 @@ class JadwalPelajaranController extends Controller
     {
         $days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
         $jamSlots = JamPelajaran::orderBy('jam_ke')->get(); // <-- Ambil dari database
-        $mataPelajaran = MataPelajaran::orderBy('nama_mapel')->get();
+        $mataPelajaran = MataPelajaran::where('kelas_id', $rombel->kelas_id)
+            ->orderBy('nama_mapel')
+            ->get();
         $guru = MasterGuru::orderBy('nama_lengkap')->get();
 
         $jadwal = JadwalPelajaran::where('rombel_id', $rombel->id)

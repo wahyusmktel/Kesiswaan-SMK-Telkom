@@ -38,7 +38,8 @@
                         <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-200">
                             <tr>
                                 <th class="px-6 py-4 font-bold tracking-wider">Kode</th>
-                                <th class="px-6 py-4 font-bold tracking-wider">Nama Mata Pelajaran</th>
+                                <th class="px-6 py-4 font-bold tracking-wider">Mata Pelajaran</th>
+                                <th class="px-6 py-4 font-bold tracking-wider">Kelas</th>
                                 <th class="px-6 py-4 font-bold tracking-wider">Beban Jam</th>
                                 <th class="px-6 py-4 font-bold tracking-wider text-right">Aksi</th>
                             </tr>
@@ -55,8 +56,14 @@
                                     <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-800">
                                         {{ $item->nama_mapel }}
                                     </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            {{ $item->kelas->nama_kelas ?? '-' }}
+                                        </span>
+                                    </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-gray-600">
-                                        {{ $item->jumlah_jam }} JP / Minggu
+                                        {{ $item->jumlah_jam }} JP
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div class="flex items-center justify-end gap-2">
@@ -66,6 +73,7 @@
                                                     kode_mapel: '{{ $item->kode_mapel }}',
                                                     nama_mapel: '{{ addslashes($item->nama_mapel) }}',
                                                     jumlah_jam: '{{ $item->jumlah_jam }}',
+                                                    kelas_id: '{{ $item->kelas_id }}', // Kirim ID kelas
                                                     updateUrl: '{{ route('kurikulum.mata-pelajaran.update', $item->id) }}'
                                                 })"
                                                 class="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-xs font-semibold border border-gray-200">
@@ -86,7 +94,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="px-6 py-12 text-center text-gray-500 bg-gray-50/50">
+                                    <td colspan="5" class="px-6 py-12 text-center text-gray-500 bg-gray-50/50">
                                         <div class="flex flex-col items-center justify-center">
                                             <svg class="w-12 h-12 text-gray-300 mb-3" fill="none"
                                                 stroke="currentColor" viewBox="0 0 24 24">
@@ -145,6 +153,18 @@
                                 placeholder="Contoh: Matematika Wajib"
                                 class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                         </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Kelas / Tingkat</label>
+                            <select name="kelas_id" x-model="form.kelas_id" required
+                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                <option value="">-- Pilih Kelas --</option>
+                                @foreach ($kelas as $k)
+                                    <option value="{{ $k->id }}">{{ $k->nama_kelas }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Jumlah Jam (JP)</label>
                             <input type="number" name="jumlah_jam" x-model="form.jumlah_jam" required
@@ -191,10 +211,12 @@
                     <div class="px-4 py-5 sm:p-6 space-y-4">
                         <div class="bg-emerald-50 border border-emerald-100 rounded-lg p-3 text-sm text-emerald-800">
                             <p class="font-bold mb-1">Format File:</p>
-                            <p>Pastikan file Excel (.xlsx) memiliki kolom: <code
-                                    class="bg-emerald-100 px-1 rounded">kode_mapel</code>, <code
-                                    class="bg-emerald-100 px-1 rounded">nama_mapel</code>, <code
-                                    class="bg-emerald-100 px-1 rounded">jumlah_jam</code>.</p>
+                            <p>Pastikan file Excel memiliki kolom:
+                                <code class="bg-emerald-100 px-1 rounded">kode_mapel</code>,
+                                <code class="bg-emerald-100 px-1 rounded">nama_mapel</code>,
+                                <code class="bg-emerald-100 px-1 rounded">jumlah_jam</code>,
+                                <code class="bg-emerald-100 px-1 rounded">kelas</code> (Nama Kelas, misal: X).
+                            </p>
                         </div>
 
                         <div>
@@ -242,7 +264,8 @@
                     form: {
                         kode_mapel: '',
                         nama_mapel: '',
-                        jumlah_jam: ''
+                        jumlah_jam: '',
+                        kelas_id: '' // Tambahkan ini
                     },
                     openModal() {
                         this.isOpen = true;
@@ -251,7 +274,8 @@
                         this.form = {
                             kode_mapel: '',
                             nama_mapel: '',
-                            jumlah_jam: ''
+                            jumlah_jam: '',
+                            kelas_id: ''
                         };
                     },
                     editModal(data) {
@@ -261,7 +285,8 @@
                         this.form = {
                             kode_mapel: data.kode_mapel,
                             nama_mapel: data.nama_mapel,
-                            jumlah_jam: data.jumlah_jam
+                            jumlah_jam: data.jumlah_jam,
+                            kelas_id: data.kelas_id
                         };
                     },
                     closeModal() {

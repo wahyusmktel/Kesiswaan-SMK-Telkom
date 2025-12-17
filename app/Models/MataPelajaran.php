@@ -13,7 +13,13 @@ class MataPelajaran extends Model
         'kode_mapel',
         'nama_mapel',
         'jumlah_jam',
+        'kelas_id',
     ];
+
+    public function kelas()
+    {
+        return $this->belongsTo(Kelas::class);
+    }
 
     public function jadwalPelajaran()
     {

@@ -33,6 +33,13 @@
                                             x-text="mapel.nama_mapel + ' (Sisa ' + mapel.sisa_jam + ' JP)'"></option>
                                     </template>
                                 </select>
+
+                                <template x-if="mataPelajaran.length === 0">
+                                    <p class="text-xs text-red-500 mt-1">
+                                        * Belum ada mata pelajaran untuk kelas ini. Silakan atur di Data Kurikulum.
+                                    </p>
+                                </template>
+
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24"
                                         stroke="currentColor">
