@@ -46,7 +46,8 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
-            'role' => 'required|exists:roles,name',
+            'roles' => 'required|array',
+            'roles.*' => 'exists:roles,name',
         ]);
 
         if ($validator->fails()) {
@@ -62,7 +63,8 @@ class UserController extends Controller
                 'password' => Hash::make($request->password),
             ]);
 
-            $user->assignRole($request->role);
+            // GUNAKAN SYNCROLES UNTUK ARRAY
+            $user->assignRole($request->roles);
 
             DB::commit();
             toast('Pengguna berhasil ditambahkan!', 'success');
@@ -95,7 +97,8 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:8|confirmed',
-            'role' => 'required|exists:roles,name',
+            'roles' => 'required|array',
+            'roles.*' => 'exists:roles,name',
         ]);
 
         if ($validator->fails()) {
@@ -114,7 +117,7 @@ class UserController extends Controller
                 $user->update(['password' => Hash::make($request->password)]);
             }
 
-            $user->syncRoles($request->role);
+            $user->syncRoles($request->roles);
 
             DB::commit();
             toast('Pengguna berhasil diperbarui!', 'success');

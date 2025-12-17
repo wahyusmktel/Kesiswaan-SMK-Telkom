@@ -44,17 +44,17 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        @if (!empty($user->getRoleNames()))
-                                            @foreach ($user->getRoleNames() as $role)
+                                    <td class="px-6 py-4">
+                                        <div class="flex flex-wrap gap-1">
+                                            @forelse ($user->getRoleNames() as $role)
                                                 <span
                                                     class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-100 shadow-sm">
                                                     {{ $role }}
                                                 </span>
-                                            @endforeach
-                                        @else
-                                            <span class="text-gray-400 italic text-xs">Tidak ada peran</span>
-                                        @endif
+                                            @empty
+                                                <span class="text-gray-400 italic text-xs">Tidak ada peran</span>
+                                            @endforelse
+                                        </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div class="flex items-center justify-end gap-2">
@@ -63,7 +63,7 @@
                                                     id: '{{ $user->id }}',
                                                     name: '{{ addslashes($user->name) }}',
                                                     email: '{{ $user->email }}',
-                                                    role: '{{ $user->roles->first()?->name ?? '' }}',
+                                                    roles: {{ json_encode($user->getRoleNames()) }}, 
                                                     updateUrl: '{{ route('users.update', $user->id) }}'
                                                 })"
                                                 class="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-xs font-semibold border border-gray-200">
@@ -120,9 +120,9 @@
         </div>
     </div>
 
-    <div x-data="userModalData()" @open-user-modal.window="openModal()" @edit-user.window="editModal($event.detail)"
-        x-show="isOpen" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title"
-        role="dialog" aria-modal="true">
+    <div x-data="userModalData()" x-init="initTomSelect()" @open-user-modal.window="openModal()"
+        @edit-user.window="editModal($event.detail)" x-show="isOpen" style="display: none;"
+        class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
 
         <div x-show="isOpen" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0"
             x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200"
@@ -136,11 +136,11 @@
                 x-transition:leave="ease-in duration-200"
                 x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
                 x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-gray-100">
+                class="relative transform overflow-visible rounded-xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-gray-100">
 
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 border-b border-gray-100 flex justify-between items-center">
                     <h3 class="text-lg font-bold leading-6 text-gray-900"
-                        x-text="isEdit ? 'Edit Pengguna' : 'Tambah Pengguna Baru'"></h3>
+                        x-text="isEdit ? 'Edit Pengguna & Peran' : 'Tambah Pengguna Baru'"></h3>
                     <button @click="closeModal" class="text-gray-400 hover:text-gray-500 focus:outline-none">
                         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                             stroke="currentColor">
@@ -166,16 +166,18 @@
                             <input type="email" name="email" x-model="form.email" required
                                 class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
                         </div>
+
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Peran (Role)</label>
-                            <select name="role" x-model="form.role" required
-                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
-                                <option value="">-- Pilih Peran --</option>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Peran (Role)</label>
+                            <select id="roles-select" name="roles[]" multiple placeholder="Pilih Peran..."
+                                autocomplete="off">
                                 @foreach ($roles as $role)
                                     <option value="{{ $role }}">{{ $role }}</option>
                                 @endforeach
                             </select>
+                            <p class="text-xs text-gray-500 mt-1">Bisa memilih lebih dari satu peran.</p>
                         </div>
+
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Password</label>
                             <input type="password" name="password" id="password"
@@ -207,31 +209,65 @@
         </div>
     </div>
 
+    {{-- TomSelect CSS & JS --}}
+    @push('styles')
+        <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet">
+        <style>
+            /* Container Input */
+            .ts-control {
+                border-radius: 0.5rem;
+                padding: 0.5rem 0.75rem;
+                border-color: #d1d5db;
+                z-index: 10;
+            }
+
+            .ts-control.focus {
+                border-color: #ef4444;
+                box-shadow: 0 0 0 1px #ef4444;
+            }
+
+            /* Chips/Badge Item */
+            .ts-control .item {
+                background-color: #fef2f2;
+                color: #b91c1c;
+                border: 1px solid #fecaca;
+                border-radius: 9999px;
+                padding: 2px 10px;
+            }
+
+            /* Dropdown Menu - WAJIB Z-INDEX TINGGI */
+            .ts-dropdown {
+                z-index: 999999 !important;
+                border-radius: 0.5rem;
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+                margin-top: 4px;
+            }
+        </style>
+    @endpush
+
     @push('scripts')
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 
         <script>
-            // Fungsi SweetAlert untuk Konfirmasi Hapus
             function confirmDelete(button) {
                 Swal.fire({
                     title: 'Apakah Anda yakin?',
                     text: "Data pengguna ini akan dihapus secara permanen!",
                     icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonColor: '#dc2626', // Red-600
-                    cancelButtonColor: '#6b7280', // Gray-500
+                    confirmButtonColor: '#dc2626',
+                    cancelButtonColor: '#6b7280',
                     confirmButtonText: 'Ya, Hapus!',
                     cancelButtonText: 'Batal',
                     reverseButtons: true
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        // Submit form terdekat dari tombol yang diklik
                         button.closest('form').submit();
                     }
                 });
             }
 
-            // Alpine JS Data
             function userModalData() {
                 return {
                     isOpen: false,
@@ -240,8 +276,18 @@
                     form: {
                         name: '',
                         email: '',
-                        role: ''
                     },
+                    tomSelect: null,
+
+                    initTomSelect() {
+                        this.tomSelect = new TomSelect("#roles-select", {
+                            plugins: ['remove_button'],
+                            create: false,
+                            // KUNCI UTAMA: Render dropdown di body agar tidak terpotong modal
+                            dropdownParent: 'body'
+                        });
+                    },
+
                     openModal() {
                         this.isOpen = true;
                         this.isEdit = false;
@@ -249,11 +295,17 @@
                         this.form = {
                             name: '',
                             email: '',
-                            role: ''
                         };
+
+                        // Reset TomSelect
+                        if (this.tomSelect) {
+                            this.tomSelect.clear();
+                        }
+
                         document.getElementById('password').value = '';
                         document.getElementById('password_confirmation').value = '';
                     },
+
                     editModal(user) {
                         this.isOpen = true;
                         this.isEdit = true;
@@ -261,11 +313,19 @@
                         this.form = {
                             name: user.name,
                             email: user.email,
-                            role: user.role
                         };
+
+                        // Set nilai role ke TomSelect
+                        if (this.tomSelect) {
+                            this.tomSelect.clear();
+                            // user.roles dikirim dari controller sebagai array ['Admin', 'Guru']
+                            this.tomSelect.setValue(user.roles);
+                        }
+
                         document.getElementById('password').value = '';
                         document.getElementById('password_confirmation').value = '';
                     },
+
                     closeModal() {
                         this.isOpen = false;
                     }
