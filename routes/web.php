@@ -39,6 +39,7 @@ use App\Http\Controllers\Prakerin\PenempatanController;
 use App\Http\Controllers\Prakerin\JurnalSiswaController;
 use App\Http\Controllers\Prakerin\MonitoringPembimbingController;
 use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\MasterData\TahunPelajaranController;
 
 // ==================================
 //     ROUTE PUBLIK UNTUK VERIFIKASI
@@ -106,6 +107,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('rombel/{rombel}/remove-siswa/{siswa}', [RombelController::class, 'removeSiswa'])->name('rombel.remove-siswa');
         Route::resource('rombel', RombelController::class);
         Route::post('/siswa/import', [MasterSiswaController::class, 'import'])->name('siswa.import');
+
+        // Route Tahun Pelajaran
+        Route::resource('tahun-pelajaran', TahunPelajaranController::class)->except(['create', 'edit', 'show']);
+        Route::patch('tahun-pelajaran/{tahunPelajaran}/activate', [TahunPelajaranController::class, 'activate'])->name('tahun-pelajaran.activate');
     });
 
     // Grup Route untuk Kesiswaan

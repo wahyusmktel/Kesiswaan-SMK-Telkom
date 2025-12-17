@@ -8,6 +8,7 @@ use App\Models\MasterSiswa;
 use App\Models\Rombel;
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Models\TahunPelajaran;
 use Illuminate\Support\Facades\Log;
 
 class RombelController extends Controller
@@ -32,11 +33,16 @@ class RombelController extends Controller
 
         $rombel = $query->latest()->paginate(10);
 
+        $tahun_ajaran_list = TahunPelajaran::select('tahun')->distinct()->orderBy('tahun', 'desc')->pluck('tahun', 'tahun');
+
+        // Ambil Tahun Aktif sebagai default value
+        $tahun_aktif = TahunPelajaran::where('is_active', true)->value('tahun');
+
         // Data untuk Dropdown di Modal Tambah/Edit
         $kelas = Kelas::orderBy('nama_kelas')->pluck('nama_kelas', 'id');
         $wali_kelas = User::role('Wali Kelas')->orderBy('name')->pluck('name', 'id');
 
-        return view('pages.master-data.rombel.index', compact('rombel', 'kelas', 'wali_kelas'));
+        return view('pages.master-data.rombel.index', compact('rombel', 'kelas', 'wali_kelas', 'tahun_ajaran_list', 'tahun_aktif'));
     }
 
     /**

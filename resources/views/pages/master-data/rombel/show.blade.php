@@ -26,13 +26,28 @@
                             <form action="{{ route('master-data.rombel.add-siswa', $rombel->id) }}" method="POST">
                                 @csrf
                                 <div>
-                                    <label for="siswa_ids" class="block text-sm font-medium text-gray-700 mb-2">Pilih
-                                        Siswa (Tersedia)</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Pilih Siswa
+                                        (Tersedia)</label>
+
+                                    <div class="relative mb-2">
+                                        <div
+                                            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24"
+                                                stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                            </svg>
+                                        </div>
+                                        <input type="text" id="searchBox"
+                                            class="block w-full pl-10 rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-xs"
+                                            placeholder="Ketik Nama / NIS untuk menyaring...">
+                                    </div>
+
                                     <select name="siswa_ids[]" id="siswa_ids" multiple
                                         class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 text-sm h-64">
                                         @forelse ($siswaTersedia as $siswa)
                                             <option value="{{ $siswa->id }}"
-                                                class="py-1 px-2 hover:bg-red-50 cursor-pointer">
+                                                class="py-1 px-2 hover:bg-red-50 cursor-pointer border-b border-gray-50 last:border-0">
                                                 {{ $siswa->nis }} - {{ $siswa->nama_lengkap }}
                                             </option>
                                         @empty
@@ -40,6 +55,7 @@
                                                 sudah masuk rombel --</option>
                                         @endforelse
                                     </select>
+
                                     <p class="mt-2 text-xs text-gray-500 flex items-center">
                                         <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor"
                                             viewBox="0 0 24 24">
@@ -137,6 +153,7 @@
     @push('scripts')
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
+            // Script untuk SweetAlert Delete
             function confirmRemove(button) {
                 Swal.fire({
                     title: 'Keluarkan Siswa?',
@@ -153,6 +170,26 @@
                     }
                 });
             }
+
+            // Script untuk Pencarian Real-time pada Select Box
+            document.addEventListener('DOMContentLoaded', function() {
+                const searchBox = document.getElementById('searchBox');
+                const selectBox = document.getElementById('siswa_ids');
+                const options = selectBox.querySelectorAll('option');
+
+                searchBox.addEventListener('keyup', function(e) {
+                    const searchTerm = e.target.value.toLowerCase();
+
+                    options.forEach(option => {
+                        const text = option.textContent.toLowerCase();
+                        if (text.includes(searchTerm)) {
+                            option.style.display = ''; // Tampilkan
+                        } else {
+                            option.style.display = 'none'; // Sembunyikan
+                        }
+                    });
+                });
+            });
         </script>
     @endpush
 </x-app-layout>

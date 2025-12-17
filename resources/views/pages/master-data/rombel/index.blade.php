@@ -136,9 +136,13 @@
                     <div class="px-4 py-5 sm:p-6 space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Tahun Ajaran</label>
-                            <input type="text" name="tahun_ajaran" x-model="form.tahun_ajaran" required
-                                placeholder="Contoh: 2024/2025"
+                            <select name="tahun_ajaran" x-model="form.tahun_ajaran" required
                                 class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
+                                <option value="">-- Pilih Tahun --</option>
+                                @foreach ($tahun_ajaran_list as $tahun)
+                                    <option value="{{ $tahun }}">{{ $tahun }}</option>
+                                @endforeach
+                            </select>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Kelas</label>
@@ -207,7 +211,7 @@
                         this.isEdit = false;
                         this.formAction = '{{ route('master-data.rombel.store') }}';
                         this.form = {
-                            tahun_ajaran: '',
+                            tahun_ajaran: '{{ $tahun_aktif }}', // Set Default ke Tahun Aktif
                             kelas_id: '',
                             wali_kelas_id: ''
                         };
