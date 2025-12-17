@@ -28,4 +28,9 @@ class Rombel extends Model
     {
         return $this->hasMany(JadwalPelajaran::class);
     }
+
+    public function tahunPelajaran()
+    {
+        return $this->belongsTo(TahunPelajaran::class, 'tahun_pelajaran_id');
+    }
 }

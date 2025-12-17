@@ -35,8 +35,9 @@
                                 <tr class="bg-white hover:bg-gray-50/80 transition-colors duration-200">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <span
-                                            class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
-                                            {{ $item->tahun_ajaran }}
+                                            class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-medium
+        {{ $item->tahunPelajaran->is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
+                                            {{ $item->tahunPelajaran->tahun }} ({{ $item->tahunPelajaran->semester }})
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-gray-900 font-semibold">
@@ -71,6 +72,15 @@
                                             <button
                                                 @click="$dispatch('edit-rombel', {
                                                     id: '{{ $item->id }}',
+                                                    tahun_pelajaran_id: '{{ $item->tahun_pelajaran_id }}', kelas_id: '{{ $item->kelas_id }}',
+                                                    wali_kelas_id: '{{ $item->wali_kelas_id }}',
+                                                    updateUrl: '{{ route('master-data.rombel.update', $item->id) }}'
+                                                })"class="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-xs font-semibold border border-gray-200">
+                                                Edit</button>
+
+                                            {{-- <button
+                                                @click="$dispatch('edit-rombel', {
+                                                    id: '{{ $item->id }}',
                                                     tahun_ajaran: '{{ $item->tahun_ajaran }}',
                                                     kelas_id: '{{ $item->kelas_id }}',
                                                     wali_kelas_id: '{{ $item->wali_kelas_id }}',
@@ -78,7 +88,7 @@
                                                 })"
                                                 class="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-xs font-semibold border border-gray-200">
                                                 Edit
-                                            </button>
+                                            </button> --}}
 
                                             <form action="{{ route('master-data.rombel.destroy', $item->id) }}"
                                                 method="POST" class="delete-form inline-block">
@@ -135,12 +145,15 @@
 
                     <div class="px-4 py-5 sm:p-6 space-y-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Tahun Ajaran</label>
-                            <select name="tahun_ajaran" x-model="form.tahun_ajaran" required
+                            <label class="block text-sm font-medium text-gray-700">Tahun Pelajaran</label>
+                            <select name="tahun_pelajaran_id" x-model="form.tahun_pelajaran_id" required
                                 class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
                                 <option value="">-- Pilih Tahun --</option>
-                                @foreach ($tahun_ajaran_list as $tahun)
-                                    <option value="{{ $tahun }}">{{ $tahun }}</option>
+                                @foreach ($tahun_pelajaran as $tp)
+                                    <option value="{{ $tp->id }}">
+                                        {{ $tp->tahun }} - {{ $tp->semester }}
+                                        {{ $tp->is_active ? '(Aktif)' : '' }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
@@ -202,7 +215,7 @@
                     isEdit: false,
                     formAction: '{{ route('master-data.rombel.store') }}',
                     form: {
-                        tahun_ajaran: '',
+                        tahun_pelajaran_id: '{{ $tahun_aktif_id }}', // Default ke Tahun Aktif
                         kelas_id: '',
                         wali_kelas_id: ''
                     },
@@ -211,7 +224,7 @@
                         this.isEdit = false;
                         this.formAction = '{{ route('master-data.rombel.store') }}';
                         this.form = {
-                            tahun_ajaran: '{{ $tahun_aktif }}', // Set Default ke Tahun Aktif
+                            tahun_pelajaran_id: '{{ $tahun_aktif_id }}', // Reset ke Default
                             kelas_id: '',
                             wali_kelas_id: ''
                         };
@@ -221,7 +234,7 @@
                         this.isEdit = true;
                         this.formAction = data.updateUrl;
                         this.form = {
-                            tahun_ajaran: data.tahun_ajaran,
+                            tahun_pelajaran_id: data.tahun_pelajaran_id, // Load ID dari data
                             kelas_id: data.kelas_id,
                             wali_kelas_id: data.wali_kelas_id
                         };

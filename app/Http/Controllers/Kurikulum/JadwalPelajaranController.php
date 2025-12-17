@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Kurikulum;
 use App\Http\Controllers\Controller;
 use App\Models\JadwalPelajaran;
 use App\Models\JamPelajaran; // <-- Import model baru
+use App\Models\TahunPelajaran;
 use App\Models\MasterGuru;
 use App\Models\MataPelajaran;
 use App\Models\Rombel;
@@ -16,7 +17,16 @@ class JadwalPelajaranController extends Controller
     // Method index() tidak perlu diubah
     public function index()
     {
-        $rombels = Rombel::with('kelas', 'waliKelas')->where('tahun_ajaran', '2024/2025')->get(); // Ganti dengan tahun ajaran dinamis
+        // 1. Cari Tahun Pelajaran yang Aktif
+        $tahunAktif = TahunPelajaran::where('is_active', true)->first();
+        $tahunAktifId = $tahunAktif ? $tahunAktif->id : null;
+
+        // 2. Ambil Rombel hanya di tahun aktif tersebut
+        // Jangan lupa eager load 'tahunPelajaran'
+        $rombels = Rombel::with(['kelas', 'waliKelas', 'tahunPelajaran'])
+            ->where('tahun_pelajaran_id', $tahunAktifId)
+            ->get();
+
         return view('pages.kurikulum.jadwal-pelajaran.index', compact('rombels'));
     }
 

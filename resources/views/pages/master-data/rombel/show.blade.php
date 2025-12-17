@@ -1,11 +1,14 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h2 class="font-bold text-xl text-gray-800 leading-tight">Kelola Rombel: {{ $rombel->kelas->nama_kelas }}
+            <h2 class="font-bold text-xl text-gray-800 leading-tight">
+                Kelola Rombel: {{ $rombel->kelas->nama_kelas }}
             </h2>
             <div class="flex items-center gap-4 text-sm">
-                <span
-                    class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-semibold">{{ $rombel->tahun_ajaran }}</span>
+                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-semibold">
+                    {{ $rombel->tahunPelajaran->tahun }} ({{ $rombel->tahunPelajaran->semester }})
+                </span>
+
                 <span class="text-gray-500">Wali Kelas: <span
                         class="font-semibold text-gray-700">{{ $rombel->waliKelas->name }}</span></span>
             </div>

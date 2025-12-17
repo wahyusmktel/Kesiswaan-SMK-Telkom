@@ -6,26 +6,34 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
         Schema::table('rombels', function (Blueprint $table) {
-            // 1. Hapus kolom lama
-            $table->dropColumn('tahun_ajaran');
-
-            // 2. Tambahkan Foreign Key ke tabel tahun_pelajaran
+            // 1. Tambahkan kolom relasi baru
+            // PENTING: Tambahkan ->nullable() agar data lama yang sudah ada tidak error
             $table->foreignId('tahun_pelajaran_id')
-                ->after('id') // Biar rapi di depan
+                ->nullable() // <--- INI KUNCINYA
+                ->after('id')
                 ->constrained('tahun_pelajaran')
                 ->onDelete('cascade');
+
+            // 2. Kolom 'tahun_ajaran' lama TIDAK DIHAPUS (sesuai request)
+            // $table->dropColumn('tahun_ajaran');
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         Schema::table('rombels', function (Blueprint $table) {
+            // Hapus foreign key dan kolom barunya saja jika rollback
             $table->dropForeign(['tahun_pelajaran_id']);
             $table->dropColumn('tahun_pelajaran_id');
-            $table->string('tahun_ajaran', 9)->nullable(); // Balikin kolom lama jika rollback
         });
     }
 };

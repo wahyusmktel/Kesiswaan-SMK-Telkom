@@ -23,7 +23,8 @@
                                 </div>
                                 <span
                                     class="px-2.5 py-1 bg-gray-100 text-gray-600 text-xs rounded-full font-bold border border-gray-200">
-                                    {{ $rombel->tahun_ajaran }}
+                                    {{ $rombel->tahunPelajaran->tahun ?? '-' }}
+                                    ({{ $rombel->tahunPelajaran->semester ?? '' }})
                                 </span>
                             </div>
 

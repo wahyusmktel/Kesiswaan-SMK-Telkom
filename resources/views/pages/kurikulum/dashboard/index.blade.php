@@ -24,7 +24,14 @@
     @endpush
 
     <x-slot name="header">
-        <h2 class="font-bold text-xl text-gray-800 leading-tight">Dashboard Kurikulum</h2>
+        <h2 class="font-bold text-xl text-gray-800 leading-tight">
+            Dashboard Kurikulum
+            @if (isset($tahunAktif))
+                <span class="text-sm font-normal text-gray-500 ml-2">
+                    (T.A. {{ $tahunAktif->tahun }} - {{ $tahunAktif->semester }})
+                </span>
+            @endif
+        </h2>
     </x-slot>
 
     <div class="py-6 w-full">

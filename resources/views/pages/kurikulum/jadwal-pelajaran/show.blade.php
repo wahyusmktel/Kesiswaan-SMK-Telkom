@@ -6,7 +6,7 @@
             </h2>
             <span
                 class="text-sm font-bold text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm">
-                T.A. {{ $rombel->tahun_ajaran }}
+                T.A. {{ $rombel->tahunPelajaran->tahun ?? '-' }} ({{ $rombel->tahunPelajaran->semester ?? '' }})
             </span>
         </div>
     </x-slot>

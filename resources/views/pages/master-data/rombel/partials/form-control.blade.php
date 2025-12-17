@@ -1,12 +1,24 @@
 <div>
-    <x-input-label for="tahun_ajaran" :value="__('Tahun Ajaran (Contoh: 2024/2025)')" />
-    <x-text-input id="tahun_ajaran" class="block mt-1 w-full" type="text" name="tahun_ajaran" :value="old('tahun_ajaran', $rombel->tahun_ajaran ?? '')" required autofocus />
-    <x-input-error :messages="$errors->get('tahun_ajaran')" class="mt-2" />
+    <x-input-label for="tahun_pelajaran_id" :value="__('Tahun Pelajaran')" />
+    <select name="tahun_pelajaran_id" id="tahun_pelajaran_id"
+        class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+        required>
+        <option value="">-- Pilih Tahun --</option>
+        @foreach ($tahun_pelajaran as $tp)
+            <option value="{{ $tp->id }}"
+                {{ old('tahun_pelajaran_id', $rombel->tahun_pelajaran_id ?? $tahun_aktif_id) == $tp->id ? 'selected' : '' }}>
+                {{ $tp->tahun }} - {{ $tp->semester }} {{ $tp->is_active ? '(Aktif)' : '' }}
+            </option>
+        @endforeach
+    </select>
+    <x-input-error :messages="$errors->get('tahun_pelajaran_id')" class="mt-2" />
 </div>
 
 <div class="mt-4">
     <x-input-label for="kelas_id" :value="__('Pilih Kelas')" />
-    <select name="kelas_id" id="kelas_id" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>
+    <select name="kelas_id" id="kelas_id"
+        class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+        required>
         <option value="">-- Pilih Kelas --</option>
         @foreach ($kelas as $id => $nama)
             <option value="{{ $id }}" {{ old('kelas_id', $rombel->kelas_id ?? '') == $id ? 'selected' : '' }}>
@@ -19,10 +31,13 @@
 
 <div class="mt-4">
     <x-input-label for="wali_kelas_id" :value="__('Pilih Wali Kelas')" />
-    <select name="wali_kelas_id" id="wali_kelas_id" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>
+    <select name="wali_kelas_id" id="wali_kelas_id"
+        class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+        required>
         <option value="">-- Pilih Wali Kelas --</option>
         @foreach ($wali_kelas as $id => $nama)
-            <option value="{{ $id }}" {{ old('wali_kelas_id', $rombel->wali_kelas_id ?? '') == $id ? 'selected' : '' }}>
+            <option value="{{ $id }}"
+                {{ old('wali_kelas_id', $rombel->wali_kelas_id ?? '') == $id ? 'selected' : '' }}>
                 {{ $nama }}
             </option>
         @endforeach
