@@ -36,6 +36,12 @@
         {{-- UBAHAN 1: Mengganti max-w-7xl menjadi w-full agar full width --}}
         <div class="w-full px-4 sm:px-6 lg:px-8 space-y-8">
 
+            <div class="flex items-center gap-2 mb-4 px-1">
+                <div class="w-1.5 h-6 bg-red-600 rounded-full shadow-sm"></div>
+                <h3 class="text-lg font-bold text-gray-800 tracking-tight">Aktifitas Perizinan Tidak Sekolah Hari ini
+                </h3>
+            </div>
+
             {{-- Widget Statistik dengan Animasi Gradient --}}
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 
@@ -138,7 +144,7 @@
             <div>
                 <div class="flex items-center gap-2 mb-4 px-1">
                     <div class="w-1.5 h-6 bg-red-600 rounded-full shadow-sm"></div>
-                    <h3 class="text-lg font-bold text-gray-800 tracking-tight">Analisa Izin Tidak Masuk</h3>
+                    <h3 class="text-lg font-bold text-gray-800 tracking-tight">Analisa Izin Tidak Masuk Sekolah</h3>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
