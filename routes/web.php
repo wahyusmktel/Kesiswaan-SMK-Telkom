@@ -40,6 +40,8 @@ use App\Http\Controllers\Prakerin\JurnalSiswaController;
 use App\Http\Controllers\Prakerin\MonitoringPembimbingController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\MasterData\TahunPelajaranController;
+use App\Http\Controllers\PengaduanController;
+
 
 // ==================================
 //     ROUTE PUBLIK UNTUK VERIFIKASI
@@ -57,6 +59,10 @@ Route::get('/verifikasi/surat-terlambat/{uuid}', [PublicVerifikasiController::cl
 
 Route::get('/verifikasi/dispensasi/{dispensasi}', [PublicVerifikasiController::class, 'showDispensasi'])
     ->name('verifikasi.dispensasi');
+
+// Route Pengaduan Orang Tua (Publik)
+Route::get('/pengaduan', [PengaduanController::class, 'create'])->name('pengaduan.create');
+Route::post('/pengaduan', [PengaduanController::class, 'store'])->name('pengaduan.store');
 
 Route::get('/', function () {
     return view('welcome');
@@ -125,6 +131,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('/persetujuan-dispensasi/{dispensasi}/approve', [PersetujuanDispensasiController::class, 'approve'])->name('persetujuan-dispensasi.approve');
         Route::patch('/persetujuan-dispensasi/{dispensasi}/reject', [PersetujuanDispensasiController::class, 'reject'])->name('persetujuan-dispensasi.reject');
         Route::get('/persetujuan-dispensasi/{dispensasi}/print', [PersetujuanDispensasiController::class, 'printPdf'])->name('persetujuan-dispensasi.print');
+
+        // Route Pengaduan untuk Admin Kesiswaan
+        Route::get('/pengaduan', [PengaduanController::class, 'index'])->name('pengaduan.index');
+        Route::patch('/pengaduan/{pengaduan}/status', [PengaduanController::class, 'updateStatus'])->name('pengaduan.update-status');
     });
 
     // Grup Route untuk Siswa
