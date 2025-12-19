@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\MasterSiswa;
 use App\Models\Pengaduan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -47,7 +48,8 @@ class PengaduanController extends Controller
      */
     public function create()
     {
-        return view('pages.publik.pengaduan');
+        $siswa = MasterSiswa::with('rombels.kelas')->get();
+        return view('pages.publik.pengaduan', compact('siswa'));
     }
 
     /**

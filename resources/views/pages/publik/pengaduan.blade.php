@@ -7,6 +7,8 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700&display=swap" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    {{-- TomSelect CSS --}}
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet">
     <style>
         .glass {
             background: rgba(255, 255, 255, 0.8);
@@ -15,6 +17,20 @@
         }
         .gradient-bg {
             background: linear-gradient(135deg, #fce7f3 0%, #fef3c7 50%, #d1fae5 100%);
+        }
+        /* Custom TomSelect Red Theme */
+        .ts-control {
+            border-radius: 0.75rem !important;
+            padding: 0.75rem 1rem !important;
+            border-color: #e5e7eb !important;
+        }
+        .ts-control.focus {
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1) !important;
+        }
+        .ts-dropdown {
+            border-radius: 0.75rem !important;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
         }
     </style>
 </head>
@@ -85,19 +101,29 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {{-- Nama Siswa --}}
                         <div>
-                            <label for="nama_siswa" class="block text-sm font-semibold text-gray-700 mb-1">Nama Siswa (Anak)</label>
-                            <input type="text" name="nama_siswa" id="nama_siswa" value="{{ old('nama_siswa') }}" required
-                                class="w-full px-4 py-3 rounded-xl border-gray-200 focus:border-red-500 focus:ring focus:ring-red-200 transition-all placeholder-gray-400"
-                                placeholder="Nama lengkap anak">
+                            <label for="select_siswa" class="block text-sm font-semibold text-gray-700 mb-1">Nama Siswa (Anak)</label>
+                            <select id="select_siswa" placeholder="Cari nama siswa..." required autocomplete="off">
+                                <option value="">Cari nama siswa...</option>
+                                @foreach($siswa as $s)
+                                    @php
+                                        $namaKelas = $s->rombels->first()?->kelas->nama_kelas ?? 'Tanpa Kelas';
+                                    @endphp
+                                    <option value="{{ $s->id }}" data-nama="{{ $s->nama_lengkap }}" data-kelas="{{ $namaKelas }}"
+                                        {{ old('nama_siswa') == $s->nama_lengkap ? 'selected' : '' }}>
+                                        {{ $s->nama_lengkap }} ({{ $namaKelas }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            <input type="hidden" name="nama_siswa" id="nama_siswa_hidden" value="{{ old('nama_siswa') }}">
                             @error('nama_siswa') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
 
                         {{-- Kelas Siswa --}}
                         <div>
                             <label for="kelas_siswa" class="block text-sm font-semibold text-gray-700 mb-1">Kelas</label>
-                            <input type="text" name="kelas_siswa" id="kelas_siswa" value="{{ old('kelas_siswa') }}" required
-                                class="w-full px-4 py-3 rounded-xl border-gray-200 focus:border-red-500 focus:ring focus:ring-red-200 transition-all placeholder-gray-400"
-                                placeholder="Contoh: X RPL 1">
+                            <input type="text" name="kelas_siswa" id="kelas_siswa" value="{{ old('kelas_siswa') }}" required readonly
+                                class="w-full px-4 py-3 rounded-xl border-gray-200 bg-gray-50 focus:border-red-500 focus:ring focus:ring-red-200 transition-all placeholder-gray-400 group-read-only:cursor-not-allowed"
+                                placeholder="Terisi otomatis">
                             @error('kelas_siswa') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
@@ -133,5 +159,45 @@
     </div>
 
     @include('sweetalert::alert')
+
+    {{-- TomSelect JS --}}
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var select = new TomSelect('#select_siswa', {
+                create: false,
+                sortField: {
+                    field: "text",
+                    direction: "asc"
+                },
+                onChange: function(value) {
+                    var item = this.options[value];
+                    if (item) {
+                        // TomSelect picks up data-* attributes and adds them to the item object
+                        // but sometimes they are nested or require specific naming.
+                        // We'll use the values we know are there.
+                        document.getElementById('nama_siswa_hidden').value = item.nama || '';
+                        document.getElementById('kelas_siswa').value = item.kelas || '';
+                    } else {
+                        document.getElementById('nama_siswa_hidden').value = '';
+                        document.getElementById('kelas_siswa').value = '';
+                    }
+                }
+            });
+
+            // Trigger change if there is old value (for validation errors)
+            if (select.getValue()) {
+                // We need to wait a bit for TomSelect to fully initialize
+                setTimeout(function() {
+                    var val = select.getValue();
+                    var item = select.options[val];
+                    if (item) {
+                        document.getElementById('nama_siswa_hidden').value = item.nama || '';
+                        document.getElementById('kelas_siswa').value = item.kelas || '';
+                    }
+                }, 100);
+            }
+        });
+    </script>
 </body>
 </html>
