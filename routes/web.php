@@ -41,11 +41,8 @@ use App\Http\Controllers\Prakerin\MonitoringPembimbingController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\MasterData\TahunPelajaranController;
 use App\Http\Controllers\PengaduanController;
+use App\Http\Controllers\Admin\SuperAdminController;
 
-
-// ==================================
-//     ROUTE PUBLIK UNTUK VERIFIKASI
-// ==================================
 Route::get('/verifikasi/surat/{uuid}', [VerifikasiController::class, 'show'])->name('verifikasi.surat');
 // ==================================
 //     BATAS ROUTE PUBLIK
@@ -253,6 +250,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/monitoring', [MonitoringPembimbingController::class, 'index'])->name('monitoring.index');
         Route::get('/monitoring/{penempatan}', [MonitoringPembimbingController::class, 'show'])->name('monitoring.show');
         Route::patch('/monitoring/jurnal/{jurnal}', [MonitoringPembimbingController::class, 'updateJurnal'])->name('monitoring.updateJurnal');
+    });
+
+    // Grup Route untuk Super Admin
+    Route::middleware(['role:Super Admin'])->prefix('super-admin')->name('super-admin.')->group(function () {
+        Route::get('/settings', [SuperAdminController::class, 'settings'])->name('settings');
+        Route::post('/settings', [SuperAdminController::class, 'updateSettings'])->name('settings.update');
     });
 });
 

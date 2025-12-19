@@ -13,6 +13,10 @@
     <!-- Styles -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
+    @if($appSetting?->favicon)
+        <link rel="icon" type="image/x-icon" href="{{ Storage::url($appSetting->favicon) }}">
+    @endif
+    
     <style>
         :root {
             --telkom-red: #E21F26;
@@ -124,9 +128,18 @@
         <div class="max-w-7xl mx-auto flex items-center justify-between glass py-3 px-6 rounded-2xl">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center overflow-hidden p-1 shadow-lg">
-                    <img src="https://upload.wikimedia.org/wikipedia/id/d/dc/Logo_SMK_Telkom_Malang.png" alt="Logo" class="object-contain w-full h-full">
+                    @if($appSetting?->logo)
+                        <img src="{{ Storage::url($appSetting->logo) }}" alt="Logo" class="object-contain w-full h-full">
+                    @else
+                        <img src="https://upload.wikimedia.org/wikipedia/id/d/dc/Logo_SMK_Telkom_Malang.png" alt="Logo" class="object-contain w-full h-full">
+                    @endif
                 </div>
-                <span class="font-outfit font-bold text-xl tracking-tight hidden sm:block">Kesiswaan <span class="text-[#E21F26]">TS</span></span>
+                <span class="font-outfit font-bold text-xl tracking-tight hidden sm:block">
+                    {{ $appSetting?->school_name ?? 'Kesiswaan' }}
+                    @if(!$appSetting?->school_name)
+                        <span class="text-[#E21F26]">TS</span>
+                    @endif
+                </span>
             </div>
 
             <div class="hidden md:flex items-center gap-8 text-sm font-medium">
@@ -321,10 +334,16 @@
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
             <div class="space-y-2 text-center md:text-left">
                 <div class="flex items-center gap-3 justify-center md:justify-start">
-                    <img src="https://upload.wikimedia.org/wikipedia/id/d/dc/Logo_SMK_Telkom_Malang.png" alt="Logo" class="w-8 h-8 border-r border-slate-700 pr-3">
-                    <span class="font-outfit font-bold text-lg">Kesiswaan SMK Telkom</span>
+                    @if($appSetting?->logo)
+                        <img src="{{ Storage::url($appSetting->logo) }}" alt="Logo" class="w-8 h-8 border-r border-slate-700 pr-3 object-contain">
+                    @else
+                        <img src="https://upload.wikimedia.org/wikipedia/id/d/dc/Logo_SMK_Telkom_Malang.png" alt="Logo" class="w-8 h-8 border-r border-slate-700 pr-3 object-contain">
+                    @endif
+                    <span class="font-outfit font-bold text-lg">
+                        {{ $appSetting?->school_name ?? 'Kesiswaan SMK Telkom' }}
+                    </span>
                 </div>
-                <p class="text-sm text-slate-500">© 2025 SMK Telkom. All rights reserved.</p>
+                <p class="text-sm text-slate-500">© {{ date('Y') }} {{ $appSetting?->school_name ?? 'SMK Telkom' }}. All rights reserved.</p>
             </div>
             
             <div class="flex gap-6 text-sm font-medium text-slate-400">

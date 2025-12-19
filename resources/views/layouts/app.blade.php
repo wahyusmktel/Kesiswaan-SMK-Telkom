@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name', 'Aplikasi Izin') }} — Admin Dashboard</title>
+    <title>{{ $appSetting?->school_name ?? config('app.name', 'Aplikasi Izin') }} — Admin Dashboard</title>
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700&display=swap" rel="stylesheet" />
@@ -30,10 +30,16 @@
 
             <div class="h-20 px-6 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl gradient-red bg-red-500"></div>
+                    <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center p-1 shadow-sm overflow-hidden border border-gray-100">
+                        @if($appSetting?->logo)
+                            <img src="{{ Storage::url($appSetting->logo) }}" alt="Logo" class="object-contain w-full h-full">
+                        @else
+                            <div class="w-full h-full gradient-red rounded-lg"></div>
+                        @endif
+                    </div>
                     <div>
-                        <p class="text-xs text-gray-500 uppercase tracking-wider font-bold">Admin</p>
-                        <h1 class="text-lg font-bold text-gray-800">{{ config('app.name', 'Aplikasi Izin') }}</h1>
+                        <p class="text-[10px] text-red-600 uppercase tracking-widest font-extrabold leading-none mb-1">DASHBOARD</p>
+                        <h1 class="text-sm font-bold text-gray-800 leading-tight truncate max-w-[120px]">{{ $appSetting?->school_name ?? config('app.name', 'Aplikasi Izin') }}</h1>
                     </div>
                 </div>
 
@@ -155,8 +161,8 @@
             <footer class="flex-shrink-0 bg-white border-t border-gray-200">
                 <div class="px-4 sm:px-6 lg:px-8 py-4">
                     <div class="flex flex-col sm:flex-row items-center justify-between text-sm text-gray-500 gap-2">
-                        <p>Aplikasi Izin &copy; {{ date('Y') }}</p>
-                        <p class="opacity-70">Versi 1.0 &bull; UI Modern</p>
+                        <p>{{ $appSetting?->school_name ?? 'Aplikasi Izin' }} &copy; {{ date('Y') }}</p>
+                        <p class="opacity-70">Sistem Informasi Kesiswaan &bull; Versi 1.0</p>
                     </div>
                 </div>
             </footer>

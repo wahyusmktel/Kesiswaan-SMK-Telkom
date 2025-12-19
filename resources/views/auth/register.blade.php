@@ -203,191 +203,225 @@
         <div
             class="w-full lg:w-1/2 flex flex-col justify-center items-center px-6 py-8 sm:px-12 lg:px-16 overflow-y-auto">
             <div class="w-full max-w-md animate-fade-in-up">
-                <!-- Header -->
-                <div class="text-center mb-8">
-                    <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Buat Akun Baru</h2>
-                    <p class="text-gray-600">Isi data berikut untuk mendaftar</p>
-                </div>
-
-                <!-- Register Form -->
-                <form method="POST" action="{{ route('register') }}" class="space-y-5">
-                    @csrf
-
-                    <!-- Name -->
-                    <div class="form-group">
-                        <label for="name" class="input-label">Nama Lengkap</label>
-                        <div class="relative">
-                            <input id="name" type="text" name="name" value="{{ old('name') }}"
-                                class="form-input @error('name') border-red-500 ring-1 ring-red-500 @enderror"
-                                placeholder="Masukkan nama lengkap" required autofocus autocomplete="name" />
-                            <svg class="input-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                <!-- Debug: Registration status: {{ var_export($appSetting?->allow_registration, true) }} -->
+                @if($appSetting && !$appSetting->allow_registration)
+                    <!-- Registration Closed Message -->
+                    <div class="text-center">
+                        <div class="mb-8 inline-flex items-center justify-center w-24 h-24 bg-red-100 rounded-full text-red-600 animate-pulse">
+                            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                             </svg>
                         </div>
-                        @error('name')
-                            <div class="error-message">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd"
-                                        d="M18.101 12.93a1 1 0 00-1.414-1.414L10 14.586l-6.687-6.687a1 1 0 00-1.414 1.414l8 8a1 1 0 001.414 0l8-8z"
-                                        clip-rule="evenodd"></path>
-                                </svg>
-                                {{ $message }}
+                        <h2 class="text-3xl font-extrabold text-gray-900 mb-4">Pendaftaran Ditutup</h2>
+                        <div class="bg-white border-2 border-dashed border-red-200 rounded-2xl p-6 shadow-sm">
+                            <p class="text-gray-600 leading-relaxed mb-6">
+                                Mohon maaf, saat ini pendaftaran akun baru telah ditutup oleh sistem.
+                            </p>
+                            <div class="bg-red-50 rounded-xl p-4 text-left border border-red-100 mb-6">
+                                <p class="text-red-800 text-sm font-semibold flex items-center gap-2 mb-2">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                                    Informasi Lebih Lanjut:
+                                </p>
+                                <p class="text-red-700 text-sm">
+                                    Silahkan hubungi administrator sekolah atau tim kesiswaan untuk mendapatkan akses atau informasi pembukaan pendaftaran kembali.
+                                </p>
                             </div>
-                        @enderror
+                            <a href="{{ route('login') }}" class="btn-primary w-full flex items-center justify-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                                Kembali ke Halaman Login
+                            </a>
+                        </div>
+                        <p class="mt-8 text-gray-400 text-xs">
+                             &copy; {{ date('Y') }} {{ $appSetting?->school_name ?? 'SMK Telkom' }}
+                        </p>
+                    </div>
+                @else
+                    <!-- Header -->
+                    <div class="text-center mb-8">
+                        <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Buat Akun Baru</h2>
+                        <p class="text-gray-600">Isi data berikut untuk mendaftar</p>
                     </div>
 
-                    <!-- Email -->
-                    <div class="form-group">
-                        <label for="email" class="input-label">Email</label>
-                        <div class="relative">
-                            <input id="email" type="email" name="email" value="{{ old('email') }}"
-                                class="form-input @error('email') border-red-500 ring-1 ring-red-500 @enderror"
-                                placeholder="nama@sekolah.id" required autocomplete="email" />
-                            <svg class="input-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
-                                </path>
-                            </svg>
-                        </div>
-                        @error('email')
-                            <div class="error-message">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd"
-                                        d="M18.101 12.93a1 1 0 00-1.414-1.414L10 14.586l-6.687-6.687a1 1 0 00-1.414 1.414l8 8a1 1 0 001.414 0l8-8z"
-                                        clip-rule="evenodd"></path>
+                    <!-- Register Form -->
+                    <form method="POST" action="{{ route('register') }}" class="space-y-5">
+                        @csrf
+
+                        <!-- Name -->
+                        <div class="form-group">
+                            <label for="name" class="input-label">Nama Lengkap</label>
+                            <div class="relative">
+                                <input id="name" type="text" name="name" value="{{ old('name') }}"
+                                    class="form-input @error('name') border-red-500 ring-1 ring-red-500 @enderror"
+                                    placeholder="Masukkan nama lengkap" required autofocus autocomplete="name" />
+                                <svg class="input-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                                 </svg>
-                                {{ $message }}
                             </div>
-                        @enderror
+                            @error('name')
+                                <div class="error-message">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd"
+                                            d="M18.101 12.93a1 1 0 00-1.414-1.414L10 14.586l-6.687-6.687a1 1 0 00-1.414 1.414l8 8a1 1 0 001.414 0l8-8z"
+                                            clip-rule="evenodd"></path>
+                                    </svg>
+                                    {{ $message }}
+                                </div>
+                            @enderror
+                        </div>
+
+                        <!-- Email -->
+                        <div class="form-group">
+                            <label for="email" class="input-label">Email</label>
+                            <div class="relative">
+                                <input id="email" type="email" name="email" value="{{ old('email') }}"
+                                    class="form-input @error('email') border-red-500 ring-1 ring-red-500 @enderror"
+                                    placeholder="nama@sekolah.id" required autocomplete="email" />
+                                <svg class="input-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+                                    </path>
+                                </svg>
+                            </div>
+                            @error('email')
+                                <div class="error-message">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd"
+                                            d="M18.101 12.93a1 1 0 00-1.414-1.414L10 14.586l-6.687-6.687a1 1 0 00-1.414 1.414l8 8a1 1 0 001.414 0l8-8z"
+                                            clip-rule="evenodd"></path>
+                                    </svg>
+                                    {{ $message }}
+                                </div>
+                            @enderror
+                        </div>
+
+                        <!-- Password -->
+                        <div class="form-group">
+                            <label for="password" class="input-label">Password</label>
+                            <div class="relative">
+                                <input id="password" type="password" name="password"
+                                    class="form-input has-eye @error('password') border-red-500 ring-1 ring-red-500 @enderror"
+                                    placeholder="••••••••" required autocomplete="new-password" />
+                                <svg class="input-icon right-10 w-5 h-5" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                                    </path>
+                                </svg>
+                                <button type="button" data-toggle="password" data-target="password"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none">
+                                    <svg class="eye-open w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                    <svg class="eye-closed w-5 h-5 hidden" xmlns="http://www.w3.org/2000/svg"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7a9.96 9.96 0 012.768-4.724m3.546-2.232A9.955 9.955 0 0112 5c4.477 0 8.268 2.943 9.542 7a9.958 9.958 0 01-4.043 5.306M15 12a3 3 0 00-3-3m0 0a2.996 2.996 0 00-2.815 2.01m0 0L3 21m6-9a3 3 0 003 3m0 0a2.996 2.996 0 002.815-2.01m0 0L21 3" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="password-strength strength-medium w-full"></div>
+                            <p class="text-xs text-gray-500 mt-2">Minimal 8 karakter dengan kombinasi huruf, angka, dan
+                                simbol</p>
+                            @error('password')
+                                <div class="error-message">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd"
+                                            d="M18.101 12.93a1 1 0 00-1.414-1.414L10 14.586l-6.687-6.687a1 1 0 00-1.414 1.414l8 8a1 1 0 001.414 0l8-8z"
+                                            clip-rule="evenodd"></path>
+                                    </svg>
+                                    {{ $message }}
+                                </div>
+                            @enderror
+                        </div>
+
+                        <!-- Confirm Password -->
+                        <div class="form-group">
+                            <label for="password_confirmation" class="input-label">Konfirmasi Password</label>
+                            <div class="relative">
+                                <input id="password_confirmation" type="password" name="password_confirmation"
+                                    class="form-input has-eye @error('password_confirmation') border-red-500 ring-1 ring-red-500 @enderror"
+                                    placeholder="••••••••" required autocomplete="new-password" />
+                                <svg class="input-icon right-10 w-5 h-5" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                                    </path>
+                                </svg>
+                                <button type="button" data-toggle="password" data-target="password_confirmation"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none">
+                                    <svg class="eye-open w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                    <svg class="eye-closed w-5 h-5 hidden" xmlns="http://www.w3.org/2000/svg"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7a9.96 9.96 0 012.768-4.724m3.546-2.232A9.955 9.955 0 0112 5c4.477 0 8.268 2.943 9.542 7a9.958 9.958 0 01-4.043 5.306M15 12a3 3 0 00-3-3m0 0a2.996 2.996 0 00-2.815 2.01m0 0L3 21m6-9a3 3 0 003 3m0 0a2.996 2.996 0 002.815-2.01m0 0L21 3" />
+                                    </svg>
+                                </button>
+                            </div>
+                            @error('password_confirmation')
+                                <div class="error-message">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd"
+                                            d="M18.101 12.93a1 1 0 00-1.414-1.414L10 14.586l-6.687-6.687a1 1 0 00-1.414 1.414l8 8a1 1 0 001.414 0l8-8z"
+                                            clip-rule="evenodd"></path>
+                                    </svg>
+                                    {{ $message }}
+                                </div>
+                            @enderror
+                        </div>
+
+                        <!-- Terms Checkbox -->
+                        <label for="terms" class="flex items-start gap-3 cursor-pointer group">
+                            <input id="terms" type="checkbox" name="terms"
+                                class="mt-1 w-4 h-4 text-red-600 border-gray-300 rounded cursor-pointer focus:ring-red-500"
+                                required />
+                            <span class="text-sm text-gray-600 group-hover:text-red-600 transition-colors">
+                                Saya setuju dengan <a href="#"
+                                    class="text-red-600 hover:text-red-700 font-medium">Syarat dan Ketentuan</a> dan <a
+                                    href="#" class="text-red-600 hover:text-red-700 font-medium">Kebijakan
+                                    Privasi</a>
+                            </span>
+                        </label>
+
+                        <!-- Submit Button -->
+                        <button type="submit" class="btn-primary w-full shadow-lg" data-submit-button>
+                            <div class="flex items-center justify-center gap-2">
+                                <span class="btn-text">Daftar Sekarang</span>
+                                <span class="spinner" aria-hidden="true"></span>
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                                </svg>
+                            </div>
+                        </button>
+                    </form>
+
+                    <!-- Divider -->
+                    <div class="flex items-center gap-4 my-6">
+                        <div class="flex-1 h-px bg-gray-300"></div>
+                        <span class="text-sm text-gray-500">atau</span>
+                        <div class="flex-1 h-px bg-gray-300"></div>
                     </div>
 
-                    <!-- Password -->
-                    <div class="form-group">
-                        <label for="password" class="input-label">Password</label>
-                        <div class="relative">
-                            <input id="password" type="password" name="password"
-                                class="form-input has-eye @error('password') border-red-500 ring-1 ring-red-500 @enderror"
-                                placeholder="••••••••" required autocomplete="new-password" />
-                            <svg class="input-icon right-10 w-5 h-5" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
-                                </path>
-                            </svg>
-                            <button type="button" data-toggle="password" data-target="password"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none">
-                                <svg class="eye-open w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                                <svg class="eye-closed w-5 h-5 hidden" xmlns="http://www.w3.org/2000/svg"
-                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7a9.96 9.96 0 012.768-4.724m3.546-2.232A9.955 9.955 0 0112 5c4.477 0 8.268 2.943 9.542 7a9.958 9.958 0 01-4.043 5.306M15 12a3 3 0 00-3-3m0 0a2.996 2.996 0 00-2.815 2.01m0 0L3 21m6-9a3 3 0 003 3m0 0a2.996 2.996 0 002.815-2.01m0 0L21 3" />
-                                </svg>
-                            </button>
-                        </div>
-                        <div class="password-strength strength-medium w-full"></div>
-                        <p class="text-xs text-gray-500 mt-2">Minimal 8 karakter dengan kombinasi huruf, angka, dan
-                            simbol</p>
-                        @error('password')
-                            <div class="error-message">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd"
-                                        d="M18.101 12.93a1 1 0 00-1.414-1.414L10 14.586l-6.687-6.687a1 1 0 00-1.414 1.414l8 8a1 1 0 001.414 0l8-8z"
-                                        clip-rule="evenodd"></path>
-                                </svg>
-                                {{ $message }}
-                            </div>
-                        @enderror
-                    </div>
-
-                    <!-- Confirm Password -->
-                    <div class="form-group">
-                        <label for="password_confirmation" class="input-label">Konfirmasi Password</label>
-                        <div class="relative">
-                            <input id="password_confirmation" type="password" name="password_confirmation"
-                                class="form-input has-eye @error('password_confirmation') border-red-500 ring-1 ring-red-500 @enderror"
-                                placeholder="••••••••" required autocomplete="new-password" />
-                            <svg class="input-icon right-10 w-5 h-5" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
-                                </path>
-                            </svg>
-                            <button type="button" data-toggle="password" data-target="password_confirmation"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none">
-                                <svg class="eye-open w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                                <svg class="eye-closed w-5 h-5 hidden" xmlns="http://www.w3.org/2000/svg"
-                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7a9.96 9.96 0 012.768-4.724m3.546-2.232A9.955 9.955 0 0112 5c4.477 0 8.268 2.943 9.542 7a9.958 9.958 0 01-4.043 5.306M15 12a3 3 0 00-3-3m0 0a2.996 2.996 0 00-2.815 2.01m0 0L3 21m6-9a3 3 0 003 3m0 0a2.996 2.996 0 002.815-2.01m0 0L21 3" />
-                                </svg>
-                            </button>
-                        </div>
-                        @error('password_confirmation')
-                            <div class="error-message">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd"
-                                        d="M18.101 12.93a1 1 0 00-1.414-1.414L10 14.586l-6.687-6.687a1 1 0 00-1.414 1.414l8 8a1 1 0 001.414 0l8-8z"
-                                        clip-rule="evenodd"></path>
-                                </svg>
-                                {{ $message }}
-                            </div>
-                        @enderror
-                    </div>
-
-                    <!-- Terms Checkbox -->
-                    <label for="terms" class="flex items-start gap-3 cursor-pointer group">
-                        <input id="terms" type="checkbox" name="terms"
-                            class="mt-1 w-4 h-4 text-red-600 border-gray-300 rounded cursor-pointer focus:ring-red-500"
-                            required />
-                        <span class="text-sm text-gray-600 group-hover:text-red-600 transition-colors">
-                            Saya setuju dengan <a href="#"
-                                class="text-red-600 hover:text-red-700 font-medium">Syarat dan Ketentuan</a> dan <a
-                                href="#" class="text-red-600 hover:text-red-700 font-medium">Kebijakan
-                                Privasi</a>
-                        </span>
-                    </label>
-
-                    <!-- Submit Button -->
-                    <button type="submit" class="btn-primary w-full shadow-lg" data-submit-button>
-                        <div class="flex items-center justify-center gap-2">
-                            <span class="btn-text">Daftar Sekarang</span>
-                            <span class="spinner" aria-hidden="true"></span>
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                            </svg>
-                        </div>
-                    </button>
-                </form>
-
-                <!-- Divider -->
-                <div class="flex items-center gap-4 my-6">
-                    <div class="flex-1 h-px bg-gray-300"></div>
-                    <span class="text-sm text-gray-500">atau</span>
-                    <div class="flex-1 h-px bg-gray-300"></div>
-                </div>
-
-                <!-- Login Link -->
-                <p class="text-center text-gray-600">
-                    Sudah punya akun?
-                    <a href="{{ route('login') }}"
-                        class="font-semibold text-red-600 hover:text-red-700 transition-colors">
-                        Masuk di sini
-                    </a>
-                </p>
+                    <!-- Login Link -->
+                    <p class="text-center text-gray-600">
+                        Sudah punya akun?
+                        <a href="{{ route('login') }}"
+                            class="font-semibold text-red-600 hover:text-red-700 transition-colors">
+                            Masuk di sini
+                        </a>
+                    </p>
+                @endif
             </div>
 
             <!-- Mobile Logo -->
