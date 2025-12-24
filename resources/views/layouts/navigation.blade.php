@@ -422,6 +422,27 @@
                         Pelajaran</a></li>
             </ul>
         </li>
+        <li x-data="{ expanded: {{ request()->routeIs('kurikulum.monitoring-absensi-guru.*') || request()->routeIs('kurikulum.monitoring-absensi-per-kelas.*') ? 'true' : 'false' }} }">
+            <button @click="expanded = !expanded"
+                class="flex items-center justify-between w-full px-3 py-2 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors">
+                <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                    </svg>
+                    <span class="text-sm font-medium">Absensi Guru</span>
+                </div>
+                <svg :class="expanded ? 'rotate-180' : ''" class="w-4 h-4 transition-transform transform" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
+            <ul x-show="expanded" x-collapse class="pl-10 mt-1 space-y-1">
+                <li><a href="{{ route('kurikulum.monitoring-absensi-guru.index') }}"
+                        class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kurikulum.monitoring-absensi-guru.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Monitoring Harian</a></li>
+                <li><a href="{{ route('kurikulum.monitoring-absensi-per-kelas.index') }}"
+                        class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kurikulum.monitoring-absensi-per-kelas.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Monitoring Per Kelas</a></li>
+            </ul>
+        </li>
     @endrole
 
     {{-- ============================================================ --}}
@@ -551,6 +572,16 @@
                         d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
                 <span class="text-sm">Verifikasi Terlambat</span>
+            </a>
+        </li>
+        <li>
+            <a href="{{ route('piket.absensi-guru.index') }}"
+                class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('piket.absensi-guru.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+                <span class="text-sm">Absensi Guru</span>
             </a>
         </li>
     @endrole

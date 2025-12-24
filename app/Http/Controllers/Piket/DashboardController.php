@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\IzinMeninggalkanKelas;
 use App\Models\Perizinan;
 use App\Models\Rombel;
+use App\Models\TahunPelajaran;
 use App\Models\User; // <-- Pastikan User model di-import
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -47,13 +48,18 @@ class DashboardController extends Controller
         }
 
         // Data untuk Bar Chart Izin per Rombel
-        $tahunAjaranAktif = '2024/2025';
-        $rombelData = Rombel::where('tahun_ajaran', $tahunAjaranAktif)
-            ->with('kelas')
-            ->join('kelas', 'rombels.kelas_id', '=', 'kelas.id')
-            ->select('rombels.id', 'kelas.nama_kelas', DB::raw('(SELECT COUNT(*) FROM perizinan JOIN users ON perizinan.user_id = users.id JOIN master_siswa ON users.id = master_siswa.user_id JOIN rombel_siswa ON master_siswa.id = rombel_siswa.master_siswa_id WHERE rombel_siswa.rombel_id = rombels.id) as total_izin'))
-            ->orderBy('total_izin', 'desc')
-            ->get();
+        $tahunAktif = TahunPelajaran::where('is_active', true)->first();
+        
+        if ($tahunAktif) {
+            $rombelData = Rombel::where('tahun_pelajaran_id', $tahunAktif->id)
+                ->with('kelas')
+                ->join('kelas', 'rombels.kelas_id', '=', 'kelas.id')
+                ->select('rombels.id', 'kelas.nama_kelas', DB::raw('(SELECT COUNT(*) FROM perizinan JOIN users ON perizinan.user_id = users.id JOIN master_siswa ON users.id = master_siswa.user_id JOIN rombel_siswa ON master_siswa.id = rombel_siswa.master_siswa_id WHERE rombel_siswa.rombel_id = rombels.id) as total_izin'))
+                ->orderBy('total_izin', 'desc')
+                ->get();
+        } else {
+            $rombelData = collect();
+        }
 
 
         // ==================================================

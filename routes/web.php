@@ -231,6 +231,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/verifikasi-terlambat', [VerifikasiTerlambatController::class, 'index'])->name('verifikasi-terlambat.index');
         Route::get('/verifikasi-terlambat/{keterlambatan}', [VerifikasiTerlambatController::class, 'show'])->name('verifikasi-terlambat.show');
         Route::put('/verifikasi-terlambat/{keterlambatan}', [VerifikasiTerlambatController::class, 'update'])->name('verifikasi-terlambat.update');
+
+        // Route untuk Absensi Guru
+        Route::get('/absensi-guru', [\App\Http\Controllers\Piket\AbsensiGuruController::class, 'index'])->name('absensi-guru.index');
+        Route::post('/absensi-guru', [\App\Http\Controllers\Piket\AbsensiGuruController::class, 'store'])->name('absensi-guru.store');
+        Route::patch('/absensi-guru/{id}', [\App\Http\Controllers\Piket\AbsensiGuruController::class, 'update'])->name('absensi-guru.update');
     });
 
     // Route ini kita namakan 'api.siswa.search' sesuai panggilan di JavaScript
@@ -244,6 +249,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('mata-pelajaran', MataPelajaranController::class);
         Route::post('master-guru/{master_guru}/generate-akun', [MasterGuruController::class, 'generateAkun'])->name('master-guru.generate-akun');
         Route::resource('master-guru', MasterGuruController::class);
+
+        // Monitoring Absensi Guru
+        Route::get('/monitoring-absensi-guru', [\App\Http\Controllers\Kurikulum\MonitoringAbsensiGuruController::class, 'index'])->name('monitoring-absensi-guru.index');
+        Route::get('/monitoring-absensi-guru/export', [\App\Http\Controllers\Kurikulum\MonitoringAbsensiGuruController::class, 'export'])->name('monitoring-absensi-guru.export');
+
+        // Monitoring Absensi Per Kelas
+        Route::get('/monitoring-absensi-per-kelas', [\App\Http\Controllers\Kurikulum\MonitoringAbsensiPerKelasController::class, 'index'])->name('monitoring-absensi-per-kelas.index');
+        Route::get('/monitoring-absensi-per-kelas/export', [\App\Http\Controllers\Kurikulum\MonitoringAbsensiPerKelasController::class, 'export'])->name('monitoring-absensi-per-kelas.export');
         Route::get('jadwal-pelajaran', [JadwalPelajaranController::class, 'index'])->name('jadwal-pelajaran.index');
         Route::get('jadwal-pelajaran/{rombel}', [JadwalPelajaranController::class, 'show'])->name('jadwal-pelajaran.show');
         Route::post('jadwal-pelajaran/{rombel}', [JadwalPelajaranController::class, 'store'])->name('jadwal-pelajaran.store');
