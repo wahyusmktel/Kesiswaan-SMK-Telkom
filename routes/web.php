@@ -132,10 +132,32 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Route Pengaduan untuk Admin Kesiswaan
         Route::get('/pengaduan', [PengaduanController::class, 'index'])->name('pengaduan.index');
         Route::patch('/pengaduan/{pengaduan}/status', [PengaduanController::class, 'updateStatus'])->name('pengaduan.update-status');
+
+        // Route untuk Poin & Pelanggaran
+        Route::post('poin-peraturan/category', [\App\Http\Controllers\Kesiswaan\PoinPeraturanController::class, 'storeCategory'])->name('poin-peraturan.storeCategory');
+        Route::resource('poin-peraturan', \App\Http\Controllers\Kesiswaan\PoinPeraturanController::class);
+        Route::resource('input-pelanggaran', \App\Http\Controllers\Kesiswaan\PelanggaranSiswaController::class);
+        Route::resource('input-prestasi', \App\Http\Controllers\Kesiswaan\PrestasiSiswaController::class);
+        Route::resource('input-pemutihan', \App\Http\Controllers\Kesiswaan\PemutihanPoinController::class);
+
+        // Route Panggilan Orang Tua
+        Route::get('panggilan-ortu', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'index'])->name('panggilan-ortu.index');
+        Route::post('panggilan-ortu', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'store'])->name('panggilan-ortu.store');
+        Route::patch('panggilan-ortu/{panggilan}/status', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'updateStatus'])->name('panggilan-ortu.update-status');
+        Route::delete('panggilan-ortu/{panggilan}', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'destroy'])->name('panggilan-ortu.destroy');
+
+        // Monitoring BK untuk Waka Kesiswaan
+        Route::get('monitoring-bk/pembinaan', [\App\Http\Controllers\BK\PembinaanRutinController::class, 'index'])->name('monitoring-bk.pembinaan');
+        Route::get('monitoring-bk/konsultasi', [\App\Http\Controllers\BK\KonsultasiJadwalController::class, 'index'])->name('monitoring-bk.konsultasi');
     });
 
+    // Route Panggilan yang bisa diakses Siswa (Hanya Cetak)
+    Route::get('kesiswaan/panggilan-ortu/{panggilan}/print', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'printPdf'])
+        ->middleware(['auth'])
+        ->name('kesiswaan.panggilan-ortu.print');
+
     // Grup Route untuk Siswa
-    Route::middleware(['role:Siswa'])->prefix('siswa')->name('siswa.')->group(function () {
+    Route::middleware(['role:Siswa|siswa'])->prefix('siswa')->name('siswa.')->group(function () {
         Route::get('/dashboard', [SiswaDashboardController::class, 'index'])->name('dashboard.index');
 
         // Route untuk Izin Meninggalkan Kelas
@@ -145,12 +167,47 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Route untuk Jurnal Prakerin
         Route::get('/jurnal-prakerin', [JurnalSiswaController::class, 'index'])->name('jurnal-prakerin.index');
         Route::post('/jurnal-prakerin', [JurnalSiswaController::class, 'store'])->name('jurnal-prakerin.store');
+
+        // Route BK Siswa
+        Route::get('/bk', [\App\Http\Controllers\Siswa\BKController::class, 'index'])->name('bk.index');
+        Route::post('/bk/jadwal', [\App\Http\Controllers\Siswa\BKController::class, 'storeJadwal'])->name('bk.jadwal.store');
+        
+        // Chat
+        Route::get('/chat', [\App\Http\Controllers\BK\ChatController::class, 'index'])->name('chat.index');
+        Route::get('/chat/start/{guru}', [\App\Http\Controllers\BK\ChatController::class, 'startChat'])->name('chat.start');
+
+        // ISO Docs
+        Route::get('/bk/konsultasi/{jadwal}/print-jadwal', [\App\Http\Controllers\BK\ConsultationDocController::class, 'printSchedule'])->name('bk.konsultasi.print-jadwal');
+        Route::get('/bk/konsultasi/{jadwal}/print-report', [\App\Http\Controllers\BK\ConsultationDocController::class, 'printReport'])->name('bk.konsultasi.print-report');
     });
 
     // Grup Route untuk Guru BK
     Route::middleware(['role:Guru BK'])->prefix('bk')->name('bk.')->group(function () {
         Route::get('/dashboard', [BKDashboardController::class, 'index'])->name('dashboard.index');
         Route::get('/monitoring-izin', [BKMonitoringController::class, 'index'])->name('monitoring.index');
+
+        // Pembinaan Rutin
+        Route::get('/pembinaan', [\App\Http\Controllers\BK\PembinaanRutinController::class, 'index'])->name('pembinaan.index');
+        Route::post('/pembinaan', [\App\Http\Controllers\BK\PembinaanRutinController::class, 'store'])->name('pembinaan.store');
+        Route::delete('/pembinaan/{pembinaan}', [\App\Http\Controllers\BK\PembinaanRutinController::class, 'destroy'])->name('pembinaan.destroy');
+
+        // Jadwal Konsultasi
+        Route::get('/konsultasi', [\App\Http\Controllers\BK\KonsultasiJadwalController::class, 'index'])->name('konsultasi.index');
+        Route::patch('/konsultasi/{jadwal}/status', [\App\Http\Controllers\BK\KonsultasiJadwalController::class, 'updateStatus'])->name('konsultasi.update-status');
+
+        // Chat
+        Route::get('/chat', [\App\Http\Controllers\BK\ChatController::class, 'index'])->name('chat.index');
+
+        // ISO Docs
+        Route::get('/konsultasi/{jadwal}/print-jadwal', [\App\Http\Controllers\BK\ConsultationDocController::class, 'printSchedule'])->name('konsultasi.print-jadwal');
+        Route::get('/konsultasi/{jadwal}/print-report', [\App\Http\Controllers\BK\ConsultationDocController::class, 'printReport'])->name('konsultasi.print-report');
+    });
+
+    // API Chat (Shared)
+    Route::middleware(['auth'])->prefix('api/chat')->name('api.chat.')->group(function() {
+        Route::get('/unread-count', [\App\Http\Controllers\BK\ChatController::class, 'getUnreadCount'])->name('unread-count');
+        Route::get('/rooms/{room}', [\App\Http\Controllers\BK\ChatController::class, 'show'])->name('show');
+        Route::post('/rooms/{room}/send', [\App\Http\Controllers\BK\ChatController::class, 'sendMessage'])->name('send');
     });
 
     // Grup Route untuk Guru Piket

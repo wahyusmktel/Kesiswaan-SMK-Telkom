@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class MasterSiswa extends Model
 {
@@ -46,5 +47,80 @@ class MasterSiswa extends Model
     public function penempatan()
     {
         return $this->hasOne(PrakerinPenempatan::class, 'master_siswa_id');
+    }
+
+    // Relationships for Poin System
+    public function pelanggarans()
+    {
+        return $this->hasMany(SiswaPelanggaran::class, 'master_siswa_id');
+    }
+
+    public function prestasis()
+    {
+        return $this->hasMany(SiswaPrestasi::class, 'master_siswa_id');
+    }
+
+    public function pemutihans()
+    {
+        return $this->hasMany(SiswaPemutihan::class, 'master_siswa_id');
+    }
+
+    public function panggilans()
+    {
+        return $this->hasMany(SiswaPanggilan::class, 'master_siswa_id');
+    }
+
+    public function pembinaanRutins()
+    {
+        return $this->hasMany(BKPembinaanRutin::class, 'master_siswa_id');
+    }
+
+    public function konsultasiJadwals()
+    {
+        return $this->hasMany(BKKonsultasiJadwal::class, 'master_siswa_id');
+    }
+
+    // Point Calculation Methods
+    public function getTotalViolationPoints()
+    {
+        return $this->pelanggarans()
+            ->join('poin_peraturans', 'siswa_pelanggarans.poin_peraturan_id', '=', 'poin_peraturans.id')
+            ->sum('poin_peraturans.bobot_poin');
+    }
+
+    public function getTotalAchievementPoints()
+    {
+        return $this->prestasis()->sum('poin_bonus');
+    }
+
+    public function getTotalExpungementPoints()
+    {
+        return $this->pemutihans()->sum('poin_dikurangi');
+    }
+
+    public function getCurrentPoints()
+    {
+        $violations = $this->getTotalViolationPoints();
+        $achievements = $this->getTotalAchievementPoints();
+        $expungements = $this->getTotalExpungementPoints();
+
+        // Current Points = Violations - Achievements - Expungements
+        // Point cannot be negative (or can it? Usually 0 is the floor for bad points)
+        $total = $violations - $achievements - $expungements;
+        
+        return max(0, $total);
+    }
+
+    public function getPointStatus()
+    {
+        $points = $this->getCurrentPoints();
+        
+        if ($points >= 150) return ['label' => 'Sangat Kritis', 'color' => 'red', 'class' => 'bg-red-600'];
+        if ($points >= 100) return ['label' => 'Kritis', 'color' => 'orange', 'class' => 'bg-orange-600'];
+        if ($points >= 75) return ['label' => 'Peringatan Keras', 'color' => 'yellow', 'class' => 'bg-yellow-600'];
+        if ($points >= 50) return ['label' => 'Peringatan', 'color' => 'yellow', 'class' => 'bg-yellow-500'];
+        if ($points >= 25) return ['label' => 'Waspada', 'color' => 'blue', 'class' => 'bg-blue-500'];
+        
+        return ['label' => 'Aman', 'color' => 'green', 'class' => 'bg-green-500'];
     }
 }

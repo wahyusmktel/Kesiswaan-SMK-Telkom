@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Perizinan;
+use App\Models\TahunPelajaran;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -67,10 +68,17 @@ class IzinController extends Controller
             ]);
 
             $masterSiswa = Auth::user()->masterSiswa;
-            $rombelAktif = $masterSiswa->rombels()->where('tahun_ajaran', '2024/2025')->first();
-            if ($rombelAktif && $rombelAktif->waliKelas) {
-                $waliKelas = $rombelAktif->waliKelas;
-                $waliKelas->notify(new PengajuanIzinMasuk($perizinan));
+            $tahunAktif = TahunPelajaran::where('is_active', true)->first();
+            
+            if ($tahunAktif) {
+                $rombelAktif = $masterSiswa->rombels()
+                    ->where('tahun_pelajaran_id', $tahunAktif->id)
+                    ->first();
+                    
+                if ($rombelAktif && $rombelAktif->waliKelas) {
+                    $waliKelas = $rombelAktif->waliKelas;
+                    $waliKelas->notify(new PengajuanIzinMasuk($perizinan));
+                }
             }
 
             toast('Pengajuan izin berhasil dikirim!', 'success');

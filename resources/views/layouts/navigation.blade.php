@@ -1,3 +1,4 @@
+<div x-data="globalNotificationSystem()" x-init="init()">
 <ul class="space-y-1 font-medium">
 
     {{-- ============================================================ --}}
@@ -86,6 +87,31 @@
                 </a>
             </li>
         @endif
+
+        <div class="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider mt-4">Layanan BK</div>
+        <li>
+            <a href="{{ route('siswa.bk.index') }}"
+                class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('siswa.bk.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                <span class="text-sm">Konsultasi BK</span>
+            </a>
+        </li>
+        <li>
+            <a href="{{ route('siswa.chat.index') }}"
+                class="flex items-center justify-between px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('siswa.chat.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
+                <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                    <span class="text-sm">Chat BK</span>
+                </div>
+                <template x-if="unreadChatCount > 0">
+                    <span class="bg-red-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full" x-text="unreadChatCount"></span>
+                </template>
+            </a>
+        </li>
     @endrole
 
     {{-- ============================================================ --}}
@@ -291,6 +317,64 @@
                 <span class="text-sm">Pengaduan Orang Tua</span>
             </a>
         </li>
+
+        {{-- Dropdown Poin & Tata Tertib --}}
+        <li x-data="{ expanded: {{ request()->routeIs('kesiswaan.poin-peraturan.*') || request()->routeIs('kesiswaan.input-*') ? 'true' : 'false' }} }">
+            <button @click="expanded = !expanded"
+                class="flex items-center justify-between w-full px-3 py-2 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors">
+                <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span class="text-sm font-medium">Poin & Tata Tertib</span>
+                </div>
+                <svg :class="expanded ? 'rotate-180' : ''" class="w-4 h-4 transition-transform transform" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
+            <ul x-show="expanded" x-collapse class="pl-10 mt-1 space-y-1">
+                <li><a href="{{ route('kesiswaan.poin-peraturan.index') }}"
+                        class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kesiswaan.poin-peraturan.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Manajemen
+                        Aturan</a></li>
+                <li><a href="{{ route('kesiswaan.input-pelanggaran.index') }}"
+                        class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kesiswaan.input-pelanggaran.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Input
+                        Pelanggaran</a></li>
+                <li><a href="{{ route('kesiswaan.input-prestasi.index') }}"
+                        class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kesiswaan.input-prestasi.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Input
+                        Prestasi</a></li>
+                <li><a href="{{ route('kesiswaan.input-pemutihan.index') }}"
+                        class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kesiswaan.input-pemutihan.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Pemutihan
+                        Poin</a></li>
+            </ul>
+        </li>
+
+        {{-- Dropdown Monitoring BK --}}
+        <li x-data="{ expanded: {{ request()->routeIs('kesiswaan.monitoring-bk.*') || request()->routeIs('kesiswaan.panggilan-ortu.*') ? 'true' : 'false' }} }">
+            <button @click="expanded = !expanded"
+                class="flex items-center justify-between w-full px-3 py-2 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors">
+                <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                    </svg>
+                    <span class="text-sm font-medium">Monitoring BK</span>
+                </div>
+                <svg :class="expanded ? 'rotate-180' : ''" class="w-4 h-4 transition-transform transform" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
+            <ul x-show="expanded" x-collapse class="pl-10 mt-1 space-y-1">
+                <li><a href="{{ route('kesiswaan.monitoring-bk.pembinaan') }}"
+                        class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kesiswaan.monitoring-bk.pembinaan') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Pembinaan Rutin</a></li>
+                <li><a href="{{ route('kesiswaan.monitoring-bk.konsultasi') }}"
+                        class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kesiswaan.monitoring-bk.konsultasi') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Konsultasi Siswa</a></li>
+                <li><a href="{{ route('kesiswaan.panggilan-ortu.index') }}"
+                        class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kesiswaan.panggilan-ortu.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Panggilan Orang Tua</a></li>
+            </ul>
+        </li>
     @endrole
 
     {{-- ============================================================ --}}
@@ -374,6 +458,31 @@
                         d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                 </svg>
                 <span class="text-sm">Pengaduan Orang Tua</span>
+            </a>
+        </li>
+
+        <div class="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider mt-4">Layanan BK</div>
+        <li>
+            <a href="{{ route('bk.konsultasi.index') }}"
+                class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('bk.konsultasi.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span class="text-sm">Konsultasi Siswa</span>
+            </a>
+        </li>
+        <li>
+            <a href="{{ route('bk.chat.index') }}"
+                class="flex items-center justify-between px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('bk.chat.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
+                <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                    <span class="text-sm">Chat Konsultasi</span>
+                </div>
+                <template x-if="unreadChatCount > 0">
+                    <span class="bg-red-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full" x-text="unreadChatCount"></span>
+                </template>
             </a>
         </li>
     @endrole
@@ -550,3 +659,79 @@
         </form>
     </li>
 </ul>
+
+<!-- Global Chat Notification Toast -->
+<div class="fixed bottom-6 right-6 z-[200]">
+    <template x-if="showToast">
+        <div x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="translate-y-10 opacity-0"
+             x-transition:enter-end="translate-y-0 opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="bg-white border border-gray-100 shadow-2xl rounded-2xl p-4 flex items-center gap-4 max-w-sm animate-bounce-subtle">
+            <div class="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-red-100">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+            </div>
+            <div class="flex-1">
+                <p class="text-xs font-black text-gray-900 uppercase tracking-widest">Pesan Baru</p>
+                <p class="text-sm text-gray-500 font-medium">Ada pesan konsultasi baru masuk.</p>
+            </div>
+            <button @click="showToast = false" class="text-gray-300 hover:text-gray-500">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+    </template>
+</div>
+
+<script>
+    function globalNotificationSystem() {
+        return {
+            unreadChatCount: 0,
+            showToast: false,
+            polling: null,
+
+            init() {
+                this.checkUnread();
+                this.polling = setInterval(() => this.checkUnread(), 5000); // Poll every 5 seconds
+                
+                // Allow menu badges to listen to this data
+                window.addEventListener('update-unread-chat', (e) => {
+                    this.unreadChatCount = e.detail.count;
+                });
+            },
+
+            async checkUnread() {
+                try {
+                    const response = await fetch('{{ route('api.chat.unread-count') }}');
+                    const data = await response.json();
+                    
+                    if (data.unread_count > this.unreadChatCount) {
+                        // Only show toast if count increased AND we are not on chat page
+                        if (!window.location.pathname.includes('/chat')) {
+                            this.showToast = true;
+                            setTimeout(() => { this.showToast = false; }, 5000);
+                        }
+                    }
+                    
+                    this.unreadChatCount = data.unread_count;
+                    // Provide the data globally by attaching to window or using a shared state
+                    window.unreadChatCount = this.unreadChatCount;
+                } catch (error) {
+                    console.warn('Notification poll failed');
+                }
+            }
+        }
+    }
+</script>
+
+<style>
+    @keyframes bounce-subtle {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+    }
+    .animate-bounce-subtle {
+        animation: bounce-subtle 2s infinite ease-in-out;
+    }
+</style>
+</div>

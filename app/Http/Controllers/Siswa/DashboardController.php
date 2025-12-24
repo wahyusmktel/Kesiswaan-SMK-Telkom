@@ -30,11 +30,70 @@ class DashboardController extends Controller
             'data' => $statusData->values(),
         ];
 
+        // 3. Data Poin Pelanggaran
+        $siswa = Auth::user()->masterSiswa;
+        $poinData = [
+            'current_points' => $siswa ? $siswa->getCurrentPoints() : 0,
+            'status' => $siswa ? $siswa->getPointStatus() : ['label' => 'Aman', 'class' => 'bg-green-500'],
+            'total_pelanggaran' => $siswa ? $siswa->getTotalViolationPoints() : 0,
+            'total_prestasi' => $siswa ? $siswa->getTotalAchievementPoints() : 0,
+            'total_pemutihan' => $siswa ? $siswa->getTotalExpungementPoints() : 0,
+            'recent_activities' => $siswa ? collect([
+                ...$siswa->pelanggarans()->with('peraturan')->latest()->take(3)->get()->map(fn($p) => [
+                    'type' => 'Pelanggaran',
+                    'title' => $p->peraturan->deskripsi,
+                    'points' => -$p->peraturan->bobot_poin,
+                    'date' => $p->tanggal,
+                    'color' => 'text-red-600',
+                    'bg' => 'bg-red-50'
+                ]),
+                ...$siswa->prestasis()->latest()->take(3)->get()->map(fn($p) => [
+                    'type' => 'Prestasi',
+                    'title' => $p->nama_prestasi,
+                    'points' => $p->poin_bonus,
+                    'date' => $p->tanggal,
+                    'color' => 'text-green-600',
+                    'bg' => 'bg-green-50'
+                ]),
+                ...$siswa->pemutihans()->latest()->take(3)->get()->map(fn($p) => [
+                    'type' => 'Pemutihan',
+                    'title' => $p->keterangan ?? 'Pemutihan Poin',
+                    'points' => $p->poin_dikurangi,
+                    'date' => $p->tanggal,
+                    'color' => 'text-blue-600',
+                    'bg' => 'bg-blue-50'
+                ]),
+            ])->sortByDesc('date')->take(5) : collect([]),
+        ];
+
+        $panggilanAktif = $siswa ? $siswa->panggilans()
+            ->where('status', 'terkirim')
+            ->latest()
+            ->first() : null;
+
+        $konsultasiHariIni = $siswa ? $siswa->konsultasiJadwals()
+            ->whereDate('tanggal_rencana', today())
+            ->where('status', 'approved')
+            ->first() : null;
+
+        $chat_rooms = \App\Models\BKChatRoom::with(['guruBK', 'messages' => fn($q) => $q->latest()->limit(1)])
+            ->withCount(['messages as unread_count' => function($q) use ($userId) {
+                $q->where('sender_id', '!=', $userId)->where('is_read', false);
+            }])
+            ->where('siswa_user_id', $userId)
+            ->orderBy('last_message_at', 'desc')
+            ->limit(5)
+            ->get();
+
         return view('pages.siswa.dashboard.index', compact(
             'totalDiajukan',
             'totalDisetujui',
             'totalDitolak',
-            'statusChartData'
+            'statusChartData',
+            'poinData',
+            'panggilanAktif',
+            'konsultasiHariIni',
+            'chat_rooms'
         ));
     }
 }

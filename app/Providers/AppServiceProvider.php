@@ -19,6 +19,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        \Illuminate\Support\Facades\View::share('appSetting', \App\Models\AppSetting::first());
+        try {
+            // Cek apakah tabel app_settings sudah ada
+            if (\Illuminate\Support\Facades\Schema::hasTable('app_settings')) {
+                \Illuminate\Support\Facades\View::share('appSetting', \App\Models\AppSetting::first());
+            } else {
+                // Jika tabel belum ada, share null atau object kosong
+                \Illuminate\Support\Facades\View::share('appSetting', null);
+            }
+        } catch (\Exception $e) {
+            // Jika terjadi error, share null
+            \Illuminate\Support\Facades\View::share('appSetting', null);
+        }
     }
 }

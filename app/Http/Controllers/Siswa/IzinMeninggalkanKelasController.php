@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Siswa;
 use App\Http\Controllers\Controller;
 use App\Models\IzinMeninggalkanKelas;
 use App\Models\JadwalPelajaran;
+use App\Models\TahunPelajaran;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -20,7 +21,15 @@ class IzinMeninggalkanKelasController extends Controller
 
         // Cari jadwal yang sedang berlangsung untuk ditampilkan di form
         $jadwalSaatIni = null;
-        $rombelAktif = $user->masterSiswa?->rombels()->where('tahun_ajaran', '2024/2025')->first();
+        $tahunAktif = TahunPelajaran::where('is_active', true)->first();
+        
+        if ($tahunAktif) {
+            $rombelAktif = $user->masterSiswa?->rombels()
+                ->where('tahun_pelajaran_id', $tahunAktif->id)
+                ->first();
+        } else {
+            $rombelAktif = null;
+        }
 
         if ($rombelAktif) {
             $namaHariIni = $this->getNamaHari(now()->dayOfWeek);
@@ -47,7 +56,16 @@ class IzinMeninggalkanKelasController extends Controller
 
         try {
             $user = Auth::user();
-            $rombelAktif = $user->masterSiswa->rombels()->where('tahun_ajaran', '2024/2025')->first();
+            $tahunAktif = TahunPelajaran::where('is_active', true)->first();
+            
+            if (!$tahunAktif) {
+                toast('Tahun ajaran aktif belum diatur.', 'error');
+                return back();
+            }
+            
+            $rombelAktif = $user->masterSiswa->rombels()
+                ->where('tahun_pelajaran_id', $tahunAktif->id)
+                ->first();
 
             if (!$rombelAktif) {
                 toast('Anda tidak terdaftar di rombel manapun pada tahun ajaran ini.', 'error');

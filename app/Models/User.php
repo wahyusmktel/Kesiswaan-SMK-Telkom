@@ -80,6 +80,25 @@ class User extends Authenticatable
     }
 
     /**
+     * Mendefinisikan relasi dari User ke Perizinan.
+     * Satu user (siswa) bisa memiliki banyak perizinan.
+     */
+    public function perizinanPiket()
+    {
+        return $this->hasMany(Perizinan::class, 'piket_id');
+    }
+
+    public function chatRoomsSiswa()
+    {
+        return $this->hasMany(BKChatRoom::class, 'siswa_user_id');
+    }
+
+    public function chatRoomsBK()
+    {
+        return $this->hasMany(BKChatRoom::class, 'guru_bk_user_id');
+    }
+
+    /**
      * Mendefinisikan relasi dari User ke Izin Meninggalkan Kelas.
      */
     public function izinMeninggalkanKelas()
