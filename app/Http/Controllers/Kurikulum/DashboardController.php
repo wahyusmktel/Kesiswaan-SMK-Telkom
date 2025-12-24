@@ -68,13 +68,33 @@ class DashboardController extends Controller
             'data' => $mapelChart->pluck('total_jam'),
         ];
 
+        // 4. Data Top 5 Guru
+        $baseQuery = \App\Models\AbsensiGuru::join('jadwal_pelajarans', 'absensi_guru.jadwal_pelajaran_id', '=', 'jadwal_pelajarans.id')
+            ->join('master_gurus', 'jadwal_pelajarans.master_guru_id', '=', 'master_gurus.id')
+            ->join('rombels', 'jadwal_pelajarans.rombel_id', '=', 'rombels.id')
+            ->select('master_gurus.nama_lengkap', 'master_gurus.id', DB::raw('count(*) as total'))
+            ->groupBy('master_gurus.id', 'master_gurus.nama_lengkap');
+
+        if ($tahunAktifId) {
+            $baseQuery->where('rombels.tahun_pelajaran_id', $tahunAktifId);
+        }
+
+        $topRajin = (clone $baseQuery)->where('status', 'hadir')->orderByDesc('total')->take(5)->get();
+        $topTerlambat = (clone $baseQuery)->where('status', 'terlambat')->orderByDesc('total')->take(5)->get();
+        $topAbsen = (clone $baseQuery)->where('status', 'tidak_hadir')->orderByDesc('total')->take(5)->get();
+        $topIzin = (clone $baseQuery)->where('status', 'izin')->orderByDesc('total')->take(5)->get();
+
         return view('pages.kurikulum.dashboard.index', compact(
             'totalGuru',
             'totalMapel',
             'totalRombel',
             'jadwalHariIni',
             'mapelChartData',
-            'tahunAktif' // Kirim variabel ini buat ditampilkan di header dashboard
+            'tahunAktif',
+            'topRajin',
+            'topTerlambat',
+            'topAbsen',
+            'topIzin'
         ));
     }
 

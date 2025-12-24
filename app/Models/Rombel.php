@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Rombel extends Model
 {
     // Jangan lupa tambahkan $fillable
-    protected $fillable = ['tahun_ajaran', 'kelas_id', 'wali_kelas_id'];
+    protected $fillable = ['tahun_ajaran', 'tahun_pelajaran_id', 'kelas_id', 'wali_kelas_id'];
 
     // Relasi dari Rombel ke data kelasnya
     public function kelas()

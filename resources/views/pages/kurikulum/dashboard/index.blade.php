@@ -106,6 +106,109 @@
                 </div>
             </div>
 
+            {{-- Top 5 Stats Widgets --}}
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+                <!-- Top Rajin -->
+                <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm relative overflow-hidden group">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600 font-bold text-lg">
+                            🏆
+                        </div>
+                        <h4 class="font-bold text-gray-800">Top 5 Rajin</h4>
+                    </div>
+                    <div class="space-y-3">
+                        @forelse($topRajin as $index => $guru)
+                            <div class="flex items-center justify-between p-2 rounded-lg hover:bg-green-50 transition-colors">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-xs font-bold text-gray-400 w-4">#{{ $index + 1 }}</span>
+                                    <div class="flex flex-col">
+                                        <span class="text-sm font-bold text-gray-800 line-clamp-1">{{ $guru->nama_lengkap }}</span>
+                                    </div>
+                                </div>
+                                <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">{{ $guru->total }}</span>
+                            </div>
+                        @empty
+                            <div class="text-center text-gray-400 text-xs py-4">Belum ada data</div>
+                        @endforelse
+                    </div>
+                </div>
+
+                <!-- Top Terlambat -->
+                <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm relative overflow-hidden group">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600 font-bold text-lg">
+                            🏃
+                        </div>
+                        <h4 class="font-bold text-gray-800">Sering Terlambat</h4>
+                    </div>
+                    <div class="space-y-3">
+                        @forelse($topTerlambat as $index => $guru)
+                            <div class="flex items-center justify-between p-2 rounded-lg hover:bg-yellow-50 transition-colors">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-xs font-bold text-gray-400 w-4">#{{ $index + 1 }}</span>
+                                    <div class="flex flex-col">
+                                        <span class="text-sm font-bold text-gray-800 line-clamp-1">{{ $guru->nama_lengkap }}</span>
+                                    </div>
+                                </div>
+                                <span class="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs font-bold rounded-full">{{ $guru->total }}</span>
+                            </div>
+                        @empty
+                            <div class="text-center text-gray-400 text-xs py-4">Belum ada data</div>
+                        @endforelse
+                    </div>
+                </div>
+
+                <!-- Top Absen -->
+                <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm relative overflow-hidden group">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-red-600 font-bold text-lg">
+                            🤒
+                        </div>
+                        <h4 class="font-bold text-gray-800">Sering Absen</h4>
+                    </div>
+                    <div class="space-y-3">
+                        @forelse($topAbsen as $index => $guru)
+                            <div class="flex items-center justify-between p-2 rounded-lg hover:bg-red-50 transition-colors">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-xs font-bold text-gray-400 w-4">#{{ $index + 1 }}</span>
+                                    <div class="flex flex-col">
+                                        <span class="text-sm font-bold text-gray-800 line-clamp-1">{{ $guru->nama_lengkap }}</span>
+                                    </div>
+                                </div>
+                                <span class="px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full">{{ $guru->total }}</span>
+                            </div>
+                        @empty
+                            <div class="text-center text-gray-400 text-xs py-4">Belum ada data</div>
+                        @endforelse
+                    </div>
+                </div>
+
+                <!-- Top Izin -->
+                <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm relative overflow-hidden group">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-lg">
+                            📝
+                        </div>
+                        <h4 class="font-bold text-gray-800">Sering Izin</h4>
+                    </div>
+                    <div class="space-y-3">
+                        @forelse($topIzin as $index => $guru)
+                            <div class="flex items-center justify-between p-2 rounded-lg hover:bg-blue-50 transition-colors">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-xs font-bold text-gray-400 w-4">#{{ $index + 1 }}</span>
+                                    <div class="flex flex-col">
+                                        <span class="text-sm font-bold text-gray-800 line-clamp-1">{{ $guru->nama_lengkap }}</span>
+                                    </div>
+                                </div>
+                                <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">{{ $guru->total }}</span>
+                            </div>
+                        @empty
+                            <div class="text-center text-gray-400 text-xs py-4">Belum ada data</div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
                 <div class="lg:col-span-2 space-y-6">
