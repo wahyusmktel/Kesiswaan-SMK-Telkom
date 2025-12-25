@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Piket;
 use App\Http\Controllers\Controller;
 use App\Models\JadwalPelajaran;
 use App\Models\Keterlambatan;
+use App\Models\PoinCategory;
+use App\Models\PoinPeraturan;
+use App\Models\SiswaPelanggaran;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -61,6 +64,25 @@ class VerifikasiTerlambatController extends Controller
                 'waktu_verifikasi_piket' => now(),
                 'jadwal_pelajaran_id' => $jadwalSaatItu?->id,
                 'status' => 'diverifikasi_piket',
+            ]);
+
+            // 2.5 Tambahkan Poin Pelanggaran Otomatis (1 Poin)
+            $category = PoinCategory::firstOrCreate(['name' => 'Kedisiplinan']);
+            $peraturanTerlambat = PoinPeraturan::firstOrCreate(
+                ['deskripsi' => 'Terlambat'],
+                [
+                    'poin_category_id' => $category->id,
+                    'pasal' => 'Ketertiban',
+                    'bobot_poin' => 1,
+                ]
+            );
+
+            SiswaPelanggaran::create([
+                'master_siswa_id' => $keterlambatan->master_siswa_id,
+                'poin_peraturan_id' => $peraturanTerlambat->id,
+                'tanggal' => now()->toDateString(),
+                'catatan' => 'Terlambat pada hari ' . $namaHari,
+                'pelapor_id' => Auth::id(),
             ]);
 
             // 3. Siapkan data untuk PDF dengan me-load ulang semua relasi

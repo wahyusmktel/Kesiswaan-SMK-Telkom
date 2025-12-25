@@ -80,6 +80,11 @@ class MasterSiswa extends Model
         return $this->hasMany(BKKonsultasiJadwal::class, 'master_siswa_id');
     }
 
+    public function keterlambatans()
+    {
+        return $this->hasMany(Keterlambatan::class, 'master_siswa_id');
+    }
+
     // Point Calculation Methods
     public function getTotalViolationPoints()
     {

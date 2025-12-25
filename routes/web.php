@@ -164,6 +164,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/izin-keluar-kelas', [IzinMeninggalkanKelasController::class, 'index'])->name('izin-keluar-kelas.index');
         Route::post('/izin-keluar-kelas', [IzinMeninggalkanKelasController::class, 'store'])->name('izin-keluar-kelas.store');
 
+        // Route Riwayat Catatan (Pelanggaran & Keterlambatan)
+        Route::get('/riwayat-catatan', [\App\Http\Controllers\Siswa\RiwayatCatatanController::class, 'index'])->name('riwayat-catatan.index');
+
         // Route untuk Jurnal Prakerin
         Route::get('/jurnal-prakerin', [JurnalSiswaController::class, 'index'])->name('jurnal-prakerin.index');
         Route::post('/jurnal-prakerin', [JurnalSiswaController::class, 'store'])->name('jurnal-prakerin.store');
