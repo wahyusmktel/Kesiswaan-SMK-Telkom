@@ -105,4 +105,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(IzinMeninggalkanKelas::class);
     }
+
+    public function masterGuru()
+    {
+        return $this->hasOne(MasterGuru::class);
+    }
 }

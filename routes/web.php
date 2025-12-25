@@ -303,6 +303,37 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/verifikasi-terlambat/scan/{uuid}', [GuruKelasVerifikasiTerlambatController::class, 'scanAndVerify'])->name('verifikasi-terlambat.scan');
     });
 
+    // Grup Route untuk Guru (Submission)
+    Route::middleware(['role:Guru Kelas'])->prefix('guru')->name('guru.')->group(function () {
+        Route::get('/izin', [\App\Http\Controllers\Guru\IzinGuruController::class, 'index'])->name('izin.index');
+        Route::get('/izin/create', [\App\Http\Controllers\Guru\IzinGuruController::class, 'create'])->name('izin.create');
+        Route::post('/izin', [\App\Http\Controllers\Guru\IzinGuruController::class, 'store'])->name('izin.store');
+        Route::get('/izin/schedules', [\App\Http\Controllers\Guru\IzinGuruController::class, 'getSchedules'])->name('izin.schedules');
+    });
+
+    // Grup Route untuk Piket (Approval Stage 1)
+    Route::middleware(['role:Guru Piket'])->prefix('piket')->name('piket.')->group(function () {
+        Route::get('/persetujuan-izin-guru', [\App\Http\Controllers\Piket\PersetujuanIzinGuruController::class, 'index'])->name('persetujuan-izin-guru.index');
+        Route::patch('/persetujuan-izin-guru/{izin}/approve', [\App\Http\Controllers\Piket\PersetujuanIzinGuruController::class, 'approve'])->name('persetujuan-izin-guru.approve');
+        Route::patch('/persetujuan-izin-guru/{izin}/reject', [\App\Http\Controllers\Piket\PersetujuanIzinGuruController::class, 'reject'])->name('persetujuan-izin-guru.reject');
+    });
+
+    // Grup Route untuk Kurikulum (Approval Stage 2)
+    Route::middleware(['role:Kurikulum'])->prefix('kurikulum')->name('kurikulum.')->group(function () {
+        Route::get('/persetujuan-izin-guru', [\App\Http\Controllers\Kurikulum\PersetujuanIzinGuruController::class, 'index'])->name('persetujuan-izin-guru.index');
+        Route::patch('/persetujuan-izin-guru/{izin}/approve', [\App\Http\Controllers\Kurikulum\PersetujuanIzinGuruController::class, 'approve'])->name('persetujuan-izin-guru.approve');
+        Route::patch('/persetujuan-izin-guru/{izin}/reject', [\App\Http\Controllers\Kurikulum\PersetujuanIzinGuruController::class, 'reject'])->name('persetujuan-izin-guru.reject');
+    });
+
+    // Grup Route untuk SDM (Approval Stage 3 - Final)
+    Route::middleware(['role:KAUR SDM'])->prefix('sdm')->name('sdm.')->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\SDM\DashboardController::class, 'index'])->name('dashboard.index');
+        Route::get('/persetujuan-izin-guru', [\App\Http\Controllers\SDM\PersetujuanIzinGuruController::class, 'index'])->name('persetujuan-izin-guru.index');
+        Route::patch('/persetujuan-izin-guru/{izin}/approve', [\App\Http\Controllers\SDM\PersetujuanIzinGuruController::class, 'approve'])->name('persetujuan-izin-guru.approve');
+        Route::patch('/persetujuan-izin-guru/{izin}/reject', [\App\Http\Controllers\SDM\PersetujuanIzinGuruController::class, 'reject'])->name('persetujuan-izin-guru.reject');
+        Route::get('/persetujuan-izin-guru/{izin}/print', [\App\Http\Controllers\SDM\PersetujuanIzinGuruController::class, 'printPdf'])->name('persetujuan-izin-guru.print');
+    });
+
     // Grup Route untuk Security
     Route::middleware(['role:Security'])->prefix('security')->name('security.')->group(function () {
         Route::get('/verifikasi-izin', [SecurityVerifikasiController::class, 'index'])->name('verifikasi.index');

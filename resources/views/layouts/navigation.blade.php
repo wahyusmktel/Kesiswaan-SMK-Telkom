@@ -207,6 +207,17 @@
                 </a>
             </li>
         @endif
+
+        <div class="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider mt-4">Layanan Guru</div>
+        <li>
+            <a href="{{ route('guru.izin.index') }}"
+                class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('guru.izin.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span class="text-sm">Pengajuan Izin Guru</span>
+            </a>
+        </li>
     @endrole
 
     {{-- ============================================================ --}}
@@ -432,7 +443,7 @@
                         Pelajaran</a></li>
             </ul>
         </li>
-        <li x-data="{ expanded: {{ request()->routeIs('kurikulum.monitoring-absensi-guru.*') || request()->routeIs('kurikulum.monitoring-absensi-per-kelas.*') ? 'true' : 'false' }} }">
+        <li x-data="{ expanded: {{ request()->routeIs('kurikulum.monitoring-absensi-guru.*') || request()->routeIs('kurikulum.monitoring-absensi-per-kelas.*') || request()->routeIs('kurikulum.persetujuan-izin-guru.*') ? 'true' : 'false' }} }">
             <button @click="expanded = !expanded"
                 class="flex items-center justify-between w-full px-3 py-2 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors">
                 <div class="flex items-center gap-3">
@@ -451,6 +462,8 @@
                         class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kurikulum.monitoring-absensi-guru.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Monitoring Harian</a></li>
                 <li><a href="{{ route('kurikulum.monitoring-absensi-per-kelas.index') }}"
                         class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kurikulum.monitoring-absensi-per-kelas.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Monitoring Per Kelas</a></li>
+                <li><a href="{{ route('kurikulum.persetujuan-izin-guru.index') }}"
+                        class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kurikulum.persetujuan-izin-guru.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Persetujuan Izin Guru</a></li>
             </ul>
         </li>
     @endrole
@@ -631,6 +644,15 @@
                 <span class="text-sm">Absensi Guru</span>
             </a>
         </li>
+        <li>
+            <a href="{{ route('piket.persetujuan-izin-guru.index') }}"
+                class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('piket.persetujuan-izin-guru.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span class="text-sm">Persetujuan Izin Guru</span>
+            </a>
+        </li>
     @endrole
 
     {{-- ============================================================ --}}
@@ -675,6 +697,30 @@
                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span class="text-sm">Pendataan Terlambat</span>
+            </a>
+        </li>
+    @endrole
+
+    {{-- ============================================================ --}}
+    {{-- ROLE: KAUR SDM                                               --}}
+    {{-- ============================================================ --}}
+    @role('KAUR SDM')
+        <li>
+            <a href="{{ route('sdm.dashboard.index') }}"
+                class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('sdm.dashboard.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M13 5v6h6" />
+                </svg>
+                <span class="text-sm">Dashboard SDM</span>
+            </a>
+        </li>
+        <li>
+            <a href="{{ route('sdm.persetujuan-izin-guru.index') }}"
+                class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('sdm.persetujuan-izin-guru.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span class="text-sm">Persetujuan Izin Guru</span>
             </a>
         </li>
     @endrole

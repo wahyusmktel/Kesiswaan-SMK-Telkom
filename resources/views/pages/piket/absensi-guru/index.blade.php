@@ -122,7 +122,11 @@
                                             </div>
                                         @else
                                             <div class="mt-3 text-xs text-gray-500">
-                                                Dicatat: {{ $jadwal->absensi->waktu_absen->format('H:i') }}
+                                                @if($jadwal->absensi->waktu_absen)
+                                                    Dicatat: {{ $jadwal->absensi->waktu_absen->format('H:i') }}
+                                                @else
+                                                    Dicatat: {{ $jadwal->absensi->created_at->format('H:i') }} (Auto)
+                                                @endif
                                                 @if($jadwal->absensi->keterangan)
                                                     <br>Ket: {{ $jadwal->absensi->keterangan }}
                                                 @endif
