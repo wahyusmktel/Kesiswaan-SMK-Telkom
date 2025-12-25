@@ -140,10 +140,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('input-prestasi', \App\Http\Controllers\Kesiswaan\PrestasiSiswaController::class);
         Route::resource('input-pemutihan', \App\Http\Controllers\Kesiswaan\PemutihanPoinController::class);
 
-        // Route Panggilan Orang Tua
+        // Route Panggilan Orang Tua (Approval & Management)
         Route::get('panggilan-ortu', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'index'])->name('panggilan-ortu.index');
         Route::post('panggilan-ortu', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'store'])->name('panggilan-ortu.store');
         Route::patch('panggilan-ortu/{panggilan}/status', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'updateStatus'])->name('panggilan-ortu.update-status');
+        Route::patch('panggilan-ortu/{panggilan}/approve', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'approve'])->name('panggilan-ortu.approve');
+        Route::patch('panggilan-ortu/{panggilan}/reject', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'reject'])->name('panggilan-ortu.reject');
         Route::delete('panggilan-ortu/{panggilan}', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'destroy'])->name('panggilan-ortu.destroy');
 
         // Monitoring BK untuk Waka Kesiswaan
@@ -196,6 +198,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Jadwal Konsultasi
         Route::get('/konsultasi', [\App\Http\Controllers\BK\KonsultasiJadwalController::class, 'index'])->name('konsultasi.index');
+        Route::post('/konsultasi/store-bk', [\App\Http\Controllers\BK\KonsultasiJadwalController::class, 'storeByBK'])->name('konsultasi.store-bk');
         Route::patch('/konsultasi/{jadwal}/status', [\App\Http\Controllers\BK\KonsultasiJadwalController::class, 'updateStatus'])->name('konsultasi.update-status');
 
         // Chat
@@ -204,6 +207,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // ISO Docs
         Route::get('/konsultasi/{jadwal}/print-jadwal', [\App\Http\Controllers\BK\ConsultationDocController::class, 'printSchedule'])->name('konsultasi.print-jadwal');
         Route::get('/konsultasi/{jadwal}/print-report', [\App\Http\Controllers\BK\ConsultationDocController::class, 'printReport'])->name('konsultasi.print-report');
+
+        // Monitoring Pelanggaran & Keterlambatan
+        Route::get('/monitoring-catatan', [\App\Http\Controllers\BK\MonitoringCatatanController::class, 'index'])->name('monitoring-catatan.index');
+        Route::get('/monitoring-catatan/{siswa}', [\App\Http\Controllers\BK\MonitoringCatatanController::class, 'show'])->name('monitoring-catatan.show');
+        Route::post('/panggilan-proposal', [\App\Http\Controllers\BK\PanggilanProposalController::class, 'store'])->name('panggilan-proposal.store');
     });
 
     // API Chat (Shared)

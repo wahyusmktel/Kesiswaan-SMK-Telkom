@@ -20,10 +20,17 @@ class PanggilanOrangTuaController extends Controller
                 return $siswa->getCurrentPoints() >= 100;
             });
 
-        // 2. Ambil Riwayat Panggilan
-        $panggilans = SiswaPanggilan::with(['siswa.rombels.kelas', 'creator'])->latest()->paginate(10);
+        // 2. Ambil Riwayat Panggilan & Pengajuan BK
+        $panggilans = SiswaPanggilan::with(['siswa.rombels.kelas', 'creator', 'approver'])
+            ->latest()
+            ->paginate(10);
 
-        return view('kesiswaan.poin.panggilan', compact('butuhPanggilan', 'panggilans'));
+        // 3. Ambil Khusus Pengajuan BK (Yang butuh persetujuan)
+        $pengajuanBK = SiswaPanggilan::with(['siswa.rombels.kelas', 'creator'])
+            ->where('status', 'diajukan')
+            ->get();
+
+        return view('kesiswaan.poin.panggilan', compact('butuhPanggilan', 'panggilans', 'pengajuanBK'));
     }
 
     public function store(Request $request)
@@ -73,6 +80,30 @@ class PanggilanOrangTuaController extends Controller
         $panggilan->update(['status' => $request->status]);
         
         return redirect()->back()->with('success', 'Status panggilan berhasil diperbarui.');
+    }
+
+    public function approve(Request $request, SiswaPanggilan $panggilan)
+    {
+        $panggilan->update([
+            'status' => 'disetujui',
+            'disetujui_oleh' => Auth::id(),
+            'catatan_waka' => $request->catatan_waka,
+        ]);
+
+        toast('Pengajuan panggilan disetujui.', 'success');
+        return redirect()->back();
+    }
+
+    public function reject(Request $request, SiswaPanggilan $panggilan)
+    {
+        $panggilan->update([
+            'status' => 'ditolak',
+            'disetujui_oleh' => Auth::id(),
+            'catatan_waka' => $request->catatan_waka,
+        ]);
+
+        toast('Pengajuan panggilan ditolak.', 'info');
+        return redirect()->back();
     }
 
     public function destroy(SiswaPanggilan $panggilan)

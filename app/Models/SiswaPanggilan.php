@@ -18,6 +18,8 @@ class SiswaPanggilan extends Model
         'perihal',
         'status',
         'created_by',
+        'disetujui_oleh',
+        'catatan_waka',
     ];
 
     public function siswa()
@@ -28,5 +30,10 @@ class SiswaPanggilan extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function approver()
+    {
+        return $this->belongsTo(User::class, 'disetujui_oleh');
     }
 }

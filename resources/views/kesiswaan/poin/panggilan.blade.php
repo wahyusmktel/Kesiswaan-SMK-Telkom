@@ -74,6 +74,58 @@
                 </div>
             </div>
 
+            {{-- Bagian Pengajuan Panggilan dari BK --}}
+            @if(count($pengajuanBK) > 0)
+            <div class="bg-indigo-50/30 overflow-hidden shadow-sm sm:rounded-lg p-6 border border-indigo-100 mb-8">
+                <div class="mb-6 flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg font-bold text-indigo-800 flex items-center gap-2">
+                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                             Pengajuan Panggilan dari Guru BK
+                        </h3>
+                        <p class="text-sm text-indigo-600">Terima atau tolak pengajuan surat panggilan yang diajukan oleh Guru BK.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    @foreach($pengajuanBK as $p)
+                    <div class="bg-white p-6 rounded-2xl border border-indigo-100 shadow-sm flex flex-col hover:shadow-md transition-all text-sm">
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="px-2 py-1 bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded-lg uppercase tracking-wider">Proposal BK</span>
+                            <span class="text-[10px] text-gray-400 font-medium">Diajukan: {{ $p->created_at->diffForHumans() }}</span>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h4 class="font-black text-gray-900 leading-none mb-1 text-base">{{ $p->siswa->nama_lengkap }}</h4>
+                            <p class="text-xs text-gray-500">{{ $p->siswa->rombels->first()?->kelas->nama_kelas }} | NIS: {{ $p->siswa->nis }}</p>
+                            <div class="mt-4 p-3 bg-gray-50 rounded-xl">
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-2 text-[9px]">Alasan/Perihal</p>
+                                <p class="text-xs text-gray-700 leading-relaxed italic line-clamp-2">"{{ $p->perihal }}"</p>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-2 mt-auto pt-4 border-t border-gray-50">
+                            <form action="{{ route('kesiswaan.panggilan-ortu.approve', $p->id) }}" method="POST">
+                                @csrf
+                                @method('PATCH')
+                                <button type="submit" class="w-full py-2 bg-green-600 text-white rounded-xl text-xs font-bold hover:bg-green-700 transition-colors shadow-sm shadow-green-100">
+                                    Setujui & Terbitkan
+                                </button>
+                            </form>
+                            <form action="{{ route('kesiswaan.panggilan-ortu.reject', $p->id) }}" method="POST">
+                                @csrf
+                                @method('PATCH')
+                                <button type="submit" class="w-full py-2 bg-white border border-gray-200 text-red-600 rounded-xl text-xs font-bold hover:bg-red-50 transition-colors">
+                                    Tolak Pengajuan
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
             {{-- Riwayat Panggilan --}}
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6 border border-gray-100">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
@@ -114,10 +166,19 @@
                                         @csrf
                                         @method('PATCH')
                                         <select name="status" onchange="this.form.submit()" 
-                                            class="text-[10px] font-bold py-1 px-2 rounded-lg border-gray-200 {{ $p->status == 'hadir' ? 'bg-green-50 text-green-700' : ($p->status == 'tidak_hadir' ? 'bg-red-50 text-red-700' : 'bg-blue-50 text-blue-700') }}">
+                                            class="text-[10px] font-bold py-1 px-2 rounded-lg border-gray-200 {{ $p->status == 'hadir' ? 'bg-green-50 text-green-700' : ($p->status == 'tidak_hadir' ? 'bg-red-50 text-red-700' : ($p->status == 'disetujui' ? 'bg-indigo-50 text-indigo-700' : 'bg-blue-50 text-blue-700')) }}">
+                                            @if($p->status == 'diajukan')
+                                                <option value="diajukan" {{ $p->status == 'diajukan' ? 'selected' : '' }}>DIAJUKAN</option>
+                                            @endif
+                                            @if(in_array($p->status, ['diajukan', 'disetujui']))
+                                                <option value="disetujui" {{ $p->status == 'disetujui' ? 'selected' : '' }}>DISETUJUI (CETAK)</option>
+                                            @endif
                                             <option value="terkirim" {{ $p->status == 'terkirim' ? 'selected' : '' }}>TERKIRIM</option>
                                             <option value="hadir" {{ $p->status == 'hadir' ? 'selected' : '' }}>HADIR</option>
                                             <option value="tidak_hadir" {{ $p->status == 'tidak_hadir' ? 'selected' : '' }}>TIDAK HADIR</option>
+                                            @if($p->status == 'ditolak')
+                                                <option value="ditolak" {{ $p->status == 'ditolak' ? 'selected' : '' }}>DITOLAK</option>
+                                            @endif
                                         </select>
                                     </form>
                                 </td>

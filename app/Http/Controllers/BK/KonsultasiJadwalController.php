@@ -18,6 +18,29 @@ class KonsultasiJadwalController extends Controller
         return view('pages.bk.konsultasi.index', compact('jadwals'));
     }
 
+    public function storeByBK(Request $request)
+    {
+        $request->validate([
+            'master_siswa_id' => 'required|exists:master_siswa,id',
+            'perihal' => 'required|string',
+            'tanggal_rencana' => 'required|date',
+            'jam_rencana' => 'required',
+            'tempat' => 'nullable|string',
+        ]);
+
+        BKKonsultasiJadwal::create([
+            'master_siswa_id' => $request->master_siswa_id,
+            'guru_bk_id' => Auth::id(),
+            'perihal' => $request->perihal,
+            'tanggal_rencana' => $request->tanggal_rencana,
+            'jam_rencana' => $request->jam_rencana,
+            'tempat' => $request->tempat ?? 'Ruang BK',
+            'status' => 'approved', // Langsung approved karena dibuat oleh BK
+        ]);
+
+        return redirect()->back()->with('success', 'Jadwal pembinaan/konsultasi berhasil dibuat.');
+    }
+
     public function updateStatus(Request $request, BKKonsultasiJadwal $jadwal)
     {
         $request->validate([
