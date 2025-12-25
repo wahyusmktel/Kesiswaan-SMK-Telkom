@@ -117,40 +117,47 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Grup Route untuk Kesiswaan
-    Route::middleware(['role:Waka Kesiswaan'])->prefix('kesiswaan')->name('kesiswaan.')->group(function () {
-        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
-        Route::get('/monitoring-izin', [MonitoringIzinController::class, 'index'])->name('monitoring-izin.index');
-        Route::get('/riwayat-izin-keluar', [MonitoringIzinController::class, 'riwayatIzinKeluar'])->name('riwayat-izin-keluar.index');
+    Route::prefix('kesiswaan')->name('kesiswaan.')->group(function () {
+        // Shared routes for Waka Kesiswaan and Guru BK
+        Route::middleware(['role:Waka Kesiswaan|Guru BK'])->group(function () {
+            Route::post('poin-peraturan/category', [\App\Http\Controllers\Kesiswaan\PoinPeraturanController::class, 'storeCategory'])->name('poin-peraturan.storeCategory');
+            Route::resource('poin-peraturan', \App\Http\Controllers\Kesiswaan\PoinPeraturanController::class);
+            Route::resource('input-pelanggaran', \App\Http\Controllers\Kesiswaan\PelanggaranSiswaController::class);
+            Route::resource('input-prestasi', \App\Http\Controllers\Kesiswaan\PrestasiSiswaController::class);
+            Route::resource('input-pemutihan', \App\Http\Controllers\Kesiswaan\PemutihanPoinController::class);
+            Route::patch('input-pemutihan/{pemutihan}/approve', [\App\Http\Controllers\Kesiswaan\PemutihanPoinController::class, 'approve'])->name('input-pemutihan.approve');
+            Route::patch('input-pemutihan/{pemutihan}/reject', [\App\Http\Controllers\Kesiswaan\PemutihanPoinController::class, 'reject'])->name('input-pemutihan.reject');
+        });
 
-        // Route untuk Persetujuan Dispensasi
-        Route::get('/persetujuan-dispensasi', [PersetujuanDispensasiController::class, 'index'])->name('persetujuan-dispensasi.index');
-        Route::get('/persetujuan-dispensasi/{dispensasi}', [PersetujuanDispensasiController::class, 'show'])->name('persetujuan-dispensasi.show');
-        Route::patch('/persetujuan-dispensasi/{dispensasi}/approve', [PersetujuanDispensasiController::class, 'approve'])->name('persetujuan-dispensasi.approve');
-        Route::patch('/persetujuan-dispensasi/{dispensasi}/reject', [PersetujuanDispensasiController::class, 'reject'])->name('persetujuan-dispensasi.reject');
-        Route::get('/persetujuan-dispensasi/{dispensasi}/print', [PersetujuanDispensasiController::class, 'printPdf'])->name('persetujuan-dispensasi.print');
+        // Waka Kesiswaan specific routes
+        Route::middleware(['role:Waka Kesiswaan'])->group(function () {
+            Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
+            Route::get('/monitoring-izin', [MonitoringIzinController::class, 'index'])->name('monitoring-izin.index');
+            Route::get('/riwayat-izin-keluar', [MonitoringIzinController::class, 'riwayatIzinKeluar'])->name('riwayat-izin-keluar.index');
 
-        // Route Pengaduan untuk Admin Kesiswaan
-        Route::get('/pengaduan', [PengaduanController::class, 'index'])->name('pengaduan.index');
-        Route::patch('/pengaduan/{pengaduan}/status', [PengaduanController::class, 'updateStatus'])->name('pengaduan.update-status');
+            // Route untuk Persetujuan Dispensasi
+            Route::get('/persetujuan-dispensasi', [PersetujuanDispensasiController::class, 'index'])->name('persetujuan-dispensasi.index');
+            Route::get('/persetujuan-dispensasi/{dispensasi}', [PersetujuanDispensasiController::class, 'show'])->name('persetujuan-dispensasi.show');
+            Route::patch('/persetujuan-dispensasi/{dispensasi}/approve', [PersetujuanDispensasiController::class, 'approve'])->name('persetujuan-dispensasi.approve');
+            Route::patch('/persetujuan-dispensasi/{dispensasi}/reject', [PersetujuanDispensasiController::class, 'reject'])->name('persetujuan-dispensasi.reject');
+            Route::get('/persetujuan-dispensasi/{dispensasi}/print', [PersetujuanDispensasiController::class, 'printPdf'])->name('persetujuan-dispensasi.print');
 
-        // Route untuk Poin & Pelanggaran
-        Route::post('poin-peraturan/category', [\App\Http\Controllers\Kesiswaan\PoinPeraturanController::class, 'storeCategory'])->name('poin-peraturan.storeCategory');
-        Route::resource('poin-peraturan', \App\Http\Controllers\Kesiswaan\PoinPeraturanController::class);
-        Route::resource('input-pelanggaran', \App\Http\Controllers\Kesiswaan\PelanggaranSiswaController::class);
-        Route::resource('input-prestasi', \App\Http\Controllers\Kesiswaan\PrestasiSiswaController::class);
-        Route::resource('input-pemutihan', \App\Http\Controllers\Kesiswaan\PemutihanPoinController::class);
+            // Route Pengaduan untuk Admin Kesiswaan
+            Route::get('/pengaduan', [PengaduanController::class, 'index'])->name('pengaduan.index');
+            Route::patch('/pengaduan/{pengaduan}/status', [PengaduanController::class, 'updateStatus'])->name('pengaduan.update-status');
 
-        // Route Panggilan Orang Tua (Approval & Management)
-        Route::get('panggilan-ortu', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'index'])->name('panggilan-ortu.index');
-        Route::post('panggilan-ortu', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'store'])->name('panggilan-ortu.store');
-        Route::patch('panggilan-ortu/{panggilan}/status', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'updateStatus'])->name('panggilan-ortu.update-status');
-        Route::patch('panggilan-ortu/{panggilan}/approve', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'approve'])->name('panggilan-ortu.approve');
-        Route::patch('panggilan-ortu/{panggilan}/reject', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'reject'])->name('panggilan-ortu.reject');
-        Route::delete('panggilan-ortu/{panggilan}', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'destroy'])->name('panggilan-ortu.destroy');
+            // Route Panggilan Orang Tua (Approval & Management)
+            Route::get('panggilan-ortu', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'index'])->name('panggilan-ortu.index');
+            Route::post('panggilan-ortu', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'store'])->name('panggilan-ortu.store');
+            Route::patch('panggilan-ortu/{panggilan}/status', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'updateStatus'])->name('panggilan-ortu.update-status');
+            Route::patch('panggilan-ortu/{panggilan}/approve', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'approve'])->name('panggilan-ortu.approve');
+            Route::patch('panggilan-ortu/{panggilan}/reject', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'reject'])->name('panggilan-ortu.reject');
+            Route::delete('panggilan-ortu/{panggilan}', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'destroy'])->name('panggilan-ortu.destroy');
 
-        // Monitoring BK untuk Waka Kesiswaan
-        Route::get('monitoring-bk/pembinaan', [\App\Http\Controllers\BK\PembinaanRutinController::class, 'index'])->name('monitoring-bk.pembinaan');
-        Route::get('monitoring-bk/konsultasi', [\App\Http\Controllers\BK\KonsultasiJadwalController::class, 'index'])->name('monitoring-bk.konsultasi');
+            // Monitoring BK untuk Waka Kesiswaan
+            Route::get('monitoring-bk/pembinaan', [\App\Http\Controllers\BK\PembinaanRutinController::class, 'index'])->name('monitoring-bk.pembinaan');
+            Route::get('monitoring-bk/konsultasi', [\App\Http\Controllers\BK\KonsultasiJadwalController::class, 'index'])->name('monitoring-bk.konsultasi');
+        });
     });
 
     // Route Panggilan yang bisa diakses Siswa (Hanya Cetak)

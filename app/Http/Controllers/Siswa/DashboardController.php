@@ -58,7 +58,7 @@ class DashboardController extends Controller
                     'color' => 'text-green-600',
                     'bg' => 'bg-green-50'
                 ]),
-                ...$siswa->pemutihans()->latest()->take(3)->get()->map(fn($p) => [
+                ...$siswa->pemutihans()->where('status', 'disetujui')->latest()->take(3)->get()->map(fn($p) => [
                     'type' => 'Pemutihan',
                     'title' => $p->keterangan ?? 'Pemutihan Poin',
                     'points' => $p->poin_dikurangi,

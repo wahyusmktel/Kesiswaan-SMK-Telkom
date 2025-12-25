@@ -48,6 +48,7 @@
                                 <th class="px-6 py-4">Tanggal</th>
                                 <th class="px-6 py-4 text-center">Poin Dikurangi (-)</th>
                                 <th class="px-6 py-4">Keterangan</th>
+                                <th class="px-6 py-4 text-center">Status</th>
                                 <th class="px-6 py-4 text-right">Aksi</th>
                             </tr>
                         </thead>
@@ -68,15 +69,52 @@
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="text-xs text-gray-600">{{ $p->keterangan }}</div>
+                                    @if($p->pengaju)
+                                        <div class="text-[9px] text-gray-400 mt-1 uppercase font-bold tracking-tighter">Diajukan oleh: {{ $p->pengaju->name }}</div>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    @if($p->status == 'diajukan')
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-600 ring-1 ring-amber-100 uppercase tracking-tighter">Diajukan</span>
+                                    @elseif($p->status == 'disetujui')
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-50 text-green-600 ring-1 ring-green-100 uppercase tracking-tighter">Disetujui</span>
+                                        @if($p->penyetuju)
+                                            <div class="text-[9px] text-gray-400 mt-0.5 font-bold uppercase tracking-tighter">Oleh: {{ $p->penyetuju->name }}</div>
+                                        @endif
+                                    @else
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-600 ring-1 ring-red-100 uppercase tracking-tighter">Ditolak</span>
+                                        @if($p->penyetuju)
+                                            <div class="text-[9px] text-gray-400 mt-0.5 font-bold uppercase tracking-tighter">Oleh: {{ $p->penyetuju->name }}</div>
+                                        @endif
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4 text-right">
-                                    <form action="{{ route('kesiswaan.input-pemutihan.destroy', $p->id) }}" method="POST" onsubmit="return confirm('Hapus catatan pemutihan ini?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="p-2 text-gray-400 hover:text-red-600 transition-colors">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                        </button>
-                                    </form>
+                                    <div class="flex justify-end items-center gap-1">
+                                        @if($p->status == 'diajukan' && auth()->user()->hasRole('Waka Kesiswaan'))
+                                            <form action="{{ route('kesiswaan.input-pemutihan.approve', $p->id) }}" method="POST">
+                                                @csrf
+                                                @method('PATCH')
+                                                <button type="submit" title="Setujui" class="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors">
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                                </button>
+                                            </form>
+                                            <form action="{{ route('kesiswaan.input-pemutihan.reject', $p->id) }}" method="POST">
+                                                @csrf
+                                                @method('PATCH')
+                                                <button type="submit" title="Tolak" class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                </button>
+                                            </form>
+                                        @endif
+                                        
+                                        <form action="{{ route('kesiswaan.input-pemutihan.destroy', $p->id) }}" method="POST" onsubmit="return confirm('Hapus catatan pemutihan ini?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="p-2 text-gray-400 hover:text-red-600 transition-colors">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                             @empty

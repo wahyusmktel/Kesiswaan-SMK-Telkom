@@ -100,7 +100,7 @@ class MasterSiswa extends Model
 
     public function getTotalExpungementPoints()
     {
-        return $this->pemutihans()->sum('poin_dikurangi');
+        return $this->pemutihans()->where('status', 'disetujui')->sum('poin_dikurangi');
     }
 
     public function getCurrentPoints()

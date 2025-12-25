@@ -11,7 +11,7 @@ class PemutihanPoinController extends Controller
 {
     public function index(Request $request)
     {
-        $query = SiswaPemutihan::with(['siswa'])->latest();
+        $query = SiswaPemutihan::with(['siswa', 'pengaju', 'penyetuju'])->latest();
 
         if ($request->has('search')) {
             $search = $request->get('search');
@@ -34,9 +34,37 @@ class PemutihanPoinController extends Controller
             'keterangan' => 'nullable|string',
         ]);
 
-        SiswaPemutihan::create($request->all());
+        $data = $request->all();
+        $isBK = auth()->user()->hasRole('Guru BK');
+        
+        $data['status'] = $isBK ? 'diajukan' : 'disetujui';
+        $data['diajukan_oleh'] = $isBK ? auth()->id() : null;
+        $data['disetujui_oleh'] = $isBK ? null : auth()->id();
 
-        return redirect()->back()->with('success', 'Pemutihan poin siswa berhasil dicatat.');
+        SiswaPemutihan::create($data);
+
+        $message = $isBK ? 'Pengajuan pemutihan poin siswa berhasil diajukan.' : 'Pemutihan poin siswa berhasil dicatat.';
+        return redirect()->back()->with('success', $message);
+    }
+
+    public function approve(SiswaPemutihan $pemutihan)
+    {
+        $pemutihan->update([
+            'status' => 'disetujui',
+            'disetujui_oleh' => auth()->id(),
+        ]);
+
+        return redirect()->back()->with('success', 'Pengajuan pemutihan poin telah disetujui.');
+    }
+
+    public function reject(Request $request, SiswaPemutihan $pemutihan)
+    {
+        $pemutihan->update([
+            'status' => 'ditolak',
+            'disetujui_oleh' => auth()->id(),
+        ]);
+
+        return redirect()->back()->with('success', 'Pengajuan pemutihan poin telah ditolak.');
     }
 
     public function destroy(SiswaPemutihan $input_pemutihan)
