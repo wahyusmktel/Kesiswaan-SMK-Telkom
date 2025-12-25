@@ -49,6 +49,7 @@
                                 <th class="px-6 py-4 text-center">Poin Dikurangi (-)</th>
                                 <th class="px-6 py-4">Keterangan</th>
                                 <th class="px-6 py-4 text-center">Status</th>
+                                <th class="px-6 py-4 text-center">Dokumen</th>
                                 <th class="px-6 py-4 text-right">Aksi</th>
                             </tr>
                         </thead>
@@ -86,6 +87,16 @@
                                         @if($p->penyetuju)
                                             <div class="text-[9px] text-gray-400 mt-0.5 font-bold uppercase tracking-tighter">Oleh: {{ $p->penyetuju->name }}</div>
                                         @endif
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    @if($p->status != 'diajukan')
+                                        <a href="{{ route('kesiswaan.input-pemutihan.print', $p->id) }}" target="_blank" class="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all text-[10px] font-bold uppercase tracking-tight shadow-sm">
+                                            <svg class="w-3.5 h-3.5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17h6M9 13h6"/></svg>
+                                            Berita Acara
+                                        </a>
+                                    @else
+                                        <span class="text-[10px] text-gray-400 italic">Menunggu...</span>
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 text-right">

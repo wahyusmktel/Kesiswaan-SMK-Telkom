@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\MasterSiswa;
 use App\Models\SiswaPemutihan;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PemutihanPoinController extends Controller
 {
@@ -23,6 +24,17 @@ class PemutihanPoinController extends Controller
         $pemutihans = $query->paginate(10);
         
         return view('kesiswaan.poin.pemutihan', compact('pemutihans'));
+    }
+
+    public function printPdf(SiswaPemutihan $pemutihan)
+    {
+        $pemutihan->load(['siswa', 'pengaju', 'penyetuju']);
+        
+        $pdf = Pdf::loadView('pdf.berita-acara-pemutihan', compact('pemutihan'));
+        
+        $filename = 'Berita_Acara_Pemutihan_' . str_replace(' ', '_', $pemutihan->siswa->nama_lengkap) . '_' . $pemutihan->tanggal . '.pdf';
+        
+        return $pdf->stream($filename);
     }
 
     public function store(Request $request)
