@@ -331,6 +331,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/persetujuan-izin-guru', [\App\Http\Controllers\SDM\PersetujuanIzinGuruController::class, 'index'])->name('persetujuan-izin-guru.index');
         Route::patch('/persetujuan-izin-guru/{izin}/approve', [\App\Http\Controllers\SDM\PersetujuanIzinGuruController::class, 'approve'])->name('persetujuan-izin-guru.approve');
         Route::patch('/persetujuan-izin-guru/{izin}/reject', [\App\Http\Controllers\SDM\PersetujuanIzinGuruController::class, 'reject'])->name('persetujuan-izin-guru.reject');
+
+        // Monitoring & Rekapitulasi
+        Route::get('/monitoring', [\App\Http\Controllers\SDM\DashboardController::class, 'monitoring'])->name('monitoring.index');
+        Route::get('/rekapitulasi', [\App\Http\Controllers\SDM\RekapitulasiController::class, 'index'])->name('rekapitulasi.index');
+        Route::get('/rekapitulasi/export-excel', [\App\Http\Controllers\SDM\RekapitulasiController::class, 'exportExcel'])->name('rekapitulasi.export-excel');
+        Route::get('/rekapitulasi/export-pdf', [\App\Http\Controllers\SDM\RekapitulasiController::class, 'exportPdf'])->name('rekapitulasi.export-pdf');
     });
 
     // Public/Shared print route for approved permits

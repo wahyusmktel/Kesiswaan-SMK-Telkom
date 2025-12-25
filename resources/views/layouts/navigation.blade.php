@@ -715,12 +715,30 @@
             </a>
         </li>
         <li>
+            <a href="{{ route('sdm.monitoring.index') }}"
+                class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('sdm.monitoring.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                </svg>
+                <span class="text-sm">Monitoring Guru</span>
+            </a>
+        </li>
+        <li>
             <a href="{{ route('sdm.persetujuan-izin-guru.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('sdm.persetujuan-izin-guru.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span class="text-sm">Persetujuan Izin Guru</span>
+            </a>
+        </li>
+        <li>
+            <a href="{{ route('sdm.rekapitulasi.index') }}"
+                class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('sdm.rekapitulasi.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span class="text-sm">Rekapitulasi Laporan</span>
             </a>
         </li>
     @endrole
