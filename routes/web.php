@@ -331,8 +331,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/persetujuan-izin-guru', [\App\Http\Controllers\SDM\PersetujuanIzinGuruController::class, 'index'])->name('persetujuan-izin-guru.index');
         Route::patch('/persetujuan-izin-guru/{izin}/approve', [\App\Http\Controllers\SDM\PersetujuanIzinGuruController::class, 'approve'])->name('persetujuan-izin-guru.approve');
         Route::patch('/persetujuan-izin-guru/{izin}/reject', [\App\Http\Controllers\SDM\PersetujuanIzinGuruController::class, 'reject'])->name('persetujuan-izin-guru.reject');
-        Route::get('/persetujuan-izin-guru/{izin}/print', [\App\Http\Controllers\SDM\PersetujuanIzinGuruController::class, 'printPdf'])->name('persetujuan-izin-guru.print');
     });
+
+    // Public/Shared print route for approved permits
+    Route::get('/sdm/persetujuan-izin-guru/{izin}/print', [\App\Http\Controllers\SDM\PersetujuanIzinGuruController::class, 'printPdf'])
+        ->middleware(['role:KAUR SDM|Guru Kelas'])
+        ->name('sdm.persetujuan-izin-guru.print');
 
     // Grup Route untuk Security
     Route::middleware(['role:Security'])->prefix('security')->name('security.')->group(function () {

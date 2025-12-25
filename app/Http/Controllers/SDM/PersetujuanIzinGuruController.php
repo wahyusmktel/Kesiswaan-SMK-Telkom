@@ -72,6 +72,15 @@ class PersetujuanIzinGuruController extends Controller
             abort(403, 'Surat izin belum disetujui oleh KAUR SDM.');
         }
 
+        // Security check: If teacher, only allow printing their own permit
+        $user = Auth::user();
+        if ($user->hasRole('Guru Kelas')) {
+            $guru = $user->masterGuru;
+            if (!$guru || $izin->master_guru_id !== $guru->id) {
+                abort(403, 'Anda tidak memiliki akses untuk mengunduh surat izin ini.');
+            }
+        }
+
         $izin->load(['guru', 'piket', 'kurikulum', 'sdm', 'jadwals.rombel.kelas', 'jadwals.mataPelajaran']);
         
         $pdf = Pdf::loadView('pdf.izin-guru', compact('izin'));

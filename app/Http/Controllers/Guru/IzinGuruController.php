@@ -73,6 +73,21 @@ class IzinGuruController extends Controller
             return redirect()->back()->with('error', 'Data Master Guru tidak ditemukan.');
         }
 
+        // Check for overlapping permits
+        $overlap = GuruIzin::where('master_guru_id', $guru->id)
+            ->where(function ($query) use ($request) {
+                $query->where('tanggal_mulai', '<=', $request->tanggal_selesai)
+                      ->where('tanggal_selesai', '>=', $request->tanggal_mulai);
+            })
+            ->where('status_piket', '!=', 'ditolak')
+            ->where('status_kurikulum', '!=', 'ditolak')
+            ->where('status_sdm', '!=', 'ditolak')
+            ->exists();
+
+        if ($overlap) {
+            return redirect()->back()->withInput()->with('error', 'Anda sudah memiliki pengajuan izin pada rentang waktu tersebut yang sedang diproses atau sudah disetujui.');
+        }
+
         $izin = GuruIzin::create([
             'master_guru_id' => $guru->id,
             'tanggal_mulai' => $request->tanggal_mulai,
