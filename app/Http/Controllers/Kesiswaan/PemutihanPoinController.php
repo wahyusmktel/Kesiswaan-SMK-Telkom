@@ -28,6 +28,15 @@ class PemutihanPoinController extends Controller
 
     public function printPdf(SiswaPemutihan $pemutihan)
     {
+        $user = auth()->user();
+        
+        // Security check: Siswa hanya boleh cetak surat miliknya sendiri
+        if ($user->hasRole('Siswa')) {
+            if (!$user->masterSiswa || $user->masterSiswa->id !== $pemutihan->master_siswa_id) {
+                abort(403, 'Anda tidak memiliki akses ke dokumen ini.');
+            }
+        }
+
         $pemutihan->load(['siswa', 'pengaju', 'penyetuju']);
         
         $pdf = Pdf::loadView('pdf.berita-acara-pemutihan', compact('pemutihan'));

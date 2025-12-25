@@ -125,10 +125,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::resource('input-pelanggaran', \App\Http\Controllers\Kesiswaan\PelanggaranSiswaController::class);
             Route::resource('input-prestasi', \App\Http\Controllers\Kesiswaan\PrestasiSiswaController::class);
             Route::resource('input-pemutihan', \App\Http\Controllers\Kesiswaan\PemutihanPoinController::class);
-            Route::get('input-pemutihan/{pemutihan}/print', [\App\Http\Controllers\Kesiswaan\PemutihanPoinController::class, 'printPdf'])->name('input-pemutihan.print');
             Route::patch('input-pemutihan/{pemutihan}/approve', [\App\Http\Controllers\Kesiswaan\PemutihanPoinController::class, 'approve'])->name('input-pemutihan.approve');
             Route::patch('input-pemutihan/{pemutihan}/reject', [\App\Http\Controllers\Kesiswaan\PemutihanPoinController::class, 'reject'])->name('input-pemutihan.reject');
         });
+
+        // Accessible by all authenticated users (students can print their own)
+        Route::get('input-pemutihan/{pemutihan}/print', [\App\Http\Controllers\Kesiswaan\PemutihanPoinController::class, 'printPdf'])->name('input-pemutihan.print');
 
         // Waka Kesiswaan specific routes
         Route::middleware(['role:Waka Kesiswaan'])->group(function () {

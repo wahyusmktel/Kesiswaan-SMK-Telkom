@@ -23,6 +23,17 @@ class RiwayatCatatanController extends Controller
             ->latest('created_at')
             ->paginate(10, ['*'], 'keterlambatan_page');
 
-        return view('pages.siswa.riwayat-catatan.index', compact('pelanggarans', 'keterlambatans'));
+        // Ambil data prestasi
+        $prestasis = $siswa->prestasis()
+            ->latest('tanggal')
+            ->paginate(10, ['*'], 'prestasi_page');
+
+        // Ambil data pemutihan
+        $pemutihans = $siswa->pemutihans()
+            ->with(['pengaju', 'penyetuju'])
+            ->latest('tanggal')
+            ->paginate(10, ['*'], 'pemutihan_page');
+
+        return view('pages.siswa.riwayat-catatan.index', compact('pelanggarans', 'keterlambatans', 'prestasis', 'pemutihans'));
     }
 }
