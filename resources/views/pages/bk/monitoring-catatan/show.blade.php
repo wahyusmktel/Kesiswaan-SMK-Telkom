@@ -33,7 +33,7 @@
             </div>
 
             {{-- Student Quick Info --}}
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
                     <div class="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600">
                         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -41,7 +41,7 @@
                         </svg>
                     </div>
                     <div>
-                        <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Kelas</p>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Kelas</p>
                         <p class="text-lg font-extrabold text-gray-900">{{ $siswa->rombels->first()->kelas->nama_kelas ?? '-' }}</p>
                     </div>
                 </div>
@@ -52,8 +52,8 @@
                         </svg>
                     </div>
                     <div>
-                        <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Total Poin</p>
-                        <p class="text-lg font-extrabold text-gray-900">{{ $siswa->getCurrentPoints() }} Poin</p>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Total Poin</p>
+                        <p class="text-lg font-extrabold text-gray-900">{{ $siswa->getCurrentPoints() }}</p>
                     </div>
                 </div>
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
@@ -63,8 +63,19 @@
                         </svg>
                     </div>
                     <div>
-                        <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Terlambat</p>
-                        <p class="text-lg font-extrabold text-gray-900">{{ $keterlambatans->count() }} Kali</p>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Terlambat</p>
+                        <p class="text-lg font-extrabold text-gray-900">{{ $keterlambatans->count() }}</p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+                    <div class="w-14 h-14 rounded-2xl bg-red-50 flex items-center justify-center text-red-600">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Panggilan</p>
+                        <p class="text-lg font-extrabold text-gray-900">{{ $panggilans->count() }}</p>
                     </div>
                 </div>
             </div>

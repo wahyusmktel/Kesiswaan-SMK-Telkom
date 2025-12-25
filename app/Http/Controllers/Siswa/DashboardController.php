@@ -18,6 +18,9 @@ class DashboardController extends Controller
         $totalDiajukan = Perizinan::where('user_id', $userId)->count();
         $totalDisetujui = Perizinan::where('user_id', $userId)->where('status', 'disetujui')->count();
         $totalDitolak = Perizinan::where('user_id', $userId)->where('status', 'ditolak')->count();
+        
+        $siswa = Auth::user()->masterSiswa;
+        $totalPanggilan = $siswa ? $siswa->panggilans()->count() : 0;
 
         // 2. Data untuk Pie Chart
         $statusData = Perizinan::where('user_id', $userId)
@@ -89,6 +92,7 @@ class DashboardController extends Controller
             'totalDiajukan',
             'totalDisetujui',
             'totalDitolak',
+            'totalPanggilan',
             'statusChartData',
             'poinData',
             'panggilanAktif',

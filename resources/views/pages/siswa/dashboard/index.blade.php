@@ -131,7 +131,7 @@
             </div>
             @endif
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-6">
                 <div
                     class="bg-white rounded-2xl p-6 border border-indigo-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
                     <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -141,10 +141,10 @@
                         </svg>
                     </div>
                     <div class="relative z-10">
-                        <p class="text-sm font-bold text-indigo-500 uppercase tracking-wider">Total Diajukan</p>
+                        <p class="text-[10px] font-bold text-indigo-500 uppercase tracking-wider">Total Diajukan</p>
                         <div class="flex items-baseline mt-2">
-                            <h3 class="text-4xl font-black text-gray-800">{{ $totalDiajukan }}</h3>
-                            <span class="ml-2 text-sm text-gray-500">kali</span>
+                            <h3 class="text-3xl font-black text-gray-800">{{ $totalDiajukan }}</h3>
+                            <span class="ml-2 text-xs text-gray-500">kali</span>
                         </div>
                     </div>
                     <div class="mt-4 h-1 w-full bg-indigo-50 rounded-full overflow-hidden">
@@ -161,10 +161,10 @@
                         </svg>
                     </div>
                     <div class="relative z-10">
-                        <p class="text-sm font-bold text-green-600 uppercase tracking-wider">Disetujui</p>
+                        <p class="text-[10px] font-bold text-green-600 uppercase tracking-wider">Disetujui</p>
                         <div class="flex items-baseline mt-2">
-                            <h3 class="text-4xl font-black text-gray-800">{{ $totalDisetujui }}</h3>
-                            <span class="ml-2 text-sm text-gray-500">kali</span>
+                            <h3 class="text-3xl font-black text-gray-800">{{ $totalDisetujui }}</h3>
+                            <span class="ml-2 text-xs text-gray-500">kali</span>
                         </div>
                     </div>
                     <div class="mt-4 h-1 w-full bg-green-50 rounded-full overflow-hidden">
@@ -183,15 +183,37 @@
                         </svg>
                     </div>
                     <div class="relative z-10">
-                        <p class="text-sm font-bold text-red-500 uppercase tracking-wider">Ditolak</p>
+                        <p class="text-[10px] font-bold text-red-500 uppercase tracking-wider">Ditolak</p>
                         <div class="flex items-baseline mt-2">
-                            <h3 class="text-4xl font-black text-gray-800">{{ $totalDitolak }}</h3>
-                            <span class="ml-2 text-sm text-gray-500">kali</span>
+                            <h3 class="text-3xl font-black text-gray-800">{{ $totalDitolak }}</h3>
+                            <span class="ml-2 text-xs text-gray-500">kali</span>
                         </div>
                     </div>
                     <div class="mt-4 h-1 w-full bg-red-50 rounded-full overflow-hidden">
                         <div class="h-full bg-red-500 w-full"
                             style="width: {{ $totalDiajukan > 0 ? ($totalDitolak / $totalDiajukan) * 100 : 0 }}%">
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    class="bg-white rounded-2xl p-6 border border-orange-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                    <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <svg class="w-24 h-24 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                    <div class="relative z-10">
+                        <p class="text-[10px] font-bold text-orange-500 uppercase tracking-wider">Panggilan Ortu</p>
+                        <div class="flex items-baseline mt-2">
+                            <h3 class="text-3xl font-black text-gray-800">{{ $totalPanggilan }}</h3>
+                            <span class="ml-2 text-xs text-gray-500">kali</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 h-1 w-full bg-orange-50 rounded-full overflow-hidden">
+                        <div class="h-full bg-orange-500 w-full"
+                            style="width: 100%">
                         </div>
                     </div>
                 </div>
