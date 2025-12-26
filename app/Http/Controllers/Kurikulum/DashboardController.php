@@ -7,7 +7,8 @@ use App\Models\JadwalPelajaran;
 use App\Models\MasterGuru;
 use App\Models\MataPelajaran;
 use App\Models\Rombel;
-use App\Models\TahunPelajaran; // Tambahkan ini
+use App\Models\TahunPelajaran;
+use App\Models\JamPelajaran;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -83,6 +84,7 @@ class DashboardController extends Controller
         $topTerlambat = (clone $baseQuery)->where('status', 'terlambat')->orderByDesc('total')->take(5)->get();
         $topAbsen = (clone $baseQuery)->where('status', 'tidak_hadir')->orderByDesc('total')->take(5)->get();
         $topIzin = (clone $baseQuery)->where('status', 'izin')->orderByDesc('total')->take(5)->get();
+        $kegiatanSaatIni = $this->getKegiatanSaatIni();
 
         return view('pages.kurikulum.dashboard.index', compact(
             'totalGuru',
@@ -94,8 +96,35 @@ class DashboardController extends Controller
             'topRajin',
             'topTerlambat',
             'topAbsen',
-            'topIzin'
+            'topIzin',
+            'kegiatanSaatIni'
         ));
+    }
+
+    private function getKegiatanSaatIni()
+    {
+        $currentTime = now()->format('H:i:s');
+        $namaHariIni = $this->getNamaHari(now()->dayOfWeek);
+        
+        $kegiatan = JamPelajaran::where('jam_mulai', '<=', $currentTime)
+            ->where('jam_selesai', '>=', $currentTime)
+            ->whereNotNull('tipe_kegiatan')
+            ->where(function ($query) use ($namaHariIni) {
+                $query->where('hari', $namaHariIni)
+                      ->orWhereNull('hari');
+            })
+            ->orderByRaw('hari IS NULL ASC')
+            ->first();
+
+        if ($kegiatan && !$kegiatan->hari) {
+            if ($kegiatan->tipe_kegiatan == 'upacara' && $namaHariIni != 'Senin') {
+                $kegiatan = null;
+            } elseif ($kegiatan->tipe_kegiatan == 'kegiatan_4r' && $namaHariIni != 'Jumat') {
+                $kegiatan = null;
+            }
+        }
+
+        return $kegiatan;
     }
 
     private function getNamaHari($dayOfWeek)

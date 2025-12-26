@@ -11,6 +11,7 @@ use App\Models\Rombel;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use App\Models\JamPelajaran;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
@@ -94,13 +95,39 @@ class DashboardController extends Controller
             'data' => $tujuanIzinKeluarChart->values(),
         ];
 
+        // ==================================================
+        //      LOGIKA BARU: Kegiatan Sekolah Saat Ini
+        // ==================================================
+        $currentTime = now()->format('H:i:s');
+        $namaHariIni = $this->getNamaHari(now()->dayOfWeek);
+        
+        $kegiatanSaatIni = JamPelajaran::where('jam_mulai', '<=', $currentTime)
+            ->where('jam_selesai', '>=', $currentTime)
+            ->whereNotNull('tipe_kegiatan')
+            ->where(function ($query) use ($namaHariIni) {
+                $query->where('hari', $namaHariIni) // Prioritaskan override hari ini
+                      ->orWhereNull('hari');        // Atau jadwal umum
+            })
+            ->orderByRaw('hari IS NULL ASC') // Pastikan yang ada harinya (override) didahulukan
+            ->first();
+
+        // Validasi tambahan untuk upacara (Senin) dan 4R (Jumat) jika pakai jadwal umum
+        if ($kegiatanSaatIni && !$kegiatanSaatIni->hari) {
+            if ($kegiatanSaatIni->tipe_kegiatan == 'upacara' && $namaHariIni != 'Senin') {
+                $kegiatanSaatIni = null;
+            } elseif ($kegiatanSaatIni->tipe_kegiatan == 'kegiatan_4r' && $namaHariIni != 'Jumat') {
+                $kegiatanSaatIni = null;
+            }
+        }
+
         return view('pages.guru-kelas.dashboard.index', compact(
             'kelasDiajar',
             'jadwalHariIni',
             'siswaIzinHariIni',
             'siswaSedangKeluar',
-            'topSiswaIzinKeluarChartData', // <-- Kirim data baru
-            'tujuanIzinKeluarChartData'   // <-- Kirim data baru
+            'topSiswaIzinKeluarChartData',
+            'tujuanIzinKeluarChartData',
+            'kegiatanSaatIni' // <-- Kirim data kegiatan
         ));
     }
 

@@ -11,6 +11,7 @@ use App\Models\User; // <-- Pastikan User model di-import
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\JamPelajaran;
 
 class DashboardController extends Controller
 {
@@ -136,7 +137,40 @@ class DashboardController extends Controller
             'dailyChartDataPiket' => ['labels' => $datesPiket->keys()->map(fn($date) => \Carbon\Carbon::parse($date)->format('d M')), 'data' => $datesPiket->values()],
             'tujuanChartDataPiket' => ['labels' => $tujuanChartPiket->keys(), 'data' => $tujuanChartPiket->values()],
             'topSiswaIzinKeluarPersonal' => $topSiswaIzinKeluarPersonal,
-            'topSiswaIzinKeluarGlobal' => $topSiswaIzinKeluarGlobal, // <-- Variabel baru ditambahkan
+            'topSiswaIzinKeluarGlobal' => $topSiswaIzinKeluarGlobal,
+            'kegiatanSaatIni' => $this->getKegiatanSaatIni(),
         ]);
+    }
+
+    private function getKegiatanSaatIni()
+    {
+        $currentTime = now()->format('H:i:s');
+        $namaHariIni = $this->getNamaHari(now()->dayOfWeek);
+        
+        $kegiatan = JamPelajaran::where('jam_mulai', '<=', $currentTime)
+            ->where('jam_selesai', '>=', $currentTime)
+            ->whereNotNull('tipe_kegiatan')
+            ->where(function ($query) use ($namaHariIni) {
+                $query->where('hari', $namaHariIni)
+                      ->orWhereNull('hari');
+            })
+            ->orderByRaw('hari IS NULL ASC')
+            ->first();
+
+        if ($kegiatan && !$kegiatan->hari) {
+            if ($kegiatan->tipe_kegiatan == 'upacara' && $namaHariIni != 'Senin') {
+                $kegiatan = null;
+            } elseif ($kegiatan->tipe_kegiatan == 'kegiatan_4r' && $namaHariIni != 'Jumat') {
+                $kegiatan = null;
+            }
+        }
+
+        return $kegiatan;
+    }
+
+    private function getNamaHari($dayOfWeek)
+    {
+        $hari = [0 => 'Minggu', 1 => 'Senin', 2 => 'Selasa', 3 => 'Rabu', 4 => 'Kamis', 5 => 'Jumat', 6 => 'Sabtu'];
+        return $hari[$dayOfWeek] ?? 'Tidak Diketahui';
     }
 }

@@ -77,24 +77,51 @@
             </div>
             @endif
 
-            <div
-                class="relative rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 shadow-lg overflow-hidden p-6 sm:p-10 animate-gradient">
-                <div class="absolute right-0 top-0 h-full w-1/2 bg-white/10 transform skew-x-12"></div>
-                <div class="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div class="text-white">
-                        <h3 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Halo, {{ Auth::user()->name }}! 👋
-                        </h3>
-                        <p class="mt-2 text-indigo-100 font-medium">Bagaimana kabarmu hari ini? Jangan lupa jaga
-                            kesehatan ya.</p>
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                <div class="lg:col-span-3">
+                    <div
+                        class="relative rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 shadow-lg overflow-hidden p-6 sm:p-10 animate-gradient h-full">
+                        <div class="absolute right-0 top-0 h-full w-1/2 bg-white/10 transform skew-x-12"></div>
+                        <div class="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <div class="text-white">
+                                <h3 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Halo, {{ Auth::user()->name }}! 👋
+                                </h3>
+                                <p class="mt-2 text-indigo-100 font-medium">Bagaimana kabarmu hari ini? Jangan lupa jaga
+                                    kesehatan ya.</p>
+                            </div>
+                            <a href="{{ route('izin.index') }}"
+                                class="inline-flex items-center px-5 py-3 bg-white text-indigo-600 rounded-xl font-bold shadow-md hover:bg-indigo-50 hover:shadow-lg transition-all transform hover:-translate-y-1 group">
+                                <svg class="w-5 h-5 mr-2 text-pink-500 group-hover:scale-110 transition-transform"
+                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                </svg>
+                                Buat Izin Baru
+                            </a>
+                        </div>
                     </div>
-                    <a href="{{ route('izin.index') }}"
-                        class="inline-flex items-center px-5 py-3 bg-white text-indigo-600 rounded-xl font-bold shadow-md hover:bg-indigo-50 hover:shadow-lg transition-all transform hover:-translate-y-1 group">
-                        <svg class="w-5 h-5 mr-2 text-pink-500 group-hover:scale-110 transition-transform"
-                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                        Buat Izin Baru
-                    </a>
+                </div>
+                <div class="lg:col-span-1">
+                    @if ($kegiatanSaatIni)
+                        <div class="bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl shadow-lg p-6 text-white relative overflow-hidden group h-full">
+                            <div class="absolute -right-4 -bottom-4 opacity-20 transform group-hover:scale-110 transition-transform">
+                                <svg class="w-32 h-32" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg>
+                            </div>
+                            <div class="relative z-10">
+                                <span class="bg-white/20 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest mb-2 inline-block border border-white/30">Kegiatan Saat Ini</span>
+                                <h4 class="text-xl font-black leading-tight mb-1">{{ str_replace('_', ' ', strtoupper($kegiatanSaatIni->tipe_kegiatan)) }}</h4>
+                                <p class="text-amber-50 text-xs font-bold font-mono">
+                                    {{ \Carbon\Carbon::parse($kegiatanSaatIni->jam_mulai)->format('H:i') }} - {{ \Carbon\Carbon::parse($kegiatanSaatIni->jam_selesai)->format('H:i') }}
+                                </p>
+                            </div>
+                        </div>
+                    @else
+                        <div class="bg-white rounded-2xl border-2 border-dashed border-gray-200 p-6 flex flex-col items-center justify-center text-center h-full group hover:border-indigo-300 transition-colors">
+                            <div class="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mb-3 group-hover:bg-indigo-50 transition-colors">
+                                <svg class="w-6 h-6 text-gray-300 group-hover:text-indigo-400 Transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest">Tidak Ada Kegiatan Spesial</p>
+                        </div>
+                    @endif
                 </div>
             </div>
 
