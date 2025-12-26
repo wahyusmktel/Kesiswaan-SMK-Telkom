@@ -18,7 +18,27 @@
                 @csrf
 
                 <div
-                    class="bg-white border border-gray-200 shadow-md rounded-xl p-6 mb-6 sticky top-20 z-30 transition-shadow duration-300">
+                    :class="isSticky ? 'sticky top-20 z-30 shadow-xl border-indigo-100 ring-4 ring-indigo-50/50 bg-white/95 backdrop-blur-sm' : 'relative bg-white border-gray-200 shadow-md'"
+                    class="rounded-2xl p-6 mb-8 transition-all duration-500 ease-in-out border">
+                    
+                    <div class="flex items-center justify-between mb-6 border-b border-gray-50 pb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-100">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+                            </div>
+                            <div>
+                                <h3 class="font-black text-gray-900 tracking-tight">Konfigurasi Pengisian</h3>
+                                <p class="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Panel Kontrol Utama</p>
+                            </div>
+                        </div>
+
+                        <label class="relative inline-flex items-center cursor-pointer group">
+                            <input type="checkbox" x-model="isSticky" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                            <span class="ms-3 text-xs font-bold text-gray-500 group-hover:text-indigo-600 transition-colors uppercase tracking-widest">Panel Melayang</span>
+                        </label>
+                    </div>
+
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
 
                         <div class="lg:col-span-4">
@@ -88,13 +108,19 @@
                     </div>
 
                     <div
-                        class="mt-4 flex items-center gap-2 text-xs text-indigo-600 bg-indigo-50 p-2.5 rounded-lg border border-indigo-100">
-                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span><strong>Petunjuk:</strong> Pilih Mapel dan Guru di atas, lalu klik kotak-kotak pada tabel
-                            jadwal di bawah untuk mengisi jadwal. Klik lagi untuk menghapus.</span>
+                        class="mt-4 flex items-center gap-3 text-xs bg-indigo-50/50 p-4 rounded-xl border border-indigo-100/50 group">
+                        <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center flex-shrink-0 animate-pulse">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <span class="text-gray-600 leading-relaxed font-medium">
+                            <strong class="text-indigo-700">Cara Pengisian:</strong> 
+                            1. Pilih <span class="font-bold underline decoration-indigo-300">Mata Pelajaran</span> & <span class="font-bold underline decoration-indigo-300">Guru</span> di panel ini. 
+                            2. Geser layar ke bawah dan klik pada <span class="font-bold text-indigo-700">Kotak Jadwal</span> yang diinginkan. Klk lagi untuk menghapus.
+                            3. Gunakan fitur <span class="font-bold italic text-indigo-700">"Panel Melayang"</span> di pojok kanan atas untuk mempermudah navigasi saat jadwal sangat panjang.
+                        </span>
                     </div>
                 </div>
 
@@ -209,6 +235,7 @@
 
                 selectedMapelId: '',
                 selectedGuruId: '',
+                isSticky: true,
 
                 init() {
                     // Init logic jika diperlukan
