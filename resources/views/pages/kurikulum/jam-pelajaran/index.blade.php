@@ -24,6 +24,7 @@
                         <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-200">
                             <tr>
                                 <th class="px-6 py-4 font-bold tracking-wider w-24">Jam Ke-</th>
+                                <th class="px-6 py-4 font-bold tracking-wider">Berlaku Pada</th>
                                 <th class="px-6 py-4 font-bold tracking-wider">Rentang Waktu</th>
                                 <th class="px-6 py-4 font-bold tracking-wider">Durasi</th>
                                 <th class="px-6 py-4 font-bold tracking-wider">Keterangan</th>
@@ -36,6 +37,13 @@
                                     <td
                                         class="px-6 py-4 whitespace-nowrap text-center font-bold text-indigo-600 bg-indigo-50/30">
                                         {{ $item->jam_ke }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        @if ($item->hari)
+                                            <span class="px-2 py-0.5 bg-rose-50 text-rose-700 rounded-md font-bold text-[10px] border border-rose-100 uppercase tracking-widest">{{ $item->hari }}</span>
+                                        @else
+                                            <span class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md font-bold text-[10px] border border-gray-200 uppercase tracking-widest">Umum</span>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap font-mono text-gray-700">
                                         {{ \Carbon\Carbon::parse($item->jam_mulai)->format('H:i') }} -
@@ -51,13 +59,20 @@
                                             Menit</span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
+                                        @if ($item->tipe_kegiatan)
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-indigo-100 text-indigo-700 border border-indigo-200">
+                                                {{ str_replace('_', ' ', $item->tipe_kegiatan) }}
+                                            </span>
+                                        @endif
                                         @if ($item->keterangan)
                                             <span
-                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-50 text-yellow-700 border border-yellow-100">
+                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-50 text-yellow-700 border border-yellow-100 {{ $item->tipe_kegiatan ? 'mt-1 block w-fit' : '' }}">
                                                 {{ $item->keterangan }}
                                             </span>
                                         @else
-                                            <span class="text-gray-400 italic text-xs">-</span>
+                                            @if(!$item->tipe_kegiatan)
+                                                <span class="text-gray-400 italic text-xs">-</span>
+                                            @endif
                                         @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -66,9 +81,11 @@
                                                 @click="$dispatch('edit-jam', {
                                                     id: '{{ $item->id }}',
                                                     jam_ke: '{{ $item->jam_ke }}',
+                                                    hari: '{{ $item->hari ?? '' }}',
                                                     jam_mulai: '{{ \Carbon\Carbon::parse($item->jam_mulai)->format('H:i') }}',
                                                     jam_selesai: '{{ \Carbon\Carbon::parse($item->jam_selesai)->format('H:i') }}',
                                                     keterangan: '{{ addslashes($item->keterangan ?? '') }}',
+                                                    tipe_kegiatan: '{{ $item->tipe_kegiatan ?? '' }}',
                                                     updateUrl: '{{ route('kurikulum.jam-pelajaran.update', $item->id) }}'
                                                 })"
                                                 class="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-xs font-semibold border border-gray-200">
@@ -133,10 +150,25 @@
                     <template x-if="isEdit"><input type="hidden" name="_method" value="PUT"></template>
 
                     <div class="px-4 py-5 sm:p-6 space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Jam Ke-</label>
-                            <input type="number" name="jam_ke" x-model="form.jam_ke" required
-                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Jam Ke-</label>
+                                <input type="number" name="jam_ke" x-model="form.jam_ke" required
+                                    class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Hari <span class="text-gray-400 font-normal">(Kosong = Umum)</span></label>
+                                <select name="hari" x-model="form.hari"
+                                    class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                    <option value="">Berlaku Semua Hari</option>
+                                    <option value="Senin">Senin</option>
+                                    <option value="Selasa">Selasa</option>
+                                    <option value="Rabu">Rabu</option>
+                                    <option value="Kamis">Kamis</option>
+                                    <option value="Jumat">Jumat</option>
+                                    <option value="Sabtu">Sabtu</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
@@ -153,10 +185,27 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Keterangan <span
+                            <label class="block text-sm font-medium text-gray-700">Tipe Kegiatan <span class="text-gray-400 font-normal">(Opsional)</span></label>
+                            <select name="tipe_kegiatan" x-model="form.tipe_kegiatan"
+                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                <option value="">-- Kegiatan Rutin / Khusus --</option>
+                                <option value="istirahat">Istirahat</option>
+                                <option value="sholawat_pagi">Sholawat Pagi</option>
+                                <option value="upacara">Upacara (Senin)</option>
+                                <option value="ishoma">Ishoma</option>
+                                <option value="kegiatan_4r">Kegiatan 4R (Jumat)</option>
+                            </select>
+                            <div class="mt-2 text-[10px] text-gray-500 bg-gray-50 p-2 rounded border border-dashed">
+                                * Sholawat, Istirahat, Ishoma berlaku setiap hari.<br>
+                                * Upacara hanya Senin, 4R hanya Jumat.
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Keterangan Tambahan <span
                                     class="text-gray-400 font-normal">(Opsional)</span></label>
                             <input type="text" name="keterangan" x-model="form.keterangan"
-                                placeholder="Contoh: Istirahat, Sholat"
+                                placeholder="..."
                                 class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                         </div>
                     </div>
@@ -198,8 +247,10 @@
                     formAction: '{{ route('kurikulum.jam-pelajaran.store') }}',
                     form: {
                         jam_ke: '',
+                        hari: '',
                         jam_mulai: '',
                         jam_selesai: '',
+                        tipe_kegiatan: '',
                         keterangan: ''
                     },
                     openModal() {
@@ -208,8 +259,10 @@
                         this.formAction = '{{ route('kurikulum.jam-pelajaran.store') }}';
                         this.form = {
                             jam_ke: '',
+                            hari: '',
                             jam_mulai: '',
                             jam_selesai: '',
+                            tipe_kegiatan: '',
                             keterangan: ''
                         };
                     },
@@ -219,8 +272,10 @@
                         this.formAction = data.updateUrl;
                         this.form = {
                             jam_ke: data.jam_ke,
+                            hari: data.hari,
                             jam_mulai: data.jam_mulai,
                             jam_selesai: data.jam_selesai,
+                            tipe_kegiatan: data.tipe_kegiatan,
                             keterangan: data.keterangan
                         };
                     },

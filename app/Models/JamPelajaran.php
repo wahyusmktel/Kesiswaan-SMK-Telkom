@@ -13,8 +13,10 @@ class JamPelajaran extends Model
 
     protected $fillable = [
         'jam_ke',
+        'hari',
         'jam_mulai',
         'jam_selesai',
+        'tipe_kegiatan',
         'keterangan',
     ];
 }

@@ -143,6 +143,10 @@
                             </thead>
                             <tbody class="divide-y divide-gray-100">
                                 @foreach ($jamSlots as $slot)
+                                    @php
+                                        // Ambil contoh data untuk kolom kiri (pilih yang ada/default)
+                                        $repSlot = $jamLookup["{$slot->jam_ke}-Senin"] ?? $jamLookup["{$slot->jam_ke}-Jumat"] ?? null;
+                                    @endphp
                                     <tr>
                                         <td
                                             class="border-r border-gray-100 p-4 bg-gray-50/80 sticky left-0 z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] backdrop-blur-sm">
@@ -150,70 +154,104 @@
                                                 <span
                                                     class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Jam
                                                     Ke-{{ $slot->jam_ke }}</span>
-                                                <span class="font-mono text-gray-800 font-bold text-lg">
-                                                    {{ \Carbon\Carbon::parse($slot->jam_mulai)->format('H:i') }}
-                                                </span>
-                                                <span class="text-gray-300 text-xs my-0.5">-</span>
-                                                <span class="font-mono text-gray-500 font-medium">
-                                                    {{ \Carbon\Carbon::parse($slot->jam_selesai)->format('H:i') }}
-                                                </span>
-                                                @if ($slot->keterangan)
-                                                    <span
-                                                        class="mt-2 px-2 py-0.5 bg-yellow-100 text-yellow-700 text-[10px] rounded-full font-bold uppercase tracking-wide border border-yellow-200">
-                                                        {{ $slot->keterangan }}
+                                                @if($repSlot)
+                                                    <span class="font-mono text-gray-800 font-bold text-lg">
+                                                        {{ \Carbon\Carbon::parse($repSlot->jam_mulai)->format('H:i') }}
+                                                    </span>
+                                                    <span class="text-gray-300 text-xs my-0.5">-</span>
+                                                    <span class="font-mono text-gray-500 font-medium">
+                                                        {{ \Carbon\Carbon::parse($repSlot->jam_selesai)->format('H:i') }}
                                                     </span>
                                                 @endif
                                             </div>
                                         </td>
 
                                         @foreach ($days as $day)
-                                            <td class="border-r border-b border-gray-100 p-1 align-top h-32 relative group transition-all duration-200 hover:bg-gray-50/50"
+                                            @php
+                                                $currentSlot = $jamLookup["{$slot->jam_ke}-{$day}"] ?? null;
+                                                $isActivity = false;
+                                                $activityName = '';
+                                                
+                                                if ($currentSlot && $currentSlot->tipe_kegiatan) {
+                                                    if (in_array($currentSlot->tipe_kegiatan, ['istirahat', 'sholawat_pagi', 'ishoma'])) {
+                                                        $isActivity = true;
+                                                    } elseif ($currentSlot->tipe_kegiatan == 'upacara' && $day == 'Senin') {
+                                                        $isActivity = true;
+                                                    } elseif ($currentSlot->tipe_kegiatan == 'kegiatan_4r' && $day == 'Jumat') {
+                                                        $isActivity = true;
+                                                    }
+                                                    $activityName = str_replace('_', ' ', $currentSlot->tipe_kegiatan);
+                                                }
+                                            @endphp
+
+                                            <td class="border-r border-b border-gray-100 p-1 align-top h-32 relative group transition-all duration-200 {{ !$currentSlot ? 'bg-gray-100/50' : ($isActivity ? 'bg-amber-50/50' : 'bg-white hover:bg-gray-50/50') }}"
                                                 :class="getCellClass('{{ $day }}', {{ $slot->jam_ke }})"
                                                 data-cell="{{ $day }}-{{ $slot->jam_ke }}">
-
-                                                <label
-                                                    class="flex flex-col justify-center items-center h-full w-full cursor-pointer relative z-0 p-2 select-none">
-
-                                                    <input type="checkbox" class="absolute opacity-0 w-0 h-0"
-                                                        :disabled="isSlotDisabled('{{ $day }}', {{ $slot->jam_ke }})"
-                                                        @change="toggleSlot('{{ $day }}', {{ $slot->jam_ke }}, $event)">
-
-                                                    <div x-show="!jadwal['{{ $day }}-{{ $slot->jam_ke }}']"
-                                                        class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <div
-                                                            class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shadow-md transform scale-50 group-hover:scale-100 transition-transform duration-200">
-                                                            <svg class="w-6 h-6" fill="none" stroke="currentColor"
-                                                                viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                                    stroke-width="2" d="M12 4v16m8-8H4" />
-                                                            </svg>
-                                                        </div>
+                                                
+                                                @if(!$currentSlot)
+                                                    <div class="flex items-center justify-center h-full opacity-25">
+                                                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
                                                     </div>
-
-                                                    <div x-show="jadwal['{{ $day }}-{{ $slot->jam_ke }}']"
-                                                        class="text-center w-full relative z-10">
-                                                        <div class="font-bold text-sm leading-tight mb-1.5 break-words"
-                                                            x-text="getMapelName('{{ $day }}', {{ $slot->jam_ke }})">
+                                                @elseif ($isActivity)
+                                                    <div class="flex flex-col justify-center items-center h-full w-full p-2 select-none">
+                                                        <div class="w-8 h-8 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center mb-1 shadow-sm border border-amber-200">
+                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                                         </div>
-                                                        <div class="text-[10px] uppercase font-bold tracking-wide bg-white/60 px-2 py-1 rounded inline-block shadow-sm backdrop-blur-sm"
-                                                            x-text="getGuruName('{{ $day }}', {{ $slot->jam_ke }})">
-                                                        </div>
+                                                        <span class="text-[9px] font-black uppercase tracking-widest text-amber-700 text-center leading-tight">
+                                                            {{ $activityName }}
+                                                        </span>
+                                                        <span class="text-[8px] font-mono text-amber-500 mt-0.5">
+                                                            {{ \Carbon\Carbon::parse($currentSlot->jam_mulai)->format('H:i') }} - {{ \Carbon\Carbon::parse($currentSlot->jam_selesai)->format('H:i') }}
+                                                        </span>
+                                                        @if($currentSlot->keterangan)
+                                                            <span class="text-[8px] text-amber-400 mt-1 italic text-center line-clamp-1 truncate px-1">{{ $currentSlot->keterangan }}</span>
+                                                        @endif
                                                     </div>
+                                                @else
+                                                    <label
+                                                        class="flex flex-col justify-center items-center h-full w-full cursor-pointer relative z-0 p-2 select-none">
 
-                                                    <template
-                                                        x-if="jadwal['{{ $day }}-{{ $slot->jam_ke }}']">
-                                                        <div>
-                                                            <input type="hidden"
-                                                                name="jadwal[{{ $day }}][{{ $slot->jam_ke }}][mata_pelajaran_id]"
-                                                                :value="jadwal['{{ $day }}-{{ $slot->jam_ke }}']
-                                                                    .mata_pelajaran_id">
-                                                            <input type="hidden"
-                                                                name="jadwal[{{ $day }}][{{ $slot->jam_ke }}][master_guru_id]"
-                                                                :value="jadwal['{{ $day }}-{{ $slot->jam_ke }}']
-                                                                    .master_guru_id">
+                                                        <input type="checkbox" class="absolute opacity-0 w-0 h-0"
+                                                            :disabled="isSlotDisabled('{{ $day }}', {{ $slot->jam_ke }})"
+                                                            @change="toggleSlot('{{ $day }}', {{ $slot->jam_ke }}, $event)">
+
+                                                        <div x-show="!jadwal['{{ $day }}-{{ $slot->jam_ke }}']"
+                                                            class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <div
+                                                                class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shadow-md transform scale-50 group-hover:scale-100 transition-transform duration-200">
+                                                                <svg class="w-6 h-6" fill="none" stroke="currentColor"
+                                                                    viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                                        stroke-width="2" d="M12 4v16m8-8H4" />
+                                                                </svg>
+                                                            </div>
                                                         </div>
-                                                    </template>
-                                                </label>
+
+                                                        <div x-show="jadwal['{{ $day }}-{{ $slot->jam_ke }}']"
+                                                            class="text-center w-full relative z-10">
+                                                            <div class="font-bold text-sm leading-tight mb-1.5 break-words"
+                                                                x-text="getMapelName('{{ $day }}', {{ $slot->jam_ke }})">
+                                                            </div>
+                                                            <div class="text-[10px] uppercase font-bold tracking-wide bg-white/60 px-2 py-1 rounded inline-block shadow-sm backdrop-blur-sm"
+                                                                x-text="getGuruName('{{ $day }}', {{ $slot->jam_ke }})">
+                                                            </div>
+                                                        </div>
+
+                                                        <template
+                                                            x-if="jadwal['{{ $day }}-{{ $slot->jam_ke }}']">
+                                                            <div>
+                                                                <input type="hidden"
+                                                                    name="jadwal[{{ $day }}][{{ $slot->jam_ke }}][mata_pelajaran_id]"
+                                                                    :value="jadwal['{{ $day }}-{{ $slot->jam_ke }}']
+                                                                        .mata_pelajaran_id">
+                                                                <input type="hidden"
+                                                                    name="jadwal[{{ $day }}][{{ $slot->jam_ke }}][master_guru_id]"
+                                                                    :value="jadwal['{{ $day }}-{{ $slot->jam_ke }}']
+                                                                        .master_guru_id">
+                                                            </div>
+                                                        </template>
+                                                    </label>
+                                                @endif
                                             </td>
                                         @endforeach
                                     </tr>
@@ -303,7 +341,7 @@
 
                 getCellClass(day, jamKe) {
                     const data = this.jadwal[`${day}-${jamKe}`];
-                    if (!data) return 'bg-white'; // Kosong
+                    if (!data) return ''; // Kosong
 
                     // Warna-warni pastel berdasarkan ID Mapel
                     const colors = [

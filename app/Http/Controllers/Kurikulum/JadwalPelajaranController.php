@@ -34,7 +34,30 @@ class JadwalPelajaranController extends Controller
     public function show(Rombel $rombel)
     {
         $days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-        $jamSlots = JamPelajaran::orderBy('jam_ke')->get(); // <-- Ambil dari database
+        $allJam = JamPelajaran::orderBy('jam_ke')->get();
+        
+        // Ambil daftar unik jam_ke untuk baris tabel
+        $jamKeList = $allJam->pluck('jam_ke')->unique()->sort();
+        
+        // Kelompokkan slot jam untuk mempermudah pencarian (override vs default)
+        $jamSlotsGrouped = $allJam->groupBy('jam_ke');
+        
+        // Siapkan array final jamSlots untuk dikirim ke view
+        // Kita buat dummy collection yang berisi jam_ke unik agar loop di blade tetap jalan
+        $jamSlots = $jamKeList->map(function($ke) {
+            return (object)['jam_ke' => $ke];
+        });
+
+        // Hash table untuk pencarian cepat di blade: jamKe-Hari => JamPelajaran object
+        $jamLookup = [];
+        foreach ($jamSlotsGrouped as $ke => $slots) {
+            $default = $slots->whereNull('hari')->first();
+            foreach ($days as $day) {
+                $specific = $slots->where('hari', $day)->first();
+                $jamLookup["{$ke}-{$day}"] = $specific ?? $default;
+            }
+        }
+
         $mataPelajaran = MataPelajaran::where('kelas_id', $rombel->kelas_id)
             ->orderBy('nama_mapel')
             ->get();
@@ -58,14 +81,22 @@ class JadwalPelajaranController extends Controller
             return $item->hari . '-' . $item->jam_ke;
         });
 
-        return view('pages.kurikulum.jadwal-pelajaran.show', compact('rombel', 'days', 'jamSlots', 'mataPelajaran', 'guru', 'jadwalFormatted'));
+        return view('pages.kurikulum.jadwal-pelajaran.show', compact('rombel', 'days', 'jamSlots', 'mataPelajaran', 'guru', 'jadwalFormatted', 'jamLookup'));
     }
 
     // Method store() diubah untuk mengambil data dari database
     public function store(Request $request, Rombel $rombel)
     {
         $jadwalData = $request->input('jadwal', []);
-        $jamSlots = JamPelajaran::orderBy('jam_ke')->get()->keyBy('jam_ke'); // <-- Ambil dari database
+        
+        // Ambil semua jam pelajaran dan buat lookup: hari-jamKe => object
+        // Hari null di-mapped ke 'default-jamKe'
+        $allSlots = JamPelajaran::all();
+        $slotLookup = [];
+        foreach ($allSlots as $s) {
+            $key = ($s->hari ?? 'default') . '-' . $s->jam_ke;
+            $slotLookup[$key] = $s;
+        }
 
         DB::beginTransaction();
         try {
@@ -73,8 +104,11 @@ class JadwalPelajaranController extends Controller
             foreach ($jadwalData as $hari => $jamKeList) {
                 foreach ($jamKeList as $jamKe => $data) {
                     if (!empty($data['mata_pelajaran_id']) && !empty($data['master_guru_id'])) {
-                        $slot = $jamSlots->get($jamKe);
-                        if ($slot) { // Pastikan slot jam ditemukan
+                        
+                        // Cari slot yang spesifik hari ini, jika tidak ada pakai default
+                        $slot = $slotLookup["{$hari}-{$jamKe}"] ?? $slotLookup["default-{$jamKe}"] ?? null;
+                        
+                        if ($slot) {
                             JadwalPelajaran::create([
                                 'rombel_id' => $rombel->id,
                                 'hari' => $hari,
