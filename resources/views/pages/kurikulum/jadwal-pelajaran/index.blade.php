@@ -6,9 +6,18 @@
     <div class="py-6 w-full">
         <div class="w-full px-4 sm:px-6 lg:px-8">
             <div class="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
-                <div class="p-6 border-b border-gray-100 bg-gray-50/50">
-                    <h3 class="font-bold text-gray-700 text-lg">Pilih Rombongan Belajar</h3>
-                    <p class="text-sm text-gray-500">Klik pada kartu kelas untuk mulai mengatur jadwal.</p>
+                <div class="p-6 border-b border-gray-100 bg-gray-50/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h3 class="font-bold text-gray-700 text-lg">Pilih Rombongan Belajar</h3>
+                        <p class="text-sm text-gray-500">Klik pada kartu kelas untuk mulai mengatur jadwal.</p>
+                    </div>
+                    <a href="{{ route('kurikulum.jadwal-pelajaran.export-pdf') }}" 
+                        class="inline-flex items-center px-4 py-2.5 bg-rose-600 border border-transparent rounded-xl font-black text-xs text-white uppercase tracking-widest hover:bg-rose-500 active:scale-95 transition-all shadow-md gap-2 w-fit">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                        Unduh Semua Jadwal (PDF)
+                    </a>
                 </div>
 
                 <div class="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

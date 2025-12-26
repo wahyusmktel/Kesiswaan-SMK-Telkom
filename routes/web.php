@@ -279,6 +279,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/monitoring-absensi-per-kelas', [\App\Http\Controllers\Kurikulum\MonitoringAbsensiPerKelasController::class, 'index'])->name('monitoring-absensi-per-kelas.index');
         Route::get('/monitoring-absensi-per-kelas/export', [\App\Http\Controllers\Kurikulum\MonitoringAbsensiPerKelasController::class, 'export'])->name('monitoring-absensi-per-kelas.export');
         Route::get('jadwal-pelajaran', [JadwalPelajaranController::class, 'index'])->name('jadwal-pelajaran.index');
+        Route::get('jadwal-pelajaran/export-pdf', [JadwalPelajaranController::class, 'exportPdf'])->name('jadwal-pelajaran.export-pdf');
         Route::get('jadwal-pelajaran/{rombel}', [JadwalPelajaranController::class, 'show'])->name('jadwal-pelajaran.show');
         Route::post('jadwal-pelajaran/{rombel}', [JadwalPelajaranController::class, 'store'])->name('jadwal-pelajaran.store');
 

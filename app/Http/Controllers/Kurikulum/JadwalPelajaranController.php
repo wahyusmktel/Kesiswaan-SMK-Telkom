@@ -130,4 +130,48 @@ class JadwalPelajaranController extends Controller
         }
         return redirect()->route('kurikulum.jadwal-pelajaran.show', $rombel->id);
     }
+
+    public function exportPdf()
+    {
+        $days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        $rombels = Rombel::with(['kelas'])->get();
+        $allJam = JamPelajaran::orderBy('jam_ke')->get();
+        
+        // Ambil daftar unik jam_ke untuk baris tabel
+        $jamKeList = $allJam->pluck('jam_ke')->unique()->sort();
+        
+        // Kelompokkan slot jam untuk mempermudah pencarian (override vs default)
+        $jamSlotsGrouped = $allJam->groupBy('jam_ke');
+        
+        // Hash table untuk pencarian jam: jamKe-Hari => JamPelajaran object
+        $jamLookup = [];
+        foreach ($jamSlotsGrouped as $ke => $slots) {
+            $default = $slots->whereNull('hari')->first();
+            foreach ($days as $day) {
+                $specific = $slots->where('hari', $day)->first();
+                $jamLookup["{$ke}-{$day}"] = $specific ?? $default;
+            }
+        }
+
+        // Ambil SEMUA data jadwal
+        $jadwal = JadwalPelajaran::with(['mataPelajaran', 'guru', 'rombel.kelas'])->get();
+        
+        // Buat matrix data: hari-jamKe-rombelId => data
+        $jadwalMatrix = [];
+        foreach ($jadwal as $j) {
+            $jadwalMatrix["{$j->hari}-{$j->jam_ke}-{$j->rombel_id}"] = [
+                'kode' => $j->mataPelajaran->kode_mapel ?? '?',
+                'guru' => $j->guru->nama_lengkap ?? '?'
+            ];
+        }
+
+        // Ambil daftar mapel unik untuk lampiran
+        $allMapels = MataPelajaran::orderBy('kode_mapel')->get()->unique('kode_mapel');
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.kurikulum.jadwal_rekap', compact(
+            'days', 'rombels', 'jamKeList', 'jamLookup', 'jadwalMatrix', 'allMapels'
+        ))->setPaper('a4', 'landscape');
+
+        return $pdf->download('Master_Jadwal_Pelajaran_' . date('Y-m-d') . '.pdf');
+    }
 }
