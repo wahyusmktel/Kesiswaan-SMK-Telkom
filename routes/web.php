@@ -44,6 +44,7 @@ use App\Http\Controllers\PengaduanController;
 use App\Http\Controllers\Admin\SuperAdminController;
 
 Route::get('/verifikasi/surat/{uuid}', [VerifikasiController::class, 'show'])->name('verifikasi.surat');
+Route::get('/verifikasi/kartu/{nis}', [VerifikasiController::class, 'kartuPelajar'])->name('verifikasi.kartu');
 // ==================================
 //     BATAS ROUTE PUBLIK
 // ==================================
@@ -194,6 +195,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // ISO Docs
         Route::get('/bk/konsultasi/{jadwal}/print-jadwal', [\App\Http\Controllers\BK\ConsultationDocController::class, 'printSchedule'])->name('bk.konsultasi.print-jadwal');
         Route::get('/bk/konsultasi/{jadwal}/print-report', [\App\Http\Controllers\BK\ConsultationDocController::class, 'printReport'])->name('bk.konsultasi.print-report');
+
+        // Kartu Pelajar Digital
+        Route::get('/kartu-pelajar', [\App\Http\Controllers\Siswa\KartuPelajarController::class, 'index'])->name('kartu-pelajar.index');
     });
 
     // Grup Route untuk Guru BK

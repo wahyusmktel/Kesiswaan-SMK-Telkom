@@ -24,4 +24,20 @@ class VerifikasiController extends Controller
 
         return view('pages.verifikasi.show', compact('izin'));
     }
+
+    public function kartuPelajar(string $nis)
+    {
+        $siswa = \App\Models\MasterSiswa::with(['rombels.kelas', 'rombels.tahunPelajaran'])
+            ->where('nis', $nis)
+            ->firstOrFail();
+
+        // Get active rombel
+        $rombel = $siswa->rombels->where('tahunPelajaran.is_active', true)->first() 
+                ?? $siswa->rombels->first();
+
+        // Get school settings
+        $settings = \App\Models\AppSetting::first();
+
+        return view('pages.verifikasi.kartu', compact('siswa', 'rombel', 'settings'));
+    }
 }
