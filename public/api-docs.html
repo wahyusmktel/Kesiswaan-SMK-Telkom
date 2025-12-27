@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation - Aplikasi Izin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #16476A;
+            --secondary: #2A6F97;
+            --accent: #E1F1FD;
+            --bg: #F8FAFC;
+            --text: #1E293B;
+            --text-muted: #64748B;
+            --code-bg: #1E293B;
+            --code-text: #E2E8F0;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            margin-bottom: 60px;
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--primary);
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 30px;
+            margin-bottom: 40px;
+        }
+
+        h2 {
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 10px;
+            margin-top: 0;
+            color: var(--primary);
+        }
+
+        .endpoint {
+            margin-bottom: 40px;
+            border-left: 4px solid var(--primary);
+            padding-left: 20px;
+        }
+
+        .method-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            margin-right: 10px;
+        }
+
+        .badge-post {
+            background: var(--success);
+            color: white;
+        }
+
+        .badge-get {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .badge-put {
+            background: var(--warning);
+            color: white;
+        }
+
+        .badge-delete {
+            background: var(--danger);
+            color: white;
+        }
+
+        .path {
+            font-family: 'Inter', monospace;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text);
+        }
+
+        .description {
+            margin: 15px 0;
+            color: var(--text-muted);
+        }
+
+        .section-title {
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        pre {
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 20px;
+            border-radius: 12px;
+            overflow-x: auto;
+            font-size: 0.9rem;
+            margin: 10px 0;
+        }
+
+        .params-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+
+        .params-table th,
+        .params-table td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #E2E8F0;
+        }
+
+        .params-table th {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .required {
+            color: var(--danger);
+            font-weight: bold;
+        }
+
+        .auth-note {
+            background: #FFFBEB;
+            border: 1px solid #FDE68A;
+            padding: 15px;
+            border-radius: 8px;
+            color: #92400E;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Aplikasi Izin REST API</h1>
+            <p class="subtitle">Dokumentasi API untuk pengembangan aplikasi mobile (Flutter)</p>
+        </header>
+
+        <div class="card">
+            <h2>Otentikasi</h2>
+            <p>API menggunakan <strong>Laravel Sanctum</strong> untuk otentikasi. Gunakan token Bearer di header untuk
+                setiap permintaan yang membutuhkan otentikasi.</p>
+            <div class="auth-note">
+                <strong>Header:</strong> <code>Authorization: Bearer {token}</code>
+            </div>
+
+            <div class="endpoint">
+                <div>
+                    <span class="method-badge badge-get">GET</span>
+                    <span class="path">/api/general/master-data</span>
+                </div>
+                <p class="description">Mendapatkan data master (Kelas, Rombel, Tahun Pelajaran) untuk dropdown/filter.
+                </p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Profil & Pengaturan</h2>
+            <div class="endpoint">
+                <div>
+                    <span class="method-badge badge-get">GET</span>
+                    <span class="path">/api/profile</span>
+                </div>
+                <p class="description">Mendapatkan detail profil lengkap pengguna (termasuk data Siswa/Guru).</p>
+            </div>
+
+            <div class="endpoint">
+                <div>
+                    <span class="method-badge badge-post">POST</span>
+                    <span class="path">/api/profile/update</span>
+                </div>
+                <p class="description">Memperbarui informasi dasar profil (Nama, Email).</p>
+                <div class="section-title">Parameter Body</div>
+                <table class="params-table">
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Tipe</th>
+                            <th>Keterangan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>name <span class="required">*</span></td>
+                            <td>string</td>
+                            <td>Nama lengkap.</td>
+                        </tr>
+                        <tr>
+                            <td>email <span class="required">*</span></td>
+                            <td>string</td>
+                            <td>Email (harus unik).</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="endpoint">
+                <div>
+                    <span class="method-badge badge-post">POST</span>
+                    <span class="path">/api/profile/update-password</span>
+                </div>
+                <p class="description">Memperbarui kata sandi pengguna.</p>
+                <div class="section-title">Parameter Body</div>
+                <table class="params-table">
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Tipe</th>
+                            <th>Keterangan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>current_password <span class="required">*</span></td>
+                            <td>string</td>
+                            <td>Kata sandi saat ini.</td>
+                        </tr>
+                        <tr>
+                            <td>password <span class="required">*</span></td>
+                            <td>string</td>
+                            <td>Kata sandi baru.</td>
+                        </tr>
+                        <tr>
+                            <td>password_confirmation <span class="required">*</span></td>
+                            <td>string</td>
+                            <td>Konfirmasi kata sandi baru.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="endpoint">
+            <div>
+                <span class="method-badge badge-post">POST</span>
+                <span class="path">/api/login</span>
+            </div>
+            <p class="description">Gunakan endpoint ini untuk masuk dan mendapatkan token akses.</p>
+
+            <div class="section-title">Parameter Body</div>
+            <table class="params-table">
+                <thead>
+                    <tr>
+                        <th>Parameter</th>
+                        <th>Tipe</th>
+                        <th>Keterangan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>email <span class="required">*</span></td>
+                        <td>string</td>
+                        <td>Email pengguna yang terdaftar.</td>
+                    </tr>
+                    <tr>
+                        <td>password <span class="required">*</span></td>
+                        <td>string</td>
+                        <td>Kata sandi pengguna.</td>
+                    </tr>
+                    <tr>
+                        <td>device_name</td>
+                        <td>string</td>
+                        <td>Nama perangkat (opsional).</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="section-title">Contoh Respon</div>
+            <pre>{
+  "success": true,
+  "message": "Login berhasil",
+  "data": {
+    "token": "1|ABC...",
+    "user": {
+      "id": 1,
+      "name": "Jane Doe",
+      "email": "jane@example.com",
+      "role": "siswa"
+    }
+  }
+}</pre>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Siswa</h2>
+
+        <div class="endpoint">
+            <div>
+                <span class="method-badge badge-get">GET</span>
+                <span class="path">/api/siswa/stats</span>
+            </div>
+            <p class="description">Mendapatkan statistik poin dan perizinan siswa.</p>
+            <div class="section-title">Contoh Respon</div>
+            <pre>{
+  "success": true,
+  "data": {
+    "points": 10,
+    "status": {
+      "label": "Aman",
+      "color": "green"
+    },
+    "total_violations": 2,
+    "total_achievements": 0,
+    "total_permissions": 5
+  }
+}</pre>
+        </div>
+
+        <div class="endpoint">
+            <div>
+                <span class="method-badge badge-get">GET</span>
+                <span class="path">/api/siswa/riwayat</span>
+            </div>
+            <p class="description">Mendapatkan riwayat pelanggaran dan perizinan siswa.</p>
+        </div>
+
+        <div class="endpoint">
+            <div>
+                <span class="method-badge badge-post">POST</span>
+                <span class="path">/api/siswa/izin</span>
+            </div>
+            <p class="description">Mengajukan permohonan izin baru.</p>
+            <div class="section-title">Parameter Body (Multipart/form-data)</div>
+            <table class="params-table">
+                <thead>
+                    <tr>
+                        <th>Parameter</th>
+                        <th>Tipe</th>
+                        <th>Keterangan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>jenis_izin <span class="required">*</span></td>
+                        <td>string</td>
+                        <td>Sakit, Izin, atau Dispensasi.</td>
+                    </tr>
+                    <tr>
+                        <td>keterangan <span class="required">*</span></td>
+                        <td>text</td>
+                        <td>Alasan mendetail.</td>
+                    </tr>
+                    <tr>
+                        <td>tanggal_izin <span class="required">*</span></td>
+                        <td>date</td>
+                        <td>Format YYYY-MM-DD.</td>
+                    </tr>
+                    <tr>
+                        <td>dokumen</td>
+                        <td>file</td>
+                        <td>Image atau PDF (max 2MB).</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="endpoint">
+            <div>
+                <span class="method-badge badge-get">GET</span>
+                <span class="path">/api/siswa/exit-permits</span>
+            </div>
+            <p class="description">Mendapatkan riwayat Izin Meninggalkan Kelas siswa.</p>
+        </div>
+
+        <div class="endpoint">
+            <div>
+                <span class="method-badge badge-post">POST</span>
+                <span class="path">/api/siswa/exit-permits</span>
+            </div>
+            <p class="description">Mengajukan Izin Meninggalkan Kelas baru.</p>
+        </div>
+
+        <div class="endpoint">
+            <div>
+                <span class="method-badge badge-get">GET</span>
+                <span class="path">/api/siswa/bk/history</span>
+            </div>
+            <p class="description">Mendapatkan riwayat pembinaan BK siswa.</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Guru (Wali Kelas / Piket)</h2>
+
+        <div class="endpoint">
+            <div>
+                <span class="method-badge badge-get">GET</span>
+                <span class="path">/api/guru/pending-approvals</span>
+            </div>
+            <p class="description">Mendapatkan daftar permohonan izin yang menunggu persetujuan.</p>
+        </div>
+
+        <div class="endpoint">
+            <div>
+                <span class="method-badge badge-post">POST</span>
+                <span class="path">/api/guru/approve/{id}</span>
+            </div>
+            <p class="description">Menyetujui atau menolak permohonan izin.</p>
+            <div class="section-title">Parameter Body</div>
+            <table class="params-table">
+                <thead>
+                    <tr>
+                        <th>Parameter</th>
+                        <th>Tipe</th>
+                        <th>Keterangan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>status <span class="required">*</span></td>
+                        <td>string</td>
+                        <td>disetujui atau ditolak.</td>
+                    </tr>
+                    <tr>
+                        <td>alasan_penolakan</td>
+                        <td>string</td>
+                        <td>Wajib jika status ditolak.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="endpoint">
+            <div>
+                <span class="method-badge badge-get">GET</span>
+                <span class="path">/api/guru/exit-permits/pending</span>
+            </div>
+            <p class="description">Mendapatkan permohonan Izin Meninggalkan Kelas yang menunggu persetujuan guru.
+            </p>
+        </div>
+
+        <div class="endpoint">
+            <div>
+                <span class="method-badge badge-post">POST</span>
+                <span class="path">/api/guru/exit-permits/approve/{id}</span>
+            </div>
+            <p class="description">Menyetujui atau menolak Izin Meninggalkan Kelas.</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>BK Chat (Universal)</h2>
+        <div class="endpoint">
+            <div>
+                <span class="method-badge badge-get">GET</span>
+                <span class="path">/api/chat/rooms</span>
+            </div>
+            <p class="description">Mendapatkan daftar ruang obrolan BK.</p>
+        </div>
+        <div class="endpoint">
+            <div>
+                <span class="method-badge badge-get">GET</span>
+                <span class="path">/api/chat/messages/{roomId}</span>
+            </div>
+            <p class="description">Mendapatkan pesan dalam ruang obrolan.</p>
+        </div>
+        <div class="endpoint">
+            <div>
+                <span class="method-badge badge-post">POST</span>
+                <span class="path">/api/chat/messages/{roomId}</span>
+            </div>
+            <p class="description">Mengirim pesan baru.</p>
+        </div>
+    </div>
+
+    <footer>
+        <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+            &copy; 2025 SMK Telkom Lampung - Aplikasi Izin
+        </p>
+    </footer>
+    </div>
+
+</body>
+
+</html>
