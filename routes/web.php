@@ -44,6 +44,7 @@ use App\Http\Controllers\PengaduanController;
 use App\Http\Controllers\Admin\SuperAdminController;
 use App\Http\Controllers\SDM\NdeReferensiController;
 use App\Http\Controllers\Shared\NotaDinasController;
+use App\Http\Controllers\MasterData\DapodikSiswaController;
 
 Route::get('/verifikasi/surat/{uuid}', [VerifikasiController::class, 'show'])->name('verifikasi.surat');
 Route::get('/verifikasi/kartu/{nis}', [VerifikasiController::class, 'kartuPelajar'])->name('verifikasi.kartu');
@@ -117,6 +118,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('siswa/{master_siswa}/generate-akun', [MasterSiswaController::class, 'generateAkun'])->name('siswa.generate-akun');
         Route::post('siswa/{master_siswa}/reset-password', [MasterSiswaController::class, 'resetPassword'])->name('siswa.reset-password'); // <-- Route Reset Password
         Route::resource('siswa', MasterSiswaController::class);
+        
+        // Dapodik Siswa Routes
+        Route::get('siswa/{siswa}/dapodik', [DapodikSiswaController::class, 'show'])->name('siswa.dapodik.show');
+        Route::get('siswa/{siswa}/dapodik/edit', [DapodikSiswaController::class, 'edit'])->name('siswa.dapodik.edit');
+        Route::put('siswa/{siswa}/dapodik', [DapodikSiswaController::class, 'update'])->name('siswa.dapodik.update');
 
         Route::post('rombel/{rombel}/add-siswa', [RombelController::class, 'addSiswa'])->name('rombel.add-siswa');
         Route::delete('rombel/{rombel}/remove-siswa/{siswa}', [RombelController::class, 'removeSiswa'])->name('rombel.remove-siswa');

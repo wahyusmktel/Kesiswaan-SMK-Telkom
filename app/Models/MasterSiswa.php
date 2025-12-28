@@ -85,6 +85,11 @@ class MasterSiswa extends Model
         return $this->hasMany(Keterlambatan::class, 'master_siswa_id');
     }
 
+    public function dapodik()
+    {
+        return $this->hasOne(DapodikSiswa::class, 'master_siswa_id');
+    }
+
     // Point Calculation Methods
     public function getTotalViolationPoints()
     {
