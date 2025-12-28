@@ -131,14 +131,23 @@ class RombelController extends Controller
 
         $currentTahunId = $rombel->tahun_pelajaran_id;
 
-        $siswaTersedia = MasterSiswa::whereNotIn('id', function ($query) use ($currentTahunId) {
-            $query->select('master_siswa_id')
-                ->from('rombel_siswa')
-                ->join('rombels', 'rombels.id', '=', 'rombel_siswa.rombel_id')
-                ->where('rombels.tahun_pelajaran_id', $currentTahunId); // Filter by ID Tahun
-        })->orderBy('nama_lengkap')->get();
+        $siswaTersedia = MasterSiswa::with('dapodik')
+            ->whereNotIn('id', function ($query) use ($currentTahunId) {
+                $query->select('master_siswa_id')
+                    ->from('rombel_siswa')
+                    ->join('rombels', 'rombels.id', '=', 'rombel_siswa.rombel_id')
+                    ->where('rombels.tahun_pelajaran_id', $currentTahunId); // Filter by ID Tahun
+            })->orderBy('nama_lengkap')->get();
 
-        return view('pages.master-data.rombel.show', compact('rombel', 'siswaDiRombel', 'siswaTersedia'));
+        // 3. Ambil daftar rombel dari Dapodik untuk filter
+        $rombelDapodikOptions = \App\Models\DapodikSiswa::whereNotNull('rombel_saat_ini')
+            ->where('rombel_saat_ini', '!=', '')
+            ->distinct()
+            ->pluck('rombel_saat_ini')
+            ->sort()
+            ->values();
+
+        return view('pages.master-data.rombel.show', compact('rombel', 'siswaDiRombel', 'siswaTersedia', 'rombelDapodikOptions'));
     }
 
     /**

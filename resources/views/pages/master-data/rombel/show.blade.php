@@ -32,6 +32,18 @@
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Pilih Siswa
                                         (Tersedia)</label>
 
+                                    {{-- Filter Rombel Dapodik --}}
+                                    <div class="mb-3">
+                                        <label class="block text-xs font-medium text-gray-500 mb-1">Filter berdasarkan Rombel Dapodik:</label>
+                                        <select id="filterRombelDapodik"
+                                            class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 text-sm bg-purple-50 border-purple-200 text-purple-800">
+                                            <option value="">-- Semua Rombel --</option>
+                                            @foreach ($rombelDapodikOptions as $rombelOption)
+                                                <option value="{{ $rombelOption }}">{{ $rombelOption }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
                                     <div class="relative mb-2">
                                         <div
                                             class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -50,8 +62,12 @@
                                         class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 text-sm h-64">
                                         @forelse ($siswaTersedia as $siswa)
                                             <option value="{{ $siswa->id }}"
+                                                data-rombel-dapodik="{{ $siswa->dapodik?->rombel_saat_ini ?? '' }}"
                                                 class="py-1 px-2 hover:bg-red-50 cursor-pointer border-b border-gray-50 last:border-0">
                                                 {{ $siswa->nis }} - {{ $siswa->nama_lengkap }}
+                                                @if($siswa->dapodik?->rombel_saat_ini)
+                                                    ({{ $siswa->dapodik->rombel_saat_ini }})
+                                                @endif
                                             </option>
                                         @empty
                                             <option disabled class="text-gray-400 italic p-2 text-center">-- Semua siswa
@@ -174,24 +190,34 @@
                 });
             }
 
-            // Script untuk Pencarian Real-time pada Select Box
+            // Script untuk Pencarian dan Filter Rombel Dapodik Real-time
             document.addEventListener('DOMContentLoaded', function() {
                 const searchBox = document.getElementById('searchBox');
                 const selectBox = document.getElementById('siswa_ids');
+                const filterRombelDapodik = document.getElementById('filterRombelDapodik');
                 const options = selectBox.querySelectorAll('option');
 
-                searchBox.addEventListener('keyup', function(e) {
-                    const searchTerm = e.target.value.toLowerCase();
+                function filterOptions() {
+                    const searchTerm = searchBox.value.toLowerCase();
+                    const selectedRombel = filterRombelDapodik.value;
 
                     options.forEach(option => {
                         const text = option.textContent.toLowerCase();
-                        if (text.includes(searchTerm)) {
+                        const rombelDapodik = option.getAttribute('data-rombel-dapodik') || '';
+
+                        const matchesSearch = text.includes(searchTerm);
+                        const matchesRombel = !selectedRombel || rombelDapodik === selectedRombel;
+
+                        if (matchesSearch && matchesRombel) {
                             option.style.display = ''; // Tampilkan
                         } else {
                             option.style.display = 'none'; // Sembunyikan
                         }
                     });
-                });
+                }
+
+                searchBox.addEventListener('keyup', filterOptions);
+                filterRombelDapodik.addEventListener('change', filterOptions);
             });
         </script>
     @endpush
