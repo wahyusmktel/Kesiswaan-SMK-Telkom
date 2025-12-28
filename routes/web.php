@@ -109,8 +109,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Nanti kita tambahkan route untuk approve & reject di sini
     });
 
-    // Grup untuk Data Master, bisa diakses oleh Waka Kesiswaan/Admin
-    Route::middleware(['role:Waka Kesiswaan'])->prefix('master-data')->name('master-data.')->group(function () {
+    // Grup untuk Data Master, bisa diakses oleh Waka Kesiswaan/Operator
+    Route::middleware(['role:Waka Kesiswaan|Operator'])->prefix('master-data')->name('master-data.')->group(function () {
         Route::resource('kelas', KelasController::class);
 
         Route::post('siswa/generate-akun-masal', [MasterSiswaController::class, 'generateAkunMasal'])->name('siswa.generate-akun-masal'); // <-- Route Generate Masal

@@ -763,6 +763,51 @@
     @endrole
 
     {{-- ============================================================ --}}
+    {{-- ROLE: OPERATOR                                               --}}
+    {{-- ============================================================ --}}
+    @role('Operator')
+        <li>
+            <a href="{{ route('dashboard') }}"
+                class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('dashboard') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+                <span class="text-sm">Dashboard Operator</span>
+            </a>
+        </li>
+
+        {{-- Dropdown Master Data --}}
+        <li x-data="{ expanded: {{ request()->routeIs('master-data.*') ? 'true' : 'false' }} }">
+            <button @click="expanded = !expanded"
+                class="flex items-center justify-between w-full px-3 py-2 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors">
+                <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                    <span class="text-sm font-medium">Master Data</span>
+                </div>
+                <svg :class="expanded ? 'rotate-180' : ''" class="w-4 h-4 transition-transform transform" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
+            <ul x-show="expanded" x-collapse class="pl-10 mt-1 space-y-1">
+                <li><a href="{{ route('master-data.kelas.index') }}"
+                        class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('master-data.kelas.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Data
+                        Kelas</a></li>
+                <li><a href="{{ route('master-data.siswa.index') }}"
+                        class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('master-data.siswa.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Data
+                        Siswa</a></li>
+                <li><a href="{{ route('master-data.rombel.index') }}"
+                        class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('master-data.rombel.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Data
+                        Rombel</a></li>
+            </ul>
+        </li>
+    @endrole
+
+    {{-- ============================================================ --}}
     {{-- ROLE: PRAKERIN (Koordinator)                                 --}}
     {{-- ============================================================ --}}
     @role('Koordinator Prakerin|Waka Kesiswaan|Kurikulum')
