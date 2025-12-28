@@ -10,7 +10,12 @@ class MasterSiswa extends Model
     protected $table = "master_siswa";
 
     // Jangan lupa tambahkan $fillable
-    protected $fillable = ['nis', 'nama_lengkap', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin', 'alamat', 'user_id'];
+    protected $fillable = ['nis', 'nama_lengkap', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin', 'alamat', 'user_id', 'last_synced_at'];
+
+    protected $casts = [
+        'tanggal_lahir' => 'date',
+        'last_synced_at' => 'datetime',
+    ];
 
     // Relasi dari MasterSiswa ke akun loginnya
     public function user()

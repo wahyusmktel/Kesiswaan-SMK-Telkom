@@ -45,6 +45,7 @@ use App\Http\Controllers\Admin\SuperAdminController;
 use App\Http\Controllers\SDM\NdeReferensiController;
 use App\Http\Controllers\Shared\NotaDinasController;
 use App\Http\Controllers\MasterData\DapodikSiswaController;
+use App\Http\Controllers\Operator\DapodikManagementController;
 
 Route::get('/verifikasi/surat/{uuid}', [VerifikasiController::class, 'show'])->name('verifikasi.surat');
 Route::get('/verifikasi/kartu/{nis}', [VerifikasiController::class, 'kartuPelajar'])->name('verifikasi.kartu');
@@ -132,6 +133,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Route Tahun Pelajaran
         Route::resource('tahun-pelajaran', TahunPelajaranController::class)->except(['create', 'edit', 'show']);
         Route::patch('tahun-pelajaran/{tahunPelajaran}/activate', [TahunPelajaranController::class, 'activate'])->name('tahun-pelajaran.activate');
+    });
+
+    // Grup Route untuk Operator
+    Route::middleware(['role:Operator'])->prefix('operator')->name('operator.')->group(function () {
+        Route::get('/dapodik', [DapodikManagementController::class, 'index'])->name('dapodik.index');
+        Route::post('/dapodik/import', [DapodikManagementController::class, 'import'])->name('dapodik.import');
+        Route::post('/dapodik/sync', [DapodikManagementController::class, 'sync'])->name('dapodik.sync');
+        Route::get('/dapodik/template', [DapodikManagementController::class, 'downloadTemplate'])->name('dapodik.template');
     });
 
     // Grup Route untuk Kesiswaan

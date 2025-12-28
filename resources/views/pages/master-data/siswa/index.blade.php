@@ -67,6 +67,7 @@
                                 <th class="px-6 py-4 font-bold tracking-wider">Nama Lengkap</th>
                                 <th class="px-6 py-4 font-bold tracking-wider">L/P</th>
                                 <th class="px-6 py-4 font-bold tracking-wider">Status Akun</th>
+                                <th class="px-6 py-4 font-bold tracking-wider">Last Sync</th>
                                 <th class="px-6 py-4 font-bold tracking-wider text-right">Aksi</th>
                             </tr>
                         </thead>
@@ -98,6 +99,15 @@
                                                 class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-50 text-gray-600 border border-gray-100 ring-1 ring-gray-600/20">
                                                 Belum Ada
                                             </span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        @if ($item->last_synced_at)
+                                            <span class="text-xs text-gray-500" title="{{ $item->last_synced_at->format('d M Y H:i') }}">
+                                                {{ $item->last_synced_at->diffForHumans() }}
+                                            </span>
+                                        @else
+                                            <span class="text-xs text-gray-400">-</span>
                                         @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -176,7 +186,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="px-6 py-12 text-center text-gray-500 bg-gray-50/50">
+                                    <td colspan="6" class="px-6 py-12 text-center text-gray-500 bg-gray-50/50">
                                         <div class="flex flex-col items-center justify-center">
                                             <svg class="w-12 h-12 text-gray-300 mb-3" fill="none"
                                                 stroke="currentColor" viewBox="0 0 24 24">
