@@ -63,14 +63,26 @@ class DapodikManagementController extends Controller
             $inserted = 0;
             $updated = 0;
             $failed = 0;
+            $failedRecords = [];
+            $rowNumber = 1; // Start from 1 because row 0 is header
             
             DB::beginTransaction();
             
             foreach ($data as $row) {
+                $rowNumber++;
                 try {
                     // Skip header row or empty rows
                     if (empty($row['nipd']) && empty($row['nisn']) && empty($row['nama'])) {
                         continue;
+                    }
+                    
+                    // Validate required fields
+                    if (empty($row['nipd'])) {
+                        throw new \Exception('NIPD tidak boleh kosong');
+                    }
+                    
+                    if (empty($row['nama'])) {
+                        throw new \Exception('Nama tidak boleh kosong');
                     }
                     
                     // Find master_siswa by NIS (NIPD in Dapodik)
@@ -104,7 +116,18 @@ class DapodikManagementController extends Controller
                     
                 } catch (\Exception $e) {
                     $failed++;
-                    \Log::error('Dapodik import row error: ' . $e->getMessage());
+                    $errorMessage = $e->getMessage();
+                    $recommendation = $this->getErrorRecommendation($errorMessage);
+                    
+                    $failedRecords[] = [
+                        'row' => $rowNumber,
+                        'nipd' => $row['nipd'] ?? '-',
+                        'nama' => $row['nama'] ?? '-',
+                        'error' => $errorMessage,
+                        'recommendation' => $recommendation,
+                    ];
+                    
+                    \Log::error("Dapodik import row {$rowNumber} error: " . $errorMessage);
                 }
             }
             
@@ -122,13 +145,37 @@ class DapodikManagementController extends Controller
             DB::commit();
             
             return redirect()->route('operator.dapodik.index')
-                ->with('success', "Import berhasil! {$inserted} data baru, {$updated} data diperbarui, {$failed} gagal.");
+                ->with('success', "Import berhasil! {$inserted} data baru, {$updated} data diperbarui, {$failed} gagal.")
+                ->with('failed_records', $failedRecords);
                 
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Dapodik import error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Gagal import data: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Get recommendation based on error message.
+     */
+    private function getErrorRecommendation($errorMessage)
+    {
+        $recommendations = [
+            'NIPD tidak boleh kosong' => 'Pastikan kolom NIPD terisi untuk setiap baris data siswa.',
+            'Nama tidak boleh kosong' => 'Pastikan kolom Nama terisi untuk setiap baris data siswa.',
+            'Duplicate entry' => 'Data dengan NIPD yang sama sudah ada. Hapus duplikasi atau gunakan NIPD yang berbeda.',
+            'Data too long' => 'Data yang dimasukkan terlalu panjang. Periksa panjang karakter setiap field.',
+            'Incorrect date value' => 'Format tanggal tidak valid. Gunakan format YYYY-MM-DD atau DD/MM/YYYY.',
+            'Invalid data' => 'Data tidak valid. Periksa format dan tipe data yang dimasukkan.',
+        ];
+
+        foreach ($recommendations as $errorKey => $recommendation) {
+            if (stripos($errorMessage, $errorKey) !== false) {
+                return $recommendation;
+            }
+        }
+
+        return 'Periksa kembali data pada baris ini dan pastikan format sesuai dengan template.';
     }
 
     /**

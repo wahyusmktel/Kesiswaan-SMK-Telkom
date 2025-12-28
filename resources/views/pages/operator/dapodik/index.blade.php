@@ -33,6 +33,56 @@
                     {{ session('success') }}
                 </div>
             @endif
+            
+            @if (session('failed_records') && count(session('failed_records')) > 0)
+                <div class="mb-6 bg-white border border-red-200 shadow-sm rounded-xl overflow-hidden">
+                    <div class="px-6 py-4 bg-red-50 border-b border-red-200 flex items-center gap-3">
+                        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        <h3 class="font-semibold text-red-800">Data Gagal Import ({{ count(session('failed_records')) }} baris)</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs text-gray-700 uppercase bg-red-50 border-b border-red-100">
+                                <tr>
+                                    <th class="px-4 py-3 w-16">Baris</th>
+                                    <th class="px-4 py-3 w-28">NIPD</th>
+                                    <th class="px-4 py-3">Nama</th>
+                                    <th class="px-4 py-3">Error</th>
+                                    <th class="px-4 py-3">Rekomendasi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-red-100">
+                                @foreach (session('failed_records') as $record)
+                                    <tr class="bg-white hover:bg-red-50/50">
+                                        <td class="px-4 py-3 text-center font-mono text-red-600 font-bold">{{ $record['row'] }}</td>
+                                        <td class="px-4 py-3 font-mono text-gray-900">{{ $record['nipd'] }}</td>
+                                        <td class="px-4 py-3 text-gray-900">{{ $record['nama'] }}</td>
+                                        <td class="px-4 py-3">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                                                {{ Str::limit($record['error'], 50) }}
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-3 text-gray-600 text-xs">
+                                            <div class="flex items-start gap-2">
+                                                <svg class="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                </svg>
+                                                <span>{{ $record['recommendation'] }}</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="px-6 py-3 bg-red-50 border-t border-red-200 text-sm text-red-700">
+                        <strong>Tips:</strong> Perbaiki data pada file Excel Anda sesuai rekomendasi di atas, lalu import ulang.
+                    </div>
+                </div>
+            @endif
+            
             @if (session('error'))
                 <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
                     {{ session('error') }}
