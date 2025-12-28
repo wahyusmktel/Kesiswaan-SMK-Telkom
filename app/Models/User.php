@@ -111,4 +111,16 @@ class User extends Authenticatable
     {
         return $this->hasOne(MasterGuru::class);
     }
+
+    public function notaDinasMasuk()
+    {
+        return $this->belongsToMany(NotaDinas::class, 'nota_dinas_penerima', 'penerima_user_id', 'nota_dinas_id')
+            ->withPivot('is_read', 'read_at')
+            ->withTimestamps();
+    }
+
+    public function notaDinasKeluar()
+    {
+        return $this->hasMany(NotaDinas::class, 'user_id');
+    }
 }

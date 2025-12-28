@@ -42,6 +42,8 @@ use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\MasterData\TahunPelajaranController;
 use App\Http\Controllers\PengaduanController;
 use App\Http\Controllers\Admin\SuperAdminController;
+use App\Http\Controllers\SDM\NdeReferensiController;
+use App\Http\Controllers\Shared\NotaDinasController;
 
 Route::get('/verifikasi/surat/{uuid}', [VerifikasiController::class, 'show'])->name('verifikasi.surat');
 Route::get('/verifikasi/kartu/{nis}', [VerifikasiController::class, 'kartuPelajar'])->name('verifikasi.kartu');
@@ -77,6 +79,15 @@ Route::middleware(['auth', 'role:Waka Kesiswaan'])->prefix('admin')->name('admin
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // ... route dashboard dan profile dari Breeze
+
+    // Nota Dinas Elektronik
+    Route::prefix('nde')->name('shared.nde.')->group(function () {
+        Route::get('/', [NotaDinasController::class, 'index'])->name('index');
+        Route::get('/create', [NotaDinasController::class, 'create'])->name('create');
+        Route::post('/', [NotaDinasController::class, 'store'])->name('store');
+        Route::get('/{id}', [NotaDinasController::class, 'show'])->name('show');
+        Route::get('/{id}/download', [NotaDinasController::class, 'download'])->name('download');
+    });
 
     // Grup untuk route yang memerlukan peran Waka Kesiswaan
     Route::middleware(['role:Waka Kesiswaan'])->group(function () {
@@ -342,6 +353,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/rekapitulasi', [\App\Http\Controllers\SDM\RekapitulasiController::class, 'index'])->name('rekapitulasi.index');
         Route::get('/rekapitulasi/export-excel', [\App\Http\Controllers\SDM\RekapitulasiController::class, 'exportExcel'])->name('rekapitulasi.export-excel');
         Route::get('/rekapitulasi/export-pdf', [\App\Http\Controllers\SDM\RekapitulasiController::class, 'exportPdf'])->name('rekapitulasi.export-pdf');
+
+        // NDE Referensi
+        Route::resource('nde-referensi', NdeReferensiController::class)->except(['create', 'edit', 'show']);
     });
 
     // Public/Shared print route for approved permits

@@ -751,6 +751,15 @@
                 <span class="text-sm">Rekapitulasi Laporan</span>
             </a>
         </li>
+        <li>
+            <a href="{{ route('sdm.nde-referensi.index') }}"
+                class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('sdm.nde-referensi.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+                <span class="text-sm">Referensi NDE</span>
+            </a>
+        </li>
     @endrole
 
     {{-- ============================================================ --}}
@@ -782,6 +791,17 @@
             </ul>
         </li>
     @endrole
+
+    <div class="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider mt-4">Komunikasi</div>
+    <li>
+        <a href="{{ route('shared.nde.index') }}"
+            class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('shared.nde.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <span class="text-sm">Nota Dinas</span>
+        </a>
+    </li>
 
     <li>
         <a href="{{ route('changelog.index') }}"
