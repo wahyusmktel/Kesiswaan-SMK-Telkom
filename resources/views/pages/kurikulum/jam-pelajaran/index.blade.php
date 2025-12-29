@@ -125,7 +125,7 @@
         </div>
     </div>
 
-    <div x-data="jamModalData()" @open-jam-modal.window="openModal()" @edit-jam.window="editModal($event.detail)"
+    <div x-data="jamModalData()" x-init="initTomSelect()" @open-jam-modal.window="openModal()" @edit-jam.window="editModal($event.detail)"
         x-show="isOpen" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title"
         role="dialog" aria-modal="true">
 
@@ -157,9 +157,8 @@
                                     class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700">Hari <span class="text-gray-400 font-normal">(Kosong = Umum)</span></label>
-                                <select name="hari[]" x-model="form.hari" multiple
-                                    class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-32">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Hari <span class="text-gray-400 font-normal">(Kosong = Umum)</span></label>
+                                <select id="hari-select" name="hari[]" multiple placeholder="Pilih Hari..." autocomplete="off">
                                     <option value="">Berlaku Semua Hari (Umum)</option>
                                     <option value="Senin">Senin</option>
                                     <option value="Selasa">Selasa</option>
@@ -168,7 +167,7 @@
                                     <option value="Jumat">Jumat</option>
                                     <option value="Sabtu">Sabtu</option>
                                 </select>
-                                <p class="mt-1 text-[10px] text-gray-500 italic">Tahan Ctrl / Cmd untuk memilih lebih dari satu hari.</p>
+                                <p class="mt-1 text-[10px] text-gray-500 italic">Bisa memilih lebih dari satu hari.</p>
                             </div>
                         </div>
 
@@ -224,8 +223,38 @@
         </div>
     </div>
 
+    @push('styles')
+        <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet">
+        <style>
+            .ts-control {
+                border-radius: 0.5rem;
+                padding: 0.5rem 0.75rem;
+                border-color: #d1d5db;
+                z-index: 10;
+            }
+            .ts-control.focus {
+                border-color: #4f46e5;
+                box-shadow: 0 0 0 1px #4f46e5;
+            }
+            .ts-control .item {
+                background-color: #eef2ff;
+                color: #4338ca;
+                border: 1px solid #c7d2fe;
+                border-radius: 9999px;
+                padding: 2px 10px;
+            }
+            .ts-dropdown {
+                z-index: 999999 !important;
+                border-radius: 0.5rem;
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+                margin-top: 4px;
+            }
+        </style>
+    @endpush
+
     @push('scripts')
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
         <script>
             function confirmDelete(button) {
                 Swal.fire({
@@ -254,6 +283,15 @@
                         tipe_kegiatan: '',
                         keterangan: ''
                     },
+                    tomSelect: null,
+
+                    initTomSelect() {
+                        this.tomSelect = new TomSelect("#hari-select", {
+                            plugins: ['remove_button'],
+                            create: false,
+                            dropdownParent: 'body'
+                        });
+                    },
                     openModal() {
                         this.isOpen = true;
                         this.isEdit = false;
@@ -266,6 +304,10 @@
                             tipe_kegiatan: '',
                             keterangan: ''
                         };
+
+                        if (this.tomSelect) {
+                            this.tomSelect.clear();
+                        }
                     },
                     editModal(data) {
                         this.isOpen = true;
@@ -279,6 +321,11 @@
                             tipe_kegiatan: data.tipe_kegiatan,
                             keterangan: data.keterangan
                         };
+
+                        if (this.tomSelect) {
+                            this.tomSelect.clear();
+                            this.tomSelect.setValue(this.form.hari);
+                        }
                     },
                     closeModal() {
                         this.isOpen = false;
