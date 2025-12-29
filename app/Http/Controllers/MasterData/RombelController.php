@@ -70,7 +70,8 @@ class RombelController extends Controller
         ]);
 
         try {
-            Rombel::create($request->all());
+            $rombel = Rombel::create($request->all());
+            Log::info('User ' . auth()->user()->name . ' created rombel ID: ' . $rombel->id);
             toast('Data rombel berhasil ditambahkan.', 'success');
             return redirect()->route('master-data.rombel.index');
         } catch (\Exception $e) {
@@ -90,6 +91,7 @@ class RombelController extends Controller
 
         try {
             $rombel->update($request->all());
+            Log::info('User ' . auth()->user()->name . ' updated rombel ID: ' . $rombel->id);
             toast('Data rombel berhasil diperbarui.', 'success');
             return redirect()->route('master-data.rombel.index');
         } catch (\Exception $e) {
@@ -102,12 +104,15 @@ class RombelController extends Controller
     public function destroy(Rombel $rombel)
     {
         if ($rombel->siswa()->exists()) {
+            Log::warning('User ' . auth()->user()->name . ' attempted to delete rombel ID: ' . $rombel->id . ' but it has students.');
             toast('Gagal menghapus! Masih ada siswa terdaftar di rombel ini.', 'error');
             return back();
         }
 
         try {
+            $id = $rombel->id;
             $rombel->delete();
+            Log::info('User ' . auth()->user()->name . ' deleted rombel ID: ' . $id);
             toast('Data rombel berhasil dihapus.', 'success');
             return redirect()->route('master-data.rombel.index');
         } catch (\Exception $e) {
@@ -162,6 +167,7 @@ class RombelController extends Controller
 
         try {
             $rombel->siswa()->attach($request->siswa_ids);
+            Log::info('User ' . auth()->user()->name . ' added students ' . implode(', ', $request->siswa_ids) . ' to rombel ID: ' . $rombel->id);
             toast(count($request->siswa_ids) . ' Siswa berhasil ditambahkan.', 'success');
             return back();
         } catch (\Exception $e) {
@@ -178,6 +184,7 @@ class RombelController extends Controller
     {
         try {
             $rombel->siswa()->detach($siswa->id);
+            Log::info('User ' . auth()->user()->name . ' removed student ID: ' . $siswa->id . ' from rombel ID: ' . $rombel->id);
             toast('Siswa berhasil dikeluarkan dari rombel.', 'success');
             return back();
         } catch (\Exception $e) {
