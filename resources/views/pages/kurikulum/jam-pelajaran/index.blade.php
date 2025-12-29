@@ -158,9 +158,9 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Hari <span class="text-gray-400 font-normal">(Kosong = Umum)</span></label>
-                                <select name="hari" x-model="form.hari"
-                                    class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                    <option value="">Berlaku Semua Hari</option>
+                                <select name="hari[]" x-model="form.hari" multiple
+                                    class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-32">
+                                    <option value="">Berlaku Semua Hari (Umum)</option>
                                     <option value="Senin">Senin</option>
                                     <option value="Selasa">Selasa</option>
                                     <option value="Rabu">Rabu</option>
@@ -168,6 +168,7 @@
                                     <option value="Jumat">Jumat</option>
                                     <option value="Sabtu">Sabtu</option>
                                 </select>
+                                <p class="mt-1 text-[10px] text-gray-500 italic">Tahan Ctrl / Cmd untuk memilih lebih dari satu hari.</p>
                             </div>
                         </div>
 
@@ -247,7 +248,7 @@
                     formAction: '{{ route('kurikulum.jam-pelajaran.store') }}',
                     form: {
                         jam_ke: '',
-                        hari: '',
+                        hari: [],
                         jam_mulai: '',
                         jam_selesai: '',
                         tipe_kegiatan: '',
@@ -259,7 +260,7 @@
                         this.formAction = '{{ route('kurikulum.jam-pelajaran.store') }}';
                         this.form = {
                             jam_ke: '',
-                            hari: '',
+                            hari: [],
                             jam_mulai: '',
                             jam_selesai: '',
                             tipe_kegiatan: '',
@@ -272,7 +273,7 @@
                         this.formAction = data.updateUrl;
                         this.form = {
                             jam_ke: data.jam_ke,
-                            hari: data.hari,
+                            hari: data.hari ? [data.hari] : [],
                             jam_mulai: data.jam_mulai,
                             jam_selesai: data.jam_selesai,
                             tipe_kegiatan: data.tipe_kegiatan,

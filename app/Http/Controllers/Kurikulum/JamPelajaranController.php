@@ -24,32 +24,66 @@ class JamPelajaranController extends Controller
     {
         $request->validate([
             'jam_ke' => 'required|integer',
-            'hari' => 'nullable|string|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu',
+            'hari' => 'nullable|array',
+            'hari.*' => 'nullable|string|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu',
             'jam_mulai' => 'required|date_format:H:i',
             'jam_selesai' => 'required|date_format:H:i|after:jam_mulai',
             'tipe_kegiatan' => 'nullable|string|in:istirahat,sholawat_pagi,upacara,ishoma,kegiatan_4r',
             'keterangan' => 'nullable|string|max:255',
         ]);
 
-        // Custom validation: check if (jam_ke, hari) combination already exists
-        $exists = JamPelajaran::where('jam_ke', $request->jam_ke)
-            ->where('hari', $request->hari)
-            ->exists();
+        $days = $request->hari ?? [null];
+        
+        // Filter out empty strings if any (though nullable|array should handle it, Alpine might send empty string)
+        $days = array_map(fn($d) => $d === "" ? null : $d, $days);
+        $days = array_unique($days);
 
-        if ($exists) {
-            toast('Kombinasi Jam Ke-' . $request->jam_ke . ' untuk hari ' . ($request->hari ?? 'Umum') . ' sudah ada.', 'error');
-            return back()->withInput();
+        $successCount = 0;
+        $failCount = 0;
+        $errors = [];
+
+        foreach ($days as $hari) {
+            // Custom validation: check if (jam_ke, hari) combination already exists
+            $exists = JamPelajaran::where('jam_ke', $request->jam_ke)
+                ->where('hari', $hari)
+                ->exists();
+
+            if ($exists) {
+                $errors[] = 'Kombinasi Jam Ke-' . $request->jam_ke . ' untuk hari ' . ($hari ?? 'Umum') . ' sudah ada.';
+                $failCount++;
+                continue;
+            }
+
+            try {
+                JamPelajaran::create([
+                    'jam_ke' => $request->jam_ke,
+                    'hari' => $hari,
+                    'jam_mulai' => $request->jam_mulai,
+                    'jam_selesai' => $request->jam_selesai,
+                    'tipe_kegiatan' => $request->tipe_kegiatan,
+                    'keterangan' => $request->keterangan,
+                ]);
+                $successCount++;
+            } catch (\Exception $e) {
+                Log::error('Error storing time slot for day ' . ($hari ?? 'Umum') . ': ' . $e->getMessage());
+                $failCount++;
+            }
         }
 
-        try {
-            JamPelajaran::create($request->all());
-            toast('Jam pelajaran berhasil ditambahkan.', 'success');
-            return redirect()->route('kurikulum.jam-pelajaran.index');
-        } catch (\Exception $e) {
-            Log::error('Error storing time slot: ' . $e->getMessage());
-            toast('Gagal menambahkan jam pelajaran.', 'error');
-            return back()->withInput();
+        if ($successCount > 0) {
+            toast($successCount . ' Jam pelajaran berhasil ditambahkan.', 'success');
         }
+
+        if ($failCount > 0) {
+            foreach ($errors as $error) {
+                toast($error, 'error');
+            }
+            if (empty($errors)) {
+                toast('Gagal menambahkan beberapa jam pelajaran.', 'error');
+            }
+        }
+
+        return redirect()->route('kurikulum.jam-pelajaran.index');
     }
 
     public function edit(JamPelajaran $jamPelajaran)
@@ -61,26 +95,38 @@ class JamPelajaranController extends Controller
     {
         $request->validate([
             'jam_ke' => 'required|integer',
-            'hari' => 'nullable|string|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu',
+            'hari' => 'nullable|array',
+            'hari.*' => 'nullable|string|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu',
             'jam_mulai' => 'required|date_format:H:i',
             'jam_selesai' => 'required|date_format:H:i|after:jam_mulai',
             'tipe_kegiatan' => 'nullable|string|in:istirahat,sholawat_pagi,upacara,ishoma,kegiatan_4r',
             'keterangan' => 'nullable|string|max:255',
         ]);
 
+        // Get single day for update (usually edit only affects one record)
+        $hari = $request->hari[0] ?? null;
+        if ($hari === "") $hari = null;
+
         // Custom validation for update
         $exists = JamPelajaran::where('jam_ke', $request->jam_ke)
-            ->where('hari', $request->hari)
+            ->where('hari', $hari)
             ->where('id', '!=', $jamPelajaran->id)
             ->exists();
 
         if ($exists) {
-            toast('Kombinasi Jam Ke-' . $request->jam_ke . ' untuk hari ' . ($request->hari ?? 'Umum') . ' sudah ada.', 'error');
+            toast('Kombinasi Jam Ke-' . $request->jam_ke . ' untuk hari ' . ($hari ?? 'Umum') . ' sudah ada.', 'error');
             return back()->withInput();
         }
 
         try {
-            $jamPelajaran->update($request->all());
+            $jamPelajaran->update([
+                'jam_ke' => $request->jam_ke,
+                'hari' => $hari,
+                'jam_mulai' => $request->jam_mulai,
+                'jam_selesai' => $request->jam_selesai,
+                'tipe_kegiatan' => $request->tipe_kegiatan,
+                'keterangan' => $request->keterangan,
+            ]);
             toast('Jam pelajaran berhasil diperbarui.', 'success');
             return redirect()->route('kurikulum.jam-pelajaran.index');
         } catch (\Exception $e) {
