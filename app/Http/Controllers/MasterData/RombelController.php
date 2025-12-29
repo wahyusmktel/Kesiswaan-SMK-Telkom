@@ -70,7 +70,13 @@ class RombelController extends Controller
         ]);
 
         try {
-            $rombel = Rombel::create($request->all());
+            $data = $request->all();
+
+            // Fix SQL Error 1364: Field 'tahun_ajaran' doesn't have a default value
+            $tp = TahunPelajaran::findOrFail($request->tahun_pelajaran_id);
+            $data['tahun_ajaran'] = $tp->tahun;
+
+            $rombel = Rombel::create($data);
             Log::info('User ' . auth()->user()->name . ' created rombel ID: ' . $rombel->id);
             toast('Data rombel berhasil ditambahkan.', 'success');
             return redirect()->route('master-data.rombel.index');
@@ -90,7 +96,13 @@ class RombelController extends Controller
         ]);
 
         try {
-            $rombel->update($request->all());
+            $data = $request->all();
+
+            // Fix SQL Error 1364: Field 'tahun_ajaran' doesn't have a default value
+            $tp = TahunPelajaran::findOrFail($request->tahun_pelajaran_id);
+            $data['tahun_ajaran'] = $tp->tahun;
+
+            $rombel->update($data);
             Log::info('User ' . auth()->user()->name . ' updated rombel ID: ' . $rombel->id);
             toast('Data rombel berhasil diperbarui.', 'success');
             return redirect()->route('master-data.rombel.index');
