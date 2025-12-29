@@ -9,10 +9,33 @@ use Illuminate\Support\Facades\Log;
 
 class JamPelajaranController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $jamPelajaran = JamPelajaran::orderBy('jam_ke')->orderBy('hari')->get();
-        return view('pages.kurikulum.jam-pelajaran.index', compact('jamPelajaran'));
+        $query = JamPelajaran::query();
+
+        if ($request->filled('hari')) {
+            $hari = $request->hari;
+            $query->where(function($q) use ($hari) {
+                $q->where('hari', $hari)
+                  ->orWhereNull('hari');
+            });
+        }
+
+        $jamPelajaran = $query->orderBy('jam_ke')->orderBy('hari')->get();
+
+        // Calculate total duration in minutes
+        $totalMinutes = 0;
+        foreach ($jamPelajaran as $item) {
+            $start = \Carbon\Carbon::parse($item->jam_mulai);
+            $end = \Carbon\Carbon::parse($item->jam_selesai);
+            $totalMinutes += $start->diffInMinutes($end);
+        }
+
+        $totalHours = floor($totalMinutes / 60);
+        $remainingMinutes = $totalMinutes % 60;
+        $totalDurationFormatted = ($totalHours > 0 ? $totalHours . ' Jam ' : '') . $remainingMinutes . ' Menit';
+
+        return view('pages.kurikulum.jam-pelajaran.index', compact('jamPelajaran', 'totalDurationFormatted'));
     }
 
     public function create()

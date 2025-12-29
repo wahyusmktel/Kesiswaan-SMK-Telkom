@@ -8,15 +8,43 @@
 
             <div class="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
 
-                <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
-                    <h3 class="font-bold text-gray-700">Daftar Jam Pelajaran</h3>
-                    <button @click="$dispatch('open-jam-modal')"
-                        class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 focus:outline-none shadow-sm transition ease-in-out duration-150 gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                        Tambah Jam
-                    </button>
+                <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+                        <h3 class="font-bold text-gray-700">Daftar Jam Pelajaran</h3>
+                        <div class="flex items-center gap-2 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-lg shadow-sm">
+                            <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div class="flex flex-col">
+                                <span class="text-[10px] text-indigo-400 font-bold uppercase tracking-wider leading-none">Total Durasi</span>
+                                <span class="text-sm font-black text-indigo-700 leading-tight">{{ $totalDurationFormatted }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                        <form method="GET" action="{{ route('kurikulum.jam-pelajaran.index') }}" class="flex items-center gap-2">
+                            <span class="text-xs text-gray-500 whitespace-nowrap">Filter Hari:</span>
+                            <select name="hari" onchange="this.form.submit()"
+                                class="text-xs border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm h-9">
+                                <option value="">Semua Data</option>
+                                <option value="Senin" {{ request('hari') == 'Senin' ? 'selected' : '' }}>Senin</option>
+                                <option value="Selasa" {{ request('hari') == 'Selasa' ? 'selected' : '' }}>Selasa</option>
+                                <option value="Rabu" {{ request('hari') == 'Rabu' ? 'selected' : '' }}>Rabu</option>
+                                <option value="Kamis" {{ request('hari') == 'Kamis' ? 'selected' : '' }}>Kamis</option>
+                                <option value="Jumat" {{ request('hari') == 'Jumat' ? 'selected' : '' }}>Jumat</option>
+                                <option value="Sabtu" {{ request('hari') == 'Sabtu' ? 'selected' : '' }}>Sabtu</option>
+                            </select>
+                        </form>
+
+                        <button @click="$dispatch('open-jam-modal')"
+                            class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 focus:outline-none shadow-sm transition ease-in-out duration-150 gap-2 h-9">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Tambah Jam
+                        </button>
+                    </div>
                 </div>
 
                 <div class="overflow-x-auto">
