@@ -32,11 +32,21 @@
                             </div>
                         </div>
 
-                        <label class="relative inline-flex items-center cursor-pointer group">
-                            <input type="checkbox" x-model="isSticky" class="sr-only peer">
-                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                            <span class="ms-3 text-xs font-bold text-gray-500 group-hover:text-indigo-600 transition-colors uppercase tracking-widest">Panel Melayang</span>
-                        </label>
+                        <div class="flex items-center gap-4">
+                            <button type="button" @click="showPanduan = true" 
+                                class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl font-bold text-xs hover:bg-indigo-100 transition-all border border-indigo-100 shadow-sm group">
+                                <svg class="w-4 h-4 text-indigo-500 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Panduan Editor
+                            </button>
+
+                            <label class="relative inline-flex items-center cursor-pointer group">
+                                <input type="checkbox" x-model="isSticky" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                <span class="ms-3 text-xs font-bold text-gray-500 group-hover:text-indigo-600 transition-colors uppercase tracking-widest">Panel Melayang</span>
+                            </label>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
@@ -261,6 +271,102 @@
                 </div>
             </form>
         </div>
+
+        <!-- Modal Panduan -->
+        <div x-show="showPanduan" 
+            class="fixed inset-0 z-[100] overflow-y-auto" 
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            style="display: none;">
+            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                <div class="fixed inset-0 transition-opacity bg-gray-900/60 backdrop-blur-sm" @click="showPanduan = false"></div>
+
+                <div class="inline-block overflow-hidden text-left align-bottom transition-all transform bg-white rounded-3xl shadow-2xl sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full border border-gray-100">
+                    <div class="bg-gradient-to-br from-indigo-600 to-indigo-700 px-6 py-8 text-white relative">
+                        <button @click="showPanduan = false" class="absolute top-4 right-4 text-white/50 hover:text-white transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l18 18"/></svg>
+                        </button>
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
+                                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-black tracking-tight leading-tight">Panduan Editor Jadwal</h3>
+                                <p class="text-indigo-100/80 text-sm font-medium">Langkah praktis menyusun jadwal pelajaran</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-8 space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Step 1 -->
+                            <div class="group">
+                                <div class="flex items-start gap-4">
+                                    <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-black text-sm group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">1</div>
+                                    <div>
+                                        <h4 class="font-bold text-gray-900 mb-1">Pilih Guru & Mapel</h4>
+                                        <p class="text-xs text-gray-500 leading-relaxed">Pilih mata pelajaran dan guru yang ingin Anda masukkan ke dalam jadwal di panel konfigurasi atas.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Step 2 -->
+                            <div class="group">
+                                <div class="flex items-start gap-4">
+                                    <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-black text-sm group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">2</div>
+                                    <div>
+                                        <h4 class="font-bold text-gray-900 mb-1">Pilih Slot Waktu</h4>
+                                        <p class="text-xs text-gray-500 leading-relaxed">Klik pada kotak (slot) di hari dan jam yang sesuai. Nama mapel & guru akan otomatis muncul.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Step 3 -->
+                            <div class="group">
+                                <div class="flex items-start gap-4">
+                                    <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-black text-sm group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">3</div>
+                                    <div>
+                                        <h4 class="font-bold text-gray-900 mb-1">Hapus Jadwal</h4>
+                                        <p class="text-xs text-gray-500 leading-relaxed">Jika ingin menghapus atau mengubah, cukup klik kembali pada kotak jadwal yang sudah terisi.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Step 4 -->
+                            <div class="group">
+                                <div class="flex items-start gap-4">
+                                    <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-black text-sm group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">4</div>
+                                    <div>
+                                        <h4 class="font-bold text-gray-900 mb-1">Koreksi Otomatis</h4>
+                                        <p class="text-xs text-gray-500 leading-relaxed">Sisa jam pelajaran (JP) akan terhitung otomatis setiap kali Anda menambah atau menghapus jadwal.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-amber-50 rounded-2xl p-5 border border-amber-100 flex gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                            </div>
+                            <div>
+                                <h5 class="font-bold text-amber-900 text-sm mb-1">Penting: Simpan Perubahan!</h5>
+                                <p class="text-xs text-amber-800/80 leading-relaxed">Penyusunan jadwal di grid belum tersimpan permanen. Anda <strong>WAJIB</strong> menekan tombol <span class="bg-indigo-600 text-white px-1.5 py-0.5 rounded text-[10px]">Simpan Jadwal</span> untuk menyimpan data ke database.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 px-8 py-6 flex justify-end">
+                        <button @click="showPanduan = false" class="px-6 py-2 bg-gray-900 text-white rounded-xl font-bold text-sm hover:bg-gray-800 transition-all shadow-lg shadow-gray-200">
+                            Saya Mengerti
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -273,6 +379,7 @@
                 selectedMapelId: '',
                 selectedGuruId: '',
                 isSticky: true,
+                showPanduan: false,
 
                 init() {
                     // Init logic jika diperlukan
