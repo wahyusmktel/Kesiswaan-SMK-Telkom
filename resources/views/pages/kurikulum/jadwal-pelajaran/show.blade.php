@@ -55,13 +55,14 @@
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">1. Pilih Mata
                                 Pelajaran</label>
                             <div class="relative">
-                                <select x-model.number="selectedMapelId"
+                                <select id="select-mapel" x-model.number="selectedMapelId"
                                     class="block w-full pl-10 rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-11 bg-gray-50 focus:bg-white transition-colors">
                                     <option value="">-- Pilih Mapel --</option>
-                                    <template x-for="mapel in availableMapel" :key="mapel.id">
-                                        <option :value="mapel.id"
-                                            x-text="mapel.nama_mapel + ' (Sisa ' + mapel.sisa_jam + ' JP)'"></option>
-                                    </template>
+                                    @foreach($mataPelajaran as $mapel)
+                                        <option value="{{ $mapel->id }}">
+                                            {{ $mapel->nama_mapel }} (Sisa {{ $mapel->sisa_jam }} JP)
+                                        </option>
+                                    @endforeach
                                 </select>
 
                                 {{-- <template x-if="mataPelajaran.length === 0">
@@ -84,7 +85,7 @@
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">2. Pilih Guru
                                 Pengajar</label>
                             <div class="relative">
-                                <select x-model.number="selectedGuruId"
+                                <select id="select-guru" x-model.number="selectedGuruId"
                                     class="block w-full pl-10 rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-11 bg-gray-50 focus:bg-white transition-colors">
                                     <option value="">-- Pilih Guru --</option>
                                     @foreach ($guru as $g)
@@ -162,8 +163,8 @@
                                             class="border-r border-gray-100 p-4 bg-gray-50/80 sticky left-0 z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] backdrop-blur-sm">
                                             <div class="flex flex-col items-center justify-center h-full">
                                                 <span
-                                                    class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">JAM KE</span>
-                                                <span class="font-black text-indigo-900 text-2xl">
+                                                    class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 leading-none">JAM KE</span>
+                                                <span class="font-black text-indigo-900 text-2xl leading-none">
                                                     {{ $slot->jam_ke }}
                                                 </span>
                                             </div>
@@ -271,6 +272,44 @@
                 </div>
             </form>
         </div>
+
+        @push('styles')
+            <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+            <style>
+                /* Overriding BS5 theme for a pure Tailwind look */
+                .ts-control {
+                    @apply !border-gray-300 !rounded-lg !h-11 !pl-10 !bg-gray-50 !shadow-none !flex !items-center !text-sm !font-medium !transition-all !duration-200;
+                }
+                .ts-wrapper.focus .ts-control {
+                    @apply !border-indigo-500 !ring-4 !ring-indigo-50 !bg-white;
+                }
+                .ts-dropdown {
+                    @apply !rounded-xl !shadow-2xl !border-gray-100 !mt-2 !p-2 !z-[100];
+                }
+                .ts-dropdown .active {
+                    @apply !bg-indigo-600 !text-white !rounded-lg;
+                }
+                .ts-dropdown .option {
+                    @apply !px-4 !py-2.5 !text-sm !transition-colors !duration-150 !rounded-lg !mb-0.5;
+                }
+                .ts-dropdown .option:hover:not(.active) {
+                    @apply !bg-indigo-50 !text-indigo-700;
+                }
+                .ts-wrapper.single .ts-control:after {
+                    @apply !border-gray-400 !border-b-2 !border-r-2 !h-2 !w-2 !rotate-45 !mt-[-6px] !mr-2;
+                    border-top: 0;
+                    border-left: 0;
+                    content: "";
+                }
+                .ts-control .item {
+                    @apply !text-gray-700 !font-semibold;
+                }
+            </style>
+        @endpush
+
+        @push('scripts')
+            <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+        @endpush
 
         <!-- Modal Panduan -->
         <div x-show="showPanduan" 
@@ -380,9 +419,42 @@
                 selectedGuruId: '',
                 isSticky: true,
                 showPanduan: false,
+                tsMapel: null,
+                tsGuru: null,
 
                 init() {
-                    // Init logic jika diperlukan
+                    this.$nextTick(() => {
+                        this.initTomSelect();
+                    });
+                },
+
+                initTomSelect() {
+                    const self = this;
+                    
+                    this.tsMapel = new TomSelect("#select-mapel", {
+                        create: false,
+                        dropdownParent: 'body',
+                        onChange: (val) => { self.selectedMapelId = val; }
+                    });
+
+                    this.tsGuru = new TomSelect("#select-guru", {
+                        create: false,
+                        dropdownParent: 'body',
+                        onChange: (val) => { self.selectedGuruId = val; }
+                    });
+
+                    // Watch for changes in sisa_jam to update TomSelect labels
+                    this.$watch('mataPelajaran', (value) => {
+                        if (this.tsMapel) {
+                            value.forEach(mapel => {
+                                const option = this.tsMapel.options[mapel.id];
+                                if (option) {
+                                    option.text = `${mapel.nama_mapel} (Sisa ${mapel.sisa_jam} JP)`;
+                                    this.tsMapel.updateOption(mapel.id, option);
+                                }
+                            });
+                        }
+                    }, { deep: true });
                 },
 
                 get availableMapel() {
