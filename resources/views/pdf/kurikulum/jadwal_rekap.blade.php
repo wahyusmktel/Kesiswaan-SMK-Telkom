@@ -15,9 +15,9 @@
         }
         .header {
             text-align: center;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #4f46e5;
-            padding-bottom: 10px;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #7b7b7bff;
+            padding-bottom: 8px;
         }
         .header h1 {
             margin: 0;
@@ -28,10 +28,14 @@
             letter-spacing: 1px;
         }
         .header p {
-            margin: 3px 0 0;
+            margin: 2px 0 0;
             font-size: 10px;
             color: #4b5563;
             font-weight: 600;
+        }
+        .day-section {
+            page-break-inside: avoid;
+            margin-bottom: 15px;
         }
         table {
             width: 100%;
@@ -53,18 +57,20 @@
         }
         .hari-label-col {
             width: 45px;
-            background-color: #4f46e5 !important;
+            background-color: #858585ff !important;
             color: white !important;
             font-weight: 800;
+            vertical-align: middle;
+            text-transform: uppercase;
         }
         .jam-col {
             width: 25px;
-            background-color: #f9fafb;
+            background-color: #f8fafc;
             font-weight: 700;
         }
         .waktu-col {
-            width: 60px;
-            background-color: #f9fafb;
+            width: 65px;
+            background-color: #f8fafc;
             font-family: 'Courier', monospace;
             font-weight: 600;
         }
@@ -88,7 +94,7 @@
             font-style: italic;
         }
         .footer-note {
-            margin-top: 15px;
+            margin-top: 10px;
             font-size: 7px;
             color: #9ca3af;
             text-align: right;
@@ -103,70 +109,80 @@
         <p>SMK TELKOM LAMPUNG • TAHUN PELAJARAN {{ date('Y') }}/{{ date('Y')+1 }}</p>
     </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th class="hari-label-col">HARI</th>
-                <th class="jam-col">JAM</th>
-                <th class="waktu-col">PUKUL</th>
-                @foreach($rombels as $rombel)
-                    <th>{{ $rombel->kelas->nama_kelas }}</th>
-                @endforeach
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($days as $day)
-                @php $firstInDay = true; @endphp
-                @foreach($jamKeList as $jamKe)
-                    @php 
-                        $slot = $jamLookup["{$jamKe}-{$day}"] ?? null;
-                    @endphp
-                    @if($slot)
-                        @php
-                            $isActivity = false;
-                            if ($slot->tipe_kegiatan) {
-                                if (in_array($slot->tipe_kegiatan, ['istirahat', 'sholawat_pagi', 'ishoma'])) { $isActivity = true; }
-                                elseif ($slot->tipe_kegiatan == 'upacara' && $day == 'Senin') { $isActivity = true; }
-                                elseif ($slot->tipe_kegiatan == 'kegiatan_4r' && $day == 'Jumat') { $isActivity = true; }
-                            }
-                        @endphp
+    @foreach($days as $day)
+        @php
+            $actualSlots = [];
+            foreach($jamKeList as $jk) {
+                if(isset($jamLookup["{$jk}-{$day}"])) { $actualSlots[] = $jk; }
+            }
+        @endphp
+
+        @if(count($actualSlots) > 0)
+            <div class="day-section">
+                <table>
+                    <thead>
                         <tr>
-                            @if($firstInDay)
-                                <td rowspan="{{ count($jamKeList) }}" class="hari-label-col">
-                                    {{ strtoupper($day) }}
-                                </td>
-                                @php $firstInDay = false; @endphp
-                            @endif
-                            <td class="jam-col">{{ $jamKe }}</td>
-                            <td class="waktu-col">
-                                {{ \Carbon\Carbon::parse($slot->jam_mulai)->format('H:i') }}-{{ \Carbon\Carbon::parse($slot->jam_selesai)->format('H:i') }}
-                            </td>
-                            
-                            @if($isActivity)
-                                <td colspan="{{ count($rombels) }}" class="activity-cell">
-                                    {{ str_replace('_', ' ', strtoupper($slot->tipe_kegiatan)) }}
-                                </td>
-                            @else
-                                @foreach($rombels as $rombel)
-                                    @php
-                                        $data = $jadwalMatrix["{$day}-{$jamKe}-{$rombel->id}"] ?? null;
-                                    @endphp
-                                    <td>
-                                        @if($data)
-                                            <span class="mapel-text">{{ $data['kode'] }}</span>
-                                            <span class="guru-text">{{ $data['guru'] }}</span>
-                                        @else
-                                            -
-                                        @endif
-                                    </td>
-                                @endforeach
-                            @endif
+                            <th rowspan="2" class="hari-label-col">HARI</th>
+                            <th rowspan="2" class="jam-col">JAM</th>
+                            <th rowspan="2" class="waktu-col">PUKUL</th>
+                            <th colspan="{{ count($rombels) }}">KELAS</th>
                         </tr>
-                    @endif
-                @endforeach
-            @endforeach
-        </tbody>
-    </table>
+                        <tr>
+                            @foreach($rombels as $rombel)
+                                <th>{{ $rombel->kelas->nama_kelas }}</th>
+                            @endforeach
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @php $firstInDay = true; @endphp
+                        @foreach($actualSlots as $jamKe)
+                            @php 
+                                $slot = $jamLookup["{$jamKe}-{$day}"];
+                                $isActivity = false;
+                                if ($slot->tipe_kegiatan) {
+                                    if (in_array($slot->tipe_kegiatan, ['istirahat', 'sholawat_pagi', 'ishoma'])) { $isActivity = true; }
+                                    elseif ($slot->tipe_kegiatan == 'upacara' && $day == 'Senin') { $isActivity = true; }
+                                    elseif ($slot->tipe_kegiatan == 'kegiatan_4r' && $day == 'Jumat') { $isActivity = true; }
+                                }
+                            @endphp
+                            <tr>
+                                @if($firstInDay)
+                                    <td rowspan="{{ count($actualSlots) }}" class="hari-label-col">
+                                        {{ strtoupper($day) }}
+                                    </td>
+                                    @php $firstInDay = false; @endphp
+                                @endif
+                                <td class="jam-col">{{ $jamKe }}</td>
+                                <td class="waktu-col">
+                                    {{ \Carbon\Carbon::parse($slot->jam_mulai)->format('H:i') }}-{{ \Carbon\Carbon::parse($slot->jam_selesai)->format('H:i') }}
+                                </td>
+                                
+                                @if($isActivity)
+                                    <td colspan="{{ count($rombels) }}" class="activity-cell">
+                                        {{ str_replace('_', ' ', strtoupper($slot->tipe_kegiatan)) }}
+                                    </td>
+                                @else
+                                    @foreach($rombels as $rombel)
+                                        @php
+                                            $data = $jadwalMatrix["{$day}-{$jamKe}-{$rombel->id}"] ?? null;
+                                        @endphp
+                                        <td>
+                                            @if($data)
+                                                <span class="mapel-text">{{ $data['kode'] }}</span>
+                                                <span class="guru-text">{{ $data['guru'] }}</span>
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
+                                    @endforeach
+                                @endif
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+    @endforeach
 
     <div class="footer-note">
         Dicetak pada: {{ now()->translatedFormat('d F Y H:i') }} | Sistem Informasi Manajemen Sekolah - SMK Telkom Lampung
