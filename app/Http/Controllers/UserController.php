@@ -32,7 +32,15 @@ class UserController extends Controller
                 });
             }
 
-            // 4. Eksekusi Paginasi (tambahkan parameter ke URL pagination)
+            // 4. Filter berdasarkan Role
+            if ($request->filled('role')) {
+                $roleName = $request->role;
+                $query->whereHas('roles', function ($q) use ($roleName) {
+                    $q->where('name', $roleName);
+                });
+            }
+
+            // 5. Eksekusi Paginasi (tambahkan parameter ke URL pagination)
             $users = $query->paginate($perPage)->withQueryString();
 
             $roles = \Spatie\Permission\Models\Role::pluck('name');
@@ -168,4 +176,60 @@ class UserController extends Controller
             return redirect()->route('users.index');
         }
     }
+
+    // Export data pengguna ke Excel
+    public function exportExcel(Request $request)
+    {
+        try {
+            $role = $request->get('role');
+            $filename = $role
+                ? 'Daftar_Pengguna_' . str_replace(' ', '_', $role) . '_' . date('Ymd_His') . '.xlsx'
+                : 'Daftar_Semua_Pengguna_' . date('Ymd_His') . '.xlsx';
+
+            return \Maatwebsite\Excel\Facades\Excel::download(
+                new \App\Exports\UsersExport($role),
+                $filename
+            );
+        } catch (\Exception $e) {
+            Log::error('Error exporting users to Excel: ' . $e->getMessage());
+            toast('Gagal mengekspor data ke Excel.', 'error');
+            return redirect()->back();
+        }
+    }
+
+    // Export data pengguna ke PDF
+    public function exportPdf(Request $request)
+    {
+        try {
+            $role = $request->get('role');
+
+            $query = User::with('roles')->latest();
+
+            if ($role) {
+                $query->whereHas('roles', function ($q) use ($role) {
+                    $q->where('name', $role);
+                });
+            }
+
+            $users = $query->get();
+
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.daftar-pengguna', [
+                'users' => $users,
+                'role' => $role ?? 'Semua Role',
+            ]);
+
+            $pdf->setPaper('A4', 'portrait');
+
+            $filename = $role
+                ? 'Daftar_Pengguna_' . str_replace(' ', '_', $role) . '_' . date('Ymd_His') . '.pdf'
+                : 'Daftar_Semua_Pengguna_' . date('Ymd_His') . '.pdf';
+
+            return $pdf->download($filename);
+        } catch (\Exception $e) {
+            Log::error('Error exporting users to PDF: ' . $e->getMessage());
+            toast('Gagal mengekspor data ke PDF.', 'error');
+            return redirect()->back();
+        }
+    }
 }
+

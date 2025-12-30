@@ -22,6 +22,26 @@
                                 </svg>
                                 <span class="hidden sm:inline">Tambah</span>
                             </button>
+
+                            <div class="flex items-center gap-2">
+                                <a href="{{ route('users.export-excel', ['role' => request('role')]) }}"
+                                    class="inline-flex items-center px-4 py-2 bg-emerald-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-emerald-500 focus:outline-none shadow-sm transition ease-in-out duration-150 gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <span class="hidden lg:inline">Excel</span>
+                                </a>
+
+                                <a href="{{ route('users.export-pdf', ['role' => request('role')]) }}"
+                                    class="inline-flex items-center px-4 py-2 bg-orange-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-orange-500 focus:outline-none shadow-sm transition ease-in-out duration-150 gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                    </svg>
+                                    <span class="hidden lg:inline">PDF</span>
+                                </a>
+                            </div>
                         </div>
 
                         <form method="GET" action="{{ route('users.index') }}"
@@ -36,6 +56,19 @@
                                     <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
                                     <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100
                                     </option>
+                                </select>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-gray-500">Role</span>
+                                <select name="role" onchange="this.form.submit()"
+                                    class="text-xs border-gray-300 focus:border-red-500 focus:ring-red-500 rounded-lg shadow-sm min-w-[120px]">
+                                    <option value="">Semua Role</option>
+                                    @foreach ($roles as $role)
+                                        <option value="{{ $role }}" {{ request('role') == $role ? 'selected' : '' }}>
+                                            {{ $role }}
+                                        </option>
+                                    @endforeach
                                 </select>
                             </div>
 

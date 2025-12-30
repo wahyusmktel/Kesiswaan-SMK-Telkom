@@ -93,6 +93,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Grup untuk route yang memerlukan peran Waka Kesiswaan
     Route::middleware(['role:Waka Kesiswaan'])->group(function () {
+        Route::get('users/export-excel', [UserController::class, 'exportExcel'])->name('users.export-excel');
+        Route::get('users/export-pdf', [UserController::class, 'exportPdf'])->name('users.export-pdf');
         Route::resource('users', UserController::class);
     });
 
