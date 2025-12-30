@@ -4,97 +4,103 @@
     <title>Master Jadwal Pelajaran</title>
     <style>
         @page {
-            margin: 1cm;
+            margin: 0.8cm;
+            size: a4 landscape;
         }
         body {
-            font-family: Arial, sans-serif;
-            font-size: 8px; /* Ukuran teks kecil agar muat banyak kolom */
-            color: #333;
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 7px;
+            color: #1f2937;
+            line-height: 1.2;
         }
         .header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #4f46e5;
+            padding-bottom: 10px;
         }
         .header h1 {
             margin: 0;
-            font-size: 18px;
+            font-size: 16px;
+            color: #111827;
+            font-weight: 800;
             text-transform: uppercase;
+            letter-spacing: 1px;
         }
         .header p {
-            margin: 5px 0 0;
-            font-size: 12px;
-            color: #666;
+            margin: 3px 0 0;
+            font-size: 10px;
+            color: #4b5563;
+            font-weight: 600;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            table-layout: fixed; /* Memaksa lebar kolom merata */
+            table-layout: fixed;
         }
         th, td {
-            border: 1px solid #999;
-            padding: 4px 2px;
+            border: 0.5pt solid #d1d5db;
+            padding: 3px 1px;
             text-align: center;
             word-wrap: break-word;
         }
         th {
-            background-color: #f2f2f2;
-            font-weight: bold;
+            background-color: #f3f4f6;
+            color: #374151;
+            font-weight: 700;
             text-transform: uppercase;
-        }
-        .bg-grey {
-            background-color: #f9f9f9;
-        }
-        .hari-row {
-            background-color: #e5e7eb;
-            font-weight: bold;
-            text-align: left;
-            padding-left: 10px;
-        }
-        .jam-col {
-            width: 30px;
-        }
-        .waktu-col {
-            width: 70px;
+            font-size: 6.5px;
         }
         .hari-label-col {
-            width: 50px;
-            font-weight: bold;
+            width: 45px;
+            background-color: #4f46e5 !important;
+            color: white !important;
+            font-weight: 800;
+        }
+        .jam-col {
+            width: 25px;
+            background-color: #f9fafb;
+            font-weight: 700;
+        }
+        .waktu-col {
+            width: 60px;
+            background-color: #f9fafb;
+            font-family: 'Courier', monospace;
+            font-weight: 600;
         }
         .activity-cell {
             background-color: #fffbeb;
-            font-style: italic;
             color: #92400e;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 8px;
+        }
+        .mapel-text {
+            font-weight: 700;
+            color: #111827;
+            display: block;
+            margin-bottom: 1px;
+        }
+        .guru-text {
+            font-size: 6px;
+            color: #6b7280;
+            font-style: italic;
         }
         .footer-note {
-            margin-top: 20px;
-            font-size: 9px;
-            border-top: 1px solid #ccc;
-            padding-top: 10px;
-        }
-        .lampiran {
-            margin-top: 30px;
-            page-break-before: auto;
-        }
-        .lampiran h2 {
-            font-size: 14px;
-            border-bottom: 2px solid #333;
-            padding-bottom: 5px;
-        }
-        .mapel-grid {
-            width: 50%;
-            float: left;
-        }
-        .clearfix::after {
-            content: "";
-            clear: both;
-            display: table;
+            margin-top: 15px;
+            font-size: 7px;
+            color: #9ca3af;
+            text-align: right;
+            border-top: 0.5pt solid #e5e7eb;
+            padding-top: 5px;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>Rekapitulasi Jadwal Pelajaran</h1>
-        <p>SMK Telkom Lampung - Tahun Pelajaran {{ date('Y') }}</p>
+        <h1>Master Jadwal Pelajaran</h1>
+        <p>SMK TELKOM LAMPUNG • TAHUN PELAJARAN {{ date('Y') }}/{{ date('Y')+1 }}</p>
     </div>
 
     <table>
@@ -116,6 +122,14 @@
                         $slot = $jamLookup["{$jamKe}-{$day}"] ?? null;
                     @endphp
                     @if($slot)
+                        @php
+                            $isActivity = false;
+                            if ($slot->tipe_kegiatan) {
+                                if (in_array($slot->tipe_kegiatan, ['istirahat', 'sholawat_pagi', 'ishoma'])) { $isActivity = true; }
+                                elseif ($slot->tipe_kegiatan == 'upacara' && $day == 'Senin') { $isActivity = true; }
+                                elseif ($slot->tipe_kegiatan == 'kegiatan_4r' && $day == 'Jumat') { $isActivity = true; }
+                            }
+                        @endphp
                         <tr>
                             @if($firstInDay)
                                 <td rowspan="{{ count($jamKeList) }}" class="hari-label-col">
@@ -127,31 +141,26 @@
                             <td class="waktu-col">
                                 {{ \Carbon\Carbon::parse($slot->jam_mulai)->format('H:i') }}-{{ \Carbon\Carbon::parse($slot->jam_selesai)->format('H:i') }}
                             </td>
-                            @foreach($rombels as $rombel)
-                                @php
-                                    $data = $jadwalMatrix["{$day}-{$jamKe}-{$rombel->id}"] ?? null;
-                                    $isActivity = false;
-                                    if ($slot->tipe_kegiatan) {
-                                        if (in_array($slot->tipe_kegiatan, ['istirahat', 'sholawat_pagi', 'ishoma'])) { $isActivity = true; }
-                                        elseif ($slot->tipe_kegiatan == 'upacara' && $day == 'Senin') { $isActivity = true; }
-                                        elseif ($slot->tipe_kegiatan == 'kegiatan_4r' && $day == 'Jumat') { $isActivity = true; }
-                                    }
-                                @endphp
-                                @if($isActivity)
-                                    <td class="activity-cell">
-                                        {{ str_replace('_', ' ', strtoupper($slot->tipe_kegiatan)) }}
-                                    </td>
-                                @else
+                            
+                            @if($isActivity)
+                                <td colspan="{{ count($rombels) }}" class="activity-cell">
+                                    {{ str_replace('_', ' ', strtoupper($slot->tipe_kegiatan)) }}
+                                </td>
+                            @else
+                                @foreach($rombels as $rombel)
+                                    @php
+                                        $data = $jadwalMatrix["{$day}-{$jamKe}-{$rombel->id}"] ?? null;
+                                    @endphp
                                     <td>
                                         @if($data)
-                                            <strong>{{ $data['kode'] }}</strong><br>
-                                            <span style="font-size: 7px; color: #666;">{{ $data['guru'] }}</span>
+                                            <span class="mapel-text">{{ $data['kode'] }}</span>
+                                            <span class="guru-text">{{ $data['guru'] }}</span>
                                         @else
                                             -
                                         @endif
                                     </td>
-                                @endif
-                            @endforeach
+                                @endforeach
+                            @endif
                         </tr>
                     @endif
                 @endforeach
@@ -159,35 +168,8 @@
         </tbody>
     </table>
 
-    <div class="lampiran clearfix">
-        <h2>Lampiran Kode Mata Pelajaran</h2>
-        @php
-            $chunks = $allMapels->chunk(ceil($allMapels->count() / 2));
-        @endphp
-        @foreach($chunks as $chunk)
-            <div class="mapel-grid">
-                <table style="width: 95%;">
-                    <thead>
-                        <tr>
-                            <th style="width: 60px;">Kode</th>
-                            <th>Nama Mata Pelajaran</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($chunk as $mapel)
-                            <tr>
-                                <td style="text-align: center; font-weight: bold;">{{ $mapel->kode_mapel }}</td>
-                                <td style="text-align: left; padding-left: 5px;">{{ $mapel->nama_mapel }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        @endforeach
-    </div>
-
     <div class="footer-note">
-        Dicetak pada: {{ now()->translatedFormat('d F Y H:i') }} | Sistem Informasi Izin Guru - SMK Telkom Lampung
+        Dicetak pada: {{ now()->translatedFormat('d F Y H:i') }} | Sistem Informasi Manajemen Sekolah - SMK Telkom Lampung
     </div>
 </body>
 </html>
