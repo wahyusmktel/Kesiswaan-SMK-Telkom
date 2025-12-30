@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daftar - Aplikasi Izin</title>
+    <title>Daftar Akun — SISFO SMK Telkom Lampung</title>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
     @vite(['resources/css/app.css', 'resources/css/authentication.css', 'resources/js/app.js'])
     <style>
         @keyframes fadeInDown {
@@ -153,6 +154,14 @@
         .strength-strong {
             @apply bg-green-500;
         }
+        #particles-js {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
     </style>
 </head>
 
@@ -160,6 +169,7 @@
     <div class="flex h-full min-h-screen">
         <!-- Hero Section -->
         <div class="hidden lg:flex lg:w-1/2 hero-gradient relative flex-col justify-center items-center p-12">
+            <div id="particles-js"></div>
             <div class="floating-shape shape-1 w-64 h-64 rounded-full"></div>
             <div class="floating-shape shape-2 w-96 h-96 rounded-full"></div>
             <div class="floating-shape shape-3 w-48 h-48 rounded-full"></div>
@@ -174,11 +184,10 @@
                         </svg>
                     </div>
                 </div>
-                <h1 class="text-5xl font-bold text-white mb-4">Bergabunglah</h1>
-                <p class="text-xl text-red-100 mb-8">dengan Aplikasi Izin</p>
-                <p class="text-red-100 text-lg max-w-md mx-auto leading-relaxed">
-                    Daftarkan akun Anda dan mulai mengelola perizinan dengan sistem yang modern dan terpercaya. Proses
-                    pendaftaran cepat dan mudah.
+                <h1 class="text-5xl font-extrabold text-white mb-4 tracking-tighter">SISFO <span class="text-red-500">TS</span></h1>
+                <p class="text-xl text-red-100 mb-8 font-medium">Digitalisasi Masa Depan Pendidikan</p>
+                <p class="text-red-100/80 text-lg max-w-md mx-auto leading-relaxed">
+                    Jadilah bagian dari transformasi digital SMK Telkom Lampung. Kelola data, pantau progres, dan raih kemudahan dalam satu platform terpadu.
                 </p>
                 <div class="mt-12 pt-12 border-t border-white/20">
                     <div class="grid grid-cols-3 gap-6 text-center">
@@ -238,8 +247,8 @@
                 @else
                     <!-- Header -->
                     <div class="text-center mb-8">
-                        <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Buat Akun Baru</h2>
-                        <p class="text-gray-600">Isi data berikut untuk mendaftar</p>
+                        <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2 tracking-tight">Buat Akun</h2>
+                        <p class="text-gray-600 font-medium">Mulai perjalanan digital Anda sekarang</p>
                     </div>
 
                     <!-- Register Form -->
@@ -386,9 +395,9 @@
                                 class="mt-1 w-4 h-4 text-red-600 border-gray-300 rounded cursor-pointer focus:ring-red-500"
                                 required />
                             <span class="text-sm text-gray-600 group-hover:text-red-600 transition-colors">
-                                Saya setuju dengan <a href="#"
+                                Saya setuju dengan <a href="{{ route('terms') }}"
                                     class="text-red-600 hover:text-red-700 font-medium">Syarat dan Ketentuan</a> dan <a
-                                    href="#" class="text-red-600 hover:text-red-700 font-medium">Kebijakan
+                                    href="{{ route('privacy') }}" class="text-red-600 hover:text-red-700 font-medium">Kebijakan
                                     Privasi</a>
                             </span>
                         </label>
@@ -433,12 +442,30 @@
                             d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0z"></path>
                     </svg>
                 </div>
-                <p class="text-gray-500 text-sm">Aplikasi Izin &copy; 2025</p>
+                <p class="text-gray-500 text-[10px] font-bold uppercase tracking-widest">SISFO TS &copy; {{ date('Y') }}</p>
             </div>
         </div>
     </div>
 
     <script>
+        particlesJS("particles-js", {
+            "particles": {
+                "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
+                "color": { "value": "#ffffff" },
+                "shape": { "type": "circle" },
+                "opacity": { "value": 0.2, "random": false },
+                "size": { "value": 3, "random": true },
+                "line_linked": { "enable": true, "distance": 150, "color": "#ffffff", "opacity": 0.2, "width": 1 },
+                "move": { "enable": true, "speed": 2, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false }
+            },
+            "interactivity": {
+                "detect_on": "canvas",
+                "events": { "onhover": { "enable": true, "mode": "repulse" }, "onclick": { "enable": true, "mode": "push" }, "resize": true },
+                "modes": { "repulse": { "distance": 100, "duration": 0.4 }, "push": { "particles_nb": 4 } }
+            },
+            "retina_detect": true
+        });
+
         const passwordInput = document.getElementById('password');
         const passwordStrengthBar = document.querySelector('.password-strength');
 

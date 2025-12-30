@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lupa Password - Aplikasi Izin</title>
+    <title>Lupa Password — SISFO SMK Telkom Lampung</title>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
     @vite(['resources/css/app.css', 'resources/css/authentication.css', 'resources/js/app.js'])
     <style>
         @keyframes fadeInDown {
@@ -129,12 +130,21 @@
         .info-box {
             @apply bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg flex items-start gap-3 mb-6;
         }
+        #particles-js {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
     </style>
 </head>
 
 <body class="bg-gray-50">
     <div class="flex h-screen">
         <div class="hidden lg:flex lg:w-1/2 hero-gradient relative flex-col justify-center items-center p-12">
+            <div id="particles-js"></div>
             <div class="floating-shape shape-1 w-64 h-64 rounded-full"></div>
             <div class="floating-shape shape-2 w-96 h-96 rounded-full"></div>
             <div class="floating-shape shape-3 w-48 h-48 rounded-full"></div>
@@ -149,16 +159,16 @@
                         </svg>
                     </div>
                 </div>
-                <h1 class="text-4xl font-bold text-white mb-4">Atur Ulang Password</h1>
-                <p class="text-xl text-red-100 mb-6">Tidak perlu khawatir</p>
-                <p class="text-red-100 text-base leading-relaxed">Kami akan membantu Anda untuk mengembalikan akses ke
-                    akun Aplikasi Izin Anda.</p>
+                <h1 class="text-4xl font-extrabold text-white mb-4 tracking-tighter">SISFO <span class="text-red-500">TS</span></h1>
+                <p class="text-xl text-red-100 mb-6 font-medium">Pemulihan Akun</p>
+                <p class="text-red-100/80 text-base leading-relaxed font-medium">Bantu kami mengembalikan akses ke ekosistem digital Anda dengan aman dan cepat.</p>
             </div>
         </div>
         <div class="w-full lg:w-1/2 flex flex-col justify-center items-center px-6 py-12 sm:px-12 lg:px-16">
             <div class="w-full max-w-md animate-fade-in-up">
                 <div class="text-center mb-8">
                     <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Lupa Password?</h2>
+                    <p class="text-gray-500 text-[10px] font-bold uppercase tracking-widest">SISFO TS &copy; {{ date('Y') }}</p>
                     <p class="text-gray-600">Masukkan email Anda untuk mendapatkan link reset</p>
                 </div>
                 @if (session('status'))
@@ -228,6 +238,24 @@
         </div>
     </div>
     <script>
+        particlesJS("particles-js", {
+            "particles": {
+                "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
+                "color": { "value": "#ffffff" },
+                "shape": { "type": "circle" },
+                "opacity": { "value": 0.2, "random": false },
+                "size": { "value": 3, "random": true },
+                "line_linked": { "enable": true, "distance": 150, "color": "#ffffff", "opacity": 0.2, "width": 1 },
+                "move": { "enable": true, "speed": 2, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false }
+            },
+            "interactivity": {
+                "detect_on": "canvas",
+                "events": { "onhover": { "enable": true, "mode": "repulse" }, "onclick": { "enable": true, "mode": "push" }, "resize": true },
+                "modes": { "repulse": { "distance": 100, "duration": 0.4 }, "push": { "particles_nb": 4 } }
+            },
+            "retina_detect": true
+        });
+
         // Submit loading state (disable buttons only)
         const form = document.querySelector('form');
         if (form) {

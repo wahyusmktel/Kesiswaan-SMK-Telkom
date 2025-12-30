@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Aplikasi Izin</title>
+    <title>Masuk — SISFO SMK Telkom Lampung</title>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
     @vite(['resources/css/app.css', 'resources/css/authentication.css', 'resources/js/app.js'])
     <style>
         @keyframes fadeInDown {
@@ -161,6 +162,14 @@
         .success-message {
             @apply bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-4 flex items-center gap-2;
         }
+        #particles-js {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
     </style>
 </head>
 
@@ -168,6 +177,7 @@
     <div class="flex h-screen">
         <!-- Hero Section -->
         <div class="hidden lg:flex lg:w-1/2 hero-gradient relative flex-col justify-center items-center p-12">
+            <div id="particles-js"></div>
             <div class="floating-shape shape-1 w-64 h-64 rounded-full"></div>
             <div class="floating-shape shape-2 w-96 h-96 rounded-full"></div>
             <div class="floating-shape shape-3 w-48 h-48 rounded-full"></div>
@@ -182,11 +192,10 @@
                         </svg>
                     </div>
                 </div>
-                <h1 class="text-5xl font-bold text-white mb-4">Aplikasi Izin</h1>
-                <p class="text-xl text-red-100 mb-8">Sistem Manajemen Perizinan Sekolah Modern</p>
-                <p class="text-red-100 text-lg max-w-md mx-auto leading-relaxed">
-                    Kelola izin siswa dengan mudah dan efisien. Platform digital terpercaya untuk manajemen
-                    administratif sekolah.
+                <h1 class="text-5xl font-extrabold text-white mb-4 tracking-tighter">SISFO <span class="text-red-500">TS</span></h1>
+                <p class="text-xl text-red-100 mb-8 font-medium">Sistem Informasi SMK Telkom Lampung</p>
+                <p class="text-red-100/80 text-lg max-w-md mx-auto leading-relaxed transition-all duration-300">
+                    Ekosistem digital terintegrasi untuk mewujudkan manajemen sekolah yang cerdas, efisien, dan transparan.
                 </p>
             </div>
         </div>
@@ -196,8 +205,8 @@
             <div class="w-full max-w-md animate-fade-in-up">
                 <!-- Header -->
                 <div class="text-center mb-8">
-                    <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Masuk</h2>
-                    <p class="text-gray-600">Selamat datang kembali di Aplikasi Izin</p>
+                    <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2 tracking-tight">Selamat Datang</h2>
+                    <p class="text-gray-600 font-medium">Silakan masuk ke akun SISFO Anda</p>
                 </div>
 
                 <!-- Session Status -->
@@ -337,11 +346,29 @@
                             d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                 </div>
-                <p class="text-gray-500 text-sm">Aplikasi Izin &copy; 2025</p>
+                <p class="text-gray-500 text-[10px] font-bold uppercase tracking-widest">SISFO TS &copy; {{ date('Y') }}</p>
             </div>
         </div>
     </div>
     <script>
+        particlesJS("particles-js", {
+            "particles": {
+                "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
+                "color": { "value": "#ffffff" },
+                "shape": { "type": "circle" },
+                "opacity": { "value": 0.2, "random": false },
+                "size": { "value": 3, "random": true },
+                "line_linked": { "enable": true, "distance": 150, "color": "#ffffff", "opacity": 0.2, "width": 1 },
+                "move": { "enable": true, "speed": 2, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false }
+            },
+            "interactivity": {
+                "detect_on": "canvas",
+                "events": { "onhover": { "enable": true, "mode": "repulse" }, "onclick": { "enable": true, "mode": "push" }, "resize": true },
+                "modes": { "repulse": { "distance": 100, "duration": 0.4 }, "push": { "particles_nb": 4 } }
+            },
+            "retina_detect": true
+        });
+
         // Toggle password visibility
         document.querySelectorAll('[data-toggle="password"]').forEach((btn) => {
             btn.addEventListener('click', () => {
