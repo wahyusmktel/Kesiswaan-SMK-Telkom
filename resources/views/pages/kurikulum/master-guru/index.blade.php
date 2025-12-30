@@ -49,6 +49,7 @@
                     <table class="w-full text-sm text-left text-gray-500">
                         <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-200">
                             <tr>
+                                <th class="px-6 py-4 font-bold tracking-wider">Kode Guru</th>
                                 <th class="px-6 py-4 font-bold tracking-wider">NUPTK</th>
                                 <th class="px-6 py-4 font-bold tracking-wider">Nama Lengkap</th>
                                 <th class="px-6 py-4 font-bold tracking-wider">L/P</th>
@@ -59,6 +60,9 @@
                         <tbody class="divide-y divide-gray-100">
                             @forelse ($guru as $item)
                                 <tr class="bg-white hover:bg-gray-50/80 transition-colors duration-200">
+                                    <td class="px-6 py-4 whitespace-nowrap font-mono text-gray-600">
+                                        {{ $item->kode_guru ?? '-' }}
+                                    </td>
                                     <td class="px-6 py-4 whitespace-nowrap font-mono text-gray-600">
                                         {{ $item->nuptk ?? '-' }}
                                     </td>
@@ -109,6 +113,7 @@
                                             <button
                                                 @click="$dispatch('edit-guru', {
                                                     id: '{{ $item->id }}',
+                                                    kode_guru: '{{ $item->kode_guru ?? '' }}',
                                                     nuptk: '{{ $item->nuptk ?? '' }}',
                                                     nama_lengkap: '{{ addslashes($item->nama_lengkap) }}',
                                                     jenis_kelamin: '{{ $item->jenis_kelamin }}',
@@ -132,7 +137,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="px-6 py-12 text-center text-gray-500 bg-gray-50/50">
+                                    <td colspan="6" class="px-6 py-12 text-center text-gray-500 bg-gray-50/50">
                                         <div class="flex flex-col items-center justify-center">
                                             <svg class="w-12 h-12 text-gray-300 mb-3" fill="none"
                                                 stroke="currentColor" viewBox="0 0 24 24">
@@ -180,6 +185,12 @@
                     <template x-if="isEdit"><input type="hidden" name="_method" value="PUT"></template>
 
                     <div class="px-4 py-5 sm:p-6 space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Kode Guru <span
+                                    class="text-gray-400 font-normal">(Opsional, angka)</span></label>
+                            <input type="number" name="kode_guru" x-model="form.kode_guru" placeholder="Kode guru (angka)"
+                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">NUPTK <span
                                     class="text-gray-400 font-normal">(Opsional)</span></label>
@@ -241,8 +252,10 @@
                         <div class="bg-emerald-50 border border-emerald-100 rounded-lg p-3 text-sm text-emerald-800">
                             <p class="font-bold mb-1">Ketentuan File:</p>
                             <p>Gunakan file Excel (.xlsx) dengan kolom: <code
-                                    class="bg-emerald-100 px-1 rounded">nuptk</code> dan <code
-                                    class="bg-emerald-100 px-1 rounded">nama_lengkap</code>.</p>
+                                    class="bg-emerald-100 px-1 rounded">kode_guru</code>, <code
+                                    class="bg-emerald-100 px-1 rounded">nuptk</code>, <code
+                                    class="bg-emerald-100 px-1 rounded">nama_lengkap</code>, dan <code
+                                    class="bg-emerald-100 px-1 rounded">jenis_kelamin</code>.</p>
                         </div>
 
                         <div>
@@ -302,6 +315,7 @@
                     isEdit: false,
                     formAction: '{{ route('kurikulum.master-guru.store') }}',
                     form: {
+                        kode_guru: '',
                         nuptk: '',
                         nama_lengkap: '',
                         jenis_kelamin: 'L'
@@ -311,6 +325,7 @@
                         this.isEdit = false;
                         this.formAction = '{{ route('kurikulum.master-guru.store') }}';
                         this.form = {
+                            kode_guru: '',
                             nuptk: '',
                             nama_lengkap: '',
                             jenis_kelamin: 'L'
@@ -321,6 +336,7 @@
                         this.isEdit = true;
                         this.formAction = data.updateUrl;
                         this.form = {
+                            kode_guru: data.kode_guru,
                             nuptk: data.nuptk,
                             nama_lengkap: data.nama_lengkap,
                             jenis_kelamin: data.jenis_kelamin

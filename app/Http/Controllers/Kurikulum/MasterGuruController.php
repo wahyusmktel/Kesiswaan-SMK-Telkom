@@ -35,6 +35,7 @@ class MasterGuruController extends Controller
     public function store(Request $request)
     {
         $request->validate([
+            'kode_guru' => 'nullable|numeric|unique:master_gurus,kode_guru',
             'nuptk' => 'nullable|string|unique:master_gurus,nuptk',
             'nama_lengkap' => 'required|string|max:255',
             'jenis_kelamin' => 'required|in:L,P',
@@ -59,6 +60,7 @@ class MasterGuruController extends Controller
     public function update(Request $request, MasterGuru $masterGuru)
     {
         $request->validate([
+            'kode_guru' => 'nullable|numeric|unique:master_gurus,kode_guru,' . $masterGuru->id,
             'nuptk' => 'nullable|string|unique:master_gurus,nuptk,' . $masterGuru->id,
             'nama_lengkap' => 'required|string|max:255',
             'jenis_kelamin' => 'required|in:L,P',

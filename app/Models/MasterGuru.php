@@ -12,6 +12,7 @@ class MasterGuru extends Model
     protected $table = 'master_gurus';
 
     protected $fillable = [
+        'kode_guru',
         'nuptk',
         'nama_lengkap',
         'jenis_kelamin',

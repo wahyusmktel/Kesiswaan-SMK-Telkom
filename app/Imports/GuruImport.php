@@ -17,6 +17,7 @@ class GuruImport implements ToModel, WithHeadingRow, WithValidation
     public function model(array $row)
     {
         return new MasterGuru([
+            'kode_guru'     => $row['kode_guru'] ?? null,
             'nuptk'         => $row['nuptk'],
             'nama_lengkap'  => $row['nama_lengkap'],
             'jenis_kelamin'  => $row['jenis_kelamin'],
@@ -33,6 +34,9 @@ class GuruImport implements ToModel, WithHeadingRow, WithValidation
     public function rules(): array
     {
         return [
+            // 'kode_guru' harus unik jika diisi, numerik
+            'kode_guru' => 'nullable|numeric|unique:master_gurus,kode_guru',
+
             // 'nuptk' harus diisi, unik (tidak boleh ada duplikat di DB), dan 16 digit
             'nuptk' => '|unique:master_gurus,nuptk|',
 
@@ -45,6 +49,8 @@ class GuruImport implements ToModel, WithHeadingRow, WithValidation
     public function customValidationMessages()
     {
         return [
+            'kode_guru.unique' => 'Kode Guru ini sudah terdaftar.',
+            'kode_guru.numeric' => 'Kode Guru harus berupa angka.',
             'nuptk.unique' => 'NUPTK ini sudah terdaftar.',
             'nuptk.digits' => 'NUPTK harus terdiri dari 16 angka.',
         ];
