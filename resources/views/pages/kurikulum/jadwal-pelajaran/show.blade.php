@@ -152,17 +152,10 @@
                                             class="border-r border-gray-100 p-4 bg-gray-50/80 sticky left-0 z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] backdrop-blur-sm">
                                             <div class="flex flex-col items-center justify-center h-full">
                                                 <span
-                                                    class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Jam
-                                                    Ke-{{ $slot->jam_ke }}</span>
-                                                @if($repSlot)
-                                                    <span class="font-mono text-gray-800 font-bold text-lg">
-                                                        {{ \Carbon\Carbon::parse($repSlot->jam_mulai)->format('H:i') }}
-                                                    </span>
-                                                    <span class="text-gray-300 text-xs my-0.5">-</span>
-                                                    <span class="font-mono text-gray-500 font-medium">
-                                                        {{ \Carbon\Carbon::parse($repSlot->jam_selesai)->format('H:i') }}
-                                                    </span>
-                                                @endif
+                                                    class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">JAM KE</span>
+                                                <span class="font-black text-indigo-900 text-2xl">
+                                                    {{ $slot->jam_ke }}
+                                                </span>
                                             </div>
                                         </td>
 
@@ -216,24 +209,30 @@
                                                             @change="toggleSlot('{{ $day }}', {{ $slot->jam_ke }}, $event)">
 
                                                         <div x-show="!jadwal['{{ $day }}-{{ $slot->jam_ke }}']"
-                                                            class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            class="absolute inset-0 flex flex-col items-center justify-center group-hover:bg-indigo-50/30 transition-all duration-200">
                                                             <div
-                                                                class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shadow-md transform scale-50 group-hover:scale-100 transition-transform duration-200">
-                                                                <svg class="w-6 h-6" fill="none" stroke="currentColor"
+                                                                class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shadow-sm transform scale-50 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-all duration-200 mb-2">
+                                                                <svg class="w-5 h-5" fill="none" stroke="currentColor"
                                                                     viewBox="0 0 24 24">
                                                                     <path stroke-linecap="round" stroke-linejoin="round"
                                                                         stroke-width="2" d="M12 4v16m8-8H4" />
                                                                 </svg>
                                                             </div>
+                                                            <div class="text-[10px] font-mono text-gray-400 opacity-60 group-hover:opacity-100 transition-opacity">
+                                                                {{ \Carbon\Carbon::parse($currentSlot->jam_mulai)->format('H:i') }} - {{ \Carbon\Carbon::parse($currentSlot->jam_selesai)->format('H:i') }}
+                                                            </div>
                                                         </div>
 
                                                         <div x-show="jadwal['{{ $day }}-{{ $slot->jam_ke }}']"
-                                                            class="text-center w-full relative z-10">
-                                                            <div class="font-bold text-sm leading-tight mb-1.5 break-words"
+                                                            class="text-center w-full relative z-10 flex flex-col items-center justify-center min-h-[80px]">
+                                                            <div class="font-bold text-sm leading-tight mb-1 break-words"
                                                                 x-text="getMapelName('{{ $day }}', {{ $slot->jam_ke }})">
                                                             </div>
-                                                            <div class="text-[10px] uppercase font-bold tracking-wide bg-white/60 px-2 py-1 rounded inline-block shadow-sm backdrop-blur-sm"
+                                                            <div class="text-[9px] uppercase font-bold tracking-wide bg-white/60 px-2 py-0.5 rounded inline-block shadow-sm backdrop-blur-sm mb-2"
                                                                 x-text="getGuruName('{{ $day }}', {{ $slot->jam_ke }})">
+                                                            </div>
+                                                            <div class="text-[9px] font-mono text-gray-500/80 font-medium border-t border-black/5 pt-1 w-full">
+                                                                {{ \Carbon\Carbon::parse($currentSlot->jam_mulai)->format('H:i') }} - {{ \Carbon\Carbon::parse($currentSlot->jam_selesai)->format('H:i') }}
                                                             </div>
                                                         </div>
 
