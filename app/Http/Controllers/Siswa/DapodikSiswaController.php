@@ -141,7 +141,10 @@ class DapodikSiswaController extends Controller
 
             // Attachments
             'doc_ijazah' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'doc_ijazah_extra' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
             'doc_kk' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'doc_kk_extra' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'doc_kk_social' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
             'doc_akta' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
             'doc_kps' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
             'doc_kip' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
@@ -150,12 +153,18 @@ class DapodikSiswaController extends Controller
         ]);
 
         $attachments = [];
-        $docFields = ['doc_ijazah', 'doc_kk', 'doc_akta', 'doc_kps', 'doc_kip', 'doc_kks', 'doc_rekening'];
+        $docFields = ['doc_ijazah', 'doc_ijazah_extra', 'doc_kk', 'doc_kk_extra', 'doc_kk_social', 'doc_akta', 'doc_kps', 'doc_kip', 'doc_kks', 'doc_rekening'];
 
         // CATEGORY CHANGE DETECTION FOR SERVER-SIDE VALIDATION
         $categoryFields = [
             'ijazah' => ['nama_lengkap', 'nipd', 'nisn', 'nik', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin', 'agama', 'sekolah_asal', 'no_seri_ijazah'],
-            'kk' => ['alamat', 'rt', 'rw', 'dusun', 'kelurahan', 'kecamatan', 'kode_pos', 'nama_ayah', 'nama_ibu', 'nama_wali', 'no_kk', 'anak_ke_berapa', 'jumlah_saudara_kandung'],
+            'kk' => [
+                'alamat', 'rt', 'rw', 'dusun', 'kelurahan', 'kecamatan', 'kode_pos', 
+                'nama_ayah', 'nik_ayah', 'tahun_lahir_ayah',
+                'nama_ibu', 'nik_ibu', 'tahun_lahir_ibu',
+                'nama_wali', 'nik_wali', 'tahun_lahir_wali',
+                'no_kk', 'anak_ke_berapa', 'jumlah_saudara_kandung'
+            ],
             'akta' => ['no_registrasi_akta_lahir'],
             'kps' => ['penerima_kps', 'no_kps'],
             'kip' => ['penerima_kip', 'nomor_kip', 'nama_di_kip'],
@@ -168,14 +177,36 @@ class DapodikSiswaController extends Controller
             $changed = false;
             foreach ($fields as $field) {
                 $currentValue = ($field === 'nama_lengkap') ? $siswa->nama_lengkap : ($siswa->dapodik->$field ?? null);
-                if ($request->has($field) && $request->input($field) != $currentValue) {
+                $requestValue = $request->input($field);
+
+                // Date normalization
+                if ($currentValue instanceof \Carbon\Carbon) {
+                    $currentValue = $currentValue->format('Y-m-d');
+                }
+
+                // Empty string vs null normalization
+                $requestValue = $requestValue === '' ? null : $requestValue;
+                $currentValue = $currentValue === '' ? null : $currentValue;
+
+                if ($request->has($field) && $requestValue != $currentValue) {
                     $changed = true;
                     break;
                 }
             }
 
-            if ($changed && !$request->hasFile("doc_$docType")) {
-                $errors["doc_$docType"] = "Lampiran $docType wajib diunggah karena terdapat perubahan pada data terkait.";
+            if ($changed) {
+                $hasFile = false;
+                if ($docType === 'kk') {
+                    $hasFile = $request->hasFile('doc_kk') || $request->hasFile('doc_kk_extra') || $request->hasFile('doc_kk_social');
+                } elseif ($docType === 'ijazah') {
+                    $hasFile = $request->hasFile('doc_ijazah') || $request->hasFile('doc_ijazah_extra');
+                } else {
+                    $hasFile = $request->hasFile("doc_$docType");
+                }
+
+                if (!$hasFile) {
+                    $errors["doc_$docType"] = "Lampiran $docType wajib diunggah karena terdapat perubahan pada data terkait.";
+                }
             }
         }
 

@@ -347,15 +347,15 @@
                 </div>
 
                 {{-- Lampiran KK --}}
-                <div class="overflow-hidden shadow-sm rounded-xl mb-6 border p-6 transition-all" :class="changed(['alamat', 'rt', 'rw', 'dusun', 'kelurahan', 'kecamatan', 'kode_pos', 'nama_ayah', 'nama_ibu', 'nama_wali', 'no_kk', 'anak_ke_berapa', 'jumlah_saudara_kandung']) ? 'bg-red-50 border-red-100' : 'bg-indigo-50 border-indigo-100'">
-                    <label class="block text-sm font-bold" :class="changed(['alamat', 'rt', 'rw', 'dusun', 'kelurahan', 'kecamatan', 'kode_pos', 'nama_ayah', 'nama_ibu', 'nama_wali', 'no_kk', 'anak_ke_berapa', 'jumlah_saudara_kandung']) ? 'text-red-700' : 'text-indigo-700'">
+                <div class="overflow-hidden shadow-sm rounded-xl mb-6 border p-6 transition-all" :class="changed(['alamat', 'rt', 'rw', 'dusun', 'kelurahan', 'kecamatan', 'kode_pos', 'nama_ayah', 'nik_ayah', 'tahun_lahir_ayah', 'nama_ibu', 'nik_ibu', 'tahun_lahir_ibu', 'nama_wali', 'nik_wali', 'tahun_lahir_wali']) ? 'bg-red-50 border-red-100' : 'bg-indigo-50 border-indigo-100'">
+                    <label class="block text-sm font-bold" :class="changed(['alamat', 'rt', 'rw', 'dusun', 'kelurahan', 'kecamatan', 'kode_pos', 'nama_ayah', 'nik_ayah', 'tahun_lahir_ayah', 'nama_ibu', 'nik_ibu', 'tahun_lahir_ibu', 'nama_wali', 'nik_wali', 'tahun_lahir_wali']) ? 'text-red-700' : 'text-indigo-700'">
                         Lampiran : Kartu Keluarga (KK) (PDF/Gambar)
-                        <template x-if="changed(['alamat', 'rt', 'rw', 'dusun', 'kelurahan', 'kecamatan', 'kode_pos', 'nama_ayah', 'nama_ibu', 'nama_wali', 'no_kk', 'anak_ke_berapa', 'jumlah_saudara_kandung'])">
+                        <template x-if="changed(['alamat', 'rt', 'rw', 'dusun', 'kelurahan', 'kecamatan', 'kode_pos', 'nama_ayah', 'nik_ayah', 'tahun_lahir_ayah', 'nama_ibu', 'nik_ibu', 'tahun_lahir_ibu', 'nama_wali', 'nik_wali', 'tahun_lahir_wali'])">
                             <span class="ml-1 text-xs px-2 py-0.5 bg-red-600 text-white rounded-full uppercase">Wajib</span>
                         </template>
                     </label>
-                    <input type="file" name="doc_kk" :required="changed(['alamat', 'rt', 'rw', 'dusun', 'kelurahan', 'kecamatan', 'kode_pos', 'nama_ayah', 'nama_ibu', 'nama_wali', 'no_kk', 'anak_ke_berapa', 'jumlah_saudara_kandung'])" class="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700">
-                    <p class="mt-1 text-xs italic" :class="changed(['alamat', 'rt', 'rw', 'dusun', 'kelurahan', 'kecamatan', 'kode_pos', 'nama_ayah', 'nama_ibu', 'nama_wali', 'no_kk', 'anak_ke_berapa', 'jumlah_saudara_kandung']) ? 'text-red-600' : 'text-indigo-600'">*Lengkapi lampiran kartu keluarga apabila terdapat perubahan pada data keluarga, alamat, anak/saudara, atau No. KK.</p>
+                    <input type="file" name="doc_kk" :required="changed(['alamat', 'rt', 'rw', 'dusun', 'kelurahan', 'kecamatan', 'kode_pos', 'nama_ayah', 'nik_ayah', 'tahun_lahir_ayah', 'nama_ibu', 'nik_ibu', 'tahun_lahir_ibu', 'nama_wali', 'nik_wali', 'tahun_lahir_wali'])" class="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700">
+                    <p class="mt-1 text-xs italic" :class="changed(['alamat', 'rt', 'rw', 'dusun', 'kelurahan', 'kecamatan', 'kode_pos', 'nama_ayah', 'nik_ayah', 'tahun_lahir_ayah', 'nama_ibu', 'nik_ibu', 'tahun_lahir_ibu', 'nama_wali', 'nik_wali', 'tahun_lahir_wali']) ? 'text-red-600' : 'text-indigo-600'">*Lengkapi lampiran kartu keluarga apabila terdapat perubahan pada data keluarga (nama/NIK/tahun lahir) atau alamat.</p>
                 </div>
 
                 {{-- Dokumen & Bantuan --}}
@@ -505,6 +505,18 @@
                             <div>
                                 <label class="block text-xs text-gray-500 uppercase font-bold">Jumlah Saudara</label>
                                 <input type="number" name="jumlah_saudara_kandung" x-model="form.jumlah_saudara_kandung" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            </div>
+                            <div class="md:col-span-2">
+                                <div class="p-4 bg-indigo-50 border border-indigo-100 rounded-xl">
+                                    <label class="block text-sm font-bold text-indigo-700 mb-1 flex items-center">
+                                        Lampiran : Kartu Keluarga (KK)
+                                        <template x-if="changed(['anak_ke_berapa', 'jumlah_saudara_kandung'])">
+                                            <span class="ml-2 px-2 py-0.5 bg-red-600 text-white text-[10px] rounded-full uppercase tracking-wider">Wajib</span>
+                                        </template>
+                                    </label>
+                                    <input type="file" name="doc_kk_social" :required="changed(['anak_ke_berapa', 'jumlah_saudara_kandung'])" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700">
+                                    <p class="mt-2 text-[10px] text-indigo-500 italic">*Lampirkan Kartu Keluarga apabila terdapat perubahan pada jumlah anak/saudara.</p>
+                                </div>
                             </div>
                         </div>
 
