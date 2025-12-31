@@ -71,6 +71,14 @@ class MasterSiswaController extends Controller
 
         try {
             $siswa->update($request->all());
+            
+            // Also update the User table if an account exists
+            if ($siswa->user) {
+                $siswa->user->update([
+                    'name' => $siswa->nama_lengkap
+                ]);
+            }
+            
             toast('Data siswa berhasil diperbarui.', 'success');
             return redirect()->route('master-data.siswa.index');
         } catch (\Exception $e) {

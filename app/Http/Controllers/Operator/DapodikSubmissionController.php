@@ -39,11 +39,20 @@ class DapodikSubmissionController extends Controller
 
         $newData = $submission->new_data;
 
-        // If nama_lengkap is present, update MasterSiswa
+        // If nama_lengkap is present, update MasterSiswa and User profile
         if (isset($newData['nama_lengkap'])) {
-            $submission->masterSiswa->update([
+            $siswa = $submission->masterSiswa;
+            $siswa->update([
                 'nama_lengkap' => $newData['nama_lengkap']
             ]);
+            
+            // Also update the User table if an account exists
+            if ($siswa->user) {
+                $siswa->user->update([
+                    'name' => $newData['nama_lengkap']
+                ]);
+            }
+            
             // Remove it so it doesn't break DapodikSiswa update (column doesn't exist there)
             unset($newData['nama_lengkap']);
         }

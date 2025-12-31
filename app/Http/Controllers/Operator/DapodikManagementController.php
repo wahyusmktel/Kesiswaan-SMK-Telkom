@@ -208,6 +208,13 @@ class DapodikManagementController extends Controller
                             'alamat' => $dapodik->alamat ?? $masterSiswa->alamat,
                             'last_synced_at' => now(),
                         ]);
+
+                        // Also update the User table if an account exists
+                        if ($masterSiswa->user) {
+                            $masterSiswa->user->update([
+                                'name' => $masterSiswa->nama_lengkap
+                            ]);
+                        }
                         
                         // Link dapodik to master_siswa if not linked
                         if ($dapodik->master_siswa_id !== $masterSiswa->id) {
