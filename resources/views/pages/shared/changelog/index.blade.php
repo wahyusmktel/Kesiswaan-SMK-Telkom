@@ -23,6 +23,53 @@
 
             {{-- Change Log Content --}}
             <div class="space-y-6">
+
+                {{-- Latest Update 1.1.0 --}}
+                <div class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden border border-gray-700">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <span class="bg-blue-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">Latest Update</span>
+                            <h3 class="text-3xl font-black tracking-tight mt-1 text-white">Version 1.1.0</h3>
+                            <p class="text-gray-400 text-sm font-medium mt-1 italic">"Dapodik Integrity & System Syncing"</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-gray-400 text-xs font-bold">{{ date('F d, Y') }}</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <h4 class="text-xs font-black uppercase text-blue-400 tracking-widest border-l-2 border-blue-500 pl-3">Fitur Baru</h4>
+                            <ul class="space-y-3">
+                                <li class="text-sm">
+                                    <span class="font-bold text-gray-200">Pengajuan Mandiri Dapodik</span>
+                                    <p class="text-xs text-gray-400 mt-0.5 leading-relaxed">Siswa dapat mengajukan perubahan data Dapodik secara mandiri dengan sistem kategori lampiran dokumen (KK, Ijazah, Akta, dll).</p>
+                                </li>
+                                <li class="text-sm">
+                                    <span class="font-bold text-gray-200">Modern Operator Verification</span>
+                                    <p class="text-xs text-gray-400 mt-0.5 leading-relaxed">Dashboard verifikasi baru dengan perbandingan data lama vs baru secara side-by-side dan fitur tag ringkasan perubahan.</p>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="space-y-4">
+                            <h4 class="text-xs font-black uppercase text-emerald-400 tracking-widest border-l-2 border-emerald-500 pl-3">Peningkatan & Perbaikan</h4>
+                            <ul class="space-y-2">
+                                <li class="text-[13px] flex items-start gap-2">
+                                    <span class="text-emerald-400">🔹</span>
+                                    <span class="text-gray-300"><strong class="text-white">Auto-Identity Sync:</strong> Sinkronisasi Nama Lengkap antara Dapodik, Master Siswa, hingga Akun Login Profil.</span>
+                                </li>
+                                <li class="text-[13px] flex items-start gap-2">
+                                    <span class="text-indigo-400">🔹</span>
+                                    <span class="text-gray-300"><strong class="text-white">Modal Doc Previewer:</strong> Preview dokumen (Gambar/PDF) langsung di halaman verifikasi tanpa pindah tab.</span>
+                                </li>
+                                <li class="text-[13px] flex items-start gap-2">
+                                    <span class="text-amber-400">🔹</span>
+                                    <span class="text-gray-300"><strong class="text-white">Timezone Date Fix:</strong> Perbaikan akurasi tanggal lahir dari database ke formulir (WIB Timezone alignment).</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
                 
                 {{-- New Features --}}
                 <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-8 hover:shadow-md transition-shadow">
