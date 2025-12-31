@@ -24,7 +24,7 @@
             nik: '{{ $siswa->dapodik->nik ?? '' }}',
             jenis_kelamin: '{{ $siswa->dapodik->jenis_kelamin ?? '' }}',
             tempat_lahir: '{{ $siswa->dapodik->tempat_lahir ?? '' }}',
-            tanggal_lahir: '{{ $siswa->dapodik->tanggal_lahir?->format('Y-m-d') ?? '' }}',
+            tanggal_lahir: '{{ $siswa->dapodik->tanggal_lahir?->timezone('Asia/Jakarta')->format('Y-m-d') ?? '' }}',
             agama: '{{ $siswa->dapodik->agama ?? '' }}',
             sekolah_asal: '{{ $siswa->dapodik->sekolah_asal ?? '' }}',
             alamat: '{{ $siswa->dapodik->alamat ?? '' }}',
@@ -71,6 +71,10 @@
             rekening_atas_nama: '{{ $siswa->dapodik->rekening_atas_nama ?? '' }}',
             anak_ke_berapa: '{{ $siswa->dapodik->anak_ke_berapa ?? '' }}',
             jumlah_saudara_kandung: '{{ $siswa->dapodik->jumlah_saudara_kandung ?? '' }}',
+            berat_badan: '{{ $siswa->dapodik->berat_badan ?? '' }}',
+            tinggi_badan: '{{ $siswa->dapodik->tinggi_badan ?? '' }}',
+            lingkar_kepala: '{{ $siswa->dapodik->lingkar_kepala ?? '' }}',
+            jarak_rumah_ke_sekolah: '{{ $siswa->dapodik->jarak_rumah_ke_sekolah ?? '' }}',
         },
         original: {
             nama_lengkap: '{{ $siswa->nama_lengkap }}',
@@ -79,7 +83,7 @@
             nik: '{{ $siswa->dapodik->nik ?? '' }}',
             jenis_kelamin: '{{ $siswa->dapodik->jenis_kelamin ?? '' }}',
             tempat_lahir: '{{ $siswa->dapodik->tempat_lahir ?? '' }}',
-            tanggal_lahir: '{{ $siswa->dapodik->tanggal_lahir?->format('Y-m-d') ?? '' }}',
+            tanggal_lahir: '{{ $siswa->dapodik->tanggal_lahir?->timezone('Asia/Jakarta')->format('Y-m-d') ?? '' }}',
             agama: '{{ $siswa->dapodik->agama ?? '' }}',
             sekolah_asal: '{{ $siswa->dapodik->sekolah_asal ?? '' }}',
             alamat: '{{ $siswa->dapodik->alamat ?? '' }}',
@@ -126,13 +130,33 @@
             rekening_atas_nama: '{{ $siswa->dapodik->rekening_atas_nama ?? '' }}',
             anak_ke_berapa: '{{ $siswa->dapodik->anak_ke_berapa ?? '' }}',
             jumlah_saudara_kandung: '{{ $siswa->dapodik->jumlah_saudara_kandung ?? '' }}',
+            berat_badan: '{{ $siswa->dapodik->berat_badan ?? '' }}',
+            tinggi_badan: '{{ $siswa->dapodik->tinggi_badan ?? '' }}',
+            lingkar_kepala: '{{ $siswa->dapodik->lingkar_kepala ?? '' }}',
+            jarak_rumah_ke_sekolah: '{{ $siswa->dapodik->jarak_rumah_ke_sekolah ?? '' }}',
         },
         changed(keys) {
             return keys.some(key => this.form[key] != this.original[key]);
+        },
+        hasChanges() {
+            return Object.keys(this.form).some(key => this.form[key] != this.original[key]);
+        },
+        submitForm(e) {
+            if (!this.hasChanges()) {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Tidak Ada Perubahan',
+                    text: 'Anda belum melakukan perubahan data apapun.',
+                    confirmButtonColor: '#3b82f6',
+                    confirmButtonText: 'Tutup'
+                });
+                return;
+            }
+            e.target.submit();
         }
     }">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <form action="{{ route('siswa.dapodik.store-submission') }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('siswa.dapodik.store-submission') }}" method="POST" enctype="multipart/form-data" @submit.prevent="submitForm">
                 @csrf
                 
                 @if ($errors->any())
@@ -523,19 +547,19 @@
                         <div class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-6">
                             <div>
                                 <label class="block text-xs text-gray-500 uppercase font-bold">Berat Badan (kg)</label>
-                                <input type="number" step="0.1" name="berat_badan" value="{{ $siswa->dapodik->berat_badan ?? '' }}" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                <input type="number" step="0.1" name="berat_badan" x-model="form.berat_badan" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-500 uppercase font-bold">Tinggi Badan (cm)</label>
-                                <input type="number" step="0.1" name="tinggi_badan" value="{{ $siswa->dapodik->tinggi_badan ?? '' }}" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                <input type="number" step="0.1" name="tinggi_badan" x-model="form.tinggi_badan" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-500 uppercase font-bold">Lingkar Kepala (cm)</label>
-                                <input type="number" step="0.1" name="lingkar_kepala" value="{{ $siswa->dapodik->lingkar_kepala ?? '' }}" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                <input type="number" step="0.1" name="lingkar_kepala" x-model="form.lingkar_kepala" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-500 uppercase font-bold">Jarak ke Sekolah (km)</label>
-                                <input type="number" step="0.1" name="jarak_rumah_ke_sekolah" value="{{ $siswa->dapodik->jarak_rumah_ke_sekolah ?? '' }}" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                <input type="number" step="0.1" name="jarak_rumah_ke_sekolah" x-model="form.jarak_rumah_ke_sekolah" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
                             </div>
                         </div>
                     </div>

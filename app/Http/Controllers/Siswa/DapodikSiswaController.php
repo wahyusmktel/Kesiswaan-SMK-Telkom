@@ -221,10 +221,25 @@ class DapodikSiswaController extends Controller
             }
         }
 
-        // Remove attachments from data array to be stored in old_data/new_data
+        // Filter out attachments to get text data
         $data = collect($validated)->except($docFields)->toArray();
 
-        $oldData = $siswa->dapodik ? collect($siswa->dapodik->toArray())->except(['id', 'master_siswa_id', 'created_at', 'updated_at'])->toArray() : [];
+        // Prepare old data for comparison
+        $oldData = [];
+        if ($siswa->dapodik) {
+            foreach ($siswa->dapodik->toArray() as $key => $val) {
+                if (in_array($key, ['id', 'master_siswa_id', 'created_at', 'updated_at'])) continue;
+                
+                // Normalize date with timezone correction (Asia/Jakarta)
+                if ($val instanceof \Carbon\Carbon || (strpos($key, 'tanggal') !== false && $val)) {
+                    $val = \Carbon\Carbon::parse($val)->timezone('Asia/Jakarta')->format('Y-m-d');
+                }
+                
+                // Normalize empty to null
+                $oldData[$key] = ($val === '' || $val === null) ? null : $val;
+            }
+        }
+        $oldData['nama_lengkap'] = $siswa->nama_lengkap;
 
         \App\Models\DapodikSubmission::create([
             'master_siswa_id' => $siswa->id,
