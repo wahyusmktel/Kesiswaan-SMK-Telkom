@@ -132,6 +132,15 @@
                 <span class="bg-blue-100 text-blue-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">NEW</span>
             </a>
         </li>
+        <li>
+            <a href="{{ route('siswa.dapodik.index') }}"
+                class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('siswa.dapodik.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span class="text-sm">Data Dapodik</span>
+            </a>
+        </li>
     @endrole
 
     {{-- ============================================================ --}}
@@ -809,11 +818,26 @@
         {{-- Dapodik Management --}}
         <li>
             <a href="{{ route('operator.dapodik.index') }}"
-                class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('operator.dapodik.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
+                class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('operator.dapodik.index') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
                 </svg>
                 <span class="text-sm">Manajemen Dapodik</span>
+            </a>
+        </li>
+        <li>
+            <a href="{{ route('operator.dapodik.submissions.index') }}"
+                class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('operator.dapodik.submissions.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span class="text-sm">Verifikasi Dapodik</span>
+                @php
+                    $pendingCount = \App\Models\DapodikSubmission::where('status', 'pending')->count();
+                @endphp
+                @if ($pendingCount > 0)
+                    <span class="bg-red-100 text-red-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">{{ $pendingCount }}</span>
+                @endif
             </a>
         </li>
     @endrole

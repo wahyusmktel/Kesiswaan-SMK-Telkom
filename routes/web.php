@@ -151,6 +151,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/dapodik/import', [DapodikManagementController::class, 'import'])->name('dapodik.import');
         Route::post('/dapodik/sync', [DapodikManagementController::class, 'sync'])->name('dapodik.sync');
         Route::get('/dapodik/template', [DapodikManagementController::class, 'downloadTemplate'])->name('dapodik.template');
+
+        // Dapodik Submissions (Operator Approval)
+        Route::get('/dapodik/submissions', [\App\Http\Controllers\Operator\DapodikSubmissionController::class, 'index'])->name('dapodik.submissions.index');
+        Route::get('/dapodik/submissions/{submission}', [\App\Http\Controllers\Operator\DapodikSubmissionController::class, 'show'])->name('dapodik.submissions.show');
+        Route::patch('/dapodik/submissions/{submission}/approve', [\App\Http\Controllers\Operator\DapodikSubmissionController::class, 'approve'])->name('dapodik.submissions.approve');
+        Route::patch('/dapodik/submissions/{submission}/reject', [\App\Http\Controllers\Operator\DapodikSubmissionController::class, 'reject'])->name('dapodik.submissions.reject');
     });
 
     // Grup Route untuk Kesiswaan
@@ -234,6 +240,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Kartu Pelajar Digital
         Route::get('/kartu-pelajar', [\App\Http\Controllers\Siswa\KartuPelajarController::class, 'index'])->name('kartu-pelajar.index');
+
+        // Data Dapodik
+        Route::get('/dapodik', [\App\Http\Controllers\Siswa\DapodikSiswaController::class, 'index'])->name('dapodik.index');
+        Route::get('/dapodik/edit', [\App\Http\Controllers\Siswa\DapodikSiswaController::class, 'edit'])->name('dapodik.edit');
+        Route::post('/dapodik/submission', [\App\Http\Controllers\Siswa\DapodikSiswaController::class, 'storeSubmission'])->name('dapodik.store-submission');
+        Route::get('/dapodik/submissions', [\App\Http\Controllers\Siswa\DapodikSiswaController::class, 'submissions'])->name('dapodik.submissions');
     });
 
     // Grup Route untuk Guru BK
