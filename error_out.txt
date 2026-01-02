@@ -1,0 +1,134 @@
+PHP Warning:  Module "openssl" is already loaded in Unknown on line 0
+
+Warning: Module "openssl" is already loaded in Unknown on line 0
+
+   INFO  Running migrations.  
+
+  2026_01_02_200715_create_lms_tables  4.07ms FAIL
+
+   Illuminate\Database\QueryException 
+
+  SQLSTATE[42S01]: Base table or view already exists: 1050 Table 'lms_materials' already exists (Connection: mysql, SQL: create table `lms_materials` (`id` bigint unsigned not null auto_increment primary key, `mata_pelajaran_id` bigint unsigned not null, `master_guru_id` bigint unsigned not null, `rombel_id` bigint unsigned not null, `title` varchar(255) not null, `content` text null, `file_path` varchar(255) null, `is_published` tinyint(1) not null default '1', `created_at` timestamp null, `updated_at` timestamp null) default character set utf8mb4 collate 'utf8mb4_unicode_ci')
+
+  at vendor\laravel\framework\src\Illuminate\Database\Connection.php:822
+    818▕                     $this->getName(), $query, $this->prepareBindings($bindings), $e
+    819▕                 );
+    820▕             }
+    821▕ 
+  ➜ 822▕             throw new QueryException(
+    823▕                 $this->getName(), $query, $this->prepareBindings($bindings), $e
+    824▕             );
+    825▕         }
+    826▕     }
+
+  1   vendor\laravel\framework\src\Illuminate\Database\Connection.php:568
+      PDOException::("SQLSTATE[42S01]: Base table or view already exists: 1050 Table 'lms_materials' already exists")
+
+  2   vendor\laravel\framework\src\Illuminate\Database\Connection.php:568
+      PDOStatement::execute()
+
+  3   vendor\laravel\framework\src\Illuminate\Database\Connection.php:809
+      Illuminate\Database\Connection::Illuminate\Database\{closure}("create table `lms_materials` (`id` bigint unsigned not null auto_increment primary key, `mata_pelajaran_id` bigint unsigned not null, `master_guru_id` bigint unsigned not null, `rombel_id` bigint unsigned not null, `title` varchar(255) not null, `content` text null, `file_path` varchar(255) null, `is_published` tinyint(1) not null default '1', `created_at` timestamp null, `updated_at` timestamp null) default character set utf8mb4 collate 'utf8mb4_unicode_ci'", [])
+
+  4   vendor\laravel\framework\src\Illuminate\Database\Connection.php:776
+      Illuminate\Database\Connection::runQueryCallback("create table `lms_materials` (`id` bigint unsigned not null auto_increment primary key, `mata_pelajaran_id` bigint unsigned not null, `master_guru_id` bigint unsigned not null, `rombel_id` bigint unsigned not null, `title` varchar(255) not null, `content` text null, `file_path` varchar(255) null, `is_published` tinyint(1) not null default '1', `created_at` timestamp null, `updated_at` timestamp null) default character set utf8mb4 collate 'utf8mb4_unicode_ci'", [], Object(Closure))
+
+  5   vendor\laravel\framework\src\Illuminate\Database\Connection.php:557
+      Illuminate\Database\Connection::run("create table `lms_materials` (`id` bigint unsigned not null auto_increment primary key, `mata_pelajaran_id` bigint unsigned not null, `master_guru_id` bigint unsigned not null, `rombel_id` bigint unsigned not null, `title` varchar(255) not null, `content` text null, `file_path` varchar(255) null, `is_published` tinyint(1) not null default '1', `created_at` timestamp null, `updated_at` timestamp null) default character set utf8mb4 collate 'utf8mb4_unicode_ci'", [], Object(Closure))
+
+  6   vendor\laravel\framework\src\Illuminate\Database\Schema\Blueprint.php:119
+      Illuminate\Database\Connection::statement("create table `lms_materials` (`id` bigint unsigned not null auto_increment primary key, `mata_pelajaran_id` bigint unsigned not null, `master_guru_id` bigint unsigned not null, `rombel_id` bigint unsigned not null, `title` varchar(255) not null, `content` text null, `file_path` varchar(255) null, `is_published` tinyint(1) not null default '1', `created_at` timestamp null, `updated_at` timestamp null) default character set utf8mb4 collate 'utf8mb4_unicode_ci'")
+
+  7   vendor\laravel\framework\src\Illuminate\Database\Schema\Builder.php:618
+      Illuminate\Database\Schema\Blueprint::build()
+
+  8   vendor\laravel\framework\src\Illuminate\Database\Schema\Builder.php:472
+      Illuminate\Database\Schema\Builder::build(Object(Illuminate\Database\Schema\Blueprint))
+
+  9   vendor\laravel\framework\src\Illuminate\Support\Facades\Facade.php:361
+      Illuminate\Database\Schema\Builder::create("lms_materials", Object(Closure))
+
+  10  database\migrations\2026_01_02_200715_create_lms_tables.php:14
+      Illuminate\Support\Facades\Facade::__callStatic("create")
+
+  11  vendor\laravel\framework\src\Illuminate\Database\Migrations\Migrator.php:514
+      Illuminate\Database\Migrations\Migration@anonymous\H:\Project\Aplikasi-Izin\database\migrations\2026_01_02_200715_create_lms_tables.php:7$110::up()
+
+  12  vendor\laravel\framework\src\Illuminate\Database\Migrations\Migrator.php:439
+      Illuminate\Database\Migrations\Migrator::runMethod(Object(Illuminate\Database\MySqlConnection), Object(Illuminate\Database\Migrations\Migration@anonymous\H:\Project\Aplikasi-Izin\database\migrations\2026_01_02_200715_create_lms_tables.php:7$110), "up")
+
+  13  vendor\laravel\framework\src\Illuminate\Database\Migrations\Migrator.php:448
+      Illuminate\Database\Migrations\Migrator::Illuminate\Database\Migrations\{closure}()
+
+  14  vendor\laravel\framework\src\Illuminate\Database\Migrations\Migrator.php:250
+      Illuminate\Database\Migrations\Migrator::runMigration(Object(Illuminate\Database\Migrations\Migration@anonymous\H:\Project\Aplikasi-Izin\database\migrations\2026_01_02_200715_create_lms_tables.php:7$110), "up")
+
+  15  vendor\laravel\framework\src\Illuminate\Console\View\Components\Task.php:41
+      Illuminate\Database\Migrations\Migrator::Illuminate\Database\Migrations\{closure}()
+
+  16  vendor\laravel\framework\src\Illuminate\Database\Migrations\Migrator.php:805
+      Illuminate\Console\View\Components\Task::render("2026_01_02_200715_create_lms_tables", Object(Closure))
+
+  17  vendor\laravel\framework\src\Illuminate\Database\Migrations\Migrator.php:250
+      Illuminate\Database\Migrations\Migrator::write("Illuminate\Console\View\Components\Task", "2026_01_02_200715_create_lms_tables", Object(Closure))
+
+  18  vendor\laravel\framework\src\Illuminate\Database\Migrations\Migrator.php:210
+      Illuminate\Database\Migrations\Migrator::runUp("H:\Project\Aplikasi-Izin/database/migrations/2026_01_02_200715_create_lms_tables.php")
+
+  19  vendor\laravel\framework\src\Illuminate\Database\Migrations\Migrator.php:137
+      Illuminate\Database\Migrations\Migrator::runPending([])
+
+  20  vendor\laravel\framework\src\Illuminate\Database\Console\Migrations\MigrateCommand.php:116
+      Illuminate\Database\Migrations\Migrator::run([])
+
+  21  vendor\laravel\framework\src\Illuminate\Database\Migrations\Migrator.php:665
+      Illuminate\Database\Console\Migrations\MigrateCommand::Illuminate\Database\Console\Migrations\{closure}()
+
+  22  vendor\laravel\framework\src\Illuminate\Database\Console\Migrations\MigrateCommand.php:109
+      Illuminate\Database\Migrations\Migrator::usingConnection(Object(Closure))
+
+  23  vendor\laravel\framework\src\Illuminate\Database\Console\Migrations\MigrateCommand.php:88
+      Illuminate\Database\Console\Migrations\MigrateCommand::runMigrations()
+
+  24  vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:36
+      Illuminate\Database\Console\Migrations\MigrateCommand::handle()
+
+  25  vendor\laravel\framework\src\Illuminate\Container\Util.php:43
+      Illuminate\Container\BoundMethod::Illuminate\Container\{closure}()
+
+  26  vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:96
+      Illuminate\Container\Util::unwrapIfClosure(Object(Closure))
+
+  27  vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:35
+      Illuminate\Container\BoundMethod::callBoundMethod(Object(Illuminate\Foundation\Application), Object(Closure))
+
+  28  vendor\laravel\framework\src\Illuminate\Container\Container.php:754
+      Illuminate\Container\BoundMethod::call(Object(Illuminate\Foundation\Application), [])
+
+  29  vendor\laravel\framework\src\Illuminate\Console\Command.php:209
+      Illuminate\Container\Container::call()
+
+  30  vendor\symfony\console\Command\Command.php:318
+      Illuminate\Console\Command::execute(Object(Symfony\Component\Console\Input\ArgvInput), Object(Illuminate\Console\OutputStyle))
+
+  31  vendor\laravel\framework\src\Illuminate\Console\Command.php:178
+      Symfony\Component\Console\Command\Command::run(Object(Symfony\Component\Console\Input\ArgvInput), Object(Illuminate\Console\OutputStyle))
+
+  32  vendor\symfony\console\Application.php:1092
+      Illuminate\Console\Command::run(Object(Symfony\Component\Console\Input\ArgvInput), Object(Symfony\Component\Console\Output\ConsoleOutput))
+
+  33  vendor\symfony\console\Application.php:341
+      Symfony\Component\Console\Application::doRunCommand(Object(Illuminate\Database\Console\Migrations\MigrateCommand), Object(Symfony\Component\Console\Input\ArgvInput), Object(Symfony\Component\Console\Output\ConsoleOutput))
+
+  34  vendor\symfony\console\Application.php:192
+      Symfony\Component\Console\Application::doRun(Object(Symfony\Component\Console\Input\ArgvInput), Object(Symfony\Component\Console\Output\ConsoleOutput))
+
+  35  vendor\laravel\framework\src\Illuminate\Foundation\Console\Kernel.php:197
+      Symfony\Component\Console\Application::run(Object(Symfony\Component\Console\Input\ArgvInput), Object(Symfony\Component\Console\Output\ConsoleOutput))
+
+  36  vendor\laravel\framework\src\Illuminate\Foundation\Application.php:1234
+      Illuminate\Foundation\Console\Kernel::handle(Object(Symfony\Component\Console\Input\ArgvInput), Object(Symfony\Component\Console\Output\ConsoleOutput))
+
+  37  artisan:16
+      Illuminate\Foundation\Application::handleCommand(Object(Symfony\Component\Console\Input\ArgvInput))
+

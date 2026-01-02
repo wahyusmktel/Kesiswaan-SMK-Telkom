@@ -256,6 +256,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/dapodik/edit', [\App\Http\Controllers\Siswa\DapodikSiswaController::class, 'edit'])->name('dapodik.edit');
         Route::post('/dapodik/submission', [\App\Http\Controllers\Siswa\DapodikSiswaController::class, 'storeSubmission'])->name('dapodik.store-submission');
         Route::get('/dapodik/submissions', [\App\Http\Controllers\Siswa\DapodikSiswaController::class, 'submissions'])->name('dapodik.submissions');
+
+        // LMS Routes
+        Route::prefix('lms')->name('lms.')->group(function () {
+             Route::get('/', [App\Http\Controllers\Siswa\LmsController::class, 'index'])->name('index');
+             Route::get('/course/{mapel}', [App\Http\Controllers\Siswa\LmsController::class, 'show'])->name('course.show');
+             Route::get('/assignment/{assignment}', [App\Http\Controllers\Siswa\LmsController::class, 'showAssignment'])->name('assignment.show');
+             Route::post('/assignment/{assignment}/submit', [App\Http\Controllers\Siswa\LmsController::class, 'storeSubmission'])->name('assignment.submit');
+        });
     });
 
     // Grup Route untuk Guru BK
@@ -372,6 +380,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/izin/create', [\App\Http\Controllers\Guru\IzinGuruController::class, 'create'])->name('izin.create');
         Route::post('/izin', [\App\Http\Controllers\Guru\IzinGuruController::class, 'store'])->name('izin.store');
         Route::get('/izin/schedules', [\App\Http\Controllers\Guru\IzinGuruController::class, 'getSchedules'])->name('izin.schedules');
+
+        // LMS Routes
+        Route::prefix('lms')->name('lms.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Guru\LmsController::class, 'index'])->name('index');
+            Route::get('/course/{rombel}/{mapel}', [App\Http\Controllers\Guru\LmsController::class, 'show'])->name('course.show');
+            
+            // Material
+            Route::get('/material/create/{rombel}/{mapel}', [App\Http\Controllers\Guru\LmsController::class, 'createMaterial'])->name('material.create');
+            Route::post('/material/store/{rombel}/{mapel}', [App\Http\Controllers\Guru\LmsController::class, 'storeMaterial'])->name('material.store');
+
+            // Assignment
+            Route::get('/assignment/create/{rombel}/{mapel}', [App\Http\Controllers\Guru\LmsController::class, 'createAssignment'])->name('assignment.create');
+            Route::post('/assignment/store/{rombel}/{mapel}', [App\Http\Controllers\Guru\LmsController::class, 'storeAssignment'])->name('assignment.store');
+            Route::get('/assignment/{assignment}', [App\Http\Controllers\Guru\LmsController::class, 'showAssignment'])->name('assignment.show');
+
+            // Submission Grading
+            Route::get('/submission/{submission}', [App\Http\Controllers\Guru\LmsController::class, 'showSubmission'])->name('submission.show');
+            Route::patch('/submission/{submission}/grade', [App\Http\Controllers\Guru\LmsController::class, 'gradeSubmission'])->name('submission.grade');
+        });
     });
 
     // Grup Route untuk Piket (Approval Stage 1)
