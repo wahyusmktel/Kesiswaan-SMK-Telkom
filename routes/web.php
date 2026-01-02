@@ -81,6 +81,12 @@ Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
 
+// Documentation Routes (Public)
+Route::group(['prefix' => 'panduan', 'as' => 'docs.'], function () {
+    Route::get('/', [App\Http\Controllers\DocumentationController::class, 'index'])->name('index');
+    Route::get('/guru-piket', [App\Http\Controllers\DocumentationController::class, 'piket'])->name('piket');
+});
+
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
