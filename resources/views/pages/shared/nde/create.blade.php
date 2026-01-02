@@ -54,6 +54,11 @@
                             </div>
                         </div>
 
+                        <div class="mb-3 flex items-center gap-2">
+                            <input type="checkbox" id="select-all" class="rounded text-red-600 focus:ring-red-500 border-gray-300 w-4 h-4">
+                            <label for="select-all" class="text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer select-none">Pilih Semua Terlihat</label>
+                        </div>
+
                         <div id="penerima-list" class="bg-gray-50 rounded-2xl border border-gray-200 p-4 max-h-60 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-3">
                             @foreach($users as $user)
                                 <label class="penerima-item flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-100 hover:border-red-200 cursor-pointer transition-all"
@@ -117,6 +122,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('penerima-search');
             const roleFilter = document.getElementById('role-filter');
+            const selectAllCheckbox = document.getElementById('select-all');
             const items = document.querySelectorAll('.penerima-item');
             const noResults = document.getElementById('no-results');
             const listWrapper = document.getElementById('penerima-list');
@@ -140,6 +146,8 @@
                     } else {
                         item.classList.remove('flex');
                         item.classList.add('hidden');
+                        // Optional: uncheck if hidden? Usually better to keep checked but user might prefer only visible.
+                        // For now we just filter visibility.
                     }
                 });
 
@@ -150,7 +158,21 @@
                     noResults.classList.remove('hidden');
                     listWrapper.classList.add('hidden');
                 }
+
+                // Reset select all checkbox when filters change
+                selectAllCheckbox.checked = false;
             }
+
+            // Select All logic
+            selectAllCheckbox.addEventListener('change', function() {
+                const isChecked = this.checked;
+                items.forEach(item => {
+                    if (!item.classList.contains('hidden')) {
+                        const checkbox = item.querySelector('input[type="checkbox"]');
+                        if (checkbox) checkbox.checked = isChecked;
+                    }
+                });
+            });
 
             searchInput.addEventListener('input', filterItems);
             roleFilter.addEventListener('change', filterItems);
