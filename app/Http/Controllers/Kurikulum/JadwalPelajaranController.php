@@ -168,8 +168,11 @@ class JadwalPelajaranController extends Controller
         // Ambil daftar mapel unik untuk lampiran
         $allMapels = MataPelajaran::orderBy('kode_mapel')->get()->unique('kode_mapel');
 
+        // Ambil Tahun Pelajaran Aktif
+        $tahunAktif = TahunPelajaran::where('is_active', true)->first();
+
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.kurikulum.jadwal_rekap', compact(
-            'days', 'rombels', 'jamKeList', 'jamLookup', 'jadwalMatrix', 'allMapels'
+            'days', 'rombels', 'jamKeList', 'jamLookup', 'jadwalMatrix', 'allMapels', 'tahunAktif'
         ))->setPaper('a4', 'landscape');
 
         return $pdf->download('Master_Jadwal_Pelajaran_' . date('Y-m-d') . '.pdf');

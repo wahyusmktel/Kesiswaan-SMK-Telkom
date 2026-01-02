@@ -106,7 +106,7 @@
 <body>
     <div class="header">
         <h1>Master Jadwal Pelajaran</h1>
-        <p>SMK TELKOM LAMPUNG • TAHUN PELAJARAN {{ date('Y') }}/{{ date('Y')+1 }}</p>
+        <p>SMK TELKOM LAMPUNG • TAHUN PELAJARAN {{ $tahunAktif ? $tahunAktif->tahun : date('Y') . '/' . (date('Y') + 1) }}</p>
     </div>
 
     @foreach($days as $day)
