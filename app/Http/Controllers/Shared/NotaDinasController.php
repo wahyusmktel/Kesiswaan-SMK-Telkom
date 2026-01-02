@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
+use Spatie\Permission\Models\Role;
+
 class NotaDinasController extends Controller
 {
     public function index()
@@ -36,7 +38,8 @@ class NotaDinasController extends Controller
     {
         $jenisNde = NdeRefJenis::all();
         $users = User::where('id', '!=', Auth::id())->with('roles')->get();
-        return view('pages.shared.nde.create', compact('jenisNde', 'users'));
+        $roles = Role::all();
+        return view('pages.shared.nde.create', compact('jenisNde', 'users', 'roles'));
     }
 
     public function store(Request $request)
