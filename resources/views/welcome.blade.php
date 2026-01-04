@@ -116,6 +116,21 @@
         .nav-link:hover::after {
             width: 100%;
         }
+
+        .bisa-text {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 900;
+            font-size: clamp(8rem, 30vw, 40rem);
+            line-height: 0.75;
+            color: var(--telkom-red);
+            letter-spacing: -0.05em;
+            margin-bottom: -0.05em;
+            user-select: none;
+            pointer-events: none;
+            opacity: 1;
+            text-align: center;
+            width: 100%;
+        }
     </style>
 </head>
 <body class="antialiased overflow-x-hidden" x-data="{ showVideo: false }">
@@ -503,6 +518,11 @@
             </div>
         </div>
     </footer>
+
+    <!-- BISA Text Section (Premium) -->
+    <section class="relative w-full overflow-hidden bg-[#0F172A] pt-10 pb-0 flex justify-center">
+        <h2 class="bisa-text">BISA</h2>
+    </section>
     
     {{-- Video Modal Overlay --}}
     <div x-show="showVideo" 
