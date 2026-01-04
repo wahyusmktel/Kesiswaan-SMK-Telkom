@@ -1,151 +1,203 @@
 <!DOCTYPE html>
 <html>
-
 <head>
     <meta charset="utf-8">
     <title>Surat Izin Masuk Kelas</title>
     <style>
+        @page {
+            /* Standard A5 size usually works well for slips, or half-letter. 
+               We'll use auto size or standard layout. 
+               Dompdf default is usually A4 portrait. We'll make it fit nicely. */
+            margin: 1cm;
+        }
         body {
-            font-family: 'Helvetica', sans-serif;
-            font-size: 11pt;
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 10pt;
             color: #333;
+            line-height: 1.4;
         }
-
         .container {
-            border: 1px solid #ccc;
-            padding: 20px;
+            border: 1px solid #000;
+            padding: 20px 30px;
+            position: relative;
         }
-
         .header {
             text-align: center;
-            border-bottom: 2px solid #333;
+            border-bottom: 2px solid #000;
+            margin-bottom: 25px;
             padding-bottom: 10px;
         }
-
-        .header h3 {
+        .header h1 {
             margin: 0;
+            font-size: 14pt;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+            color: #000;
         }
-
         .header p {
-            margin: 0;
+            margin: 3px 0 0;
             font-size: 10pt;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .intro {
+            margin-bottom: 20px;
+            font-style: italic;
+            font-size: 9pt;
         }
 
-        .content {
-            margin-top: 20px;
-        }
-
-        .content table {
+        table.data {
             width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 25px;
+        }
+        table.data td {
+            padding: 6px 4px;
+            vertical-align: top;
+            border-bottom: 1px solid #eee;
+        }
+        table.data tr:last-child td {
+            border-bottom: none;
+        }
+        table.data td.label {
+            width: 140px;
+            font-weight: bold;
+            color: #444;
+        }
+        table.data td.value {
+            color: #000;
+        }
+        .highlight {
+            font-weight: bold;
         }
 
-        .content td {
-            padding: 4px;
+        .footer-table {
+            width: 100%;
+            margin-top: 30px;
+            border-top: 1px solid #ccc;
+            padding-top: 20px;
+        }
+        .qr-cell {
+            width: 50%;
             vertical-align: top;
         }
-
-        .label {
-            width: 30%;
-        }
-
-        .footer {
-            margin-top: 30px;
-        }
-
-        .signatures {
-            width: 100%;
-        }
-
-        .signatures .piket {
-            width: 40%;
-            float: right;
+        .sig-cell {
+            width: 50%;
             text-align: center;
+            vertical-align: top;
+            padding-left: 20px;
         }
-
-        .qr-codes {
-            width: 55%;
-            float: left;
-        }
-
-        .qr-box {
-            width: 48%;
-            text-align: center;
-            font-size: 7pt;
+        
+        .qr-wrapper {
             display: inline-block;
+            text-align: center;
+            margin-right: 15px;
+            vertical-align: top;
+        }
+        .qr-img {
+            width: 60px;
+            height: 60px;
+            padding: 4px;
+            border: 1px solid #ddd;
+            background: #fff;
+        }
+        .qr-caption {
+            font-size: 6pt;
+            margin-top: 5px;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .date-line {
+            margin-bottom: 5px;
+            font-size: 9pt;
+        }
+        .role-line {
+            font-weight: bold;
+            margin-bottom: 50px;
+            font-size: 9pt;
+        }
+        .name-line {
+            font-weight: bold;
+            text-decoration: underline;
+            font-size: 10pt;
         }
     </style>
 </head>
-
 <body>
     <div class="container">
         <div class="header">
-            <h3>SURAT IZIN MASUK KELAS</h3>
-            <p>SMK TELKOM LAMPUNG</p>
+            <h1>Surat Izin Masuk Kelas</h1>
+            <p>SMK Telkom Lampung</p>
         </div>
-        <div class="content">
-            <p>Siswa di bawah ini telah ditangani keterlambatannya dan diizinkan untuk mengikuti pelajaran:</p>
-            <table>
-                <tr>
-                    <td class="label">Nama</td>
-                    <td>: <strong>{{ $keterlambatan->siswa->nama_lengkap }}</strong></td>
-                </tr>
-                <tr>
-                    <td class="label">Kelas</td>
-                    <td>: {{ $keterlambatan->siswa->rombels->first()?->kelas->nama_kelas ?? 'N/A' }}</td>
-                </tr>
-                <tr>
-                    <td class="label">Jam Terlambat</td>
-                    <td>: {{ \Carbon\Carbon::parse($keterlambatan->waktu_dicatat_security)->format('H:i') }} WIB</td>
-                </tr>
-                <tr>
-                    <td class="label">Alasan Siswa</td>
-                    <td>: {{ $keterlambatan->alasan_siswa }}</td>
-                </tr>
-                @if ($keterlambatan->tindak_lanjut_piket)
-                    <tr>
-                        <td class="label">Tindak Lanjut</td>
-                        <td>: {{ $keterlambatan->tindak_lanjut_piket }}</td>
-                    </tr>
-                @endif
-                @if ($keterlambatan->jadwalPelajaran)
-                    <tr>
-                        <td class="label">Masuk di Jam Ke-</td>
-                        <td>: {{ $keterlambatan->jadwalPelajaran->jam_ke }}
-                            ({{ $keterlambatan->jadwalPelajaran->mataPelajaran->nama_mapel }})</td>
-                    </tr>
-                    <tr>
-                        <td class="label">Guru Mengajar</td>
-                        <td>: {{ $keterlambatan->jadwalPelajaran->guru->nama_lengkap }}</td>
-                    </tr>
-                @else
-                    <tr>
-                        <td class="label">Keterangan</td>
-                        <td>: Saat ini sedang tidak ada jam pelajaran.</td>
-                    </tr>
-                @endif
-            </table>
+
+        <div class="intro">
+            Dengan ini menerangkan bahwa siswa berikut telah dicatat keterlambatannya dan diizinkan untuk mengikuti pelajaran:
         </div>
-        <div class="footer">
-            <div class="signatures">
-                <div class="piket">
-                    <p>Bandar Lampung, {{ now()->isoFormat('D MMMM YYYY') }}</p>
-                    <p>Guru Piket,</p>
-                    <br><br><br>
-                    <p><strong>{{ $keterlambatan->guruPiket->name }}</strong></p>
-                </div>
-                <div class="qr-codes">
-                    <div class="qr-box">
-                        <img src="{{ $guruKelasQrCode }}" alt="QR Verifikasi Guru Kelas">
-                        <p>Pindai oleh Guru Kelas</p>
+
+        <table class="data">
+            <tr>
+                <td class="label">Nama Lengkap</td>
+                <td class="value highlight">{{ $keterlambatan->siswa->nama_lengkap }}</td>
+            </tr>
+            <tr>
+                <td class="label">Kelas / Jurusan</td>
+                <td class="value">{{ $keterlambatan->siswa->rombels->first()?->kelas->nama_kelas ?? 'N/A' }}</td>
+            </tr>
+            <tr>
+                <td class="label">Waktu Kedatangan</td>
+                <td class="value">{{ \Carbon\Carbon::parse($keterlambatan->waktu_dicatat_security)->format('H:i') }} WIB</td>
+            </tr>
+            <tr>
+                <td class="label">Alasan Terlambat</td>
+                <td class="value">"{{ $keterlambatan->alasan_siswa }}"</td>
+            </tr>
+            @if ($keterlambatan->tindak_lanjut_piket)
+            <tr>
+                <td class="label">Tindak Lanjut</td>
+                <td class="value">{{ $keterlambatan->tindak_lanjut_piket }}</td>
+            </tr>
+            @endif
+            @if ($keterlambatan->jadwalPelajaran)
+            <tr>
+                <td class="label">Jadwal Pelajaran</td>
+                <td class="value">
+                    <strong>{{ $keterlambatan->jadwalPelajaran->mataPelajaran->nama_mapel }}</strong> <br>
+                    <span style="font-size: 9pt; color: #666;">
+                        Jam Ke-{{ $keterlambatan->jadwalPelajaran->jam_ke }} • Pengajar: {{ $keterlambatan->jadwalPelajaran->guru->nama_lengkap }}
+                    </span>
+                </td>
+            </tr>
+            @else
+            <tr>
+                <td class="label">Jadwal Pelajaran</td>
+                <td class="value" style="color: #888; font-style: italic;">Saat ini tidak ada jadwal pelajaran aktif.</td>
+            </tr>
+            @endif
+        </table>
+
+        <table class="footer-table">
+            <tr>
+                <td class="qr-cell">
+                    <div class="qr-wrapper">
+                        <img src="{{ $guruKelasQrCode }}" class="qr-img" alt="QR Guru Kelas">
+                        <div class="qr-caption">Pindai oleh<br>Guru Kelas</div>
                     </div>
-                    <div class="qr-box">
-                        <img src="{{ $publicQrCode }}" alt="QR Verifikasi Publik">
-                        <p>Verifikasi Keabsahan Surat</p>
+                    <div class="qr-wrapper">
+                        <img src="{{ $publicQrCode }}" class="qr-img" alt="QR Keabsahan">
+                        <div class="qr-caption">Verifikasi<br>Keabsahan</div>
                     </div>
-                </div>
-            </div>
-        </div>
+                </td>
+                <td class="sig-cell">
+                    <div class="date-line">Bandar Lampung, {{ now()->isoFormat('D MMMM YYYY') }}</div>
+                    <div class="role-line">Guru Piket</div>
+                    <div class="name-line">{{ $keterlambatan->guruPiket->name }}</div>
+                </td>
+            </tr>
+        </table>
     </div>
 </body>
-
 </html>

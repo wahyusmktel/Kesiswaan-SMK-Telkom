@@ -20,7 +20,14 @@ class PendataanTerlambatController extends Controller
                 ->orWhere('nis', 'like', '%' . $request->search . '%')
                 ->get();
         }
-        return view('pages.security.pendataan-terlambat.index', compact('hasilPencarian'));
+
+        // Ambil riwayat hari ini
+        $todayHistory = Keterlambatan::with(['siswa', 'siswa.rombels.kelas'])
+            ->whereDate('waktu_dicatat_security', today())
+            ->orderBy('waktu_dicatat_security', 'desc')
+            ->get();
+
+        return view('pages.security.pendataan-terlambat.index', compact('hasilPencarian', 'todayHistory'));
     }
 
     public function store(Request $request)
@@ -29,6 +36,16 @@ class PendataanTerlambatController extends Controller
             'master_siswa_id' => 'required|exists:master_siswa,id',
             'alasan_siswa' => 'required|string|min:5',
         ]);
+
+        // Cek duplikasi hari ini
+        $exists = Keterlambatan::where('master_siswa_id', $request->master_siswa_id)
+            ->whereDate('waktu_dicatat_security', today())
+            ->exists();
+
+        if ($exists) {
+            toast('Siswa ini SUDAH didata terlambat hari ini.', 'error');
+            return back();
+        }
 
         try {
             Keterlambatan::create([

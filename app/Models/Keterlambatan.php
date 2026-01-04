@@ -25,6 +25,12 @@ class Keterlambatan extends Model
         'status',
     ];
 
+    protected $casts = [
+        'waktu_dicatat_security' => 'datetime',
+        'waktu_verifikasi_piket' => 'datetime',
+        'waktu_verifikasi_guru_kelas' => 'datetime',
+    ];
+
     protected static function boot()
     {
         parent::boot();

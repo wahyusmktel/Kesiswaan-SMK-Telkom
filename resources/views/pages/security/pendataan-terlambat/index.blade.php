@@ -47,6 +47,12 @@
                                         class="w-full inline-flex justify-center items-center px-4 py-3 bg-indigo-600 border border-transparent rounded-xl font-bold text-sm text-white uppercase tracking-widest hover:bg-indigo-500 focus:outline-none shadow-lg transition ease-in-out duration-150 transform hover:-translate-y-0.5">
                                         Cari Data
                                     </button>
+                                    
+                                    <button type="button" onclick="startQrScanner()"
+                                        class="w-full inline-flex justify-center items-center px-4 py-3 bg-slate-800 border border-transparent rounded-xl font-bold text-sm text-white uppercase tracking-widest hover:bg-slate-700 focus:outline-none shadow-lg transition ease-in-out duration-150 transform hover:-translate-y-0.5 mt-2 gap-2">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                                        Scan QR Code
+                                    </button>
                                     @if (request('search'))
                                         <a href="{{ route('security.pendataan-terlambat.index') }}"
                                             class="w-full inline-flex justify-center items-center px-4 py-2 bg-white border border-gray-300 rounded-xl font-semibold text-sm text-gray-700 hover:bg-gray-50 focus:outline-none transition ease-in-out duration-150">
@@ -181,9 +187,101 @@
                             @endif
                         </div>
                     </div>
+
+                    <!-- History Section -->
+                    <div class="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden mt-6">
+                        <div class="p-6 border-b border-gray-100 bg-gray-50/50">
+                            <h3 class="font-bold text-gray-800 text-lg flex items-center gap-2">
+                                <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Riwayat Terlambat Hari Ini
+                            </h3>
+                        </div>
+                        <div class="flex-1 overflow-y-auto max-h-[400px] p-6 space-y-4 custom-scrollbar">
+                            @forelse ($todayHistory as $terlambat)
+                                <div class="flex items-center gap-4 p-4 rounded-2xl border border-slate-50 hover:bg-slate-50 transition-colors">
+                                    <div class="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center text-orange-700 font-black shrink-0 text-xs">
+                                        {{ $terlambat->siswa->rombels->first()?->kelas->nama_kelas ?? '?' }}
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="flex justify-between items-start">
+                                            <h5 class="font-bold text-slate-900 leading-tight">{{ $terlambat->siswa->nama_lengkap }}</h5>
+                                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{{ $terlambat->waktu_dicatat_security->format('H:i') }}</span>
+                                        </div>
+                                        <p class="text-xs text-slate-500 mt-1 italic">"{{ Str::limit($terlambat->alasan_siswa, 50) }}"</p>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="flex flex-col items-center justify-center py-8 text-slate-300">
+                                    <span class="text-sm italic">Belum ada data terlambat hari ini.</span>
+                                </div>
+                            @endforelse
+                        </div>
+                    </div>
                 </div>
 
             </div>
         </div>
     </div>
+    <!-- QR Scanner Modal -->
+    <div id="qr-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-75 hidden">
+        <div class="bg-white rounded-2xl overflow-hidden shadow-xl max-w-lg w-full p-6 relative">
+            <button onclick="stopQrScanner()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <h3 class="text-xl font-bold text-gray-900 mb-4 text-center">Scan QR Kartu Pelajar</h3>
+            <div id="reader" class="w-full rounded-xl overflow-hidden"></div>
+            <p class="text-center text-sm text-gray-500 mt-4">Arahkan kamera ke QR Code pada kartu pelajar siswa.</p>
+        </div>
+    </div>
+
+    @push('scripts')
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script>
+        let html5QrcodeScanner = null;
+
+        function startQrScanner() {
+            document.getElementById('qr-modal').classList.remove('hidden');
+            
+            if (html5QrcodeScanner === null) {
+                html5QrcodeScanner = new Html5QrcodeScanner(
+                    "reader", 
+                    { fps: 10, qrbox: {width: 250, height: 250} },
+                    /* verbose= */ false
+                );
+            }
+            
+            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        }
+
+        function stopQrScanner() {
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.clear().then(_ => {
+                    document.getElementById('qr-modal').classList.add('hidden');
+                }).catch(error => {
+                    console.error("Failed to clear scanner. ", error);
+                    document.getElementById('qr-modal').classList.add('hidden');
+                });
+            } else {
+                document.getElementById('qr-modal').classList.add('hidden');
+            }
+        }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            // Stop scanning
+            html5QrcodeScanner.clear();
+            document.getElementById('qr-modal').classList.add('hidden');
+            
+            // Redirect to search
+            console.log(`Scan result: ${decodedText}`);
+            window.location.href = "{{ route('security.pendataan-terlambat.index') }}?search=" + encodeURIComponent(decodedText);
+        }
+
+        function onScanFailure(error) {
+            // handle scan failure, usually better to ignore and keep scanning.
+            // console.warn(`Code scan error = ${error}`);
+        }
+    </script>
+    @endpush
 </x-app-layout>
