@@ -6,24 +6,28 @@ use App\Http\Controllers\Controller;
 use App\Models\Keterlambatan;
 use App\Models\MasterSiswa;
 use App\Models\User;
-use App\Notifications\SiswaTerlambatNotification; // Kita akan buat notifikasi ini
+use App\Models\JadwalPelajaran;
+use App\Models\PoinCategory;
+use App\Models\PoinPeraturan;
+use App\Models\SiswaPelanggaran;
+use App\Notifications\SiswaTerlambatNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Carbon;
 
 class PenangananTerlambatController extends Controller
 {
     public function index(Request $request)
     {
         $hasilPencarian = null;
-        // if ($request->filled('search')) {
-        //     $hasilPencarian = MasterSiswa::with('rombels.kelas')
-        //         ->where('nama_lengkap', 'like', '%' . $request->search . '%')
-        //         ->orWhere('nis', 'like', '%' . $request->search . '%')
-        //         ->get();
-        // }
-        return view('pages.piket.penanganan-terlambat.index', compact('hasilPencarian'));
+        $terlambatHariIni = Keterlambatan::with(['siswa.user', 'siswa.rombels.kelas', 'guruPiket'])
+            ->whereDate('waktu_dicatat_security', Carbon::today())
+            ->latest()
+            ->get();
+
+        return view('pages.piket.penanganan-terlambat.index', compact('hasilPencarian', 'terlambatHariIni'));
     }
 
     public function store(Request $request)
@@ -35,19 +39,66 @@ class PenangananTerlambatController extends Controller
         ]);
 
         try {
+            $siswa = MasterSiswa::findOrFail($request->master_siswa_id);
+            $now = Carbon::now();
+            $today = $now->toDateString();
+
+            // Cek duplikasi: Apakah siswa ini sudah dicatat terlambat HARI INI?
+            $sudahAda = Keterlambatan::where('master_siswa_id', $siswa->id)
+                ->whereDate('waktu_dicatat_security', $today)
+                ->first();
+
+            if ($sudahAda) {
+                toast('Siswa ini sudah dicatat keterlambatannya pada hari ini (' . $sudahAda->waktu_dicatat_security->format('H:i') . ')', 'warning');
+                return back()->withInput();
+            }
+
+            $namaHari = $now->isoFormat('dddd');
+            $waktu = $now->format('H:i:s');
+
+            // Cari jadwal pelajaran saat ini
+            $rombelSiswa = $siswa->rombels()->first();
+            $jadwalSaatItu = null;
+            if ($rombelSiswa) {
+                $jadwalSaatItu = JadwalPelajaran::where('rombel_id', $rombelSiswa->id)
+                    ->where('hari', $namaHari)
+                    ->where('jam_mulai', '<=', $waktu)
+                    ->where('jam_selesai', '>=', $waktu)
+                    ->first();
+            }
+
             $keterlambatan = Keterlambatan::create([
-                'master_siswa_id' => $request->master_siswa_id,
-                'jam_terlambat' => now(),
-                'alasan' => $request->alasan,
-                'tindak_lanjut' => $request->tindak_lanjut,
-                'dicatat_oleh_id' => Auth::id(),
+                'master_siswa_id' => $siswa->id,
+                'dicatat_oleh_security_id' => Auth::id(), // Piket acts as recorder here
+                'waktu_dicatat_security' => $now,
+                'alasan_siswa' => $request->alasan,
+                'diverifikasi_oleh_piket_id' => Auth::id(),
+                'waktu_verifikasi_piket' => $now,
+                'tindak_lanjut_piket' => $request->tindak_lanjut,
+                'jadwal_pelajaran_id' => $jadwalSaatItu?->id,
+                'status' => 'diverifikasi_piket',
             ]);
 
-            // Kirim Notifikasi ke Wali Kelas & Guru BK
-            // $this->kirimNotifikasi($keterlambatan);
+            // Tambahkan Poin Pelanggaran Otomatis (1 Poin)
+            $category = PoinCategory::firstOrCreate(['name' => 'Kedisiplinan']);
+            $peraturanTerlambat = PoinPeraturan::firstOrCreate(
+                ['deskripsi' => 'Terlambat'],
+                [
+                    'poin_category_id' => $category->id,
+                    'pasal' => 'Ketertiban',
+                    'bobot_poin' => 1,
+                ]
+            );
+
+            SiswaPelanggaran::create([
+                'master_siswa_id' => $keterlambatan->master_siswa_id,
+                'poin_peraturan_id' => $peraturanTerlambat->id,
+                'tanggal' => $now->toDateString(),
+                'catatan' => 'Terlambat dicatat langsung oleh Piket pada hari ' . $namaHari,
+                'pelapor_id' => Auth::id(),
+            ]);
 
             toast('Data keterlambatan berhasil dicatat.', 'success');
-            // return redirect()->route('piket.penanganan-terlambat.print', $keterlambatan->id);
             return redirect()->route('piket.penanganan-terlambat.index')
                 ->with('print_url', route('piket.penanganan-terlambat.print', $keterlambatan->id));
         } catch (\Exception $e) {
@@ -59,9 +110,17 @@ class PenangananTerlambatController extends Controller
 
     public function printPdf(Keterlambatan $keterlambatan)
     {
-        $keterlambatan->load(['siswa.rombels.kelas', 'pencatat']);
-        $pdf = Pdf::loadView('pdf.surat-izin-masuk-kelas', compact('keterlambatan'));
-        return $pdf->stream('surat-izin-masuk-' . $keterlambatan->siswa->nama_lengkap . '.pdf');
+        $keterlambatan->load(['siswa.user', 'siswa.rombels.kelas', 'guruPiket']);
+
+        // Generate QR Codes required by the template (Admission Slip)
+        $publicUrl = route('verifikasi.surat-terlambat', $keterlambatan->uuid);
+        $publicQrCode = 'data:image/svg+xml;base64,' . base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(60)->generate($publicUrl));
+
+        $guruKelasUrl = route('guru-kelas.verifikasi-terlambat.scan', $keterlambatan->uuid);
+        $guruKelasQrCode = 'data:image/svg+xml;base64,' . base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(60)->generate($guruKelasUrl));
+
+        $pdf = Pdf::loadView('pdf.surat-izin-masuk-kelas', compact('keterlambatan', 'publicQrCode', 'guruKelasQrCode'));
+        return $pdf->stream('surat-izin-masuk-' . $keterlambatan->siswa->user->name . '.pdf');
     }
 
     private function kirimNotifikasi(Keterlambatan $keterlambatan)

@@ -5,10 +5,12 @@ namespace App\Http\Controllers\WaliKelas;
 use App\Http\Controllers\Controller;
 use App\Models\MasterSiswa;
 use App\Models\Perizinan;
+use App\Models\Keterlambatan;
 use App\Models\IzinMeninggalkanKelas;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -61,10 +63,74 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-        // --- DATA BARU: Widget Izin Meninggalkan Kelas ---
-        $izinKeluarTerakhir = IzinMeninggalkanKelas::whereIn('user_id', $userIds)
+        // Izin meninggalkan kelas terakhir (Hanya yang di kelas perwalian)
+        $izinKeluarTerakhir = IzinMeninggalkanKelas::whereIn('user_id', function($query) use ($waliKelas) {
+                $query->select('master_siswa.user_id')
+                    ->from('master_siswa')
+                    ->join('rombel_siswa', 'master_siswa.id', '=', 'rombel_siswa.master_siswa_id')
+                    ->join('rombels', 'rombel_siswa.rombel_id', '=', 'rombels.id')
+                    ->where('rombels.wali_kelas_id', $waliKelas->id)
+                    ->whereNotNull('master_siswa.user_id');
+            })
             ->with(['siswa'])
-            ->latest('updated_at')
+            ->latest()
+            ->take(10)
+            ->get();
+
+        // --- DATA BARU: Widget Keterlambatan Siswa ---
+        $today = Carbon::today();
+        $thirtyDaysAgo = Carbon::now()->subDays(30);
+
+        // Siswa terlambat hari ini (Hanya yang di kelas perwalian)
+        $terlambatHariIni = Keterlambatan::whereIn('master_siswa_id', function($query) use ($waliKelas) {
+                $query->select('master_siswa_id')
+                    ->from('rombel_siswa')
+                    ->join('rombels', 'rombel_siswa.rombel_id', '=', 'rombels.id')
+                    ->where('rombels.wali_kelas_id', $waliKelas->id);
+            })
+            ->whereDate('waktu_dicatat_security', $today)
+            ->with(['siswa.user'])
+            ->latest()
+            ->get();
+
+        // Statistik 30 hari terakhir
+        $stats30HariRaw = Keterlambatan::whereIn('master_siswa_id', function($query) use ($waliKelas) {
+                $query->select('master_siswa_id')
+                    ->from('rombel_siswa')
+                    ->join('rombels', 'rombel_siswa.rombel_id', '=', 'rombels.id')
+                    ->where('rombels.wali_kelas_id', $waliKelas->id);
+            })
+            ->where('waktu_dicatat_security', '>=', $thirtyDaysAgo)
+            ->select(DB::raw('DATE(waktu_dicatat_security) as date'), DB::raw('count(*) as total'))
+            ->groupBy('date')
+            ->orderBy('date', 'ASC')
+            ->get()
+            ->pluck('total', 'date');
+
+        $latenessLabels = [];
+        $latenessValues = [];
+        for ($i = 29; $i >= 0; $i--) {
+            $date = Carbon::now()->subDays($i)->format('Y-m-d');
+            $latenessLabels[] = Carbon::parse($date)->isoFormat('DD MMM');
+            $latenessValues[] = $stats30HariRaw->get($date, 0);
+        }
+
+        $latenessChartData = [
+            'labels' => $latenessLabels,
+            'data' => $latenessValues,
+        ];
+
+        // Top 5 Siswa Sering Terlambat (Berdasarkan total record di class ini)
+        $topLateStudents = Keterlambatan::whereIn('master_siswa_id', function($query) use ($waliKelas) {
+                $query->select('master_siswa_id')
+                    ->from('rombel_siswa')
+                    ->join('rombels', 'rombel_siswa.rombel_id', '=', 'rombels.id')
+                    ->where('rombels.wali_kelas_id', $waliKelas->id);
+            })
+            ->select('master_siswa_id', DB::raw('count(*) as total'))
+            ->groupBy('master_siswa_id')
+            ->orderBy('total', 'DESC')
+            ->with(['siswa.user'])
             ->take(5)
             ->get();
 
@@ -72,7 +138,10 @@ class DashboardController extends Controller
             'statusChartData',
             'dailyChartData',
             'latestActivities',
-            'izinKeluarTerakhir'
+            'izinKeluarTerakhir',
+            'terlambatHariIni',
+            'latenessChartData',
+            'topLateStudents'
         ));
     }
 }

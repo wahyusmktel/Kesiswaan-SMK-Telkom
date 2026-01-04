@@ -35,10 +35,10 @@
                 <div class="absolute right-0 top-0 h-full w-1/3 bg-white/10 transform skew-x-12 blur-2xl"></div>
                 <div class="relative z-10 text-white">
                     <h3 class="text-3xl font-extrabold tracking-tight">Halo, {{ Auth::user()->name }}! 👨‍🏫</h3>
-                    @if (Auth::user()->masterGuru?->rombels->first())
+                    @if ($rombel = Auth::user()->rombels->first())
                         <p class="mt-2 text-teal-100 font-medium text-lg">
                             Wali Kelas dari <span
-                                class="font-bold bg-white/20 px-2 py-1 rounded">{{ Auth::user()->masterGuru->rombels->first()->kelas->nama_kelas }}</span>.
+                                class="font-bold bg-white/20 px-2 py-1 rounded">{{ $rombel->kelas->nama_kelas }}</span>.
                             Semangat memantau siswa hari ini!
                         </p>
                     @else
@@ -73,17 +73,94 @@
                     </div>
 
                     <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-5 border border-green-100">
-                        <h4 class="font-bold text-green-900 mb-3 text-sm uppercase">Pintasan Cepat</h4>
+                        <h4 class="font-bold text-green-900 mb-3 text-sm uppercase italic">Pintasan Cepat</h4>
                         <div class="space-y-2">
                             <a href="{{ route('wali-kelas.perizinan.index') }}"
                                 class="block w-full py-2.5 px-4 bg-white text-green-700 text-sm font-bold rounded-xl shadow-sm hover:bg-green-600 hover:text-white transition-all text-center border border-green-200">
                                 Periksa Pengajuan Izin
                             </a>
+                            <a href="{{ route('monitoring-keterlambatan.index') }}"
+                                class="block w-full py-2.5 px-4 bg-white text-emerald-700 text-sm font-bold rounded-xl shadow-sm hover:bg-emerald-600 hover:text-white transition-all text-center border border-emerald-200">
+                                Monitoring Keterlambatan
+                            </a>
+                        </div>
+                    </div>
+
+                    {{-- NEW: Top 5 Late Students --}}
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                        <h4 class="font-bold text-gray-800 mb-6 flex items-center gap-2">
+                            <span class="w-1.5 h-6 bg-red-500 rounded-full"></span>
+                            Top 5 Kasus Terlambat
+                        </h4>
+                        <div class="space-y-4">
+                            @forelse($topLateStudents as $late)
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-red-50 text-red-600 flex items-center justify-center font-bold text-xs">
+                                            {{ $loop->iteration }}
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-bold text-gray-800 leading-none">{{ $late->siswa->user->name }}</p>
+                                            <p class="text-[10px] text-gray-500">{{ $late->siswa->nis }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="text-sm font-black text-red-600">{{ $late->total }}</span>
+                                        <span class="text-[10px] text-gray-400 block uppercase">Kasus</span>
+                                    </div>
+                                </div>
+                            @empty
+                                <p class="text-center text-gray-400 text-sm italic py-4">Belum ada data</p>
+                            @endforelse
                         </div>
                     </div>
                 </div>
 
                 <div class="lg:col-span-2 space-y-8">
+
+                    {{-- NEW: Today's Lateness Widget --}}
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-100 bg-red-50 flex justify-between items-center">
+                            <h4 class="font-bold text-red-800 flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                Terlambat Hari Ini
+                            </h4>
+                            <span class="px-2 py-0.5 bg-red-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest">{{ $terlambatHariIni->count() }} Siswa</span>
+                        </div>
+                        <div class="max-h-[300px] overflow-y-auto custom-scrollbar">
+                            <table class="w-full text-sm text-left">
+                                <thead class="bg-gray-50 text-gray-500 uppercase text-[10px] font-black tracking-widest border-b border-gray-100">
+                                    <tr>
+                                        <th class="px-6 py-3">Siswa</th>
+                                        <th class="px-6 py-3">Waktu</th>
+                                        <th class="px-6 py-3 text-right">Detail</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    @forelse($terlambatHariIni as $late)
+                                        <tr class="hover:bg-gray-50/50 transition-colors">
+                                            <td class="px-6 py-4">
+                                                <div class="font-bold text-gray-900">{{ $late->siswa->user->name }}</div>
+                                                <div class="text-[10px] text-gray-400 font-medium">{{ $late->siswa->nis }}</div>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded font-black text-[10px] border border-gray-200">
+                                                    {{ $late->waktu_dicatat_security->format('H:i') }}
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 text-right">
+                                                <a href="{{ route('monitoring-keterlambatan.show', $late->id) }}" class="text-teal-600 hover:text-teal-800 font-bold text-xs uppercase tracking-widest">Lihat</a>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="3" class="p-8 text-center text-gray-400 italic">Belum ada siswa terlambat hari ini.</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
 
                     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                         <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
@@ -151,6 +228,16 @@
                                     <p>Belum ada aktivitas di kelas Anda.</p>
                                 </div>
                             @endforelse
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                        <h4 class="font-bold text-gray-800 mb-6 flex items-center gap-2">
+                            <span class="w-1.5 h-6 bg-emerald-500 rounded-full"></span>
+                            Statistik Keterlambatan Kelas (30 Hari Terakhir)
+                        </h4>
+                        <div class="h-64 w-full">
+                            <canvas id="latenessTrendChart"></canvas>
                         </div>
                     </div>
 
@@ -228,6 +315,7 @@
 
                 const statusData = @json($statusChartData);
                 const dailyData = @json($dailyChartData);
+                const latenessData = @json($latenessChartData);
 
                 // 1. Doughnut Chart (Status Izin)
                 if (document.getElementById('statusIzinChart')) {
@@ -314,6 +402,52 @@
                                 x: {
                                     grid: {
                                         display: false
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+                // 3. Lateness Trend Chart (Emerald)
+                if (document.getElementById('latenessTrendChart')) {
+                    const ctxLate = document.getElementById('latenessTrendChart').getContext('2d');
+                    const lateGradient = ctxLate.createLinearGradient(0, 0, 0, 300);
+                    lateGradient.addColorStop(0, 'rgba(16, 185, 129, 0.2)'); // Emerald
+                    lateGradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
+
+                    new Chart(ctxLate, {
+                        type: 'line',
+                        data: {
+                            labels: latenessData.labels,
+                            datasets: [{
+                                label: 'Siswa Terlambat',
+                                data: latenessData.data,
+                                borderColor: '#10b981', // Emerald-500
+                                backgroundColor: lateGradient,
+                                borderWidth: 3,
+                                tension: 0.4,
+                                fill: true,
+                                pointRadius: 2,
+                                pointHoverRadius: 5
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: { stepSize: 1 },
+                                    grid: { borderDash: [2, 4] }
+                                },
+                                x: {
+                                    grid: { display: false },
+                                    ticks: {
+                                        autoSkip: true,
+                                        maxTicksLimit: 10
                                     }
                                 }
                             }

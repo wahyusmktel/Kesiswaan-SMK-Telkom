@@ -123,8 +123,74 @@ class DashboardController extends Controller
 
 
         // ==================================================
+        //      BAGIAN 4: DATA KETERLAMBATAN (REQ USER)
+        // ==================================================
+        
+        // Widget: Keterlambatan Hari Ini
+        $keterlambatanHariIni = \App\Models\Keterlambatan::whereDate('waktu_dicatat_security', today())->count();
+
+        // Widget: Total Keterlambatan
+        $totalKeterlambatan = \App\Models\Keterlambatan::count();
+
+        // Chart: Analisa Keterlambatan (Tren 30 Hari)
+        $dailyKeterlambatan = \App\Models\Keterlambatan::where('waktu_dicatat_security', '>=', now()->subDays(30))
+            ->selectRaw('DATE(waktu_dicatat_security) as date, COUNT(*) as count')
+            ->groupBy('date')
+            ->orderBy('date', 'ASC')
+            ->pluck('count', 'date');
+
+        $datesKeterlambatan = collect();
+        for ($i = 29; $i >= 0; $i--) {
+            $date = now()->subDays($i)->format('Y-m-d');
+            $datesKeterlambatan->put($date, $dailyKeterlambatan->get($date, 0));
+        }
+
+        // List: Siswa Terlambat Hari Ini (Detail)
+        $detailKeterlambatanHariIni = \App\Models\Keterlambatan::with(['siswa.rombels.kelas', 'security'])
+            ->whereDate('waktu_dicatat_security', today())
+            ->orderBy('waktu_dicatat_security', 'desc')
+            ->get();
+
+        // List: Kelas Paling Sering Terlambat (Top 5)
+        $topKelasTerlambat = DB::table('keterlambatans')
+            ->join('master_siswa', 'keterlambatans.master_siswa_id', '=', 'master_siswa.id')
+            ->join('rombel_siswa', 'master_siswa.id', '=', 'rombel_siswa.master_siswa_id')
+            ->join('rombels', 'rombel_siswa.rombel_id', '=', 'rombels.id')
+            ->join('kelas', 'rombels.kelas_id', '=', 'kelas.id')
+            ->where('rombels.tahun_pelajaran_id', $tahunAktif ? $tahunAktif->id : 0) 
+            ->select('kelas.nama_kelas', DB::raw('count(*) as total'))
+            ->groupBy('kelas.nama_kelas')
+            ->orderByDesc('total')
+            ->limit(5)
+            ->get();
+
+
+        // ==================================================
         //      BAGIAN 3: MENGIRIM SEMUA DATA KE VIEW
         // ==================================================
+        // Recent Activity Feed (Combined)
+        $recentPermissions = Perizinan::with('user')->latest()->take(5)->get()->map(function($item) {
+            return [
+                'type' => 'Izin Tidak Masuk',
+                'name' => $item->user->name,
+                'time' => $item->created_at,
+                'status' => $item->status,
+                'color' => 'amber'
+            ];
+        });
+
+        $recentLate = \App\Models\Keterlambatan::with('siswa.user')->latest()->take(5)->get()->map(function($item) {
+            return [
+                'type' => 'Keterlambatan',
+                'name' => $item->siswa->user->name,
+                'time' => $item->waktu_dicatat_security,
+                'status' => $item->status,
+                'color' => 'red'
+            ];
+        });
+
+        $recentActivity = $recentPermissions->concat($recentLate)->sortByDesc('time')->take(5);
+
         return view('pages.piket.dashboard.index', [
             // Variabel dari statistik umum
             'izinHariIni' => $izinHariIni,
@@ -139,6 +205,14 @@ class DashboardController extends Controller
             'topSiswaIzinKeluarPersonal' => $topSiswaIzinKeluarPersonal,
             'topSiswaIzinKeluarGlobal' => $topSiswaIzinKeluarGlobal,
             'kegiatanSaatIni' => $this->getKegiatanSaatIni(),
+            
+            // New Data Keterlambatan
+            'keterlambatanHariIni' => $keterlambatanHariIni,
+            'totalKeterlambatan' => $totalKeterlambatan,
+            'analisaKeterlambatanChart' => ['labels' => $datesKeterlambatan->keys()->map(fn($d) => \Carbon\Carbon::parse($d)->format('d M')), 'data' => $datesKeterlambatan->values()],
+            'topKelasTerlambat' => $topKelasTerlambat,
+            'detailKeterlambatan' => $detailKeterlambatanHariIni,
+            'recentActivity' => $recentActivity,
         ]);
     }
 

@@ -192,7 +192,7 @@
                     </div>
                 </td>
                 <td class="sig-cell">
-                    <div class="date-line">Bandar Lampung, {{ now()->isoFormat('D MMMM YYYY') }}</div>
+                    <div class="date-line">Pringsewu, {{ now()->isoFormat('D MMMM YYYY') }}</div>
                     <div class="role-line">Guru Piket</div>
                     <div class="name-line">{{ $keterlambatan->guruPiket->name }}</div>
                 </td>

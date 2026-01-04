@@ -490,6 +490,16 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    // Monitoring Keterlambatan Shared
+    Route::get('/monitoring-keterlambatan', [\App\Http\Controllers\Shared\MonitoringKeterlambatanController::class, 'index'])
+        ->name('monitoring-keterlambatan.index');
+    Route::get('/monitoring-keterlambatan/export', [\App\Http\Controllers\Shared\MonitoringKeterlambatanController::class, 'export'])
+        ->name('monitoring-keterlambatan.export');
+    Route::get('/monitoring-keterlambatan/{keterlambatan}', [\App\Http\Controllers\Shared\MonitoringKeterlambatanController::class, 'show'])
+        ->name('monitoring-keterlambatan.show');
+    Route::get('/monitoring-keterlambatan/{keterlambatan}/print-slip', [\App\Http\Controllers\Shared\MonitoringKeterlambatanController::class, 'printSlip'])
+        ->name('monitoring-keterlambatan.print-slip');
+
     // Change Log
     Route::get('/changelog', [\App\Http\Controllers\Shared\ChangeLogController::class, 'index'])->name('changelog.index');
 });

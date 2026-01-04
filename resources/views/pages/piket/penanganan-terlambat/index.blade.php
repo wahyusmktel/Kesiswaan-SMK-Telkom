@@ -98,6 +98,51 @@
                             </div>
                         </div>
                     </div>
+
+                    {{-- Today's Lateness List --}}
+                    <div class="mt-6 bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
+                        <div class="p-6 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                            <h3 class="font-bold text-gray-700">Terlambat Hari Ini</h3>
+                            <span class="px-2 py-1 bg-red-100 text-red-600 rounded text-xs font-black">{{ $terlambatHariIni->count() }} Siswa</span>
+                        </div>
+                        <div class="p-0 overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-gray-50 text-gray-500 uppercase text-[10px] font-black tracking-widest border-b border-gray-100">
+                                    <tr>
+                                        <th class="px-6 py-3">Siswa</th>
+                                        <th class="px-6 py-3 text-center">Waktu</th>
+                                        <th class="px-6 py-3 text-right">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    @forelse($terlambatHariIni as $late)
+                                        <tr class="hover:bg-gray-50/50 transition-colors">
+                                            <td class="px-6 py-4">
+                                                <div class="font-bold text-gray-900 leading-none mb-1">{{ $late->siswa->user->name }}</div>
+                                                <div class="text-[10px] text-gray-400 font-medium">{{ $late->siswa->rombels->first()?->kelas->nama_kelas ?? '-' }} • {{ $late->siswa->nis }}</div>
+                                            </td>
+                                            <td class="px-6 py-4 text-center">
+                                                <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded font-black text-[10px] border border-gray-200">
+                                                    {{ $late->waktu_dicatat_security->format('H:i') }}
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 text-right">
+                                                <a href="{{ route('piket.penanganan-terlambat.print', $late->id) }}" target="_blank" class="inline-flex items-center p-1.5 bg-white text-gray-400 hover:text-red-600 rounded-lg border border-gray-200 hover:border-red-200 hover:bg-red-50 transition-all" title="Cetak Ulang Slip">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="3" class="px-6 py-8 text-center text-gray-400 italic">
+                                                Belum ada data keterlambatan hari ini.
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="lg:col-span-1">
