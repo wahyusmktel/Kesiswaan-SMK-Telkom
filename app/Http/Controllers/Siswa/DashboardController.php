@@ -89,6 +89,11 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
+        $terlambatHariIni = $siswa ? $siswa->keterlambatans()
+            ->whereDate('waktu_dicatat_security', today())
+            ->latest()
+            ->first() : null;
+
         $kegiatanSaatIni = $this->getKegiatanSaatIni();
 
         return view('pages.siswa.dashboard.index', compact(
@@ -101,6 +106,7 @@ class DashboardController extends Controller
             'panggilanAktif',
             'konsultasiHariIni',
             'chat_rooms',
+            'terlambatHariIni',
             'kegiatanSaatIni'
         ));
     }

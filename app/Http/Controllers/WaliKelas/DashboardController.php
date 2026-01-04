@@ -18,9 +18,12 @@ class DashboardController extends Controller
     {
         $waliKelas = Auth::user();
 
-        // Ambil ID user dari siswa-siswa di bawah perwalian wali kelas ini
+        // Ambil ID user dari siswa-siswa di bawah perwalian wali kelas ini (Tahun ajaran aktif)
         $userIds = MasterSiswa::whereHas('rombels', function ($query) use ($waliKelas) {
-            $query->where('wali_kelas_id', $waliKelas->id);
+            $query->where('wali_kelas_id', $waliKelas->id)
+                ->whereHas('tahunPelajaran', function($q) {
+                    $q->where('is_active', true);
+                });
         })->whereNotNull('user_id')->pluck('user_id');
 
         // 1. Data untuk Pie Chart Status Izin
@@ -69,7 +72,9 @@ class DashboardController extends Controller
                     ->from('master_siswa')
                     ->join('rombel_siswa', 'master_siswa.id', '=', 'rombel_siswa.master_siswa_id')
                     ->join('rombels', 'rombel_siswa.rombel_id', '=', 'rombels.id')
+                    ->join('tahun_pelajaran', 'rombels.tahun_pelajaran_id', '=', 'tahun_pelajaran.id')
                     ->where('rombels.wali_kelas_id', $waliKelas->id)
+                    ->where('tahun_pelajaran.is_active', true)
                     ->whereNotNull('master_siswa.user_id');
             })
             ->with(['siswa'])
@@ -86,7 +91,9 @@ class DashboardController extends Controller
                 $query->select('master_siswa_id')
                     ->from('rombel_siswa')
                     ->join('rombels', 'rombel_siswa.rombel_id', '=', 'rombels.id')
-                    ->where('rombels.wali_kelas_id', $waliKelas->id);
+                    ->join('tahun_pelajaran', 'rombels.tahun_pelajaran_id', '=', 'tahun_pelajaran.id')
+                    ->where('rombels.wali_kelas_id', $waliKelas->id)
+                    ->where('tahun_pelajaran.is_active', true);
             })
             ->whereDate('waktu_dicatat_security', $today)
             ->with(['siswa.user'])
@@ -98,7 +105,9 @@ class DashboardController extends Controller
                 $query->select('master_siswa_id')
                     ->from('rombel_siswa')
                     ->join('rombels', 'rombel_siswa.rombel_id', '=', 'rombels.id')
-                    ->where('rombels.wali_kelas_id', $waliKelas->id);
+                    ->join('tahun_pelajaran', 'rombels.tahun_pelajaran_id', '=', 'tahun_pelajaran.id')
+                    ->where('rombels.wali_kelas_id', $waliKelas->id)
+                    ->where('tahun_pelajaran.is_active', true);
             })
             ->where('waktu_dicatat_security', '>=', $thirtyDaysAgo)
             ->select(DB::raw('DATE(waktu_dicatat_security) as date'), DB::raw('count(*) as total'))
@@ -125,7 +134,9 @@ class DashboardController extends Controller
                 $query->select('master_siswa_id')
                     ->from('rombel_siswa')
                     ->join('rombels', 'rombel_siswa.rombel_id', '=', 'rombels.id')
-                    ->where('rombels.wali_kelas_id', $waliKelas->id);
+                    ->join('tahun_pelajaran', 'rombels.tahun_pelajaran_id', '=', 'tahun_pelajaran.id')
+                    ->where('rombels.wali_kelas_id', $waliKelas->id)
+                    ->where('tahun_pelajaran.is_active', true);
             })
             ->select('master_siswa_id', DB::raw('count(*) as total'))
             ->groupBy('master_siswa_id')

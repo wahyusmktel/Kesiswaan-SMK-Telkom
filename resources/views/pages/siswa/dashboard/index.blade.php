@@ -54,6 +54,30 @@
             </div>
             @endif
 
+            {{-- Alert Keterlambatan Hari Ini --}}
+            @if($terlambatHariIni)
+            <div class="bg-gradient-to-r from-orange-500 to-amber-600 rounded-3xl p-1 shadow-xl shadow-orange-100 animate-in fade-in slide-in-from-top duration-700">
+                <div class="bg-white rounded-[22px] p-6 flex flex-col md:flex-row items-center gap-6">
+                    <div class="w-16 h-16 rounded-2xl bg-orange-50 flex items-center justify-center flex-shrink-0 animate-bounce">
+                        <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <div class="flex-1 text-center md:text-left">
+                        <h3 class="text-xl font-black text-gray-900 leading-tight">Surat Izin Masuk Kelas Tersedia!</h3>
+                        <p class="text-sm text-gray-500 mt-1">
+                            Kamu tercatat terlambat hari ini pada pukul <span class="font-bold text-orange-600">{{ $terlambatHariIni->waktu_dicatat_security->format('H:i') }} WIB</span>. 
+                            Silakan unduh surat izin masuk untuk ditunjukkan kepada guru di kelas.
+                        </p>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <a href="{{ route('siswa.riwayat-keterlambatan.print', $terlambatHariIni->id) }}" 
+                            class="inline-flex items-center px-6 py-3 bg-orange-600 text-white rounded-xl font-bold text-sm hover:bg-orange-700 transition-all shadow-lg shadow-orange-100">
+                            Unduh Surat Izin
+                        </a>
+                    </div>
+                </div>
+            </div>
+            @endif
+
             {{-- Alert Jadwal Konsultasi --}}
             @if($konsultasiHariIni)
             <div class="mb-6 bg-indigo-600 rounded-3xl p-6 shadow-xl shadow-indigo-100 text-white relative overflow-hidden animate-in slide-in-from-top duration-700">

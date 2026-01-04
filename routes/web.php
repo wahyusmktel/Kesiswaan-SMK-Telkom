@@ -232,6 +232,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Route Riwayat Catatan (Pelanggaran & Keterlambatan)
         Route::get('/riwayat-catatan', [\App\Http\Controllers\Siswa\RiwayatCatatanController::class, 'index'])->name('riwayat-catatan.index');
 
+        // Route Riwayat Keterlambatan Khusus
+        Route::get('/riwayat-keterlambatan', [\App\Http\Controllers\Siswa\RiwayatKeterlambatanController::class, 'index'])->name('riwayat-keterlambatan.index');
+        Route::get('/riwayat-keterlambatan/{keterlambatan}/print', [\App\Http\Controllers\Siswa\RiwayatKeterlambatanController::class, 'printPdf'])->name('riwayat-keterlambatan.print');
+
         // Route untuk Jurnal Prakerin
         Route::get('/jurnal-prakerin', [JurnalSiswaController::class, 'index'])->name('jurnal-prakerin.index');
         Route::post('/jurnal-prakerin', [JurnalSiswaController::class, 'store'])->name('jurnal-prakerin.store');
