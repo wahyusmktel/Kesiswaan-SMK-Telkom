@@ -64,6 +64,10 @@ class AuthenticatedSessionController extends Controller
             return redirect()->intended(route('operator.dashboard.index', absolute: false));
         }
 
+        if ($user->hasRole('Security')) {
+            return redirect()->intended(route('security.dashboard.index', absolute: false));
+        }
+
         // Default untuk Super Admin / Kepala Sekolah / Role lain yang tidak didefinisikan
         return redirect()->intended(route('dashboard', absolute: false));
     }
