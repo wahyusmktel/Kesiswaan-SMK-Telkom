@@ -439,6 +439,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Grup Route untuk Security
     Route::middleware(['role:Security'])->prefix('security')->name('security.')->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\Security\DashboardController::class, 'index'])->name('dashboard.index');
         Route::get('/verifikasi-izin', [SecurityVerifikasiController::class, 'index'])->name('verifikasi.index');
         Route::get('/riwayat-izin', [SecurityVerifikasiController::class, 'riwayat'])->name('verifikasi.riwayat');
         Route::get('/scan-qr', [SecurityVerifikasiController::class, 'scanQr'])->name('verifikasi.scan');
