@@ -157,9 +157,10 @@ class DashboardController extends Controller
             ->join('rombel_siswa', 'master_siswa.id', '=', 'rombel_siswa.master_siswa_id')
             ->join('rombels', 'rombel_siswa.rombel_id', '=', 'rombels.id')
             ->join('kelas', 'rombels.kelas_id', '=', 'kelas.id')
+            ->leftJoin('users as wali', 'rombels.wali_kelas_id', '=', 'wali.id')
             ->where('rombels.tahun_pelajaran_id', $tahunAktif ? $tahunAktif->id : 0) 
-            ->select('kelas.nama_kelas', DB::raw('count(*) as total'))
-            ->groupBy('kelas.nama_kelas')
+            ->select('kelas.nama_kelas', 'wali.name as nama_wali_kelas', DB::raw('count(*) as total'))
+            ->groupBy('kelas.nama_kelas', 'wali.name')
             ->orderByDesc('total')
             ->limit(5)
             ->get();

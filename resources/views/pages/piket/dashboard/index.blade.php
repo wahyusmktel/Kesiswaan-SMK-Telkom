@@ -363,7 +363,10 @@
                                 <div class="px-6 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors">
                                     <div class="flex items-center gap-3">
                                         <span class="w-6 h-6 flex items-center justify-center rounded bg-gray-200 text-xs font-bold text-gray-600">{{ $loop->iteration }}</span>
-                                        <p class="text-sm font-semibold text-gray-900">{{ $kelas->nama_kelas }}</p>
+                                        <div>
+                                            <p class="text-sm font-semibold text-gray-900">{{ $kelas->nama_kelas }}</p>
+                                            <p class="text-[10px] text-gray-500">{{ $kelas->nama_wali_kelas ?? 'Belum ada Wali Kelas' }}</p>
+                                        </div>
                                     </div>
                                     <span class="text-xs font-bold px-2 py-1 bg-red-100 text-red-700 rounded-full">{{ $kelas->total }}x</span>
                                 </div>
