@@ -124,4 +124,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(NotaDinas::class, 'user_id');
     }
+
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new \App\Notifications\CustomResetPasswordNotification($token));
+    }
 }
