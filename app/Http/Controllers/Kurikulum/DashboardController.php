@@ -69,11 +69,12 @@ class DashboardController extends Controller
             'data' => $mapelChart->pluck('total_jam'),
         ];
 
-        // 4. Data Top 5 Guru
+        // 4. Data Top 5 Guru (Session-Based: Teacher + Rombel + Mapel + Date)
         $baseQuery = \App\Models\AbsensiGuru::join('jadwal_pelajarans', 'absensi_guru.jadwal_pelajaran_id', '=', 'jadwal_pelajarans.id')
             ->join('master_gurus', 'jadwal_pelajarans.master_guru_id', '=', 'master_gurus.id')
             ->join('rombels', 'jadwal_pelajarans.rombel_id', '=', 'rombels.id')
-            ->select('master_gurus.nama_lengkap', 'master_gurus.id', DB::raw('count(*) as total'))
+            ->select('master_gurus.nama_lengkap', 'master_gurus.id', 
+                DB::raw('COUNT(DISTINCT jadwal_pelajarans.rombel_id, jadwal_pelajarans.mata_pelajaran_id, absensi_guru.tanggal) as total'))
             ->groupBy('master_gurus.id', 'master_gurus.nama_lengkap');
 
         if ($tahunAktifId) {
