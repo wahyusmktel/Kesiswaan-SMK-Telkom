@@ -11,7 +11,7 @@
                     <p class="text-xs text-gray-500 mt-1">Gunakan form ini jika siswa berhalangan melakukan input mandiri.</p>
                 </div>
 
-                <form action="{{ route('piket.persetujuan-izin-keluar.store') }}" method="POST" class="p-6 space-y-5">
+                <form action="{{ route('piket.persetujuan-izin-keluar.store') }}" method="POST" class="p-6 space-y-5" x-data="piketIzinForm()">
                     @csrf
                     
                     {{-- Student Search --}}
@@ -19,6 +19,61 @@
                         <label for="siswa-search" class="block text-sm font-bold text-gray-700 mb-2">Cari Nama Siswa / NIS</label>
                         <select id="siswa-search" name="master_siswa_id" placeholder="Ketik nama atau NIS..." required></select>
                         <x-input-error :messages="$errors->get('master_siswa_id')" class="mt-2" />
+                    </div>
+
+                    {{-- Pelajaran Saat Ini (Dynamic) --}}
+                    <div x-show="currentSchedule" x-transition class="bg-indigo-50 border border-indigo-100 rounded-xl p-4 flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div class="h-10 w-10 bg-indigo-600 rounded-full flex items-center justify-center text-white">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold text-indigo-600 uppercase tracking-wider">Pelajaran Saat Ini</p>
+                                <h4 class="text-gray-900 font-extrabold" x-text="currentSchedule.mapel"></h4>
+                                <p class="text-xs text-gray-500" x-text="`Guru: ${currentSchedule.guru} | Jam Ke-${currentSchedule.jam_ke} (${currentSchedule.waktu})`"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Jenis Izin --}}
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Jenis Izin</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <label class="relative flex cursor-pointer rounded-lg border bg-white p-3 shadow-sm focus:outline-none transition-all hover:bg-gray-50 border-gray-200"
+                                :class="jenisIzin === 'keluar_sekolah' ? 'ring-2 ring-red-500 border-red-500 bg-red-50/30' : ''">
+                                <input type="radio" name="jenis_izin" value="keluar_sekolah" x-model="jenisIzin" class="sr-only">
+                                <div class="flex items-center justify-between w-full">
+                                    <div class="flex items-center">
+                                        <div class="text-sm">
+                                            <p class="font-bold text-gray-900">Keluar Sekolah</p>
+                                            <p class="text-gray-500 text-xs">Meninggalkan lingkungan sekolah</p>
+                                        </div>
+                                    </div>
+                                    <svg x-show="jenisIzin === 'keluar_sekolah'" class="h-5 w-5 text-red-600" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                            </label>
+
+                            <label class="relative flex cursor-pointer rounded-lg border bg-white p-3 shadow-sm focus:outline-none transition-all hover:bg-gray-50 border-gray-200"
+                                :class="jenisIzin === 'dalam_lingkungan' ? 'ring-2 ring-red-500 border-red-500 bg-red-50/30' : ''">
+                                <input type="radio" name="jenis_izin" value="dalam_lingkungan" x-model="jenisIzin" class="sr-only">
+                                <div class="flex items-center justify-between w-full">
+                                    <div class="flex items-center">
+                                        <div class="text-sm">
+                                            <p class="font-bold text-gray-900">Dalam Lingkungan</p>
+                                            <p class="text-gray-500 text-xs">Izin masuk UKS, perpus, dll</p>
+                                        </div>
+                                    </div>
+                                    <svg x-show="jenisIzin === 'dalam_lingkungan'" class="h-5 w-5 text-red-600" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                            </label>
+                        </div>
+                        <x-input-error :messages="$errors->get('jenis_izin')" class="mt-2" />
                     </div>
 
                     {{-- Purpose --}}
@@ -75,8 +130,33 @@
     @push('scripts')
         <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
         <script>
+            function piketIzinForm() {
+                return {
+                    jenisIzin: 'keluar_sekolah',
+                    currentSchedule: null,
+                    async fetchSchedule(siswaId) {
+                        if (!siswaId) {
+                            this.currentSchedule = null;
+                            return;
+                        }
+                        try {
+                            const response = await fetch(`{{ url('piket/api/siswa') }}/${siswaId}/schedule`);
+                            const data = await response.json();
+                            if (response.ok) {
+                                this.currentSchedule = data;
+                            } else {
+                                this.currentSchedule = null;
+                            }
+                        } catch (e) {
+                            console.error('Failed to fetch schedule', e);
+                            this.currentSchedule = null;
+                        }
+                    }
+                }
+            }
+
             document.addEventListener('DOMContentLoaded', function() {
-                new TomSelect('#siswa-search', {
+                const ts = new TomSelect('#siswa-search', {
                     valueField: 'id',
                     labelField: 'nama_lengkap',
                     searchField: ['nama_lengkap', 'nis'],
@@ -104,6 +184,11 @@
                     },
                     placeholder: 'Ketik Nama atau NIS Siswa...',
                     maxItems: 1,
+                });
+
+                ts.on('change', function(value) {
+                    const alpineData = document.querySelector('[x-data="piketIzinForm()"]').__x.$data;
+                    alpineData.fetchSchedule(value);
                 });
             });
         </script>

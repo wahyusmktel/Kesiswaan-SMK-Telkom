@@ -30,7 +30,7 @@
                 </button>
             </div>
 
-            <form method="post" action="{{ route('siswa.izin-keluar-kelas.store') }}">
+            <form method="post" action="{{ route('siswa.izin-keluar-kelas.store') }}" x-data="{ jenisIzin: 'keluar_sekolah' }">
                 @csrf
                 <div class="px-6 py-6 space-y-5">
 
@@ -57,6 +57,44 @@
                             Tidak ada jadwal pelajaran aktif saat ini.
                         </div>
                     @endif
+
+                    {{-- Jenis Izin --}}
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Jenis Izin</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <label class="relative flex cursor-pointer rounded-xl border bg-white p-3 shadow-sm focus:outline-none transition-all hover:bg-gray-50 border-gray-200"
+                                :class="jenisIzin === 'keluar_sekolah' ? 'ring-2 ring-indigo-500 border-indigo-500 bg-indigo-50/30' : ''">
+                                <input type="radio" name="jenis_izin" value="keluar_sekolah" x-model="jenisIzin" class="sr-only">
+                                <div class="flex items-center justify-between w-full">
+                                    <div class="flex items-center">
+                                        <div class="text-xs">
+                                            <p class="font-bold text-gray-900">Keluar Sekolah</p>
+                                            <p class="text-gray-500">Meninggalkan sekolah</p>
+                                        </div>
+                                    </div>
+                                    <svg x-show="jenisIzin === 'keluar_sekolah'" class="h-4 w-4 text-indigo-600" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                            </label>
+
+                            <label class="relative flex cursor-pointer rounded-xl border bg-white p-3 shadow-sm focus:outline-none transition-all hover:bg-gray-50 border-gray-200"
+                                :class="jenisIzin === 'dalam_lingkungan' ? 'ring-2 ring-indigo-500 border-indigo-500 bg-indigo-50/30' : ''">
+                                <input type="radio" name="jenis_izin" value="dalam_lingkungan" x-model="jenisIzin" class="sr-only">
+                                <div class="flex items-center justify-between w-full">
+                                    <div class="flex items-center">
+                                        <div class="text-xs">
+                                            <p class="font-bold text-gray-900">Dalam Lingkungan</p>
+                                            <p class="text-gray-500">UKS, Perpus, BK, dll</p>
+                                        </div>
+                                    </div>
+                                    <svg x-show="jenisIzin === 'dalam_lingkungan'" class="h-4 w-4 text-indigo-600" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
 
                     <div>
                         <label for="tujuan" class="block text-sm font-bold text-gray-700 mb-1">Tujuan /

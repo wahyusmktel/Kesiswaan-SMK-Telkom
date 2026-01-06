@@ -17,6 +17,7 @@ class IzinMeninggalkanKelas extends Model
         'user_id',
         'rombel_id',
         'jadwal_pelajaran_id',
+        'jenis_izin',
         'tujuan',
         'keterangan',
         'estimasi_kembali',

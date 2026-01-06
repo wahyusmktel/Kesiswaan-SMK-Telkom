@@ -314,6 +314,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/persetujuan-izin-keluar', [PiketPersetujuanIzinKeluarController::class, 'index'])->name('persetujuan-izin-keluar.index');
         Route::get('/persetujuan-izin-keluar/create', [PiketPersetujuanIzinKeluarController::class, 'create'])->name('persetujuan-izin-keluar.create');
         Route::post('/persetujuan-izin-keluar', [PiketPersetujuanIzinKeluarController::class, 'store'])->name('persetujuan-izin-keluar.store');
+        Route::get('/api/siswa/{siswa}/schedule', [PiketPersetujuanIzinKeluarController::class, 'getStudentSchedule'])->name('persetujuan-izin-keluar.student-schedule');
         Route::get('/riwayat-izin-keluar', [PiketPersetujuanIzinKeluarController::class, 'riwayat'])->name('persetujuan-izin-keluar.riwayat');
         Route::patch('/persetujuan-izin-keluar/{izin}/approve', [PiketPersetujuanIzinKeluarController::class, 'approve'])->name('persetujuan-izin-keluar.approve');
         Route::patch('/persetujuan-izin-keluar/{izin}/reject', [PiketPersetujuanIzinKeluarController::class, 'reject'])->name('persetujuan-izin-keluar.reject');

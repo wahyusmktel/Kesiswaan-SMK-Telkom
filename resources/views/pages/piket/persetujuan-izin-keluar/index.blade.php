@@ -41,6 +41,7 @@
                                 <th class="px-6 py-4 font-bold tracking-wider">Siswa</th>
                                 <th class="px-6 py-4 font-bold tracking-wider">Kelas</th>
                                 <th class="px-6 py-4 font-bold tracking-wider">Tujuan</th>
+                                <th class="px-6 py-4 font-bold tracking-wider">Jenis</th>
                                 <th class="px-6 py-4 font-bold tracking-wider">Status</th>
                                 <th class="px-6 py-4 font-bold tracking-wider text-right">Aksi</th>
                             </tr>
@@ -71,6 +72,13 @@
                                         <span class="block truncate max-w-[200px]" title="{{ $izin->tujuan }}">
                                             {{ $izin->tujuan }}
                                         </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-xs">
+                                        @if(($izin->jenis_izin ?? 'keluar_sekolah') === 'keluar_sekolah')
+                                            <span class="text-red-500 font-bold">Keluar</span>
+                                        @else
+                                            <span class="text-blue-500 font-bold">Internal</span>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @php

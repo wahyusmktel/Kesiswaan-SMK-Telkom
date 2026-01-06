@@ -81,6 +81,7 @@
                         <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-200">
                             <tr>
                                 <th class="px-6 py-4 font-bold tracking-wider">Tujuan</th>
+                                <th class="px-6 py-4 font-bold tracking-wider">Jenis</th>
                                 <th class="px-6 py-4 font-bold tracking-wider">Waktu Pengajuan</th>
                                 <th class="px-6 py-4 font-bold tracking-wider">Status</th>
                                 <th class="px-6 py-4 font-bold tracking-wider">Keterangan</th>
@@ -91,6 +92,13 @@
                                 <tr class="bg-white hover:bg-gray-50/80 transition-colors">
                                     <td class="px-6 py-4 font-semibold text-gray-900">
                                         {{ $izin->tujuan }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-xs">
+                                        @if(($izin->jenis_izin ?? 'keluar_sekolah') === 'keluar_sekolah')
+                                            <span class="text-red-500 font-bold">Keluar</span>
+                                        @else
+                                            <span class="text-blue-500 font-bold">Internal</span>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap font-mono text-xs text-gray-600">
                                         {{ \Carbon\Carbon::parse($izin->created_at)->isoFormat('D MMM Y, HH:mm') }}

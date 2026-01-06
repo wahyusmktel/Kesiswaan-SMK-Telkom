@@ -49,6 +49,7 @@ class IzinMeninggalkanKelasController extends Controller
     public function store(Request $request)
     {
         $request->validate([
+            'jenis_izin' => 'required|in:keluar_sekolah,dalam_lingkungan',
             'tujuan' => 'required|string|max:255',
             'keterangan' => 'nullable|string',
             'estimasi_kembali' => 'required|date_format:H:i',
@@ -76,6 +77,7 @@ class IzinMeninggalkanKelasController extends Controller
                 'user_id' => $user->id,
                 'rombel_id' => $rombelAktif->id,
                 'jadwal_pelajaran_id' => $request->jadwal_pelajaran_id,
+                'jenis_izin' => $request->jenis_izin,
                 'tujuan' => $request->tujuan,
                 'keterangan' => $request->keterangan,
                 'estimasi_kembali' => now()->setTimeFromTimeString($request->estimasi_kembali),

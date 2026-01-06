@@ -32,6 +32,7 @@ class PersetujuanIzinKeluarController extends Controller
     {
         $request->validate([
             'master_siswa_id' => 'required|exists:master_siswa,id',
+            'jenis_izin' => 'required|in:keluar_sekolah,dalam_lingkungan',
             'tujuan' => 'required|string|max:255',
             'keterangan' => 'nullable|string',
             'estimasi_kembali' => 'required|date_format:H:i',
@@ -74,6 +75,7 @@ class PersetujuanIzinKeluarController extends Controller
                 'user_id' => $user->id,
                 'rombel_id' => $rombelAktif->id,
                 'jadwal_pelajaran_id' => $jadwalSaatIni?->id,
+                'jenis_izin' => $request->jenis_izin,
                 'tujuan' => $request->tujuan,
                 'keterangan' => $request->keterangan,
                 'estimasi_kembali' => now()->setTimeFromTimeString($request->estimasi_kembali),
@@ -88,6 +90,48 @@ class PersetujuanIzinKeluarController extends Controller
             Log::error('Error duty teacher creating leave permit: ' . $e->getMessage());
             toast('Gagal mencatat izin.', 'error');
             return back()->withInput();
+        }
+    }
+
+    public function getStudentSchedule(\App\Models\MasterSiswa $siswa)
+    {
+        try {
+            $tahunAktif = \App\Models\TahunPelajaran::where('is_active', true)->first();
+            if (!$tahunAktif) {
+                return response()->json(['error' => 'Tahun ajaran aktif belum diatur.'], 404);
+            }
+
+            $rombelAktif = $siswa->rombels()
+                ->where('tahun_pelajaran_id', $tahunAktif->id)
+                ->first();
+
+            if (!$rombelAktif) {
+                return response()->json(['error' => 'Siswa tidak memiliki rombel aktif.'], 404);
+            }
+
+            $namaHariIni = $this->getNamaHari(now()->dayOfWeek);
+            $waktuSaatIni = now()->format('H:i:s');
+            
+            $jadwalSaatIni = \App\Models\JadwalPelajaran::with(['mataPelajaran', 'guru'])
+                ->where('rombel_id', $rombelAktif->id)
+                ->where('hari', $namaHariIni)
+                ->where('jam_mulai', '<=', $waktuSaatIni)
+                ->where('jam_selesai', '>=', $waktuSaatIni)
+                ->first();
+
+            if (!$jadwalSaatIni) {
+                return response()->json(['error' => 'Tidak ada jadwal pelajaran saat ini.'], 404);
+            }
+
+            return response()->json([
+                'id' => $jadwalSaatIni->id,
+                'mapel' => $jadwalSaatIni->mataPelajaran->nama_mapel,
+                'guru' => $jadwalSaatIni->guru->nama_lengkap,
+                'jam_ke' => $jadwalSaatIni->jam_ke,
+                'waktu' => substr($jadwalSaatIni->jam_mulai, 0, 5) . ' - ' . substr($jadwalSaatIni->jam_selesai, 0, 5)
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 

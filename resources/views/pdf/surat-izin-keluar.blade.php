@@ -154,7 +154,11 @@
         </div>
 
         <div class="intro">
-            Diberikan izin kepada siswa di bawah ini untuk meninggalkan lingkungan sekolah sesuai dengan keterangan berikut:
+            @if(($izin->jenis_izin ?? 'keluar_sekolah') === 'keluar_sekolah')
+                Diberikan izin kepada siswa di bawah ini untuk meninggalkan lingkungan sekolah sesuai dengan keterangan berikut:
+            @else
+                Diberikan izin kepada siswa di bawah ini untuk meninggalkan KELAS (berada di lingkungan sekolah) sesuai dengan keterangan berikut:
+            @endif
         </div>
 
         <table class="data">
