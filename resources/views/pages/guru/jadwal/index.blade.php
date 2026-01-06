@@ -23,12 +23,12 @@
             @php
                 $hariUrutan = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
                 $colors = [
-                    'Senin' => 'from-blue-500 to-indigo-600',
-                    'Selasa' => 'from-emerald-500 to-teal-600',
-                    'Rabu' => 'from-amber-500 to-orange-600',
-                    'Kamis' => 'from-rose-500 to-pink-600',
-                    'Jumat' => 'from-cyan-500 to-blue-600',
-                    'Sabtu' => 'from-purple-500 to-violet-600',
+                    'Senin' => 'bg-gradient-to-r from-blue-500 to-indigo-600',
+                    'Selasa' => 'bg-gradient-to-r from-emerald-500 to-teal-600',
+                    'Rabu' => 'bg-gradient-to-r from-amber-500 to-orange-600',
+                    'Kamis' => 'bg-gradient-to-r from-rose-500 to-pink-600',
+                    'Jumat' => 'bg-gradient-to-r from-cyan-500 to-blue-600',
+                    'Sabtu' => 'bg-gradient-to-r from-purple-500 to-violet-600',
                 ];
                 $bgLight = [
                     'Senin' => 'bg-blue-50/50',
@@ -47,7 +47,7 @@
                     @endphp
                     <div class="flex flex-col h-full bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden transform transition-all hover:shadow-xl hover:-translate-y-1">
                         {{-- Header Hari --}}
-                        <div class="bg-gradient-to-r {{ $colors[$hari] }} p-6 text-white relative">
+                        <div class="{{ $colors[$hari] }} p-6 text-white relative">
                             <div class="absolute right-0 top-0 opacity-10 scale-150 p-4">
                                 <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg>
                             </div>
