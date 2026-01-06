@@ -16,7 +16,7 @@
                         <span class="bg-white/20 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest border border-white/30">Stable Release</span>
                         <span class="text-blue-100 text-xs font-bold">{{ date('F d, Y') }}</span>
                     </div>
-                    <h3 class="text-4xl font-black tracking-tight">Version 1.0.0</h3>
+                    <h3 class="text-4xl font-black tracking-tight">Version {{ config('app.version') }}</h3>
                     <p class="mt-2 text-blue-100 font-medium text-lg italic">"Initial Launch - Empowering School Management"</p>
                 </div>
             </div>
@@ -24,7 +24,54 @@
             {{-- Change Log Content --}}
             <div class="space-y-6">
 
-                {{-- Latest Update 1.1.0 --}}
+                {{-- Latest Update 1.2.0 --}}
+                <div class="bg-gradient-to-br from-blue-900 to-gray-900 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden border border-blue-700/50">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <span class="bg-blue-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">Latest Update</span>
+                            <h3 class="text-3xl font-black tracking-tight mt-1 text-white">Version {{ config('app.version') }}</h3>
+                            <p class="text-gray-400 text-sm font-medium mt-1 italic">"Multi-Role Harmony & Teacher Empowerment"</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-gray-400 text-xs font-bold">{{ date('F d, Y') }}</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <h4 class="text-xs font-black uppercase text-blue-400 tracking-widest border-l-2 border-blue-500 pl-3">Fitur Baru</h4>
+                            <ul class="space-y-3">
+                                <li class="text-sm">
+                                    <span class="font-bold text-gray-200">Dynamic Role Switcher</span>
+                                    <p class="text-xs text-gray-400 mt-0.5 leading-relaxed">Sistem perpindahan role instan untuk pengguna dengan banyak akses (multi-role). Sidebar akan menyesuaikan secara otomatis sesuai role aktif.</p>
+                                </li>
+                                <li class="text-sm">
+                                    <span class="font-bold text-gray-200">Jadwal Mengajar Interaktif</span>
+                                    <p class="text-xs text-gray-400 mt-0.5 leading-relaxed">Halaman "Jadwal Saya" untuk Guru dengan desain kartu modern, kategori per hari, dan visualisasi warna yang cerah.</p>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="space-y-4">
+                            <h4 class="text-xs font-black uppercase text-emerald-400 tracking-widest border-l-2 border-emerald-500 pl-3">Peningkatan & Perbaikan</h4>
+                            <ul class="space-y-2">
+                                <li class="text-[13px] flex items-start gap-2">
+                                    <span class="text-emerald-400">🛡️</span>
+                                    <span class="text-gray-300"><strong class="text-white">Login Redirect Fix:</strong> Perbaikan bug redirect post-login yang terkadang menampilkan JSON mentah data notifikasi chat.</span>
+                                </li>
+                                <li class="text-[13px] flex items-start gap-2">
+                                    <span class="text-indigo-400">⚡</span>
+                                    <span class="text-gray-300"><strong class="text-white">Quick Actions Guru:</strong> Penambahan shortcut navigasi cepat pada dashboard guru untuk efisiensi mengajar.</span>
+                                </li>
+                                <li class="text-[13px] flex items-start gap-2">
+                                    <span class="text-amber-400">🎨</span>
+                                    <span class="text-gray-300"><strong class="text-white">Tailwind JIT fix:</strong> Optimalisasi loading palette warna dinamis pada komponen jadwal mengajar.</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Update 1.1.0 --}}
                 <div class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden border border-gray-700">
                     <div class="flex items-center justify-between mb-6">
                         <div>
@@ -159,7 +206,7 @@
 
             {{-- Footer Info --}}
             <div class="text-center pb-12">
-                <p class="text-gray-400 text-sm font-medium">SMK Telkom Lampung - Version 1.0.0-stable</p>
+                <p class="text-gray-400 text-sm font-medium">SMK Telkom Lampung - Version {{ config('app.version') }}-stable</p>
                 <div class="flex justify-center gap-4 mt-2">
                     <span class="w-2 h-2 rounded-full bg-blue-200"></span>
                     <span class="w-2 h-2 rounded-full bg-indigo-200"></span>

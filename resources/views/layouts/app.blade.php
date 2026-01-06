@@ -218,7 +218,7 @@
                 <div class="px-4 sm:px-6 lg:px-8 py-4">
                     <div class="flex flex-col sm:flex-row items-center justify-between text-sm text-gray-500 gap-2">
                         <p>{{ $appSetting?->school_name ?? 'Aplikasi Izin' }} &copy; {{ date('Y') }}</p>
-                        <p class="opacity-70">Built with passion for better education. &bull; Versi 1.1.0</p>
+                        <p class="opacity-70">Built with passion for better education. &bull; Versi {{ config('app.version') }}</p>
                     </div>
                 </div>
             </footer>
