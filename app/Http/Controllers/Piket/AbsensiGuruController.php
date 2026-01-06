@@ -57,6 +57,17 @@ class AbsensiGuruController extends Controller
         $totalTerlambat = $jadwalHariIni->where('status_absensi', 'terlambat')->count();
         $totalBelumDicatat = $jadwalHariIni->where('status_absensi', 'belum_dicatat')->count();
 
+        // Extract unique jam_ke with time for filter
+        $listJamKe = $jadwalHariIni->sortBy('jam_ke')
+            ->groupBy('jam_ke')
+            ->map(function($group) {
+                $first = $group->first();
+                return (object)[
+                    'jam_ke' => $first->jam_ke,
+                    'waktu' => substr($first->jam_mulai, 0, 5) . ' - ' . substr($first->jam_selesai, 0, 5)
+                ];
+            })->values();
+
         return view('pages.piket.absensi-guru.index', compact(
             'jadwalGrouped',
             'totalJadwal',
@@ -64,7 +75,8 @@ class AbsensiGuruController extends Controller
             'totalTidakHadir',
             'totalTerlambat',
             'totalBelumDicatat',
-            'namaHari'
+            'namaHari',
+            'listJamKe'
         ));
     }
 

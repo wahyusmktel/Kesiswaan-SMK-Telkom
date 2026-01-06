@@ -5,6 +5,26 @@
         </h2>
     </x-slot>
 
+    @push('styles')
+        <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet">
+        <style>
+            .ts-control {
+                border-radius: 0.5rem;
+                padding: 0.5rem 0.75rem;
+                border-color: #d1d5db;
+                min-width: 200px;
+            }
+            .ts-control.focus {
+                border-color: #ef4444;
+                box-shadow: 0 0 0 1px #ef4444;
+            }
+            .ts-dropdown {
+                border-radius: 0.5rem;
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            }
+        </style>
+    @endpush
+
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
             {{-- Header Info --}}
@@ -74,13 +94,22 @@
 
             {{-- Schedule List --}}
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div class="p-6 border-b border-gray-100">
+                <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <h3 class="text-lg font-bold text-gray-900">Jadwal Mengajar Hari Ini</h3>
+                    <div class="flex items-center gap-2">
+                        <label for="filterJamKe" class="text-sm font-medium text-gray-700 whitespace-nowrap">Filter Jam Ke:</label>
+                        <select id="filterJamKe" onchange="filterScheduleByJam(this.value)" class="text-sm border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500">
+                            <option value="all">Semua Jam Pelajaran</option>
+                            @foreach($listJamKe as $item)
+                                <option value="{{ $item->jam_ke }}">Jam Ke-{{ $item->jam_ke }} ({{ $item->waktu }})</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
 
                 <div class="divide-y divide-gray-100">
                     @forelse($jadwalGrouped as $waktu => $jadwals)
-                        <div class="p-6">
+                        <div class="p-6 schedule-group" data-jam-ke="{{ $jadwals->first()->jam_ke }}">
                             <div class="flex items-center gap-3 mb-4">
                                 <div class="w-16 h-16 bg-red-50 rounded-xl flex items-center justify-center">
                                     <span class="text-red-600 font-black text-lg">{{ $waktu }}</span>
@@ -158,7 +187,18 @@
     </form>
 
     @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            new TomSelect("#filterJamKe", {
+                create: false,
+                sortField: {
+                    field: "text",
+                    direction: "asc"
+                }
+            });
+        });
+
         function confirmHadir(jadwalId, namaGuru) {
             Swal.fire({
                 title: 'Konfirmasi Kehadiran',
@@ -237,6 +277,43 @@
             document.getElementById('status').value = status;
             document.getElementById('keterangan').value = keterangan;
             document.getElementById('absensiForm').submit();
+        }
+
+        function filterScheduleByJam(selectedJam) {
+            const groups = document.querySelectorAll('.schedule-group');
+            let hasVisible = false;
+            
+            groups.forEach(group => {
+                if (selectedJam === 'all' || group.getAttribute('data-jam-ke') === selectedJam) {
+                    group.style.display = 'block';
+                    hasVisible = true;
+                } else {
+                    group.style.display = 'none';
+                }
+            });
+
+            // Handle empty state if filter hides everything (though shouldn't happen with dynamic list)
+            let emptyMsg = document.getElementById('empty-filter-msg');
+            if (!hasVisible) {
+                if (!emptyMsg) {
+                    const container = document.querySelector('.divide-y');
+                    emptyMsg = document.createElement('div');
+                    emptyMsg.id = 'empty-filter-msg';
+                    emptyMsg.className = 'p-12 text-center';
+                    emptyMsg.innerHTML = `
+                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        </div>
+                        <p class="text-gray-500 font-medium">Tidak ada jadwal untuk jam ke-${selectedJam}</p>
+                    `;
+                    container.appendChild(emptyMsg);
+                } else {
+                    emptyMsg.style.display = 'block';
+                    emptyMsg.querySelector('p').innerText = `Tidak ada jadwal untuk jam ke-${selectedJam}`;
+                }
+            } else if (emptyMsg) {
+                emptyMsg.style.display = 'none';
+            }
         }
     </script>
     @endpush
