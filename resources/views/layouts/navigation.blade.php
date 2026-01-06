@@ -520,7 +520,7 @@
                         Mapel</a></li>
             </ul>
         </li>
-        <li x-data="{ expanded: {{ request()->routeIs('kurikulum.monitoring-absensi-guru.*') || request()->routeIs('kurikulum.monitoring-absensi-per-kelas.*') || request()->routeIs('kurikulum.persetujuan-izin-guru.*') ? 'true' : 'false' }} }">
+        <li x-data="{ expanded: {{ request()->routeIs('kurikulum.monitoring-absensi-guru.*') || request()->routeIs('kurikulum.monitoring-absensi-per-kelas.*') || request()->routeIs('kurikulum.analisa-semester.*') || request()->routeIs('kurikulum.persetujuan-izin-guru.*') ? 'true' : 'false' }} }">
             <button @click="expanded = !expanded"
                 class="flex items-center justify-between w-full px-3 py-2 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors">
                 <div class="flex items-center gap-3">
@@ -539,6 +539,8 @@
                         class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kurikulum.monitoring-absensi-guru.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Monitoring Harian</a></li>
                 <li><a href="{{ route('kurikulum.monitoring-absensi-per-kelas.index') }}"
                         class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kurikulum.monitoring-absensi-per-kelas.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Monitoring Per Kelas</a></li>
+                <li><a href="{{ route('kurikulum.analisa-semester.index') }}"
+                        class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kurikulum.analisa-semester.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Analisa Semester</a></li>
                 <li><a href="{{ route('kurikulum.persetujuan-izin-guru.index') }}"
                         class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kurikulum.persetujuan-izin-guru.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Persetujuan Izin Guru</a></li>
             </ul>

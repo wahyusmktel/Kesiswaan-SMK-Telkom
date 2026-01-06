@@ -49,6 +49,7 @@ use App\Http\Controllers\Operator\DapodikManagementController;
 use App\Http\Controllers\Operator\DashboardController as OperatorDashboardController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Kurikulum\DistribusiMapelController;
+use App\Http\Controllers\Kurikulum\AnalisaKurikulumController;
 
 Route::get('auth/google', [GoogleController::class, 'redirectToGoogle'])->name('auth.google');
 Route::get('auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
@@ -367,6 +368,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('mata-pelajaran/import', [MataPelajaranController::class, 'import'])->name('mata-pelajaran.import');
         Route::post('master-guru/import', [MasterGuruController::class, 'import'])->name('master-guru.import');
         Route::get('distribusi-mapel', [DistribusiMapelController::class, 'index'])->name('distribusi-mapel.index');
+        Route::get('analisa-semester', [AnalisaKurikulumController::class, 'index'])->name('analisa-semester.index');
+        Route::get('analisa-semester/export', [AnalisaKurikulumController::class, 'export'])->name('analisa-semester.export');
+        Route::get('analisa-semester/pdf', [AnalisaKurikulumController::class, 'exportPdf'])->name('analisa-semester.pdf');
     });
 
     // Grup Route untuk Guru Kelas
