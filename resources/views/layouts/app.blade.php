@@ -95,6 +95,62 @@
                                 <span class="text-xs font-bold uppercase">Live</span>
                             </span>
 
+                            {{-- Role Switcher --}}
+                            @if(Auth::user()->roles->count() > 1)
+                            <div class="relative" x-data="{ roleOpen: false }">
+                                <button @click="roleOpen = !roleOpen"
+                                    class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 border border-gray-100 hover:bg-white hover:shadow-sm transition-all group focus:outline-none">
+                                    <div class="w-8 h-8 rounded-lg bg-red-100 text-red-600 flex items-center justify-center group-hover:bg-red-600 group-hover:text-white transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
+                                    </div>
+                                    <div class="text-left hidden lg:block">
+                                        <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-0.5">Role Aktif</p>
+                                        <p class="text-xs font-bold text-gray-700 leading-none">{{ session('active_role') }}</p>
+                                    </div>
+                                    <svg class="w-4 h-4 text-gray-400 group-hover:text-red-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+
+                                <div x-show="roleOpen" @click.outside="roleOpen = false"
+                                    x-transition:enter="transition ease-out duration-200"
+                                    x-transition:enter-start="transform opacity-0 scale-95"
+                                    x-transition:enter-end="transform opacity-100 scale-100"
+                                    x-transition:leave="transition ease-in duration-75"
+                                    x-transition:leave-start="transform opacity-100 scale-100"
+                                    x-transition:leave-end="transform opacity-0 scale-95"
+                                    class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl py-2 z-[60] ring-1 ring-black ring-opacity-5"
+                                    style="display: none;">
+                                    <div class="px-4 py-2 border-b border-gray-50 mb-1">
+                                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pilih Role</p>
+                                    </div>
+                                    @foreach(Auth::user()->roles as $role)
+                                        <form action="{{ route('role.switch') }}" method="POST">
+                                            @csrf
+                                            <input type="hidden" name="role" value="{{ $role->name }}">
+                                            <button type="submit" 
+                                                class="w-full flex items-center justify-between px-4 py-2 text-sm {{ session('active_role') == $role->name ? 'text-red-700 bg-red-50 font-bold' : 'text-gray-600 hover:bg-gray-50' }} transition-colors">
+                                                <span>{{ $role->name }}</span>
+                                                @if(session('active_role') == $role->name)
+                                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                                    </svg>
+                                                @endif
+                                            </button>
+                                        </form>
+                                    @endforeach
+                                </div>
+                            </div>
+                            @else
+                                {{-- Jika hanya 1 role, tampilkan label saja --}}
+                                <div class="hidden lg:flex flex-col text-right">
+                                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-0.5">Role Aktif</p>
+                                    <p class="text-xs font-bold text-gray-700 leading-none">{{ session('active_role') }}</p>
+                                </div>
+                            @endif
+
                             <div class="relative" x-data="{ dropdownOpen: false }">
                                 <button @click="dropdownOpen = !dropdownOpen"
                                     class="flex items-center justify-center w-10 h-10 rounded-full overflow-hidden bg-gray-200 border-2 border-white shadow-sm cursor-pointer hover:ring-2 hover:ring-red-100 transition-all focus:outline-none">

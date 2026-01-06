@@ -518,4 +518,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/changelog', [\App\Http\Controllers\Shared\ChangeLogController::class, 'index'])->name('changelog.index');
 });
 
+Route::post('/switch-role', [\App\Http\Controllers\RoleSwitchController::class, 'switch'])
+    ->name('role.switch')
+    ->middleware('auth');
+
 require __DIR__ . '/auth.php';

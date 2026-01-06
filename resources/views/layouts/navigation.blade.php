@@ -5,6 +5,7 @@
     {{-- ROLE: ADMIN / KEPALA SEKOLAH (Tanpa Dashboard Spesifik)      --}}
     {{-- ============================================================ --}}
     @role('Super Admin|Kepala Sekolah')
+    @if(session('active_role') == 'Super Admin' || session('active_role') == 'Kepala Sekolah')
         <li>
             <a href="{{ route('dashboard') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('dashboard') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -35,15 +36,15 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
                 <span class="text-sm">Konfigurasi Aplikasi</span>
-            </a>
-        </li>
-        @endrole
+    @endrole
+    @endif
     @endrole
 
     {{-- ============================================================ --}}
     {{-- ROLE: SISWA                                                  --}}
     {{-- ============================================================ --}}
     @role('Siswa')
+    @if(session('active_role') == 'Siswa')
         <li>
             <a href="{{ route('siswa.dashboard.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('siswa.dashboard.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -161,11 +162,13 @@
             </a>
         </li>
     @endrole
+    @endif
 
     {{-- ============================================================ --}}
     {{-- ROLE: WALI KELAS                                             --}}
     {{-- ============================================================ --}}
     @role('Wali Kelas')
+    @if(session('active_role') == 'Wali Kelas')
         <li>
             <a href="{{ route('wali-kelas.dashboard.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('wali-kelas.dashboard.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -196,11 +199,13 @@
             </a>
         </li>
     @endrole
+    @endif
 
     {{-- ============================================================ --}}
     {{-- ROLE: GURU KELAS                                             --}}
     {{-- ============================================================ --}}
     @role('Guru Kelas')
+    @if(session('active_role') == 'Guru Kelas')
         <li>
             <a href="{{ route('guru-kelas.dashboard.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('guru-kelas.dashboard.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -293,11 +298,13 @@
             </a>
         </li>
     @endrole
+    @endif
 
     {{-- ============================================================ --}}
     {{-- ROLE: WAKA KESISWAAN                                         --}}
     {{-- ============================================================ --}}
     @role('Waka Kesiswaan')
+    @if(session('active_role') == 'Waka Kesiswaan')
         <li>
             <a href="{{ route('kesiswaan.dashboard.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('kesiswaan.dashboard.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -480,11 +487,13 @@
             </ul>
         </li>
     @endrole
+    @endif
 
     {{-- ============================================================ --}}
     {{-- ROLE: KURIKULUM                                              --}}
     {{-- ============================================================ --}}
     @role('Kurikulum')
+    @if(session('active_role') == 'Kurikulum')
         <li>
             <a href="{{ route('kurikulum.dashboard.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('kurikulum.dashboard.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -555,11 +564,13 @@
             </ul>
         </li>
     @endrole
+    @endif
 
     {{-- ============================================================ --}}
     {{-- ROLE: GURU BK                                                --}}
     {{-- ============================================================ --}}
     @role('Guru BK')
+    @if(session('active_role') == 'Guru BK')
         <li>
             <a href="{{ route('bk.dashboard.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('bk.dashboard.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -664,11 +675,13 @@
             </a>
         </li>
     @endrole
+    @endif
 
     {{-- ============================================================ --}}
     {{-- ROLE: GURU PIKET                                             --}}
     {{-- ============================================================ --}}
     @role('Guru Piket')
+    @if(session('active_role') == 'Guru Piket')
         <li>
             <a href="{{ route('piket.dashboard.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('piket.dashboard.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -770,11 +783,13 @@
             </a>
         </li>
     @endrole
+    @endif
 
     {{-- ============================================================ --}}
     {{-- ROLE: SECURITY                                               --}}
     {{-- ============================================================ --}}
     @role('Security')
+    @if(session('active_role') == 'Security')
         <li>
             <a href="{{ route('security.dashboard.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('security.dashboard.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -826,11 +841,13 @@
             </a>
         </li>        
     @endrole
+    @endif
 
     {{-- ============================================================ --}}
     {{-- ROLE: KAUR SDM                                               --}}
     {{-- ============================================================ --}}
     @role('KAUR SDM')
+    @if(session('active_role') == 'KAUR SDM')
         <li>
             <a href="{{ route('sdm.dashboard.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('sdm.dashboard.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -877,11 +894,13 @@
             </a>
         </li>
     @endrole
+    @endif
 
     {{-- ============================================================ --}}
     {{-- ROLE: OPERATOR                                               --}}
     {{-- ============================================================ --}}
     @role('Operator')
+    @if(session('active_role') == 'Operator')
         <li>
             <a href="{{ route('operator.dashboard.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('operator.dashboard.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -948,11 +967,13 @@
             </a>
         </li>
     @endrole
+    @endif
 
     {{-- ============================================================ --}}
     {{-- ROLE: PRAKERIN (Koordinator)                                 --}}
     {{-- ============================================================ --}}
     @role('Koordinator Prakerin|Waka Kesiswaan|Kurikulum')
+    @if(in_array(session('active_role'), ['Koordinator Prakerin', 'Waka Kesiswaan', 'Kurikulum']))
         <li x-data="{ expanded: {{ request()->routeIs('prakerin.*') ? 'true' : 'false' }} }">
             <button @click="expanded = !expanded"
                 class="flex items-center justify-between w-full px-3 py-2 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors">
@@ -978,6 +999,7 @@
             </ul>
         </li>
     @endrole
+    @endif
 
     <div class="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider mt-4">Komunikasi</div>
     <li>
