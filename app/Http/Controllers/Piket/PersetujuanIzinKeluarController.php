@@ -23,6 +23,80 @@ class PersetujuanIzinKeluarController extends Controller
         return view('pages.piket.persetujuan-izin-keluar.index', compact('daftarIzin'));
     }
 
+    public function create()
+    {
+        return view('pages.piket.persetujuan-izin-keluar.create');
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'master_siswa_id' => 'required|exists:master_siswa,id',
+            'tujuan' => 'required|string|max:255',
+            'keterangan' => 'nullable|string',
+            'estimasi_kembali' => 'required|date_format:H:i',
+        ]);
+
+        try {
+            $siswa = \App\Models\MasterSiswa::findOrFail($request->master_siswa_id);
+            $user = $siswa->user;
+
+            if (!$user) {
+                toast('Data user siswa tidak ditemukan.', 'error');
+                return back();
+            }
+
+            $tahunAktif = \App\Models\TahunPelajaran::where('is_active', true)->first();
+            if (!$tahunAktif) {
+                toast('Tahun ajaran aktif belum diatur.', 'error');
+                return back();
+            }
+
+            $rombelAktif = $siswa->rombels()
+                ->where('tahun_pelajaran_id', $tahunAktif->id)
+                ->first();
+
+            if (!$rombelAktif) {
+                toast('Siswa tidak terdaftar di rombel manapun pada tahun ajaran ini.', 'error');
+                return back();
+            }
+
+            // Cari jadwal saat ini
+            $namaHariIni = $this->getNamaHari(now()->dayOfWeek);
+            $waktuSaatIni = now()->format('H:i:s');
+            $jadwalSaatIni = \App\Models\JadwalPelajaran::where('rombel_id', $rombelAktif->id)
+                ->where('hari', $namaHariIni)
+                ->where('jam_mulai', '<=', $waktuSaatIni)
+                ->where('jam_selesai', '>=', $waktuSaatIni)
+                ->first();
+
+            IzinMeninggalkanKelas::create([
+                'user_id' => $user->id,
+                'rombel_id' => $rombelAktif->id,
+                'jadwal_pelajaran_id' => $jadwalSaatIni?->id,
+                'tujuan' => $request->tujuan,
+                'keterangan' => $request->keterangan,
+                'estimasi_kembali' => now()->setTimeFromTimeString($request->estimasi_kembali),
+                'status' => 'disetujui_guru_piket',
+                'guru_piket_approval_id' => Auth::id(),
+                'guru_piket_approved_at' => now(),
+            ]);
+
+            toast('Izin siswa berhasil dicatat dan disetujui.', 'success');
+            return redirect()->route('piket.persetujuan-izin-keluar.index');
+        } catch (\Exception $e) {
+            Log::error('Error duty teacher creating leave permit: ' . $e->getMessage());
+            toast('Gagal mencatat izin.', 'error');
+            return back()->withInput();
+        }
+    }
+
+    private function getNamaHari($dayOfWeek)
+    {
+        $hari = [0 => 'Minggu', 1 => 'Senin', 2 => 'Selasa', 3 => 'Rabu', 4 => 'Kamis', 5 => 'Jumat', 6 => 'Sabtu'];
+        return $hari[$dayOfWeek] ?? 'Tidak Diketahui';
+    }
+
     public function approve(IzinMeninggalkanKelas $izin)
     {
         try {

@@ -10,7 +10,16 @@
 
                 <div
                     class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row justify-between items-center gap-4">
-                    <h3 class="font-bold text-gray-700">Daftar Pengajuan Menunggu</h3>
+                    <div class="flex items-center gap-4 w-full sm:w-auto">
+                        <h3 class="font-bold text-gray-700">Daftar Pengajuan Menunggu</h3>
+                        <a href="{{ route('piket.persetujuan-izin-keluar.create') }}" 
+                            class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-500 focus:bg-red-500 active:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150 gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Tambah Izin
+                        </a>
+                    </div>
 
                     <div class="relative w-full sm:w-64">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
