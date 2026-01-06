@@ -90,7 +90,6 @@ class JadwalPelajaranController extends Controller
         $jadwalData = $request->input('jadwal', []);
         
         // Ambil semua jam pelajaran dan buat lookup: hari-jamKe => object
-        // Hari null di-mapped ke 'default-jamKe'
         $allSlots = JamPelajaran::all();
         $slotLookup = [];
         foreach ($allSlots as $s) {
@@ -100,7 +99,10 @@ class JadwalPelajaranController extends Controller
 
         DB::beginTransaction();
         try {
-            JadwalPelajaran::where('rombel_id', $rombel->id)->delete();
+            // Ambil ID jadwal yang ada saat ini untuk dilacak mana yang masih dipakai
+            $existingJadwalIds = JadwalPelajaran::where('rombel_id', $rombel->id)->pluck('id')->toArray();
+            $keptJadwalIds = [];
+
             foreach ($jadwalData as $hari => $jamKeList) {
                 foreach ($jamKeList as $jamKe => $data) {
                     if (!empty($data['mata_pelajaran_id']) && !empty($data['master_guru_id'])) {
@@ -109,21 +111,34 @@ class JadwalPelajaranController extends Controller
                         $slot = $slotLookup["{$hari}-{$jamKe}"] ?? $slotLookup["default-{$jamKe}"] ?? null;
                         
                         if ($slot) {
-                            JadwalPelajaran::create([
-                                'rombel_id' => $rombel->id,
-                                'hari' => $hari,
-                                'jam_ke' => $jamKe,
-                                'jam_mulai' => $slot->jam_mulai,
-                                'jam_selesai' => $slot->jam_selesai,
-                                'mata_pelajaran_id' => $data['mata_pelajaran_id'],
-                                'master_guru_id' => $data['master_guru_id'],
-                            ]);
+                            // Gunakan updateOrCreate agar ID tetap sama jika slot (rombel, hari, jam_ke) sudah ada
+                            $jp = JadwalPelajaran::updateOrCreate(
+                                [
+                                    'rombel_id'         => $rombel->id,
+                                    'hari'              => $hari,
+                                    'jam_ke'            => $jamKe,
+                                ],
+                                [
+                                    'jam_mulai'         => $slot->jam_mulai,
+                                    'jam_selesai'       => $slot->jam_selesai,
+                                    'mata_pelajaran_id' => $data['mata_pelajaran_id'],
+                                    'master_guru_id'    => $data['master_guru_id'],
+                                ]
+                            );
+                            $keptJadwalIds[] = $jp->id;
                         }
                     }
                 }
             }
+
+            // Hapus jadwal yang tidak ada lagi di input baru (slot yang dikosongkan)
+            $toDeleteIds = array_diff($existingJadwalIds, $keptJadwalIds);
+            if (!empty($toDeleteIds)) {
+                JadwalPelajaran::whereIn('id', $toDeleteIds)->delete();
+            }
+
             DB::commit();
-            toast('Jadwal pelajaran berhasil disimpan.', 'success');
+            toast('Jadwal pelajaran berhasil diperbarui tanpa menghapus data absensi.', 'success');
         } catch (\Exception $e) {
             DB::rollBack();
             toast('Gagal menyimpan jadwal: ' . $e->getMessage(), 'error');
