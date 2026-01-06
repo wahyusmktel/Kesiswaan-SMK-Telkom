@@ -515,6 +515,9 @@
                 <li><a href="{{ route('kurikulum.jadwal-pelajaran.index') }}"
                         class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kurikulum.jadwal-pelajaran.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Jadwal
                         Pelajaran</a></li>
+                <li><a href="{{ route('kurikulum.distribusi-mapel.index') }}"
+                        class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kurikulum.distribusi-mapel.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Distribusi
+                        Mapel</a></li>
             </ul>
         </li>
         <li x-data="{ expanded: {{ request()->routeIs('kurikulum.monitoring-absensi-guru.*') || request()->routeIs('kurikulum.monitoring-absensi-per-kelas.*') || request()->routeIs('kurikulum.persetujuan-izin-guru.*') ? 'true' : 'false' }} }">
