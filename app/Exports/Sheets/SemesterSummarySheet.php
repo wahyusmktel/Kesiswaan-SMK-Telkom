@@ -54,7 +54,7 @@ class SemesterSummarySheet implements FromCollection, WithTitle, WithHeadings, W
         $tp = TahunPelajaran::find($this->tahunPelajaranId);
         return [
             ['LAPORAN AUDIT KEHADIRAN GURU'],
-            ['TAHUN PELAJARAN: ' . ($tp->tahun_ajaran ?? '-') . ' (' . ($tp->semester ?? '-') . ')'],
+            ['TAHUN PELAJARAN: ' . ($tp->tahun ?? '-') . ' (' . ($tp->semester ?? '-') . ')'],
             [''],
         ];
     }

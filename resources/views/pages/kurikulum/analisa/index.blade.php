@@ -4,24 +4,33 @@
             <h2 class="font-bold text-xl text-gray-800 leading-tight">
                 {{ __('Analisa & Monitoring Semester') }}
             </h2>
-            <div class="flex items-center gap-3">
-                <a href="{{ route('kurikulum.analisa-semester.pdf') }}" 
-                    class="inline-flex items-center px-4 py-2 bg-rose-600 border border-transparent rounded-lg font-bold text-xs text-white uppercase tracking-widest hover:bg-rose-700 active:bg-rose-900 transition ease-in-out duration-150 shadow-sm gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9h1m1 0h1m-3 4h3m-3 4h3" /></svg>
-                    Download PDF Report
-                </a>
-                <a href="{{ route('kurikulum.analisa-semester.export') }}" 
-                    class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg font-bold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 transition ease-in-out duration-150 shadow-sm gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                    Export Audit Record (.xlsx)
-                </a>
-            </div>
         </div>
     </x-slot>
 
     <div class="py-6 w-full">
         <div class="w-full px-4 sm:px-6 lg:px-8 space-y-6">
             
+            
+            {{-- Export Buttons & Info --}}
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                <div>
+                    <h3 class="font-black text-gray-800">Laporan Audit Semester</h3>
+                    <p class="text-xs text-gray-500">Tahun Pelajaran: {{ $tahunAktif->tahun }} | Semester: {{ $tahunAktif->semester }}</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <a href="{{ route('kurikulum.analisa-semester.pdf') }}" 
+                        class="inline-flex items-center px-4 py-2 bg-rose-600 border border-transparent rounded-lg font-bold text-xs text-white uppercase tracking-widest hover:bg-rose-700 active:bg-rose-900 transition ease-in-out duration-150 shadow-sm gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9h1m1 0h1m-3 4h3m-3 4h3" /></svg>
+                        Download PDF Report
+                    </a>
+                    <a href="{{ route('kurikulum.analisa-semester.export') }}" 
+                        class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg font-bold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 transition ease-in-out duration-150 shadow-sm gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        Export Excel (.xlsx)
+                    </a>
+                </div>
+            </div>
+
             @if(isset($error))
                 <div class="bg-red-50 border-l-4 border-red-400 p-4 rounded-lg">
                     <div class="flex">
@@ -37,15 +46,14 @@
                 </div>
             @else
                 {{-- KPI Cards --}}
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden group">
                         <div class="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
                             <svg class="w-16 h-16 text-indigo-600" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path></svg>
                         </div>
-                        <div class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Kehadiran Efektif</div>
+                        <div class="text-gray-500 text-[10px] font-black uppercase tracking-wider mb-1">Kehadiran Efektif</div>
                         <div class="flex items-baseline gap-2">
                             <span class="text-3xl font-black text-indigo-600">{{ $kehadiranPersen }}%</span>
-                            <span class="text-xs text-indigo-400 font-medium">Semester Ini</span>
                         </div>
                         <div class="mt-4 h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
                             <div class="h-full bg-indigo-500 rounded-full" style="width: {{ $kehadiranPersen }}%"></div>
@@ -53,21 +61,27 @@
                     </div>
 
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <div class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Tepat Waktu (Hadir)</div>
+                        <div class="text-gray-500 text-[10px] font-black uppercase tracking-wider mb-1">Tepat Waktu</div>
                         <div class="text-3xl font-black text-green-600">{{ $totalHadir }}</div>
-                        <div class="text-xs text-green-400 mt-1 font-medium">Kali Tatap Muka</div>
+                        <div class="text-[10px] text-green-400 mt-1 font-bold uppercase">Hadir</div>
                     </div>
 
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <div class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Terlambat</div>
+                        <div class="text-gray-500 text-[10px] font-black uppercase tracking-wider mb-1">Terlambat</div>
                         <div class="text-3xl font-black text-yellow-500">{{ $totalTerlambat }}</div>
-                        <div class="text-xs text-yellow-400 mt-1 font-medium">Perlu Evaluasi</div>
+                        <div class="text-[10px] text-yellow-400 mt-1 font-bold uppercase">Evaluasi</div>
                     </div>
 
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <div class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Ketidakhadiran (Alpa/Izin)</div>
-                        <div class="text-3xl font-black text-red-500">{{ $totalAlpa + $totalIzin }}</div>
-                        <div class="text-xs text-red-400 mt-1 font-medium">Total Absen</div>
+                        <div class="text-gray-500 text-[10px] font-black uppercase tracking-wider mb-1">Izin / Sakit</div>
+                        <div class="text-3xl font-black text-blue-500">{{ $totalIzin }}</div>
+                        <div class="text-[10px] text-blue-400 mt-1 font-bold uppercase">Permintaan</div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <div class="text-gray-500 text-[10px] font-black uppercase tracking-wider mb-1">Tanpa Keterangan</div>
+                        <div class="text-3xl font-black text-rose-600">{{ $totalAlpa }}</div>
+                        <div class="text-[10px] text-rose-400 mt-1 font-bold uppercase">Alpa</div>
                     </div>
                 </div>
 
@@ -183,6 +197,14 @@
                                 borderColor: '#3B82F6',
                                 backgroundColor: 'rgba(59, 130, 246, 0.1)',
                                 fill: true,
+                                tension: 0.4
+                            },
+                            {
+                                label: 'Alpa',
+                                data: {!! json_encode($trends->pluck('alpa')) !!},
+                                borderColor: '#EF4444',
+                                borderDash: [2, 2],
+                                fill: false,
                                 tension: 0.4
                             }
                         ]

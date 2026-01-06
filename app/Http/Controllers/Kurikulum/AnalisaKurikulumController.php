@@ -52,6 +52,7 @@ class AnalisaKurikulumController extends Controller
                 'hadir' => $monthData->where('status', 'hadir')->count(),
                 'terlambat' => $monthData->where('status', 'terlambat')->count(),
                 'izin' => $monthData->where('status', 'izin')->count(),
+                'alpa' => $monthData->where('status', 'tidak_hadir')->count(),
                 'total' => $monthData->count(),
             ];
         });
@@ -63,6 +64,8 @@ class AnalisaKurikulumController extends Controller
                 'nama' => $guru->nama_lengkap ?? 'Unknown',
                 'hadir' => $items->where('status', 'hadir')->count(),
                 'terlambat' => $items->where('status', 'terlambat')->count(),
+                'izin' => $items->where('status', 'izin')->count(),
+                'alpa' => $items->where('status', 'tidak_hadir')->count(),
                 'total' => $items->count(),
                 'persentase' => round(($items->where('status', 'hadir')->count() / $items->count()) * 100, 1)
             ];
@@ -106,6 +109,7 @@ class AnalisaKurikulumController extends Controller
                 'hadir' => $monthData->where('status', 'hadir')->count(),
                 'terlambat' => $monthData->where('status', 'terlambat')->count(),
                 'izin' => $monthData->where('status', 'izin')->count(),
+                'alpa' => $monthData->where('status', 'tidak_hadir')->count(),
                 'total' => $monthData->count(),
             ];
         });
@@ -116,6 +120,8 @@ class AnalisaKurikulumController extends Controller
                 'nama' => $guru->nama_lengkap ?? 'Unknown',
                 'hadir' => $items->where('status', 'hadir')->count(),
                 'terlambat' => $items->where('status', 'terlambat')->count(),
+                'izin' => $items->where('status', 'izin')->count(),
+                'alpa' => $items->where('status', 'tidak_hadir')->count(),
                 'total' => $items->count(),
                 'persentase' => round(($items->where('status', 'hadir')->count() / $items->count()) * 100, 1)
             ];
@@ -126,13 +132,13 @@ class AnalisaKurikulumController extends Controller
             'trends', 'guruStats', 'totalRecord'
         ))->setPaper('a4', 'portrait');
 
-        return $pdf->download('Audit_Report_Kurikulum_' . str_replace('/', '-', $tahunAktif->tahun_ajaran) . '.pdf');
+        return $pdf->download('Audit_Report_Kurikulum_' . str_replace('/', '-', $tahunAktif->tahun) . '.pdf');
     }
 
     public function export()
     {
         $tahunAktif = TahunPelajaran::where('is_active', true)->first();
-        $fileName = 'Audit_Report_Kurikulum_' . str_replace('/', '-', $tahunAktif->tahun_ajaran) . '.xlsx';
+        $fileName = 'Audit_Report_Kurikulum_' . str_replace('/', '-', $tahunAktif->tahun) . '.xlsx';
         
         return (new \App\Exports\SemesterAuditExport($tahunAktif->id))->download($fileName);
     }
