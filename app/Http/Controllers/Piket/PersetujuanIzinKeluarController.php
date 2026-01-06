@@ -65,7 +65,7 @@ class PersetujuanIzinKeluarController extends Controller
             // Cari jadwal saat ini
             $namaHariIni = $this->getNamaHari(now()->dayOfWeek);
             $waktuSaatIni = now()->format('H:i:s');
-            $jadwalSaatIni = \App\Models\JadwalPelajaran::where('rombel_id', $rombelAktif->id)
+            $jadwalSaatIni = \App\Models\JadwalPelajaran::with('guru')->where('rombel_id', $rombelAktif->id)
                 ->where('hari', $namaHariIni)
                 ->where('jam_mulai', '<=', $waktuSaatIni)
                 ->where('jam_selesai', '>=', $waktuSaatIni)
@@ -80,6 +80,8 @@ class PersetujuanIzinKeluarController extends Controller
                 'keterangan' => $request->keterangan,
                 'estimasi_kembali' => now()->setTimeFromTimeString($request->estimasi_kembali),
                 'status' => 'disetujui_guru_piket',
+                'guru_kelas_approval_id' => $jadwalSaatIni?->guru?->user_id,
+                'guru_kelas_approved_at' => $jadwalSaatIni ? now() : null,
                 'guru_piket_approval_id' => Auth::id(),
                 'guru_piket_approved_at' => now(),
             ]);
@@ -144,11 +146,23 @@ class PersetujuanIzinKeluarController extends Controller
     public function approve(IzinMeninggalkanKelas $izin)
     {
         try {
-            $izin->update([
+            $updateData = [
                 'status' => 'disetujui_guru_piket',
                 'guru_piket_approval_id' => Auth::id(),
                 'guru_piket_approved_at' => now(),
-            ]);
+            ];
+
+            // Auto-fill Guru Kelas if empty and we have a schedule
+            if (!$izin->guru_kelas_approval_id && $izin->jadwal_pelajaran_id) {
+                // Ensure relationship is loaded
+                $izin->load('jadwalPelajaran.guru');
+                if ($izin->jadwalPelajaran?->guru?->user_id) {
+                    $updateData['guru_kelas_approval_id'] = $izin->jadwalPelajaran->guru->user_id;
+                    $updateData['guru_kelas_approved_at'] = now();
+                }
+            }
+
+            $izin->update($updateData);
             toast('Izin berhasil disetujui. Silakan cetak surat izin.', 'success');
         } catch (\Exception $e) {
             Log::error('Error approving leave permit by picket teacher: ' . $e->getMessage());
