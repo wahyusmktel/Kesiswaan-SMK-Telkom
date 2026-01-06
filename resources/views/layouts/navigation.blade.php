@@ -212,6 +212,15 @@
             </a>
         </li>
         <li>
+            <a href="{{ route('guru.jadwal-saya') }}"
+                class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('guru.jadwal-saya') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span class="text-sm">Jadwal Mengajar</span>
+            </a>
+        </li>
+        <li>
             <a href="{{ route('guru.lms.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('guru.lms.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1065,7 +1074,12 @@
 
             async checkUnread() {
                 try {
-                    const response = await fetch('{{ route('api.chat.unread-count') }}');
+                    const response = await fetch('{{ route('api.chat.unread-count') }}', {
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
                     const data = await response.json();
                     
                     if (data.unread_count > this.unreadChatCount) {

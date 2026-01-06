@@ -393,6 +393,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/izin/create', [\App\Http\Controllers\Guru\IzinGuruController::class, 'create'])->name('izin.create');
         Route::post('/izin', [\App\Http\Controllers\Guru\IzinGuruController::class, 'store'])->name('izin.store');
         Route::get('/izin/schedules', [\App\Http\Controllers\Guru\IzinGuruController::class, 'getSchedules'])->name('izin.schedules');
+        Route::get('/jadwal-saya', [\App\Http\Controllers\Guru\JadwalSayaController::class, 'index'])->name('jadwal-saya');
 
         // LMS Routes
         Route::prefix('lms')->name('lms.')->group(function () {
