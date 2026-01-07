@@ -50,6 +50,7 @@ use App\Http\Controllers\Operator\DashboardController as OperatorDashboardContro
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Kurikulum\DistribusiMapelController;
 use App\Http\Controllers\Kurikulum\AnalisaKurikulumController;
+use App\Http\Controllers\Security\GateTerminalController;
 
 Route::get('auth/google', [GoogleController::class, 'redirectToGoogle'])->name('auth.google');
 Route::get('auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
@@ -476,6 +477,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Route untuk Pendataan Keterlambatan
         Route::get('/pendataan-terlambat', [PendataanTerlambatController::class, 'index'])->name('pendataan-terlambat.index');
         Route::post('/pendataan-terlambat', [PendataanTerlambatController::class, 'store'])->name('pendataan-terlambat.store');
+
+        // Gate Terminal Routes (ATM Style)
+        Route::prefix('terminal')->name('terminal.')->group(function () {
+            Route::get('/', [GateTerminalController::class, 'index'])->name('index');
+            Route::get('/lateness', [GateTerminalController::class, 'lateness'])->name('lateness');
+            Route::get('/permit', [GateTerminalController::class, 'permit'])->name('permit');
+            Route::post('/process-lateness', [GateTerminalController::class, 'processLateness'])->name('process-lateness');
+            Route::post('/process-permit', [GateTerminalController::class, 'processPermit'])->name('process-permit');
+        });
     });
 
     // Grup Route untuk Pengajuan Dispensasi (bisa diakses beberapa peran)

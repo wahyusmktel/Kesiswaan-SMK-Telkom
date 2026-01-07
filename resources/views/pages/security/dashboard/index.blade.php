@@ -121,6 +121,21 @@
                             </div>
                             <span class="text-sm font-bold text-white">RIWAYAT IZIN</span>
                         </a>
+
+                        <a href="{{ route('security.terminal.index') }}" target="_blank"
+                           class="flex flex-col items-center justify-center p-6 bg-red-600/20 backdrop-blur-md border border-red-500/30 rounded-2xl hover:bg-red-600/30 hover:scale-105 transition-all group/btn shadow-xl col-span-2 md:col-span-4 mt-2">
+                            <div class="flex items-center gap-4">
+                                <div class="w-14 h-14 bg-red-600 rounded-2xl flex items-center justify-center text-white group-hover/btn:scale-110 transition-transform shadow-lg shadow-red-600/40">
+                                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                                <div class="text-left">
+                                    <span class="text-xl font-black text-white block uppercase tracking-tight">Buka Gate Terminal</span>
+                                    <span class="text-sm text-red-200 block">Khusus Tampilan TV Layar Lebar</span>
+                                </div>
+                            </div>
+                        </a>
                     </div>
                 </div>
             </div>

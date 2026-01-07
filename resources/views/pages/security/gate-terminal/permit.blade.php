@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner Izin Keluar - Gate Terminal</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8FAFC; overflow: hidden; }
+        .telkom-gradient { background: linear-gradient(135deg, #FF1F1F 0%, #C41212 100%); }
+        .success-glow { box-shadow: 0 0 50px rgba(34, 197, 94, 0.4); }
+        .error-glow { box-shadow: 0 0 50px rgba(239, 68, 68, 0.4); }
+        .blue-glow { box-shadow: 0 0 50px rgba(59, 130, 246, 0.4); }
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col" x-data="scannerApp()">
+    {{-- Header --}}
+    <div class="telkom-gradient text-white px-12 py-6 flex justify-between items-center shadow-lg relative z-10">
+        <div class="flex items-center gap-6">
+            <a href="{{ route('security.terminal.index') }}" class="p-3 bg-white/20 hover:bg-white/30 rounded-2xl transition-colors">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+            </a>
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight uppercase">Izin Keluar & Masuk Sekolah</h1>
+                <p class="text-red-100 opacity-90">Verifikasi status keberangkatan dan kepulangan siswa</p>
+            </div>
+        </div>
+        
+        <div class="text-right">
+            <div class="text-4xl font-mono font-bold" x-text="time"></div>
+        </div>
+    </div>
+
+    {{-- Main Content --}}
+    <div class="flex-1 flex items-center justify-center p-12 relative">
+        {{-- Scanner Input (Hidden but focused) --}}
+        <input type="text" x-ref="barcodeInput" @keydown.enter="processScan" 
+            class="absolute opacity-0 pointer-events-none" autofocus>
+
+        {{-- Scanning State --}}
+        <div x-show="state === 'idle'" class="text-center animate-pulse" x-cloak>
+            <div class="w-64 h-64 bg-red-50 rounded-full flex items-center justify-center mb-8 mx-auto border-4 border-red-100">
+                <svg class="w-32 h-32 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+            </div>
+            <h2 class="text-4xl font-extrabold text-slate-400 uppercase tracking-widest">Silakan Scan Kartu Akses...</h2>
+        </div>
+
+        {{-- Processing State --}}
+        <div x-show="state === 'processing'" class="text-center" x-cloak>
+            <div class="w-32 h-32 border-8 border-red-200 border-t-red-600 rounded-full animate-spin mx-auto mb-8"></div>
+            <h2 class="text-4xl font-extrabold text-slate-600 uppercase tracking-widest">Memverifikasi Izin...</h2>
+        </div>
+
+        {{-- Success State --}}
+        <div x-show="state === 'success'" class="max-w-4xl w-full bg-white rounded-[3rem] shadow-2xl p-12 text-center border-4" 
+            :class="result.action === 'KELUAR' ? 'border-blue-500 blue-glow' : 'border-green-500 success-glow'" x-cloak>
+            
+            <div class="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8"
+                :class="result.action === 'KELUAR' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'">
+                <svg x-show="result.action === 'KELUAR'" class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                <svg x-show="result.action === 'KEMBALI'" class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+            </div>
+
+            <div class="mb-4">
+                <span class="inline-block px-8 py-2 rounded-full font-black text-2xl uppercase tracking-widest"
+                    :class="result.action === 'KELUAR' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'"
+                    x-text="result.action === 'KELUAR' ? 'Siswa Keluar' : 'Siswa Kembali'"></span>
+            </div>
+
+            <h2 class="text-5xl font-black text-slate-800 mb-8" x-text="result.action === 'KELUAR' ? 'DIIZINKAN KELUAR' : 'DITERIMA KEMBALI'"></h2>
+            
+            <div class="flex items-center gap-8 bg-slate-50 p-8 rounded-[2rem] text-left">
+                <div class="w-32 h-40 bg-slate-200 rounded-2xl flex items-center justify-center overflow-hidden border-2 border-slate-300">
+                    <svg class="w-16 h-16 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                </div>
+                <div>
+                    <div class="text-red-600 font-bold text-2xl mb-1" x-text="result.siswa.nis"></div>
+                    <div class="text-4xl font-black text-slate-900 mb-2 uppercase" x-text="result.siswa.nama_lengkap"></div>
+                    <div class="text-2xl font-semibold text-slate-500 bg-white px-4 py-1 rounded-lg shadow-sm inline-block" x-text="result.izin.tujuan"></div>
+                </div>
+            </div>
+
+            <div class="mt-8 flex justify-center gap-8 text-2xl font-bold">
+                <div class="text-slate-400">Jam: <span class="text-slate-800" x-text="time"></span></div>
+                <div class="text-slate-400" x-show="result.action === 'KEMBALI'">Estimasi: <span class="text-slate-800" x-text="formatTime(result.izin.estimasi_kembali)"></span></div>
+            </div>
+
+            <p class="mt-8 text-2xl text-slate-400">Monitor kembali dalam <span x-text="countdown"></span> detik...</p>
+        </div>
+
+        {{-- Error State --}}
+        <div x-show="state === 'error'" class="max-w-4xl w-full bg-white rounded-[3rem] shadow-2xl p-12 text-center border-4 border-red-500 error-glow" x-cloak>
+            <div class="w-24 h-24 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-8">
+                <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </div>
+            <h2 class="text-5xl font-black text-red-600 mb-4">VERIFIKASI GAGAL</h2>
+            <p class="text-3xl text-slate-600 mb-8" x-text="errorMessage"></p>
+            <button @click="resetScanner" class="bg-red-600 text-white px-12 py-6 rounded-2xl font-bold text-2xl shadow-lg hover:bg-red-700 transition-all">
+                Coba Lagi
+            </button>
+        </div>
+    </div>
+
+    {{-- Script --}}
+    <script>
+        function scannerApp() {
+            return {
+                state: 'idle', 
+                time: '',
+                result: { siswa: {}, izin: {} },
+                errorMessage: '',
+                countdown: 5,
+                
+                init() {
+                    this.updateTime();
+                    setInterval(() => this.updateTime(), 1000);
+                    document.addEventListener('click', () => this.$refs.barcodeInput.focus());
+                },
+
+                updateTime() {
+                    const now = new Date();
+                    this.time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                },
+
+                formatTime(isoString) {
+                    if (!isoString) return '-';
+                    const date = new Date(isoString);
+                    return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                },
+
+                async processScan(e) {
+                    const nipd = e.target.value.trim();
+                    if (!nipd) return;
+
+                    this.state = 'processing';
+                    e.target.value = '';
+
+                    try {
+                        const response = await fetch('{{ route('security.terminal.process-permit') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify({ nipd })
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            this.result = data;
+                            this.state = 'success';
+                            this.playBeep('success');
+                            this.startCountdown();
+                        } else {
+                            this.errorMessage = data.message || 'Terjadi kesalahan sistem.';
+                            this.state = 'error';
+                            this.playBeep('error');
+                        }
+                    } catch (error) {
+                        this.errorMessage = 'Gagal terhubung ke server.';
+                        this.state = 'error';
+                    }
+                },
+
+                resetScanner() {
+                    this.state = 'idle';
+                    this.errorMessage = '';
+                    this.result = { siswa: {}, izin: {} };
+                    this.$nextTick(() => this.$refs.barcodeInput.focus());
+                },
+
+                startCountdown() {
+                    this.countdown = 6;
+                    const timer = setInterval(() => {
+                        this.countdown--;
+                        if (this.countdown <= 0) {
+                            clearInterval(timer);
+                            this.resetScanner();
+                        }
+                    }, 1000);
+                },
+
+                playBeep(type) {
+                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+
+                    if (type === 'success') {
+                        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+                        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                        oscillator.start();
+                        oscillator.stop(audioCtx.currentTime + 0.1);
+                        setTimeout(() => {
+                            const osc2 = audioCtx.createOscillator();
+                            osc2.connect(gainNode);
+                            osc2.frequency.setValueAtTime(1318.51, audioCtx.currentTime); // E6
+                            osc2.start();
+                            osc2.stop(audioCtx.currentTime + 0.2);
+                        }, 100);
+                    } else {
+                        oscillator.frequency.setValueAtTime(110, audioCtx.currentTime); 
+                        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                        oscillator.start();
+                        oscillator.stop(audioCtx.currentTime + 0.4);
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
