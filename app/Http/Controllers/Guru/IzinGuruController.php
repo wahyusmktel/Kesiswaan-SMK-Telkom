@@ -98,7 +98,7 @@ class IzinGuruController extends Controller
             ->get();
 
         if ($availableSchedules->isNotEmpty() && count($request->input('jadwal_ids', [])) === 0) {
-            return redirect()->back()->withInput()->with('error', 'Sistem mendeteksi Anda memiliki jam mengajar pada waktu tersebut. Anda wajib memilih minimal satu jam pelajaran yang ditinggalkan.');
+            return redirect()->back()->withInput()->with('error', 'Sistem mendeteksi Anda memiliki jam mengajar pada waktu tersebut. Silakan pilih jam pelajaran yang Anda tinggalkan.');
         }
 
         // Check for overlapping permits (existing permits for the same time)
