@@ -49,6 +49,7 @@
                                     <option value="Sakit">Sakit</option>
                                     <option value="Dinas">Dinas Out</option>
                                     <option value="Keperluan Pribadi">Keperluan Pribadi</option>
+                                    <option value="Terlambat">Terlambat</option>
                                     <option value="Lainnya">Lainnya</option>
                                 </select>
                             </div>

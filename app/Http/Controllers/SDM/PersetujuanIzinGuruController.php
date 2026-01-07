@@ -7,6 +7,7 @@ use App\Models\GuruIzin;
 use App\Models\AbsensiGuru;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\AppSetting;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class PersetujuanIzinGuruController extends Controller
@@ -84,7 +85,9 @@ class PersetujuanIzinGuruController extends Controller
 
         $izin->load(['guru', 'piket', 'kurikulum', 'sdm', 'jadwals.rombel.kelas', 'jadwals.mataPelajaran']);
         
-        $pdf = Pdf::loadView('pdf.izin-guru', compact('izin'));
+        $settings = AppSetting::first();
+        
+        $pdf = Pdf::loadView('pdf.izin-guru', compact('izin', 'settings'));
         return $pdf->stream('Surat_Izin_Guru_' . str_replace(' ', '_', $izin->guru->nama_lengkap) . '.pdf');
     }
 }
