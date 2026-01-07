@@ -73,8 +73,9 @@ class PersetujuanIzinGuruController extends Controller
         }
 
         // Security check: If teacher, only allow printing their own permit
+        // Bypass this if user also has KAUR SDM role
         $user = Auth::user();
-        if ($user->hasRole('Guru Kelas')) {
+        if ($user->hasRole('Guru Kelas') && !$user->hasRole('KAUR SDM')) {
             $guru = $user->masterGuru;
             if (!$guru || $izin->master_guru_id !== $guru->id) {
                 abort(403, 'Anda tidak memiliki akses untuk mengunduh surat izin ini.');
