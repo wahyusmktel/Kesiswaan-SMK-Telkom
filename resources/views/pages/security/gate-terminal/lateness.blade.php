@@ -87,7 +87,7 @@
                             </svg>
                         </button>
                         <button @click="submitManual()" 
-                            class="col-span-2 h-20 telkom-gradient text-white rounded-[1.5rem] text-2xl font-black uppercase tracking-widest transition-all active:scale-95 shadow-xl shadow-red-200">
+                            class="col-span-3 h-20 telkom-gradient text-white rounded-[1.5rem] text-2xl font-black uppercase tracking-widest transition-all active:scale-95 shadow-xl shadow-red-200">
                             PROSES
                         </button>
                     </div>
