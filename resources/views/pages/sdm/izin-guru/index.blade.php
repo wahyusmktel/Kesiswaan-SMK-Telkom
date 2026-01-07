@@ -94,23 +94,67 @@
         </div>
 
         {{-- Modal Reject SDM --}}
-        <div x-show="isOpen" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto">
-            <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" @click="isOpen = false"></div>
-            <div class="flex items-center justify-center min-h-screen p-4">
-                <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
-                    <form :action="rejectUrl" method="POST">
-                        @csrf
-                        @method('PATCH')
-                        <h3 class="text-lg font-bold text-gray-900 mb-4">Batalkan Izin (Final)</h3>
-                        <textarea name="catatan_sdm" required class="w-full rounded-xl border-gray-200" rows="3" placeholder="Alasan pembatalan..."></textarea>
-                        <div class="mt-6 flex gap-3">
-                            <button type="button" @click="isOpen = false" class="flex-1 py-2 font-bold text-gray-500 border rounded-xl">Batal</button>
-                            <button type="submit" class="flex-1 py-2 font-bold bg-red-600 text-white rounded-xl">Tolak</button>
-                        </div>
-                    </form>
+        <template x-teleport="body">
+            <div x-show="isOpen" 
+                 x-cloak
+                 class="fixed inset-0 z-[100] overflow-y-auto" 
+                 aria-labelledby="modal-title" 
+                 role="dialog" 
+                 aria-modal="true">
+                <!-- Background backdrop -->
+                <div x-show="isOpen"
+                     x-transition:enter="transition ease-out duration-300"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     x-transition:leave="transition ease-in duration-200"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
+                     class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" 
+                     @click="isOpen = false"
+                     aria-hidden="true"></div>
+
+                <!-- Modal panel -->
+                <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                    <div x-show="isOpen"
+                         x-transition:enter="transition ease-out duration-300"
+                         x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                         x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                         x-transition:leave="transition ease-in duration-200"
+                         x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                         x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                         class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-md p-6">
+                        
+                        <form :action="rejectUrl" method="POST">
+                            @csrf
+                            @method('PATCH')
+                            
+                            <div class="mb-4">
+                                <h3 class="text-lg font-bold text-gray-900" id="modal-title">Batalkan Izin (Final)</h3>
+                                <p class="text-xs text-gray-500 mt-1">Berikan alasan mengapa permohonan izin ini ditolak.</p>
+                            </div>
+
+                            <textarea name="catatan_sdm" 
+                                      required 
+                                      class="w-full rounded-xl border-gray-200 focus:border-red-500 focus:ring-red-500 transition-all" 
+                                      rows="4" 
+                                      placeholder="Alasan pembatalan..."></textarea>
+                            
+                            <div class="mt-6 flex gap-3">
+                                <button type="button" 
+                                        @click="isOpen = false" 
+                                        class="flex-1 py-2.5 font-bold text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                                    Batal
+                                </button>
+                                <button type="submit" 
+                                        class="flex-1 py-2.5 font-bold bg-red-600 text-white rounded-xl hover:bg-red-700 shadow-sm transition-colors">
+                                    Tolak Izin
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
-        </div>
+        </template>
     </div>
 
     @push('scripts')
