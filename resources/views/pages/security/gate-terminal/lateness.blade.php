@@ -31,8 +31,15 @@
             </div>
         </div>
         
-        <div class="text-right">
-            <div class="text-4xl font-mono font-bold" x-text="time"></div>
+        <div class="flex items-center gap-4">
+            <button @click="toggleManual()" 
+                class="px-6 py-3 rounded-2xl font-bold uppercase tracking-wider transition-all shadow-lg active:scale-95"
+                :class="isManual ? 'bg-white text-red-600' : 'bg-red-700 text-white hover:bg-red-800'">
+                <span x-text="isManual ? 'Beralih ke Scan' : 'Input Manual'"></span>
+            </button>
+            <div class="text-right">
+                <div class="text-4xl font-mono font-bold" x-text="time"></div>
+            </div>
         </div>
     </div>
 
@@ -42,14 +49,50 @@
         <input type="text" x-ref="barcodeInput" @keydown.enter="processScan" 
             class="absolute opacity-0 pointer-events-none" autofocus>
 
-        {{-- Scanning State --}}
-        <div x-show="state === 'idle'" class="text-center animate-pulse" x-cloak>
-            <div class="w-64 h-64 bg-red-50 rounded-full flex items-center justify-center mb-8 mx-auto border-4 border-red-100">
-                <svg class="w-32 h-32 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-                </svg>
+        {{-- Idle State --}}
+        <div x-show="state === 'idle'" class="w-full max-w-4xl" x-cloak>
+            
+            {{-- Mode Scan --}}
+            <div x-show="!isManual" class="text-center animate-fade-in">
+                <div class="w-64 h-64 bg-red-50 rounded-full flex items-center justify-center mb-8 mx-auto border-4 border-red-100">
+                    <svg class="w-32 h-32 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                    </svg>
+                </div>
+                <h2 class="text-4xl font-extrabold text-slate-400 uppercase tracking-widest">Menunggu Pemindaian...</h2>
             </div>
-            <h2 class="text-4xl font-extrabold text-slate-400 uppercase tracking-widest">Menunggu Pemindaian...</h2>
+
+            {{-- Mode Manual --}}
+            <div x-show="isManual" class="animate-slide-up max-w-2xl mx-auto">
+                <div class="bg-white rounded-[3rem] shadow-2xl border-4 border-slate-100 p-10">
+                    <h2 class="text-3xl font-black text-slate-800 uppercase tracking-tight mb-6 text-center">INPUT NIPD MANUAL</h2>
+                    
+                    {{-- Input Display --}}
+                    <div class="bg-slate-50 rounded-3xl p-6 border-4 border-slate-100 mb-8 min-h-[90px] flex items-center justify-center">
+                        <span class="text-5xl font-black tracking-[0.2em] text-red-600" x-text="manualNipd || '________'"></span>
+                    </div>
+
+                    {{-- Keypad --}}
+                    <div class="grid grid-cols-3 gap-4">
+                        <template x-for="n in ['1','2','3','4','5','6','7','8','9','0']" :key="n">
+                            <button @click="addDigit(n)" 
+                                class="h-20 bg-slate-50 hover:bg-slate-100 border-2 border-slate-100 rounded-[1.5rem] text-3xl font-black text-slate-700 transition-all active:scale-95 active:bg-slate-200">
+                                <span x-text="n"></span>
+                            </button>
+                        </template>
+                        <button @click="removeDigit()" 
+                            class="h-20 bg-red-50 hover:bg-red-100 border-2 border-red-100 rounded-[1.5rem] text-red-600 transition-all active:scale-95 flex items-center justify-center">
+                            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-9.172a2 2 0 00-1.414.586L3 12z" />
+                            </svg>
+                        </button>
+                        <button @click="submitManual()" 
+                            class="col-span-2 h-20 telkom-gradient text-white rounded-[1.5rem] text-2xl font-black uppercase tracking-widest transition-all active:scale-95 shadow-xl shadow-red-200">
+                            PROSES
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         {{-- Processing State --}}
@@ -102,6 +145,8 @@
         function scannerApp() {
             return {
                 state: 'idle', // idle, processing, success, error
+                isManual: false,
+                manualNipd: '',
                 time: '',
                 result: { siswa: {} },
                 errorMessage: '',
@@ -111,10 +156,40 @@
                     this.updateTime();
                     setInterval(() => this.updateTime(), 1000);
                     
-                    // Keep input focused
+                    // Keep input focused if not in manual mode
                     document.addEventListener('click', () => {
-                        this.$refs.barcodeInput.focus();
+                        this.focusInput();
                     });
+                },
+
+                focusInput() {
+                    if (this.state === 'idle' && !this.isManual) {
+                        this.$nextTick(() => this.$refs.barcodeInput.focus());
+                    }
+                },
+
+                toggleManual() {
+                    this.isManual = !this.isManual;
+                    this.manualNipd = '';
+                    if (!this.isManual) {
+                        this.focusInput();
+                    }
+                },
+
+                addDigit(digit) {
+                    if (this.manualNipd.length < 20) {
+                        this.manualNipd += digit;
+                    }
+                },
+
+                removeDigit() {
+                    this.manualNipd = this.manualNipd.slice(0, -1);
+                },
+
+                submitManual() {
+                    if (this.manualNipd) {
+                        this.processScan({ target: { value: this.manualNipd } });
+                    }
                 },
 
                 updateTime() {
@@ -123,11 +198,11 @@
                 },
 
                 async processScan(e) {
-                    const nipd = e.target.value.trim();
+                    const nipd = typeof e === 'string' ? e : (e.target.value.trim());
                     if (!nipd) return;
 
                     this.state = 'processing';
-                    e.target.value = '';
+                    if (e.target) e.target.value = '';
 
                     try {
                         const response = await fetch('{{ route('security.terminal.process-lateness') }}', {
@@ -162,8 +237,9 @@
                 resetScanner() {
                     this.state = 'idle';
                     this.errorMessage = '';
+                    this.manualNipd = '';
                     this.result = { siswa: {} };
-                    this.$nextTick(() => this.$refs.barcodeInput.focus());
+                    this.focusInput();
                 },
 
                 startCountdown(seconds) {
