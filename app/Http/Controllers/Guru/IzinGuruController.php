@@ -97,11 +97,11 @@ class IzinGuruController extends Controller
             })
             ->get();
 
-        if ($availableSchedules->isNotEmpty() && (empty($request->jadwal_ids))) {
-            return redirect()->back()->withInput()->with('error', 'Anda memiliki jadwal mengajar pada rentang waktu izin tersebut. Silakan pilih jam pelajaran yang Anda tinggalkan.');
+        if ($availableSchedules->isNotEmpty() && count($request->input('jadwal_ids', [])) === 0) {
+            return redirect()->back()->withInput()->with('error', 'Sistem mendeteksi Anda memiliki jam mengajar pada waktu tersebut. Anda wajib memilih minimal satu jam pelajaran yang ditinggalkan.');
         }
 
-        // Check for overlapping permits
+        // Check for overlapping permits (existing permits for the same time)
         $overlap = GuruIzin::where('master_guru_id', $guru->id)
             ->where(function ($query) use ($request) {
                 $query->where('tanggal_mulai', '<=', $request->tanggal_selesai)
@@ -127,7 +127,7 @@ class IzinGuruController extends Controller
             'status_sdm' => 'menunggu',
         ]);
 
-        if ($request->has('jadwal_ids')) {
+        if ($request->filled('jadwal_ids')) {
             $izin->jadwals()->attach($request->jadwal_ids);
         }
 

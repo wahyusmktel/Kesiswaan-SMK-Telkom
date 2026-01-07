@@ -167,37 +167,47 @@
                 },
 
                 validateAndSubmit() {
+                    // Pre-validation checking if times are filled
                     if (!this.startDate || !this.endDate) {
-                        Swal.fire('Oops!', 'Mohon lengkapi tanggal dan waktu izin.', 'warning');
-                        return;
-                    }
-
-                    const permitStart = new Date(this.startDate);
-                    const permitEnd = new Date(this.endDate);
-                    
-                    const pStartTime = permitStart.getHours().toString().padStart(2, '0') + ':' + permitStart.getMinutes().toString().padStart(2, '0');
-                    const pEndTime = permitEnd.getHours().toString().padStart(2, '0') + ':' + permitEnd.getMinutes().toString().padStart(2, '0');
-
-                    // Check if there are overlapping schedules that are NOT selected
-                    let overlappingCount = 0;
-                    this.schedules.forEach(schedule => {
-                        const sStart = schedule.jam_mulai.substring(0, 5);
-                        const sEnd = schedule.jam_selesai.substring(0, 5);
-                        if (pStartTime < sEnd && pEndTime > sStart) {
-                            overlappingCount++;
-                        }
-                    });
-
-                    if (overlappingCount > 0 && this.selectedIds.length === 0) {
                         Swal.fire({
-                            title: 'Verifikasi Jadwal',
-                            text: 'Sistem mendeteksi Anda memiliki jam mengajar pada waktu tersebut. Silakan pilih jam pelajaran yang Anda tinggalkan.',
+                            title: 'Data Tidak Lengkap',
+                            text: 'Mohon lengkapi tanggal dan waktu mulai serta selesai izin Anda.',
                             icon: 'warning',
                             confirmButtonColor: '#4f46e5'
                         });
                         return;
                     }
 
+                    // Re-calculate overlapping count to be sure
+                    const permitStart = new Date(this.startDate);
+                    const permitEnd = new Date(this.endDate);
+                    
+                    const pStartTime = permitStart.getHours().toString().padStart(2, '0') + ':' + permitStart.getMinutes().toString().padStart(2, '0') + ':00';
+                    const pEndTime = permitEnd.getHours().toString().padStart(2, '0') + ':' + permitEnd.getMinutes().toString().padStart(2, '0') + ':00';
+
+                    let overlappingCount = 0;
+                    this.schedules.forEach(schedule => {
+                        // Using explicit string comparison for time
+                        const sStart = schedule.jam_mulai; // Assuming format HH:mm:ss from backend
+                        const sEnd = schedule.jam_selesai;
+
+                        if (pStartTime < sEnd && pEndTime > sStart) {
+                            overlappingCount++;
+                        }
+                    });
+
+                    // If there are schedules that overlap but NONE are selected, block submission
+                    if (overlappingCount > 0 && this.selectedIds.length === 0) {
+                        Swal.fire({
+                            title: 'Verifikasi Jadwal',
+                            text: 'Sistem mendeteksi Anda memiliki jam mengajar pada waktu tersebut. Silakan centang jam pelajaran yang akan Anda tinggalkan.',
+                            icon: 'warning',
+                            confirmButtonColor: '#4f46e5'
+                        });
+                        return;
+                    }
+
+                    // If everything is valid, submit the form via the reference
                     this.$refs.form.submit();
                 },
 
