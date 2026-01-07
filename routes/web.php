@@ -215,6 +215,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
             // Monitoring BK untuk Waka Kesiswaan
             Route::get('monitoring-bk/pembinaan', [\App\Http\Controllers\BK\PembinaanRutinController::class, 'index'])->name('monitoring-bk.pembinaan');
             Route::get('monitoring-bk/konsultasi', [\App\Http\Controllers\BK\KonsultasiJadwalController::class, 'index'])->name('monitoring-bk.konsultasi');
+
+            // Route Stella Access Card
+            Route::get('/kartu-akses', [\App\Http\Controllers\Kesiswaan\KartuAksesController::class, 'index'])->name('kartu-akses.index');
+            Route::get('/kartu-akses/{siswa}', [\App\Http\Controllers\Kesiswaan\KartuAksesController::class, 'show'])->name('kartu-akses.show');
+            Route::get('/kartu-akses/{siswa}/cetak', [\App\Http\Controllers\Kesiswaan\KartuAksesController::class, 'cetak'])->name('kartu-akses.cetak');
+            Route::post('/kartu-akses/cetak-masal', [\App\Http\Controllers\Kesiswaan\KartuAksesController::class, 'cetakMasal'])->name('kartu-akses.cetak-masal');
         });
     });
 
