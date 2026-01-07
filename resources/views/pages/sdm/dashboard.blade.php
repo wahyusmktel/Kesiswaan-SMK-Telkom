@@ -68,7 +68,23 @@
                                     </td>
                                     <td class="px-6 py-4 text-xs">{{ $req->tanggal_mulai->translatedFormat('d F Y') }}</td>
                                     <td class="px-6 py-4">
-                                        <x-status-badge-izin :status="$req->status_sdm" />
+                                        @if($req->status_piket === 'ditolak' || $req->status_kurikulum === 'ditolak' || $req->status_sdm === 'ditolak')
+                                            <x-status-badge-izin status="ditolak" />
+                                        @elseif($req->status_piket === 'menunggu')
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black border bg-amber-50 text-amber-700 border-amber-200 uppercase tracking-tighter">
+                                                Menunggu: Piket
+                                            </span>
+                                        @elseif($req->status_kurikulum === 'menunggu')
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black border bg-yellow-50 text-yellow-700 border-yellow-200 uppercase tracking-tighter">
+                                                Menunggu: Kurikulum
+                                            </span>
+                                        @elseif($req->status_sdm === 'menunggu')
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black border bg-indigo-50 text-indigo-700 border-indigo-200 uppercase tracking-tighter">
+                                                Menunggu: SDM
+                                            </span>
+                                        @else
+                                            <x-status-badge-izin status="disetujui" />
+                                        @endif
                                     </td>
                                 </tr>
                             @empty
