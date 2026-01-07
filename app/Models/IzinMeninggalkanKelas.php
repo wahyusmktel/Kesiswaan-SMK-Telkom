@@ -34,6 +34,15 @@ class IzinMeninggalkanKelas extends Model
         'ditolak_oleh',
     ];
 
+    protected $casts = [
+        'estimasi_kembali' => 'datetime',
+        'waktu_keluar_sebenarnya' => 'datetime',
+        'waktu_kembali_sebenarnya' => 'datetime',
+        'guru_kelas_approved_at' => 'datetime',
+        'guru_piket_approved_at' => 'datetime',
+        'security_verified_at' => 'datetime',
+    ];
+
     // Otomatis membuat UUID saat data baru akan disimpan
     protected static function boot()
     {

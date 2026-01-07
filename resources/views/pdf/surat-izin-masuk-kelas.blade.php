@@ -194,7 +194,7 @@
                 <td class="sig-cell">
                     <div class="date-line">Pringsewu, {{ now()->isoFormat('D MMMM YYYY') }}</div>
                     <div class="role-line">Guru Piket</div>
-                    <div class="name-line">{{ $keterlambatan->guruPiket->name }}</div>
+                    <div class="name-line">{{ $keterlambatan->guruPiket->name ?? '(Belum Diverifikasi)' }}</div>
                 </td>
             </tr>
         </table>
