@@ -53,6 +53,7 @@
                             <tr>
                                 <th class="px-6 py-4">Nama Guru</th>
                                 <th class="px-6 py-4">Jenis Izin</th>
+                                <th class="px-6 py-4">Deskripsi</th>
                                 <th class="px-6 py-4">Tanggal</th>
                                 <th class="px-6 py-4">Status</th>
                             </tr>
@@ -62,6 +63,9 @@
                                 <tr class="hover:bg-gray-50 transition-colors">
                                     <td class="px-6 py-4 font-bold text-gray-900">{{ $req->guru->nama_lengkap }}</td>
                                     <td class="px-6 py-4 text-gray-600">{{ $req->jenis_izin }}</td>
+                                    <td class="px-6 py-4 text-gray-500 italic text-[10px] truncate max-w-[150px]" title="{{ $req->deskripsi }}">
+                                        "{{ $req->deskripsi }}"
+                                    </td>
                                     <td class="px-6 py-4 text-xs">{{ $req->tanggal_mulai->translatedFormat('d F Y') }}</td>
                                     <td class="px-6 py-4">
                                         <x-status-badge-izin :status="$req->status_sdm" />
@@ -69,7 +73,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="px-6 py-8 text-center text-gray-400 italic">Belum ada pengajuan terbaru.</td>
+                                    <td colspan="5" class="px-6 py-8 text-center text-gray-400 italic">Belum ada pengajuan terbaru.</td>
                                 </tr>
                             @endforelse
                         </tbody>

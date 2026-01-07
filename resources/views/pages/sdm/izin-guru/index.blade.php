@@ -21,6 +21,7 @@
                             <tr>
                                 <th class="px-6 py-4">Guru</th>
                                 <th class="px-6 py-4">Status Approver</th>
+                                <th class="px-6 py-4">Deskripsi</th>
                                 <th class="px-6 py-4">Detail Jam</th>
                                 <th class="px-6 py-4">Aksi</th>
                             </tr>
@@ -50,6 +51,11 @@
                                                 <x-status-badge-izin :status="$izin->status_kurikulum" />
                                             </div>
                                         </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <p class="text-xs text-gray-500 italic truncate max-w-[200px]" title="{{ $izin->deskripsi }}">
+                                            "{{ $izin->deskripsi }}"
+                                        </p>
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="flex flex-wrap gap-1">
@@ -82,7 +88,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="px-6 py-12 text-center text-gray-400 italic">
+                                    <td colspan="5" class="px-6 py-12 text-center text-gray-400 italic">
                                         Tidak ada data yang perlu divalidasi.
                                     </td>
                                 </tr>
