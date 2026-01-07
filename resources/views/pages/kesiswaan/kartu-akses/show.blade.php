@@ -66,9 +66,9 @@
                         </div>
 
                         {{-- Barcode --}}
-                        <div class="mt-3 bg-white rounded-lg p-2 flex flex-col items-center">
-                            <img src="data:image/png;base64,{{ $barcode }}" alt="Barcode" class="h-8">
-                            <span class="text-[9px] text-gray-600 font-mono mt-1">{{ $siswa->nis }}</span>
+                        <div class="mt-3 bg-white rounded-lg p-3 flex flex-col items-center">
+                            <img src="data:image/png;base64,{{ $barcode }}" alt="Barcode" class="h-12 w-auto">
+                            <span class="text-[10px] text-gray-600 font-mono mt-1">{{ $siswa->nis }}</span>
                         </div>
                     </div>
                 </div>

@@ -61,9 +61,9 @@ class KartuAksesController extends Controller
             $q->where('tahun_pelajaran_id', $tahunAktif?->id)->with('kelas');
         }]);
 
-        // Generate barcode
+        // Generate barcode - wider (3) and taller (80) for better scanner readability
         $generator = new BarcodeGeneratorPNG();
-        $barcode = base64_encode($generator->getBarcode($siswa->nis, $generator::TYPE_CODE_128, 2, 50));
+        $barcode = base64_encode($generator->getBarcode($siswa->nis, $generator::TYPE_CODE_128, 3, 80));
 
         return view('pages.kesiswaan.kartu-akses.show', compact('siswa', 'barcode'));
     }
@@ -78,9 +78,9 @@ class KartuAksesController extends Controller
             $q->where('tahun_pelajaran_id', $tahunAktif?->id)->with('kelas');
         }]);
 
-        // Generate barcode
+        // Generate barcode - wider (3) and taller (80) for better scanner readability
         $generator = new BarcodeGeneratorPNG();
-        $barcode = base64_encode($generator->getBarcode($siswa->nis, $generator::TYPE_CODE_128, 2, 50));
+        $barcode = base64_encode($generator->getBarcode($siswa->nis, $generator::TYPE_CODE_128, 3, 80));
 
         return view('pages.kesiswaan.kartu-akses.cetak', compact('siswa', 'barcode'));
     }
@@ -109,7 +109,7 @@ class KartuAksesController extends Controller
         $generator = new BarcodeGeneratorPNG();
         $barcodes = [];
         foreach ($siswaList as $siswa) {
-            $barcodes[$siswa->id] = base64_encode($generator->getBarcode($siswa->nis, $generator::TYPE_CODE_128, 2, 50));
+            $barcodes[$siswa->id] = base64_encode($generator->getBarcode($siswa->nis, $generator::TYPE_CODE_128, 3, 80));
         }
 
         return view('pages.kesiswaan.kartu-akses.cetak-masal', compact('siswaList', 'barcodes', 'rombel'));

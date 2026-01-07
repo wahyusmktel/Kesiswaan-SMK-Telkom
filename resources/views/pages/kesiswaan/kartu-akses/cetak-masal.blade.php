@@ -190,23 +190,25 @@
         }
 
         .barcode-section {
-            margin: 4px 10px 6px;
+            margin: 3px 10px 5px;
             background: white;
             border-radius: 4px;
-            padding: 4px;
+            padding: 5px 8px;
             text-align: center;
         }
 
         .barcode-section img {
-            height: 16px;
+            height: 24px;
             width: auto;
+            max-width: 100%;
         }
 
         .barcode-number {
-            font-size: 5px;
+            font-size: 7px;
             color: #374151;
             font-family: 'Consolas', 'Courier New', monospace;
-            margin-top: 1px;
+            margin-top: 2px;
+            letter-spacing: 0.5px;
         }
 
         .print-btn {
