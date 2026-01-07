@@ -6,7 +6,7 @@
     <div class="py-6 w-full" x-data="permitForm()">
         <div class="w-full px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
             <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                <form action="{{ route('guru.izin.store') }}" method="POST">
+                <form x-ref="form" action="{{ route('guru.izin.store') }}" method="POST" @submit.prevent="validateAndSubmit()">
                     @csrf
                     <div class="p-8 space-y-8">
                         <div>
@@ -29,14 +29,14 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div class="space-y-2">
                                 <label class="block text-sm font-bold text-gray-700">Tanggal & Waktu Mulai</label>
-                                <input type="datetime-local" name="tanggal_mulai" x-model="startDate" @change="fetchSchedules()"
+                                <input type="datetime-local" name="tanggal_mulai" required x-model="startDate" @change="fetchSchedules()"
                                     class="w-full rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500">
                                 @error('tanggal_mulai') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                             </div>
 
                             <div class="space-y-2">
                                 <label class="block text-sm font-bold text-gray-700">Tanggal & Waktu Selesai</label>
-                                <input type="datetime-local" name="tanggal_selesai" x-model="endDate"
+                                <input type="datetime-local" name="tanggal_selesai" required x-model="endDate" @change="fetchSchedules()"
                                     class="w-full rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500">
                                 @error('tanggal_selesai') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                             </div>
@@ -76,8 +76,11 @@
 
                             <div x-show="!loading && schedules.length > 0" class="grid grid-cols-1 gap-3">
                                 <template x-for="schedule in schedules" :key="schedule.id">
-                                    <label class="relative flex items-center p-4 rounded-xl border border-gray-200 hover:border-indigo-200 hover:bg-indigo-50/50 cursor-pointer transition-all">
-                                        <input type="checkbox" name="jadwal_ids[]" :value="schedule.id" class="rounded text-indigo-600 focus:ring-indigo-500 mr-4">
+                                    <label class="relative flex items-center p-4 rounded-xl border border-gray-200 hover:border-indigo-200 hover:bg-indigo-50/50 cursor-pointer transition-all"
+                                           :class="selectedIds.includes(schedule.id.toString()) ? 'bg-indigo-50 border-indigo-200 ring-1 ring-indigo-100' : ''">
+                                        <input type="checkbox" name="jadwal_ids[]" :value="schedule.id" 
+                                               x-model="selectedIds"
+                                               class="rounded text-indigo-600 focus:ring-indigo-500 mr-4 transition-all">
                                         <div class="flex-1">
                                             <div class="flex justify-between items-center mb-1">
                                                 <span class="font-bold text-gray-900" x-text="schedule.rombel.kelas.nama_kelas"></span>
@@ -122,6 +125,7 @@
                 startDate: '',
                 endDate: '',
                 schedules: [],
+                selectedIds: [],
                 loading: false,
 
                 async fetchSchedules() {
@@ -130,11 +134,71 @@
                     try {
                         const response = await fetch(`{{ route('guru.izin.schedules') }}?tanggal=${this.startDate}`);
                         this.schedules = await response.json();
+                        
+                        // Auto-selection logic
+                        this.autoSelectOverlappingSchedules();
                     } catch (error) {
                         console.error('Failed to fetch schedules', error);
                         Swal.fire('Error', 'Gagal memuat jadwal.', 'error');
                     }
                     this.loading = false;
+                },
+
+                autoSelectOverlappingSchedules() {
+                    if (!this.startDate || !this.endDate) return;
+
+                    const permitStart = new Date(this.startDate);
+                    const permitEnd = new Date(this.endDate);
+                    
+                    // Convert to only time strings for comparison HH:mm
+                    const pStartTime = permitStart.getHours().toString().padStart(2, '0') + ':' + permitStart.getMinutes().toString().padStart(2, '0');
+                    const pEndTime = permitEnd.getHours().toString().padStart(2, '0') + ':' + permitEnd.getMinutes().toString().padStart(2, '0');
+
+                    this.selectedIds = [];
+                    this.schedules.forEach(schedule => {
+                        const sStart = schedule.jam_mulai.substring(0, 5);
+                        const sEnd = schedule.jam_selesai.substring(0, 5);
+
+                        // Overlap condition: startA < endB AND endA > startB
+                        if (pStartTime < sEnd && pEndTime > sStart) {
+                            this.selectedIds.push(schedule.id.toString());
+                        }
+                    });
+                },
+
+                validateAndSubmit() {
+                    if (!this.startDate || !this.endDate) {
+                        Swal.fire('Oops!', 'Mohon lengkapi tanggal dan waktu izin.', 'warning');
+                        return;
+                    }
+
+                    const permitStart = new Date(this.startDate);
+                    const permitEnd = new Date(this.endDate);
+                    
+                    const pStartTime = permitStart.getHours().toString().padStart(2, '0') + ':' + permitStart.getMinutes().toString().padStart(2, '0');
+                    const pEndTime = permitEnd.getHours().toString().padStart(2, '0') + ':' + permitEnd.getMinutes().toString().padStart(2, '0');
+
+                    // Check if there are overlapping schedules that are NOT selected
+                    let overlappingCount = 0;
+                    this.schedules.forEach(schedule => {
+                        const sStart = schedule.jam_mulai.substring(0, 5);
+                        const sEnd = schedule.jam_selesai.substring(0, 5);
+                        if (pStartTime < sEnd && pEndTime > sStart) {
+                            overlappingCount++;
+                        }
+                    });
+
+                    if (overlappingCount > 0 && this.selectedIds.length === 0) {
+                        Swal.fire({
+                            title: 'Verifikasi Jadwal',
+                            text: 'Sistem mendeteksi Anda memiliki jam mengajar pada waktu tersebut. Silakan pilih jam pelajaran yang Anda tinggalkan.',
+                            icon: 'warning',
+                            confirmButtonColor: '#4f46e5'
+                        });
+                        return;
+                    }
+
+                    this.$refs.form.submit();
                 },
 
                 formatTime(time) {

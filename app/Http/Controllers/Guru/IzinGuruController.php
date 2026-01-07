@@ -64,13 +64,41 @@ class IzinGuruController extends Controller
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
             'jenis_izin' => 'required|string',
             'deskripsi' => 'required|string',
-            'jadwal_ids' => 'required|array',
+            'jadwal_ids' => 'nullable|array',
             'jadwal_ids.*' => 'exists:jadwal_pelajarans,id',
         ]);
 
         $guru = Auth::user()->masterGuru;
         if (!$guru) {
             return redirect()->back()->with('error', 'Data Master Guru tidak ditemukan.');
+        }
+
+        // Logic check: If there are schedules within the permit timeframe, at least one must be selected
+        $startDate = \Carbon\Carbon::parse($request->tanggal_mulai);
+        $endDate = \Carbon\Carbon::parse($request->tanggal_selesai);
+        
+        // Get all schedules for the days covered by the permit
+        // (For simplicity assuming single day or handle multiple days if needed)
+        // Usually teacher permits are per-day in this context
+        $hariMap = [
+            'Sunday' => 'Minggu', 'Monday' => 'Senin', 'Tuesday' => 'Selasa',
+            'Wednesday' => 'Rabu', 'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu',
+        ];
+        
+        $hari = $hariMap[$startDate->format('l')];
+        $startTime = $startDate->format('H:i:s');
+        $endTime = $endDate->format('H:i:s');
+
+        $availableSchedules = JadwalPelajaran::where('master_guru_id', $guru->id)
+            ->where('hari', $hari)
+            ->where(function($q) use ($startTime, $endTime) {
+                $q->where('jam_mulai', '<', $endTime)
+                  ->where('jam_selesai', '>', $startTime);
+            })
+            ->get();
+
+        if ($availableSchedules->isNotEmpty() && (empty($request->jadwal_ids))) {
+            return redirect()->back()->withInput()->with('error', 'Anda memiliki jadwal mengajar pada rentang waktu izin tersebut. Silakan pilih jam pelajaran yang Anda tinggalkan.');
         }
 
         // Check for overlapping permits
@@ -99,7 +127,9 @@ class IzinGuruController extends Controller
             'status_sdm' => 'menunggu',
         ]);
 
-        $izin->jadwals()->attach($request->jadwal_ids);
+        if ($request->has('jadwal_ids')) {
+            $izin->jadwals()->attach($request->jadwal_ids);
+        }
 
         return redirect()->route('guru.izin.index')->with('success', 'Permohonan izin berhasil diajukan dan sedang menunggu persetujuan.');
     }
