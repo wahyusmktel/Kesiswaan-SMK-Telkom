@@ -172,10 +172,12 @@
                             this.errorMessage = data.message || 'Terjadi kesalahan sistem.';
                             this.state = 'error';
                             this.playBeep('error');
+                            this.startCountdown(2); // Auto reset in 2 seconds on error
                         }
                     } catch (error) {
                         this.errorMessage = 'Gagal terhubung ke server.';
                         this.state = 'error';
+                        this.startCountdown(2); // Auto reset in 2 seconds on error
                     }
                 },
 
@@ -186,8 +188,8 @@
                     this.$nextTick(() => this.$refs.barcodeInput.focus());
                 },
 
-                startCountdown() {
-                    this.countdown = 6;
+                startCountdown(seconds) {
+                    this.countdown = seconds || 6;
                     const timer = setInterval(() => {
                         this.countdown--;
                         if (this.countdown <= 0) {
