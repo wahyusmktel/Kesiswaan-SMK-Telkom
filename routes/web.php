@@ -51,6 +51,7 @@ use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Kurikulum\DistribusiMapelController;
 use App\Http\Controllers\Kurikulum\AnalisaKurikulumController;
 use App\Http\Controllers\Security\GateTerminalController;
+use App\Http\Controllers\Auth\SecurityLoginController;
 
 Route::get('auth/google', [GoogleController::class, 'redirectToGoogle'])->name('auth.google');
 Route::get('auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
@@ -487,6 +488,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/process-permit', [GateTerminalController::class, 'processPermit'])->name('process-permit');
         });
     });
+
+    // Specialized Security Login Routes (Inside Auth but accessible by Security)
+    Route::get('/security/login', [SecurityLoginController::class, 'showLoginForm'])->name('security.login')->withoutMiddleware(['auth', 'verified']);
+    Route::post('/security/login', [SecurityLoginController::class, 'login'])->name('security.login.submit')->withoutMiddleware(['auth', 'verified']);
+    Route::post('/security/logout', [SecurityLoginController::class, 'logout'])->name('security.logout');
+
 
     // Grup Route untuk Pengajuan Dispensasi (bisa diakses beberapa peran)
     Route::middleware(['auth'])->prefix('dispensasi')->name('dispensasi.')->group(function () {

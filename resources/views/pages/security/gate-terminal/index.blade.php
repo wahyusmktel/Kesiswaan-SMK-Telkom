@@ -40,17 +40,28 @@
             </div>
         </div>
         
-        <div class="text-right" x-data="{ 
-            time: '', 
-            date: '',
-            updateTime() {
-                const now = new Date();
-                this.time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                this.date = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            }
-        }" x-init="updateTime(); setInterval(() => updateTime(), 1000)">
-            <div class="text-5xl font-mono font-bold" x-text="time"></div>
-            <div class="text-lg opacity-80" x-text="date"></div>
+        <div class="flex items-center gap-8">
+            <div class="text-right" x-data="{ 
+                time: '', 
+                date: '',
+                updateTime() {
+                    const now = new Date();
+                    this.time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    this.date = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                }
+            }" x-init="updateTime(); setInterval(() => updateTime(), 1000)">
+                <div class="text-5xl font-mono font-bold" x-text="time"></div>
+                <div class="text-lg opacity-80" x-text="date"></div>
+            </div>
+
+            <form action="{{ route('security.logout') }}" method="POST">
+                @csrf
+                <button type="submit" class="p-4 bg-white/20 hover:bg-white/30 rounded-2xl transition-all group shadow-inner">
+                    <svg class="w-10 h-10 transform group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                </button>
+            </form>
         </div>
     </div>
 
