@@ -30,15 +30,14 @@ class DatabaseController extends Controller
         }, $tables);
 
         $backups = [];
-        if (Storage::exists('backups')) {
-            $files = Storage::files('backups');
-            foreach ($files as $file) {
-                $backups[] = [
-                    'filename' => basename($file),
-                    'size' => Storage::size($file),
-                    'last_modified' => Storage::lastModified($file),
-                ];
-            }
+        $disk = Storage::disk('backups');
+        $files = $disk->files();
+        foreach ($files as $file) {
+            $backups[] = [
+                'filename' => basename($file),
+                'size' => $disk->size($file),
+                'last_modified' => $disk->lastModified($file),
+            ];
         }
 
         // Sort backups by last modified desc
@@ -53,11 +52,13 @@ class DatabaseController extends Controller
     {
         $dbConfig = config('database.connections.mysql');
         $filename = 'backup-' . date('Y-m-d-H-i-s') . '.sql';
-        $path = storage_path('app/backups/' . $filename);
-
-        if (!file_exists(storage_path('app/backups'))) {
-            mkdir(storage_path('app/backups'), 0755, true);
+        $disk = Storage::disk('backups');
+        
+        if (!$disk->exists('')) {
+            $disk->makeDirectory('');
         }
+        
+        $path = $disk->path($filename);
 
         $command = sprintf(
             'mysqldump --user=%s --password=%s --host=%s %s > %s',
@@ -120,11 +121,11 @@ class DatabaseController extends Controller
         if ($request->hasFile('backup_file')) {
             $file = $request->file('backup_file');
             $filename = 'upload-' . date('Y-m-d-H-i-s') . '-' . $file->getClientOriginalName();
-            $path = $file->storeAs('backups', $filename);
-            $path = storage_path('app/' . $path);
+            $path = $file->storeAs('', $filename, 'backups');
+            $path = Storage::disk('backups')->path($filename);
         } else {
             $filename = $request->filename;
-            $path = storage_path('app/backups/' . $filename);
+            $path = Storage::disk('backups')->path($filename);
         }
 
         if (!file_exists($path)) {
@@ -186,7 +187,11 @@ class DatabaseController extends Controller
     {
         $dbConfig = config('database.connections.mysql');
         $filename = 'auto-backup-before-restore-' . date('Y-m-d-H-i-s') . '.sql';
-        $path = storage_path('app/backups/' . $filename);
+        $path = Storage::disk('backups')->path($filename);
+        
+        if (!Storage::disk('backups')->exists('')) {
+            Storage::disk('backups')->makeDirectory('');
+        }
 
         $command = sprintf(
             'mysqldump --user=%s --password=%s --host=%s %s > %s',
@@ -203,9 +208,8 @@ class DatabaseController extends Controller
 
     public function download($filename)
     {
-        $path = 'backups/' . $filename;
-        if (Storage::exists($path)) {
-            return Storage::download($path);
+        if (Storage::disk('backups')->exists($filename)) {
+            return Storage::disk('backups')->download($filename);
         }
 
         Alert::error('Gagal', 'File tidak ditemukan.');
@@ -214,9 +218,8 @@ class DatabaseController extends Controller
 
     public function destroy($filename)
     {
-        $path = 'backups/' . $filename;
-        if (Storage::exists($path)) {
-            Storage::delete($path);
+        if (Storage::disk('backups')->exists($filename)) {
+            Storage::disk('backups')->delete($filename);
             Alert::success('Berhasil', 'File backup berhasil dihapus.');
         } else {
             Alert::error('Gagal', 'File tidak ditemukan.');
