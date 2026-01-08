@@ -223,6 +223,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/kartu-akses/{siswa}', [\App\Http\Controllers\Kesiswaan\KartuAksesController::class, 'show'])->name('kartu-akses.show');
             Route::get('/kartu-akses/{siswa}/cetak', [\App\Http\Controllers\Kesiswaan\KartuAksesController::class, 'cetak'])->name('kartu-akses.cetak');
             Route::post('/kartu-akses/cetak-masal', [\App\Http\Controllers\Kesiswaan\KartuAksesController::class, 'cetakMasal'])->name('kartu-akses.cetak-masal');
+
+            // Route Database Maintenance
+            Route::get('/database', [\App\Http\Controllers\Kesiswaan\DatabaseController::class, 'index'])->name('database.index');
+            Route::post('/database/backup', [\App\Http\Controllers\Kesiswaan\DatabaseController::class, 'backup'])->name('database.backup');
+            Route::post('/database/restore', [\App\Http\Controllers\Kesiswaan\DatabaseController::class, 'restore'])->name('database.restore');
+            Route::get('/database/download/{filename}', [\App\Http\Controllers\Kesiswaan\DatabaseController::class, 'download'])->name('database.download');
+            Route::delete('/database/{filename}', [\App\Http\Controllers\Kesiswaan\DatabaseController::class, 'destroy'])->name('database.destroy');
         });
     });
 
