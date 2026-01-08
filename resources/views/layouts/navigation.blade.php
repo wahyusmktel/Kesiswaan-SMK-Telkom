@@ -5,39 +5,50 @@
     {{-- ROLE: ADMIN / KEPALA SEKOLAH (Tanpa Dashboard Spesifik)      --}}
     {{-- ============================================================ --}}
     @role('Super Admin|Kepala Sekolah')
-    @if(session('active_role') == 'Super Admin' || session('active_role') == 'Kepala Sekolah')
-        <li>
-            <a href="{{ route('dashboard') }}"
-                class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('dashboard') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                </svg>
-                <span class="text-sm">Dashboard Admin</span>
-            </a>
-        </li>
-        <li>
-            <a href="{{ route('users.index') }}"
-                class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('users.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-                <span class="text-sm">Manajemen Pengguna</span>
-            </a>
-        </li>
-        @role('Super Admin')
-        <li>
-            <a href="{{ route('super-admin.settings') }}"
-                class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('super-admin.settings') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span class="text-sm">Konfigurasi Aplikasi</span>
-    @endrole
-    @endif
+        @if(session('active_role') == 'Super Admin' || session('active_role') == 'Kepala Sekolah')
+            <li>
+                <a href="{{ route('dashboard') }}"
+                    class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('dashboard') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                    </svg>
+                    <span class="text-sm">Dashboard Admin</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('users.index') }}"
+                    class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('users.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    <span class="text-sm">Manajemen Pengguna</span>
+                </a>
+            </li>
+            @role('Super Admin')
+            <li>
+                <a href="{{ route('super-admin.settings') }}"
+                    class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('super-admin.settings') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span class="text-sm">Konfigurasi Aplikasi</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('super-admin.permissions.index') }}"
+                    class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('super-admin.permissions.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                    </svg>
+                    <span class="text-sm italic">Manajemen Hak Akses</span>
+                </a>
+            </li>
+            @endrole
+        @endif
     @endrole
 
     {{-- ============================================================ --}}
@@ -305,6 +316,7 @@
     {{-- ============================================================ --}}
     @role('Waka Kesiswaan')
     @if(session('active_role') == 'Waka Kesiswaan')
+        @can('view kesiswaan dashboard')
         <li>
             <a href="{{ route('kesiswaan.dashboard.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('kesiswaan.dashboard.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -315,8 +327,10 @@
                 <span class="text-sm">Dashboard Kesiswaan</span>
             </a>
         </li>
+        @endcan
 
         {{-- Manajemen Pengguna untuk Waka --}}
+        @can('manage tahun pelajaran')
         <li>
             <a href="{{ route('master-data.tahun-pelajaran.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('master-data.tahun-pelajaran.index') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -327,6 +341,8 @@
                 <span class="text-sm">Tahun Pelajaran</span>
             </a>
         </li>
+        @endcan
+        @can('view users')
         <li>
             <a href="{{ route('users.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('users.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -337,6 +353,8 @@
                 <span class="text-sm">Manajemen Pengguna</span>
             </a>
         </li>
+        @endcan
+        @can('view roles')
         <li>
             <a href="{{ route('admin.roles.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('admin.roles.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -347,8 +365,10 @@
                 <span class="text-sm">Manajemen Role</span>
             </a>
         </li>
+        @endcan
 
         {{-- Dropdown Master Data --}}
+        @canany(['manage kelas', 'manage siswa', 'manage rombel'])
         <li x-data="{ expanded: {{ request()->routeIs('master-data.*') ? 'true' : 'false' }} }">
             <button @click="expanded = !expanded"
                 class="flex items-center justify-between w-full px-3 py-2 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors">
@@ -365,18 +385,26 @@
                 </svg>
             </button>
             <ul x-show="expanded" x-collapse class="pl-10 mt-1 space-y-1">
+                @can('manage kelas')
                 <li><a href="{{ route('master-data.kelas.index') }}"
                         class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('master-data.kelas.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Data
                         Kelas</a></li>
+                @endcan
+                @can('manage siswa')
                 <li><a href="{{ route('master-data.siswa.index') }}"
                         class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('master-data.siswa.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Data
                         Siswa</a></li>
+                @endcan
+                @can('manage rombel')
                 <li><a href="{{ route('master-data.rombel.index') }}"
                         class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('master-data.rombel.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Data
-                        Rombel</a></li>
+                         Rombel</a></li>
+                @endcan
             </ul>
         </li>
+        @endcanany
 
+        @can('monitoring izin')
         <li>
             <a href="{{ route('kesiswaan.monitoring-izin.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('kesiswaan.monitoring-izin.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -389,6 +417,9 @@
                 <span class="text-sm">Monitoring Izin</span>
             </a>
         </li>
+        @endcan
+
+        @can('manage penanganan terlambat')
         <li>
             <a href="{{ route('monitoring-keterlambatan.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('monitoring-keterlambatan.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -398,6 +429,9 @@
                 <span class="text-sm">Monitoring Terlambat</span>
             </a>
         </li>
+        @endcan
+
+        @can('monitoring izin')
         <li>
             <a href="{{ route('kesiswaan.riwayat-izin-keluar.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('kesiswaan.riwayat-izin-keluar.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -408,6 +442,9 @@
                 <span class="text-sm">History Izin Keluar</span>
             </a>
         </li>
+        @endcan
+
+        @can('manage dispensasi')
         <li>
             <a href="{{ route('kesiswaan.persetujuan-dispensasi.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('kesiswaan.persetujuan-dispensasi.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -418,6 +455,9 @@
                 <span class="text-sm">Persetujuan Dispensasi</span>
             </a>
         </li>
+        @endcan
+
+        @can('manage panggilan ortu')
         <li>
             <a href="{{ route('kesiswaan.pengaduan.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('kesiswaan.pengaduan.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -428,6 +468,9 @@
                 <span class="text-sm">Pengaduan Orang Tua</span>
             </a>
         </li>
+        @endcan
+
+        @can('manage kartu akses')
         <li>
             <a href="{{ route('kesiswaan.kartu-akses.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('kesiswaan.kartu-akses.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -439,8 +482,10 @@
                 <span class="bg-indigo-100 text-indigo-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">NEW</span>
             </a>
         </li>
+        @endcan
 
         {{-- Dropdown Poin & Tata Tertib --}}
+        @canany(['manage poin pelanggaran', 'manage poin prestasi', 'manage pemutihan poin'])
         <li x-data="{ expanded: {{ request()->routeIs('kesiswaan.poin-peraturan.*') || request()->routeIs('kesiswaan.input-*') ? 'true' : 'false' }} }">
             <button @click="expanded = !expanded"
                 class="flex items-center justify-between w-full px-3 py-2 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors">
@@ -457,22 +502,30 @@
                 </svg>
             </button>
             <ul x-show="expanded" x-collapse class="pl-10 mt-1 space-y-1">
+                @can('manage poin pelanggaran')
                 <li><a href="{{ route('kesiswaan.poin-peraturan.index') }}"
                         class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kesiswaan.poin-peraturan.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Manajemen
                         Aturan</a></li>
                 <li><a href="{{ route('kesiswaan.input-pelanggaran.index') }}"
                         class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kesiswaan.input-pelanggaran.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Input
                         Pelanggaran</a></li>
+                @endcan
+                @can('manage poin prestasi')
                 <li><a href="{{ route('kesiswaan.input-prestasi.index') }}"
                         class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kesiswaan.input-prestasi.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Input
                         Prestasi</a></li>
+                @endcan
+                @can('manage pemutihan poin')
                 <li><a href="{{ route('kesiswaan.input-pemutihan.index') }}"
                         class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kesiswaan.input-pemutihan.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Pemutihan
                         Poin</a></li>
+                @endcan
             </ul>
         </li>
+        @endcanany
 
         {{-- Dropdown Monitoring BK --}}
+        @canany(['manage pembinaan rutin', 'manage jadwal konsultasi', 'manage panggilan ortu'])
         <li x-data="{ expanded: {{ request()->routeIs('kesiswaan.monitoring-bk.*') || request()->routeIs('kesiswaan.panggilan-ortu.*') ? 'true' : 'false' }} }">
             <button @click="expanded = !expanded"
                 class="flex items-center justify-between w-full px-3 py-2 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors">
@@ -489,15 +542,23 @@
                 </svg>
             </button>
             <ul x-show="expanded" x-collapse class="pl-10 mt-1 space-y-1">
+                @can('manage pembinaan rutin')
                 <li><a href="{{ route('kesiswaan.monitoring-bk.pembinaan') }}"
                         class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kesiswaan.monitoring-bk.pembinaan') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Pembinaan Rutin</a></li>
+                @endcan
+                @can('manage jadwal konsultasi')
                 <li><a href="{{ route('kesiswaan.monitoring-bk.konsultasi') }}"
                         class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kesiswaan.monitoring-bk.konsultasi') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Konsultasi Siswa</a></li>
+                @endcan
+                @can('manage panggilan ortu')
                 <li><a href="{{ route('kesiswaan.panggilan-ortu.index') }}"
                         class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kesiswaan.panggilan-ortu.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Panggilan Orang Tua</a></li>
+                @endcan
             </ul>
         </li>
+        @endcanany
 
+        @can('manage database maintenance')
         <li>
             <a href="{{ route('kesiswaan.database.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('kesiswaan.database.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -509,6 +570,7 @@
                 <span class="bg-red-100 text-red-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">SAFE</span>
             </a>
         </li>
+        @endcan
     @endrole
     @endif
 

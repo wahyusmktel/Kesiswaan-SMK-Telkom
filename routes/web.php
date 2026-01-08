@@ -42,6 +42,7 @@ use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\MasterData\TahunPelajaranController;
 use App\Http\Controllers\PengaduanController;
 use App\Http\Controllers\Admin\SuperAdminController;
+use App\Http\Controllers\Admin\PermissionManagementController;
 use App\Http\Controllers\SDM\NdeReferensiController;
 use App\Http\Controllers\Shared\NotaDinasController;
 use App\Http\Controllers\MasterData\DapodikSiswaController;
@@ -95,9 +96,8 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::middleware(['auth', 'role:Waka Kesiswaan'])->prefix('admin')->name('admin.')->group(function () {
-    // ... route lain ...
-    Route::resource('roles', RoleController::class)->except(['create', 'edit', 'show']);
+Route::middleware(['auth', 'role:Waka Kesiswaan|Super Admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::resource('roles', RoleController::class)->middleware('permission:view roles')->except(['create', 'edit', 'show']);
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -112,11 +112,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{id}/download', [NotaDinasController::class, 'download'])->name('download');
     });
 
-    // Grup untuk route yang memerlukan peran Waka Kesiswaan
-    Route::middleware(['role:Waka Kesiswaan'])->group(function () {
+    // Grup untuk route yang memerlukan peran Waka Kesiswaan atau Super Admin
+    Route::middleware(['role:Waka Kesiswaan|Super Admin'])->group(function () {
         Route::get('users/export-excel', [UserController::class, 'exportExcel'])->name('users.export-excel');
         Route::get('users/export-pdf', [UserController::class, 'exportPdf'])->name('users.export-pdf');
-        Route::resource('users', UserController::class);
+        Route::resource('users', UserController::class)->middleware('permission:view users');
     });
 
     // Route untuk Perizinan
@@ -135,13 +135,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Grup untuk Data Master, bisa diakses oleh Waka Kesiswaan/Operator
-    Route::middleware(['role:Waka Kesiswaan|Operator'])->prefix('master-data')->name('master-data.')->group(function () {
-        Route::resource('kelas', KelasController::class);
+    Route::middleware(['role:Waka Kesiswaan|Operator|Super Admin'])->prefix('master-data')->name('master-data.')->group(function () {
+        Route::resource('kelas', KelasController::class)->middleware('permission:manage kelas');
 
         Route::post('siswa/generate-akun-masal', [MasterSiswaController::class, 'generateAkunMasal'])->name('siswa.generate-akun-masal'); // <-- Route Generate Masal
         Route::post('siswa/{master_siswa}/generate-akun', [MasterSiswaController::class, 'generateAkun'])->name('siswa.generate-akun');
         Route::post('siswa/{master_siswa}/reset-password', [MasterSiswaController::class, 'resetPassword'])->name('siswa.reset-password'); // <-- Route Reset Password
-        Route::resource('siswa', MasterSiswaController::class);
+        Route::resource('siswa', MasterSiswaController::class)->middleware('permission:manage siswa');
         
         // Dapodik Siswa Routes
         Route::get('siswa/{siswa}/dapodik', [DapodikSiswaController::class, 'show'])->name('siswa.dapodik.show');
@@ -150,11 +150,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::post('rombel/{rombel}/add-siswa', [RombelController::class, 'addSiswa'])->name('rombel.add-siswa');
         Route::delete('rombel/{rombel}/remove-siswa/{siswa}', [RombelController::class, 'removeSiswa'])->name('rombel.remove-siswa');
-        Route::resource('rombel', RombelController::class);
+        Route::resource('rombel', RombelController::class)->middleware('permission:manage rombel');
         Route::post('/siswa/import', [MasterSiswaController::class, 'import'])->name('siswa.import');
 
         // Route Tahun Pelajaran
-        Route::resource('tahun-pelajaran', TahunPelajaranController::class)->except(['create', 'edit', 'show']);
+        Route::resource('tahun-pelajaran', TahunPelajaranController::class)->middleware('permission:manage tahun pelajaran')->except(['create', 'edit', 'show']);
         Route::patch('tahun-pelajaran/{tahunPelajaran}/activate', [TahunPelajaranController::class, 'activate'])->name('tahun-pelajaran.activate');
     });
 
@@ -177,13 +177,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('kesiswaan')->name('kesiswaan.')->group(function () {
         // Shared routes for Waka Kesiswaan and Guru BK
         Route::middleware(['role:Waka Kesiswaan|Guru BK'])->group(function () {
-            Route::post('poin-peraturan/category', [\App\Http\Controllers\Kesiswaan\PoinPeraturanController::class, 'storeCategory'])->name('poin-peraturan.storeCategory');
-            Route::resource('poin-peraturan', \App\Http\Controllers\Kesiswaan\PoinPeraturanController::class);
-            Route::resource('input-pelanggaran', \App\Http\Controllers\Kesiswaan\PelanggaranSiswaController::class);
-            Route::resource('input-prestasi', \App\Http\Controllers\Kesiswaan\PrestasiSiswaController::class);
-            Route::resource('input-pemutihan', \App\Http\Controllers\Kesiswaan\PemutihanPoinController::class);
-            Route::patch('input-pemutihan/{pemutihan}/approve', [\App\Http\Controllers\Kesiswaan\PemutihanPoinController::class, 'approve'])->name('input-pemutihan.approve');
-            Route::patch('input-pemutihan/{pemutihan}/reject', [\App\Http\Controllers\Kesiswaan\PemutihanPoinController::class, 'reject'])->name('input-pemutihan.reject');
+            Route::post('poin-peraturan/category', [\App\Http\Controllers\Kesiswaan\PoinPeraturanController::class, 'storeCategory'])->middleware('permission:manage poin pelanggaran')->name('poin-peraturan.storeCategory');
+            Route::resource('poin-peraturan', \App\Http\Controllers\Kesiswaan\PoinPeraturanController::class)->middleware([
+                'index' => 'permission:manage poin pelanggaran',
+                'create' => 'permission:manage poin pelanggaran',
+                'store' => 'permission:manage poin pelanggaran',
+                'edit' => 'permission:manage poin pelanggaran',
+                'update' => 'permission:manage poin pelanggaran',
+                'destroy' => 'permission:manage poin pelanggaran',
+            ]);
+            Route::resource('input-pelanggaran', \App\Http\Controllers\Kesiswaan\PelanggaranSiswaController::class)->middleware(['permission:manage poin pelanggaran']);
+            Route::resource('input-prestasi', \App\Http\Controllers\Kesiswaan\PrestasiSiswaController::class)->middleware(['permission:manage poin prestasi']);
+            Route::resource('input-pemutihan', \App\Http\Controllers\Kesiswaan\PemutihanPoinController::class)->middleware(['permission:manage pemutihan poin']);
+            Route::patch('input-pemutihan/{pemutihan}/approve', [\App\Http\Controllers\Kesiswaan\PemutihanPoinController::class, 'approve'])->middleware('permission:manage pemutihan poin')->name('input-pemutihan.approve');
+            Route::patch('input-pemutihan/{pemutihan}/reject', [\App\Http\Controllers\Kesiswaan\PemutihanPoinController::class, 'reject'])->middleware('permission:manage pemutihan poin')->name('input-pemutihan.reject');
         });
 
         // Accessible by all authenticated users (students can print their own)
@@ -191,45 +198,45 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Waka Kesiswaan specific routes
         Route::middleware(['role:Waka Kesiswaan'])->group(function () {
-            Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
-            Route::get('/monitoring-izin', [MonitoringIzinController::class, 'index'])->name('monitoring-izin.index');
-            Route::get('/riwayat-izin-keluar', [MonitoringIzinController::class, 'riwayatIzinKeluar'])->name('riwayat-izin-keluar.index');
+            Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('permission:view kesiswaan dashboard')->name('dashboard.index');
+            Route::get('/monitoring-izin', [MonitoringIzinController::class, 'index'])->middleware('permission:monitoring izin')->name('monitoring-izin.index');
+            Route::get('/riwayat-izin-keluar', [MonitoringIzinController::class, 'riwayatIzinKeluar'])->middleware('permission:monitoring izin')->name('riwayat-izin-keluar.index');
 
             // Route untuk Persetujuan Dispensasi
-            Route::get('/persetujuan-dispensasi', [PersetujuanDispensasiController::class, 'index'])->name('persetujuan-dispensasi.index');
-            Route::get('/persetujuan-dispensasi/{dispensasi}', [PersetujuanDispensasiController::class, 'show'])->name('persetujuan-dispensasi.show');
-            Route::patch('/persetujuan-dispensasi/{dispensasi}/approve', [PersetujuanDispensasiController::class, 'approve'])->name('persetujuan-dispensasi.approve');
-            Route::patch('/persetujuan-dispensasi/{dispensasi}/reject', [PersetujuanDispensasiController::class, 'reject'])->name('persetujuan-dispensasi.reject');
-            Route::get('/persetujuan-dispensasi/{dispensasi}/print', [PersetujuanDispensasiController::class, 'printPdf'])->name('persetujuan-dispensasi.print');
+            Route::get('/persetujuan-dispensasi', [PersetujuanDispensasiController::class, 'index'])->middleware('permission:manage dispensasi')->name('persetujuan-dispensasi.index');
+            Route::get('/persetujuan-dispensasi/{dispensasi}', [PersetujuanDispensasiController::class, 'show'])->middleware('permission:manage dispensasi')->name('persetujuan-dispensasi.show');
+            Route::patch('/persetujuan-dispensasi/{dispensasi}/approve', [PersetujuanDispensasiController::class, 'approve'])->middleware('permission:manage dispensasi')->name('persetujuan-dispensasi.approve');
+            Route::patch('/persetujuan-dispensasi/{dispensasi}/reject', [PersetujuanDispensasiController::class, 'reject'])->middleware('permission:manage dispensasi')->name('persetujuan-dispensasi.reject');
+            Route::get('/persetujuan-dispensasi/{dispensasi}/print', [PersetujuanDispensasiController::class, 'printPdf'])->middleware('permission:manage dispensasi')->name('persetujuan-dispensasi.print');
 
             // Route Pengaduan untuk Admin Kesiswaan
-            Route::get('/pengaduan', [PengaduanController::class, 'index'])->name('pengaduan.index');
-            Route::patch('/pengaduan/{pengaduan}/status', [PengaduanController::class, 'updateStatus'])->name('pengaduan.update-status');
+            Route::get('/pengaduan', [PengaduanController::class, 'index'])->middleware('permission:manage panggilan ortu')->name('pengaduan.index');
+            Route::patch('/pengaduan/{pengaduan}/status', [PengaduanController::class, 'updateStatus'])->middleware('permission:manage panggilan ortu')->name('pengaduan.update-status');
 
             // Route Panggilan Orang Tua (Approval & Management)
-            Route::get('panggilan-ortu', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'index'])->name('panggilan-ortu.index');
-            Route::post('panggilan-ortu', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'store'])->name('panggilan-ortu.store');
-            Route::patch('panggilan-ortu/{panggilan}/status', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'updateStatus'])->name('panggilan-ortu.update-status');
-            Route::patch('panggilan-ortu/{panggilan}/approve', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'approve'])->name('panggilan-ortu.approve');
-            Route::patch('panggilan-ortu/{panggilan}/reject', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'reject'])->name('panggilan-ortu.reject');
-            Route::delete('panggilan-ortu/{panggilan}', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'destroy'])->name('panggilan-ortu.destroy');
+            Route::get('panggilan-ortu', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'index'])->middleware('permission:manage panggilan ortu')->name('panggilan-ortu.index');
+            Route::post('panggilan-ortu', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'store'])->middleware('permission:manage panggilan ortu')->name('panggilan-ortu.store');
+            Route::patch('panggilan-ortu/{panggilan}/status', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'updateStatus'])->middleware('permission:manage panggilan ortu')->name('panggilan-ortu.update-status');
+            Route::patch('panggilan-ortu/{panggilan}/approve', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'approve'])->middleware('permission:manage panggilan ortu')->name('panggilan-ortu.approve');
+            Route::patch('panggilan-ortu/{panggilan}/reject', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'reject'])->middleware('permission:manage panggilan ortu')->name('panggilan-ortu.reject');
+            Route::delete('panggilan-ortu/{panggilan}', [\App\Http\Controllers\Kesiswaan\PanggilanOrangTuaController::class, 'destroy'])->middleware('permission:manage panggilan ortu')->name('panggilan-ortu.destroy');
 
             // Monitoring BK untuk Waka Kesiswaan
-            Route::get('monitoring-bk/pembinaan', [\App\Http\Controllers\BK\PembinaanRutinController::class, 'index'])->name('monitoring-bk.pembinaan');
-            Route::get('monitoring-bk/konsultasi', [\App\Http\Controllers\BK\KonsultasiJadwalController::class, 'index'])->name('monitoring-bk.konsultasi');
+            Route::get('monitoring-bk/pembinaan', [\App\Http\Controllers\BK\PembinaanRutinController::class, 'index'])->middleware('permission:manage pembinaan rutin')->name('monitoring-bk.pembinaan');
+            Route::get('monitoring-bk/konsultasi', [\App\Http\Controllers\BK\KonsultasiJadwalController::class, 'index'])->middleware('permission:manage jadwal konsultasi')->name('monitoring-bk.konsultasi');
 
             // Route Stella Access Card
-            Route::get('/kartu-akses', [\App\Http\Controllers\Kesiswaan\KartuAksesController::class, 'index'])->name('kartu-akses.index');
-            Route::get('/kartu-akses/{siswa}', [\App\Http\Controllers\Kesiswaan\KartuAksesController::class, 'show'])->name('kartu-akses.show');
-            Route::get('/kartu-akses/{siswa}/cetak', [\App\Http\Controllers\Kesiswaan\KartuAksesController::class, 'cetak'])->name('kartu-akses.cetak');
-            Route::post('/kartu-akses/cetak-masal', [\App\Http\Controllers\Kesiswaan\KartuAksesController::class, 'cetakMasal'])->name('kartu-akses.cetak-masal');
+            Route::get('/kartu-akses', [\App\Http\Controllers\Kesiswaan\KartuAksesController::class, 'index'])->middleware('permission:manage kartu akses')->name('kartu-akses.index');
+            Route::get('/kartu-akses/{siswa}', [\App\Http\Controllers\Kesiswaan\KartuAksesController::class, 'show'])->middleware('permission:manage kartu akses')->name('kartu-akses.show');
+            Route::get('/kartu-akses/{siswa}/cetak', [\App\Http\Controllers\Kesiswaan\KartuAksesController::class, 'cetak'])->middleware('permission:manage kartu akses')->name('kartu-akses.cetak');
+            Route::post('/kartu-akses/cetak-masal', [\App\Http\Controllers\Kesiswaan\KartuAksesController::class, 'cetakMasal'])->middleware('permission:manage kartu akses')->name('kartu-akses.cetak-masal');
 
             // Route Database Maintenance
-            Route::get('/database', [\App\Http\Controllers\Kesiswaan\DatabaseController::class, 'index'])->name('database.index');
-            Route::post('/database/backup', [\App\Http\Controllers\Kesiswaan\DatabaseController::class, 'backup'])->name('database.backup');
-            Route::post('/database/restore', [\App\Http\Controllers\Kesiswaan\DatabaseController::class, 'restore'])->name('database.restore');
-            Route::get('/database/download/{filename}', [\App\Http\Controllers\Kesiswaan\DatabaseController::class, 'download'])->name('database.download');
-            Route::delete('/database/{filename}', [\App\Http\Controllers\Kesiswaan\DatabaseController::class, 'destroy'])->name('database.destroy');
+            Route::get('/database', [\App\Http\Controllers\Kesiswaan\DatabaseController::class, 'index'])->middleware('permission:manage database maintenance')->name('database.index');
+            Route::post('/database/backup', [\App\Http\Controllers\Kesiswaan\DatabaseController::class, 'backup'])->middleware('permission:manage database maintenance')->name('database.backup');
+            Route::post('/database/restore', [\App\Http\Controllers\Kesiswaan\DatabaseController::class, 'restore'])->middleware('permission:manage database maintenance')->name('database.restore');
+            Route::get('/database/download/{filename}', [\App\Http\Controllers\Kesiswaan\DatabaseController::class, 'download'])->middleware('permission:manage database maintenance')->name('database.download');
+            Route::delete('/database/{filename}', [\App\Http\Controllers\Kesiswaan\DatabaseController::class, 'destroy'])->middleware('permission:manage database maintenance')->name('database.destroy');
         });
     });
 
@@ -526,6 +533,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware(['role:Super Admin'])->prefix('super-admin')->name('super-admin.')->group(function () {
         Route::get('/settings', [SuperAdminController::class, 'settings'])->name('settings');
         Route::post('/settings', [SuperAdminController::class, 'updateSettings'])->name('settings.update');
+
+        // Permission Management
+        Route::get('/permissions', [PermissionManagementController::class, 'index'])->name('permissions.index');
+        Route::get('/permissions/{role}', [PermissionManagementController::class, 'getRolePermissions'])->name('permissions.get');
+        Route::post('/permissions/{role}', [PermissionManagementController::class, 'syncPermissions'])->name('permissions.sync');
     });
 });
 
