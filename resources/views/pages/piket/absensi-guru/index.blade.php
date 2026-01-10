@@ -29,11 +29,16 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
             {{-- Header Info --}}
             <div class="bg-gradient-to-r from-red-600 to-red-700 rounded-2xl p-6 text-white shadow-lg">
-                <div class="flex justify-between items-center">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
-                        <h3 class="text-2xl font-bold">{{ $namaHari }}, {{ now()->translatedFormat('d F Y') }}</h3>
+                        <h3 class="text-2xl font-bold">{{ $namaHari }}, {{ \Carbon\Carbon::parse($selectedDate)->translatedFormat('d F Y') }}</h3>
                         <p class="text-red-100 mt-1">Monitoring Kehadiran Guru Mengajar</p>
                     </div>
+                    <div class="flex items-center gap-3 bg-white/10 p-2 rounded-xl backdrop-blur-sm">
+                        <label for="date-select" class="text-sm font-bold whitespace-nowrap">Pilih Tanggal:</label>
+                        <input type="date" id="date-select" value="{{ $selectedDate }}" onchange="window.location.href='{{ route('piket.absensi-guru.index') }}?date=' + this.value" class="bg-white text-gray-900 text-sm rounded-lg border-none focus:ring-2 focus:ring-white">
+                    </div>
+                </div>
                     <div class="text-right">
                         <div class="text-3xl font-black">{{ $totalJadwal }}</div>
                         <div class="text-sm text-red-100">Total Jadwal Hari Ini</div>
@@ -184,6 +189,8 @@
         <input type="hidden" name="jadwal_pelajaran_id" id="jadwal_id">
         <input type="hidden" name="status" id="status">
         <input type="hidden" name="keterangan" id="keterangan">
+        <input type="hidden" name="tanggal" id="tanggal" value="{{ $selectedDate }}">
+        <input type="hidden" name="agreement" id="agreement">
     </form>
 
     @push('scripts')
@@ -199,7 +206,14 @@
             });
         });
 
+        const isPastDate = {{ $isPast ? 'true' : 'false' }};
+
         function confirmHadir(jadwalId, namaGuru) {
+            if (isPastDate) {
+                showWarningModal(jadwalId, 'hadir', namaGuru);
+                return;
+            }
+
             Swal.fire({
                 title: 'Konfirmasi Kehadiran',
                 html: `Tandai <strong>${namaGuru}</strong> sebagai <span class="text-green-600 font-bold">HADIR</span>?`,
@@ -217,6 +231,11 @@
         }
 
         function showReasonModal(jadwalId, status, namaGuru) {
+            if (isPastDate) {
+                showWarningModal(jadwalId, status, namaGuru);
+                return;
+            }
+
             let title = '';
             let placeholder = '';
             let confirmButtonColor = '';
@@ -268,6 +287,73 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     submitAbsensi(jadwalId, status, result.value);
+                }
+            });
+        }
+
+        function showWarningModal(jadwalId, status, namaGuru) {
+            let statusText = status.toUpperCase().replace('_', ' ');
+            let colorClass = '';
+            switch(status) {
+                case 'hadir': colorClass = 'text-green-600'; break;
+                case 'terlambat': colorClass = 'text-yellow-600'; break;
+                case 'tidak_hadir': colorClass = 'text-red-600'; break;
+                case 'izin': colorClass = 'text-blue-600'; break;
+            }
+
+            Swal.fire({
+                title: 'Peringatan Absensi Retroaktif',
+                html: `
+                    <div class="text-left space-y-4">
+                        <div class="p-3 bg-red-50 border border-red-100 rounded-lg text-red-800 text-xs">
+                            <strong>Perhatian:</strong> Anda sedang mencatatkan absensi untuk hari yang telah lampau. Pastikan data yang anda masukkan benar.
+                        </div>
+                        <div class="text-sm">
+                            Tandai <strong>${namaGuru}</strong> sebagai <span class="${colorClass} font-bold">${statusText}</span>?
+                        </div>
+                        ${status !== 'hadir' ? `
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-1">Alasan ${statusText}</label>
+                                <textarea id="swal-keterangan" class="w-full rounded-lg border-gray-300 text-sm" rows="3" placeholder="Masukkan alasan..."></textarea>
+                            </div>
+                        ` : ''}
+                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                            <label class="flex items-start gap-3 cursor-pointer">
+                                <input type="checkbox" id="swal-agreement" class="mt-1 rounded text-red-600 focus:ring-red-500">
+                                <span class="text-xs text-gray-700 font-medium leading-relaxed">
+                                    Saya menyatakan secara sadar telah lupa mencatatkan absensi pada hari H, dan berjanji tidak akan mengulangi kesalahan ini lagi.
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                `,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Ya, Saya Setuju & Simpan',
+                cancelButtonText: 'Batal',
+                preConfirm: () => {
+                    const agreement = document.getElementById('swal-agreement').checked;
+                    const keteranganObj = document.getElementById('swal-keterangan');
+                    const keterangan = keteranganObj ? keteranganObj.value : '';
+
+                    if (!agreement) {
+                        Swal.showValidationMessage('Anda harus mencentang pernyataan persetujuan!');
+                        return false;
+                    }
+
+                    if (status !== 'hadir' && keterangan.length < 5) {
+                        Swal.showValidationMessage('Alasan minimal 5 karakter!');
+                        return false;
+                    }
+
+                    return { agreement: true, keterangan: keterangan };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('agreement').value = '1';
+                    submitAbsensi(jadwalId, status, result.value.keterangan);
                 }
             });
         }
