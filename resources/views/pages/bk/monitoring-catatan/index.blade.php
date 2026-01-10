@@ -27,7 +27,7 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Cari Nama/NISN</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Cari Nama/NIS</label>
                         <input type="text" name="search" value="{{ request('search') }}" 
                                placeholder="Contoh: Ahmad"
                                class="w-full rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 transition-shadow">
@@ -63,7 +63,7 @@
                                         </div>
                                         <div>
                                             <div class="font-bold text-gray-900">{{ $siswa->nama_lengkap }}</div>
-                                            <div class="text-xs text-gray-500">NISN: {{ $siswa->nisn }}</div>
+                                            <div class="text-xs text-gray-500">NIS: {{ $siswa->nis }}</div>
                                         </div>
                                     </div>
                                 </td>

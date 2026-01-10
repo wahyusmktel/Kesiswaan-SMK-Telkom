@@ -22,6 +22,11 @@ class Keterlambatan extends Model
         'jadwal_pelajaran_id',
         'verifikasi_oleh_guru_kelas_id',
         'waktu_verifikasi_guru_kelas',
+        'waktu_pendampingan_wali_kelas',
+        'catatan_wali_kelas',
+        'pembinaan_oleh_bk_id',
+        'waktu_pembinaan_bk',
+        'catatan_bk',
         'status',
     ];
 
@@ -29,6 +34,8 @@ class Keterlambatan extends Model
         'waktu_dicatat_security' => 'datetime',
         'waktu_verifikasi_piket' => 'datetime',
         'waktu_verifikasi_guru_kelas' => 'datetime',
+        'waktu_pendampingan_wali_kelas' => 'datetime',
+        'waktu_pembinaan_bk' => 'datetime',
     ];
 
     protected static function boot()
@@ -56,5 +63,9 @@ class Keterlambatan extends Model
     public function guruKelasVerifier()
     {
         return $this->belongsTo(User::class, 'verifikasi_oleh_guru_kelas_id');
+    }
+    public function bkProcessor()
+    {
+        return $this->belongsTo(User::class, 'pembinaan_oleh_bk_id');
     }
 }

@@ -25,7 +25,7 @@ class MonitoringCatatanController extends Controller
 
         if ($request->filled('search')) {
             $query->where('nama_lengkap', 'like', '%' . $request->search . '%')
-                  ->orWhere('nisn', 'like', '%' . $request->search . '%');
+                  ->orWhere('nis', 'like', '%' . $request->search . '%');
         }
 
         $siswas = $query->paginate(15);

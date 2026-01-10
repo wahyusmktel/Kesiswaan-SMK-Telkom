@@ -111,7 +111,7 @@ class MonitoringKeterlambatanController extends Controller
 
     public function show(Keterlambatan $keterlambatan)
     {
-        $keterlambatan->load(['siswa.user', 'siswa.rombels.kelas', 'security', 'guruPiket']);
+        $keterlambatan->load(['siswa.user', 'siswa.rombels.kelas', 'security', 'guruPiket', 'guruKelasVerifier', 'bkProcessor']);
         return view('pages.shared.monitoring-keterlambatan.show', compact('keterlambatan'));
     }
 

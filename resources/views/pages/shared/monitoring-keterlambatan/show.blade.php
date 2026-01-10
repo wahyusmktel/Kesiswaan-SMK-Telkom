@@ -127,6 +127,91 @@
                                     </div>
                                 </div>
 
+                                {{-- Guru Kelas Entry --}}
+                                <div class="relative">
+                                    <div class="absolute -left-[41px] top-0 w-[18px] h-[18px] bg-white border-4 border-indigo-500 rounded-full z-10"></div>
+                                    <div class="space-y-2">
+                                        <div class="flex items-center gap-3">
+                                            <span class="text-lg font-black text-gray-900">{{ $keterlambatan->waktu_verifikasi_guru_kelas ? $keterlambatan->waktu_verifikasi_guru_kelas->format('H:i') : '--:--' }}</span>
+                                            <span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded text-[10px] font-black uppercase tracking-widest border border-indigo-100 italic">Masuk Kelas</span>
+                                        </div>
+                                        @if($keterlambatan->waktu_verifikasi_guru_kelas)
+                                            <div class="bg-indigo-50/30 rounded-2xl p-6 border border-indigo-100">
+                                                <p class="text-sm font-black text-gray-900 leading-none">Diverifikasi oleh: {{ $keterlambatan->guruKelasVerifier->name ?? 'Guru Mengajar' }}</p>
+                                                <p class="text-xs text-gray-500 mt-1 font-medium italic">Siswa telah sampai di kelas dan surat izin telah di-scan oleh guru yang sedang mengajar.</p>
+                                            </div>
+                                        @else
+                                            <div class="bg-gray-50 rounded-2xl p-6 border border-dashed border-gray-300 text-center italic text-sm text-gray-400">
+                                                Menunggu scan QR dari Guru di kelas.
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                {{-- Wali Kelas Mentoring --}}
+                                <div class="relative">
+                                    <div class="absolute -left-[41px] top-0 w-[18px] h-[18px] bg-white border-4 border-purple-500 rounded-full z-10"></div>
+                                    <div class="space-y-2">
+                                        <div class="flex items-center gap-3">
+                                            <span class="text-lg font-black text-gray-900">{{ $keterlambatan->waktu_pendampingan_wali_kelas ? $keterlambatan->waktu_pendampingan_wali_kelas->format('H:i') : '--:--' }}</span>
+                                            <span class="px-2 py-0.5 bg-purple-50 text-purple-700 rounded text-[10px] font-black uppercase tracking-widest border border-purple-100 italic">Pendampingan Wali Kelas</span>
+                                        </div>
+                                        @if($keterlambatan->waktu_pendampingan_wali_kelas)
+                                            <div class="bg-purple-50/30 rounded-2xl p-6 border border-purple-100">
+                                                <p class="text-sm font-black text-gray-900 leading-none">Wali Kelas: {{ $keterlambatan->siswa->rombels->first()?->waliKelas->name ?? '-' }}</p>
+                                                <div class="mt-4">
+                                                    <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Catatan Coaching:</span>
+                                                    <span class="text-sm font-bold text-gray-700 block bg-white p-3 rounded-lg border border-purple-100">"{{ $keterlambatan->catatan_wali_kelas }}"</span>
+                                                </div>
+                                            </div>
+                                        @elseif($keterlambatan->status === 'pendampingan_wali_kelas' && Auth::user()->hasRole('Wali Kelas') && $keterlambatan->siswa->rombels->first()?->wali_kelas_id === Auth::id())
+                                            <div class="bg-purple-50 rounded-2xl p-6 border border-purple-200">
+                                                <h5 class="text-xs font-black text-purple-800 uppercase tracking-widest mb-3">Input Catatan Pendampingan</h5>
+                                                <form action="{{ route('wali-kelas.keterlambatan.mentoring', $keterlambatan->id) }}" method="POST">
+                                                    @csrf
+                                                    <textarea name="catatan_wali_kelas" rows="3" class="w-full rounded-xl border-purple-100 focus:border-purple-500 focus:ring-purple-500 text-sm mb-3" placeholder="Tuliskan hasil coaching/pendampingan terhadap siswa..."></textarea>
+                                                    <button type="submit" class="w-full bg-purple-600 text-white text-xs font-black py-2 rounded-lg hover:bg-purple-700 transition uppercase tracking-widest">Simpan Pendampingan</button>
+                                                </form>
+                                            </div>
+                                        @else
+                                            <div class="bg-gray-50 rounded-2xl p-6 border border-dashed border-gray-300 text-center italic text-sm text-gray-400">
+                                                {{ $keterlambatan->waktu_verifikasi_guru_kelas ? 'Menunggu pendampingan dari Wali Kelas.' : 'Siswa harus masuk kelas terlebih dahulu.' }}
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                {{-- BK Pembinaan (Conditional) --}}
+                                @if($keterlambatan->status === 'pembinaan_bk' || $keterlambatan->waktu_pembinaan_bk)
+                                <div class="relative">
+                                    <div class="absolute -left-[41px] top-0 w-[18px] h-[18px] bg-white border-4 border-blue-500 rounded-full z-10"></div>
+                                    <div class="space-y-2">
+                                        <div class="flex items-center gap-3">
+                                            <span class="text-lg font-black text-gray-900">{{ $keterlambatan->waktu_pembinaan_bk ? $keterlambatan->waktu_pembinaan_bk->format('H:i') : '--:--' }}</span>
+                                            <span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] font-black uppercase tracking-widest border border-blue-100 italic">Pembinaan BK</span>
+                                        </div>
+                                        @if($keterlambatan->waktu_pembinaan_bk)
+                                            <div class="bg-blue-50/30 rounded-2xl p-6 border border-blue-100">
+                                                <p class="text-sm font-black text-gray-900 leading-none">Guru BK: {{ $keterlambatan->bkProcessor->name ?? '-' }}</p>
+                                                <div class="mt-4">
+                                                    <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Hasil Pembinaan:</span>
+                                                    <span class="text-sm font-bold text-gray-700 block bg-white p-3 rounded-lg border border-blue-100">"{{ $keterlambatan->catatan_bk }}"</span>
+                                                </div>
+                                            </div>
+                                        @elseif(Auth::user()->hasRole('Guru BK'))
+                                            <div class="bg-blue-50 rounded-2xl p-6 border border-blue-200">
+                                                <h5 class="text-xs font-black text-blue-800 uppercase tracking-widest mb-3">Input Hasil Pembinaan BK</h5>
+                                                <form action="{{ route('bk.keterlambatan.pembinaan', $keterlambatan->id) }}" method="POST">
+                                                    @csrf
+                                                    <textarea name="catatan_bk" rows="3" class="w-full rounded-xl border-blue-100 focus:border-blue-500 focus:ring-blue-500 text-sm mb-3" placeholder="Tuliskan hasil pembinaan lanjutan oleh BK..."></textarea>
+                                                    <button type="submit" class="w-full bg-blue-600 text-white text-xs font-black py-2 rounded-lg hover:bg-blue-700 transition uppercase tracking-widest">Simpan Pembinaan BK</button>
+                                                </form>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                                @endif
+
                                 {{-- Completion --}}
                                 <div class="relative">
                                     <div class="absolute -left-[41px] top-0 w-[18px] h-[18px] bg-white border-4 {{ $keterlambatan->status == 'selesai' ? 'border-green-500' : 'border-gray-200' }} rounded-full z-10"></div>
@@ -137,7 +222,7 @@
                                         @if($keterlambatan->status == 'selesai')
                                             <div class="text-sm font-bold text-green-600 flex items-center gap-2">
                                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
-                                                Siswa telah diproses sepenuhnya.
+                                                Siswa telah diproses sepenuhnya melalui alur pembinaan.
                                             </div>
                                         @endif
                                     </div>

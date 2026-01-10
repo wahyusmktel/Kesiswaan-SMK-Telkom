@@ -27,7 +27,7 @@ class VerifikasiTerlambatController extends Controller
         // Jika surat valid dan statusnya 'diverifikasi_piket'
         if ($keterlambatan->status === 'diverifikasi_piket') {
             $keterlambatan->update([
-                'status' => 'selesai',
+                'status' => 'pendampingan_wali_kelas',
                 'verifikasi_oleh_guru_kelas_id' => Auth::id(),
                 'waktu_verifikasi_guru_kelas' => now(),
             ]);

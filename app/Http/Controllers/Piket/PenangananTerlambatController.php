@@ -79,22 +79,31 @@ class PenangananTerlambatController extends Controller
                 'status' => 'diverifikasi_piket',
             ]);
 
-            // Tambahkan Poin Pelanggaran Otomatis (1 Poin)
-            $category = PoinCategory::firstOrCreate(['name' => 'Kedisiplinan']);
-            $peraturanTerlambat = PoinPeraturan::firstOrCreate(
-                ['deskripsi' => 'Terlambat'],
-                [
-                    'poin_category_id' => $category->id,
-                    'pasal' => 'Ketertiban',
-                    'bobot_poin' => 1,
-                ]
-            );
+            // Tambahkan Poin Pelanggaran Otomatis Berdasarkan Aturan
+            $peraturanTerlambat = PoinPeraturan::whereHas('category', function($q) {
+                    $q->where('name', 'Kedisiplinan');
+                })
+                ->where('pasal', 'Ketertiban')
+                ->where('deskripsi', 'Terlambat')
+                ->first();
+
+            // Jika aturan tidak ditemukan, buat fallback (untuk keamanan logic)
+            if (!$peraturanTerlambat) {
+                $category = PoinCategory::firstOrCreate(['name' => 'Kedisiplinan']);
+                $peraturanTerlambat = PoinPeraturan::firstOrCreate(
+                    ['deskripsi' => 'Terlambat', 'poin_category_id' => $category->id],
+                    [
+                        'pasal' => 'Ketertiban',
+                        'bobot_poin' => 1,
+                    ]
+                );
+            }
 
             SiswaPelanggaran::create([
                 'master_siswa_id' => $keterlambatan->master_siswa_id,
                 'poin_peraturan_id' => $peraturanTerlambat->id,
                 'tanggal' => $now->toDateString(),
-                'catatan' => 'Terlambat dicatat langsung oleh Piket pada hari ' . $namaHari,
+                'catatan' => 'Terlambat (' . $peraturanTerlambat->bobot_poin . ' Poin) dicatat langsung oleh Piket pada hari ' . $namaHari,
                 'pelapor_id' => Auth::id(),
             ]);
 

@@ -53,6 +53,8 @@ use App\Http\Controllers\Kurikulum\DistribusiMapelController;
 use App\Http\Controllers\Kurikulum\AnalisaKurikulumController;
 use App\Http\Controllers\Security\GateTerminalController;
 use App\Http\Controllers\Auth\SecurityLoginController;
+use App\Http\Controllers\WaliKelas\WaliKelasMentoringController;
+use App\Http\Controllers\BK\BKPembinaanTerlambatController;
 
 Route::get('auth/google', [GoogleController::class, 'redirectToGoogle'])->name('auth.google');
 Route::get('auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
@@ -131,7 +133,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/perizinan', [WaliKelasPerizinanController::class, 'index'])->name('perizinan.index');
         Route::patch('/perizinan/{perizinan}/approve', [WaliKelasPerizinanController::class, 'approve'])->name('perizinan.approve');
         Route::patch('/perizinan/{perizinan}/reject', [WaliKelasPerizinanController::class, 'reject'])->name('perizinan.reject');
-        // Nanti kita tambahkan route untuk approve & reject di sini
+        Route::post('/keterlambatan/{keterlambatan}/mentoring', [WaliKelasMentoringController::class, 'store'])->name('keterlambatan.mentoring');
     });
 
     // Grup untuk Data Master, bisa diakses oleh Waka Kesiswaan/Operator
@@ -319,6 +321,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Monitoring Pelanggaran & Keterlambatan
         Route::get('/monitoring-catatan', [\App\Http\Controllers\BK\MonitoringCatatanController::class, 'index'])->name('monitoring-catatan.index');
         Route::get('/monitoring-catatan/{siswa}', [\App\Http\Controllers\BK\MonitoringCatatanController::class, 'show'])->name('monitoring-catatan.show');
+        Route::post('/keterlambatan/{keterlambatan}/pembinaan', [BKPembinaanTerlambatController::class, 'store'])->name('keterlambatan.pembinaan');
         Route::post('/panggilan-proposal', [\App\Http\Controllers\BK\PanggilanProposalController::class, 'store'])->name('panggilan-proposal.store');
     });
 
