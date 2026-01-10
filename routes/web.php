@@ -136,6 +136,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/keterlambatan/{keterlambatan}/mentoring', [WaliKelasMentoringController::class, 'store'])->name('keterlambatan.mentoring');
     });
 
+    // Route bersama untuk download coaching (Wali Kelas, BK, Waka Kesiswaan)
+    Route::middleware(['role:Wali Kelas|Guru BK|Waka Kesiswaan'])->group(function() {
+        Route::get('/wali-kelas/keterlambatan/{keterlambatan}/coaching-pdf', [WaliKelasMentoringController::class, 'downloadCoaching'])->name('wali-kelas.keterlambatan.coaching-pdf');
+    });
+
     // Grup untuk Data Master, bisa diakses oleh Waka Kesiswaan/Operator
     Route::middleware(['role:Waka Kesiswaan|Operator|Super Admin'])->prefix('master-data')->name('master-data.')->group(function () {
         Route::resource('kelas', KelasController::class)->middleware('permission:manage kelas');

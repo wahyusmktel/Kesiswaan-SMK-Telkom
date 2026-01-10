@@ -68,4 +68,9 @@ class Keterlambatan extends Model
     {
         return $this->belongsTo(User::class, 'pembinaan_oleh_bk_id');
     }
+
+    public function coaching()
+    {
+        return $this->hasOne(KeterlambatanCoaching::class);
+    }
 }

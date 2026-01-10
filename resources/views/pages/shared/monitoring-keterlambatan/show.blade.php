@@ -159,19 +159,116 @@
                                         @if($keterlambatan->waktu_pendampingan_wali_kelas)
                                             <div class="bg-purple-50/30 rounded-2xl p-6 border border-purple-100">
                                                 <p class="text-sm font-black text-gray-900 leading-none">Wali Kelas: {{ $keterlambatan->siswa->rombels->first()?->waliKelas->name ?? '-' }}</p>
-                                                <div class="mt-4">
-                                                    <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Catatan Coaching:</span>
-                                                    <span class="text-sm font-bold text-gray-700 block bg-white p-3 rounded-lg border border-purple-100">"{{ $keterlambatan->catatan_wali_kelas }}"</span>
+                                                <div class="mt-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                                    <div>
+                                                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Catatan Coaching:</span>
+                                                        <span class="text-sm font-bold text-gray-700 block italic">"{{ $keterlambatan->catatan_wali_kelas }}"</span>
+                                                    </div>
+                                                    @if(Auth::user()->hasRole('Wali Kelas') || Auth::user()->hasRole('Guru BK') || Auth::user()->hasRole('Waka Kesiswaan'))
+                                                    <a href="{{ route('wali-kelas.keterlambatan.coaching-pdf', $keterlambatan->id) }}" class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white text-[10px] font-black rounded-lg hover:bg-red-700 transition uppercase tracking-widest shadow-sm">
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                        Cetak Lembar Coaching
+                                                    </a>
+                                                    @endif
                                                 </div>
                                             </div>
                                         @elseif($keterlambatan->status === 'pendampingan_wali_kelas' && Auth::user()->hasRole('Wali Kelas') && $keterlambatan->siswa->rombels->first()?->wali_kelas_id === Auth::id())
                                             <div class="bg-purple-50 rounded-2xl p-6 border border-purple-200">
-                                                <h5 class="text-xs font-black text-purple-800 uppercase tracking-widest mb-3">Input Catatan Pendampingan</h5>
-                                                <form action="{{ route('wali-kelas.keterlambatan.mentoring', $keterlambatan->id) }}" method="POST">
-                                                    @csrf
-                                                    <textarea name="catatan_wali_kelas" rows="3" class="w-full rounded-xl border-purple-100 focus:border-purple-500 focus:ring-purple-500 text-sm mb-3" placeholder="Tuliskan hasil coaching/pendampingan terhadap siswa..."></textarea>
-                                                    <button type="submit" class="w-full bg-purple-600 text-white text-xs font-black py-2 rounded-lg hover:bg-purple-700 transition uppercase tracking-widest">Simpan Pendampingan</button>
-                                                </form>
+                                                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                                                    <div>
+                                                        <h5 class="text-xs font-black text-purple-800 uppercase tracking-widest">Sesi Pendampingan Wali Kelas</h5>
+                                                        <p class="text-[10px] text-purple-600 font-medium italic mt-1">Gunakan Model GROW untuk melakukan coaching kedisiplinan kepada siswa.</p>
+                                                    </div>
+                                                    <button type="button" @click="$dispatch('open-modal', 'grow-coaching-modal')" class="px-4 py-2 bg-purple-600 text-white text-[10px] font-black rounded-lg hover:bg-purple-700 transition uppercase tracking-widest shadow-sm">
+                                                        Mulai Sesi Coaching
+                                                    </button>
+                                                </div>
+
+                                                <x-modal name="grow-coaching-modal" :show="$errors->isNotEmpty()" focusable>
+                                                    <form method="post" action="{{ route('wali-kelas.keterlambatan.mentoring', $keterlambatan->id) }}" class="p-8">
+                                                        @csrf
+                                                        <div class="flex items-center justify-between mb-6 border-b border-gray-100 pb-4">
+                                                            <div>
+                                                                <h2 class="text-xl font-black text-gray-900 uppercase tracking-tight">Lembar Coaching Kedisiplinan</h2>
+                                                                <p class="text-xs text-gray-500 font-medium mt-1 italic">Metode GROW (Goal, Reality, Options, Will)</p>
+                                                            </div>
+                                                            <button type="button" @click="$dispatch('close')" class="text-gray-400 hover:text-gray-600">
+                                                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                            </button>
+                                                        </div>
+
+                                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                                                            <div>
+                                                                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Tanggal Coaching</label>
+                                                                <input type="date" name="tanggal_coaching" value="{{ date('Y-m-d') }}" class="w-full rounded-xl border-gray-200 focus:border-purple-500 focus:ring-purple-500 text-sm font-bold shadow-sm">
+                                                            </div>
+                                                            <div>
+                                                                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Lokasi Coaching</label>
+                                                                <select name="lokasi" class="w-full rounded-xl border-gray-200 focus:border-purple-500 focus:ring-purple-500 text-sm font-bold shadow-sm">
+                                                                    <option value="langsung">Dibina Secara Langsung (Luring)</option>
+                                                                    <option value="online">Dibina Melalui Online (Daring)</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="space-y-6">
+                                                            <div class="bg-indigo-50/50 p-6 rounded-2xl border border-indigo-100/50">
+                                                                <h3 class="font-black text-indigo-700 text-sm uppercase tracking-wide mb-3 flex items-center gap-2">
+                                                                    <span class="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px]">G</span>
+                                                                    Goal (Tujuan)
+                                                                </h3>
+                                                                <p class="text-xs text-indigo-900/60 italic mb-3 font-medium">"Apa tujuanmu datang tepat waktu ke sekolah? Apa dampaknya bagimu jika masuk tepat waktu?"</p>
+                                                                <textarea name="goal_response" rows="2" class="w-full rounded-xl border-indigo-100 focus:border-indigo-500 focus:ring-indigo-500 text-sm" placeholder="Respon / Catatan Siswa..."></textarea>
+                                                            </div>
+
+                                                            <div class="bg-blue-50/50 p-6 rounded-2xl border border-blue-100/50">
+                                                                <h3 class="font-black text-blue-700 text-sm uppercase tracking-wide mb-3 flex items-center gap-2">
+                                                                    <span class="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px]">R</span>
+                                                                    Reality (Kenyataan)
+                                                                </h3>
+                                                                <p class="text-xs text-blue-900/60 italic mb-3 font-medium">"Ceritakan apa yang biasanya terjadi di pagi hari sehingga kamu terlambat? Apa kendala utamanya?"</p>
+                                                                <textarea name="reality_response" rows="2" class="w-full rounded-xl border-blue-100 focus:border-blue-500 focus:ring-blue-500 text-sm" placeholder="Respon / Catatan Siswa..."></textarea>
+                                                            </div>
+
+                                                            <div class="bg-amber-50/50 p-6 rounded-2xl border border-amber-100/50">
+                                                                <h3 class="font-black text-amber-700 text-sm uppercase tracking-wide mb-3 flex items-center gap-2">
+                                                                    <span class="w-6 h-6 rounded-full bg-amber-600 text-white flex items-center justify-center text-[10px]">O</span>
+                                                                    Options (Pilihan)
+                                                                </h3>
+                                                                <p class="text-xs text-amber-900/60 italic mb-3 font-medium">"Apa saja hal yang bisa kamu ubah agar tidak terlambat lagi? (Misal: tidur lebih awal, dsb)"</p>
+                                                                <textarea name="options_response" rows="2" class="w-full rounded-xl border-amber-100 focus:border-amber-500 focus:ring-amber-500 text-sm" placeholder="Respon / Catatan Siswa..."></textarea>
+                                                            </div>
+
+                                                            <div class="bg-green-50/50 p-6 rounded-2xl border border-green-100/50">
+                                                                <h3 class="font-black text-green-700 text-sm uppercase tracking-wide mb-3 flex items-center gap-2">
+                                                                    <span class="w-6 h-6 rounded-full bg-green-600 text-white flex items-center justify-center text-[10px]">W</span>
+                                                                    Will (Tindakan)
+                                                                </h3>
+                                                                <p class="text-xs text-green-900/60 italic mb-3 font-medium">"Dari pilihan tadi, mana yang akan kamu lakukan mulai besok? Siapa yang bisa membantumu?"</p>
+                                                                <textarea name="will_response" rows="2" class="w-full rounded-xl border-green-100 focus:border-green-500 focus:ring-green-500 text-sm" placeholder="Respon / Catatan Siswa..."></textarea>
+                                                            </div>
+
+                                                            <div class="pt-4 border-t border-gray-100">
+                                                                <div class="mb-4">
+                                                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Rencana Aksi & Komitmen Siswa</label>
+                                                                    <p class="text-[10px] text-gray-400 italic mb-2 font-medium">"Saya berkomitmen untuk melakukan perubahan sebagai berikut: (Tuliskan poin-poinnya)"</p>
+                                                                    <textarea name="rencana_aksi" rows="4" class="w-full rounded-xl border-gray-200 focus:border-purple-500 focus:ring-purple-500 text-sm" placeholder="1. Bangun lebih pagi&#10;2. Menyiapkan perlengkapan sekolah malam hari..."></textarea>
+                                                                </div>
+
+                                                                <div>
+                                                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Konsekuensi Logis</label>
+                                                                    <p class="text-[10px] text-gray-400 italic mb-2 font-medium">"Jika saya terlambat lagi, saya bersedia untuk: (Disepakati bersama)"</p>
+                                                                    <input type="text" name="konsekuensi_logis" class="w-full rounded-xl border-gray-200 focus:border-purple-500 focus:ring-purple-500 text-sm" placeholder="Contoh: Membantu piket kebersihan pagi selama 3 hari">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="mt-8 flex items-center justify-end gap-3">
+                                                            <button type="button" @click="$dispatch('close')" class="px-6 py-3 bg-gray-100 text-gray-600 text-xs font-black rounded-xl hover:bg-gray-200 transition uppercase tracking-widest">Batal</button>
+                                                            <button type="submit" class="px-6 py-3 bg-purple-600 text-white text-xs font-black rounded-xl hover:bg-purple-700 transition uppercase tracking-widest shadow-lg shadow-purple-200">Simpan & Selesaikan Sesi</button>
+                                                        </div>
+                                                    </form>
+                                                </x-modal>
                                             </div>
                                         @else
                                             <div class="bg-gray-50 rounded-2xl p-6 border border-dashed border-gray-300 text-center italic text-sm text-gray-400">
