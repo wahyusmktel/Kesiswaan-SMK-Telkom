@@ -73,4 +73,9 @@ class Keterlambatan extends Model
     {
         return $this->hasOne(KeterlambatanCoaching::class);
     }
+
+    public function bkCoaching()
+    {
+        return $this->hasOne(KeterlambatanBKCoaching::class);
+    }
 }

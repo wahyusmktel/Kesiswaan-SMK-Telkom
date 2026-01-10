@@ -290,19 +290,134 @@
                                         @if($keterlambatan->waktu_pembinaan_bk)
                                             <div class="bg-blue-50/30 rounded-2xl p-6 border border-blue-100">
                                                 <p class="text-sm font-black text-gray-900 leading-none">Guru BK: {{ $keterlambatan->bkProcessor->name ?? '-' }}</p>
-                                                <div class="mt-4">
-                                                    <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Hasil Pembinaan:</span>
-                                                    <span class="text-sm font-bold text-gray-700 block bg-white p-3 rounded-lg border border-blue-100">"{{ $keterlambatan->catatan_bk }}"</span>
+                                                <div class="mt-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                                    <div>
+                                                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Hasil Pembinaan:</span>
+                                                        <span class="text-sm font-bold text-gray-700 block italic">"{{ $keterlambatan->catatan_bk }}"</span>
+                                                    </div>
+                                                    @if(Auth::user()->hasRole('Guru BK') || Auth::user()->hasRole('Wali Kelas') || Auth::user()->hasRole('Waka Kesiswaan'))
+                                                    <a href="{{ route('bk.keterlambatan.coaching-pdf', $keterlambatan->id) }}" class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white text-[10px] font-black rounded-lg hover:bg-blue-700 transition uppercase tracking-widest shadow-sm">
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                        Cetak Kontrak Perilaku
+                                                    </a>
+                                                    @endif
                                                 </div>
                                             </div>
                                         @elseif(Auth::user()->hasRole('Guru BK'))
                                             <div class="bg-blue-50 rounded-2xl p-6 border border-blue-200">
-                                                <h5 class="text-xs font-black text-blue-800 uppercase tracking-widest mb-3">Input Hasil Pembinaan BK</h5>
-                                                <form action="{{ route('bk.keterlambatan.pembinaan', $keterlambatan->id) }}" method="POST">
-                                                    @csrf
-                                                    <textarea name="catatan_bk" rows="3" class="w-full rounded-xl border-blue-100 focus:border-blue-500 focus:ring-blue-500 text-sm mb-3" placeholder="Tuliskan hasil pembinaan lanjutan oleh BK..."></textarea>
-                                                    <button type="submit" class="w-full bg-blue-600 text-white text-xs font-black py-2 rounded-lg hover:bg-blue-700 transition uppercase tracking-widest">Simpan Pembinaan BK</button>
-                                                </form>
+                                                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                                                    <div>
+                                                        <h5 class="text-xs font-black text-blue-800 uppercase tracking-widest">Konseling & Kontrak Perilaku BK</h5>
+                                                        <p class="text-[10px] text-blue-600 font-medium italic mt-1">Lakukan identifikasi akar masalah dan buat kontrak perilaku formal bersama siswa.</p>
+                                                    </div>
+                                                    <button type="button" @click="$dispatch('open-modal', 'bk-coaching-modal')" class="px-4 py-2 bg-blue-600 text-white text-[10px] font-black rounded-lg hover:bg-blue-700 transition uppercase tracking-widest shadow-sm">
+                                                        Mulai Konseling BK
+                                                    </button>
+                                                </div>
+
+                                                <x-modal name="bk-coaching-modal" :show="$errors->isNotEmpty()" focusable>
+                                                    <form method="post" action="{{ route('bk.keterlambatan.pembinaan', $keterlambatan->id) }}" class="p-8" x-data="{ showHpLimit: false }">
+                                                        @csrf
+                                                        <div class="flex items-center justify-between mb-6 border-b border-gray-100 pb-4">
+                                                            <div>
+                                                                <h2 class="text-xl font-black text-gray-900 uppercase tracking-tight">Konseling Mendalam (Deep Dive)</h2>
+                                                                <p class="text-xs text-gray-500 font-medium mt-1 italic">Intervensi Perilaku & Kontrak Formal</p>
+                                                            </div>
+                                                            <button type="button" @click="$dispatch('close')" class="text-gray-400 hover:text-gray-600">
+                                                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                            </button>
+                                                        </div>
+
+                                                        <div class="mb-8 bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                                                            <div class="w-full">
+                                                                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Tanggal Konseling</label>
+                                                                <input type="date" name="tanggal_konseling" value="{{ date('Y-m-d') }}" class="w-full rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500 text-sm font-bold shadow-sm">
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="space-y-6">
+                                                            {{-- II. Deep Dive --}}
+                                                            <div class="bg-indigo-50/50 p-6 rounded-2xl border border-indigo-100/50">
+                                                                <h3 class="font-black text-indigo-700 text-sm uppercase tracking-wide mb-4 flex items-center gap-2">II. Identifikasi Akar Masalah</h3>
+                                                                
+                                                                <div class="space-y-4">
+                                                                    <div>
+                                                                        <label class="text-xs text-indigo-900/80 font-bold mb-1 block">Evaluasi Sebelumnya: Mengapa komitmen dengan Wali Kelas belum berhasil?</label>
+                                                                        <textarea name="evaluasi_sebelumnya" rows="2" class="w-full rounded-xl border-indigo-100 focus:border-indigo-500 focus:ring-indigo-500 text-sm" placeholder="Respon siswa..."></textarea>
+                                                                    </div>
+                                                                    <div>
+                                                                        <label class="text-xs text-indigo-900/80 font-bold mb-1 block">Faktor Penghambat: Kendala teknis atau masalah psikologis?</label>
+                                                                        <textarea name="faktor_penghambat" rows="2" class="w-full rounded-xl border-indigo-100 focus:border-indigo-500 focus:ring-indigo-500 text-sm" placeholder="Respon siswa..."></textarea>
+                                                                    </div>
+                                                                    <div>
+                                                                        <label class="text-xs text-indigo-900/80 font-bold mb-1 block">Analisis Dampak: Kerugian terbesar yang dirasakan siswa?</label>
+                                                                        <textarea name="analisis_dampak" rows="2" class="w-full rounded-xl border-indigo-100 focus:border-indigo-500 focus:ring-indigo-500 text-sm" placeholder="Respon siswa..."></textarea>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            {{-- III. Solution Bridge --}}
+                                                            <div class="bg-blue-50/50 p-6 rounded-2xl border border-blue-100/50">
+                                                                <h3 class="font-black text-blue-700 text-sm uppercase tracking-wide mb-4 flex items-center gap-2">III. Intervensi Perilaku (The Solution Bridge)</h3>
+                                                                
+                                                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                                                    <div>
+                                                                        <label class="text-[10px] font-black text-blue-900/50 uppercase tracking-widest mb-1 block">Jam Bangun</label>
+                                                                        <input type="time" name="jam_bangun" class="w-full rounded-xl border-blue-100 focus:border-blue-500 focus:ring-blue-500 text-sm font-bold">
+                                                                    </div>
+                                                                    <div>
+                                                                        <label class="text-[10px] font-black text-blue-900/50 uppercase tracking-widest mb-1 block">Jam Berangkat</label>
+                                                                        <input type="time" name="jam_berangkat" class="w-full rounded-xl border-blue-100 focus:border-blue-500 focus:ring-blue-500 text-sm font-bold">
+                                                                    </div>
+                                                                    <div>
+                                                                        <label class="text-[10px] font-black text-blue-900/50 uppercase tracking-widest mb-1 block">Estimasi Perjalanan (Min)</label>
+                                                                        <input type="number" name="durasi_perjalanan" class="w-full rounded-xl border-blue-100 focus:border-blue-500 focus:ring-blue-500 text-sm font-bold">
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="space-y-3">
+                                                                    <label class="text-xs text-blue-900/80 font-bold block mb-2">Strategi Pendukung (Checklist):</label>
+                                                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                                        <label class="flex items-center gap-3 bg-white p-3 rounded-xl border border-blue-50 cursor-pointer hover:bg-blue-50 transition shadow-sm">
+                                                                            <input type="checkbox" name="strategi_pendukung[]" value="alarm" class="rounded text-blue-600 focus:ring-blue-500">
+                                                                            <span class="text-xs font-medium text-gray-700">Alarm Ganda (5 menit)</span>
+                                                                        </label>
+                                                                        <label class="flex items-center gap-3 bg-white p-3 rounded-xl border border-blue-50 cursor-pointer hover:bg-blue-50 transition shadow-sm">
+                                                                            <input type="checkbox" name="strategi_pendukung[]" value="prep" class="rounded text-blue-600 focus:ring-blue-500">
+                                                                            <span class="text-xs font-medium text-gray-700">Persiapan H-1 Malam</span>
+                                                                        </label>
+                                                                        <label class="flex items-center gap-3 bg-white p-3 rounded-xl border border-blue-50 cursor-pointer hover:bg-blue-50 transition shadow-sm">
+                                                                            <input type="checkbox" name="strategi_pendukung[]" value="hp" class="rounded text-blue-600 focus:ring-blue-500" @change="showHpLimit = $event.target.checked">
+                                                                            <span class="text-xs font-medium text-gray-700">Batas Penggunaan HP</span>
+                                                                        </label>
+                                                                        <label class="flex items-center gap-3 bg-white p-3 rounded-xl border border-blue-50 cursor-pointer hover:bg-blue-50 transition shadow-sm">
+                                                                            <input type="checkbox" name="strategi_pendukung[]" value="help" class="rounded text-blue-600 focus:ring-blue-500">
+                                                                            <span class="text-xs font-medium text-gray-700">Bantuan Pihak Ketiga</span>
+                                                                        </label>
+                                                                    </div>
+                                                                    <div x-show="showHpLimit" class="mt-3">
+                                                                        <label class="text-[10px] font-black text-blue-900/50 uppercase tracking-widest mb-1 block">Maksimal HP Jam:</label>
+                                                                        <input type="time" name="hp_limit_time" class="w-full rounded-xl border-blue-100 focus:border-blue-500 focus:ring-blue-500 text-sm font-bold">
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            {{-- IV. Behavioral Contract --}}
+                                                            <div class="bg-red-50/50 p-6 rounded-2xl border border-red-100/50">
+                                                                <h3 class="font-black text-red-700 text-sm uppercase tracking-wide mb-4 flex items-center gap-2">IV. Kontrak Perilaku (Behavioral Contract)</h3>
+                                                                <p class="text-xs text-red-900/60 italic mb-4 font-medium">
+                                                                    "Jika saya terlambat untuk yang ke-4 kalinya, maka saya bersedia menerima sanksi tegas..."
+                                                                </p>
+                                                                <textarea name="sanksi_disepakati" rows="2" class="w-full rounded-xl border-red-100 focus:border-red-500 focus:ring-red-500 text-sm font-bold bg-white" placeholder="Contoh: Panggilan Orang Tua, Skorsing Terbatas, atau Sanksi Lainnya..."></textarea>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="mt-8 flex items-center justify-end gap-3">
+                                                            <button type="button" @click="$dispatch('close')" class="px-6 py-3 bg-gray-100 text-gray-600 text-xs font-black rounded-xl hover:bg-gray-200 transition uppercase tracking-widest">Batal</button>
+                                                            <button type="submit" class="px-6 py-3 bg-blue-600 text-white text-xs font-black rounded-xl hover:bg-blue-700 transition uppercase tracking-widest shadow-lg shadow-blue-200">Simpan & Selesaikan Konseling</button>
+                                                        </div>
+                                                    </form>
+                                                </x-modal>
                                             </div>
                                         @endif
                                     </div>
