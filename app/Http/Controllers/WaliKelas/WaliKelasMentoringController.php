@@ -85,7 +85,7 @@ class WaliKelasMentoringController extends Controller
         $data = [
             'keterlambatan' => $keterlambatan,
             'frekuensiBulanIni' => $frekuensiBulanIni,
-            'wali_kelas' => Auth::user()->name, 
+            'wali_kelas' => $keterlambatan->siswa->rombels->first()?->waliKelas->name ?? '-', 
         ];
 
         $pdf = Pdf::loadView('pages.wali-kelas.keterlambatan.coaching-pdf', $data);

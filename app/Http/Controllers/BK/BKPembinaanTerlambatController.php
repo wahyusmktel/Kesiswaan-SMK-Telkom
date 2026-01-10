@@ -75,7 +75,7 @@ class BKPembinaanTerlambatController extends Controller
         $data = [
             'keterlambatan' => $keterlambatan,
             'history' => $history,
-            'bk_teacher' => Auth::user()->name,
+            'bk_teacher' => $keterlambatan->bkCoaching->pencatat->name ?? '-',
             'wali_kelas' => $keterlambatan->siswa->rombels->first()?->waliKelas->name ?? '-',
         ];
 

@@ -55,6 +55,7 @@ use App\Http\Controllers\Security\GateTerminalController;
 use App\Http\Controllers\Auth\SecurityLoginController;
 use App\Http\Controllers\WaliKelas\WaliKelasMentoringController;
 use App\Http\Controllers\BK\BKPembinaanTerlambatController;
+use App\Http\Controllers\Shared\CoachingAnalyticsController;
 
 Route::get('auth/google', [GoogleController::class, 'redirectToGoogle'])->name('auth.google');
 Route::get('auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
@@ -136,8 +137,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/keterlambatan/{keterlambatan}/mentoring', [WaliKelasMentoringController::class, 'store'])->name('keterlambatan.mentoring');
     });
 
-    // Route bersama untuk download coaching (Wali Kelas, BK, Waka Kesiswaan)
+    // Route bersama untuk coaching & analisa (Wali Kelas, BK, Waka Kesiswaan)
     Route::middleware(['role:Wali Kelas|Guru BK|Waka Kesiswaan'])->group(function() {
+        Route::get('/coaching-analytics', [CoachingAnalyticsController::class, 'index'])->name('coaching-analytics.index');
         Route::get('/wali-kelas/keterlambatan/{keterlambatan}/coaching-pdf', [WaliKelasMentoringController::class, 'downloadCoaching'])->name('wali-kelas.keterlambatan.coaching-pdf');
         Route::get('/bk/keterlambatan/{keterlambatan}/coaching-pdf', [BKPembinaanTerlambatController::class, 'downloadCoaching'])->name('bk.keterlambatan.coaching-pdf');
     });
