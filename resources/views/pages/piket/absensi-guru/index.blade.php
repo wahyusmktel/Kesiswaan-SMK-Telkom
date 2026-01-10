@@ -29,19 +29,22 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
             {{-- Header Info --}}
             <div class="bg-gradient-to-r from-red-600 to-red-700 rounded-2xl p-6 text-white shadow-lg">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div>
                         <h3 class="text-2xl font-bold">{{ $namaHari }}, {{ \Carbon\Carbon::parse($selectedDate)->translatedFormat('d F Y') }}</h3>
                         <p class="text-red-100 mt-1">Monitoring Kehadiran Guru Mengajar</p>
                     </div>
-                    <div class="flex items-center gap-3 bg-white/10 p-2 rounded-xl backdrop-blur-sm">
-                        <label for="date-select" class="text-sm font-bold whitespace-nowrap">Pilih Tanggal:</label>
-                        <input type="date" id="date-select" value="{{ $selectedDate }}" onchange="window.location.href='{{ route('piket.absensi-guru.index') }}?date=' + this.value" class="bg-white text-gray-900 text-sm rounded-lg border-none focus:ring-2 focus:ring-white">
-                    </div>
-                </div>
-                    <div class="text-right">
-                        <div class="text-3xl font-black">{{ $totalJadwal }}</div>
-                        <div class="text-sm text-red-100">Total Jadwal Hari Ini</div>
+                    
+                    <div class="flex flex-col md:flex-row items-start md:items-center gap-6 w-full md:w-auto">
+                        <div class="flex items-center gap-3 bg-white/20 p-2 px-3 rounded-xl backdrop-blur-sm">
+                            <label for="date-select" class="text-sm font-bold whitespace-nowrap">Pilih Tanggal:</label>
+                            <input type="date" id="date-select" value="{{ $selectedDate }}" onchange="window.location.href='{{ route('piket.absensi-guru.index') }}?date=' + this.value" class="bg-white text-gray-900 text-sm rounded-lg border-none focus:ring-2 focus:ring-red-400">
+                        </div>
+
+                        <div class="text-right">
+                            <div class="text-3xl font-black leading-none">{{ $totalJadwal }}</div>
+                            <div class="text-[10px] text-red-100 uppercase font-bold tracking-widest mt-1">Total Jadwal</div>
+                        </div>
                     </div>
                 </div>
             </div>
