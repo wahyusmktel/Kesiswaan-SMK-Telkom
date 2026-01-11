@@ -133,6 +133,7 @@
                                                 <div class="space-y-1.5">
                                                     <label class="text-[10px] font-bold text-gray-400 uppercase">Materi Pelajaran</label>
                                                     <select :name="'lms_material_ids[' + schedule.id + ']'" 
+                                                        x-model="selectedLms[schedule.id + '_material']"
                                                         class="w-full text-xs rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 bg-white shadow-sm">
                                                         <option value="">-- Pilih Materi --</option>
                                                         <template x-for="material in lmsData[schedule.id]?.materials || []" :key="material.id">
@@ -143,6 +144,7 @@
                                                 <div class="space-y-1.5">
                                                     <label class="text-[10px] font-bold text-gray-400 uppercase">Tugas & PR</label>
                                                     <select :name="'lms_assignment_ids[' + schedule.id + ']'" 
+                                                        x-model="selectedLms[schedule.id + '_assignment']"
                                                         class="w-full text-xs rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 bg-white shadow-sm">
                                                         <option value="">-- Pilih Tugas --</option>
                                                         <template x-for="assignment in lmsData[schedule.id]?.assignments || []" :key="assignment.id">
@@ -175,11 +177,27 @@
                             </div>
                         </div>
 
+                        {{-- LMS Validation Warning --}}
+                        <div x-show="selectedIds.length > 0 && !isLmsValid()" 
+                             x-transition
+                             class="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3 text-amber-700">
+                            <svg class="w-5 h-5 mt-0.5 flex-shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                            <div>
+                                <p class="text-sm font-black">Penugasan Belum Lengkap</p>
+                                <p class="text-xs font-medium opacity-80">Anda wajib memilih minimal satu Materi Pelajaran atau Tugas & PR untuk setiap jam pelajaran yang dipilih sebelum mengirim pengajuan.</p>
+                            </div>
+                        </div>
+
                         <div class="pt-6 flex gap-3">
                             <a href="{{ route('guru.izin.index') }}" class="flex-1 py-3 text-center rounded-xl font-bold bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
                                 Batal
                             </a>
-                            <button type="submit" class="flex-1 py-3 px-6 rounded-xl font-bold bg-indigo-600 text-white hover:bg-indigo-500 shadow-md transform active:scale-95 transition-all">
+                            <button type="submit" 
+                                    :disabled="selectedIds.length > 0 && !isLmsValid()"
+                                    :class="(selectedIds.length > 0 && !isLmsValid()) ? 'bg-gray-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-500 shadow-md transform active:scale-95'"
+                                    class="flex-1 py-3 px-6 rounded-xl font-bold text-white transition-all">
                                 Kirim Pengajuan
                             </button>
                         </div>
@@ -198,6 +216,7 @@
                 schedules: [],
                 selectedIds: [],
                 lmsData: {}, // Map of scheduleId -> {materials, assignments}
+                selectedLms: {}, // Map of scheduleId_material/scheduleId_assignment -> value
                 loading: false,
 
                 async fetchSchedules() {
@@ -293,12 +312,38 @@
                         return;
                     }
 
+                    // Check if LMS resources are selected for all checked schedules
+                    if (this.selectedIds.length > 0 && !this.isLmsValid()) {
+                        Swal.fire({
+                            title: 'Penugasan Belum Lengkap',
+                            text: 'Anda wajib memilih minimal satu Materi atau Tugas untuk setiap jam pelajaran yang dipilih.',
+                            icon: 'warning',
+                            confirmButtonColor: '#4f46e5'
+                        });
+                        return;
+                    }
+
                     // If everything is valid, submit the form via the reference
                     this.$refs.form.submit();
                 },
 
                 formatTime(time) {
                     return time.substring(0, 5);
+                },
+
+                isLmsValid() {
+                    // Check if every selected schedule has at least one material or assignment
+                    for (const scheduleId of this.selectedIds) {
+                        const materialKey = scheduleId + '_material';
+                        const assignmentKey = scheduleId + '_assignment';
+                        const hasMaterial = this.selectedLms[materialKey] && this.selectedLms[materialKey] !== '';
+                        const hasAssignment = this.selectedLms[assignmentKey] && this.selectedLms[assignmentKey] !== '';
+                        
+                        if (!hasMaterial && !hasAssignment) {
+                            return false;
+                        }
+                    }
+                    return true;
                 }
             }
         }
