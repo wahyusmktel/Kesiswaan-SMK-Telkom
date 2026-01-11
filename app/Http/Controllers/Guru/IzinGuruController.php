@@ -63,7 +63,7 @@ class IzinGuruController extends Controller
             'tanggal_mulai' => 'required|date',
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
             'jenis_izin' => 'required|string',
-            'kategori_penyetujuan' => 'required|in:sekolah,luar',
+            'kategori_penyetujuan' => 'required|in:sekolah,luar,terlambat',
             'deskripsi' => 'required|string',
             'jadwal_ids' => 'nullable|array',
             'jadwal_ids.*' => 'exists:jadwal_pelajarans,id',
@@ -117,6 +117,15 @@ class IzinGuruController extends Controller
             return redirect()->back()->withInput()->with('error', 'Anda sudah memiliki pengajuan izin pada rentang waktu tersebut yang sedang diproses atau sudah disetujui.');
         }
 
+        $statusPiket = 'menunggu';
+        $statusKurikulum = 'menunggu';
+        
+        // Bisnis logic khusus: Izin Terlambat langsung ke KAUR SDM
+        if ($request->kategori_penyetujuan === 'terlambat') {
+            $statusPiket = 'disetujui';
+            $statusKurikulum = 'disetujui';
+        }
+
         $izin = GuruIzin::create([
             'master_guru_id' => $guru->id,
             'tanggal_mulai' => $request->tanggal_mulai,
@@ -124,8 +133,8 @@ class IzinGuruController extends Controller
             'jenis_izin' => $request->jenis_izin,
             'kategori_penyetujuan' => $request->kategori_penyetujuan,
             'deskripsi' => $request->deskripsi,
-            'status_piket' => 'menunggu',
-            'status_kurikulum' => 'menunggu',
+            'status_piket' => $statusPiket,
+            'status_kurikulum' => $statusKurikulum,
             'status_sdm' => 'menunggu',
         ]);
 

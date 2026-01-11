@@ -24,6 +24,9 @@ class RekapitulasiController extends Controller
         if ($request->filled('guru_id')) {
             $query->where('master_guru_id', $request->guru_id);
         }
+        if ($request->filled('kategori')) {
+            $query->where('kategori_penyetujuan', $request->kategori);
+        }
 
         $izins = $query->latest()->paginate(20)->withQueryString();
         $gurus = MasterGuru::all();
@@ -43,6 +46,9 @@ class RekapitulasiController extends Controller
         }
         if ($request->filled('guru_id')) {
             $query->where('master_guru_id', $request->guru_id);
+        }
+        if ($request->filled('kategori')) {
+            $query->where('kategori_penyetujuan', $request->kategori);
         }
 
         $izins = $query->latest()->get();
@@ -76,7 +82,10 @@ class RekapitulasiController extends Controller
         if ($request->filled('guru_id')) {
             $query->where('master_guru_id', $request->guru_id);
         }
-
+        if ($request->filled('kategori')) {
+            $query->where('kategori_penyetujuan', $request->kategori);
+        }
+        
         $izins = $query->latest()->get();
 
         $headers = [
@@ -87,7 +96,7 @@ class RekapitulasiController extends Controller
             "Expires"             => "0"
         ];
 
-        $columns = ['ID', 'Nama Guru', 'Jenis Izin', 'Tanggal Mulai', 'Tanggal Selesai', 'Deskripsi'];
+        $columns = ['ID', 'Nama Guru', 'Kategori', 'Jenis Izin', 'Tanggal Mulai', 'Tanggal Selesai', 'Deskripsi'];
 
         $callback = function() use($izins, $columns) {
             $file = fopen('php://output', 'w');
@@ -97,6 +106,7 @@ class RekapitulasiController extends Controller
                 fputcsv($file, [
                     $izin->id,
                     $izin->guru->nama_lengkap,
+                    $izin->kategori_penyetujuan === 'sekolah' ? 'Lingkungan Sekolah' : ($izin->kategori_penyetujuan === 'terlambat' ? 'Terlambat' : 'Luar Sekolah'),
                     $izin->jenis_izin,
                     $izin->tanggal_mulai->format('Y-m-d H:i'),
                     $izin->tanggal_selesai->format('Y-m-d H:i'),

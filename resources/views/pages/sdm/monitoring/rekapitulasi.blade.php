@@ -37,6 +37,15 @@
                             @endforeach
                         </select>
                     </div>
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-widest">Kategori</label>
+                        <select name="kategori" class="w-full rounded-2xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500">
+                            <option value="">Semua Kategori</option>
+                            <option value="sekolah" {{ request('kategori') == 'sekolah' ? 'selected' : '' }}>Lingkungan Sekolah</option>
+                            <option value="luar" {{ request('kategori') == 'luar' ? 'selected' : '' }}>Luar Sekolah / Absen</option>
+                            <option value="terlambat" {{ request('kategori') == 'terlambat' ? 'selected' : '' }}>Terlambat</option>
+                        </select>
+                    </div>
                     <div class="flex gap-2">
                         <button type="submit" class="flex-1 py-3 bg-indigo-600 text-white rounded-2xl font-black shadow-md hover:bg-indigo-500 transition-all active:scale-95">Filter</button>
                         <a href="{{ route('sdm.rekapitulasi.index') }}" class="p-3 bg-gray-100 text-gray-600 rounded-2xl hover:bg-gray-200 transition-colors">
@@ -71,6 +80,7 @@
                             <tr>
                                 <th class="px-6 py-4">Guru</th>
                                 <th class="px-6 py-4">Waktu Izin</th>
+                                <th class="px-6 py-4">Kategori</th>
                                 <th class="px-6 py-4">Jenis</th>
                                 <th class="px-6 py-4">Deskripsi</th>
                             </tr>
@@ -90,6 +100,15 @@
                                                 {{ $izin->tanggal_mulai->translatedFormat('d/m/Y') }} - {{ $izin->tanggal_selesai->translatedFormat('d/m/Y') }}
                                             @endif
                                         </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        @if($izin->kategori_penyetujuan === 'terlambat')
+                                            <span class="px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-100 text-[10px] font-black uppercase">Terlambat</span>
+                                        @elseif($izin->kategori_penyetujuan === 'sekolah')
+                                            <span class="px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-100 text-[10px] font-black uppercase">Sekolah</span>
+                                        @else
+                                            <span class="px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-100 text-[10px] font-black uppercase">Luar</span>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4">
                                         <span class="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] font-black uppercase">{{ $izin->jenis_izin }}</span>

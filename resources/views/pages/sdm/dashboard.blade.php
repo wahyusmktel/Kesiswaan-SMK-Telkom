@@ -17,11 +17,19 @@
                         <div class="mt-8 flex gap-6 border-t border-white/20 pt-6">
                             <div>
                                 <span class="text-3xl font-black block">{{ $stats['total_pending'] }}</span>
-                                <span class="text-xs font-bold uppercase tracking-widest text-indigo-200">Menunggu Validasi</span>
+                                <span class="text-[10px] font-bold uppercase tracking-widest text-indigo-200">Menunggu</span>
                             </div>
                             <div class="border-l border-white/20 pl-6">
-                                <span class="text-3xl font-black block">{{ $stats['total_approved'] }}</span>
-                                <span class="text-xs font-bold uppercase tracking-widest text-indigo-200">Izin Disetujui</span>
+                                <span class="text-3xl font-black block">{{ $stats['total_izin_sekolah'] }}</span>
+                                <span class="text-[10px] font-bold uppercase tracking-widest text-indigo-200">Izin Sekolah</span>
+                            </div>
+                            <div class="border-l border-white/20 pl-6">
+                                <span class="text-3xl font-black block">{{ $stats['total_izin_luar'] }}</span>
+                                <span class="text-[10px] font-bold uppercase tracking-widest text-indigo-200">Izin Luar</span>
+                            </div>
+                            <div class="border-l border-white/20 pl-6">
+                                <span class="text-3xl font-black block">{{ $stats['total_terlambat'] }}</span>
+                                <span class="text-[10px] font-bold uppercase tracking-widest text-indigo-200">Terlambat</span>
                             </div>
                         </div>
                     </div>
@@ -52,6 +60,7 @@
                         <thead class="bg-gray-50 text-gray-500 font-bold uppercase text-[10px] tracking-widest">
                             <tr>
                                 <th class="px-6 py-4">Nama Guru</th>
+                                <th class="px-6 py-4">Kategori</th>
                                 <th class="px-6 py-4">Jenis Izin</th>
                                 <th class="px-6 py-4">Deskripsi</th>
                                 <th class="px-6 py-4">Tanggal</th>
@@ -62,6 +71,15 @@
                             @forelse($stats['latest_requests'] as $req)
                                 <tr class="hover:bg-gray-50 transition-colors">
                                     <td class="px-6 py-4 font-bold text-gray-900">{{ $req->guru->nama_lengkap }}</td>
+                                    <td class="px-6 py-4">
+                                        @if($req->kategori_penyetujuan === 'terlambat')
+                                            <span class="px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-100 text-[10px] font-black uppercase tracking-tighter">Terlambat</span>
+                                        @elseif($req->kategori_penyetujuan === 'sekolah')
+                                            <span class="px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-100 text-[10px] font-black uppercase tracking-tighter">Sekolah</span>
+                                        @else
+                                            <span class="px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-100 text-[10px] font-black uppercase tracking-tighter">Luar</span>
+                                        @endif
+                                    </td>
                                     <td class="px-6 py-4 text-gray-600">{{ $req->jenis_izin }}</td>
                                     <td class="px-6 py-4 text-gray-500 italic text-[10px] truncate max-w-[150px]" title="{{ $req->deskripsi }}">
                                         "{{ $req->deskripsi }}"

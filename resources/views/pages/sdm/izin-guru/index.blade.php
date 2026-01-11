@@ -38,7 +38,16 @@
                                                 {{ $izin->tanggal_mulai->translatedFormat('d M, H:i') }} s/d {{ $izin->tanggal_selesai->translatedFormat('d M Y, H:i') }}
                                             @endif
                                         </div>
-                                        <p class="text-xs text-indigo-600 font-bold mt-1">{{ $izin->jenis_izin }}</p>
+                                        <div class="flex gap-1 mt-1">
+                                            @if($izin->kategori_penyetujuan === 'terlambat')
+                                                <span class="px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-100 text-[10px] font-black uppercase">Terlambat</span>
+                                            @elseif($izin->kategori_penyetujuan === 'sekolah')
+                                                <span class="px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-100 text-[10px] font-black uppercase">Sekolah</span>
+                                            @else
+                                                <span class="px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-100 text-[10px] font-black uppercase">Luar</span>
+                                            @endif
+                                            <span class="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] font-black uppercase">{{ $izin->jenis_izin }}</span>
+                                        </div>
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="flex items-center gap-2">

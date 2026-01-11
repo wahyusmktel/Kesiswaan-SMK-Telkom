@@ -8,24 +8,44 @@
     <div class="py-6 w-full">
         <div class="w-full px-4 sm:px-6 lg:px-8 space-y-6">
             {{-- Stats Overview --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm flex items-center gap-4">
-                    <div class="w-14 h-14 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm flex items-center gap-3">
+                    <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center flex-shrink-0">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                     </div>
                     <div>
-                        <p class="text-sm font-bold text-gray-500 uppercase tracking-wider">Total Izin Disetujui</p>
-                        <h3 class="text-3xl font-black text-gray-900">{{ $stats['total_izin'] }}</h3>
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Izin Sekolah</p>
+                        <h3 class="text-2xl font-black text-gray-900 leading-none">{{ $stats['total_izin_sekolah'] }}</h3>
                     </div>
                 </div>
 
-                <div class="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm flex items-center gap-4">
-                    <div class="w-14 h-14 bg-yellow-100 text-yellow-600 rounded-2xl flex items-center justify-center">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <div class="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm flex items-center gap-3">
+                    <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center flex-shrink-0">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                     </div>
                     <div>
-                        <p class="text-sm font-bold text-gray-500 uppercase tracking-wider">Izin Menunggu Validasi</p>
-                        <h3 class="text-3xl font-black text-gray-900">{{ $stats['total_pending'] }}</h3>
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Izin Luar</p>
+                        <h3 class="text-2xl font-black text-gray-900 leading-none">{{ $stats['total_izin_luar'] }}</h3>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm flex items-center gap-3">
+                    <div class="w-12 h-12 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center flex-shrink-0">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <div>
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Terlambat</p>
+                        <h3 class="text-2xl font-black text-gray-900 leading-none">{{ $stats['total_terlambat'] }}</h3>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm flex items-center gap-3">
+                    <div class="w-12 h-12 bg-yellow-100 text-yellow-600 rounded-2xl flex items-center justify-center flex-shrink-0">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <div>
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Menunggu</p>
+                        <h3 class="text-2xl font-black text-gray-900 leading-none">{{ $stats['total_pending'] }}</h3>
                     </div>
                 </div>
             </div>
@@ -61,7 +81,7 @@
                             </div>
                             <div class="flex items-center justify-between">
                                 <span class="text-gray-400">Rata-rata Izin Harian</span>
-                                <span class="font-bold">{{ number_format(collect($chartData['izin'])->avg(), 1) }} Kasus</span>
+                                <span class="font-bold">{{ number_format((collect($chartData['izin_sekolah'])->avg() + collect($chartData['izin_luar'])->avg() + collect($chartData['terlambat'])->avg()), 1) }} Kasus</span>
                             </div>
                         </div>
                     </div>
@@ -101,27 +121,64 @@
                 type: 'line',
                 data: {
                     labels: {!! json_encode($chartData['labels']) !!},
-                    datasets: [{
-                        label: 'Jumlah Izin Disetujui',
-                        data: {!! json_encode($chartData['izin']) !!},
-                        borderColor: '#4F46E5',
-                        borderWidth: 4,
-                        backgroundColor: gradient,
-                        fill: true,
-                        tension: 0.4,
-                        pointBackgroundColor: '#4F46E5',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointRadius: 6,
-                        pointHoverRadius: 8
-                    }]
+                    datasets: [
+                        {
+                            label: 'Lingkungan Sekolah',
+                            data: {!! json_encode($chartData['izin_sekolah']) !!},
+                            borderColor: '#8B5CF6',
+                            borderWidth: 3,
+                            backgroundColor: 'transparent',
+                            fill: false,
+                            tension: 0.4,
+                            pointBackgroundColor: '#8B5CF6',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 4
+                        },
+                        {
+                            label: 'Luar Sekolah / Absen',
+                            data: {!! json_encode($chartData['izin_luar']) !!},
+                            borderColor: '#F97316',
+                            borderWidth: 3,
+                            backgroundColor: 'transparent',
+                            fill: false,
+                            tension: 0.4,
+                            pointBackgroundColor: '#F97316',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 4
+                        },
+                        {
+                            label: 'Terlambat',
+                            data: {!! json_encode($chartData['terlambat']) !!},
+                            borderColor: '#EF4444',
+                            borderWidth: 3,
+                            backgroundColor: 'transparent',
+                            fill: false,
+                            tension: 0.4,
+                            pointBackgroundColor: '#EF4444',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 4
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            display: false
+                            display: true,
+                            position: 'top',
+                            align: 'end',
+                            labels: {
+                                usePointStyle: true,
+                                boxWidth: 6,
+                                font: {
+                                    size: 11,
+                                    weight: 'bold'
+                                }
+                            }
                         },
                         tooltip: {
                             mode: 'index',
@@ -135,7 +192,7 @@
                             displayColors: false,
                             callbacks: {
                                 label: function(context) {
-                                    return context.parsed.y + ' Persetujuan';
+                                    return context.dataset.label + ': ' + context.parsed.y + ' Kasus';
                                 }
                             }
                         }

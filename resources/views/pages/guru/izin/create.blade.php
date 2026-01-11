@@ -49,7 +49,6 @@
                                     <option value="Sakit">Sakit</option>
                                     <option value="Dinas">Dinas Out</option>
                                     <option value="Keperluan Pribadi">Keperluan Pribadi</option>
-                                    <option value="Terlambat">Terlambat</option>
                                     <option value="Lainnya">Lainnya</option>
                                 </select>
                             </div>
@@ -60,8 +59,13 @@
                                     class="w-full rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500">
                                     <option value="sekolah">Lingkungan Sekolah (Rapat, dsb)</option>
                                     <option value="luar" selected>Luar Sekolah / Tidak Masuk</option>
+                                    <option value="terlambat">Terlambat (Datang Terlambat)</option>
                                 </select>
-                                <p class="text-[10px] text-gray-500 mt-1">* Kategori Sekolah hanya butuh persetujuan Piket.</p>
+                                <p class="text-[10px] text-gray-500 mt-2">
+                                    * <strong>Sekolah</strong>: Hanya butuh persetujuan Piket.<br>
+                                    * <strong>Luar Sekolah</strong>: Piket → Kurikulum → SDM.<br>
+                                    * <strong>Terlambat</strong>: Hanya butuh persetujuan <strong>KAUR SDM</strong>.
+                                </p>
                             </div>
 
                             <div class="space-y-2 md:col-span-2">
