@@ -16,6 +16,7 @@
                     <span class="text-sm">Dashboard Admin</span>
                 </a>
             </li>
+            @can('view users')
             <li>
                 <a href="{{ route('users.index') }}"
                     class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('users.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -26,7 +27,8 @@
                     <span class="text-sm">Manajemen Pengguna</span>
                 </a>
             </li>
-            @role('Super Admin')
+            @endcan
+            @can('manage settings')
             <li>
                 <a href="{{ route('super-admin.settings') }}"
                     class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('super-admin.settings') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -38,6 +40,8 @@
                     <span class="text-sm">Konfigurasi Aplikasi</span>
                 </a>
             </li>
+            @endcan
+            @can('manage permissions')
             <li>
                 <a href="{{ route('super-admin.permissions.index') }}"
                     class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('super-admin.permissions.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -47,7 +51,7 @@
                     <span class="text-sm italic">Manajemen Hak Akses</span>
                 </a>
             </li>
-            @endrole
+            @endcan
         @endif
     @endrole
 
@@ -172,12 +176,13 @@
                 <span class="text-sm">Data Dapodik</span>
             </a>
         </li>
-    @endrole
     @endif
+    @endrole
 
     {{-- ============================================================ --}}
     {{-- ROLE: WALI KELAS                                             --}}
     {{-- ============================================================ --}}
+    @can('view wali kelas dashboard')
     @role('Wali Kelas')
     @if(session('active_role') == 'Wali Kelas')
         <li>
@@ -190,6 +195,7 @@
                 <span class="text-sm">Dashboard Wali</span>
             </a>
         </li>
+        @can('manage perizinan wali kelas')
         <li>
             <a href="{{ route('wali-kelas.perizinan.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('wali-kelas.perizinan.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -200,6 +206,8 @@
                 <span class="text-sm">Persetujuan Izin</span>
             </a>
         </li>
+        @endcan
+        @can('view monitoring keterlambatan')
         <li>
             <a href="{{ route('monitoring-keterlambatan.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('monitoring-keterlambatan.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -209,12 +217,27 @@
                 <span class="text-sm">Monitoring Terlambat</span>
             </a>
         </li>
-    @endrole
+        @endcan
+        @can('view coaching analytics')
+        <li>
+            <a href="{{ route('coaching-analytics.index') }}"
+                class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('coaching-analytics.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <span class="text-sm">Analisa Coaching</span>
+            </a>
+        </li>
+        @endcan
     @endif
+    @endrole
+    @endcan
+
 
     {{-- ============================================================ --}}
     {{-- ROLE: GURU KELAS                                             --}}
     {{-- ============================================================ --}}
+    @can('view guru kelas dashboard')
     @role('Guru Kelas')
     @if(session('active_role') == 'Guru Kelas')
         <li>
@@ -236,6 +259,7 @@
                 <span class="text-sm">Jadwal Mengajar</span>
             </a>
         </li>
+        @can('manage lms')
         <li>
             <a href="{{ route('guru.lms.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('guru.lms.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -245,6 +269,8 @@
                 <span class="text-sm">Ruang Belajar</span>
             </a>
         </li>
+        @endcan
+        @can('manage perizinan siswa')
         <li>
             <a href="{{ route('guru-kelas.persetujuan-izin-keluar.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('guru-kelas.persetujuan-izin-keluar.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -265,6 +291,8 @@
                 <span class="text-sm">Riwayat Persetujuan</span>
             </a>
         </li>
+        @endcan
+        @can('manage dispensasi')
         <li>
             <a href="{{ route('dispensasi.pengajuan.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('dispensasi.pengajuan.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -275,6 +303,8 @@
                 <span class="text-sm">Pengajuan Dispensasi</span>
             </a>
         </li>
+        @endcan
+        @can('view monitoring keterlambatan')
         <li>
             <a href="{{ route('monitoring-keterlambatan.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('monitoring-keterlambatan.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -284,7 +314,9 @@
                 <span class="text-sm">Monitoring Terlambat</span>
             </a>
         </li>
+        @endcan
         {{-- Menu Pembimbing Prakerin --}}
+        @can('monitor prakerin')
         @if (Auth::user()->masterGuru?->penempatan()->where('status', 'aktif')->exists())
             <li>
                 <a href="{{ route('pembimbing-prakerin.monitoring.index') }}"
@@ -297,6 +329,7 @@
                 </a>
             </li>
         @endif
+        @endcan
 
         <div class="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider mt-4">Layanan Guru</div>
         <li>
@@ -308,8 +341,9 @@
                 <span class="text-sm">Pengajuan Izin Guru</span>
             </a>
         </li>
-    @endrole
     @endif
+    @endrole
+    @endcan
 
     {{-- ============================================================ --}}
     {{-- ROLE: WAKA KESISWAAN                                         --}}
@@ -420,6 +454,7 @@
         @endcan
 
         @can('manage penanganan terlambat')
+        @can('view monitoring keterlambatan')
         <li>
             <a href="{{ route('monitoring-keterlambatan.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('monitoring-keterlambatan.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -429,6 +464,8 @@
                 <span class="text-sm">Monitoring Terlambat</span>
             </a>
         </li>
+        @endcan
+        @can('view coaching analytics')
         <li>
             <a href="{{ route('coaching-analytics.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('coaching-analytics.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -439,6 +476,7 @@
                 <span class="bg-blue-100 text-blue-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">NEW</span>
             </a>
         </li>
+        @endcan
         @endcan
 
         @can('monitoring izin')
@@ -581,12 +619,13 @@
             </a>
         </li>
         @endcan
-    @endrole
     @endif
+    @endrole
 
     {{-- ============================================================ --}}
     {{-- ROLE: KURIKULUM                                              --}}
     {{-- ============================================================ --}}
+    @canany(['manage jam pelajaran', 'manage mata pelajaran', 'manage guru', 'manage jadwal pelajaran', 'manage distribusi mapel'])
     @role('Kurikulum')
     @if(session('active_role') == 'Kurikulum')
         <li>
@@ -616,21 +655,31 @@
                 </svg>
             </button>
             <ul x-show="expanded" x-collapse class="pl-10 mt-1 space-y-1">
+                @can('manage jam pelajaran')
                 <li><a href="{{ route('kurikulum.jam-pelajaran.index') }}"
                         class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kurikulum.jam-pelajaran.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Pengaturan
                         Jam</a></li>
+                @endcan
+                @can('manage mata pelajaran')
                 <li><a href="{{ route('kurikulum.mata-pelajaran.index') }}"
                         class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kurikulum.mata-pelajaran.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Mata
                         Pelajaran</a></li>
+                @endcan
+                @can('manage guru')
                 <li><a href="{{ route('kurikulum.master-guru.index') }}"
                         class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kurikulum.master-guru.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Data
                         Guru</a></li>
+                @endcan
+                @can('manage jadwal pelajaran')
                 <li><a href="{{ route('kurikulum.jadwal-pelajaran.index') }}"
                         class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kurikulum.jadwal-pelajaran.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Jadwal
                         Pelajaran</a></li>
+                @endcan
+                @can('manage distribusi mapel')
                 <li><a href="{{ route('kurikulum.distribusi-mapel.index') }}"
                         class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kurikulum.distribusi-mapel.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Distribusi
                         Mapel</a></li>
+                @endcan
             </ul>
         </li>
         <li x-data="{ expanded: {{ request()->routeIs('kurikulum.monitoring-absensi-guru.*') || request()->routeIs('kurikulum.monitoring-absensi-per-kelas.*') || request()->routeIs('kurikulum.analisa-semester.*') || request()->routeIs('kurikulum.persetujuan-izin-guru.*') ? 'true' : 'false' }} }">
@@ -648,22 +697,28 @@
                 </svg>
             </button>
             <ul x-show="expanded" x-collapse class="pl-10 mt-1 space-y-1">
+                @can('manage monitoring absensi guru')
                 <li><a href="{{ route('kurikulum.monitoring-absensi-guru.index') }}"
                         class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kurikulum.monitoring-absensi-guru.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Monitoring Harian</a></li>
                 <li><a href="{{ route('kurikulum.monitoring-absensi-per-kelas.index') }}"
                         class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kurikulum.monitoring-absensi-per-kelas.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Monitoring Per Kelas</a></li>
+                @endcan
+                @can('view analisa kurikulum')
                 <li><a href="{{ route('kurikulum.analisa-semester.index') }}"
                         class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kurikulum.analisa-semester.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Analisa Semester</a></li>
+                @endcan
                 <li><a href="{{ route('kurikulum.persetujuan-izin-guru.index') }}"
                         class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kurikulum.persetujuan-izin-guru.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Persetujuan Izin Guru</a></li>
             </ul>
         </li>
-    @endrole
     @endif
+    @endrole
+    @endcanany
 
     {{-- ============================================================ --}}
     {{-- ROLE: GURU BK                                                --}}
     {{-- ============================================================ --}}
+    @can('view bk dashboard')
     @role('Guru BK')
     @if(session('active_role') == 'Guru BK')
         <li>
@@ -676,6 +731,7 @@
                 <span class="text-sm">Dashboard BK</span>
             </a>
         </li>
+        @can('manage monitoring bk')
         <li>
             <a href="{{ route('bk.monitoring.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('bk.monitoring.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -688,6 +744,8 @@
                 <span class="text-sm">Monitoring Izin</span>
             </a>
         </li>
+        @endcan
+        @can('view monitoring keterlambatan')
         <li>
             <a href="{{ route('monitoring-keterlambatan.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('monitoring-keterlambatan.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -697,6 +755,19 @@
                 <span class="text-sm">Monitoring Terlambat</span>
             </a>
         </li>
+        @endcan
+        @can('view coaching analytics')
+        <li>
+            <a href="{{ route('coaching-analytics.index') }}"
+                class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('coaching-analytics.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <span class="text-sm">Analisa Coaching</span>
+            </a>
+        </li>
+        @endcan
+        @can('manage monitoring catatan')
         <li>
             <a href="{{ route('bk.monitoring-catatan.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('bk.monitoring-catatan.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -706,6 +777,7 @@
                 <span class="text-sm">Monitoring Catatan</span>
             </a>
         </li>
+        @endcan
         <li>
             <a href="{{ route('kesiswaan.pengaduan.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('kesiswaan.pengaduan.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -717,6 +789,7 @@
             </a>
         </li>
 
+        @can('manage poin tata tertib')
         <li x-data="{ expanded: {{ request()->routeIs('kesiswaan.input-pelanggaran.*') || request()->routeIs('kesiswaan.input-prestasi.*') || request()->routeIs('kesiswaan.input-pemutihan.*') ? 'true' : 'false' }} }">
             <button @click="expanded = !expanded"
                 class="flex items-center justify-between w-full px-3 py-2 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors">
@@ -744,8 +817,10 @@
                         Poin</a></li>
             </ul>
         </li>
+        @endcan
 
         <div class="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider mt-4">Layanan BK</div>
+        @can('manage konsultasi bk')
         <li>
             <a href="{{ route('bk.konsultasi.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('bk.konsultasi.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -755,6 +830,8 @@
                 <span class="text-sm">Konsultasi Siswa</span>
             </a>
         </li>
+        @endcan
+        @can('manage chat bk')
         <li>
             <a href="{{ route('bk.chat.index') }}"
                 class="flex items-center justify-between px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('bk.chat.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -769,12 +846,15 @@
                 </template>
             </a>
         </li>
-    @endrole
+        @endcan
     @endif
+    @endrole
+    @endcan
 
     {{-- ============================================================ --}}
     {{-- ROLE: GURU PIKET                                             --}}
     {{-- ============================================================ --}}
+    @can('view piket dashboard')
     @role('Guru Piket')
     @if(session('active_role') == 'Guru Piket')
         <li>
@@ -787,6 +867,7 @@
                 <span class="text-sm">Dashboard Piket</span>
             </a>
         </li>
+        @can('manage verifikasi terlambat')
         <li>
             <a href="{{ route('piket.verifikasi-terlambat.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('piket.verifikasi-terlambat.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -797,6 +878,8 @@
                 <span class="text-sm">Verifikasi Terlambat</span>
             </a>
         </li>
+        @endcan
+        @can('manage student late handling')
         <li>
             <a href="{{ route('piket.penanganan-terlambat.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('piket.penanganan-terlambat.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -807,6 +890,7 @@
                 <span class="text-sm">Penanganan Terlambat</span>
             </a>
         </li>
+        @endcan
         <li>
             <a href="{{ route('piket.monitoring.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('piket.monitoring.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -819,6 +903,7 @@
                 <span class="text-sm">Monitoring Izin</span>
             </a>
         </li>
+        @can('view monitoring keterlambatan')
         <li>
             <a href="{{ route('monitoring-keterlambatan.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('monitoring-keterlambatan.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -828,6 +913,7 @@
                 <span class="text-sm">Monitoring Terlambat</span>
             </a>
         </li>
+        @endcan
         <li>
             <a href="{{ route('piket.persetujuan-izin-keluar.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('piket.persetujuan-izin-keluar.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -848,6 +934,7 @@
                 <span class="text-sm">Riwayat Keluar</span>
             </a>
         </li>        
+        @can('manage teacher attendance tracking')
         <li>
             <a href="{{ route('piket.absensi-guru.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('piket.absensi-guru.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -858,6 +945,8 @@
                 <span class="text-sm">Absensi Guru</span>
             </a>
         </li>
+        @endcan
+        @can('monitoring izin')
         <li>
             <a href="{{ route('piket.persetujuan-izin-guru.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('piket.persetujuan-izin-guru.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -867,6 +956,7 @@
                 <span class="text-sm">Persetujuan Izin Guru</span>
             </a>
         </li>
+        @endcan
         <div class="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider mt-4">Pusat Bantuan</div>
         <li>
             <a href="{{ route('docs.piket') }}" target="_blank"
@@ -877,12 +967,14 @@
                 <span class="text-sm">Panduan Penggunaan</span>
             </a>
         </li>
-    @endrole
     @endif
+    @endrole
+    @endcan
 
     {{-- ============================================================ --}}
     {{-- ROLE: SECURITY                                               --}}
     {{-- ============================================================ --}}
+    @can('manage gate terminal')
     @role('Security')
     @if(session('active_role') == 'Security')
         <li>
@@ -935,12 +1027,14 @@
                 <span class="text-sm">Pindai QR</span>
             </a>
         </li>        
-    @endrole
     @endif
+    @endrole
+    @endcan
 
     {{-- ============================================================ --}}
     {{-- ROLE: KAUR SDM                                               --}}
     {{-- ============================================================ --}}
+    @can('view sdm dashboard')
     @role('KAUR SDM')
     @if(session('active_role') == 'KAUR SDM')
         <li>
@@ -961,6 +1055,7 @@
                 <span class="text-sm">Monitoring Guru</span>
             </a>
         </li>
+        @can('manage perizinan guru')
         <li>
             <a href="{{ route('sdm.persetujuan-izin-guru.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('sdm.persetujuan-izin-guru.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -970,6 +1065,8 @@
                 <span class="text-sm">Persetujuan Izin Guru</span>
             </a>
         </li>
+        @endcan
+        @can('view rekapitulasi sdm')
         <li>
             <a href="{{ route('sdm.rekapitulasi.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('sdm.rekapitulasi.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -979,6 +1076,8 @@
                 <span class="text-sm">Rekapitulasi Laporan</span>
             </a>
         </li>
+        @endcan
+        @can('manage nde referensi')
         <li>
             <a href="{{ route('sdm.nde-referensi.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('sdm.nde-referensi.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -988,12 +1087,15 @@
                 <span class="text-sm">Referensi NDE</span>
             </a>
         </li>
-    @endrole
+        @endcan
     @endif
+    @endrole
+    @endcan
 
     {{-- ============================================================ --}}
     {{-- ROLE: OPERATOR                                               --}}
     {{-- ============================================================ --}}
+    @can('view operator dashboard')
     @role('Operator')
     @if(session('active_role') == 'Operator')
         <li>
@@ -1008,6 +1110,7 @@
         </li>
 
         {{-- Dropdown Master Data --}}
+        @can('view master data')
         <li x-data="{ expanded: {{ request()->routeIs('master-data.*') ? 'true' : 'false' }} }">
             <button @click="expanded = !expanded"
                 class="flex items-center justify-between w-full px-3 py-2 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors">
@@ -1024,19 +1127,27 @@
                 </svg>
             </button>
             <ul x-show="expanded" x-collapse class="pl-10 mt-1 space-y-1">
+                @can('manage kelas')
                 <li><a href="{{ route('master-data.kelas.index') }}"
                         class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('master-data.kelas.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Data
                         Kelas</a></li>
+                @endcan
+                @can('manage siswa')
                 <li><a href="{{ route('master-data.siswa.index') }}"
                         class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('master-data.siswa.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Data
                         Siswa</a></li>
+                @endcan
+                @can('manage rombel')
                 <li><a href="{{ route('master-data.rombel.index') }}"
                         class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('master-data.rombel.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Data
                         Rombel</a></li>
+                @endcan
             </ul>
         </li>
+        @endcan
 
         {{-- Dapodik Management --}}
+        @can('manage dapodik')
         <li>
             <a href="{{ route('operator.dapodik.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('operator.dapodik.index') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -1061,12 +1172,15 @@
                 @endif
             </a>
         </li>
-    @endrole
+        @endcan
     @endif
+    @endrole
+    @endcan
 
     {{-- ============================================================ --}}
     {{-- ROLE: PRAKERIN (Koordinator)                                 --}}
     {{-- ============================================================ --}}
+    @can('manage prakerin')
     @role('Koordinator Prakerin|Waka Kesiswaan|Kurikulum')
     @if(in_array(session('active_role'), ['Koordinator Prakerin', 'Waka Kesiswaan', 'Kurikulum']))
         <li x-data="{ expanded: {{ request()->routeIs('prakerin.*') ? 'true' : 'false' }} }">
@@ -1093,8 +1207,9 @@
                         Siswa</a></li>
             </ul>
         </li>
-    @endrole
     @endif
+    @endrole
+    @endcan
 
     <div class="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider mt-4">Komunikasi</div>
     <li>

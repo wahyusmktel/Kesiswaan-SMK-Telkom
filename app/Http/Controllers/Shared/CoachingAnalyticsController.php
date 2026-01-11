@@ -23,13 +23,9 @@ class CoachingAnalyticsController extends Controller
             $query->whereHas('siswa.rombels', function($q) use ($user) {
                 $q->where('wali_kelas_id', $user->id);
             });
-        } elseif ($user->hasRole('Guru BK')) {
-            // BK usually handles 3+ lateness which has status 'pembinaan_bk' or is completed after BK
-            $query->where(function($q) {
-                $q->where('status', 'pembinaan_bk')
-                  ->orWhereNotNull('waktu_pembinaan_bk');
-            });
-        }
+        } 
+        // Waka and Guru BK can see everything in this analytics view now
+        // to allow comparative analysis as requested.
 
         // Only show records that have had some coaching or reached that stage
         $query->where(function($q) {
@@ -48,7 +44,10 @@ class CoachingAnalyticsController extends Controller
             DB::raw("DATE_FORMAT(waktu_dicatat_security, '%Y-%m') as month")
         )
         ->where('waktu_dicatat_security', '>=', now()->subMonths(6))
-        ->whereNotNull('waktu_pendampingan_wali_kelas');
+        ->where(function($q) {
+            $q->whereNotNull('waktu_pendampingan_wali_kelas')
+              ->orWhereNotNull('waktu_pembinaan_bk');
+        });
 
         if ($user->hasRole('Wali Kelas')) {
             $trendsQuery->whereHas('siswa.rombels', function($q) use ($user) {
@@ -87,26 +86,33 @@ class CoachingAnalyticsController extends Controller
         $routines['avg_wake'] = $routines['avg_wake'] ? date('H:i', $routines['avg_wake']) : '--:--';
         $routines['avg_depart'] = $routines['avg_depart'] ? date('H:i', $routines['avg_depart']) : '--:--';
 
-        // 4. Common Causes (Realities)
-        $recentCoachings = KeterlambatanCoaching::with('keterlambatan.siswa')
+        // 4. Wali Kelas GROW Action Plans
+        $growSummary = KeterlambatanCoaching::with('keterlambatan.siswa')
             ->latest()
-            ->take(10);
+            ->take(6);
             
         if ($user->hasRole('Wali Kelas')) {
-            $recentCoachings->whereHas('keterlambatan.siswa.rombels', function($q) use ($user) {
+            $growSummary->whereHas('keterlambatan.siswa.rombels', function($q) use ($user) {
                 $q->where('wali_kelas_id', $user->id);
             });
         }
         
-        $recentCoachings = $recentCoachings->get();
+        $recentGrow = $growSummary->get();
+
+        // 5. Comparison Stats
+        $stats = [
+            'total_bk' => (clone $query)->whereNotNull('waktu_pembinaan_bk')->count(),
+            'total_wali' => (clone $query)->whereNotNull('waktu_pendampingan_wali_kelas')->count(),
+        ];
 
         return view('pages.shared.coaching-analytics.index', compact(
             'activities',
             'trends',
             'effectivenessRate',
-            'recentCoachings',
+            'recentGrow',
             'totalCoached',
-            'routines'
+            'routines',
+            'stats'
         ));
     }
 }

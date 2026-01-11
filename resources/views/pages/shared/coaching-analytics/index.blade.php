@@ -20,9 +20,12 @@
                 {{-- Total Coached --}}
                 <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center justify-between overflow-hidden relative">
                     <div class="relative z-10">
-                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Coached</p>
+                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Coached / Breakdown</p>
                         <h3 class="text-4xl font-black text-gray-900">{{ $totalCoached }}</h3>
-                        <p class="text-xs text-gray-500 mt-2 font-medium italic">Siswa telah dibina</p>
+                        <div class="flex gap-3 mt-2">
+                            <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">BK: {{ $stats['total_bk'] }}</span>
+                            <span class="text-[10px] font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">Wali: {{ $stats['total_wali'] }}</span>
+                        </div>
                     </div>
                     <div class="absolute -right-4 -bottom-4 opacity-5">
                         <svg class="w-32 h-32 text-gray-900" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
@@ -59,7 +62,7 @@
                 {{-- Routine Stats --}}
                 <div class="bg-indigo-900 rounded-3xl p-8 shadow-sm border border-indigo-800 text-white relative overflow-hidden">
                     <div class="relative z-10">
-                        <h4 class="text-xs font-black text-indigo-200 uppercase tracking-widest mb-6">Analisa Rutinitas Pagi (Rata-rata)</h4>
+                        <h4 class="text-xs font-black text-indigo-200 uppercase tracking-widest mb-6">Analisa Rutinitas Pagi (BK)</h4>
                         <div class="grid grid-cols-3 gap-4">
                             <div class="text-center">
                                 <p class="text-[8px] font-black text-indigo-300 uppercase tracking-tighter mb-2">Jam Bangun</p>
@@ -83,15 +86,18 @@
 
                 {{-- Common Causes --}}
                 <div class="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-                    <h4 class="text-xs font-black text-gray-900 uppercase tracking-widest mb-6">Analisa Akar Masalah (Reality)</h4>
+                    <h4 class="text-xs font-black text-gray-900 uppercase tracking-widest mb-6">Analisa GROW (Wali Kelas)</h4>
                     <div class="space-y-4">
-                        @forelse($recentCoachings as $coaching)
+                        @forelse($recentGrow as $coaching)
                             <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100">
                                 <div class="flex items-center justify-between mb-2">
                                     <span class="text-[10px] font-black text-purple-600 uppercase tracking-widest">{{ $coaching->keterlambatan?->siswa?->nama_lengkap ?? 'Unknown' }}</span>
                                     <span class="text-[10px] text-gray-400 font-bold">{{ $coaching->created_at->format('d/m/Y') }}</span>
                                 </div>
-                                <p class="text-xs text-gray-700 italic font-medium leading-relaxed">"{{ Str::limit($coaching->reality_response, 80) }}"</p>
+                                <div class="space-y-1">
+                                    <p class="text-[9px] font-bold text-gray-400 uppercase">Rencana Aksi:</p>
+                                    <p class="text-xs text-gray-700 italic font-medium leading-relaxed">"{{ Str::limit($coaching->rencana_aksi, 80) }}"</p>
+                                </div>
                             </div>
                         @empty
                             <div class="text-center py-6">
