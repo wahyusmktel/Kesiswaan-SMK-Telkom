@@ -23,7 +23,7 @@
                     </div>
                     <div>
                         <h4 class="text-blue-900 font-bold mb-2 text-sm uppercase tracking-wider">Panduan Pengajuan Izin Guru</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div class="bg-white/50 p-3 rounded-xl border border-blue-100">
                                 <p class="text-xs font-bold text-blue-800 mb-1">1. Izin Lingkungan Sekolah</p>
                                 <p class="text-[11px] text-blue-600 leading-relaxed font-medium">Gunakan kategori ini jika Anda izin meninggalkan kelas untuk kegiatan operasional sekolah (Rapat, dsb) namun tetap berada di lingkungan sekolah. Cukup memerlukan persetujuan dari <strong>Guru Piket</strong>.</p>
@@ -31,6 +31,10 @@
                             <div class="bg-white/50 p-3 rounded-xl border border-blue-100">
                                 <p class="text-xs font-bold text-blue-800 mb-1">2. Izin Luar Sekolah / Absen</p>
                                 <p class="text-[11px] text-blue-600 leading-relaxed font-medium">Gunakan kategori ini jika Anda izin keluar lingkungan sekolah atau tidak masuk di hari berikutnya. Memerlukan persetujuan berjenjang: <strong>Guru Piket &rarr; Waka Kurikulum &rarr; KAUR SDM</strong>.</p>
+                            </div>
+                            <div class="bg-white/50 p-3 rounded-xl border border-blue-100">
+                                <p class="text-xs font-bold text-blue-800 mb-1">3. Izin Keterlambatan</p>
+                                <p class="text-[11px] text-blue-600 leading-relaxed font-medium">Gunakan kategori ini jika Anda hadir terlambat di sekolah. Pengajuan ini akan langsung diteruskan ke <strong>KAUR SDM</strong> untuk validasi, melewati Guru Piket dan Waka Kurikulum.</p>
                             </div>
                         </div>
                     </div>
