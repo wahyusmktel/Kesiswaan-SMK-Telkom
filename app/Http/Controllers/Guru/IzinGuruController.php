@@ -48,13 +48,39 @@ class IzinGuruController extends Controller
         ];
         $hari = $hariMap[date('l', strtotime($tanggal))];
 
-        $schedules = JadwalPelajaran::with(['rombel', 'mataPelajaran'])
+        $schedules = JadwalPelajaran::with(['rombel.kelas', 'mataPelajaran'])
             ->where('master_guru_id', $guru->id)
             ->where('hari', $hari)
             ->orderBy('jam_ke')
             ->get();
 
         return response()->json($schedules);
+    }
+
+    public function getLmsResources(JadwalPelajaran $schedule)
+    {
+        $guru = Auth::user()->masterGuru;
+        if (!$guru || $schedule->master_guru_id !== $guru->id) {
+            return response()->json([], 403);
+        }
+
+        $materials = \App\Models\LmsMaterial::where('master_guru_id', $guru->id)
+            ->where('rombel_id', $schedule->rombel_id)
+            ->where('mata_pelajaran_id', $schedule->mata_pelajaran_id)
+            ->where('is_published', true)
+            ->select('id', 'title')
+            ->get();
+
+        $assignments = \App\Models\LmsAssignment::where('master_guru_id', $guru->id)
+            ->where('rombel_id', $schedule->rombel_id)
+            ->where('mata_pelajaran_id', $schedule->mata_pelajaran_id)
+            ->select('id', 'title')
+            ->get();
+
+        return response()->json([
+            'materials' => $materials,
+            'assignments' => $assignments
+        ]);
     }
 
     public function store(Request $request)
@@ -67,6 +93,8 @@ class IzinGuruController extends Controller
             'deskripsi' => 'required|string',
             'jadwal_ids' => 'nullable|array',
             'jadwal_ids.*' => 'exists:jadwal_pelajarans,id',
+            'lms_material_ids' => 'nullable|array',
+            'lms_assignment_ids' => 'nullable|array',
         ]);
 
         $guru = Auth::user()->masterGuru;
@@ -78,9 +106,6 @@ class IzinGuruController extends Controller
         $startDate = \Carbon\Carbon::parse($request->tanggal_mulai);
         $endDate = \Carbon\Carbon::parse($request->tanggal_selesai);
         
-        // Get all schedules for the days covered by the permit
-        // (For simplicity assuming single day or handle multiple days if needed)
-        // Usually teacher permits are per-day in this context
         $hariMap = [
             'Sunday' => 'Minggu', 'Monday' => 'Senin', 'Tuesday' => 'Selasa',
             'Wednesday' => 'Rabu', 'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu',
@@ -98,15 +123,30 @@ class IzinGuruController extends Controller
             })
             ->get();
 
-        if ($availableSchedules->isNotEmpty() && count($request->input('jadwal_ids', [])) === 0) {
-            return redirect()->back()->withInput()->with('error', 'Sistem mendeteksi Anda memiliki jam mengajar pada waktu tersebut. Silakan pilih jam pelajaran yang Anda tinggalkan.');
+        if ($availableSchedules->isNotEmpty()) {
+            $selectedJadwalIds = $request->input('jadwal_ids', []);
+            if (count($selectedJadwalIds) === 0) {
+                return redirect()->back()->withInput()->with('error', 'Sistem mendeteksi Anda memiliki jam mengajar pada waktu tersebut. Silakan pilih jam pelajaran yang Anda tinggalkan.');
+            }
+
+            // Mandatory Penugasan Validation
+            foreach ($selectedJadwalIds as $id) {
+                $mateId = $request->input("lms_material_ids.$id");
+                $asgnId = $request->input("lms_assignment_ids.$id");
+                
+                if (empty($mateId) && empty($asgnId)) {
+                    $jadwal = JadwalPelajaran::with('rombel.kelas')->find($id);
+                    $kelasNama = $jadwal->rombel->kelas->nama_kelas;
+                    return redirect()->back()->withInput()->with('error', "Anda wajib melampirkan minimal satu Materi atau Tugas untuk kelas $kelasNama pada Jam ke-$jadwal->jam_ke.");
+                }
+            }
         }
 
-        // Check for overlapping permits (existing permits for the same time)
+        // Check for overlapping permits
         $overlap = GuruIzin::where('master_guru_id', $guru->id)
-            ->where(function ($query) use ($request) {
-                $query->where('tanggal_mulai', '<=', $request->tanggal_selesai)
-                      ->where('tanggal_selesai', '>=', $request->tanggal_mulai);
+            ->where(function ($query) use ($startDate, $endDate) {
+                $query->where('tanggal_mulai', '<=', $endDate)
+                      ->where('tanggal_selesai', '>=', $startDate);
             })
             ->where('status_piket', '!=', 'ditolak')
             ->where('status_kurikulum', '!=', 'ditolak')
@@ -120,7 +160,6 @@ class IzinGuruController extends Controller
         $statusPiket = 'menunggu';
         $statusKurikulum = 'menunggu';
         
-        // Bisnis logic khusus: Izin Terlambat langsung ke KAUR SDM
         if ($request->kategori_penyetujuan === 'terlambat') {
             $statusPiket = 'disetujui';
             $statusKurikulum = 'disetujui';
@@ -139,7 +178,14 @@ class IzinGuruController extends Controller
         ]);
 
         if ($request->filled('jadwal_ids')) {
-            $izin->jadwals()->attach($request->jadwal_ids);
+            $pivotData = [];
+            foreach ($request->jadwal_ids as $jadwalId) {
+                $pivotData[$jadwalId] = [
+                    'lms_material_id' => $request->input("lms_material_ids.$jadwalId") ?: null,
+                    'lms_assignment_id' => $request->input("lms_assignment_ids.$jadwalId") ?: null,
+                ];
+            }
+            $izin->jadwals()->sync($pivotData);
         }
 
         // Notifikasi untuk Approver

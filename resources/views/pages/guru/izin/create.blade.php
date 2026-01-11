@@ -88,24 +88,81 @@
                                 <svg class="animate-spin h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                             </div>
 
-                            <div x-show="!loading && schedules.length > 0" class="grid grid-cols-1 gap-3">
+                            <div x-show="!loading && schedules.length > 0" class="grid grid-cols-1 gap-4">
                                 <template x-for="schedule in schedules" :key="schedule.id">
-                                    <label class="relative flex items-center p-4 rounded-xl border border-gray-200 hover:border-indigo-200 hover:bg-indigo-50/50 cursor-pointer transition-all"
-                                           :class="selectedIds.includes(schedule.id.toString()) ? 'bg-indigo-50 border-indigo-200 ring-1 ring-indigo-100' : ''">
-                                        <input type="checkbox" name="jadwal_ids[]" :value="schedule.id" 
-                                               x-model="selectedIds"
-                                               class="rounded text-indigo-600 focus:ring-indigo-500 mr-4 transition-all">
-                                        <div class="flex-1">
-                                            <div class="flex justify-between items-center mb-1">
-                                                <span class="font-bold text-gray-900" x-text="schedule.rombel.kelas.nama_kelas"></span>
-                                                <span class="text-xs font-black text-indigo-600 uppercase tracking-widest" x-text="'Jam ' + schedule.jam_ke"></span>
+                                    <div class="space-y-3">
+                                        <label class="relative flex items-center p-4 rounded-xl border border-gray-200 hover:border-indigo-200 hover:bg-indigo-50/50 cursor-pointer transition-all"
+                                               :class="selectedIds.includes(schedule.id.toString()) ? 'bg-indigo-50 border-indigo-200 ring-1 ring-indigo-100' : ''">
+                                            <input type="checkbox" name="jadwal_ids[]" :value="schedule.id" 
+                                                   x-model="selectedIds"
+                                                   @change="handleScheduleToggle(schedule)"
+                                                   class="rounded text-indigo-600 focus:ring-indigo-500 mr-4 transition-all">
+                                            <div class="flex-1">
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <span class="font-bold text-gray-900" x-text="schedule.rombel.kelas.nama_kelas"></span>
+                                                    <span class="text-xs font-black text-indigo-600 uppercase tracking-widest" x-text="'Jam ' + schedule.jam_ke"></span>
+                                                </div>
+                                                <div class="flex justify-between items-center">
+                                                    <span class="text-sm text-gray-600" x-text="schedule.mata_pelajaran.nama_mapel"></span>
+                                                    <span class="text-xs font-mono text-gray-400" x-text="formatTime(schedule.jam_mulai) + ' - ' + formatTime(schedule.jam_selesai)"></span>
+                                                </div>
                                             </div>
-                                            <div class="flex justify-between items-center">
-                                                <span class="text-sm text-gray-600" x-text="schedule.mata_pelajaran.nama_mapel"></span>
-                                                <span class="text-xs font-mono text-gray-400" x-text="formatTime(schedule.jam_mulai) + ' - ' + formatTime(schedule.jam_selesai)"></span>
+                                        </label>
+
+                                        {{-- LMS Resource Selectors (Conditional) --}}
+                                        <div x-show="selectedIds.includes(schedule.id.toString())" 
+                                             x-transition:enter="transition ease-out duration-200"
+                                             x-transition:enter-start="opacity-0 -translate-y-2"
+                                             x-transition:enter-end="opacity-100 translate-y-0"
+                                             class="ml-8 p-5 bg-gray-50 rounded-2xl border border-gray-100 space-y-4 shadow-sm">
+                                            
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <div class="p-1.5 bg-indigo-100 text-indigo-700 rounded-lg">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                                    </svg>
+                                                </div>
+                                                <h5 class="text-xs font-black text-gray-900 uppercase tracking-widest">Penugasan & Materi (Wajib)</h5>
+                                            </div>
+
+                                            <p class="text-[10px] text-gray-500 leading-normal mb-3">
+                                                * Anda wajib melampirkan minimal satu materi atau tugas untuk setiap jam pelajaran yang ditinggalkan.
+                                            </p>
+
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div class="space-y-1.5">
+                                                    <label class="text-[10px] font-bold text-gray-400 uppercase">Materi Pelajaran</label>
+                                                    <select :name="'lms_material_ids[' + schedule.id + ']'" 
+                                                        class="w-full text-xs rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 bg-white shadow-sm">
+                                                        <option value="">-- Pilih Materi --</option>
+                                                        <template x-for="material in lmsData[schedule.id]?.materials || []" :key="material.id">
+                                                            <option :value="material.id" x-text="material.title"></option>
+                                                        </template>
+                                                    </select>
+                                                </div>
+                                                <div class="space-y-1.5">
+                                                    <label class="text-[10px] font-bold text-gray-400 uppercase">Tugas & PR</label>
+                                                    <select :name="'lms_assignment_ids[' + schedule.id + ']'" 
+                                                        class="w-full text-xs rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 bg-white shadow-sm">
+                                                        <option value="">-- Pilih Tugas --</option>
+                                                        <template x-for="assignment in lmsData[schedule.id]?.assignments || []" :key="assignment.id">
+                                                            <option :value="assignment.id" x-text="assignment.title"></option>
+                                                        </template>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div x-show="lmsData[schedule.id] && lmsData[schedule.id].materials.length === 0 && lmsData[schedule.id].assignments.length === 0" 
+                                                 class="p-3 bg-red-50 border border-red-100 rounded-xl flex items-center gap-2">
+                                                <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                </svg>
+                                                <p class="text-[10px] text-red-600 font-bold">
+                                                    Data LSM belum tersedia untuk kelas ini. Silakan buat materi/tugas di Ruang Belajar terlebih dahulu.
+                                                </p>
                                             </div>
                                         </div>
-                                    </label>
+                                    </div>
                                 </template>
                             </div>
 
@@ -140,6 +197,7 @@
                 endDate: '',
                 schedules: [],
                 selectedIds: [],
+                lmsData: {}, // Map of scheduleId -> {materials, assignments}
                 loading: false,
 
                 async fetchSchedules() {
@@ -158,13 +216,27 @@
                     this.loading = false;
                 },
 
+                async handleScheduleToggle(schedule) {
+                    const id = schedule.id.toString();
+                    if (this.selectedIds.includes(id)) {
+                        // Fetch LMS resources if not already loaded
+                        if (!this.lmsData[schedule.id]) {
+                            try {
+                                const response = await fetch(`/guru/izin/lms-resources/${schedule.id}`);
+                                this.lmsData[schedule.id] = await response.json();
+                            } catch (error) {
+                                console.error('Failed to fetch LMS resources', error);
+                            }
+                        }
+                    }
+                },
+
                 autoSelectOverlappingSchedules() {
                     if (!this.startDate || !this.endDate) return;
 
                     const permitStart = new Date(this.startDate);
                     const permitEnd = new Date(this.endDate);
                     
-                    // Convert to only time strings for comparison HH:mm
                     const pStartTime = permitStart.getHours().toString().padStart(2, '0') + ':' + permitStart.getMinutes().toString().padStart(2, '0');
                     const pEndTime = permitEnd.getHours().toString().padStart(2, '0') + ':' + permitEnd.getMinutes().toString().padStart(2, '0');
 
@@ -173,9 +245,9 @@
                         const sStart = schedule.jam_mulai.substring(0, 5);
                         const sEnd = schedule.jam_selesai.substring(0, 5);
 
-                        // Overlap condition: startA < endB AND endA > startB
                         if (pStartTime < sEnd && pEndTime > sStart) {
                             this.selectedIds.push(schedule.id.toString());
+                            this.handleScheduleToggle(schedule);
                         }
                     });
                 },

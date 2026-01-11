@@ -23,4 +23,11 @@ class JadwalPelajaran extends Model
     {
         return $this->belongsTo(MasterGuru::class, 'master_guru_id');
     }
+    public function izins()
+    {
+        return $this->belongsToMany(GuruIzin::class, 'guru_izin_jadwal')
+                    ->using(GuruIzinJadwal::class)
+                    ->withPivot(['lms_material_id', 'lms_assignment_id'])
+                    ->withTimestamps();
+    }
 }

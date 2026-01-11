@@ -21,7 +21,8 @@
                             <tr>
                                 <th class="px-6 py-4">Guru</th>
                                 <th class="px-6 py-4">Waktu & Jenis</th>
-                                <th class="px-6 py-4">Deskripsi</th>
+                                <th class="px-6 py-4">Penugasan & Materi</th>
+                                <th class="px-6 py-4 text-center">Status</th>
                                 <th class="px-6 py-4">Aksi</th>
                             </tr>
                         </thead>
@@ -46,21 +47,54 @@
                                                 <span class="block text-[10px] text-indigo-600 font-normal">{{ $izin->tanggal_mulai->format('H:i') }} - {{ $izin->tanggal_selesai->format('H:i') }}</span>
                                             @else
                                                 <span class="block text-[10px] text-gray-600 font-normal">{{ $izin->tanggal_mulai->translatedFormat('d M Y, H:i') }}</span>
-                                                <span class="block text-[10px] text-gray-400 font-normal text-center">s/d</span>
-                                                <span class="block text-[10px] text-gray-600 font-normal">{{ $izin->tanggal_selesai->translatedFormat('d M Y, H:i') }}</span>
+                                                <span class="block text-[10px] text-indigo-600 font-normal">{{ $izin->tanggal_selesai->translatedFormat('d M Y, H:i') }}</span>
                                             @endif
                                         </div>
                                         <span class="inline-block mt-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 text-[10px] font-black uppercase">{{ $izin->jenis_izin }}</span>
                                         @if($izin->kategori_penyetujuan === 'sekolah')
                                             <span class="inline-block mt-1 px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-100 text-[10px] font-black uppercase">Lingkungan Sekolah</span>
-                                        @else
+                                        @elseif($izin->kategori_penyetujuan === 'luar')
                                             <span class="inline-block mt-1 px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-100 text-[10px] font-black uppercase">Luar Sekolah</span>
+                                        @else
+                                            <span class="inline-block mt-1 px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-100 text-[10px] font-black uppercase">Terlambat</span>
                                         @endif
                                     </td>
                                     <td class="px-6 py-4">
-                                        <p class="text-gray-600 text-xs max-w-xs italic line-clamp-2">"{{ $izin->deskripsi }}"</p>
+                                        @if($izin->jadwals->isNotEmpty())
+                                            <div class="space-y-3">
+                                                @foreach($izin->jadwals as $jadwal)
+                                                    <div class="bg-white border border-gray-100 rounded-xl p-3 shadow-sm">
+                                                        <div class="flex justify-between items-center mb-2">
+                                                            <span class="text-xs font-black text-gray-900">{{ $jadwal->rombel->kelas->nama_kelas }}</span>
+                                                            <span class="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Jam {{ $jadwal->jam_ke }}</span>
+                                                        </div>
+                                                        <p class="text-[10px] text-gray-500 mb-2">{{ $jadwal->mataPelajaran->nama_mapel }}</p>
+                                                        
+                                                        <div class="space-y-1.5">
+                                                            @if($jadwal->pivot->loadedMaterial)
+                                                                <div class="flex items-center gap-2 group cursor-pointer">
+                                                                    <div class="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                                                                    <span class="text-[10px] font-bold text-blue-600 group-hover:underline">{{ $jadwal->pivot->loadedMaterial->title }} (Materi)</span>
+                                                                </div>
+                                                            @endif
+                                                            @if($jadwal->pivot->loadedAssignment)
+                                                                <div class="flex items-center gap-2 group cursor-pointer">
+                                                                    <div class="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                                                                    <span class="text-[10px] font-bold text-green-600 group-hover:underline">{{ $jadwal->pivot->loadedAssignment->title }} (Tugas)</span>
+                                                                </div>
+                                                            @endif
+                                                            @if(!$jadwal->pivot->loadedMaterial && !$jadwal->pivot->loadedAssignment)
+                                                                <span class="text-[10px] italic text-red-500">Materi/Tugas belum dilampirkan</span>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <p class="text-xs text-gray-400 italic">"{{ $izin->deskripsi }}"</p>
+                                        @endif
                                     </td>
-                                    <td class="px-6 py-4">
+                                    <td class="px-6 py-4 text-center">
                                         @if($izin->status_piket == 'menunggu')
                                             <div class="flex gap-2">
                                                 <form action="{{ route('piket.persetujuan-izin-guru.approve', $izin->id) }}" method="POST">

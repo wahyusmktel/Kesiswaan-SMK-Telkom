@@ -21,6 +21,7 @@
                             <tr>
                                 <th class="px-6 py-4">Guru</th>
                                 <th class="px-6 py-4">Waktu & Jenis</th>
+                                <th class="px-6 py-4">Penugasan & Materi</th>
                                 <th class="px-6 py-4">Piket Status</th>
                                 <th class="px-6 py-4">Aksi</th>
                             </tr>
@@ -35,7 +36,9 @@
                                             </div>
                                             <div>
                                                 <p class="font-bold text-gray-900">{{ $izin->guru->nama_lengkap }}</p>
-                                                <p class="text-[10px] text-gray-600 font-mono italic">"{{ Str::limit($izin->deskripsi, 30) }}"</p>
+                                                <p class="text-xs text-gray-500 italic truncate max-w-[200px]" title="{{ $izin->deskripsi }}">
+                                                    "{{ $izin->deskripsi }}"
+                                                </p>
                                             </div>
                                         </div>
                                     </td>
@@ -51,11 +54,35 @@
                                         </div>
                                         <span class="inline-block mt-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 text-[10px] font-black uppercase">{{ $izin->jenis_izin }}</span>
                                     </td>
-                                    <td class="px-6 py-4">
-                                        <div class="flex flex-col">
-                                            <x-status-badge-izin :status="$izin->status_piket" />
-                                            <span class="text-[10px] text-gray-400 mt-1">{{ $izin->piket_at?->format('H:i') }} WIB</span>
-                                        </div>
+                                    <td class="px-6 py-4 text-xs font-bold text-gray-600">
+                                        @if($izin->jadwals->isNotEmpty())
+                                            <div class="space-y-2">
+                                                @foreach($izin->jadwals as $jadwal)
+                                                    <div class="bg-gray-50 p-2 rounded-lg border border-gray-100">
+                                                        <div class="flex justify-between items-center mb-1">
+                                                            <span class="font-black text-gray-900">{{ $jadwal->rombel->kelas->nama_kelas }}</span>
+                                                            <span class="text-[9px] text-indigo-600 uppercase">Jam {{ $jadwal->jam_ke }}</span>
+                                                        </div>
+                                                        <div class="space-y-1">
+                                                            @if($jadwal->pivot->loadedMaterial)
+                                                                <div class="flex items-center gap-1.5 font-bold text-blue-600">
+                                                                    <div class="w-1 h-1 rounded-full bg-blue-500"></div>
+                                                                    <span>Materi: {{ $jadwal->pivot->loadedMaterial->title }}</span>
+                                                                </div>
+                                                            @endif
+                                                            @if($jadwal->pivot->loadedAssignment)
+                                                                <div class="flex items-center gap-1.5 font-bold text-green-600">
+                                                                    <div class="w-1 h-1 rounded-full bg-green-500"></div>
+                                                                    <span>Tugas: {{ $jadwal->pivot->loadedAssignment->title }}</span>
+                                                                </div>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <span class="italic text-gray-400">N/A</span>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4">
                                         @if($izin->status_kurikulum == 'menunggu')

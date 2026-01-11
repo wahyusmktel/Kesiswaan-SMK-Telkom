@@ -61,6 +61,9 @@ class GuruIzin extends Model
 
     public function jadwals()
     {
-        return $this->belongsToMany(JadwalPelajaran::class, 'guru_izin_jadwal');
+        return $this->belongsToMany(JadwalPelajaran::class, 'guru_izin_jadwal')
+                    ->using(GuruIzinJadwal::class)
+                    ->withPivot(['lms_material_id', 'lms_assignment_id'])
+                    ->withTimestamps();
     }
 }

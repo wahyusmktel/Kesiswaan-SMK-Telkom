@@ -282,14 +282,36 @@
                             </div>
 
                             {{-- Jadwal Terkena Dampak --}}
-                            <div class="space-y-3">
-                                <h5 class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Jadwal Terkena Dampak</h5>
-                                <div class="flex flex-wrap gap-2">
+                            <div class="space-y-4">
+                                <h5 class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Jadwal Terkena Dampak & Penugasan</h5>
+                                <div class="grid grid-cols-1 gap-3">
                                     <template x-for="j in selectedItem.jadwals" :key="j.id">
-                                        <div class="px-4 py-2 bg-white border border-gray-200 rounded-xl shadow-sm">
-                                            <p class="text-[10px] font-bold text-gray-400 leading-none">JAM KE</p>
-                                            <p class="font-black text-indigo-600 text-lg" x-text="j.jam_ke"></p>
-                                            <p class="text-[11px] font-bold text-gray-500 uppercase mt-1" x-text="j.rombel.kelas.nama_kelas"></p>
+                                        <div class="p-4 bg-white border border-gray-100 rounded-2xl shadow-sm space-y-3">
+                                            <div class="flex justify-between items-center">
+                                                <div class="flex items-center gap-3">
+                                                    <span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-[10px] font-black" x-text="'JAM ' + j.jam_ke"></span>
+                                                    <span class="font-bold text-gray-900" x-text="j.rombel.kelas.nama_kelas"></span>
+                                                </div>
+                                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest" x-text="j.mata_pelajaran.nama_mapel"></span>
+                                            </div>
+                                            
+                                            <div class="space-y-2 pt-2 border-t border-gray-50">
+                                                <template x-if="j.pivot.loadedMaterial">
+                                                    <div class="flex items-center gap-2">
+                                                        <div class="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                                                        <span class="text-xs font-bold text-blue-600" x-text="j.pivot.loadedMaterial.title + ' (Materi)'"></span>
+                                                    </div>
+                                                </template>
+                                                <template x-if="j.pivot.loadedAssignment">
+                                                    <div class="flex items-center gap-2">
+                                                        <div class="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                                                        <span class="text-xs font-bold text-green-600" x-text="j.pivot.loadedAssignment.title + ' (Tugas)'"></span>
+                                                    </div>
+                                                </template>
+                                                <template x-if="!j.pivot.loadedMaterial && !j.pivot.loadedAssignment">
+                                                    <span class="text-xs italic text-red-500 font-medium">Materi/Tugas belum dilampirkan</span>
+                                                </template>
+                                            </div>
                                         </div>
                                     </template>
                                 </div>
