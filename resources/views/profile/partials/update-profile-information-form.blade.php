@@ -28,8 +28,8 @@
             <div>
                 <x-input-label for="name" :value="__('Nama Lengkap')" />
                 <x-text-input id="name" name="name" type="text"
-                    class="mt-1 block w-full rounded-lg bg-gray-50 border-transparent focus:border-indigo-500 focus:bg-white focus:ring-0 transition-colors"
-                    :value="old('name', $user->name)" required autofocus autocomplete="name" />
+                    class="mt-1 block w-full rounded-lg bg-gray-100 border-transparent text-gray-500 cursor-not-allowed focus:border-transparent focus:ring-0"
+                    :value="old('name', $user->name)" readonly />
                 <x-input-error class="mt-2" :messages="$errors->get('name')" />
             </div>
 
