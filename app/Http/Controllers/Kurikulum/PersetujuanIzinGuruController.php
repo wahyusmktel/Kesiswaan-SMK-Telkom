@@ -31,6 +31,14 @@ class PersetujuanIzinGuruController extends Controller
             'kurikulum_at' => now(),
         ]);
 
+        // Notify SDM
+        $approvers = \App\Models\User::role('kaur sdm')->get();
+        $msg = "Ada pengajuan Izin Guru (Luar Sekolah) yang perlu validasi akhir.";
+        $url = route('sdm.persetujuan-izin-guru.index');
+        foreach ($approvers as $approver) {
+            $approver->notify(new \App\Notifications\PengajuanIzinGuruNotification($izin, 'pending_approval', $msg, $url));
+        }
+
         return redirect()->back()->with('success', 'Permohonan izin diteruskan ke KAUR SDM.');
     }
 
@@ -44,6 +52,14 @@ class PersetujuanIzinGuruController extends Controller
             'kurikulum_at' => now(),
             'catatan_kurikulum' => $request->catatan_kurikulum,
         ]);
+
+        // Notify Teacher
+        $teacherUser = $izin->guru->user;
+        if ($teacherUser) {
+            $msg = "Permohonan izin Anda ditolak oleh Waka Kurikulum.";
+            $url = route('guru.izin.index');
+            $teacherUser->notify(new \App\Notifications\PengajuanIzinGuruNotification($izin, 'status_updated', $msg, $url));
+        }
 
         return redirect()->back()->with('info', 'Permohonan izin telah ditolak oleh Waka Kurikulum.');
     }

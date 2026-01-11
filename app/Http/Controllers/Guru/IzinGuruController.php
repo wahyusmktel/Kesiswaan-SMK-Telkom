@@ -142,6 +142,23 @@ class IzinGuruController extends Controller
             $izin->jadwals()->attach($request->jadwal_ids);
         }
 
+        // Notifikasi untuk Approver
+        if ($izin->kategori_penyetujuan === 'terlambat') {
+            // Langsung ke SDM
+            $approvers = \App\Models\User::role('kaur sdm')->get();
+            $msg = "Ada pengajuan Izin Terlambat baru dari " . $guru->nama_lengkap;
+            $url = route('sdm.persetujuan-izin-guru.index');
+        } else {
+            // Ke Piket terlebih dahulu
+            $approvers = \App\Models\User::role('guru piket')->get();
+            $msg = "Ada pengajuan Izin Guru baru dari " . $guru->nama_lengkap;
+            $url = route('piket.persetujuan-izin-guru.index');
+        }
+
+        foreach ($approvers as $approver) {
+            $approver->notify(new \App\Notifications\PengajuanIzinGuruNotification($izin, 'pending_approval', $msg, $url));
+        }
+
         return redirect()->route('guru.izin.index')->with('success', 'Permohonan izin berhasil diajukan dan sedang menunggu persetujuan.');
     }
 }

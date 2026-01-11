@@ -43,6 +43,14 @@ class PersetujuanIzinGuruController extends Controller
             
             $izin->update($updateData);
 
+            // Notify Teacher
+            $teacherUser = $izin->guru->user;
+            if ($teacherUser) {
+                $msg = "Izin Anda (Lingkungan Sekolah) telah disetujui sepenuhnya.";
+                $url = route('guru.izin.index');
+                $teacherUser->notify(new \App\Notifications\PengajuanIzinGuruNotification($izin, 'status_updated', $msg, $url));
+            }
+
             // Sync to AbsensiGuru (Otomatis karena tuntas di Piket)
             foreach ($izin->jadwals as $jadwal) {
                 AbsensiGuru::updateOrCreate(
@@ -63,6 +71,15 @@ class PersetujuanIzinGuruController extends Controller
         }
 
         $izin->update($updateData);
+
+        // Notify Kurikulum
+        $approvers = \App\Models\User::role('waka kurikulum')->get();
+        $msg = "Ada pengajuan Izin Guru (Luar Sekolah) baru dari " . $izin->guru->nama_lengkap;
+        $url = route('kurikulum.persetujuan-izin-guru.index');
+        foreach ($approvers as $approver) {
+            $approver->notify(new \App\Notifications\PengajuanIzinGuruNotification($izin, 'pending_approval', $msg, $url));
+        }
+
         return redirect()->back()->with('success', 'Permohonan izin diteruskan ke Waka Kurikulum.');
     }
 
@@ -76,6 +93,14 @@ class PersetujuanIzinGuruController extends Controller
             'piket_at' => now(),
             'catatan_piket' => $request->catatan_piket,
         ]);
+
+        // Notify Teacher
+        $teacherUser = $izin->guru->user;
+        if ($teacherUser) {
+            $msg = "Permohonan izin Anda ditolak oleh Guru Piket.";
+            $url = route('guru.izin.index');
+            $teacherUser->notify(new \App\Notifications\PengajuanIzinGuruNotification($izin, 'status_updated', $msg, $url));
+        }
 
         return redirect()->back()->with('info', 'Permohonan izin telah ditolak.');
     }

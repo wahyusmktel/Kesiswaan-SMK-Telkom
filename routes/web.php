@@ -568,6 +568,13 @@ Route::middleware('auth')->group(function () {
 
     // Change Log
     Route::get('/changelog', [\App\Http\Controllers\Shared\ChangeLogController::class, 'index'])->name('changelog.index');
+
+    // Notifications
+    Route::prefix('notifications')->name('shared.notifications.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Shared\NotificationController::class, 'index'])->name('index');
+        Route::get('/{id}/read', [\App\Http\Controllers\Shared\NotificationController::class, 'markAsRead'])->name('read');
+        Route::post('/mark-all-as-read', [\App\Http\Controllers\Shared\NotificationController::class, 'markAllAsRead'])->name('mark-all');
+    });
 });
 
 Route::post('/switch-role', [\App\Http\Controllers\RoleSwitchController::class, 'switch'])

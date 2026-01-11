@@ -34,6 +34,14 @@ class PersetujuanIzinGuruController extends Controller
             'sdm_at' => now(),
         ]);
 
+        // Notify Teacher
+        $teacherUser = $izin->guru->user;
+        if ($teacherUser) {
+            $msg = "Permohonan izin Anda telah disetujui sepenuhnya oleh KAUR SDM.";
+            $url = route('guru.izin.index');
+            $teacherUser->notify(new \App\Notifications\PengajuanIzinGuruNotification($izin, 'status_updated', $msg, $url));
+        }
+
         // Sync to AbsensiGuru
         foreach ($izin->jadwals as $jadwal) {
             AbsensiGuru::updateOrCreate(
@@ -63,6 +71,14 @@ class PersetujuanIzinGuruController extends Controller
             'sdm_at' => now(),
             'catatan_sdm' => $request->catatan_sdm,
         ]);
+
+        // Notify Teacher
+        $teacherUser = $izin->guru->user;
+        if ($teacherUser) {
+            $msg = "Permohonan izin Anda ditolak oleh KAUR SDM.";
+            $url = route('guru.izin.index');
+            $teacherUser->notify(new \App\Notifications\PengajuanIzinGuruNotification($izin, 'status_updated', $msg, $url));
+        }
 
         return redirect()->back()->with('info', 'Permohonan izin telah ditolak oleh KAUR SDM.');
     }

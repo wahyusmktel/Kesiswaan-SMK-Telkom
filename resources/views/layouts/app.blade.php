@@ -151,6 +151,78 @@
                                 </div>
                             @endif
 
+                            {{-- Notifications --}}
+                            <div class="relative" x-data="{ notificationOpen: false }">
+                                <button @click="notificationOpen = !notificationOpen"
+                                    class="relative flex items-center justify-center w-10 h-10 rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50 transition-all focus:outline-none">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                    </svg>
+                                    @if(Auth::user()->unreadNotifications->count() > 0)
+                                        <span class="absolute top-2 right-2 flex h-2 w-2">
+                                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                            <span class="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
+                                        </span>
+                                    @endif
+                                </button>
+
+                                <div x-show="notificationOpen" @click.outside="notificationOpen = false"
+                                    x-transition:enter="transition ease-out duration-200"
+                                    x-transition:enter-start="transform opacity-0 scale-95"
+                                    x-transition:enter-end="transform opacity-100 scale-100"
+                                    x-transition:leave="transition ease-in duration-75"
+                                    x-transition:leave-start="transform opacity-100 scale-100"
+                                    x-transition:leave-end="transform opacity-0 scale-95"
+                                    class="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl py-2 z-50 ring-1 ring-black ring-opacity-5 origin-top-right"
+                                    style="display: none;">
+                                    
+                                    <div class="px-4 py-2 border-b border-gray-50 flex items-center justify-between">
+                                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Notifikasi</p>
+                                        @if(Auth::user()->unreadNotifications->count() > 0)
+                                            <form action="{{ route('shared.notifications.mark-all') }}" method="POST">
+                                                @csrf
+                                                <button type="submit" class="text-[10px] text-red-600 font-bold hover:underline">Tandai Semua Dibaca</button>
+                                            </form>
+                                        @endif
+                                    </div>
+
+                                    <div class="max-h-96 overflow-y-auto">
+                                        @forelse(Auth::user()->unreadNotifications as $notification)
+                                            <a href="{{ route('shared.notifications.read', $notification->id) }}" 
+                                                class="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0">
+                                                <div class="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center flex-shrink-0">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                                    </svg>
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <p class="text-xs text-gray-800 font-medium leading-normal mb-1">
+                                                        {{ $notification->data['message'] }}
+                                                    </p>
+                                                    <p class="text-[10px] text-gray-400 font-medium">
+                                                        {{ $notification->created_at->diffForHumans() }}
+                                                    </p>
+                                                </div>
+                                            </a>
+                                        @empty
+                                            <div class="px-4 py-8 text-center">
+                                                <div class="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-3">
+                                                    <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                                    </svg>
+                                                </div>
+                                                <p class="text-xs text-gray-500 font-medium">Tidak ada notifikasi baru</p>
+                                            </div>
+                                        @endforelse
+                                    </div>
+                                    
+                                    <div class="px-4 py-2 border-t border-gray-50 text-center">
+                                        <a href="#" class="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-red-600 transition-colors">Lihat Semua</a>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="relative" x-data="{ dropdownOpen: false }">
                                 <button @click="dropdownOpen = !dropdownOpen"
                                     class="flex items-center justify-center w-10 h-10 rounded-full overflow-hidden bg-gray-200 border-2 border-white shadow-sm cursor-pointer hover:ring-2 hover:ring-red-100 transition-all focus:outline-none">
