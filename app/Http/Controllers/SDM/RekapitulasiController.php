@@ -31,7 +31,49 @@ class RekapitulasiController extends Controller
         $izins = $query->latest()->paginate(20)->withQueryString();
         $gurus = MasterGuru::all();
 
-        return view('pages.sdm.monitoring.rekapitulasi', compact('izins', 'gurus'));
+        // Generate Chart Data based on filters
+        $startDate = $request->filled('start_date') ? \Carbon\Carbon::parse($request->start_date) : now()->subDays(6);
+        $endDate = $request->filled('end_date') ? \Carbon\Carbon::parse($request->end_date) : now();
+        
+        // Limit range to prevent performance issues if too long
+        if ($startDate->diffInDays($endDate) > 31) {
+            $startDate = $endDate->copy()->subDays(31);
+        }
+
+        $chartData = [
+            'labels' => [],
+            'izin_sekolah' => [],
+            'izin_luar' => [],
+            'terlambat' => [],
+        ];
+
+        $current = $startDate->copy();
+        while ($current <= $endDate) {
+            $dateStr = $current->format('Y-m-d');
+            $chartData['labels'][] = $current->translatedFormat('d M');
+            
+            // Base query for each day respects guru filter
+            $dayQuery = GuruIzin::whereDate('tanggal_mulai', $dateStr)->where('status_sdm', 'disetujui');
+            if ($request->filled('guru_id')) {
+                $dayQuery->where('master_guru_id', $request->guru_id);
+            }
+
+            // If a specific category is filtered, only count that category
+            $filteredKategori = $request->kategori;
+            
+            $chartData['izin_sekolah'][] = (!$filteredKategori || $filteredKategori === 'sekolah') 
+                ? (clone $dayQuery)->where('kategori_penyetujuan', 'sekolah')->count() : 0;
+            
+            $chartData['izin_luar'][] = (!$filteredKategori || $filteredKategori === 'luar') 
+                ? (clone $dayQuery)->where('kategori_penyetujuan', 'luar')->count() : 0;
+            
+            $chartData['terlambat'][] = (!$filteredKategori || $filteredKategori === 'terlambat') 
+                ? (clone $dayQuery)->where('kategori_penyetujuan', 'terlambat')->count() : 0;
+
+            $current->addDay();
+        }
+
+        return view('pages.sdm.monitoring.rekapitulasi', compact('izins', 'gurus', 'chartData'));
     }
 
     public function exportPdf(Request $request)

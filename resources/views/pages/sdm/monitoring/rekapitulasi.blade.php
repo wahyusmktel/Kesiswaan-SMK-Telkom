@@ -55,6 +55,19 @@
                 </form>
             </div>
 
+            {{-- Trend Chart Section --}}
+            <div class="bg-white p-8 rounded-3xl border border-gray-200 shadow-sm space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-xl font-black text-gray-900 leading-none">Tren Izin Terpilih</h3>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Visualisasi data berdasarkan filter aktif</p>
+                    </div>
+                </div>
+                <div class="h-[300px]">
+                    <canvas id="rekapChart"></canvas>
+                </div>
+            </div>
+
             {{-- Table & Export --}}
             <div class="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
                 <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50">
@@ -134,4 +147,105 @@
             </div>
         </div>
     </div>
+    @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('rekapChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: {!! json_encode($chartData['labels']) !!},
+                    datasets: [
+                        {
+                            label: 'Lingkungan Sekolah',
+                            data: {!! json_encode($chartData['izin_sekolah']) !!},
+                            borderColor: '#9333EA',
+                            borderWidth: 3,
+                            backgroundColor: 'transparent',
+                            fill: false,
+                            tension: 0.4,
+                            pointBackgroundColor: '#9333EA',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 4
+                        },
+                        {
+                            label: 'Luar Sekolah / Absen',
+                            data: {!! json_encode($chartData['izin_luar']) !!},
+                            borderColor: '#F97316',
+                            borderWidth: 3,
+                            backgroundColor: 'transparent',
+                            fill: false,
+                            tension: 0.4,
+                            pointBackgroundColor: '#F97316',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 4
+                        },
+                        {
+                            label: 'Terlambat',
+                            data: {!! json_encode($chartData['terlambat']) !!},
+                            borderColor: '#EF4444',
+                            borderWidth: 3,
+                            backgroundColor: 'transparent',
+                            fill: false,
+                            tension: 0.4,
+                            pointBackgroundColor: '#EF4444',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            align: 'end',
+                            labels: {
+                                usePointStyle: true,
+                                boxWidth: 6,
+                                font: { size: 11, weight: 'bold' }
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: '#fff',
+                            titleColor: '#111827',
+                            bodyColor: '#4b5563',
+                            borderColor: '#e5e7eb',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y + ' Kasus';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { display: true, color: '#f3f4f6', drawBorder: false },
+                            ticks: { 
+                                stepSize: 1,
+                                font: { weight: 'bold' } 
+                            }
+                        },
+                        x: {
+                            grid: { display: false, drawBorder: false },
+                            ticks: { font: { weight: 'bold' } }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+    @endpush
 </x-app-layout>
