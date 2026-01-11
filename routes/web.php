@@ -369,6 +369,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/absensi-guru', [\App\Http\Controllers\Piket\AbsensiGuruController::class, 'index'])->middleware('permission:manage absensi guru')->name('absensi-guru.index');
         Route::post('/absensi-guru', [\App\Http\Controllers\Piket\AbsensiGuruController::class, 'store'])->middleware('permission:manage absensi guru')->name('absensi-guru.store');
         Route::patch('/absensi-guru/{id}', [\App\Http\Controllers\Piket\AbsensiGuruController::class, 'update'])->middleware('permission:manage absensi guru')->name('absensi-guru.update');
+
+        // Route untuk Monitoring Izin Guru
+        Route::get('/monitoring-izin-guru', [\App\Http\Controllers\Piket\MonitoringIzinGuruController::class, 'index'])->name('monitoring-izin-guru.index');
     });
 
     // Route ini kita namakan 'api.siswa.search' sesuai panggilan di JavaScript
