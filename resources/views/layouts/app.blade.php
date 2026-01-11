@@ -218,7 +218,7 @@
                                     </div>
                                     
                                     <div class="px-4 py-2 border-t border-gray-50 text-center">
-                                        <a href="#" class="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-red-600 transition-colors">Lihat Semua</a>
+                                        <a href="{{ route('shared.notifications.index') }}" class="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-red-600 transition-colors">Lihat Semua</a>
                                     </div>
                                 </div>
                             </div>

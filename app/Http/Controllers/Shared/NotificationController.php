@@ -10,8 +10,8 @@ class NotificationController extends Controller
 {
     public function index()
     {
-        $notifications = Auth::user()->notifications()->paginate(20);
-        return $notifications;
+        $notifications = Auth::user()->notifications()->paginate(15);
+        return view('pages.shared.notifications.index', compact('notifications'));
     }
 
     public function markAsRead($id)
