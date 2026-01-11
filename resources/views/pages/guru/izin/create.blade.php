@@ -55,6 +55,16 @@
                             </div>
 
                             <div class="space-y-2">
+                                <label class="block text-sm font-bold text-gray-700">Kategori Penyetujuan</label>
+                                <select name="kategori_penyetujuan" required
+                                    class="w-full rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500">
+                                    <option value="sekolah">Lingkungan Sekolah (Rapat, dsb)</option>
+                                    <option value="luar" selected>Luar Sekolah / Tidak Masuk</option>
+                                </select>
+                                <p class="text-[10px] text-gray-500 mt-1">* Kategori Sekolah hanya butuh persetujuan Piket.</p>
+                            </div>
+
+                            <div class="space-y-2 md:col-span-2">
                                 <label class="block text-sm font-bold text-gray-700">Alasan / Deskripsi</label>
                                 <textarea name="deskripsi" rows="3" required
                                     class="w-full rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"

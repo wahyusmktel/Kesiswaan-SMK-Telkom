@@ -14,6 +14,7 @@ class GuruIzin extends Model
         'tanggal_mulai',
         'tanggal_selesai',
         'jenis_izin',
+        'kategori_penyetujuan',
         'deskripsi',
         'dokumen_pdf',
         'status_piket',

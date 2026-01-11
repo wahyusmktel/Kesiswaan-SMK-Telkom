@@ -13,6 +13,30 @@
                 </a>
             </div>
 
+            <!-- Panduan Pengajuan Izin -->
+            <div class="bg-blue-50 border border-blue-200 rounded-2xl p-6">
+                <div class="flex items-start gap-4">
+                    <div class="p-2 bg-blue-100 rounded-xl text-blue-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h4 class="text-blue-900 font-bold mb-2 text-sm uppercase tracking-wider">Panduan Pengajuan Izin Guru</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-white/50 p-3 rounded-xl border border-blue-100">
+                                <p class="text-xs font-bold text-blue-800 mb-1">1. Izin Lingkungan Sekolah</p>
+                                <p class="text-[11px] text-blue-600 leading-relaxed font-medium">Gunakan kategori ini jika Anda izin meninggalkan kelas untuk kegiatan operasional sekolah (Rapat, dsb) namun tetap berada di lingkungan sekolah. Cukup memerlukan persetujuan dari <strong>Guru Piket</strong>.</p>
+                            </div>
+                            <div class="bg-white/50 p-3 rounded-xl border border-blue-100">
+                                <p class="text-xs font-bold text-blue-800 mb-1">2. Izin Luar Sekolah / Absen</p>
+                                <p class="text-[11px] text-blue-600 leading-relaxed font-medium">Gunakan kategori ini jika Anda izin keluar lingkungan sekolah atau tidak masuk di hari berikutnya. Memerlukan persetujuan berjenjang: <strong>Guru Piket &rarr; Waka Kurikulum &rarr; KAUR SDM</strong>.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm">
@@ -46,6 +70,11 @@
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200">
                                             {{ $izin->jenis_izin }}
                                         </span>
+                                        @if($izin->kategori_penyetujuan === 'sekolah')
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200 uppercase">
+                                                Sekolah
+                                            </span>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4 max-w-xs truncate text-gray-600">
                                         {{ $izin->deskripsi }}

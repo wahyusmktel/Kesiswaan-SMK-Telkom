@@ -51,6 +51,11 @@
                                             @endif
                                         </div>
                                         <span class="inline-block mt-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 text-[10px] font-black uppercase">{{ $izin->jenis_izin }}</span>
+                                        @if($izin->kategori_penyetujuan === 'sekolah')
+                                            <span class="inline-block mt-1 px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-100 text-[10px] font-black uppercase">Lingkungan Sekolah</span>
+                                        @else
+                                            <span class="inline-block mt-1 px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-100 text-[10px] font-black uppercase">Luar Sekolah</span>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4">
                                         <p class="text-gray-600 text-xs max-w-xs italic line-clamp-2">"{{ $izin->deskripsi }}"</p>
