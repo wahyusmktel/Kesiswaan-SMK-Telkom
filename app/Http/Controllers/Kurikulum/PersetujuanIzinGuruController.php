@@ -71,7 +71,7 @@ class PersetujuanIzinGuruController extends Controller
         ]);
 
         // Notify SDM
-        $approvers = \App\Models\User::role('kaur sdm')->get();
+        $approvers = \App\Models\User::role('KAUR SDM')->get();
         $msg = "Ada pengajuan Izin Guru (Luar Sekolah) yang perlu validasi akhir.";
         $url = route('sdm.persetujuan-izin-guru.index');
         foreach ($approvers as $approver) {

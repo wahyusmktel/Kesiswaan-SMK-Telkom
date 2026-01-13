@@ -191,7 +191,7 @@ class IzinGuruController extends Controller
         // Notifikasi untuk Approver
         if ($izin->kategori_penyetujuan === 'terlambat') {
             // Langsung ke SDM
-            $approvers = \App\Models\User::role('kaur sdm')->get();
+            $approvers = \App\Models\User::role('KAUR SDM')->get();
             $msg = "Ada pengajuan Izin Terlambat baru dari " . $guru->nama_lengkap;
             $url = route('sdm.persetujuan-izin-guru.index');
         } else {

@@ -123,7 +123,7 @@ class PersetujuanIzinGuruController extends Controller
         $izin->update($updateData);
 
         // Notify Kurikulum
-        $approvers = \App\Models\User::role('waka kurikulum')->get();
+        $approvers = \App\Models\User::role('Kurikulum')->get();
         $msg = "Ada pengajuan Izin Guru (Luar Sekolah) baru dari " . $izin->guru->nama_lengkap;
         $url = route('kurikulum.persetujuan-izin-guru.index');
         foreach ($approvers as $approver) {
