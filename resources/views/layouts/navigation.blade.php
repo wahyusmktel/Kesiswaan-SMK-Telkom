@@ -934,7 +934,7 @@
                 <span class="text-sm">Riwayat Keluar</span>
             </a>
         </li>        
-        @can('manage teacher attendance tracking')
+        <!-- @can('manage teacher attendance tracking') -->
         <li>
             <a href="{{ route('piket.absensi-guru.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('piket.absensi-guru.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -945,7 +945,7 @@
                 <span class="text-sm">Absensi Guru</span>
             </a>
         </li>
-        @endcan
+        <!-- @endcan -->
         @can('monitoring izin')
         <li>
             <a href="{{ route('piket.persetujuan-izin-guru.index') }}"
