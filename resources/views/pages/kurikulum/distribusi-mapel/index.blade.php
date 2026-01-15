@@ -51,7 +51,7 @@
                     </div>
 
                     <div class="flex flex-col sm:flex-row items-end gap-3">
-                        <form action="{{ route('distribusi-mapel.index') }}" method="GET" class="flex flex-col sm:flex-row items-end gap-3 w-full sm:w-auto">
+                        <form action="{{ route('kurikulum.distribusi-mapel.index') }}" method="GET" class="flex flex-col sm:flex-row items-end gap-3 w-full sm:w-auto">
                             <div class="w-full sm:w-48">
                                 <label for="kelas_id" class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Filter Kelas</label>
                                 <select name="kelas_id" id="kelas_id" class="w-full rounded-lg border-gray-200 text-sm focus:ring-indigo-500 focus:border-indigo-500">
@@ -69,7 +69,7 @@
                                     Filter
                                 </button>
                                 @if($kelasId)
-                                    <a href="{{ route('distribusi-mapel.index') }}" class="flex-1 sm:flex-none px-4 py-2 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg text-sm font-bold shadow-sm transition-all flex items-center justify-center">
+                                    <a href="{{ route('kurikulum.distribusi-mapel.index') }}" class="flex-1 sm:flex-none px-4 py-2 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg text-sm font-bold shadow-sm transition-all flex items-center justify-center">
                                         Reset
                                     </a>
                                 @endif
