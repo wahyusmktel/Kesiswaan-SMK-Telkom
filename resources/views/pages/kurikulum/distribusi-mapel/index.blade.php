@@ -49,6 +49,33 @@
                             @endif
                         </p>
                     </div>
+
+                    <div class="flex flex-col sm:flex-row items-end gap-3">
+                        <form action="{{ route('distribusi-mapel.index') }}" method="GET" class="flex flex-col sm:flex-row items-end gap-3 w-full sm:w-auto">
+                            <div class="w-full sm:w-48">
+                                <label for="kelas_id" class="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Filter Kelas</label>
+                                <select name="kelas_id" id="kelas_id" class="w-full rounded-lg border-gray-200 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="">Semua Kelas</option>
+                                    @foreach($kelases as $kls)
+                                        <option value="{{ $kls->id }}" {{ $kelasId == $kls->id ? 'selected' : '' }}>
+                                            {{ $kls->nama_kelas }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="flex gap-2 w-full sm:w-auto">
+                                <button type="submit" class="flex-1 sm:flex-none px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-bold shadow-sm transition-all flex items-center justify-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+                                    Filter
+                                </button>
+                                @if($kelasId)
+                                    <a href="{{ route('distribusi-mapel.index') }}" class="flex-1 sm:flex-none px-4 py-2 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg text-sm font-bold shadow-sm transition-all flex items-center justify-center">
+                                        Reset
+                                    </a>
+                                @endif
+                            </div>
+                        </form>
+                    </div>
                 </div>
 
                 <div class="overflow-x-auto">
