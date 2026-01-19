@@ -38,6 +38,13 @@
                         <input type="text" name="search" value="{{ request('search') }}" placeholder="Nama atau NIPD..."
                             class="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
                     </div>
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Desain Kartu</label>
+                        <select name="design" x-model="design" class="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
+                            <option value="standard">Standard (Full ID Card)</option>
+                            <option value="minimalist">Minimalist (Short & Barcode Only)</option>
+                        </select>
+                    </div>
                     <div class="flex gap-2">
                         <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -63,6 +70,7 @@
                     <form action="{{ route('kesiswaan.kartu-akses.cetak-masal') }}" method="POST" target="_blank">
                         @csrf
                         <input type="hidden" name="rombel_id" value="{{ request('rombel_id') }}">
+                        <input type="hidden" name="design" :value="design">
                         <button type="submit" class="px-6 py-3 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 transition-colors flex items-center gap-2 shadow-lg">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -114,7 +122,7 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                             </svg>
                                         </a>
-                                        <a href="{{ route('kesiswaan.kartu-akses.cetak', $s) }}" target="_blank"
+                                        <a :href="'{{ route('kesiswaan.kartu-akses.cetak', $s) }}?design=' + design" target="_blank"
                                             class="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Cetak">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -154,6 +162,7 @@
     function kartuAksesData() {
         return {
             selectedIds: [],
+            design: '{{ request('design', 'standard') }}',
         }
     }
     </script>

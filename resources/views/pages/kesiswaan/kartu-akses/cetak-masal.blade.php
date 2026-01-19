@@ -64,12 +64,13 @@
 
         .card {
             width: 85.6mm;
-            height: 54mm;
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #020617 100%);
+            height: {{ $design === 'minimalist' ? '35mm' : '54mm' }};
+            background: {{ $design === 'minimalist' ? 'white' : 'linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #020617 100%)' }};
             border-radius: 8px;
             overflow: hidden;
             page-break-inside: avoid;
             break-inside: avoid;
+            {{ $design === 'minimalist' ? 'border: 0.5px solid #e2e8f0;' : '' }}
         }
 
         @media print {
@@ -279,54 +280,75 @@
 
     <div class="info-bar">
         <span>📋 {{ $siswaList->count() }} kartu akan dicetak</span>
-        <span>📄 {{ ceil($siswaList->count() / 8) }} halaman A4</span>
+        <span>📄 {{ ceil($siswaList->count() / ($design === 'minimalist' ? 14 : 8)) }} halaman A4</span>
     </div>
 
     <div class="cards-grid">
         @foreach($siswaList as $index => $siswa)
-            <div class="card">
-                <div class="card-header">
-                    <div class="logo-section">
-                        <div class="logo-icon">
+            @if($design === 'minimalist')
+                <div class="card">
+                    <div style="padding: 6px 10px; display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 0.5px dashed #e2e8f0;">
+                        <div>
+                            <h2 style="font-size: 8px; font-weight: 800; color: #1e293b; margin-bottom: 1px;">{{ strtoupper($siswa->nama_lengkap) }}</h2>
+                            <p style="font-size: 6px; color: #64748b; font-family: monospace;">{{ $siswa->nis }} | {{ $siswa->rombels->first()?->kelas?->nama_kelas ?? '-' }}</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <p style="font-size: 6px; font-weight: 700; color: #4f46e5;">STELLA ACCESS</p>
+                        </div>
+                    </div>
+                    <div class="barcode-section" style="margin: 2px; padding: 2px;">
+                        <img src="data:image/png;base64,{{ $barcodes[$siswa->id] }}" alt="Barcode" style="height: 25px; width: 100%; object-fit: contain;">
+                        <div class="barcode-number" style="margin-top: 1px; font-size: 6px;">{{ $siswa->nis }}</div>
+                    </div>
+                </div>
+            @else
+                <div class="card">
+                    <div class="card-header">
+                        <div class="logo-section">
+                            <div class="logo-icon">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="card-title">STELLA ACCESS CARD</div>
+                                <div class="card-subtitle">SMK Telkom Lampung</div>
+                            </div>
+                        </div>
+                        <div class="security-badge"></div>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="photo-box">
                             <svg viewBox="0 0 24 24">
-                                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                                <path d="M12 4C14.21 4 16 5.79 16 8C16 10.21 14.21 12 12 12C9.79 12 8 10.21 8 8C8 5.79 9.79 4 12 4M12 14C16.42 14 20 15.79 20 18V20H4V18C4 15.79 7.58 14 12 14Z"/>
                             </svg>
                         </div>
-                        <div>
-                            <div class="card-title">STELLA ACCESS CARD</div>
-                            <div class="card-subtitle">SMK Telkom Lampung</div>
+                        <div class="info-section">
+                            <div class="student-name">{{ strtoupper($siswa->nama_lengkap) }}</div>
+                            <div class="info-row">
+                                <span class="info-label">NIPD</span>
+                                <span class="info-value">{{ $siswa->nis }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">KELAS</span>
+                                <span class="info-value">{{ $siswa->rombels->first()?->kelas?->nama_kelas ?? '-' }}</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="security-badge"></div>
-                </div>
 
-                <div class="card-body">
-                    <div class="photo-box">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M12 4C14.21 4 16 5.79 16 8C16 10.21 14.21 12 12 12C9.79 12 8 10.21 8 8C8 5.79 9.79 4 12 4M12 14C16.42 14 20 15.79 20 18V20H4V18C4 15.79 7.58 14 12 14Z"/>
-                        </svg>
-                    </div>
-                    <div class="info-section">
-                        <div class="student-name">{{ strtoupper($siswa->nama_lengkap) }}</div>
-                        <div class="info-row">
-                            <span class="info-label">NIPD</span>
-                            <span class="info-value">{{ $siswa->nis }}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">KELAS</span>
-                            <span class="info-value">{{ $siswa->rombels->first()?->kelas?->nama_kelas ?? '-' }}</span>
-                        </div>
+                    <div class="barcode-section">
+                        <img src="data:image/png;base64,{{ $barcodes[$siswa->id] }}" alt="Barcode">
+                        <div class="barcode-number">{{ $siswa->nis }}</div>
                     </div>
                 </div>
+            @endif
 
-                <div class="barcode-section">
-                    <img src="data:image/png;base64,{{ $barcodes[$siswa->id] }}" alt="Barcode">
-                    <div class="barcode-number">{{ $siswa->nis }}</div>
-                </div>
-            </div>
-
-            {{-- Page break after every 8 cards (2 columns x 4 rows) --}}
-            @if(($index + 1) % 8 == 0 && $index + 1 < $siswaList->count())
+            {{-- Page break calculation based on design --}}
+            @php
+                $perPage = $design === 'minimalist' ? 14 : 8;
+            @endphp
+            @if(($index + 1) % $perPage == 0 && $index + 1 < $siswaList->count())
                 </div>
                 <div class="page-break"></div>
                 <div class="cards-grid">

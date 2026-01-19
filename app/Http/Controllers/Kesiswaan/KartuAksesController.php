@@ -82,7 +82,9 @@ class KartuAksesController extends Controller
         $generator = new BarcodeGeneratorPNG();
         $barcode = base64_encode($generator->getBarcode($siswa->nis, $generator::TYPE_CODE_128, 3, 80));
 
-        return view('pages.kesiswaan.kartu-akses.cetak', compact('siswa', 'barcode'));
+        $design = request('design', 'standard');
+
+        return view('pages.kesiswaan.kartu-akses.cetak', compact('siswa', 'barcode', 'design'));
     }
 
     /**
@@ -112,6 +114,8 @@ class KartuAksesController extends Controller
             $barcodes[$siswa->id] = base64_encode($generator->getBarcode($siswa->nis, $generator::TYPE_CODE_128, 3, 80));
         }
 
-        return view('pages.kesiswaan.kartu-akses.cetak-masal', compact('siswaList', 'barcodes', 'rombel'));
+        $design = $request->design ?? 'standard';
+
+        return view('pages.kesiswaan.kartu-akses.cetak-masal', compact('siswaList', 'barcodes', 'rombel', 'design'));
     }
 }
