@@ -158,13 +158,37 @@
                                                         @if($jadwal->pivot->loadedMaterial)
                                                             <div class="flex items-center gap-1.5">
                                                                 <div class="w-1 h-1 rounded-full bg-blue-500"></div>
-                                                                <span class="text-[10px] font-bold text-blue-600">{{ $jadwal->pivot->loadedMaterial->title }}</span>
+                                                                <button type="button"
+                                                                    class="text-[10px] font-bold text-blue-600 hover:underline"
+                                                                    data-type="Materi"
+                                                                    data-title="{{ $jadwal->pivot->loadedMaterial->title }}"
+                                                                    data-content="{{ $jadwal->pivot->loadedMaterial->content ?? '' }}"
+                                                                    data-file-url="{{ $jadwal->pivot->loadedMaterial->file_path ? Storage::url($jadwal->pivot->loadedMaterial->file_path) : '' }}"
+                                                                    data-mapel="{{ $jadwal->mataPelajaran->nama_mapel }}"
+                                                                    data-rombel="{{ $jadwal->rombel->kelas->nama_kelas }}"
+                                                                    data-jam="{{ $jadwal->jam_ke }}"
+                                                                    onclick="openLmsDetail(this)">
+                                                                    {{ $jadwal->pivot->loadedMaterial->title }}
+                                                                </button>
                                                             </div>
                                                         @endif
                                                         @if($jadwal->pivot->loadedAssignment)
                                                             <div class="flex items-center gap-1.5">
                                                                 <div class="w-1 h-1 rounded-full bg-green-500"></div>
-                                                                <span class="text-[10px] font-bold text-green-600">{{ $jadwal->pivot->loadedAssignment->title }}</span>
+                                                                <button type="button"
+                                                                    class="text-[10px] font-bold text-green-600 hover:underline"
+                                                                    data-type="Tugas"
+                                                                    data-title="{{ $jadwal->pivot->loadedAssignment->title }}"
+                                                                    data-description="{{ $jadwal->pivot->loadedAssignment->description ?? '' }}"
+                                                                    data-due-date="{{ $jadwal->pivot->loadedAssignment->due_date ? $jadwal->pivot->loadedAssignment->due_date->translatedFormat('d M Y H:i') : '' }}"
+                                                                    data-points="{{ $jadwal->pivot->loadedAssignment->points ?? '' }}"
+                                                                    data-file-url="{{ $jadwal->pivot->loadedAssignment->file_path ? Storage::url($jadwal->pivot->loadedAssignment->file_path) : '' }}"
+                                                                    data-mapel="{{ $jadwal->mataPelajaran->nama_mapel }}"
+                                                                    data-rombel="{{ $jadwal->rombel->kelas->nama_kelas }}"
+                                                                    data-jam="{{ $jadwal->jam_ke }}"
+                                                                    onclick="openLmsDetail(this)">
+                                                                    {{ $jadwal->pivot->loadedAssignment->title }}
+                                                                </button>
                                                             </div>
                                                         @endif
                                                     </div>
@@ -195,4 +219,89 @@
             </div>
         </div>
     </div>
+
+    <div id="lms-detail-modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" onclick="closeLmsDetail()"></div>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl relative overflow-hidden">
+                <div class="p-6 border-b border-gray-100">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest" id="lms-detail-type">Detail</p>
+                    <h3 class="text-lg font-bold text-gray-900 mt-1" id="lms-detail-title"></h3>
+                    <p class="text-xs text-gray-500 mt-2" id="lms-detail-meta"></p>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div id="lms-detail-content-wrapper">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Ringkasan</p>
+                        <p class="text-sm text-gray-700 whitespace-pre-line" id="lms-detail-content"></p>
+                    </div>
+                    <div id="lms-detail-extra" class="hidden">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Detail Tugas</p>
+                        <p class="text-sm text-gray-700 whitespace-pre-line" id="lms-detail-description"></p>
+                        <div class="text-xs text-gray-600 mt-2 space-y-1">
+                            <p id="lms-detail-due-date"></p>
+                            <p id="lms-detail-points"></p>
+                        </div>
+                    </div>
+                    <div id="lms-detail-file" class="hidden">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Lampiran</p>
+                        <a id="lms-detail-file-link" href="#" target="_blank" class="text-sm text-blue-600 hover:underline">Lihat File</a>
+                    </div>
+                </div>
+                <div class="p-4 border-t border-gray-100 bg-gray-50/50 flex justify-end">
+                    <button type="button" onclick="closeLmsDetail()" class="px-4 py-2 rounded-xl bg-gray-900 text-white text-xs font-bold uppercase tracking-widest">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </x-app-layout>
+
+@push('scripts')
+<script>
+    function openLmsDetail(el) {
+        const type = el.dataset.type || 'Detail';
+        const title = el.dataset.title || '-';
+        const content = el.dataset.content || '';
+        const description = el.dataset.description || '';
+        const dueDate = el.dataset.dueDate || '';
+        const points = el.dataset.points || '';
+        const fileUrl = el.dataset.fileUrl || '';
+        const mapel = el.dataset.mapel || '-';
+        const rombel = el.dataset.rombel || '-';
+        const jam = el.dataset.jam || '-';
+
+        document.getElementById('lms-detail-type').textContent = type;
+        document.getElementById('lms-detail-title').textContent = title;
+        document.getElementById('lms-detail-meta').textContent = `${mapel} | ${rombel} | Jam ${jam}`;
+
+        const contentWrapper = document.getElementById('lms-detail-content-wrapper');
+        const contentEl = document.getElementById('lms-detail-content');
+        contentEl.textContent = content || '-';
+        contentWrapper.classList.toggle('hidden', !content && type !== 'Materi');
+
+        const extra = document.getElementById('lms-detail-extra');
+        if (type === 'Tugas') {
+            document.getElementById('lms-detail-description').textContent = description || '-';
+            document.getElementById('lms-detail-due-date').textContent = dueDate ? `Batas waktu: ${dueDate}` : '';
+            document.getElementById('lms-detail-points').textContent = points ? `Poin: ${points}` : '';
+            extra.classList.remove('hidden');
+        } else {
+            extra.classList.add('hidden');
+        }
+
+        const fileWrap = document.getElementById('lms-detail-file');
+        const fileLink = document.getElementById('lms-detail-file-link');
+        if (fileUrl) {
+            fileLink.href = fileUrl;
+            fileWrap.classList.remove('hidden');
+        } else {
+            fileWrap.classList.add('hidden');
+        }
+
+        document.getElementById('lms-detail-modal').classList.remove('hidden');
+    }
+
+    function closeLmsDetail() {
+        document.getElementById('lms-detail-modal').classList.add('hidden');
+    }
+</script>
+@endpush
