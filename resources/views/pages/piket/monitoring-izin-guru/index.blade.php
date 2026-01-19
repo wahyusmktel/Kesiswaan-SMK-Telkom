@@ -253,55 +253,57 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+    <script>
+        window.openLmsDetail = function (el) {
+            const type = el.dataset.type || 'Detail';
+            const title = el.dataset.title || '-';
+            const content = el.dataset.content || '';
+            const description = el.dataset.description || '';
+            const dueDate = el.dataset.dueDate || '';
+            const points = el.dataset.points || '';
+            const fileUrl = el.dataset.fileUrl || '';
+            const mapel = el.dataset.mapel || '-';
+            const rombel = el.dataset.rombel || '-';
+            const jam = el.dataset.jam || '-';
+
+            document.getElementById('lms-detail-type').textContent = type;
+            document.getElementById('lms-detail-title').textContent = title;
+            document.getElementById('lms-detail-meta').textContent = `${mapel} | ${rombel} | Jam ${jam}`;
+
+            const contentWrapper = document.getElementById('lms-detail-content-wrapper');
+            const contentEl = document.getElementById('lms-detail-content');
+            contentEl.textContent = content || '-';
+            contentWrapper.classList.toggle('hidden', !content && type !== 'Materi');
+
+            const extra = document.getElementById('lms-detail-extra');
+            if (type === 'Tugas') {
+                document.getElementById('lms-detail-description').textContent = description || '-';
+                document.getElementById('lms-detail-due-date').textContent = dueDate ? `Batas waktu: ${dueDate}` : '';
+                document.getElementById('lms-detail-points').textContent = points ? `Poin: ${points}` : '';
+                extra.classList.remove('hidden');
+            } else {
+                extra.classList.add('hidden');
+            }
+
+            const fileWrap = document.getElementById('lms-detail-file');
+            const fileLink = document.getElementById('lms-detail-file-link');
+            if (fileUrl) {
+                fileLink.href = fileUrl;
+                fileWrap.classList.remove('hidden');
+            } else {
+                fileWrap.classList.add('hidden');
+            }
+
+            document.getElementById('lms-detail-modal').classList.remove('hidden');
+        }
+
+        window.closeLmsDetail = function () {
+            document.getElementById('lms-detail-modal').classList.add('hidden');
+        }
+    </script>
+    @endpush
 </x-app-layout>
 
-@push('scripts')
-<script>
-    window.openLmsDetail = function (el) {
-        const type = el.dataset.type || 'Detail';
-        const title = el.dataset.title || '-';
-        const content = el.dataset.content || '';
-        const description = el.dataset.description || '';
-        const dueDate = el.dataset.dueDate || '';
-        const points = el.dataset.points || '';
-        const fileUrl = el.dataset.fileUrl || '';
-        const mapel = el.dataset.mapel || '-';
-        const rombel = el.dataset.rombel || '-';
-        const jam = el.dataset.jam || '-';
 
-        document.getElementById('lms-detail-type').textContent = type;
-        document.getElementById('lms-detail-title').textContent = title;
-        document.getElementById('lms-detail-meta').textContent = `${mapel} | ${rombel} | Jam ${jam}`;
-
-        const contentWrapper = document.getElementById('lms-detail-content-wrapper');
-        const contentEl = document.getElementById('lms-detail-content');
-        contentEl.textContent = content || '-';
-        contentWrapper.classList.toggle('hidden', !content && type !== 'Materi');
-
-        const extra = document.getElementById('lms-detail-extra');
-        if (type === 'Tugas') {
-            document.getElementById('lms-detail-description').textContent = description || '-';
-            document.getElementById('lms-detail-due-date').textContent = dueDate ? `Batas waktu: ${dueDate}` : '';
-            document.getElementById('lms-detail-points').textContent = points ? `Poin: ${points}` : '';
-            extra.classList.remove('hidden');
-        } else {
-            extra.classList.add('hidden');
-        }
-
-        const fileWrap = document.getElementById('lms-detail-file');
-        const fileLink = document.getElementById('lms-detail-file-link');
-        if (fileUrl) {
-            fileLink.href = fileUrl;
-            fileWrap.classList.remove('hidden');
-        } else {
-            fileWrap.classList.add('hidden');
-        }
-
-        document.getElementById('lms-detail-modal').classList.remove('hidden');
-    }
-
-    window.closeLmsDetail = function () {
-        document.getElementById('lms-detail-modal').classList.add('hidden');
-    }
-</script>
-@endpush
