@@ -257,7 +257,7 @@
 
 @push('scripts')
 <script>
-    function openLmsDetail(el) {
+    window.openLmsDetail = function (el) {
         const type = el.dataset.type || 'Detail';
         const title = el.dataset.title || '-';
         const content = el.dataset.content || '';
@@ -300,7 +300,7 @@
         document.getElementById('lms-detail-modal').classList.remove('hidden');
     }
 
-    function closeLmsDetail() {
+    window.closeLmsDetail = function () {
         document.getElementById('lms-detail-modal').classList.add('hidden');
     }
 </script>
