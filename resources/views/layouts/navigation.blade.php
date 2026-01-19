@@ -206,7 +206,7 @@
                 <span class="text-sm">Persetujuan Izin</span>
             </a>
         </li>
-        @endcan
+        @endcanany
         @can('view monitoring keterlambatan')
         <li>
             <a href="{{ route('monitoring-keterlambatan.index') }}"
@@ -731,7 +731,7 @@
                 <span class="text-sm">Dashboard BK</span>
             </a>
         </li>
-        @can('manage monitoring bk')
+        @can('monitoring izin')
         <li>
             <a href="{{ route('bk.monitoring.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('bk.monitoring.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -767,7 +767,7 @@
             </a>
         </li>
         @endcan
-        @can('manage monitoring catatan')
+        @can('manage poin pelanggaran')
         <li>
             <a href="{{ route('bk.monitoring-catatan.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('bk.monitoring-catatan.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -789,7 +789,7 @@
             </a>
         </li>
 
-        @can('manage poin tata tertib')
+        @canany(['manage poin pelanggaran', 'manage poin prestasi', 'manage pemutihan poin'])
         <li x-data="{ expanded: {{ request()->routeIs('kesiswaan.input-pelanggaran.*') || request()->routeIs('kesiswaan.input-prestasi.*') || request()->routeIs('kesiswaan.input-pemutihan.*') ? 'true' : 'false' }} }">
             <button @click="expanded = !expanded"
                 class="flex items-center justify-between w-full px-3 py-2 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors">
@@ -820,7 +820,7 @@
         @endcan
 
         <div class="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider mt-4">Layanan BK</div>
-        @can('manage konsultasi bk')
+        @can('manage jadwal konsultasi')
         <li>
             <a href="{{ route('bk.konsultasi.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('bk.konsultasi.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -831,7 +831,7 @@
             </a>
         </li>
         @endcan
-        @can('manage chat bk')
+        @can('view chat bk')
         <li>
             <a href="{{ route('bk.chat.index') }}"
                 class="flex items-center justify-between px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('bk.chat.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -867,7 +867,7 @@
                 <span class="text-sm">Dashboard Piket</span>
             </a>
         </li>
-        @can('manage verifikasi terlambat')
+        @can('manage penanganan terlambat')
         <li>
             <a href="{{ route('piket.verifikasi-terlambat.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('piket.verifikasi-terlambat.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -879,7 +879,7 @@
             </a>
         </li>
         @endcan
-        @can('manage student late handling')
+        @can('manage penanganan terlambat')
         <li>
             <a href="{{ route('piket.penanganan-terlambat.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('piket.penanganan-terlambat.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -934,7 +934,7 @@
                 <span class="text-sm">Riwayat Keluar</span>
             </a>
         </li>        
-        <!-- @can('manage teacher attendance tracking') -->
+        @can('manage absensi guru')
         <li>
             <a href="{{ route('piket.absensi-guru.index') }}"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors {{ request()->routeIs('piket.absensi-guru.*') ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-red-50 hover:text-red-700' }}">
@@ -945,7 +945,7 @@
                 <span class="text-sm">Absensi Guru</span>
             </a>
         </li>
-        <!-- @endcan -->
+        @endcan
         @can('monitoring izin')
         <li>
             <a href="{{ route('piket.persetujuan-izin-guru.index') }}"
