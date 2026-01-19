@@ -286,19 +286,16 @@
     <div class="cards-grid">
         @foreach($siswaList as $index => $siswa)
             @if($design === 'minimalist')
-                <div class="card">
-                    <div style="padding: 6px 10px; display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 0.5px dashed #e2e8f0;">
-                        <div>
-                            <h2 style="font-size: 8px; font-weight: 800; color: #1e293b; margin-bottom: 1px;">{{ strtoupper($siswa->nama_lengkap) }}</h2>
-                            <p style="font-size: 6px; color: #64748b; font-family: monospace;">{{ $siswa->nis }} | {{ $siswa->rombels->first()?->kelas?->nama_kelas ?? '-' }}</p>
-                        </div>
-                        <div style="text-align: right;">
-                            <p style="font-size: 6px; font-weight: 700; color: #4f46e5;">STELLA ACCESS</p>
-                        </div>
+                <div class="card" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 4px;">
+                    <div class="barcode-section" style="margin: 0; padding: 0; width: 100%;">
+                        <img src="data:image/png;base64,{{ $barcodes[$siswa->id] }}" alt="Barcode" style="height: 45px; width: 100%; object-fit: contain;">
+                        <div class="barcode-number" style="margin-top: 1px; font-size: 7px; font-weight: 700; color: #000;">{{ $siswa->nis }}</div>
                     </div>
-                    <div class="barcode-section" style="margin: 2px; padding: 2px;">
-                        <img src="data:image/png;base64,{{ $barcodes[$siswa->id] }}" alt="Barcode" style="height: 25px; width: 100%; object-fit: contain;">
-                        <div class="barcode-number" style="margin-top: 1px; font-size: 6px;">{{ $siswa->nis }}</div>
+                    <div style="margin-top: 2px; padding-top: 2px; border-top: 0.5px solid #e2e8f0; width: 90%;">
+                        <p style="font-size: 8px; font-weight: 800; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            {{ strtoupper($siswa->nama_lengkap) }} | {{ $siswa->nis }} | {{ $siswa->rombels->first()?->kelas?->nama_kelas ?? '-' }}
+                        </p>
+                        <p style="font-size: 5px; font-weight: 800; color: #4f46e5; margin-top: 1px; letter-spacing: 0.5px;">STELLA ACCESS • SMK TELKOM LAMPUNG</p>
                     </div>
                 </div>
             @else
