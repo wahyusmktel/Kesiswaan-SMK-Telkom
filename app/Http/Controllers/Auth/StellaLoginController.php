@@ -61,7 +61,7 @@ class StellaLoginController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Login berhasil! Selamat datang, ' . $user->name,
-                'redirect' => route('dashboard'),
+                'redirect' => route('siswa.dashboard.index'),
             ]);
 
         } catch (\Exception $e) {
