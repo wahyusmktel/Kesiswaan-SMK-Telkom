@@ -226,19 +226,16 @@
                             <div x-show="!alreadySubmitted && !isSubmitting">
                                 <div class="flex flex-wrap items-center justify-center md:justify-end gap-3 sm:gap-4">
                                     <template x-for="mood in moods" :key="mood.level">
-                                        <button @click="selectMood(mood)" :class="{
-                                                'ring-4 ring-red-500/50 scale-110 bg-white/10': selectedMood?.level === mood.level,
-                                                'bg-white/5 hover:bg-white/10': selectedMood?.level !== mood.level
-                                            }"
-                                            class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center text-3xl transition-all duration-300 transform cursor-pointer border border-white/5"
+                                        <button @click="selectAndSubmit(mood)"
+                                            class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center text-3xl transition-all duration-300 transform cursor-pointer border border-white/5 bg-white/5 hover:bg-white/10 hover:scale-110 active:scale-95 group relative"
                                             :title="mood.label">
                                             <span x-text="mood.emoji"></span>
+                                            <div
+                                                class="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-slate-800 text-[10px] text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none font-bold z-50">
+                                                <span x-text="mood.label"></span>
+                                            </div>
                                         </button>
                                     </template>
-                                    <button @click="submitMood()" x-show="selectedMood" x-transition
-                                        class="ml-4 px-8 py-4 bg-gradient-to-r from-red-600 to-red-500 rounded-2xl font-black text-white shadow-xl shadow-red-600/30 hover:scale-105 active:scale-95 transition-all text-sm uppercase tracking-widest">
-                                        KIRIM 🚀
-                                    </button>
                                 </div>
                             </div>
 
@@ -893,6 +890,11 @@
 
                 selectMood(mood) {
                     this.selectedMood = mood;
+                },
+
+                selectAndSubmit(mood) {
+                    this.selectedMood = mood;
+                    this.submitMood();
                 },
 
                 async submitMood() {
