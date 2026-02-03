@@ -10,6 +10,7 @@ use App\Http\Controllers\MasterData\MasterSiswaController;
 use App\Http\Controllers\MasterData\RombelController;
 use App\Http\Controllers\Kesiswaan\MonitoringIzinController;
 use App\Http\Controllers\Kesiswaan\DashboardController;
+use App\Http\Controllers\Kesiswaan\AnalisaKeterlambatanController;
 use App\Http\Controllers\WaliKelas\DashboardController as WaliKelasDashboardController;
 use App\Http\Controllers\Siswa\DashboardController as SiswaDashboardController;
 use App\Http\Controllers\BK\DashboardController as BKDashboardController;
@@ -64,9 +65,12 @@ Route::get('/verifikasi/surat/{uuid}', [VerifikasiController::class, 'show'])->n
 Route::get('/verifikasi/kartu/{nis}', [VerifikasiController::class, 'kartuPelajar'])->name('verifikasi.kartu');
 
 // Legal Pages
-Route::get('/privacy', function () { return view('pages.legal.privacy'); })->name('privacy');
-Route::get('/terms', function () { return view('pages.legal.terms'); })->name('terms');
-Route::get('/security', function () { return view('pages.legal.security'); })->name('security');
+Route::get('/privacy', function () {
+    return view('pages.legal.privacy'); })->name('privacy');
+Route::get('/terms', function () {
+    return view('pages.legal.terms'); })->name('terms');
+Route::get('/security', function () {
+    return view('pages.legal.security'); })->name('security');
 
 // ==================================
 //     BATAS ROUTE PUBLIK
@@ -138,7 +142,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Route bersama untuk coaching & analisa (Wali Kelas, BK, Waka Kesiswaan)
-    Route::middleware(['auth', 'permission:view coaching analytics'])->group(function() {
+    Route::middleware(['auth', 'permission:view coaching analytics'])->group(function () {
         Route::get('/coaching-analytics', [CoachingAnalyticsController::class, 'index'])->name('coaching-analytics.index');
         Route::get('/wali-kelas/keterlambatan/{keterlambatan}/coaching-pdf', [WaliKelasMentoringController::class, 'downloadCoaching'])->name('wali-kelas.keterlambatan.coaching-pdf');
         Route::get('/bk/keterlambatan/{keterlambatan}/coaching-pdf', [BKPembinaanTerlambatController::class, 'downloadCoaching'])->name('bk.keterlambatan.coaching-pdf');
@@ -152,7 +156,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('siswa/{master_siswa}/generate-akun', [MasterSiswaController::class, 'generateAkun'])->name('siswa.generate-akun');
         Route::post('siswa/{master_siswa}/reset-password', [MasterSiswaController::class, 'resetPassword'])->name('siswa.reset-password'); // <-- Route Reset Password
         Route::resource('siswa', MasterSiswaController::class)->middleware('permission:manage siswa');
-        
+
         // Dapodik Siswa Routes
         Route::get('siswa/{siswa}/dapodik', [DapodikSiswaController::class, 'show'])->name('siswa.dapodik.show');
         Route::get('siswa/{siswa}/dapodik/edit', [DapodikSiswaController::class, 'edit'])->name('siswa.dapodik.edit');
@@ -210,6 +214,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::middleware(['role:Waka Kesiswaan'])->group(function () {
             Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('permission:view kesiswaan dashboard')->name('dashboard.index');
             Route::get('/monitoring-izin', [MonitoringIzinController::class, 'index'])->middleware('permission:monitoring izin')->name('monitoring-izin.index');
+            Route::get('/analisa-keterlambatan', [AnalisaKeterlambatanController::class, 'index'])->middleware('permission:monitoring izin')->name('analisa-keterlambatan.index');
             Route::get('/riwayat-izin-keluar', [MonitoringIzinController::class, 'riwayatIzinKeluar'])->middleware('permission:monitoring izin')->name('riwayat-izin-keluar.index');
 
             // Route untuk Persetujuan Dispensasi
@@ -277,7 +282,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Route BK Siswa
         Route::get('/bk', [\App\Http\Controllers\Siswa\BKController::class, 'index'])->name('bk.index');
         Route::post('/bk/jadwal', [\App\Http\Controllers\Siswa\BKController::class, 'storeJadwal'])->name('bk.jadwal.store');
-        
+
         // Chat
         Route::get('/chat', [\App\Http\Controllers\BK\ChatController::class, 'index'])->name('chat.index');
         Route::get('/chat/start/{guru}', [\App\Http\Controllers\BK\ChatController::class, 'startChat'])->name('chat.start');
@@ -297,10 +302,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // LMS Routes
         Route::prefix('lms')->name('lms.')->group(function () {
-             Route::get('/', [App\Http\Controllers\Siswa\LmsController::class, 'index'])->name('index');
-             Route::get('/course/{mapel}', [App\Http\Controllers\Siswa\LmsController::class, 'show'])->name('course.show');
-             Route::get('/assignment/{assignment}', [App\Http\Controllers\Siswa\LmsController::class, 'showAssignment'])->name('assignment.show');
-             Route::post('/assignment/{assignment}/submit', [App\Http\Controllers\Siswa\LmsController::class, 'storeSubmission'])->name('assignment.submit');
+            Route::get('/', [App\Http\Controllers\Siswa\LmsController::class, 'index'])->name('index');
+            Route::get('/course/{mapel}', [App\Http\Controllers\Siswa\LmsController::class, 'show'])->name('course.show');
+            Route::get('/assignment/{assignment}', [App\Http\Controllers\Siswa\LmsController::class, 'showAssignment'])->name('assignment.show');
+            Route::post('/assignment/{assignment}/submit', [App\Http\Controllers\Siswa\LmsController::class, 'storeSubmission'])->name('assignment.submit');
         });
     });
 
@@ -334,7 +339,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // API Chat (Shared)
-    Route::middleware(['auth'])->prefix('api/chat')->name('api.chat.')->group(function() {
+    Route::middleware(['auth'])->prefix('api/chat')->name('api.chat.')->group(function () {
         Route::get('/unread-count', [\App\Http\Controllers\BK\ChatController::class, 'getUnreadCount'])->name('unread-count');
         Route::get('/rooms/{room}', [\App\Http\Controllers\BK\ChatController::class, 'show'])->name('show');
         Route::post('/rooms/{room}/send', [\App\Http\Controllers\BK\ChatController::class, 'sendMessage'])->name('send');
@@ -436,7 +441,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::prefix('lms')->name('lms.')->group(function () {
             Route::get('/', [App\Http\Controllers\Guru\LmsController::class, 'index'])->name('index');
             Route::get('/course/{rombel}/{mapel}', [App\Http\Controllers\Guru\LmsController::class, 'show'])->name('course.show');
-            
+
             // Material
             Route::get('/material/create/{rombel}/{mapel}', [App\Http\Controllers\Guru\LmsController::class, 'createMaterial'])->name('material.create');
             Route::post('/material/store/{rombel}/{mapel}', [App\Http\Controllers\Guru\LmsController::class, 'storeMaterial'])->name('material.store');
