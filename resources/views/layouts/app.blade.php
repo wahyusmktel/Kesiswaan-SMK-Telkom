@@ -112,10 +112,10 @@
                     <div x-show="!sidebarCollapsed" x-transition:enter="transition ease-out duration-200"
                         x-transition:enter-start="opacity-0 transform -translate-x-2"
                         x-transition:enter-end="opacity-100 transform translate-x-0" class="flex-1 min-w-0">
-                        <h1 class="text-xs font-bold text-slate-700 leading-tight truncate uppercase tracking-tighter">
+                        <h1 class="text-xs font-bold text-white leading-tight truncate uppercase tracking-tighter">
                             {{ $appSetting?->school_name ?? config('app.name', 'Aplikasi Izin') }}
                         </h1>
-                        <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none">Management
+                        <p class="text-[9px] text-white/70 font-bold uppercase tracking-widest leading-none">Management
                             System</p>
                     </div>
                 </div>
