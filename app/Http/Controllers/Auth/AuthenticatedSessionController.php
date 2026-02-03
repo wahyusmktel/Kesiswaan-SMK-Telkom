@@ -68,6 +68,10 @@ class AuthenticatedSessionController extends Controller
             return redirect()->intended(route('security.dashboard.index', absolute: false));
         }
 
+        if ($user->hasRole('KAUR SDM')) {
+            return redirect()->intended(route('sdm.dashboard.index', absolute: false));
+        }
+
         if ($user->hasRole('Super Admin')) {
             return redirect()->intended(route('super-admin.dashboard.index', absolute: false));
         }

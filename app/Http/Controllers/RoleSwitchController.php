@@ -37,6 +37,7 @@ class RoleSwitchController extends Controller
             'Wali Kelas' => 'wali-kelas.dashboard.index',
             'Guru BK' => 'bk.dashboard.index',
             'Piket' => 'piket.dashboard.index',
+            'Guru Piket' => 'piket.dashboard.index',
             'Siswa' => 'siswa.dashboard.index',
             'Petugas Keamanan' => 'security.dashboard.index',
             'KAUR SDM' => 'sdm.dashboard.index',
