@@ -96,6 +96,13 @@ Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
 
+// Happiness Meter (Public API)
+Route::prefix('api/happiness')->name('happiness.')->group(function () {
+    Route::post('/check', [App\Http\Controllers\HappinessMetricController::class, 'checkStatus'])->name('check');
+    Route::post('/store', [App\Http\Controllers\HappinessMetricController::class, 'store'])->name('store');
+    Route::get('/stats', [App\Http\Controllers\HappinessMetricController::class, 'getStats'])->name('stats');
+});
+
 // Documentation Routes (Public)
 Route::group(['prefix' => 'panduan', 'as' => 'docs.'], function () {
     Route::get('/', [App\Http\Controllers\DocumentationController::class, 'index'])->name('index');

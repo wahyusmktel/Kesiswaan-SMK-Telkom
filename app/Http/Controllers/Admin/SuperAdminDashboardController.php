@@ -96,6 +96,17 @@ class SuperAdminDashboardController extends Controller
             ];
         });
 
+        // Happiness Meter Summary (Today)
+        $happinessMetricsToday = DB::table('happiness_metrics')->where('submitted_date', now()->toDateString())->get();
+        $distribution = $happinessMetricsToday->groupBy('mood_level')->map(fn($item) => $item->count());
+
+        $happinessSummary = [
+            'total' => $happinessMetricsToday->count(),
+            'average' => round($happinessMetricsToday->avg('mood_score'), 1) ?? 0,
+            'dominant' => $distribution->sortDesc()->keys()->first() ?? 'Belum ada data',
+            'distribution' => $distribution,
+        ];
+
         return view('pages.super-admin.dashboard', compact(
             'activeUsers',
             'recentLogins',
@@ -103,7 +114,8 @@ class SuperAdminDashboardController extends Controller
             'stats',
             'recentActivities',
             'userActivityFeed',
-            'loginTrend'
+            'loginTrend',
+            'happinessSummary'
         ));
     }
 
