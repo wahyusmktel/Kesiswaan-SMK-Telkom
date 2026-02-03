@@ -41,7 +41,7 @@
         }
 
         .soft-ui-sidebar {
-            background-image: linear-gradient(310deg, #ee2d24 0%, #ff5c5c 100%) !important;
+            background-image: linear-gradient(310deg, #ad0f06ff 0%, #ec2a2aff 100%) !important;
             /* Telkom Red Gradient */
             backdrop-filter: saturate(200%) blur(30px);
             box-shadow: 0 20px 27px 0 rgba(0, 0, 0, 0.1);
