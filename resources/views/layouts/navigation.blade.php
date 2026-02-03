@@ -622,16 +622,14 @@
 
     {{-- Dropdown Master Data (Hybrid: Inline + Flyout) --}}
     @canany(['manage kelas', 'manage siswa', 'manage rombel'])
-        <li class="submenu-dropdown"
-            x-data="{ 
-                expanded: {{ request()->routeIs(['master-data.kelas.*', 'master-data.siswa.*', 'master-data.rombel.*']) ? 'true' : 'false' }},
-                flyoutTop: 0,
-                updateFlyoutPosition() {
-                    const rect = this.$el.querySelector('button').getBoundingClientRect();
-                    this.flyoutTop = rect.top;
-                }
-            }" 
-            @mouseenter="updateFlyoutPosition()">
+        <li class="submenu-dropdown" x-data="{ 
+                                                                        expanded: {{ request()->routeIs(['master-data.kelas.*', 'master-data.siswa.*', 'master-data.rombel.*']) ? 'true' : 'false' }},
+                                                                        flyoutTop: 0,
+                                                                        updateFlyoutPosition() {
+                                                                            const rect = this.$el.querySelector('button').getBoundingClientRect();
+                                                                            this.flyoutTop = rect.top;
+                                                                        }
+                                                                    }" @mouseenter="updateFlyoutPosition()">
             <button @click="expanded = !expanded"
                 class="nav-link w-full {{ request()->routeIs(['master-data.kelas.*', 'master-data.siswa.*', 'master-data.rombel.*']) ? 'nav-link-active' : 'nav-link-inactive' }}">
                 <div class="flex items-center">
@@ -810,80 +808,166 @@
 
     {{-- Dropdown Poin & Tata Tertib --}}
     @canany(['manage poin pelanggaran', 'manage poin prestasi', 'manage pemutihan poin'])
-        <li
-            x-data="{ expanded: {{ request()->routeIs('kesiswaan.poin-peraturan.*') || request()->routeIs('kesiswaan.input-*') ? 'true' : 'false' }} }">
+        <li class="submenu-dropdown" x-data="{ 
+                                                                        expanded: {{ request()->routeIs('kesiswaan.poin-peraturan.*') || request()->routeIs('kesiswaan.input-*') ? 'true' : 'false' }},
+                                                                        flyoutTop: 0,
+                                                                        updateFlyoutPosition() {
+                                                                            const rect = this.$el.querySelector('button').getBoundingClientRect();
+                                                                            this.flyoutTop = rect.top;
+                                                                        }
+                                                                    }" @mouseenter="updateFlyoutPosition()">
             <button @click="expanded = !expanded"
-                class="flex items-center justify-between w-full px-3 py-2 rounded-lg nav-link-inactive transition-colors">
+                class="nav-link w-full {{ request()->routeIs('kesiswaan.poin-peraturan.*') || request()->routeIs('kesiswaan.input-*') ? 'nav-link-active' : 'nav-link-inactive' }}">
                 <div class="flex items-center">
-                    <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="nav-icon-container">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg></div>
+                        </svg>
+                    </div>
                     <span class="nav-text">Poin & Tata Tertib</span>
                 </div>
-                <svg :class="expanded ? 'rotate-180' : ''" class="dropdown-arrow w-4 h-4 transition-transform transform"
-                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg :class="expanded ? 'rotate-180' : ''"
+                    class="dropdown-arrow w-4 h-4 transition-transform transform text-white/60" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
             </button>
-            <ul x-show="expanded" x-collapse class="pl-10 mt-1 space-y-1">
+
+            <!-- Inline Card Submenu -->
+            <div x-show="expanded" x-collapse class="submenu-card">
                 @can('manage poin pelanggaran')
-                    <li><a href="{{ route('kesiswaan.poin-peraturan.index') }}"
-                            class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kesiswaan.poin-peraturan.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Manajemen
-                            Aturan</a></li>
-                    <li><a href="{{ route('kesiswaan.input-pelanggaran.index') }}"
-                            class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kesiswaan.input-pelanggaran.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Input
-                            Pelanggaran</a></li>
+                    <a href="{{ route('kesiswaan.poin-peraturan.index') }}"
+                        class="submenu-item {{ request()->routeIs('kesiswaan.poin-peraturan.*') ? 'submenu-item-active' : '' }}">
+                        <span class="submenu-dot"></span>
+                        Manajemen Aturan
+                    </a>
+                    <a href="{{ route('kesiswaan.input-pelanggaran.index') }}"
+                        class="submenu-item {{ request()->routeIs('kesiswaan.input-pelanggaran.*') ? 'submenu-item-active' : '' }}">
+                        <span class="submenu-dot"></span>
+                        Input Pelanggaran
+                    </a>
                 @endcan
                 @can('manage poin prestasi')
-                    <li><a href="{{ route('kesiswaan.input-prestasi.index') }}"
-                            class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kesiswaan.input-prestasi.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Input
-                            Prestasi</a></li>
+                    <a href="{{ route('kesiswaan.input-prestasi.index') }}"
+                        class="submenu-item {{ request()->routeIs('kesiswaan.input-prestasi.*') ? 'submenu-item-active' : '' }}">
+                        <span class="submenu-dot"></span>
+                        Input Prestasi
+                    </a>
                 @endcan
                 @can('manage pemutihan poin')
-                    <li><a href="{{ route('kesiswaan.input-pemutihan.index') }}"
-                            class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kesiswaan.input-pemutihan.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Pemutihan
-                            Poin</a></li>
+                    <a href="{{ route('kesiswaan.input-pemutihan.index') }}"
+                        class="submenu-item {{ request()->routeIs('kesiswaan.input-pemutihan.*') ? 'submenu-item-active' : '' }}">
+                        <span class="submenu-dot"></span>
+                        Pemutihan Poin
+                    </a>
                 @endcan
-            </ul>
+            </div>
+
+            <!-- Flyout Submenu -->
+            <div class="submenu-flyout" :style="'top: ' + flyoutTop + 'px'">
+                <div class="submenu-flyout-title">Poin & Tata Tertib</div>
+                @can('manage poin pelanggaran')
+                    <a href="{{ route('kesiswaan.poin-peraturan.index') }}"
+                        class="submenu-item {{ request()->routeIs('kesiswaan.poin-peraturan.*') ? 'submenu-item-active' : '' }}">
+                        Manajemen Aturan
+                    </a>
+                    <a href="{{ route('kesiswaan.input-pelanggaran.index') }}"
+                        class="submenu-item {{ request()->routeIs('kesiswaan.input-pelanggaran.*') ? 'submenu-item-active' : '' }}">
+                        Input Pelanggaran
+                    </a>
+                @endcan
+                @can('manage poin prestasi')
+                    <a href="{{ route('kesiswaan.input-prestasi.index') }}"
+                        class="submenu-item {{ request()->routeIs('kesiswaan.input-prestasi.*') ? 'submenu-item-active' : '' }}">
+                        Input Prestasi
+                    </a>
+                @endcan
+                @can('manage pemutihan poin')
+                    <a href="{{ route('kesiswaan.input-pemutihan.index') }}"
+                        class="submenu-item {{ request()->routeIs('kesiswaan.input-pemutihan.*') ? 'submenu-item-active' : '' }}">
+                        Pemutihan Poin
+                    </a>
+                @endcan
+            </div>
         </li>
     @endcanany
 
     {{-- Dropdown Monitoring BK --}}
     @canany(['manage pembinaan rutin', 'manage jadwal konsultasi', 'manage panggilan ortu'])
-        <li
-            x-data="{ expanded: {{ request()->routeIs('kesiswaan.monitoring-bk.*') || request()->routeIs('kesiswaan.panggilan-ortu.*') ? 'true' : 'false' }} }">
+        <li class="submenu-dropdown" x-data="{ 
+                                                                        expanded: {{ request()->routeIs('kesiswaan.monitoring-bk.*') || request()->routeIs('kesiswaan.panggilan-ortu.*') ? 'true' : 'false' }},
+                                                                        flyoutTop: 0,
+                                                                        updateFlyoutPosition() {
+                                                                            const rect = this.$el.querySelector('button').getBoundingClientRect();
+                                                                            this.flyoutTop = rect.top;
+                                                                        }
+                                                                    }" @mouseenter="updateFlyoutPosition()">
             <button @click="expanded = !expanded"
-                class="flex items-center justify-between w-full px-3 py-2 rounded-lg nav-link-inactive transition-colors">
+                class="nav-link w-full {{ request()->routeIs('kesiswaan.monitoring-bk.*') || request()->routeIs('kesiswaan.panggilan-ortu.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
                 <div class="flex items-center">
-                    <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="nav-icon-container">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                        </svg></div>
+                        </svg>
+                    </div>
                     <span class="nav-text">Monitoring BK</span>
                 </div>
-                <svg :class="expanded ? 'rotate-180' : ''" class="dropdown-arrow w-4 h-4 transition-transform transform"
-                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg :class="expanded ? 'rotate-180' : ''"
+                    class="dropdown-arrow w-4 h-4 transition-transform transform text-white/60" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
             </button>
-            <ul x-show="expanded" x-collapse class="pl-10 mt-1 space-y-1">
+
+            <!-- Inline Card Submenu -->
+            <div x-show="expanded" x-collapse class="submenu-card">
                 @can('manage pembinaan rutin')
-                    <li><a href="{{ route('kesiswaan.monitoring-bk.pembinaan') }}"
-                            class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kesiswaan.monitoring-bk.pembinaan') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Pembinaan
-                            Rutin</a></li>
+                    <a href="{{ route('kesiswaan.monitoring-bk.pembinaan') }}"
+                        class="submenu-item {{ request()->routeIs('kesiswaan.monitoring-bk.pembinaan') ? 'submenu-item-active' : '' }}">
+                        <span class="submenu-dot"></span>
+                        Pembinaan Rutin
+                    </a>
                 @endcan
                 @can('manage jadwal konsultasi')
-                    <li><a href="{{ route('kesiswaan.monitoring-bk.konsultasi') }}"
-                            class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kesiswaan.monitoring-bk.konsultasi') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Konsultasi
-                            Siswa</a></li>
+                    <a href="{{ route('kesiswaan.monitoring-bk.konsultasi') }}"
+                        class="submenu-item {{ request()->routeIs('kesiswaan.monitoring-bk.konsultasi') ? 'submenu-item-active' : '' }}">
+                        <span class="submenu-dot"></span>
+                        Konsultasi Siswa
+                    </a>
                 @endcan
                 @can('manage panggilan ortu')
-                    <li><a href="{{ route('kesiswaan.panggilan-ortu.index') }}"
-                            class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kesiswaan.panggilan-ortu.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Panggilan
-                            Orang Tua</a></li>
+                    <a href="{{ route('kesiswaan.panggilan-ortu.index') }}"
+                        class="submenu-item {{ request()->routeIs('kesiswaan.panggilan-ortu.*') ? 'submenu-item-active' : '' }}">
+                        <span class="submenu-dot"></span>
+                        Panggilan Orang Tua
+                    </a>
                 @endcan
-            </ul>
+            </div>
+
+            <!-- Flyout Submenu -->
+            <div class="submenu-flyout" :style="'top: ' + flyoutTop + 'px'">
+                <div class="submenu-flyout-title">Monitoring BK</div>
+                @can('manage pembinaan rutin')
+                    <a href="{{ route('kesiswaan.monitoring-bk.pembinaan') }}"
+                        class="submenu-item {{ request()->routeIs('kesiswaan.monitoring-bk.pembinaan') ? 'submenu-item-active' : '' }}">
+                        Pembinaan Rutin
+                    </a>
+                @endcan
+                @can('manage jadwal konsultasi')
+                    <a href="{{ route('kesiswaan.monitoring-bk.konsultasi') }}"
+                        class="submenu-item {{ request()->routeIs('kesiswaan.monitoring-bk.konsultasi') ? 'submenu-item-active' : '' }}">
+                        Konsultasi Siswa
+                    </a>
+                @endcan
+                @can('manage panggilan ortu')
+                    <a href="{{ route('kesiswaan.panggilan-ortu.index') }}"
+                        class="submenu-item {{ request()->routeIs('kesiswaan.panggilan-ortu.*') ? 'submenu-item-active' : '' }}">
+                        Panggilan Orang Tua
+                    </a>
+                @endcan
+            </div>
         </li>
     @endcanany
 
@@ -891,11 +975,13 @@
         <li>
             <a href="{{ route('kesiswaan.database.index') }}"
                 class="nav-link {{ request()->routeIs("kesiswaan.database.*") ? "nav-link-active" : "nav-link-inactive" }}">
-                <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="nav-icon-container">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
-                    </svg></div>
-                <span class="text-sm tracking-tight capitalize">Maintenance database</span>
+                    </svg>
+                </div>
+                <span class="nav-text">Database</span>
                 <span
                     class="nav-badge bg-red-100 text-red-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">SAFE</span>
             </a>
@@ -921,84 +1007,185 @@
             </a>
         </li>
 
-        <li
-            x-data="{ expanded: {{ request()->routeIs('kurikulum.jam-pelajaran.*') || request()->routeIs('kurikulum.mata-pelajaran.*') || request()->routeIs('kurikulum.master-guru.*') || request()->routeIs('kurikulum.jadwal-pelajaran.*') ? 'true' : 'false' }} }">
+        <li class="submenu-dropdown" x-data="{ 
+                                                                expanded: {{ request()->routeIs('kurikulum.jam-pelajaran.*') || request()->routeIs('kurikulum.mata-pelajaran.*') || request()->routeIs('kurikulum.master-guru.*') || request()->routeIs('kurikulum.jadwal-pelajaran.*') ? 'true' : 'false' }},
+                                                                flyoutTop: 0,
+                                                                updateFlyoutPosition() {
+                                                                    const rect = this.$el.querySelector('button').getBoundingClientRect();
+                                                                    this.flyoutTop = rect.top;
+                                                                }
+                                                            }" @mouseenter="updateFlyoutPosition()">
             <button @click="expanded = !expanded"
-                class="flex items-center justify-between w-full px-3 py-2 rounded-lg nav-link-inactive transition-colors">
+                class="nav-link w-full {{ request()->routeIs('kurikulum.jam-pelajaran.*') || request()->routeIs('kurikulum.mata-pelajaran.*') || request()->routeIs('kurikulum.master-guru.*') || request()->routeIs('kurikulum.jadwal-pelajaran.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
                 <div class="flex items-center">
-                    <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="nav-icon-container">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                        </svg></div>
+                        </svg>
+                    </div>
                     <span class="nav-text">Data Kurikulum</span>
                 </div>
-                <svg :class="expanded ? 'rotate-180' : ''" class="dropdown-arrow w-4 h-4 transition-transform transform"
-                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg :class="expanded ? 'rotate-180' : ''"
+                    class="dropdown-arrow w-4 h-4 transition-transform transform text-white/60" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
             </button>
-            <ul x-show="expanded" x-collapse class="pl-10 mt-1 space-y-1">
+
+            <!-- Inline Card Submenu -->
+            <div x-show="expanded" x-collapse class="submenu-card">
                 @can('manage jam pelajaran')
-                    <li><a href="{{ route('kurikulum.jam-pelajaran.index') }}"
-                            class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kurikulum.jam-pelajaran.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Pengaturan
-                            Jam</a></li>
+                    <a href="{{ route('kurikulum.jam-pelajaran.index') }}"
+                        class="submenu-item {{ request()->routeIs('kurikulum.jam-pelajaran.*') ? 'submenu-item-active' : '' }}">
+                        <span class="submenu-dot"></span>
+                        Pengaturan Jam
+                    </a>
                 @endcan
                 @can('manage mata pelajaran')
-                    <li><a href="{{ route('kurikulum.mata-pelajaran.index') }}"
-                            class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kurikulum.mata-pelajaran.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Mata
-                            Pelajaran</a></li>
+                    <a href="{{ route('kurikulum.mata-pelajaran.index') }}"
+                        class="submenu-item {{ request()->routeIs('kurikulum.mata-pelajaran.*') ? 'submenu-item-active' : '' }}">
+                        <span class="submenu-dot"></span>
+                        Mata Pelajaran
+                    </a>
                 @endcan
                 @can('manage guru')
-                    <li><a href="{{ route('kurikulum.master-guru.index') }}"
-                            class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kurikulum.master-guru.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Data
-                            Guru</a></li>
+                    <a href="{{ route('kurikulum.master-guru.index') }}"
+                        class="submenu-item {{ request()->routeIs('kurikulum.master-guru.*') ? 'submenu-item-active' : '' }}">
+                        <span class="submenu-dot"></span>
+                        Data Guru
+                    </a>
                 @endcan
                 @can('manage jadwal pelajaran')
-                    <li><a href="{{ route('kurikulum.jadwal-pelajaran.index') }}"
-                            class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kurikulum.jadwal-pelajaran.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Jadwal
-                            Pelajaran</a></li>
+                    <a href="{{ route('kurikulum.jadwal-pelajaran.index') }}"
+                        class="submenu-item {{ request()->routeIs('kurikulum.jadwal-pelajaran.*') ? 'submenu-item-active' : '' }}">
+                        <span class="submenu-dot"></span>
+                        Jadwal Pelajaran
+                    </a>
                 @endcan
                 @can('manage distribusi mapel')
-                    <li><a href="{{ route('kurikulum.distribusi-mapel.index') }}"
-                            class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kurikulum.distribusi-mapel.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Distribusi
-                            Mapel</a></li>
+                    <a href="{{ route('kurikulum.distribusi-mapel.index') }}"
+                        class="submenu-item {{ request()->routeIs('kurikulum.distribusi-mapel.*') ? 'submenu-item-active' : '' }}">
+                        <span class="submenu-dot"></span>
+                        Distribusi Mapel
+                    </a>
                 @endcan
-            </ul>
+            </div>
+
+            <!-- Flyout Submenu -->
+            <div class="submenu-flyout" :style="'top: ' + flyoutTop + 'px'">
+                <div class="submenu-flyout-title">Data Kurikulum</div>
+                @can('manage jam pelajaran')
+                    <a href="{{ route('kurikulum.jam-pelajaran.index') }}"
+                        class="submenu-item {{ request()->routeIs('kurikulum.jam-pelajaran.*') ? 'submenu-item-active' : '' }}">
+                        Pengaturan Jam
+                    </a>
+                @endcan
+                @can('manage mata pelajaran')
+                    <a href="{{ route('kurikulum.mata-pelajaran.index') }}"
+                        class="submenu-item {{ request()->routeIs('kurikulum.mata-pelajaran.*') ? 'submenu-item-active' : '' }}">
+                        Mata Pelajaran
+                    </a>
+                @endcan
+                @can('manage guru')
+                    <a href="{{ route('kurikulum.master-guru.index') }}"
+                        class="submenu-item {{ request()->routeIs('kurikulum.master-guru.*') ? 'submenu-item-active' : '' }}">
+                        Data Guru
+                    </a>
+                @endcan
+                @can('manage jadwal pelajaran')
+                    <a href="{{ route('kurikulum.jadwal-pelajaran.index') }}"
+                        class="submenu-item {{ request()->routeIs('kurikulum.jadwal-pelajaran.*') ? 'submenu-item-active' : '' }}">
+                        Jadwal Pelajaran
+                    </a>
+                @endcan
+                @can('manage distribusi mapel')
+                    <a href="{{ route('kurikulum.distribusi-mapel.index') }}"
+                        class="submenu-item {{ request()->routeIs('kurikulum.distribusi-mapel.*') ? 'submenu-item-active' : '' }}">
+                        Distribusi Mapel
+                    </a>
+                @endcan
+            </div>
         </li>
-        <li
-            x-data="{ expanded: {{ request()->routeIs('kurikulum.monitoring-absensi-guru.*') || request()->routeIs('kurikulum.monitoring-absensi-per-kelas.*') || request()->routeIs('kurikulum.analisa-semester.*') || request()->routeIs('kurikulum.persetujuan-izin-guru.*') ? 'true' : 'false' }} }">
+
+        <li class="submenu-dropdown" x-data="{ 
+                                                                expanded: {{ request()->routeIs('kurikulum.monitoring-absensi-guru.*') || request()->routeIs('kurikulum.monitoring-absensi-per-kelas.*') || request()->routeIs('kurikulum.analisa-semester.*') || request()->routeIs('kurikulum.persetujuan-izin-guru.*') ? 'true' : 'false' }},
+                                                                flyoutTop: 0,
+                                                                updateFlyoutPosition() {
+                                                                    const rect = this.$el.querySelector('button').getBoundingClientRect();
+                                                                    this.flyoutTop = rect.top;
+                                                                }
+                                                            }" @mouseenter="updateFlyoutPosition()">
             <button @click="expanded = !expanded"
-                class="flex items-center justify-between w-full px-3 py-2 rounded-lg nav-link-inactive transition-colors">
+                class="nav-link w-full {{ request()->routeIs('kurikulum.monitoring-absensi-guru.*') || request()->routeIs('kurikulum.monitoring-absensi-per-kelas.*') || request()->routeIs('kurikulum.analisa-semester.*') || request()->routeIs('kurikulum.persetujuan-izin-guru.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
                 <div class="flex items-center">
-                    <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="nav-icon-container">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                        </svg></div>
+                        </svg>
+                    </div>
                     <span class="nav-text">Absensi Guru</span>
                 </div>
-                <svg :class="expanded ? 'rotate-180' : ''" class="dropdown-arrow w-4 h-4 transition-transform transform"
-                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg :class="expanded ? 'rotate-180' : ''"
+                    class="dropdown-arrow w-4 h-4 transition-transform transform text-white/60" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
             </button>
-            <ul x-show="expanded" x-collapse class="pl-10 mt-1 space-y-1">
+
+            <!-- Inline Card Submenu -->
+            <div x-show="expanded" x-collapse class="submenu-card">
                 @can('manage monitoring absensi guru')
-                    <li><a href="{{ route('kurikulum.monitoring-absensi-guru.index') }}"
-                            class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kurikulum.monitoring-absensi-guru.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Monitoring
-                            Harian</a></li>
-                    <li><a href="{{ route('kurikulum.monitoring-absensi-per-kelas.index') }}"
-                            class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kurikulum.monitoring-absensi-per-kelas.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Monitoring
-                            Per Kelas</a></li>
+                    <a href="{{ route('kurikulum.monitoring-absensi-guru.index') }}"
+                        class="submenu-item {{ request()->routeIs('kurikulum.monitoring-absensi-guru.*') ? 'submenu-item-active' : '' }}">
+                        <span class="submenu-dot"></span>
+                        Monitoring Harian
+                    </a>
+                    <a href="{{ route('kurikulum.monitoring-absensi-per-kelas.index') }}"
+                        class="submenu-item {{ request()->routeIs('kurikulum.monitoring-absensi-per-kelas.*') ? 'submenu-item-active' : '' }}">
+                        <span class="submenu-dot"></span>
+                        Monitoring Per Kelas
+                    </a>
                 @endcan
                 @can('view analisa kurikulum')
-                    <li><a href="{{ route('kurikulum.analisa-semester.index') }}"
-                            class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kurikulum.analisa-semester.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Analisa
-                            Semester</a></li>
+                    <a href="{{ route('kurikulum.analisa-semester.index') }}"
+                        class="submenu-item {{ request()->routeIs('kurikulum.analisa-semester.*') ? 'submenu-item-active' : '' }}">
+                        <span class="submenu-dot"></span>
+                        Analisa Semester
+                    </a>
                 @endcan
-                <li><a href="{{ route('kurikulum.persetujuan-izin-guru.index') }}"
-                        class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kurikulum.persetujuan-izin-guru.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Persetujuan
-                        Izin Guru</a></li>
-            </ul>
+                <a href="{{ route('kurikulum.persetujuan-izin-guru.index') }}"
+                    class="submenu-item {{ request()->routeIs('kurikulum.persetujuan-izin-guru.*') ? 'submenu-item-active' : '' }}">
+                    <span class="submenu-dot"></span>
+                    Persetujuan Izin Guru
+                </a>
+            </div>
+
+            <!-- Flyout Submenu -->
+            <div class="submenu-flyout" :style="'top: ' + flyoutTop + 'px'">
+                <div class="submenu-flyout-title">Absensi Guru</div>
+                @can('manage monitoring absensi guru')
+                    <a href="{{ route('kurikulum.monitoring-absensi-guru.index') }}"
+                        class="submenu-item {{ request()->routeIs('kurikulum.monitoring-absensi-guru.*') ? 'submenu-item-active' : '' }}">
+                        Monitoring Harian
+                    </a>
+                    <a href="{{ route('kurikulum.monitoring-absensi-per-kelas.index') }}"
+                        class="submenu-item {{ request()->routeIs('kurikulum.monitoring-absensi-per-kelas.*') ? 'submenu-item-active' : '' }}">
+                        Monitoring Per Kelas
+                    </a>
+                @endcan
+                @can('view analisa kurikulum')
+                    <a href="{{ route('kurikulum.analisa-semester.index') }}"
+                        class="submenu-item {{ request()->routeIs('kurikulum.analisa-semester.*') ? 'submenu-item-active' : '' }}">
+                        Analisa Semester
+                    </a>
+                @endcan
+                <a href="{{ route('kurikulum.persetujuan-izin-guru.index') }}"
+                    class="submenu-item {{ request()->routeIs('kurikulum.persetujuan-izin-guru.*') ? 'submenu-item-active' : '' }}">
+                    Persetujuan Izin Guru
+                </a>
+            </div>
         </li>
     @endif
     @endrole
@@ -1082,33 +1269,67 @@
 </li>
 
 @canany(['manage poin pelanggaran', 'manage poin prestasi', 'manage pemutihan poin'])
-<li
-    x-data="{ expanded: {{ request()->routeIs('kesiswaan.input-pelanggaran.*') || request()->routeIs('kesiswaan.input-prestasi.*') || request()->routeIs('kesiswaan.input-pemutihan.*') ? 'true' : 'false' }} }">
+<li class="submenu-dropdown" x-data="{ 
+        expanded: {{ request()->routeIs('kesiswaan.input-pelanggaran.*') || request()->routeIs('kesiswaan.input-prestasi.*') || request()->routeIs('kesiswaan.input-pemutihan.*') ? 'true' : 'false' }},
+        flyoutTop: 0,
+        updateFlyoutPosition() {
+            const rect = this.$el.querySelector('button').getBoundingClientRect();
+            this.flyoutTop = rect.top;
+        }
+    }" @mouseenter="updateFlyoutPosition()">
     <button @click="expanded = !expanded"
-        class="flex items-center justify-between w-full px-3 py-2 rounded-lg nav-link-inactive transition-colors">
+        class="nav-link w-full {{ request()->routeIs('kesiswaan.input-pelanggaran.*') || request()->routeIs('kesiswaan.input-prestasi.*') || request()->routeIs('kesiswaan.input-pemutihan.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
         <div class="flex items-center">
-            <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg></div>
+                </svg>
+            </div>
             <span class="nav-text">Poin & Tata Tertib</span>
         </div>
-        <svg :class="expanded ? 'rotate-180' : ''" class="dropdown-arrow w-4 h-4 transition-transform transform"
-            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg :class="expanded ? 'rotate-180' : ''"
+            class="dropdown-arrow w-4 h-4 transition-transform transform text-white/60" fill="none"
+            stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
         </svg>
     </button>
-    <ul x-show="expanded" x-collapse class="pl-10 mt-1 space-y-1">
-        <li><a href="{{ route('kesiswaan.input-pelanggaran.index') }}"
-                class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kesiswaan.input-pelanggaran.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Input
-                Pelanggaran</a></li>
-        <li><a href="{{ route('kesiswaan.input-prestasi.index') }}"
-                class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kesiswaan.input-prestasi.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Input
-                Prestasi</a></li>
-        <li><a href="{{ route('kesiswaan.input-pemutihan.index') }}"
-                class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('kesiswaan.input-pemutihan.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Pemutihan
-                Poin</a></li>
-    </ul>
+
+    <!-- Inline Card Submenu -->
+    <div x-show="expanded" x-collapse class="submenu-card">
+        <a href="{{ route('kesiswaan.input-pelanggaran.index') }}"
+            class="submenu-item {{ request()->routeIs('kesiswaan.input-pelanggaran.*') ? 'submenu-item-active' : '' }}">
+            <span class="submenu-dot"></span>
+            Input Pelanggaran
+        </a>
+        <a href="{{ route('kesiswaan.input-prestasi.index') }}"
+            class="submenu-item {{ request()->routeIs('kesiswaan.input-prestasi.*') ? 'submenu-item-active' : '' }}">
+            <span class="submenu-dot"></span>
+            Input Prestasi
+        </a>
+        <a href="{{ route('kesiswaan.input-pemutihan.index') }}"
+            class="submenu-item {{ request()->routeIs('kesiswaan.input-pemutihan.*') ? 'submenu-item-active' : '' }}">
+            <span class="submenu-dot"></span>
+            Pemutihan Poin
+        </a>
+    </div>
+
+    <!-- Flyout Submenu -->
+    <div class="submenu-flyout" :style="'top: ' + flyoutTop + 'px'">
+        <div class="submenu-flyout-title">Poin & Tata Tertib</div>
+        <a href="{{ route('kesiswaan.input-pelanggaran.index') }}"
+            class="submenu-item {{ request()->routeIs('kesiswaan.input-pelanggaran.*') ? 'submenu-item-active' : '' }}">
+            Input Pelanggaran
+        </a>
+        <a href="{{ route('kesiswaan.input-prestasi.index') }}"
+            class="submenu-item {{ request()->routeIs('kesiswaan.input-prestasi.*') ? 'submenu-item-active' : '' }}">
+            Input Prestasi
+        </a>
+        <a href="{{ route('kesiswaan.input-pemutihan.index') }}"
+            class="submenu-item {{ request()->routeIs('kesiswaan.input-pemutihan.*') ? 'submenu-item-active' : '' }}">
+            Pemutihan Poin
+        </a>
+    </div>
 </li>
 @endcan
 
@@ -1425,39 +1646,79 @@
 
         {{-- Dropdown Master Data --}}
         @can('view master data')
-            <li
-                x-data="{ expanded: {{ request()->routeIs(['master-data.kelas.*', 'master-data.siswa.*', 'master-data.rombel.*']) ? 'true' : 'false' }} }">
+            <li class="submenu-dropdown" x-data="{ 
+                                                                    expanded: {{ request()->routeIs(['master-data.kelas.*', 'master-data.siswa.*', 'master-data.rombel.*']) ? 'true' : 'false' }},
+                                                                    flyoutTop: 0,
+                                                                    updateFlyoutPosition() {
+                                                                        const rect = this.$el.querySelector('button').getBoundingClientRect();
+                                                                        this.flyoutTop = rect.top;
+                                                                    }
+                                                                }" @mouseenter="updateFlyoutPosition()">
                 <button @click="expanded = !expanded"
-                    class="flex items-center justify-between w-full px-3 py-2 rounded-lg nav-link-inactive transition-colors">
+                    class="nav-link w-full {{ request()->routeIs(['master-data.kelas.*', 'master-data.siswa.*', 'master-data.rombel.*']) ? 'nav-link-active' : 'nav-link-inactive' }}">
                     <div class="flex items-center">
-                        <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="nav-icon-container">
+                            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                            </svg></div>
+                            </svg>
+                        </div>
                         <span class="nav-text">Master Data</span>
                     </div>
-                    <svg :class="expanded ? 'rotate-180' : ''" class="dropdown-arrow w-4 h-4 transition-transform transform"
-                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg :class="expanded ? 'rotate-180' : ''"
+                        class="dropdown-arrow w-4 h-4 transition-transform transform text-white/60" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                     </svg>
                 </button>
-                <ul x-show="expanded" x-collapse class="pl-10 mt-1 space-y-1">
+
+                <!-- Inline Card Submenu -->
+                <div x-show="expanded" x-collapse class="submenu-card">
                     @can('manage kelas')
-                        <li><a href="{{ route('master-data.kelas.index') }}"
-                                class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('master-data.kelas.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Data
-                                Kelas</a></li>
+                        <a href="{{ route('master-data.kelas.index') }}"
+                            class="submenu-item {{ request()->routeIs('master-data.kelas.*') ? 'submenu-item-active' : '' }}">
+                            <span class="submenu-dot"></span>
+                            Data Kelas
+                        </a>
                     @endcan
                     @can('manage siswa')
-                        <li><a href="{{ route('master-data.siswa.index') }}"
-                                class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('master-data.siswa.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Data
-                                Siswa</a></li>
+                        <a href="{{ route('master-data.siswa.index') }}"
+                            class="submenu-item {{ request()->routeIs('master-data.siswa.*') ? 'submenu-item-active' : '' }}">
+                            <span class="submenu-dot"></span>
+                            Data Siswa
+                        </a>
                     @endcan
                     @can('manage rombel')
-                        <li><a href="{{ route('master-data.rombel.index') }}"
-                                class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('master-data.rombel.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Data
-                                Rombel</a></li>
+                        <a href="{{ route('master-data.rombel.index') }}"
+                            class="submenu-item {{ request()->routeIs('master-data.rombel.*') ? 'submenu-item-active' : '' }}">
+                            <span class="submenu-dot"></span>
+                            Data Rombel
+                        </a>
                     @endcan
-                </ul>
+                </div>
+
+                <!-- Flyout Submenu -->
+                <div class="submenu-flyout" :style="'top: ' + flyoutTop + 'px'">
+                    <div class="submenu-flyout-title">Master Data</div>
+                    @can('manage kelas')
+                        <a href="{{ route('master-data.kelas.index') }}"
+                            class="submenu-item {{ request()->routeIs('master-data.kelas.*') ? 'submenu-item-active' : '' }}">
+                            Data Kelas
+                        </a>
+                    @endcan
+                    @can('manage siswa')
+                        <a href="{{ route('master-data.siswa.index') }}"
+                            class="submenu-item {{ request()->routeIs('master-data.siswa.*') ? 'submenu-item-active' : '' }}">
+                            Data Siswa
+                        </a>
+                    @endcan
+                    @can('manage rombel')
+                        <a href="{{ route('master-data.rombel.index') }}"
+                            class="submenu-item {{ request()->routeIs('master-data.rombel.*') ? 'submenu-item-active' : '' }}">
+                            Data Rombel
+                        </a>
+                    @endcan
+                </div>
             </li>
         @endcan
 
@@ -1501,29 +1762,58 @@
 @can('manage prakerin')
     @role('Koordinator Prakerin')
     @if(session('active_role') == 'Koordinator Prakerin')
-        <li x-data="{ expanded: {{ request()->routeIs('prakerin.*') ? 'true' : 'false' }} }">
+        <li class="submenu-dropdown" x-data="{ 
+                                        expanded: {{ request()->routeIs('prakerin.*') ? 'true' : 'false' }},
+                                        flyoutTop: 0,
+                                        updateFlyoutPosition() {
+                                            const rect = this.$el.querySelector('button').getBoundingClientRect();
+                                            this.flyoutTop = rect.top;
+                                        }
+                                    }" @mouseenter="updateFlyoutPosition()">
             <button @click="expanded = !expanded"
-                class="flex items-center justify-between w-full px-3 py-2 rounded-lg nav-link-inactive transition-colors">
+                class="nav-link w-full {{ request()->routeIs('prakerin.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
                 <div class="flex items-center">
-                    <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="nav-icon-container">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg></div>
+                        </svg>
+                    </div>
                     <span class="nav-text">Prakerin</span>
                 </div>
-                <svg :class="expanded ? 'rotate-180' : ''" class="dropdown-arrow w-4 h-4 transition-transform transform"
-                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg :class="expanded ? 'rotate-180' : ''"
+                    class="dropdown-arrow w-4 h-4 transition-transform transform text-white/60" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
             </button>
-            <ul x-show="expanded" x-collapse class="pl-10 mt-1 space-y-1">
-                <li><a href="{{ route('prakerin.industri.index') }}"
-                        class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('prakerin.industri.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Data
-                        Industri</a></li>
-                <li><a href="{{ route('prakerin.penempatan.index') }}"
-                        class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('prakerin.penempatan.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Penempatan
-                        Siswa</a></li>
-            </ul>
+
+            <!-- Inline Card Submenu -->
+            <div x-show="expanded" x-collapse class="submenu-card">
+                <a href="{{ route('prakerin.industri.index') }}"
+                    class="submenu-item {{ request()->routeIs('prakerin.industri.*') ? 'submenu-item-active' : '' }}">
+                    <span class="submenu-dot"></span>
+                    Data Industri
+                </a>
+                <a href="{{ route('prakerin.penempatan.index') }}"
+                    class="submenu-item {{ request()->routeIs('prakerin.penempatan.*') ? 'submenu-item-active' : '' }}">
+                    <span class="submenu-dot"></span>
+                    Penempatan Siswa
+                </a>
+            </div>
+
+            <!-- Flyout Submenu -->
+            <div class="submenu-flyout" :style="'top: ' + flyoutTop + 'px'">
+                <div class="submenu-flyout-title">Prakerin</div>
+                <a href="{{ route('prakerin.industri.index') }}"
+                    class="submenu-item {{ request()->routeIs('prakerin.industri.*') ? 'submenu-item-active' : '' }}">
+                    Data Industri
+                </a>
+                <a href="{{ route('prakerin.penempatan.index') }}"
+                    class="submenu-item {{ request()->routeIs('prakerin.penempatan.*') ? 'submenu-item-active' : '' }}">
+                    Penempatan Siswa
+                </a>
+            </div>
         </li>
     @endif
     @endrole
