@@ -88,6 +88,11 @@
                                 </svg>
                             </a>
                             <div class="flex space-x-1">
+                                @if(!$survey->is_active)
+                                    <a href="{{ route('surveys.edit', $survey) }}" title="Edit Draft" class="p-1.5 text-slate-400 hover:text-amber-600 transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5M16.243 3.757a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17.657 3.757z" /></svg>
+                                    </a>
+                                @endif
                                 <a href="{{ route('surveys.show', $survey) }}" title="Link Survey"
                                     class="p-1.5 text-slate-400 hover:text-blue-600 transition-colors">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

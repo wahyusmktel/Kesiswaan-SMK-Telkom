@@ -1,27 +1,32 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-bold text-xl text-gray-800 leading-tight">Buat Survei Baru</h2>
+        <h2 class="font-bold text-xl text-gray-800 leading-tight">Edit Survei</h2>
     </x-slot>
 
     <div class="p-6"
-        x-data="surveyBuilder({{ json_encode($isStudent) }}, {{ json_encode($roles) }}, {{ json_encode($rombels) }}, {{ json_encode($guruKelas) }}, {{ json_encode($nonStudentUsers) }})">
+        x-data="surveyBuilder({{ json_encode($isStudent) }}, {{ json_encode($roles) }}, {{ json_encode($rombels) }}, {{ json_encode($guruKelas) }}, {{ json_encode($nonStudentUsers) }}, {{ json_encode($survey->questions) }}, {{ json_encode($survey->targets->pluck('id')) }})">
         <div class="max-w-5xl mx-auto">
-            <form action="{{ route('surveys.store') }}" method="POST">
+            <form action="{{ route('surveys.update', $survey) }}" method="POST">
                 @csrf
+                @method('PUT')
 
                 <!-- Header Section -->
                 <div class="mb-8 flex justify-between items-end">
                     <div>
-                        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Buat Survei Baru</h1>
-                        <p class="text-slate-500 mt-1">Rancang kuesioner Anda dengan target responden yang tepat.</p>
+                        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Edit Survei</h1>
+                        <p class="text-slate-500 mt-1">Perbarui kuesioner Anda sebelum dipublikasikan.</p>
                     </div>
                     <div class="flex space-x-3">
-                        <input type="hidden" name="is_active" id="is_active_input" value="1">
-                        <a href="{{ route('surveys.index') }}" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-800 transition-colors flex items-center">Batal</a>
-                        <button type="submit" @click="setDraft($event)" class="px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all duration-200">
-                            Simpan sebagai Draft
+                        <input type="hidden" name="is_active" id="is_active_input"
+                            value="{{ $survey->is_active ? 1 : 0 }}">
+                        <a href="{{ route('surveys.index') }}"
+                            class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-800 transition-colors flex items-center">Batal</a>
+                        <button type="submit" @click="setDraft($event)"
+                            class="px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all duration-200">
+                            Simpan Draft
                         </button>
-                        <button type="submit" @click="confirmPublish($event)" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-200 transition-all duration-200 transform hover:-translate-y-0.5">
+                        <button type="submit" @click="confirmPublish($event)"
+                            class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-200 transition-all duration-200 transform hover:-translate-y-0.5">
                             Publikasikan
                         </button>
                     </div>
@@ -47,7 +52,7 @@
                     <div class="space-y-6">
                         <div>
                             <label class="block text-sm font-bold text-slate-700 mb-2">Judul Survei</label>
-                            <input type="text" name="title" required value="{{ old('title') }}"
+                            <input type="text" name="title" required value="{{ old('title', $survey->title) }}"
                                 class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-slate-400 text-lg font-semibold"
                                 placeholder="Contoh: Survei Kepuasan Pembelajaran Semester Ganjil">
                         </div>
@@ -55,7 +60,7 @@
                             <label class="block text-sm font-bold text-slate-700 mb-2">Deskripsi (Opsional)</label>
                             <textarea name="description" rows="3"
                                 class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-slate-400"
-                                placeholder="Berikan penjelasan singkat tentang tujuan survei ini...">{{ old('description') }}</textarea>
+                                placeholder="Berikan penjelasan singkat tentang tujuan survei ini...">{{ old('description', $survey->description) }}</textarea>
                         </div>
                     </div>
                 </div>
@@ -70,14 +75,16 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-bold text-slate-700 mb-2">Waktu Mulai</label>
-                            <input type="datetime-local" name="start_at" value="{{ old('start_at') }}"
+                            <input type="datetime-local" name="start_at"
+                                value="{{ old('start_at', $survey->start_at?->format('Y-m-d\TH:i')) }}"
                                 class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 transition-all text-slate-600">
                             <p class="text-[10px] text-slate-400 mt-2 uppercase tracking-widest font-bold">Kosongkan
                                 jika ingin segera dimulai</p>
                         </div>
                         <div>
                             <label class="block text-sm font-bold text-slate-700 mb-2">Waktu Selesai</label>
-                            <input type="datetime-local" name="end_at" value="{{ old('end_at') }}"
+                            <input type="datetime-local" name="end_at"
+                                value="{{ old('end_at', $survey->end_at?->format('Y-m-d\TH:i')) }}"
                                 class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 transition-all text-slate-600">
                             <p class="text-[10px] text-slate-400 mt-2 uppercase tracking-widest font-bold">Kosongkan
                                 jika tidak ada batas waktu</p>
@@ -144,7 +151,7 @@
                                 </div>
                             </div>
 
-                            <!-- Option 2: Semua Role Kecuali Siswa (Detail Selection) -->
+                            <!-- Option 2: Semua Role Kecuali Siswa -->
                             <div class="p-6 rounded-2xl border border-slate-100 bg-slate-50/50">
                                 <div
                                     class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
@@ -210,7 +217,6 @@
 
                             <div x-show="targetCategories.siswa" x-transition
                                 class="mt-4 border-t border-slate-100 pt-4 space-y-6">
-                                <!-- Search & Selection Control -->
                                 <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
                                     <div class="relative w-full md:w-64">
                                         <input type="text" x-model="search.rombels" placeholder="Cari Kelas..."
@@ -231,7 +237,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Classes Grid -->
                                 <div
                                     class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
                                     <template x-for="rombel in filteredRombels" :key="rombel.id">
@@ -254,7 +259,6 @@
                                     </template>
                                 </div>
 
-                                <!-- Individual Students (When a class is active) -->
                                 <div x-show="activeRombel" x-transition
                                     class="p-6 bg-white rounded-2xl border border-blue-100 shadow-sm shadow-blue-50">
                                     <div class="flex justify-between items-center mb-6">
@@ -312,7 +316,6 @@
                     <template x-for="(question, index) in questions" :key="question.idx">
                         <div
                             class="bg-white rounded-2xl shadow-sm border border-slate-100 p-8 relative group hover:border-blue-200 transition-colors">
-                            <!-- Question Header -->
                             <div class="flex justify-between items-start mb-6">
                                 <div class="flex items-center">
                                     <span
@@ -333,7 +336,6 @@
                                 </button>
                             </div>
 
-                            <!-- Question Input -->
                             <div class="mb-6">
                                 <input type="text" x-model="question.question_text"
                                     :name="'questions['+index+'][question_text]'" required
@@ -341,7 +343,6 @@
                                     placeholder="Ketik pertanyaan di sini...">
                             </div>
 
-                            <!-- Options Section (If MC) -->
                             <div x-show="question.type === 'multiple_choice'" x-transition>
                                 <div class="space-y-3">
                                     <template x-for="(option, optIndex) in question.options" :key="optIndex">
@@ -375,7 +376,6 @@
                         </div>
                     </template>
 
-                    <!-- Add Question Button -->
                     <button type="button" @click="addQuestion"
                         class="w-full py-6 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 transition-all font-bold flex items-center justify-center group">
                         <svg class="w-6 h-6 mr-2 transform group-hover:rotate-90 transition-transform duration-300"
@@ -409,7 +409,7 @@
     </style>
 
     <script>
-        function surveyBuilder(isStudent, roles, rombels, guruKelas, nonStudentUsers) {
+        function surveyBuilder(isStudent, roles, rombels, guruKelas, nonStudentUsers, initialQuestions, initialTargets) {
             return {
                 isStudent: isStudent,
                 roles: roles,
@@ -418,9 +418,9 @@
                 nonStudentUsers: nonStudentUsers,
 
                 targetCategories: {
-                    guruKelas: false,
-                    nonStudent: false,
-                    siswa: isStudent
+                    guruKelas: initialTargets.some(id => guruKelas.some(g => g.id === id)),
+                    nonStudent: initialTargets.some(id => nonStudentUsers.some(u => u.id === id)),
+                    siswa: initialTargets.some(id => rombels.some(r => r.siswa.some(s => s.user.id === id))) || isStudent
                 },
 
                 search: {
@@ -429,109 +429,72 @@
                     rombels: ''
                 },
 
-                selectedUsers: [],
+                selectedUsers: initialTargets || [],
                 activeRombel: null,
 
-                questions: [
-                    { idx: Date.now(), type: 'multiple_choice', question_text: '', options: ['', ''] }
-                ],
+                questions: initialQuestions.map(q => ({
+                    idx: q.id || Date.now() + Math.random(),
+                    type: q.type,
+                    question_text: q.question_text,
+                    options: q.options || ['', '']
+                })),
 
-                // Respondent Logic: Guru Kelas
+                // Logic functions
                 get filteredGuruKelas() {
                     if (!this.search.guruKelas) return this.guruKelas;
                     return this.guruKelas.filter(g => g.name.toLowerCase().includes(this.search.guruKelas.toLowerCase()));
                 },
-
                 toggleAllGuruKelas(checked) {
                     const ids = this.filteredGuruKelas.map(g => g.id);
-                    if (checked) {
-                        this.selectedUsers = [...new Set([...this.selectedUsers, ...ids])];
-                    } else {
-                        this.selectedUsers = this.selectedUsers.filter(id => !ids.includes(id));
-                    }
+                    if (checked) this.selectedUsers = [...new Set([...this.selectedUsers, ...ids])];
+                    else this.selectedUsers = this.selectedUsers.filter(id => !ids.includes(id));
                 },
-
-                // Respondent Logic: Non-Student
                 get filteredNonStudent() {
                     if (!this.search.nonStudent) return this.nonStudentUsers;
                     return this.nonStudentUsers.filter(u => u.name.toLowerCase().includes(this.search.nonStudent.toLowerCase()));
                 },
-
                 toggleAllNonStudent(checked) {
                     const ids = this.filteredNonStudent.map(u => u.id);
-                    if (checked) {
-                        this.selectedUsers = [...new Set([...this.selectedUsers, ...ids])];
-                    } else {
-                        this.selectedUsers = this.selectedUsers.filter(id => !ids.includes(id));
-                    }
+                    if (checked) this.selectedUsers = [...new Set([...this.selectedUsers, ...ids])];
+                    else this.selectedUsers = this.selectedUsers.filter(id => !ids.includes(id));
                 },
-
-                // Respondent Logic: Students & Classes
                 get filteredRombels() {
                     if (!this.search.rombels) return this.rombels;
                     return this.rombels.filter(r => r.kelas.nama_kelas.toLowerCase().includes(this.search.rombels.toLowerCase()));
                 },
-
                 get currentStudents() {
                     if (!this.activeRombel) return [];
                     return this.rombels.find(r => r.id === this.activeRombel)?.siswa || [];
                 },
-
                 isRombelSelected(rombel) {
                     const ids = rombel.siswa.map(s => s.user.id);
                     return ids.length > 0 && ids.every(id => this.selectedUsers.includes(id));
                 },
-
                 toggleRombel(rombel, checked) {
                     const ids = rombel.siswa.map(s => s.user.id);
-                    if (checked) {
-                        this.selectedUsers = [...new Set([...this.selectedUsers, ...ids])];
-                    } else {
-                        this.selectedUsers = this.selectedUsers.filter(id => !ids.includes(id));
-                    }
+                    if (checked) this.selectedUsers = [...new Set([...this.selectedUsers, ...ids])];
+                    else this.selectedUsers = this.selectedUsers.filter(id => !ids.includes(id));
                 },
-
                 toggleAllRombels(checked) {
                     this.rombels.forEach(r => this.toggleRombel(r, checked));
                 },
-
                 toggleActiveRombelSiswa(checked) {
-                const rombel = this.rombels.find(r => r.id === this.activeRombel);
-                if (rombel) this.toggleRombel(rombel, checked);
-            },
-
-            // Form Submission Logic
-            setDraft(event) {
-                document.getElementById('is_active_input').value = '0';
-            },
-
-            confirmPublish(event) {
-                document.getElementById('is_active_input').value = '1';
-                if (!confirm('Apakah anda yakin akan mempublikasikan survei ini?')) {
-                    event.preventDefault();
-                }
-            },
-
-            // Question Builder Logic
-            addQuestion() {
-                    this.questions.push({
-                        idx: Date.now(),
-                        type: 'multiple_choice',
-                        question_text: '',
-                        options: ['', '']
-                    });
+                    const rombel = this.rombels.find(r => r.id === this.activeRombel);
+                    if (rombel) this.toggleRombel(rombel, checked);
                 },
-                removeQuestion(index) {
-                    this.questions.splice(index, 1);
+                setDraft(event) {
+                    document.getElementById('is_active_input').value = '0';
                 },
-                addOption(qIndex) {
-                    if (this.questions[qIndex].options.length < 5) {
-                        this.questions[qIndex].options.push('');
-                    }
+                confirmPublish(event) {
+                    document.getElementById('is_active_input').value = '1';
+                    if (!confirm('Apakah anda yakin akan mempublikasikan survei ini?')) event.preventDefault();
                 },
-                removeOption(qIndex, optIndex) {
-                    this.questions[qIndex].options.splice(optIndex, 1);
-                }
+                addQuestion() {
+                    this.questions.push({ idx: Date.now() + Math.random(), type: 'multiple_choice', question_text: '', options: ['', ''] });
+                },
+                removeQuestion(index) { this.questions.splice(index, 1); },
+                addOption(qIndex) { if (this.questions[qIndex].options.length < 5) this.questions[qIndex].options.push(''); },
+                removeOption(qIndex, optIndex) { this.questions[qIndex].options.splice(optIndex, 1); }
             };
         }
     </script>
