@@ -220,8 +220,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Accessible by all authenticated users (students can print their own)
         Route::get('input-pemutihan/{pemutihan}/print', [\App\Http\Controllers\Kesiswaan\PemutihanPoinController::class, 'printPdf'])->name('input-pemutihan.print');
 
-        // Waka Kesiswaan specific routes
-        Route::middleware(['role:Waka Kesiswaan'])->group(function () {
+        // Waka Kesiswaan & Super Admin specific routes
+        Route::middleware(['role:Waka Kesiswaan|Super Admin'])->group(function () {
             Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('permission:view kesiswaan dashboard')->name('dashboard.index');
             Route::get('/monitoring-izin', [MonitoringIzinController::class, 'index'])->middleware('permission:monitoring izin')->name('monitoring-izin.index');
             Route::get('/analisa-keterlambatan', [AnalisaKeterlambatanController::class, 'index'])->middleware('permission:monitoring izin')->name('analisa-keterlambatan.index');
@@ -256,12 +256,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/kartu-akses/{siswa}/cetak', [\App\Http\Controllers\Kesiswaan\KartuAksesController::class, 'cetak'])->middleware('permission:manage kartu akses')->name('kartu-akses.cetak');
             Route::post('/kartu-akses/cetak-masal', [\App\Http\Controllers\Kesiswaan\KartuAksesController::class, 'cetakMasal'])->middleware('permission:manage kartu akses')->name('kartu-akses.cetak-masal');
 
-            // Route Database Maintenance
-            Route::get('/database', [\App\Http\Controllers\Kesiswaan\DatabaseController::class, 'index'])->middleware('permission:manage database maintenance')->name('database.index');
-            Route::post('/database/backup', [\App\Http\Controllers\Kesiswaan\DatabaseController::class, 'backup'])->middleware('permission:manage database maintenance')->name('database.backup');
-            Route::post('/database/restore', [\App\Http\Controllers\Kesiswaan\DatabaseController::class, 'restore'])->middleware('permission:manage database maintenance')->name('database.restore');
-            Route::get('/database/download/{filename}', [\App\Http\Controllers\Kesiswaan\DatabaseController::class, 'download'])->middleware('permission:manage database maintenance')->name('database.download');
-            Route::delete('/database/{filename}', [\App\Http\Controllers\Kesiswaan\DatabaseController::class, 'destroy'])->middleware('permission:manage database maintenance')->name('database.destroy');
+            // Route Database Maintenance (Strictly Super Admin Only)
+            Route::get('/database', [\App\Http\Controllers\Kesiswaan\DatabaseController::class, 'index'])->middleware(['role:Super Admin', 'permission:manage database maintenance'])->name('database.index');
+            Route::post('/database/backup', [\App\Http\Controllers\Kesiswaan\DatabaseController::class, 'backup'])->middleware(['role:Super Admin', 'permission:manage database maintenance'])->name('database.backup');
+            Route::post('/database/restore', [\App\Http\Controllers\Kesiswaan\DatabaseController::class, 'restore'])->middleware(['role:Super Admin', 'permission:manage database maintenance'])->name('database.restore');
+            Route::get('/database/download/{filename}', [\App\Http\Controllers\Kesiswaan\DatabaseController::class, 'download'])->middleware(['role:Super Admin', 'permission:manage database maintenance'])->name('database.download');
+            Route::delete('/database/{filename}', [\App\Http\Controllers\Kesiswaan\DatabaseController::class, 'destroy'])->middleware(['role:Super Admin', 'permission:manage database maintenance'])->name('database.destroy');
         });
     });
 
