@@ -624,4 +624,8 @@ Route::post('/switch-role', [\App\Http\Controllers\RoleSwitchController::class, 
     ->name('role.switch')
     ->middleware('auth');
 
+// Stella Access Card Login Routes
+Route::get('/stella-login', [\App\Http\Controllers\Auth\StellaLoginController::class, 'showScanPage'])->name('stella-login');
+Route::post('/stella-login', [\App\Http\Controllers\Auth\StellaLoginController::class, 'login'])->name('stella-login.submit');
+
 require __DIR__ . '/auth.php';
