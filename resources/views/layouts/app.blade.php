@@ -94,7 +94,7 @@
                 'w-72': !sidebarCollapsed,
                 'w-24': sidebarCollapsed
             }"
-            class="fixed inset-y-0 left-0 z-40 soft-ui-sidebar sidebar-float transform transition-all duration-300 ease-in-out flex flex-col md:relative md:translate-x-0 md:flex-shrink-0 sidebar-transition group overflow-hidden">
+            class="fixed inset-y-0 left-0 z-40 soft-ui-sidebar sidebar-float transform transition-all duration-300 ease-in-out flex flex-col md:relative md:translate-x-0 md:flex-shrink-0 sidebar-transition group">
 
             <!-- Sidebar Header -->
             <div class="h-24 px-6 flex items-center justify-between flex-shrink-0 relative">
@@ -160,7 +160,7 @@
         </aside>
 
         <div
-            class="flex-1 flex flex-col overflow-hidden relative md:my-5 md:mr-5 md:rounded-r-2xl md:shadow-soft bg-white border-y border-r border-gray-100">
+            class="flex-1 flex flex-col overflow-hidden relative md:my-5 md:mr-5 md:rounded-r-2xl md:shadow-soft bg-white border-y border-r border-gray-100 z-10">
 
             <header class="flex-shrink-0 bg-white/90 backdrop-blur-md border-b border-gray-200 sticky top-0 z-30">
                 <div class="px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">

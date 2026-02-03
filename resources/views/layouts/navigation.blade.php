@@ -53,14 +53,20 @@
     }
 
     .nav-icon {
-        width: 12px;
-        height: 12px;
+        width: 14px;
+        height: 14px;
     }
 
     .nav-text {
-        font-size: 0.8125rem;
+        font-size: 0.875rem;
         margin-left: 0.75rem;
         transition: all 0.2s ease;
+    }
+
+    /* Dropdown parent menu icon container styling */
+    .nav-link-inactive .nav-icon-container {
+        background-color: rgba(255, 255, 255, 0.15);
+        color: #ffffff;
     }
 
     .section-title {
@@ -88,6 +94,112 @@
         width: 48px;
         margin-left: auto;
         margin-right: auto;
+    }
+
+    /* Hybrid Submenu Styles */
+    .submenu-dropdown {
+        position: relative;
+    }
+
+    /* Inline Card Submenu (Expanded Sidebar) */
+    .submenu-card {
+        margin: 0.5rem 0.5rem 0.75rem 0.5rem;
+        padding: 0.75rem;
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(8px);
+        border-radius: 0.875rem;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .submenu-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 0.75rem;
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.8);
+        border-radius: 0.5rem;
+        transition: all 0.15s ease;
+    }
+
+    .submenu-item:hover {
+        background: rgba(255, 255, 255, 0.15);
+        color: #ffffff;
+    }
+
+    .submenu-item-active {
+        background: rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+        font-weight: 600;
+    }
+
+    .submenu-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.4);
+        flex-shrink: 0;
+    }
+
+    .submenu-item-active .submenu-dot {
+        background: #ffffff;
+    }
+
+    /* Flyout Submenu (Collapsed Sidebar) - Fixed positioning to avoid overflow */
+    .submenu-flyout {
+        position: fixed;
+        left: 5.5rem;
+        min-width: 160px;
+        background: #344767;
+        border-radius: 0.75rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+        padding: 0.5rem;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.2s ease;
+        z-index: 9999;
+        pointer-events: none;
+    }
+
+    /* Invisible bridge to maintain hover when moving from trigger to flyout */
+    .submenu-flyout::before {
+        content: '';
+        position: absolute;
+        left: -1.5rem;
+        top: 0;
+        width: 1.5rem;
+        height: 100%;
+        background: transparent;
+    }
+
+    .submenu-flyout-title {
+        padding: 0.5rem 0.75rem 0.375rem;
+        font-size: 0.65rem;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.5);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    /* Show flyout on hover when collapsed */
+    .sidebar-collapsed .submenu-dropdown:hover .submenu-flyout {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+    }
+
+    /* Hide inline card when collapsed */
+    .sidebar-collapsed .submenu-card {
+        display: none;
+    }
+
+    /* Show flyout only when collapsed */
+    .submenu-flyout {
+        display: none;
+    }
+
+    .sidebar-collapsed .submenu-flyout {
+        display: block;
     }
 </style>
 
@@ -508,42 +620,83 @@
         </li>
     @endcan
 
-    {{-- Dropdown Master Data --}}
+    {{-- Dropdown Master Data (Hybrid: Inline + Flyout) --}}
     @canany(['manage kelas', 'manage siswa', 'manage rombel'])
-        <li
-            x-data="{ expanded: {{ request()->routeIs(['master-data.kelas.*', 'master-data.siswa.*', 'master-data.rombel.*']) ? 'true' : 'false' }} }">
+        <li class="submenu-dropdown"
+            x-data="{ 
+                expanded: {{ request()->routeIs(['master-data.kelas.*', 'master-data.siswa.*', 'master-data.rombel.*']) ? 'true' : 'false' }},
+                flyoutTop: 0,
+                updateFlyoutPosition() {
+                    const rect = this.$el.querySelector('button').getBoundingClientRect();
+                    this.flyoutTop = rect.top;
+                }
+            }" 
+            @mouseenter="updateFlyoutPosition()">
             <button @click="expanded = !expanded"
-                class="flex items-center justify-between w-full px-3 py-2 rounded-lg nav-link-inactive transition-colors">
+                class="nav-link w-full {{ request()->routeIs(['master-data.kelas.*', 'master-data.siswa.*', 'master-data.rombel.*']) ? 'nav-link-active' : 'nav-link-inactive' }}">
                 <div class="flex items-center">
-                    <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="nav-icon-container">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                        </svg></div>
+                        </svg>
+                    </div>
                     <span class="nav-text">Master Data</span>
                 </div>
-                <svg :class="expanded ? 'rotate-180' : ''" class="dropdown-arrow w-4 h-4 transition-transform transform"
-                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg :class="expanded ? 'rotate-180' : ''"
+                    class="dropdown-arrow w-4 h-4 transition-transform transform text-white/60" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
-
             </button>
-            <ul x-show="expanded" x-collapse class="pl-10 mt-1 space-y-1">
+
+            <!-- Inline Card Submenu (Expanded Sidebar) -->
+            <div x-show="expanded" x-collapse class="submenu-card">
                 @can('manage kelas')
-                    <li><a href="{{ route('master-data.kelas.index') }}"
-                            class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('master-data.kelas.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Data
-                            Kelas</a></li>
+                    <a href="{{ route('master-data.kelas.index') }}"
+                        class="submenu-item {{ request()->routeIs('master-data.kelas.*') ? 'submenu-item-active' : '' }}">
+                        <span class="submenu-dot"></span>
+                        Data Kelas
+                    </a>
                 @endcan
                 @can('manage siswa')
-                    <li><a href="{{ route('master-data.siswa.index') }}"
-                            class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('master-data.siswa.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Data
-                            Siswa</a></li>
+                    <a href="{{ route('master-data.siswa.index') }}"
+                        class="submenu-item {{ request()->routeIs('master-data.siswa.*') ? 'submenu-item-active' : '' }}">
+                        <span class="submenu-dot"></span>
+                        Data Siswa
+                    </a>
                 @endcan
                 @can('manage rombel')
-                    <li><a href="{{ route('master-data.rombel.index') }}"
-                            class="block px-3 py-2 text-sm rounded-lg {{ request()->routeIs('master-data.rombel.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:text-red-700' }}">Data
-                            Rombel</a></li>
+                    <a href="{{ route('master-data.rombel.index') }}"
+                        class="submenu-item {{ request()->routeIs('master-data.rombel.*') ? 'submenu-item-active' : '' }}">
+                        <span class="submenu-dot"></span>
+                        Data Rombel
+                    </a>
                 @endcan
-            </ul>
+            </div>
+
+            <!-- Flyout Submenu (Collapsed Sidebar) -->
+            <div class="submenu-flyout" :style="'top: ' + flyoutTop + 'px'">
+                <div class="submenu-flyout-title">Master Data</div>
+                @can('manage kelas')
+                    <a href="{{ route('master-data.kelas.index') }}"
+                        class="submenu-item {{ request()->routeIs('master-data.kelas.*') ? 'submenu-item-active' : '' }}">
+                        Data Kelas
+                    </a>
+                @endcan
+                @can('manage siswa')
+                    <a href="{{ route('master-data.siswa.index') }}"
+                        class="submenu-item {{ request()->routeIs('master-data.siswa.*') ? 'submenu-item-active' : '' }}">
+                        Data Siswa
+                    </a>
+                @endcan
+                @can('manage rombel')
+                    <a href="{{ route('master-data.rombel.index') }}"
+                        class="submenu-item {{ request()->routeIs('master-data.rombel.*') ? 'submenu-item-active' : '' }}">
+                        Data Rombel
+                    </a>
+                @endcan
+            </div>
         </li>
     @endcanany
 
