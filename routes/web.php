@@ -556,6 +556,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Grup Route untuk Super Admin
     Route::middleware(['role:Super Admin'])->prefix('super-admin')->name('super-admin.')->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\Admin\SuperAdminDashboardController::class, 'index'])->name('dashboard.index');
         Route::get('/settings', [SuperAdminController::class, 'settings'])->name('settings');
         Route::post('/settings', [SuperAdminController::class, 'updateSettings'])->name('settings.update');
 

@@ -18,7 +18,7 @@ class RoleSwitchController extends Controller
 
         if ($user->hasRole($requestedRole)) {
             session(['active_role' => $requestedRole]);
-            
+
             // Redirect based on role
             return redirect()->route($this->getDashboardRoute($requestedRole))
                 ->with('success', 'Berhasil beralih ke role ' . $requestedRole);
@@ -30,15 +30,18 @@ class RoleSwitchController extends Controller
     private function getDashboardRoute($role)
     {
         return match ($role) {
-            'Super Admin' => 'admin.dashboard.index',
+            'Super Admin' => 'super-admin.dashboard.index',
+            'Waka Kesiswaan' => 'kesiswaan.dashboard.index',
             'Kurikulum' => 'kurikulum.dashboard.index',
             'Guru Kelas' => 'guru-kelas.dashboard.index',
+            'Wali Kelas' => 'wali-kelas.dashboard.index',
             'Guru BK' => 'bk.dashboard.index',
             'Piket' => 'piket.dashboard.index',
             'Siswa' => 'siswa.dashboard.index',
             'Petugas Keamanan' => 'security.dashboard.index',
             'KAUR SDM' => 'sdm.dashboard.index',
             'Operator' => 'operator.dashboard.index',
+            'Koordinator Prakerin' => 'dashboard',
             default => 'dashboard',
         };
     }
