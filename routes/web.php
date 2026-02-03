@@ -66,11 +66,14 @@ Route::get('/verifikasi/kartu/{nis}', [VerifikasiController::class, 'kartuPelaja
 
 // Legal Pages
 Route::get('/privacy', function () {
-    return view('pages.legal.privacy'); })->name('privacy');
+    return view('pages.legal.privacy');
+})->name('privacy');
 Route::get('/terms', function () {
-    return view('pages.legal.terms'); })->name('terms');
+    return view('pages.legal.terms');
+})->name('terms');
 Route::get('/security', function () {
-    return view('pages.legal.security'); })->name('security');
+    return view('pages.legal.security');
+})->name('security');
 
 // ==================================
 //     BATAS ROUTE PUBLIK
@@ -309,6 +312,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         });
     });
 
+    // Monitoring Pelanggaran & Keterlambatan (Shared BK & Waka)
+    Route::middleware(['auth', 'role:Guru BK|Waka Kesiswaan|Super Admin'])->prefix('bk')->name('bk.')->group(function () {
+        Route::get('/monitoring-catatan', [\App\Http\Controllers\BK\MonitoringCatatanController::class, 'index'])->name('monitoring-catatan.index');
+        Route::get('/monitoring-catatan/{siswa}', [\App\Http\Controllers\BK\MonitoringCatatanController::class, 'show'])->name('monitoring-catatan.show');
+    });
+
     // Grup Route untuk Guru BK
     Route::middleware(['role:Guru BK', 'permission:view bk dashboard'])->prefix('bk')->name('bk.')->group(function () {
         Route::get('/dashboard', [BKDashboardController::class, 'index'])->name('dashboard.index');
@@ -331,9 +340,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/konsultasi/{jadwal}/print-jadwal', [\App\Http\Controllers\BK\ConsultationDocController::class, 'printSchedule'])->name('konsultasi.print-jadwal');
         Route::get('/konsultasi/{jadwal}/print-report', [\App\Http\Controllers\BK\ConsultationDocController::class, 'printReport'])->name('konsultasi.print-report');
 
-        // Monitoring Pelanggaran & Keterlambatan
-        Route::get('/monitoring-catatan', [\App\Http\Controllers\BK\MonitoringCatatanController::class, 'index'])->name('monitoring-catatan.index');
-        Route::get('/monitoring-catatan/{siswa}', [\App\Http\Controllers\BK\MonitoringCatatanController::class, 'show'])->name('monitoring-catatan.show');
         Route::post('/keterlambatan/{keterlambatan}/pembinaan', [BKPembinaanTerlambatController::class, 'store'])->name('keterlambatan.pembinaan');
         Route::post('/panggilan-proposal', [\App\Http\Controllers\BK\PanggilanProposalController::class, 'store'])->name('panggilan-proposal.store');
     });
