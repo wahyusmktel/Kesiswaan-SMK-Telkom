@@ -25,14 +25,16 @@
 
                     <div class="flex items-center gap-2">
 
-                        <button @click="$dispatch('open-import-modal')"
-                            class="inline-flex items-center px-4 py-2 bg-emerald-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-emerald-500 focus:outline-none shadow-sm transition ease-in-out duration-150 gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                            </svg>
-                            Import Excel
-                        </button>
+                        @unlessrole('Waka Kesiswaan')
+                            <button @click="$dispatch('open-import-modal')"
+                                class="inline-flex items-center px-4 py-2 bg-emerald-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-emerald-500 focus:outline-none shadow-sm transition ease-in-out duration-150 gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                Import Excel
+                            </button>
+                        @endunlessrole
 
                         <form action="{{ route('master-data.siswa.generate-akun-masal') }}" method="POST"
                             class="action-form">
@@ -48,14 +50,16 @@
                             </button>
                         </form>
 
-                        <button @click="$dispatch('open-siswa-modal')"
-                            class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-500 focus:outline-none shadow-sm transition ease-in-out duration-150 gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                            </svg>
-                            Tambah Siswa
-                        </button>
+                        @unlessrole('Waka Kesiswaan')
+                            <button @click="$dispatch('open-siswa-modal')"
+                                class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-500 focus:outline-none shadow-sm transition ease-in-out duration-150 gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                                </svg>
+                                Tambah Siswa
+                            </button>
+                        @endunlessrole
                     </div>
                 </div>
 
@@ -158,29 +162,31 @@
                                                 Dapodik
                                             </a>
 
-                                            <button
-                                                @click="$dispatch('edit-siswa', {
-                                                    id: '{{ $item->id }}',
-                                                    nis: '{{ $item->nis }}',
-                                                    nama_lengkap: '{{ addslashes($item->nama_lengkap) }}',
-                                                    jenis_kelamin: '{{ $item->jenis_kelamin }}',
-                                                    tanggal_lahir: '{{ $item->tanggal_lahir }}',
-                                                    alamat: '{{ addslashes($item->alamat) }}',
-                                                    updateUrl: '{{ route('master-data.siswa.update', $item->id) }}'
-                                                })"
-                                                class="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-xs font-semibold border border-gray-200">
-                                                Edit
-                                            </button>
-
-                                            <form action="{{ route('master-data.siswa.destroy', $item->id) }}"
-                                                method="POST" class="delete-form inline-block">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="button" onclick="confirmDelete(this)"
-                                                    class="inline-flex items-center px-3 py-1.5 bg-white text-red-600 rounded-lg hover:bg-red-50 hover:text-red-700 transition-colors text-xs font-semibold border border-red-200">
-                                                    Hapus
+                                            @unlessrole('Waka Kesiswaan')
+                                                <button
+                                                    @click="$dispatch('edit-siswa', {
+                                                        id: '{{ $item->id }}',
+                                                        nis: '{{ $item->nis }}',
+                                                        nama_lengkap: '{{ addslashes($item->nama_lengkap) }}',
+                                                        jenis_kelamin: '{{ $item->jenis_kelamin }}',
+                                                        tanggal_lahir: '{{ $item->tanggal_lahir }}',
+                                                        alamat: '{{ addslashes($item->alamat) }}',
+                                                        updateUrl: '{{ route('master-data.siswa.update', $item->id) }}'
+                                                    })"
+                                                    class="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-xs font-semibold border border-gray-200">
+                                                    Edit
                                                 </button>
-                                            </form>
+
+                                                <form action="{{ route('master-data.siswa.destroy', $item->id) }}"
+                                                    method="POST" class="delete-form inline-block">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="button" onclick="confirmDelete(this)"
+                                                        class="inline-flex items-center px-3 py-1.5 bg-white text-red-600 rounded-lg hover:bg-red-50 hover:text-red-700 transition-colors text-xs font-semibold border border-red-200">
+                                                        Hapus
+                                                    </button>
+                                                </form>
+                                            @endunlessrole
                                         </div>
                                     </td>
                                 </tr>
