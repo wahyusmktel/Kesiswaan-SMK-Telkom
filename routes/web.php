@@ -599,6 +599,25 @@ Route::middleware('auth')->group(function () {
         Route::get('/{id}/read', [\App\Http\Controllers\Shared\NotificationController::class, 'markAsRead'])->name('read');
         Route::post('/mark-all-as-read', [\App\Http\Controllers\Shared\NotificationController::class, 'markAllAsRead'])->name('mark-all');
     });
+
+    // Survey Questionnaire Features
+    Route::prefix('surveys')->name('surveys.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Survey\SurveyController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\Survey\SurveyController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\Survey\SurveyController::class, 'store'])->name('store');
+        Route::get('/{survey}/edit', [\App\Http\Controllers\Survey\SurveyController::class, 'edit'])->name('edit');
+        Route::put('/{survey}', [\App\Http\Controllers\Survey\SurveyController::class, 'update'])->name('update');
+        Route::delete('/{survey}', [\App\Http\Controllers\Survey\SurveyController::class, 'destroy'])->name('destroy');
+
+        // Survey Responding
+        Route::get('/{survey}/take', [\App\Http\Controllers\Survey\SurveyController::class, 'show'])->name('show');
+        Route::post('/{survey}/respond', [\App\Http\Controllers\Survey\SurveyController::class, 'submitResponse'])->name('submit');
+
+        // Survey Results & Analytics
+        Route::get('/{survey}/results', [\App\Http\Controllers\Survey\SurveyController::class, 'results'])->name('results');
+        Route::get('/{survey}/export/excel', [\App\Http\Controllers\Survey\SurveyController::class, 'exportExcel'])->name('export.excel');
+        Route::get('/{survey}/export/pdf', [\App\Http\Controllers\Survey\SurveyController::class, 'exportPdf'])->name('export.pdf');
+    });
 });
 
 Route::post('/switch-role', [\App\Http\Controllers\RoleSwitchController::class, 'switch'])
