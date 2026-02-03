@@ -130,4 +130,9 @@ class User extends Authenticatable
     {
         $this->notify(new \App\Notifications\CustomResetPasswordNotification($token));
     }
+
+    public function surveysAsTarget()
+    {
+        return $this->belongsToMany(Survey::class, 'survey_targets');
+    }
 }

@@ -8,6 +8,9 @@ use Illuminate\Http\Request;
 use App\Models\Survey;
 use App\Models\SurveyQuestion;
 use App\Models\SurveyResponse;
+use App\Models\User;
+use App\Models\Rombel;
+use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\SurveyExport;
@@ -18,8 +21,19 @@ class SurveyController extends Controller
 {
     public function index()
     {
-        $surveys = Survey::where('created_by', auth()->id())
+        $user = auth()->user();
+        $surveys = Survey::where(function ($query) use ($user) {
+            $query->where('created_by', $user->id)
+                ->orWhereHas('targets', function ($q) use ($user) {
+                    $q->where('user_id', $user->id);
+                });
+        })
             ->withCount('responses')
+            ->with([
+                'responses' => function ($q) use ($user) {
+                    $q->where('user_id', $user->id);
+                }
+            ])
             ->latest()
             ->paginate(10);
 
@@ -28,7 +42,17 @@ class SurveyController extends Controller
 
     public function create()
     {
-        return view('pages.surveys.create');
+        $user = auth()->user();
+        $isStudent = $user->hasRole('Siswa');
+
+        $roles = Role::where('name', '!=', 'Siswa')->get();
+        $rombels = Rombel::with(['kelas', 'siswa.user'])->get();
+        $guruKelas = User::role('Guru Kelas')->get();
+        $nonStudentUsers = User::whereDoesntHave('roles', function ($q) {
+            $q->where('name', 'Siswa');
+        })->get();
+
+        return view('pages.surveys.create', compact('isStudent', 'roles', 'rombels', 'guruKelas', 'nonStudentUsers'));
     }
 
     public function store(Request $request)
@@ -36,10 +60,13 @@ class SurveyController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'start_at' => 'nullable|date',
+            'end_at' => 'nullable|date|after_or_equal:start_at',
             'questions' => 'required|array|min:1',
             'questions.*.question_text' => 'required|string',
             'questions.*.type' => 'required|in:multiple_choice,essay',
             'questions.*.options' => 'nullable|array|max:5',
+            'target_users' => 'required|array|min:1',
         ]);
 
         DB::beginTransaction();
@@ -47,6 +74,8 @@ class SurveyController extends Controller
             $survey = Survey::create([
                 'title' => $request->title,
                 'description' => $request->description,
+                'start_at' => $request->start_at,
+                'end_at' => $request->end_at,
                 'created_by' => auth()->id(),
             ]);
 
@@ -59,6 +88,9 @@ class SurveyController extends Controller
                 ]);
             }
 
+            // Sync targets
+            $survey->targets()->sync($request->target_users);
+
             DB::commit();
             return redirect()->route('surveys.index')->with('success', 'Survei berhasil dibuat.');
         } catch (\Exception $e) {
@@ -69,8 +101,26 @@ class SurveyController extends Controller
 
     public function show(Survey $survey)
     {
-        if (!$survey->is_active) {
+        $user = auth()->user();
+
+        // Security checks
+        if (!$survey->isOpen()) {
+            $status = $survey->schedule_status;
+            if ($status === 'upcoming') {
+                return back()->with('info', 'Survei ini belum dimulai. Silakan kembali lagi nanti.');
+            }
+            if ($status === 'expired') {
+                return back()->with('error', 'Survei ini sudah berakhir.');
+            }
             return back()->with('error', 'Survei ini sudah tidak aktif.');
+        }
+
+        if ($survey->created_by !== $user->id && !$survey->targets()->where('user_id', $user->id)->exists()) {
+            abort(403, 'Anda tidak terdaftar sebagai responden survei ini.');
+        }
+
+        if ($survey->responses()->where('user_id', $user->id)->exists()) {
+            return redirect()->route('surveys.index')->with('info', 'Anda sudah mengisi survei ini.');
         }
 
         $survey->load('questions');
@@ -79,6 +129,17 @@ class SurveyController extends Controller
 
     public function submitResponse(Request $request, Survey $survey)
     {
+        $user = auth()->user();
+
+        // Security checks
+        if (!$survey->isOpen()) {
+            abort(403, 'Survei tidak sedang berlangsung.');
+        }
+
+        if ($survey->responses()->where('user_id', $user->id)->exists()) {
+            return redirect()->route('surveys.index')->with('error', 'Anda sudah mengisi survei ini.');
+        }
+
         $request->validate([
             'answers' => 'required|array',
             'answers.*' => 'required',
@@ -87,12 +148,10 @@ class SurveyController extends Controller
         DB::beginTransaction();
         try {
             $response = $survey->responses()->create([
-                'user_id' => auth()->id(),
+                'user_id' => $user->id,
             ]);
 
             foreach ($request->answers as $questionId => $value) {
-                // For multiple choice, value might be an array if we allow multi-select, 
-                // but for now it's single choice as per prompt "maksimal 5 pilihan jawaban".
                 $response->answers()->create([
                     'question_id' => $questionId,
                     'answer_value' => is_array($value) ? json_encode($value) : $value,
@@ -100,7 +159,7 @@ class SurveyController extends Controller
             }
 
             DB::commit();
-            return redirect()->route('dashboard')->with('success', 'Terima kasih telah mengisi survei!');
+            return redirect()->route('surveys.index')->with('success', 'Terima kasih telah mengisi survei!');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Terjadi kesalahan saat mengirim jawaban.');
