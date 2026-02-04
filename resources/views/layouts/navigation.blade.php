@@ -626,13 +626,13 @@
     {{-- Dropdown Master Data (Hybrid: Inline + Flyout) --}}
     @canany(['manage kelas', 'manage siswa', 'manage rombel'])
         <li class="submenu-dropdown" x-data="{ 
-                                                                                                        expanded: {{ request()->routeIs(['master-data.kelas.*', 'master-data.siswa.*', 'master-data.rombel.*']) ? 'true' : 'false' }},
-                                                                                                        flyoutTop: 0,
-                                                                                                        updateFlyoutPosition() {
-                                                                                                            const rect = this.$el.querySelector('button').getBoundingClientRect();
-                                                                                                            this.flyoutTop = rect.top;
-                                                                                                        }
-                                                                                                    }"
+                                                                                                                        expanded: {{ request()->routeIs(['master-data.kelas.*', 'master-data.siswa.*', 'master-data.rombel.*']) ? 'true' : 'false' }},
+                                                                                                                        flyoutTop: 0,
+                                                                                                                        updateFlyoutPosition() {
+                                                                                                                            const rect = this.$el.querySelector('button').getBoundingClientRect();
+                                                                                                                            this.flyoutTop = rect.top;
+                                                                                                                        }
+                                                                                                                    }"
             @mouseenter="updateFlyoutPosition()">
             <button @click="expanded = !expanded"
                 class="nav-link w-full {{ request()->routeIs(['master-data.kelas.*', 'master-data.siswa.*', 'master-data.rombel.*']) ? 'nav-link-active' : 'nav-link-inactive' }}">
@@ -813,13 +813,13 @@
     {{-- Dropdown Poin & Tata Tertib --}}
     @canany(['manage poin pelanggaran', 'manage poin prestasi', 'manage pemutihan poin'])
         <li class="submenu-dropdown" x-data="{ 
-                                                                                                        expanded: {{ request()->routeIs('kesiswaan.poin-peraturan.*') || request()->routeIs('kesiswaan.input-*') ? 'true' : 'false' }},
-                                                                                                        flyoutTop: 0,
-                                                                                                        updateFlyoutPosition() {
-                                                                                                            const rect = this.$el.querySelector('button').getBoundingClientRect();
-                                                                                                            this.flyoutTop = rect.top;
-                                                                                                        }
-                                                                                                    }"
+                                                                                                                        expanded: {{ request()->routeIs('kesiswaan.poin-peraturan.*') || request()->routeIs('kesiswaan.input-*') ? 'true' : 'false' }},
+                                                                                                                        flyoutTop: 0,
+                                                                                                                        updateFlyoutPosition() {
+                                                                                                                            const rect = this.$el.querySelector('button').getBoundingClientRect();
+                                                                                                                            this.flyoutTop = rect.top;
+                                                                                                                        }
+                                                                                                                    }"
             @mouseenter="updateFlyoutPosition()">
             <button @click="expanded = !expanded"
                 class="nav-link w-full {{ request()->routeIs('kesiswaan.poin-peraturan.*') || request()->routeIs('kesiswaan.input-*') ? 'nav-link-active' : 'nav-link-inactive' }}">
@@ -901,13 +901,13 @@
     {{-- Dropdown Monitoring BK --}}
     @canany(['manage pembinaan rutin', 'manage jadwal konsultasi', 'manage panggilan ortu'])
         <li class="submenu-dropdown" x-data="{ 
-                                                                                                        expanded: {{ request()->routeIs('kesiswaan.monitoring-bk.*') || request()->routeIs('kesiswaan.panggilan-ortu.*') ? 'true' : 'false' }},
-                                                                                                        flyoutTop: 0,
-                                                                                                        updateFlyoutPosition() {
-                                                                                                            const rect = this.$el.querySelector('button').getBoundingClientRect();
-                                                                                                            this.flyoutTop = rect.top;
-                                                                                                        }
-                                                                                                    }"
+                                                                                                                        expanded: {{ request()->routeIs('kesiswaan.monitoring-bk.*') || request()->routeIs('kesiswaan.panggilan-ortu.*') ? 'true' : 'false' }},
+                                                                                                                        flyoutTop: 0,
+                                                                                                                        updateFlyoutPosition() {
+                                                                                                                            const rect = this.$el.querySelector('button').getBoundingClientRect();
+                                                                                                                            this.flyoutTop = rect.top;
+                                                                                                                        }
+                                                                                                                    }"
             @mouseenter="updateFlyoutPosition()">
             <button @click="expanded = !expanded"
                 class="nav-link w-full {{ request()->routeIs('kesiswaan.monitoring-bk.*') || request()->routeIs('kesiswaan.panggilan-ortu.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
@@ -998,13 +998,13 @@
         </li>
 
         <li class="submenu-dropdown" x-data="{ 
-                                                                                                expanded: {{ request()->routeIs('kurikulum.jam-pelajaran.*') || request()->routeIs('kurikulum.mata-pelajaran.*') || request()->routeIs('kurikulum.master-guru.*') || request()->routeIs('kurikulum.jadwal-pelajaran.*') ? 'true' : 'false' }},
-                                                                                                flyoutTop: 0,
-                                                                                                updateFlyoutPosition() {
-                                                                                                    const rect = this.$el.querySelector('button').getBoundingClientRect();
-                                                                                                    this.flyoutTop = rect.top;
-                                                                                                }
-                                                                                            }"
+                                                                                                                expanded: {{ request()->routeIs('kurikulum.jam-pelajaran.*') || request()->routeIs('kurikulum.mata-pelajaran.*') || request()->routeIs('kurikulum.master-guru.*') || request()->routeIs('kurikulum.jadwal-pelajaran.*') ? 'true' : 'false' }},
+                                                                                                                flyoutTop: 0,
+                                                                                                                updateFlyoutPosition() {
+                                                                                                                    const rect = this.$el.querySelector('button').getBoundingClientRect();
+                                                                                                                    this.flyoutTop = rect.top;
+                                                                                                                }
+                                                                                                            }"
             @mouseenter="updateFlyoutPosition()">
             <button @click="expanded = !expanded"
                 class="nav-link w-full {{ request()->routeIs('kurikulum.jam-pelajaran.*') || request()->routeIs('kurikulum.mata-pelajaran.*') || request()->routeIs('kurikulum.master-guru.*') || request()->routeIs('kurikulum.jadwal-pelajaran.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
@@ -1100,13 +1100,13 @@
         </li>
 
         <li class="submenu-dropdown" x-data="{ 
-                                                                                                expanded: {{ request()->routeIs('kurikulum.monitoring-absensi-guru.*') || request()->routeIs('kurikulum.monitoring-absensi-per-kelas.*') || request()->routeIs('kurikulum.analisa-semester.*') || request()->routeIs('kurikulum.persetujuan-izin-guru.*') ? 'true' : 'false' }},
-                                                                                                flyoutTop: 0,
-                                                                                                updateFlyoutPosition() {
-                                                                                                    const rect = this.$el.querySelector('button').getBoundingClientRect();
-                                                                                                    this.flyoutTop = rect.top;
-                                                                                                }
-                                                                                            }"
+                                                                                                                expanded: {{ request()->routeIs('kurikulum.monitoring-absensi-guru.*') || request()->routeIs('kurikulum.monitoring-absensi-per-kelas.*') || request()->routeIs('kurikulum.analisa-semester.*') || request()->routeIs('kurikulum.persetujuan-izin-guru.*') ? 'true' : 'false' }},
+                                                                                                                flyoutTop: 0,
+                                                                                                                updateFlyoutPosition() {
+                                                                                                                    const rect = this.$el.querySelector('button').getBoundingClientRect();
+                                                                                                                    this.flyoutTop = rect.top;
+                                                                                                                }
+                                                                                                            }"
             @mouseenter="updateFlyoutPosition()">
             <button @click="expanded = !expanded"
                 class="nav-link w-full {{ request()->routeIs('kurikulum.monitoring-absensi-guru.*') || request()->routeIs('kurikulum.monitoring-absensi-per-kelas.*') || request()->routeIs('kurikulum.analisa-semester.*') || request()->routeIs('kurikulum.persetujuan-izin-guru.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
@@ -1620,6 +1620,59 @@
 @endcan
 
 {{-- ============================================================ --}}
+{{-- ROLE: TATA USAHA --}}
+{{-- ============================================================ --}}
+@role('Tata Usaha')
+@if(session('active_role') == 'Tata Usaha')
+    <li>
+        <a href="{{ route('tu.dashboard.index') }}"
+            class="nav-link {{ request()->routeIs('tu.dashboard.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg></div>
+            <span class="nav-text">Dashboard TU</span>
+        </a>
+    </li>
+    <li>
+        <a href="{{ route('tu.incoming.index') }}"
+            class="nav-link {{ request()->routeIs('tu.incoming.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg></div>
+            <span class="nav-text">Surat Masuk</span>
+        </a>
+    </li>
+    <li>
+        <a href="{{ route('tu.outgoing.index') }}"
+            class="nav-link {{ request()->routeIs('tu.outgoing.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg></div>
+            <span class="nav-text">Surat Keluar</span>
+        </a>
+    </li>
+    <li>
+        <a href="{{ route('tu.requests.index') }}"
+            class="nav-link {{ request()->routeIs('tu.requests.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg></div>
+            <span class="nav-text">Antrean Nomor</span>
+            @php $pendingCount = \App\Models\TuLetterRequest::where('status', 'pending')->count(); @endphp
+            @if($pendingCount > 0)
+                <span
+                    class="nav-badge bg-red-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">{{ $pendingCount }}</span>
+            @endif
+        </a>
+    </li>
+@endif
+@endrole
+
+{{-- ============================================================ --}}
 {{-- ROLE: OPERATOR --}}
 {{-- ============================================================ --}}
 @can('view operator dashboard')
@@ -1638,14 +1691,15 @@
 
         {{-- Dropdown Master Data --}}
         @can('view master data')
-            <li class="submenu-dropdown" x-data="{ 
-                                                                                                                    expanded: {{ request()->routeIs(['master-data.kelas.*', 'master-data.siswa.*', 'master-data.rombel.*']) ? 'true' : 'false' }},
-                                                                                                                    flyoutTop: 0,
-                                                                                                                    updateFlyoutPosition() {
-                                                                                                                        const rect = this.$el.querySelector('button').getBoundingClientRect();
-                                                                                                                        this.flyoutTop = rect.top;
-                                                                                                                    }
-                                                                                                                }"
+            <li class="submenu-dropdown"
+                x-data="{ 
+                                                                                                                                            expanded: {{ request()->routeIs(['master-data.kelas.*', 'master-data.siswa.*', 'master-data.rombel.*']) ? 'true' : 'false' }},
+                                                                                                                                            flyoutTop: 0,
+                                                                                                                                            updateFlyoutPosition() {
+                                                                                                                                                const rect = this.$el.querySelector('button').getBoundingClientRect();
+                                                                                                                                                this.flyoutTop = rect.top;
+                                                                                                                                            }
+                                                                                                                                        }"
                 @mouseenter="updateFlyoutPosition()">
                 <button @click="expanded = !expanded"
                     class="nav-link w-full {{ request()->routeIs(['master-data.kelas.*', 'master-data.siswa.*', 'master-data.rombel.*']) ? 'nav-link-active' : 'nav-link-inactive' }}">
@@ -1756,13 +1810,13 @@
     @role('Koordinator Prakerin')
     @if(session('active_role') == 'Koordinator Prakerin')
         <li class="submenu-dropdown" x-data="{ 
-                                                                        expanded: {{ request()->routeIs('prakerin.*') ? 'true' : 'false' }},
-                                                                        flyoutTop: 0,
-                                                                        updateFlyoutPosition() {
-                                                                            const rect = this.$el.querySelector('button').getBoundingClientRect();
-                                                                            this.flyoutTop = rect.top;
-                                                                        }
-                                                                    }" @mouseenter="updateFlyoutPosition()">
+                                                                                        expanded: {{ request()->routeIs('prakerin.*') ? 'true' : 'false' }},
+                                                                                        flyoutTop: 0,
+                                                                                        updateFlyoutPosition() {
+                                                                                            const rect = this.$el.querySelector('button').getBoundingClientRect();
+                                                                                            this.flyoutTop = rect.top;
+                                                                                        }
+                                                                                    }" @mouseenter="updateFlyoutPosition()">
             <button @click="expanded = !expanded"
                 class="nav-link w-full {{ request()->routeIs('prakerin.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
                 <div class="flex items-center">
@@ -1850,6 +1904,20 @@
             class="nav-badge bg-blue-100 text-blue-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">v1.0</span>
     </a>
 </li>
+
+@can('manage tu letter requests')
+    <div class="section-title">Layanan Persuratan</div>
+    <li>
+        <a href="{{ route('correspondence.request') }}"
+            class="nav-link {{ request()->routeIs('correspondence.request') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg></div>
+            <span class="nav-text">Permohonan Nomor</span>
+        </a>
+    </li>
+@endcan
 
 {{-- SEPARATOR & PROFILE MENU (Always Visible) --}}
 <li class="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent mx-6 my-4"></li>
@@ -1949,6 +2017,6 @@
                 }
             }
 
+        }
     }
-}
 </script>

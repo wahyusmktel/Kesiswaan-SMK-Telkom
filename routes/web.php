@@ -628,4 +628,31 @@ Route::post('/switch-role', [\App\Http\Controllers\RoleSwitchController::class, 
 Route::get('/stella-login', [\App\Http\Controllers\Auth\StellaLoginController::class, 'showScanPage'])->name('stella-login');
 Route::post('/stella-login', [\App\Http\Controllers\Auth\StellaLoginController::class, 'login'])->name('stella-login.submit');
 
+// Group Route for Tata Usaha
+Route::middleware(['auth', 'role:Tata Usaha', 'permission:view tu dashboard'])->prefix('tu')->name('tu.')->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\TU\CorrespondenceController::class, 'dashboard'])->name('dashboard.index');
+
+    // Incoming Letters
+    Route::get('/incoming', [\App\Http\Controllers\TU\CorrespondenceController::class, 'incomingIndex'])->name('incoming.index');
+
+    // Outgoing Letters
+    Route::get('/outgoing', [\App\Http\Controllers\TU\CorrespondenceController::class, 'outgoingIndex'])->name('outgoing.index');
+    Route::post('/outgoing', [\App\Http\Controllers\TU\CorrespondenceController::class, 'storeOutgoing'])->name('outgoing.store');
+
+    // Letter Requests (Management)
+    Route::get('/requests', [\App\Http\Controllers\TU\LetterRequestController::class, 'index'])->name('requests.index');
+    Route::post('/requests/{letterRequest}/approve', [\App\Http\Controllers\TU\LetterRequestController::class, 'approve'])->name('requests.approve');
+    Route::post('/requests/{letterRequest}/reject', [\App\Http\Controllers\TU\LetterRequestController::class, 'reject'])->name('requests.reject');
+    Route::get('/requests/{letterRequest}/download', [\App\Http\Controllers\TU\LetterRequestController::class, 'download'])->name('requests.download');
+    Route::get('/requests/{letterRequest}/print', [\App\Http\Controllers\TU\LetterRequestController::class, 'print'])->name('requests.print');
+});
+
+// Letter Request Route for Teachers/Staff
+Route::middleware(['auth', 'permission:manage tu letter requests'])->group(function () {
+    Route::get('/layanan-persuratan/request', [\App\Http\Controllers\TU\LetterRequestController::class, 'create'])->name('correspondence.request');
+    Route::post('/layanan-persuratan/request', [\App\Http\Controllers\TU\LetterRequestController::class, 'store'])->name('correspondence.request.store');
+    Route::get('/layanan-persuratan/request/{letterRequest}/download', [\App\Http\Controllers\TU\LetterRequestController::class, 'download'])->name('correspondence.request.download');
+    Route::get('/layanan-persuratan/request/{letterRequest}/print', [\App\Http\Controllers\TU\LetterRequestController::class, 'print'])->name('correspondence.request.print');
+});
+
 require __DIR__ . '/auth.php';
