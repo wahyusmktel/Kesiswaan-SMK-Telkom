@@ -92,6 +92,17 @@ Route::get('/verifikasi/dispensasi/{dispensasi}', [PublicVerifikasiController::c
 Route::get('/pengaduan', [PengaduanController::class, 'create'])->name('pengaduan.create');
 Route::post('/pengaduan', [PengaduanController::class, 'store'])->name('pengaduan.store');
 
+// NOTTED Social Media Routes
+Route::get('/notted', [App\Http\Controllers\NottedController::class, 'index'])->name('notted.landing');
+
+Route::middleware(['auth'])->prefix('notted')->name('notted.')->group(function () {
+    Route::get('/app', [App\Http\Controllers\NottedController::class, 'app'])->name('app');
+    Route::post('/posts', [App\Http\Controllers\NottedController::class, 'store'])->name('posts.store');
+    Route::get('/posts/{post}', [App\Http\Controllers\NottedController::class, 'show'])->name('posts.show');
+    Route::post('/posts/{post}/comment', [App\Http\Controllers\NottedController::class, 'storeComment'])->name('posts.comment');
+    Route::post('/toggle-like', [App\Http\Controllers\NottedController::class, 'toggleLike'])->name('toggle-like');
+});
+
 Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
