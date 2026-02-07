@@ -9,6 +9,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <style>
+        .mention-link {
+            @apply font-black text-indigo-600 hover:text-indigo-700 transition-colors;
+        }
+
         body {
             font-family: 'Outfit', sans-serif;
             background: #f8fafc;
@@ -103,10 +107,10 @@
                                 {{ session('active_role') }}
                             </p>
                         </div>
-                        <div class="w-10 h-10 rounded-xl bg-indigo-100 border border-indigo-200 overflow-hidden">
+                        <a href="{{ route('notted.profile', Auth::id()) }}" class="w-10 h-10 rounded-xl bg-indigo-100 border border-indigo-200 overflow-hidden block">
                             <img src="https://ui-avatars.com/api/?name={{ Auth::user()->name }}&background=6366f1&color=fff"
                                 alt="">
-                        </div>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -157,6 +161,15 @@
                                 </svg>
                                 Pengumuman
                             </a>
+                            <a href="{{ route('notted.typing-test') }}"
+                                class="{{ request()->routeIs('notted.typing-test') ? 'sidebar-item-active' : 'text-slate-600 hover:bg-slate-50' }} flex items-center gap-4 px-4 py-3 rounded-2xl font-semibold transition-all group">
+                                <svg class="w-6 h-6 {{ request()->routeIs('notted.typing-test') ? 'text-white' : 'text-slate-400 group-hover:text-indigo-500' }}" fill="none"
+                                    stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Test Mengetik
+                            </a>
                         </div>
                     </div>
 
@@ -186,7 +199,7 @@
                 <!-- Stories -->
                 <div class="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
                     @for ($i = 0; $i <= 6; $i++)
-                        <div class="flex-shrink-0 flex flex-col items-center gap-2">
+                        <a href="#" class="flex-shrink-0 flex flex-col items-center gap-2 group cursor-pointer hover:scale-105 transition-transform">
                             <div class="relative w-16 h-16 rounded-2xl p-0.5 notted-gradient">
                                 <div class="w-full h-full bg-slate-200 rounded-[14px] overflow-hidden">
                                     <img src="https://ui-avatars.com/api/?name=User+{{ $i }}&background=random"
@@ -194,7 +207,7 @@
                                 </div>
                             </div>
                             <span class="text-[10px] font-bold text-slate-400 uppercase">User {{ $i }}</span>
-                        </div>
+                        </a>
                     @endfor
                 </div>
 
@@ -203,10 +216,10 @@
                     <form action="{{ route('notted.posts.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <div class="flex gap-4 items-start mb-4">
-                            <div class="w-12 h-12 rounded-2xl bg-slate-100 overflow-hidden flex-shrink-0">
+                            <a href="{{ route('notted.profile', Auth::id()) }}" class="w-12 h-12 rounded-2xl bg-slate-100 overflow-hidden flex-shrink-0 block">
                                 <img src="https://ui-avatars.com/api/?name={{ Auth::user()->name }}&background=6366f1&color=fff"
                                     alt="">
-                            </div>
+                            </a>
                             <textarea name="content" required
                                 placeholder="Apa cerita digitalmu hari ini, {{ explode(' ', Auth::user()->name)[0] }}?"
                                 class="flex-1 bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-indigo-500 min-h-[100px] resize-none"></textarea>
@@ -253,13 +266,13 @@
                         id="post-card-{{ $post->id }}">
                         <div class="p-6">
                             <div class="flex items-center gap-3 mb-6">
-                                <div class="w-10 h-10 rounded-xl bg-slate-100 overflow-hidden">
+                                <a href="{{ route('notted.profile', $post->user_id) }}" class="w-10 h-10 rounded-xl bg-slate-100 overflow-hidden block hover:scale-105 transition-transform border border-slate-100">
                                     <img
                                         src="https://ui-avatars.com/api/?name={{ urlencode($post->user->name) }}&background=6366f1&color=fff">
-                                </div>
+                                </a>
                                 <div>
-                                    <h4 class="text-sm font-bold text-slate-900 leading-none mb-1">{{ $post->user->name }}
-                                    </h4>
+                                    <a href="{{ route('notted.profile', $post->user_id) }}" class="text-sm font-bold text-slate-900 leading-none mb-1 hover:text-indigo-600 transition-colors block">{{ $post->user->name }}
+                                    </a>
                                     <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                                         {{ $post->created_at->diffForHumans() }}
                                     </p>
@@ -314,7 +327,21 @@
 
                         <!-- Inline Comment Box (Facebook style) -->
                         <div class="px-8 py-4 bg-white border-t border-slate-50">
+                            <!-- Inline Reply Indicator -->
+                            <div id="inline-reply-indicator-{{ $post->id }}" class="hidden mb-2 px-3 py-2 bg-indigo-50 border border-indigo-100 rounded-xl flex flex-col gap-1">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-[9px] text-indigo-600 font-black uppercase tracking-widest">Membalas komentar...</span>
+                                    <button onclick="cancelInlineReply({{ $post->id }})" class="text-indigo-400 hover:text-indigo-600">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <p id="inline-reply-snippet-{{ $post->id }}" class="text-[10px] text-slate-500 italic line-clamp-1"></p>
+                            </div>
+
                             <form onsubmit="submitInlineComment(event, {{ $post->id }})" class="flex gap-3">
+                                <input type="hidden" id="inline-parent-id-{{ $post->id }}" value="">
                                 <div class="w-8 h-8 rounded-lg bg-slate-100 flex-shrink-0 overflow-hidden">
                                     <img src="https://ui-avatars.com/api/?name={{ Auth::user()->name }}&background=6366f1&color=fff"
                                         class="w-full h-full object-cover">
@@ -331,6 +358,53 @@
                                     </button>
                                 </div>
                             </form>
+
+                            <!-- Latest Comments Preview -->
+                            <div id="preview-comments-{{ $post->id }}" class="mt-4 space-y-3">
+                                @foreach ($post->comments as $previewComment)
+                                    <div class="flex gap-2 items-start animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                        <div class="w-6 h-6 rounded-lg bg-slate-100 flex-shrink-0 overflow-hidden">
+                                            <img src="https://ui-avatars.com/api/?name={{ urlencode($previewComment->user->name) }}&background=random"
+                                                class="w-full h-full object-cover">
+                                        </div>
+                                        <div class="group relative flex-1">
+                                            <div class="bg-slate-50 px-3 py-2 rounded-2xl text-[11px] border border-slate-100">
+                                                <span class="font-bold text-slate-800">{{ $previewComment->user->name }}</span>
+                                                <span class="text-slate-600 ml-1">{!! preg_replace('/(@[a-zA-Z0-9_]+)/', '<span class="mention-link">$1</span>', e(Str::limit($previewComment->content, 60))) !!}</span>
+                                            </div>
+                                            <!-- Inline Actions -->
+                                            <div class="mt-1 flex gap-3 px-1">
+                                                <button onclick="toggleLike({{ $previewComment->id }}, 'comment', this)"
+                                                    class="flex items-center gap-1 text-[9px] font-bold uppercase tracking-tighter {{ $previewComment->isLikedBy(Auth::user()) ? 'text-pink-600' : 'text-slate-400' }} hover:text-pink-600 transition-colors">
+                                                    <svg class="w-3 h-3" fill="{{ $previewComment->isLikedBy(Auth::user()) ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                                    </svg>
+                                                    <span class="like-count">{{ $previewComment->likes_count ?? 0 }}</span>
+                                                </button>
+                                                <button onclick="setInlineReply({{ $post->id }}, {{ $previewComment->id }}, '{{ addslashes($previewComment->user->name) }}', '{{ addslashes(Str::limit($previewComment->content, 40)) }}')"
+                                                    class="flex items-center gap-1 text-[9px] font-bold uppercase tracking-tighter text-slate-400 hover:text-indigo-600 transition-colors">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                                                    </svg>
+                                                    Balas ({{ $previewComment->replies_count ?? 0 }})
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+
+                                @if ($post->comments_count > 3)
+                                    <button onclick="openPostModal({{ $post->id }})" id="view-more-{{ $post->id }}"
+                                        class="text-[10px] font-bold text-indigo-600 uppercase tracking-widest hover:underline mt-2 block">
+                                        Lihat {{ $post->comments_count - 3 }} Komentar Lainnya...
+                                    </button>
+                                @elseif($post->comments_count > 0)
+                                    <button onclick="openPostModal({{ $post->id }})" id="view-more-{{ $post->id }}"
+                                        class="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-indigo-600 transition-colors mt-2 block">
+                                        Lihat Selengkapnya
+                                    </button>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 @empty
@@ -360,13 +434,13 @@
                     <div
                         class="bg-white p-8 rounded-[40px] border border-slate-200 shadow-sm text-center relative overflow-hidden">
                         <div class="relative z-10">
-                            <div class="w-20 h-20 rounded-3xl notted-gradient mx-auto mb-4 p-1">
+                            <a href="{{ route('notted.profile', Auth::id()) }}" class="w-20 h-20 rounded-3xl notted-gradient mx-auto mb-4 p-1 block hover:scale-110 transition-transform">
                                 <div class="w-full h-full bg-slate-100 rounded-[22px] overflow-hidden">
                                     <img src="https://ui-avatars.com/api/?name={{ Auth::user()->name }}&background=6366f1&color=fff"
                                         class="w-full h-full object-cover">
                                 </div>
-                            </div>
-                            <h3 class="font-bold text-slate-800 tracking-tight">{{ Auth::user()->name }}</h3>
+                            </a>
+                            <a href="{{ route('notted.profile', Auth::id()) }}" class="font-bold text-slate-800 tracking-tight hover:text-indigo-600 transition-colors block">{{ Auth::user()->name }}</a>
                             <p class="text-xs font-bold text-slate-400 uppercase mb-6">{{ Auth::user()->email }}</p>
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="bg-slate-50 p-3 rounded-2xl">
@@ -479,13 +553,16 @@
 
                 <!-- Comment Input -->
                 <div class="p-6 border-t border-slate-50 bg-slate-50/50">
-                    <div id="replying-to-indicator" class="hidden mb-2 px-2 py-1 bg-indigo-100 rounded-lg flex justify-between items-center">
-                        <span class="text-[10px] text-indigo-600 font-bold uppercase">Membalas komentar...</span>
-                        <button onclick="cancelReply()" class="text-indigo-400 hover:text-indigo-600">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
+                    <div id="replying-to-indicator" class="hidden mb-2 px-3 py-2 bg-indigo-50 border border-indigo-100 rounded-xl flex flex-col gap-1">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[10px] text-indigo-600 font-black uppercase tracking-widest">Membalas komentar...</span>
+                            <button onclick="cancelReply()" class="text-indigo-400 hover:text-indigo-600">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <p id="reply-snippet" class="text-[11px] text-slate-500 italic line-clamp-1"></p>
                     </div>
                     <form id="comment-form" onsubmit="submitComment(event)" class="relative">
                         <input type="hidden" id="comment-parent-id" value="">
@@ -552,12 +629,12 @@
                     const text = button.querySelector('.like-count');
 
                     if (data.status === 'liked') {
-                        button.classList.remove('text-slate-500');
+                        button.classList.remove('text-slate-500', 'text-slate-400');
                         button.classList.add('text-pink-600');
                         icon.setAttribute('fill', 'currentColor');
                     } else {
-                        button.classList.add('text-slate-500');
                         button.classList.remove('text-pink-600');
+                        button.classList.add('text-slate-500');
                         icon.setAttribute('fill', 'none');
                     }
                     if (text) text.innerText = data.count;
@@ -565,6 +642,11 @@
             } catch (error) {
                 console.error("Error toggling like:", error);
             }
+        }
+
+        // Mentions Formatting
+        function formatMentions(text) {
+            return text.replace(/(@[a-zA-Z0-9_]+)/g, '<span class="mention-link">$1</span>');
         }
 
         // Inline Comment
@@ -577,9 +659,26 @@
             }
         }
 
+        function setInlineReply(postId, commentId, authorName, snippet) {
+            document.getElementById(`inline-parent-id-${postId}`).value = commentId;
+            document.getElementById(`inline-reply-indicator-${postId}`).classList.remove('hidden');
+            document.getElementById(`inline-reply-snippet-${postId}`).innerText = snippet + (snippet.length >= 40 ? '...' : '');
+            
+            const input = document.getElementById(`inline-input-${postId}`);
+            input.value = `@${authorName} `;
+            input.focus();
+        }
+
+        function cancelInlineReply(postId) {
+            document.getElementById(`inline-parent-id-${postId}`).value = "";
+            document.getElementById(`inline-reply-indicator-${postId}`).classList.add('hidden');
+            document.getElementById(`inline-reply-snippet-${postId}`).innerText = "";
+        }
+
         async function submitInlineComment(event, postId) {
             event.preventDefault();
             const input = document.getElementById(`inline-input-${postId}`);
+            const parentId = document.getElementById(`inline-parent-id-${postId}`).value;
             const content = input.value.trim();
             if (!content) return;
 
@@ -592,13 +691,66 @@
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': csrfToken
                     },
-                    body: JSON.stringify({ content })
+                    body: JSON.stringify({ 
+                        content,
+                        parent_id: parentId || null
+                    })
                 });
 
                 if (response.ok) {
+                    const comment = await response.json();
                     input.value = "";
-                    // Optional: open modal to show the comment
-                    openPostModal(postId);
+                    cancelInlineReply(postId);
+                    
+                    // Add to preview container
+                    const container = document.getElementById(`preview-comments-${postId}`);
+                    if (container) {
+                        // Create element
+                        const div = document.createElement('div');
+                        div.className = 'flex gap-2 items-start animate-in fade-in slide-in-from-bottom-2 duration-300';
+                        div.innerHTML = `
+                            <div class="w-6 h-6 rounded-lg bg-slate-100 flex-shrink-0 overflow-hidden">
+                                <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(comment.user.name)}&background=random" class="w-full h-full object-cover">
+                            </div>
+                            <div class="group relative flex-1">
+                                <div class="bg-slate-50 px-3 py-2 rounded-2xl text-[11px] border border-slate-100">
+                                    <span class="font-bold text-slate-800">${comment.user.name}</span>
+                                    <span class="text-slate-600 ml-1">${formatMentions(comment.content.length > 60 ? comment.content.substring(0, 60) + '...' : comment.content)}</span>
+                                </div>
+                                <div class="mt-1 flex gap-3 px-1">
+                                    <button onclick="toggleLike(${comment.id}, 'comment', this)"
+                                        class="flex items-center gap-1 text-[9px] font-bold uppercase tracking-tighter text-slate-400 hover:text-pink-600 transition-colors">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                        </svg>
+                                        <span class="like-count">0</span>
+                                    </button>
+                                    <button onclick="setInlineReply(${postId}, ${comment.id}, '${comment.user.name.replace(/'/g, "\\'")}', '${comment.content.substring(0, 40).replace(/'/g, "\\'")}')"
+                                        class="flex items-center gap-1 text-[9px] font-bold uppercase tracking-tighter text-slate-400 hover:text-indigo-600 transition-colors">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                                        </svg>
+                                        Balas (0)
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Insert before the button
+                        const viewMoreBtn = document.getElementById(`view-more-${postId}`);
+                        if (viewMoreBtn) {
+                            container.insertBefore(div, viewMoreBtn);
+                        } else {
+                            // If no button, add "Lihat Selengkapnya" if it's the first or more
+                            container.appendChild(div);
+                            const moreBtn = document.createElement('button');
+                            moreBtn.id = `view-more-${postId}`;
+                            moreBtn.onclick = () => openPostModal(postId);
+                            moreBtn.className = 'text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-indigo-600 transition-colors mt-2 block';
+                            moreBtn.innerText = 'Lihat Selengkapnya';
+                            container.appendChild(moreBtn);
+                        }
+                    }
                 }
             } catch (error) {
                 console.error("Error submitting inline comment:", error);
@@ -610,7 +762,7 @@
         // Modal Logic
         let currentPostId = null;
 
-        async function openPostModal(postId) {
+        async function openPostModal(postId, replyTo = null) {
             currentPostId = postId;
             const modal = document.getElementById('postModal');
             document.body.classList.add('overflow-hidden');
@@ -645,31 +797,60 @@
                 }
 
                 // Fill comments
-                renderComments(post.root_comments || []);
+                renderComments(post.comments || []);
+                
+                // If triggered from "Balas" button in feed
+                if (replyTo) {
+                    setReply(replyTo.id, replyTo.name, replyTo.snippet);
+                }
 
             } catch (error) {
                 console.error("Error fetching post details:", error);
             }
         }
 
+        function buildCommentTree(comments) {
+            const map = {};
+            const roots = [];
+            
+            // First, initialize all comments and clear existing replies
+            comments.forEach(c => {
+                map[c.id] = { ...c, replies: [] };
+            });
+            
+            // Build the tree
+            comments.forEach(c => {
+                if (c.parent_id && map[c.parent_id]) {
+                    map[c.parent_id].replies.push(map[c.id]);
+                } else {
+                    roots.push(map[c.id]);
+                }
+            });
+            
+            return roots;
+        }
+
         function renderComments(comments) {
             const list = document.getElementById('modal-comments-list');
-            if (comments.length === 0) {
+            const tree = buildCommentTree(comments);
+            
+            if (tree.length === 0) {
                 list.innerHTML = '<div class="text-center py-12 text-slate-400 text-sm font-semibold italic">Belum ada diskusi... Jadilah yang pertama!</div>';
                 return;
             }
 
-            list.innerHTML = comments.map(comment => renderCommentItem(comment)).join('');
+            list.innerHTML = tree.map(comment => renderCommentItem(comment)).join('');
             list.scrollTop = 0;
         }
 
-        function renderCommentItem(comment, isReply = false) {
+        function renderCommentItem(comment, depth = 0) {
             const currentUserId = {{ Auth::id() }};
-            // Check if user liked this comment
             const isLiked = comment.likes && comment.likes.some(l => l.user_id === currentUserId);
+            const isReply = depth > 0;
+            const maxDepth = 5;
             
             let html = `
-                <div class="flex flex-col gap-3 ${isReply ? 'ml-12 border-l-2 border-slate-100 pl-4' : ''}">
+                <div class="flex flex-col gap-3 ${isReply ? `ml-${Math.min(depth * 4, 8)} border-l-2 border-slate-100 pl-4` : ''}">
                     <div class="flex gap-4">
                         <div class="w-10 h-10 rounded-xl bg-slate-100 flex-shrink-0 overflow-hidden">
                             <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(comment.user.name)}&background=random">
@@ -679,7 +860,7 @@
                                 <span class="text-xs font-black text-slate-800">${comment.user.name}</span>
                                 <span class="text-[9px] font-bold text-slate-400 uppercase">${new Date(comment.created_at).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})}</span>
                             </div>
-                            <p class="text-sm text-slate-600 leading-relaxed">${comment.content}</p>
+                            <p class="text-sm text-slate-600 leading-relaxed">${formatMentions(comment.content)}</p>
                             
                             <div class="mt-3 flex gap-4">
                                 <button onclick="toggleLike(${comment.id}, 'comment', this)" 
@@ -689,36 +870,39 @@
                                     </svg>
                                     <span class="like-count">${comment.likes_count || 0}</span>
                                 </button>
-                                ${!isReply ? `
-                                <button onclick="setReply(${comment.id})" class="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-tight text-slate-400 hover:text-indigo-600 transition-all">
+                                <button onclick="setReply(${comment.id}, '${comment.user.name.replace(/'/g, "\\'")}', '${comment.content.substring(0, 60).replace(/'/g, "\\'")}')" class="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-tight text-slate-400 hover:text-indigo-600 transition-all">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
                                     </svg>
                                     Balas (${comment.replies_count || 0})
                                 </button>
-                                ` : ''}
                             </div>
                         </div>
                     </div>
             `;
             
             if (comment.replies && comment.replies.length > 0) {
-                html += comment.replies.map(reply => renderCommentItem(reply, true)).join('');
+                html += comment.replies.map(reply => renderCommentItem(reply, depth + 1)).join('');
             }
             
             html += `</div>`;
             return html;
         }
 
-        function setReply(commentId) {
+        function setReply(commentId, authorName, snippet) {
             document.getElementById('comment-parent-id').value = commentId;
             document.getElementById('replying-to-indicator').classList.remove('hidden');
-            document.getElementById('comment-content').focus();
+            document.getElementById('reply-snippet').innerText = snippet + (snippet.length >= 40 ? '...' : '');
+            
+            const contentArea = document.getElementById('comment-content');
+            contentArea.value = `@${authorName} `;
+            contentArea.focus();
         }
 
         function cancelReply() {
             document.getElementById('comment-parent-id').value = "";
             document.getElementById('replying-to-indicator').classList.add('hidden');
+            document.getElementById('reply-snippet').innerText = "";
         }
 
         function closePostModal() {
@@ -756,7 +940,7 @@
                     // Re-fetch post to get all comments
                     const res = await fetch(`/notted/posts/${currentPostId}`);
                     const post = await res.json();
-                    renderComments(post.root_comments || []);
+                    renderComments(post.comments || []);
                 }
             } catch (error) {
                 console.error("Error submitting comment:", error);

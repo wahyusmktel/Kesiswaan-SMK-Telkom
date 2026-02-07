@@ -57,6 +57,7 @@ use App\Http\Controllers\Auth\SecurityLoginController;
 use App\Http\Controllers\WaliKelas\WaliKelasMentoringController;
 use App\Http\Controllers\BK\BKPembinaanTerlambatController;
 use App\Http\Controllers\Shared\CoachingAnalyticsController;
+use App\Http\Controllers\Admin\SystemUpdateController;
 
 Route::get('auth/google', [GoogleController::class, 'redirectToGoogle'])->name('auth.google');
 Route::get('auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
@@ -101,6 +102,9 @@ Route::middleware(['auth'])->prefix('notted')->name('notted.')->group(function (
     Route::get('/posts/{post}', [App\Http\Controllers\NottedController::class, 'show'])->name('posts.show');
     Route::post('/posts/{post}/comment', [App\Http\Controllers\NottedController::class, 'storeComment'])->name('posts.comment');
     Route::post('/toggle-like', [App\Http\Controllers\NottedController::class, 'toggleLike'])->name('toggle-like');
+    Route::get('/profile/{user?}', [App\Http\Controllers\NottedController::class, 'profile'])->name('profile');
+    Route::get('/typing-test', [App\Http\Controllers\NottedController::class, 'typingTest'])->name('typing-test');
+    Route::post('/typing-test', [App\Http\Controllers\NottedController::class, 'storeTypingResult'])->name('typing-test.store');
 });
 
 Route::get('/', function () {
@@ -582,6 +586,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/permissions', [PermissionManagementController::class, 'index'])->name('permissions.index');
         Route::get('/permissions/{role}', [PermissionManagementController::class, 'getRolePermissions'])->name('permissions.get');
         Route::post('/permissions/{role}', [PermissionManagementController::class, 'syncPermissions'])->name('permissions.sync');
+
+        // System Update
+        Route::get('/system-update', [SystemUpdateController::class, 'index'])->name('system-update.index');
+        Route::post('/system-update/deploy', [SystemUpdateController::class, 'deploy'])->name('system-update.deploy');
     });
 });
 

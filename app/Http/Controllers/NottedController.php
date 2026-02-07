@@ -8,8 +8,84 @@ use App\Models\NottedLike;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+use App\Models\User;
+use App\Models\NottedTypingResult;
+
 class NottedController extends Controller
 {
+    /**
+     * Show User Profile
+     */
+    public function profile(User $user = null)
+    {
+        $user = $user ?? Auth::user();
+        
+        // Fetch posts by this user
+        $posts = NottedPost::where('user_id', $user->id)
+            ->with(['user', 'comments' => function ($q) {
+                $q->with('user')->withCount(['likes', 'replies'])->latest()->take(3);
+            }, 'likes'])
+            ->withCount(['likes', 'comments'])
+            ->latest()
+            ->paginate(10);
+
+        // Stats
+        $stats = [
+            'posts_count' => NottedPost::where('user_id', $user->id)->count(),
+            'total_likes_received' => NottedPost::where('notted_posts.user_id', $user->id)
+                ->join('notted_likes', function($join) {
+                    $join->on('notted_posts.id', '=', 'notted_likes.likeable_id')
+                         ->where('notted_likes.likeable_type', '=', NottedPost::class);
+                })->count(),
+            'joined_at' => $user->created_at->format('M Y'),
+        ];
+
+        return view('notted.profile', compact('user', 'posts', 'stats'));
+    }
+
+    /**
+     * Typing Test Feature
+     */
+    public function typingTest()
+    {
+        $history = NottedTypingResult::where('user_id', Auth::id())
+            ->latest()
+            ->take(10)
+            ->get();
+
+        // Data for chart (last 10 tests, chronological order)
+        $chartData = $history->reverse()->values();
+
+        return view('notted.typing-test', compact('history', 'chartData'));
+    }
+
+    /**
+     * Store Typing Test Result
+     */
+    public function storeTypingResult(Request $request)
+    {
+        $validated = $request->validate([
+            'kpm' => 'required|integer',
+            'accuracy' => 'required|integer',
+            'correct_words' => 'required|integer',
+            'wrong_words' => 'required|integer',
+            'total_chars' => 'required|integer',
+            'language' => 'required|string|max:2',
+        ]);
+
+        $result = NottedTypingResult::create([
+            'user_id' => Auth::id(),
+            'kpm' => $validated['kpm'],
+            'accuracy' => $validated['accuracy'],
+            'correct_words' => $validated['correct_words'],
+            'wrong_words' => $validated['wrong_words'],
+            'total_chars' => $validated['total_chars'],
+            'language' => $validated['language'],
+        ]);
+
+        return response()->json($result);
+    }
+
     /**
      * Show NOTTED Landing Page
      */
@@ -23,7 +99,9 @@ class NottedController extends Controller
      */
     public function app()
     {
-        $posts = NottedPost::with(['user', 'rootComments.user', 'likes'])
+        $posts = NottedPost::with(['user', 'comments' => function ($q) {
+            $q->with('user')->withCount(['likes', 'replies'])->latest()->take(3);
+        }, 'likes'])
             ->withCount(['likes', 'comments'])
             ->latest()
             ->paginate(10);
@@ -61,8 +139,8 @@ class NottedController extends Controller
     {
         $post->load([
             'user',
-            'rootComments' => function ($query) {
-                $query->with(['user', 'replies.user', 'likes', 'replies.likes'])
+            'comments' => function ($query) {
+                $query->with(['user', 'likes', 'replies'])
                     ->withCount(['likes', 'replies'])
                     ->latest();
             },
@@ -123,7 +201,9 @@ class NottedController extends Controller
             $status = 'liked';
         }
 
-        $count = $likeableType::find($likeableId)->likes()->count();
+        $count = NottedLike::where('likeable_id', $likeableId)
+            ->where('likeable_type', $likeableType)
+            ->count();
 
         return response()->json([
             'status' => $status,
