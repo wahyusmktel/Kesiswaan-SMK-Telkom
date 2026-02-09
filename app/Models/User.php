@@ -8,11 +8,13 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
+use Laragear\WebAuthn\WebauthnAuthenticatable;
+use Laragear\WebAuthn\Contracts\WebauthnAuthenticatable as WebauthnAuthenticatableContract;
 
-class User extends Authenticatable
+class User extends Authenticatable implements WebauthnAuthenticatableContract
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable, HasRoles;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles, WebauthnAuthenticatable;
 
     /**
      * The attributes that are mass assignable.

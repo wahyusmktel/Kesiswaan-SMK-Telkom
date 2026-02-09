@@ -331,6 +331,16 @@
                     <div class="flex-1 h-px bg-gray-300"></div>
                 </div>
 
+                <!-- Fingerprint Login Button -->
+                <button type="button" id="btn-fingerprint" style="display: none;"
+                    class="flex items-center justify-center gap-3 w-full py-3 px-4 bg-emerald-600 border border-transparent rounded-lg font-bold text-white hover:bg-emerald-700 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 mb-3">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A10.003 10.003 0 0012 21a10.003 10.003 0 008.384-4.51m-2.408-4.69L11 11m-1 8L7 11V9a5 5 0 0110 0v2l-3 4" />
+                    </svg>
+                    <span>Masuk dengan Fingerprint</span>
+                </button>
+
                 @if (session('error'))
                     <div class="error-message mb-4 bg-red-50 border border-red-200 p-3 rounded-lg">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -447,6 +457,31 @@
                     }
                 });
             });
+        }
+    </script>
+    <script src="{{ asset('vendor/webauthn/webauthn.js') }}"></script>
+    <script>
+        if (WebAuthn.supportsWebAuthn()) {
+            const btnFingerprint = document.getElementById('btn-fingerprint');
+            if (btnFingerprint) {
+                btnFingerprint.style.display = 'flex';
+                const webauthn = new WebAuthn();
+                
+                btnFingerprint.addEventListener('click', async () => {
+                    btnFingerprint.disabled = true;
+                    btnFingerprint.innerHTML = '<div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div><span>Memproses...</span>';
+                    
+                    try {
+                        await webauthn.login();
+                        window.location.href = '/dashboard';
+                    } catch (error) {
+                        console.error('Fingerprint login failed:', error);
+                        alert('Login fingerprint gagal. Pastikan perangkat Anda sudah terdaftar dan Anda telah memberikan akses.');
+                        btnFingerprint.disabled = false;
+                        btnFingerprint.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A10.003 10.003 0 0012 21a10.003 10.003 0 008.384-4.51m-2.408-4.69L11 11m-1 8L7 11V9a5 5 0 0110 0v2l-3 4" /></svg><span>Masuk dengan Fingerprint</span>';
+                    }
+                });
+            }
         }
     </script>
 </body>

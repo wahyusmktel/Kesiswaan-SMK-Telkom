@@ -56,4 +56,8 @@ Route::middleware('auth')->group(function () {
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
+
+    // WebAuthn Routes
+    \Laragear\WebAuthn\Http\Routes::register();
+    Route::delete('webauthn/unregister/{id}', [\App\Http\Controllers\WebAuthn\WebAuthnRegisterController::class, 'destroy'])->name('webauthn.destroy');
 });
