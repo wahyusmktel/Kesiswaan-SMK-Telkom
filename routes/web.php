@@ -105,6 +105,22 @@ Route::middleware(['auth'])->prefix('notted')->name('notted.')->group(function (
     Route::get('/profile/{user?}', [App\Http\Controllers\NottedController::class, 'profile'])->name('profile');
     Route::get('/typing-test', [App\Http\Controllers\NottedController::class, 'typingTest'])->name('typing-test');
     Route::post('/typing-test', [App\Http\Controllers\NottedController::class, 'storeTypingResult'])->name('typing-test.store');
+
+    // Millionaire Game Routes
+    Route::get('/millionaire', [App\Http\Controllers\MillionaireGameController::class, 'index'])->name('millionaire.index');
+    Route::get('/millionaire/play/{set}', [App\Http\Controllers\MillionaireGameController::class, 'play'])->name('millionaire.play');
+    Route::get('/millionaire/questions/{set}', [App\Http\Controllers\MillionaireGameController::class, 'getQuestions'])->name('millionaire.questions');
+    
+    // Management (Guru Kelas only)
+    Route::middleware(['role:Guru Kelas'])->prefix('millionaire/manage')->name('millionaire.manage.')->group(function () {
+        Route::get('/', [App\Http\Controllers\MillionaireGameController::class, 'manage'])->name('index');
+        Route::post('/set', [App\Http\Controllers\MillionaireGameController::class, 'storeSet'])->name('set.store');
+        Route::put('/set/{set}', [App\Http\Controllers\MillionaireGameController::class, 'updateSet'])->name('set.update');
+        Route::delete('/set/{set}', [App\Http\Controllers\MillionaireGameController::class, 'destroySet'])->name('set.destroy');
+        Route::post('/question', [App\Http\Controllers\MillionaireGameController::class, 'storeQuestion'])->name('question.store');
+        Route::put('/question/{question}', [App\Http\Controllers\MillionaireGameController::class, 'updateQuestion'])->name('question.update');
+        Route::delete('/question/{question}', [App\Http\Controllers\MillionaireGameController::class, 'destroyQuestion'])->name('question.destroy');
+    });
 });
 
 Route::get('/', function () {
