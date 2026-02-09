@@ -90,7 +90,11 @@
                     window.location.reload();
                 } catch (error) {
                     console.error('Registration failed:', error);
-                    alert('Pendaftaran gagal. Pastikan perangkat Anda mendukung biometrik dan Anda telah memberikan akses.');
+                    let message = 'Pendaftaran gagal. Pastikan perangkat Anda mendukung biometrik dan Anda telah memberikan akses.';
+                    if (error.name) {
+                        message += `\n\nDetail: ${error.name} - ${error.message}`;
+                    }
+                    alert(message);
                 } finally {
                     this.loading = false;
                 }
