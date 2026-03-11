@@ -103,6 +103,7 @@ Route::middleware(['auth'])->prefix('notted')->name('notted.')->group(function (
     Route::post('/posts/{post}/comment', [App\Http\Controllers\NottedController::class, 'storeComment'])->name('posts.comment');
     Route::post('/toggle-like', [App\Http\Controllers\NottedController::class, 'toggleLike'])->name('toggle-like');
     Route::get('/profile/{user?}', [App\Http\Controllers\NottedController::class, 'profile'])->name('profile');
+    Route::get('/games', [App\Http\Controllers\NottedController::class, 'games'])->name('games');
     Route::get('/typing-test', [App\Http\Controllers\NottedController::class, 'typingTest'])->name('typing-test');
     Route::post('/typing-test', [App\Http\Controllers\NottedController::class, 'storeTypingResult'])->name('typing-test.store');
 });

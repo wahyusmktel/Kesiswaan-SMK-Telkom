@@ -44,6 +44,14 @@ class NottedController extends Controller
     }
 
     /**
+     * Games Hub Feature
+     */
+    public function games()
+    {
+        return view('notted.games');
+    }
+
+    /**
      * Typing Test Feature
      */
     public function typingTest()
