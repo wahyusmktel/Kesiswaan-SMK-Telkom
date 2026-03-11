@@ -58,6 +58,9 @@ use App\Http\Controllers\WaliKelas\WaliKelasMentoringController;
 use App\Http\Controllers\BK\BKPembinaanTerlambatController;
 use App\Http\Controllers\Shared\CoachingAnalyticsController;
 use App\Http\Controllers\Admin\SystemUpdateController;
+use App\Http\Controllers\Shared\AbsensiSayaController;
+use App\Http\Controllers\SDM\AbsensiSettingController;
+use App\Http\Controllers\SDM\AbsensiMonitoringController;
 
 Route::get('auth/google', [GoogleController::class, 'redirectToGoogle'])->name('auth.google');
 Route::get('auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
@@ -151,6 +154,13 @@ Route::middleware(['auth', 'role:Waka Kesiswaan|Super Admin'])->prefix('admin')-
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // ... route dashboard dan profile dari Breeze
+
+    // Absensi Saya (Semua Role)
+    Route::prefix('absensi-saya')->name('absensi-saya.')->group(function () {
+        Route::get('/', [AbsensiSayaController::class, 'index'])->name('index');
+        Route::post('/checkin', [AbsensiSayaController::class, 'checkin'])->name('checkin');
+        Route::post('/checkout', [AbsensiSayaController::class, 'checkout'])->name('checkout');
+    });
 
     // Nota Dinas Elektronik
     Route::prefix('nde')->name('shared.nde.')->group(function () {
@@ -523,7 +533,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('/persetujuan-izin-guru/{izin}/approve', [\App\Http\Controllers\SDM\PersetujuanIzinGuruController::class, 'approve'])->middleware('permission:manage perizinan guru')->name('persetujuan-izin-guru.approve');
         Route::patch('/persetujuan-izin-guru/{izin}/reject', [\App\Http\Controllers\SDM\PersetujuanIzinGuruController::class, 'reject'])->middleware('permission:manage perizinan guru')->name('persetujuan-izin-guru.reject');
 
-        // Monitoring & Rekapitulasi
+        // Monitoring & Rekapitulasi (legacy)
         Route::get('/monitoring', [\App\Http\Controllers\SDM\DashboardController::class, 'monitoring'])->middleware('permission:view rekapitulasi sdm')->name('monitoring.index');
         Route::get('/rekapitulasi', [\App\Http\Controllers\SDM\RekapitulasiController::class, 'index'])->middleware('permission:view rekapitulasi sdm')->name('rekapitulasi.index');
         Route::get('/rekapitulasi/export-excel', [\App\Http\Controllers\SDM\RekapitulasiController::class, 'exportExcel'])->middleware('permission:view rekapitulasi sdm')->name('rekapitulasi.export-excel');
@@ -531,6 +541,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // NDE Referensi
         Route::resource('nde-referensi', NdeReferensiController::class)->middleware('permission:manage nde referensi')->except(['create', 'edit', 'show']);
+
+        // ======= Absensi Pegawai Management (KAUR SDM) =======
+        // Pengaturan Absensi
+        Route::get('/absensi-settings', [AbsensiSettingController::class, 'index'])->name('absensi-settings.index');
+        Route::put('/absensi-settings', [AbsensiSettingController::class, 'update'])->name('absensi-settings.update');
+
+        // Monitoring & Laporan
+        Route::get('/absensi/monitoring-harian', [AbsensiMonitoringController::class, 'harian'])->name('absensi.harian');
+        Route::get('/absensi/laporan-bulanan', [AbsensiMonitoringController::class, 'bulanan'])->name('absensi.bulanan');
+        Route::get('/absensi/rekapitulasi-pegawai', [AbsensiMonitoringController::class, 'rekapitulasi'])->name('absensi.rekapitulasi');
+        Route::get('/absensi/export', [AbsensiMonitoringController::class, 'exportExcel'])->name('absensi.export');
     });
 
     // Public/Shared print route for approved permits

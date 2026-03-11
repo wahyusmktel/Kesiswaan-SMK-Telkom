@@ -137,4 +137,9 @@ class User extends Authenticatable implements WebAuthnAuthenticatableContract
     {
         return $this->belongsToMany(Survey::class, 'survey_targets');
     }
+
+    public function absensiPegawai()
+    {
+        return $this->hasMany(AbsensiPegawai::class);
+    }
 }

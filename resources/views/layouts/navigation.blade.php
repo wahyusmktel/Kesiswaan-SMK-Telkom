@@ -516,6 +516,14 @@
             </a>
         </li>
     @endcan
+    {{-- Absensi Saya Wali Kelas --}}
+    <li>
+        <a href="{{ route('absensi-saya.index') }}" class="nav-link {{ request()->routeIs('absensi-saya.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg></div>
+            <span class="nav-text">Absensi Saya</span>
+            <span class="nav-badge bg-teal-100 text-teal-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">GPS</span>
+        </a>
+    </li>
     @endif
     @endrole
 @endcan
@@ -635,6 +643,17 @@
         @endcan
 
         <div class="section-title">Layanan Guru</div>
+        <li>
+            <a href="{{ route('absensi-saya.index') }}"
+                class="nav-link {{ request()->routeIs('absensi-saya.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg></div>
+                <span class="nav-text">Absensi Saya</span>
+                <span class="nav-badge bg-teal-100 text-teal-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">GPS</span>
+            </a>
+        </li>
         <li>
             <a href="{{ route('guru.izin.index') }}"
                 class="nav-link {{ request()->routeIs("guru.izin.*") ? "nav-link-active" : "nav-link-inactive" }}">
@@ -1681,6 +1700,19 @@
                     <span class="nav-text">Dashboard SDM</span>
                 </a>
             </li>
+            {{-- Absensi Saya --}}
+            <li>
+                <a href="{{ route('absensi-saya.index') }}"
+                    class="nav-link {{ request()->routeIs('absensi-saya.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                    <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg></div>
+                    <span class="nav-text">Absensi Saya</span>
+                    <span class="nav-badge bg-teal-100 text-teal-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">GPS</span>
+                </a>
+            </li>
             <li>
                 <a href="{{ route('sdm.monitoring.index') }}"
                     class="nav-link {{ request()->routeIs("sdm.monitoring.*") ? "nav-link-active" : "nav-link-inactive" }}">
@@ -1727,6 +1759,36 @@
                     </a>
                 </li>
             @endcan
+
+            {{-- ====== ABSENSI PEGAWAI (KAUR SDM) ====== --}}
+            <div class="section-title">Absensi Pegawai</div>
+            <li class="submenu-dropdown" x-data="{ expanded: {{ request()->routeIs('sdm.absensi*') || request()->routeIs('sdm.absensi-settings*') ? 'true' : 'false' }}, flyoutTop:0, updateFlyoutPosition(){ const r=this.$el.querySelector('button').getBoundingClientRect(); this.flyoutTop=r.top; } }" @mouseenter="updateFlyoutPosition()">
+                <button @click="expanded = !expanded"
+                    class="nav-link w-full {{ request()->routeIs('sdm.absensi*') || request()->routeIs('sdm.absensi-settings*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                    <div class="flex items-center">
+                        <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                            </svg></div>
+                        <span class="nav-text">Manaj. Absensi</span>
+                    </div>
+                    <svg :class="expanded ? 'rotate-180' : ''" class="dropdown-arrow w-4 h-4 transition-transform text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                </button>
+                <!-- Inline Submenu -->
+                <div x-show="expanded" x-collapse class="submenu-card">
+                    <a href="{{ route('sdm.absensi.harian') }}" class="submenu-item {{ request()->routeIs('sdm.absensi.harian') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Monitoring Harian</a>
+                    <a href="{{ route('sdm.absensi.bulanan') }}" class="submenu-item {{ request()->routeIs('sdm.absensi.bulanan') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Laporan Bulanan</a>
+                    <a href="{{ route('sdm.absensi.rekapitulasi') }}" class="submenu-item {{ request()->routeIs('sdm.absensi.rekapitulasi') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Rekapitulasi</a>
+                    <a href="{{ route('sdm.absensi-settings.index') }}" class="submenu-item {{ request()->routeIs('sdm.absensi-settings.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Pengaturan</a>
+                </div>
+                <!-- Flyout Submenu -->
+                <div class="submenu-flyout" :style="'top: ' + flyoutTop + 'px'">
+                    <div class="submenu-flyout-title">Absensi Pegawai</div>
+                    <a href="{{ route('sdm.absensi.harian') }}" class="submenu-item {{ request()->routeIs('sdm.absensi.harian') ? 'submenu-item-active' : '' }}">Monitoring Harian</a>
+                    <a href="{{ route('sdm.absensi.bulanan') }}" class="submenu-item {{ request()->routeIs('sdm.absensi.bulanan') ? 'submenu-item-active' : '' }}">Laporan Bulanan</a>
+                    <a href="{{ route('sdm.absensi.rekapitulasi') }}" class="submenu-item {{ request()->routeIs('sdm.absensi.rekapitulasi') ? 'submenu-item-active' : '' }}">Rekapitulasi</a>
+                    <a href="{{ route('sdm.absensi-settings.index') }}" class="submenu-item {{ request()->routeIs('sdm.absensi-settings.*') ? 'submenu-item-active' : '' }}">Pengaturan</a>
+                </div>
+            </li>
     @endif
     @endrole
 @endcan
