@@ -113,7 +113,7 @@ class NottedController extends Controller
             ->withCount(['likes', 'comments'])
             ->latest()
             ->paginate(10);
-        return view('notted.app', compact('posts'));
+        return view('notted.feed', compact('posts'));
     }
 
     /**
