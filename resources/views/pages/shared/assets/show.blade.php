@@ -75,8 +75,8 @@
                         <span class="w-2 h-2 rounded-full {{ $sc['dot'] }} animate-pulse"></span>
                         {{ $asset['current_status'] ?? '-' }}
                     </span>
-                    @if($asset['purchase_year'])
-                    <span class="text-red-200 text-xs font-medium">Tahun {{ $asset['purchase_year'] }}</span>
+                    @if($asset['created_at'])
+                    <span class="text-red-200 text-xs font-medium">Tahun {{ \Carbon\Carbon::parse($asset['created_at'])->format('Y') }}</span>
                     @endif
                 </div>
             </div>
@@ -85,7 +85,7 @@
         {{-- Tombol Ajukan Peminjaman --}}
         @if(!$isDisposed && ($asset['current_status'] ?? '') === 'Tersedia')
         <div class="flex justify-end">
-            <a href="{{ route('inventaris-aset.borrow-form', $asset['id']) }}"
+            <a href="{{ route('inventaris-aset.borrow-form', $asset['asset_id']) }}"
                 class="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-2xl transition-all shadow-lg shadow-emerald-500/20 hover:-translate-y-0.5">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>

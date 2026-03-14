@@ -57,7 +57,7 @@ use App\Http\Controllers\Auth\SecurityLoginController;
 use App\Http\Controllers\WaliKelas\WaliKelasMentoringController;
 use App\Http\Controllers\BK\BKPembinaanTerlambatController;
 use App\Http\Controllers\Shared\CoachingAnalyticsController;
-use App\Http\Controllers\Admin\SystemUpdateController;
+use App\Http\Controllers\Admin\AssetSyncController;
 use App\Http\Controllers\Shared\AbsensiSayaController;
 use App\Http\Controllers\SDM\AbsensiSettingController;
 use App\Http\Controllers\SDM\AbsensiMonitoringController;
@@ -629,6 +629,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // System Update
         Route::get('/system-update', [SystemUpdateController::class, 'index'])->name('system-update.index');
         Route::post('/system-update/deploy', [SystemUpdateController::class, 'deploy'])->name('system-update.deploy');
+
+        // Sinkronisasi Aset
+        Route::get('/asset-sync', [AssetSyncController::class, 'index'])->name('asset-sync.index');
+        Route::post('/asset-sync', [AssetSyncController::class, 'sync'])->name('asset-sync.process');
     });
 });
 

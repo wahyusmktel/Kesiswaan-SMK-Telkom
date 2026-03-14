@@ -32,13 +32,13 @@
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
             @php
                 $statItems = [
-                    ['label' => 'Total Aset', 'value' => $stats['total'], 'color' => 'red', 'bg' => 'bg-red-50', 'icon_color' => 'text-red-600',
+                    ['label' => 'Total Aset', 'value' => $stats['total_assets'], 'color' => 'red', 'bg' => 'bg-red-50', 'icon_color' => 'text-red-600',
                      'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />'],
-                    ['label' => 'Tersedia', 'value' => $stats['tersedia'], 'color' => 'emerald', 'bg' => 'bg-emerald-50', 'icon_color' => 'text-emerald-600',
+                    ['label' => 'Tersedia', 'value' => $stats['total_aktif'], 'color' => 'emerald', 'bg' => 'bg-emerald-50', 'icon_color' => 'text-emerald-600',
                      'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />'],
-                    ['label' => 'Dipinjam/Dipakai', 'value' => $stats['dipinjam'], 'color' => 'blue', 'bg' => 'bg-blue-50', 'icon_color' => 'text-blue-600',
+                    ['label' => 'Dipinjam/Dipakai', 'value' => $stats['total_dipinjam'], 'color' => 'blue', 'bg' => 'bg-blue-50', 'icon_color' => 'text-blue-600',
                      'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />'],
-                    ['label' => 'Rusak', 'value' => $stats['rusak'], 'color' => 'amber', 'bg' => 'bg-amber-50', 'icon_color' => 'text-amber-600',
+                    ['label' => 'Rusak', 'value' => $stats['total_rusak'], 'color' => 'amber', 'bg' => 'bg-amber-50', 'icon_color' => 'text-amber-600',
                      'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />'],
                 ];
             @endphp
@@ -131,9 +131,9 @@
             <div class="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
                 <div>
                     <h3 class="text-sm font-bold text-gray-800">Daftar Inventaris Aset</h3>
-                    @if(isset($assets['total']))
+                    @if($assets->total() > 0)
                     <p class="text-xs text-gray-400 mt-0.5">
-                        Menampilkan {{ $assets['from'] ?? 0 }} – {{ $assets['to'] ?? 0 }} dari {{ $assets['total'] ?? 0 }} aset
+                        Menampilkan {{ $assets->firstItem() }} – {{ $assets->lastItem() }} dari {{ $assets->total() }} aset
                     </p>
                     @endif
                 </div>
@@ -157,7 +157,7 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50">
-                        @forelse($assets['data'] ?? [] as $asset)
+                        @forelse($assets as $asset)
                         @php
                             $statusMap = [
                                 'Tersedia'  => 'bg-emerald-100 text-emerald-700',
@@ -165,22 +165,22 @@
                                 'Digunakan' => 'bg-blue-100 text-blue-700',
                                 'Rusak'     => 'bg-red-100 text-red-700',
                             ];
-                            $cls = $statusMap[$asset['current_status']] ?? 'bg-gray-100 text-gray-600';
+                            $cls = $statusMap[$asset->current_status] ?? 'bg-gray-100 text-gray-600';
                         @endphp
                         <tr class="hover:bg-gray-50/50 transition-colors group">
                             <td class="px-6 py-4">
                                 <div>
-                                    <span class="text-[10px] font-black text-red-600 uppercase tracking-widest">{{ $asset['asset_code_ypt'] ?? '-' }}</span>
+                                    <span class="text-[10px] font-black text-red-600 uppercase tracking-widest">{{ $asset->asset_code_ypt ?? '-' }}</span>
                                     <p class="text-sm font-semibold text-gray-800 mt-0.5 group-hover:text-red-600 transition-colors">
-                                        {{ $asset['name'] }}
+                                        {{ $asset->name }}
                                     </p>
-                                    @if($asset['purchase_year'])
-                                    <span class="text-[10px] text-gray-400 font-medium">Tahun {{ $asset['purchase_year'] }}</span>
+                                    @if($asset->created_at)
+                                    <span class="text-[10px] text-gray-400 font-medium">Tahun {{ $asset->created_at->format('Y') }}</span>
                                     @endif
                                 </div>
                             </td>
                             <td class="px-4 py-4 hidden md:table-cell">
-                                <span class="text-xs text-gray-600 font-medium">{{ $asset['category'] ?? '-' }}</span>
+                                <span class="text-xs text-gray-600 font-medium">{{ $asset->category ?? '-' }}</span>
                             </td>
                             <td class="px-4 py-4 hidden lg:table-cell">
                                 <div class="flex flex-col gap-0.5">
@@ -188,22 +188,22 @@
                                         <svg class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                                         </svg>
-                                        <span class="text-xs text-gray-600">{{ $asset['building'] ?? '-' }}</span>
+                                        <span class="text-xs text-gray-600">{{ $asset->building ?? '-' }}</span>
                                     </div>
-                                    @if($asset['room'])
+                                    @if($asset->room)
                                     <div class="flex items-center gap-1.5 ml-5">
-                                        <span class="text-[10px] text-gray-400">{{ $asset['room'] }}</span>
+                                        <span class="text-[10px] text-gray-400">{{ $asset->room }}</span>
                                     </div>
                                     @endif
                                 </div>
                             </td>
                             <td class="px-4 py-4 text-center">
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest {{ $cls }}">
-                                    {{ $asset['current_status'] ?? '-' }}
+                                    {{ $asset->current_status ?? '-' }}
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-right">
-                                <a href="{{ route('inventaris-aset.show', $asset['id']) }}"
+                                <a href="{{ route('inventaris-aset.show', $asset->asset_id) }}"
                                     class="inline-flex items-center gap-1.5 px-4 py-2 bg-red-50 hover:bg-red-600 text-red-600 hover:text-white text-xs font-bold rounded-xl transition-all group/btn">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -233,39 +233,16 @@
             </div>
 
             {{-- Pagination --}}
-            @if(isset($assets['last_page']) && $assets['last_page'] > 1)
-            <div class="px-6 py-4 border-t border-gray-50 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50/30">
-                <p class="text-xs text-gray-500">
-                    Halaman <span class="font-bold text-gray-700">{{ $assets['current_page'] }}</span>
-                    dari <span class="font-bold text-gray-700">{{ $assets['last_page'] }}</span>
-                </p>
-                <div class="flex items-center gap-1">
-                    {{-- Prev --}}
-                    @if($assets['current_page'] > 1)
-                    <a href="{{ request()->fullUrlWithQuery(['page' => $assets['current_page'] - 1]) }}"
-                        class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all text-sm font-bold">
-                        ‹
-                    </a>
-                    @endif
-
-                    {{-- Page Numbers --}}
-                    @for($p = max(1, $assets['current_page'] - 2); $p <= min($assets['last_page'], $assets['current_page'] + 2); $p++)
-                    <a href="{{ request()->fullUrlWithQuery(['page' => $p]) }}"
-                        class="inline-flex items-center justify-center w-9 h-9 rounded-lg border text-xs font-bold transition-all
-                            {{ $p == $assets['current_page'] ? 'bg-red-600 border-red-600 text-white shadow-md shadow-red-500/20' : 'bg-white border-gray-200 text-gray-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200' }}">
-                        {{ $p }}
-                    </a>
-                    @endfor
-
-                    {{-- Next --}}
-                    @if($assets['current_page'] < $assets['last_page'])
-                    <a href="{{ request()->fullUrlWithQuery(['page' => $assets['current_page'] + 1]) }}"
-                        class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all text-sm font-bold">
-                        ›
-                    </a>
-                    @endif
+            @if($assets->hasPages())
+                <div class="px-6 py-4 border-t border-gray-50 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50/30">
+                    <p class="text-xs text-gray-500">
+                        Halaman <span class="font-bold text-gray-700">{{ $assets->currentPage() }}</span>
+                        dari <span class="font-bold text-gray-700">{{ $assets->lastPage() }}</span>
+                    </p>
+                    <div class="flex justify-end mt-4">
+                        {{ $assets->links('pagination::tailwind') }}
+                    </div>
                 </div>
-            </div>
             @endif
         </div>
 

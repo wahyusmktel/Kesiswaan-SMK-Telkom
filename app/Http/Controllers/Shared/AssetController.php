@@ -18,46 +18,80 @@ class AssetController extends Controller
     }
 
     /**
-     * Menampilkan daftar semua aset dari Aplikasi Aset.
+     * Menampilkan daftar semua aset dari database lokal hasil sinkronisasi.
      */
     public function index(Request $request)
     {
-        $params = array_filter([
-            'search'       => $request->input('search'),
-            'category_id'  => $request->input('category_id'),
-            'status'       => $request->input('status'),
-            'purchase_year'=> $request->input('purchase_year'),
-            'per_page'     => $request->input('per_page', 15),
-            'page'         => $request->input('page', 1),
-        ]);
+        $search        = $request->input('search');
+        $categoryId    = $request->input('category_id');
+        $status        = $request->input('status');
+        $purchaseYear  = $request->input('purchase_year');
+        $perPage       = $request->input('per_page', 15);
 
         try {
-            $response = Http::timeout(10)->get("{$this->apiBase}/api/assets", $params);
+            $query = \App\Models\SyncedAsset::query();
 
-            if ($response->failed()) {
-                return view('pages.shared.assets.index', [
-                    'error'      => 'Gagal menghubungi server Aplikasi Aset. Pastikan server berjalan.',
-                    'assets'     => null,
-                    'stats'      => null,
-                    'categories' => collect(),
-                    'years'      => collect(),
-                ]);
+            if ($search) {
+                $query->where(function($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('asset_code_ypt', 'like', "%{$search}%")
+                      ->orWhere('institution', 'like', "%{$search}%")
+                      ->orWhere('department', 'like', "%{$search}%")
+                      ->orWhere('room', 'like', "%{$search}%");
+                });
             }
 
-            $data = $response->json();
+            if ($categoryId) {
+                $query->where('category', $categoryId);
+            }
+
+            if ($status) {
+                $query->where('current_status', $status);
+            }
+
+            if ($purchaseYear) {
+                // Because there is no explicit 'purchase_year' we extract from 'created_at' or purchase_cost
+                $query->whereYear('created_at', $purchaseYear); 
+            }
+
+            $assets = $query->latest('last_synced_at')->paginate($perPage)->withQueryString();
+
+            // Statistik lokal
+            $stats = [
+                'total_assets'   => \App\Models\SyncedAsset::count(),
+                'total_aktif'    => \App\Models\SyncedAsset::where('current_status', 'Tersedia')->count(),
+                'total_dipinjam' => \App\Models\SyncedAsset::where('current_status', 'Dipinjam')->count(),
+                'total_rusak'    => \App\Models\SyncedAsset::where('current_status', 'Rusak')->count(),
+            ];
+
+            // Categories
+            $categories = \App\Models\SyncedAsset::select('category')
+                            ->distinct()
+                            ->whereNotNull('category')
+                            ->pluck('category')
+                            ->map(function ($cat) {
+                                return ['id' => $cat, 'name' => $cat];
+                            });
+
+            // Years
+            $years = \App\Models\SyncedAsset::selectRaw('YEAR(created_at) as year')
+                            ->distinct()
+                            ->orderByDesc('year')
+                            ->pluck('year');
 
             return view('pages.shared.assets.index', [
-                'assets'     => $data['assets'] ?? null,
-                'stats'      => $data['stats'] ?? null,
-                'categories' => collect($data['categories'] ?? []),
-                'years'      => collect($data['years'] ?? []),
+                'assets'     => $assets,
+                'stats'      => $stats,
+                'categories' => $categories,
+                'years'      => $years,
                 'error'      => null,
-                'filters'    => $params,
+                'filters'    => $request->all(),
             ]);
+
         } catch (\Exception $e) {
-            Log::error('Asset API Error (index): ' . $e->getMessage());
+            Log::error('Asset Local DB Error (index): ' . $e->getMessage());
             return view('pages.shared.assets.index', [
-                'error'      => 'Koneksi ke Aplikasi Aset gagal: ' . $e->getMessage(),
+                'error'      => 'Gagal mengambil data dari database lokal: ' . $e->getMessage(),
                 'assets'     => null,
                 'stats'      => null,
                 'categories' => collect(),
@@ -68,61 +102,53 @@ class AssetController extends Controller
     }
 
     /**
-     * Menampilkan detail satu aset.
+     * Menampilkan detail satu aset dari database lokal.
      */
     public function show(int $id)
     {
         try {
-            $response = Http::timeout(10)->get("{$this->apiBase}/api/assets/{$id}");
+            $asset = \App\Models\SyncedAsset::where('asset_id', $id)->first();
 
-            if ($response->status() === 404) {
-                abort(404, 'Aset tidak ditemukan.');
+            if (!$asset) {
+                // Return 404 behavior tapi dalam konteks view untuk user
+                abort(404, 'Aset tidak ditemukan di database lokal. Pastikan sudah sinkronisasi.');
             }
-
-            if ($response->failed()) {
-                return view('pages.shared.assets.show', [
-                    'error' => 'Gagal mengambil data aset dari server.',
-                    'asset' => null,
-                ]);
-            }
-
-            $data = $response->json();
 
             return view('pages.shared.assets.show', [
-                'asset'      => $data['asset'] ?? null,
-                'isDisposed' => $data['isDisposed'] ?? false,
+                'asset'      => $asset->toArray(),
+                'isDisposed' => $asset->current_status === 'Dihapuskan',
                 'error'      => null,
             ]);
         } catch (\Exception $e) {
-            Log::error('Asset API Error (show): ' . $e->getMessage());
+            Log::error('Asset Local DB Error (show): ' . $e->getMessage());
             return view('pages.shared.assets.show', [
-                'error' => 'Koneksi ke Aplikasi Aset gagal: ' . $e->getMessage(),
+                'error' => 'Gagal memuat detail aset: ' . $e->getMessage(),
                 'asset' => null,
             ]);
         }
     }
 
     /**
-     * Tampilkan form pengajuan peminjaman aset.
+     * Tampilkan form pengajuan peminjaman aset dari database lokal.
      */
     public function showBorrowForm(int $id)
     {
         try {
-            $response = Http::timeout(10)->get("{$this->apiBase}/api/assets/{$id}");
-            if ($response->status() === 404) abort(404, 'Aset tidak ditemukan.');
-            if ($response->failed()) {
-                return redirect()->route('inventaris-aset.show', $id)
-                    ->with('error', 'Gagal memuat data aset.');
+            $asset = \App\Models\SyncedAsset::where('asset_id', $id)->first();
+            
+            if (!$asset) {
+                return redirect()->route('inventaris-aset.index')
+                    ->with('error', 'Aset tidak ditemukan di database lokal. Pastikan sudah sinkronisasi.');
             }
-            $data = $response->json();
+
             return view('pages.shared.assets.borrow-form', [
-                'asset'      => $data['asset'] ?? null,
-                'isDisposed' => $data['isDisposed'] ?? false,
+                'asset'      => $asset->toArray(),
+                'isDisposed' => $asset->current_status === 'Dihapuskan',
             ]);
         } catch (\Exception $e) {
-            Log::error('AssetController showBorrowForm: ' . $e->getMessage());
-            return redirect()->route('inventaris-aset.show', $id)
-                ->with('error', 'Koneksi ke server Aplikasi Aset gagal.');
+            Log::error('AssetController showBorrowForm (Local): ' . $e->getMessage());
+            return redirect()->route('inventaris-aset.index')
+                ->with('error', 'Gagal memuat form peminjaman aset.');
         }
     }
 

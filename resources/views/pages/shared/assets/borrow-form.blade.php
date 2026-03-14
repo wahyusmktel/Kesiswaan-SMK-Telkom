@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center gap-3">
-            <a href="{{ route('inventaris-aset.show', $asset['id']) }}"
+            <a href="{{ route('inventaris-aset.show', $asset['asset_id']) }}"
                 class="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-gray-100 hover:bg-red-50 text-gray-500 hover:text-red-600 transition-all">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
@@ -57,7 +57,7 @@
 
         {{-- Form --}}
         @if($asset && !$isDisposed)
-        <form action="{{ route('inventaris-aset.borrow', $asset['id']) }}" method="POST" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
+        <form action="{{ route('inventaris-aset.borrow', $asset['asset_id']) }}" method="POST" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
             @csrf
 
             {{-- Tujuan Peminjaman --}}
@@ -120,7 +120,7 @@
 
             {{-- Submit --}}
             <div class="flex gap-3 pt-2">
-                <a href="{{ route('inventaris-aset.show', $asset['id']) }}"
+                <a href="{{ route('inventaris-aset.show', $asset['asset_id']) }}"
                     class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-xl transition-all">
                     Batal
                 </a>
