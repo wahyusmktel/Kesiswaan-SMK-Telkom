@@ -61,6 +61,7 @@ use App\Http\Controllers\Admin\SystemUpdateController;
 use App\Http\Controllers\Shared\AbsensiSayaController;
 use App\Http\Controllers\SDM\AbsensiSettingController;
 use App\Http\Controllers\SDM\AbsensiMonitoringController;
+use App\Http\Controllers\Shared\AssetController as SharedAssetController;
 
 Route::get('auth/google', [GoogleController::class, 'redirectToGoogle'])->name('auth.google');
 Route::get('auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
@@ -713,3 +714,17 @@ Route::middleware(['auth', 'permission:manage tu letter requests'])->group(funct
 });
 
 require __DIR__ . '/auth.php';
+
+// ============================================================
+// Integrasi Inventaris Aset (semua role kecuali Siswa)
+// ============================================================
+Route::middleware(['auth', 'role:Super Admin|Waka Kesiswaan|Guru BK|Guru Piket|Kurikulum|Wali Kelas|Tata Usaha|Security|KAUR SDM|Operator|Koordinator Prakerin|Guru Kelas'])
+    ->prefix('inventaris-aset')
+    ->name('inventaris-aset.')
+    ->group(function () {
+        Route::get('/', [SharedAssetController::class, 'index'])->name('index');
+        Route::get('/riwayat-peminjaman', [SharedAssetController::class, 'borrowHistory'])->name('borrow-history');
+        Route::get('/{id}/pinjam', [SharedAssetController::class, 'showBorrowForm'])->name('borrow-form');
+        Route::post('/{id}/pinjam', [SharedAssetController::class, 'requestBorrow'])->name('borrow');
+        Route::get('/{id}', [SharedAssetController::class, 'show'])->name('show');
+    });

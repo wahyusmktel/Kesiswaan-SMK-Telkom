@@ -668,6 +668,7 @@
     @endrole
 @endcan
 
+
 {{-- ============================================================ --}}
 {{-- ROLE: WAKA KESISWAAN --}}
 {{-- ============================================================ --}}
@@ -2107,6 +2108,40 @@
             class="nav-badge bg-blue-100 text-blue-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">v1.0</span>
     </a>
 </li>
+
+{{-- ============================================================ --}}
+{{-- MENU: INVENTARIS ASET (Semua Role kecuali Siswa)            --}}
+{{-- ============================================================ --}}
+@unlessrole('Siswa|siswa')
+    @if(session('active_role') !== 'Siswa' && !is_null(session('active_role')))
+        <div class="section-title">Integrasi</div>
+        <li>
+            <a href="{{ route('inventaris-aset.index') }}" title="Inventaris Aset"
+                class="nav-link {{ request()->routeIs('inventaris-aset.index') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                <div class="nav-icon-container">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                </div>
+                <span class="nav-text">Inventaris Aset</span>
+                <span class="nav-badge bg-orange-100 text-orange-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">API</span>
+            </a>
+        </li>
+        <li>
+            <a href="{{ route('inventaris-aset.borrow-history') }}" title="Riwayat Peminjaman Aset"
+                class="nav-link {{ request()->routeIs('inventaris-aset.borrow-history') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                <div class="nav-icon-container">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <span class="nav-text">Riwayat Peminjaman</span>
+            </a>
+        </li>
+    @endif
+@endunlessrole
 
 @can('manage tu letter requests')
     <div class="section-title">Layanan Persuratan</div>
