@@ -81,6 +81,29 @@
                                 @error('address') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                             </div>
 
+                            <!-- Theme Selection -->
+                            <div class="col-span-1 md:col-span-2 pt-4 border-t border-gray-100">
+                                <label class="block text-sm font-medium text-gray-700 mb-3">Tema Landing Page</label>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <label class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none hover:border-gray-300">
+                                        <input type="radio" name="theme" value="default" class="mt-0.5 h-4 w-4 text-red-600 border-gray-300 focus:ring-red-500" {{ old('theme', $setting->theme ?? 'default') === 'default' ? 'checked' : '' }}>
+                                        <span class="ml-3 flex flex-col">
+                                            <span class="block text-sm font-medium text-gray-900">Default Mode</span>
+                                            <span class="block text-sm text-gray-500">Tema Gelap (Dark Blue & Red)</span>
+                                        </span>
+                                    </label>
+
+                                    <label class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none hover:border-gray-300">
+                                        <input type="radio" name="theme" value="light-red" class="mt-0.5 h-4 w-4 text-red-600 border-gray-300 focus:ring-red-500" {{ old('theme', $setting->theme ?? 'default') === 'light-red' ? 'checked' : '' }}>
+                                        <span class="ml-3 flex flex-col">
+                                            <span class="block text-sm font-medium text-gray-900">Light Mode</span>
+                                            <span class="block text-sm text-gray-500">Tema Terang (Merah Putih)</span>
+                                        </span>
+                                    </label>
+                                </div>
+                                @error('theme') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                            </div>
+
                             <!-- Registration Toggle -->
                             <div class="col-span-1 md:col-span-2 pt-4 border-t border-gray-100">
                                 <label class="relative inline-flex items-center cursor-pointer">

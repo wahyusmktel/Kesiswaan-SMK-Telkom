@@ -156,6 +156,21 @@ Route::middleware(['auth', 'role:Waka Kesiswaan|Super Admin'])->prefix('admin')-
 Route::middleware(['auth', 'verified'])->group(function () {
     // ... route dashboard dan profile dari Breeze
 
+    // Penyimpanan Cloud (Semua Role)
+    Route::prefix('cloud-files')->name('cloud-files.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\CloudFileController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\CloudFileController::class, 'store'])->name('store');
+        Route::get('/{cloudFile}/download', [\App\Http\Controllers\CloudFileController::class, 'download'])->name('download');
+        Route::delete('/{cloudFile}', [\App\Http\Controllers\CloudFileController::class, 'destroy'])->name('destroy');
+    });
+
+    // Shortener URL (Semua Role)
+    Route::prefix('shortener')->name('shortener.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\ShortUrlController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\ShortUrlController::class, 'store'])->name('store');
+        Route::delete('/{shortUrl}', [\App\Http\Controllers\ShortUrlController::class, 'destroy'])->name('destroy');
+    });
+
     // Absensi Saya (Semua Role)
     Route::prefix('absensi-saya')->name('absensi-saya.')->group(function () {
         Route::get('/', [AbsensiSayaController::class, 'index'])->name('index');
@@ -732,3 +747,10 @@ Route::middleware(['auth', 'role:Super Admin|Waka Kesiswaan|Guru BK|Guru Piket|K
         Route::post('/{id}/pinjam', [SharedAssetController::class, 'requestBorrow'])->name('borrow');
         Route::get('/{id}', [SharedAssetController::class, 'show'])->name('show');
     });
+
+// ============================================================
+// REDIRECT SHORTENER URL (CATCH-ALL)
+// ============================================================
+Route::get('/{code}', [\App\Http\Controllers\ShortUrlController::class, 'redirect'])
+    ->name('shortener.redirect')
+    ->where('code', '.*');

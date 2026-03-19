@@ -148,10 +148,107 @@
             text-align: center;
             width: 100%;
         }
+
+        /* Light Theme Overrides */
+        .theme-light-red {
+            background-color: #F8FAFC;
+            color: #0F172A;
+        }
+
+        .theme-light-red .glass {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .theme-light-red .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        }
+
+        .theme-light-red .glass-card:hover {
+            background: #FFFFFF;
+            border-color: var(--telkom-red);
+            box-shadow: 0 20px 25px -5px rgba(226, 31, 38, 0.1);
+        }
+
+        .theme-light-red .text-gradient {
+            background: linear-gradient(135deg, #0F172A 0%, #475569 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .theme-light-red .nav-link {
+            color: #475569 !important;
+        }
+        
+        .theme-light-red .nav-link:hover {
+            color: #0F172A !important;
+        }
+        
+        .theme-light-red .text-white:not(.btn-primary:not(.text-white), .btn-primary *, .text-white.btn-primary) {
+            color: #0F172A !important;
+        }
+        
+        .theme-light-red .text-slate-300 {
+            color: #475569 !important;
+        }
+        
+        .theme-light-red .text-slate-400 {
+            color: #64748B !important;
+        }
+        
+        .theme-light-red .text-slate-500 {
+            color: #94A3B8 !important;
+        }
+
+        .theme-light-red .border-white\/5,
+        .theme-light-red .border-white\/10 {
+            border-color: rgba(0, 0, 0, 0.05) !important;
+        }
+
+        .theme-light-red .bg-white\/5 {
+            background-color: rgba(0, 0, 0, 0.03) !important;
+        }
+
+        .theme-light-red .bg-slate-900\/50,
+        .theme-light-red .bg-slate-900 {
+            background-color: #F1F5F9 !important;
+        }
+
+        .theme-light-red .bisa-section {
+            background-color: #FFFFFF !important;
+            background-image: repeating-linear-gradient(
+                -45deg,
+                rgba(255, 77, 84, 0.05) 0px,
+                rgba(255, 77, 84, 0.05) 2px,
+                transparent 2px,
+                transparent 15px
+            ), repeating-linear-gradient(
+                45deg,
+                rgba(226, 31, 38, 0.03) 0px,
+                rgba(226, 31, 38, 0.03) 2px,
+                transparent 2px,
+                transparent 25px
+            ) !important;
+        }
+
+        .theme-light-red .bisa-text {
+            color: #FF0D1A !important;
+            opacity: 1 !important;
+            text-shadow: 0px 10px 30px rgba(255, 13, 26, 0.2);
+            z-index: 10;
+        }
+        
+        /* Ensure primary button texts remain white */
+        .theme-light-red .btn-primary {
+            color: #FFFFFF !important;
+        }
     </style>
 </head>
 
-<body class="antialiased overflow-x-hidden" x-data="{ showVideo: false }">
+<body class="antialiased overflow-x-hidden {{ $appSetting?->theme === 'light-red' ? 'theme-light-red' : '' }}" x-data="{ showVideo: false }">
     <!-- Blobs -->
     <div class="blob top-[-100px] left-[-100px]"></div>
     <div class="blob bottom-[10%] right-[-100px]" style="background: #3B82F6; opacity: 0.1;"></div>
@@ -762,7 +859,7 @@
     </footer>
 
     <!-- BISA Text Section (Premium) -->
-    <section class="relative w-full overflow-hidden bg-[#0F172A] pt-10 pb-0 flex justify-center">
+    <section class="bisa-section relative w-full overflow-hidden bg-[#0F172A] pt-10 pb-0 flex justify-center">
         <h2 class="bisa-text">BISA</h2>
     </section>
 

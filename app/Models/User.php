@@ -142,4 +142,14 @@ class User extends Authenticatable implements WebAuthnAuthenticatableContract
     {
         return $this->hasMany(AbsensiPegawai::class);
     }
+
+    public function cloudFiles()
+    {
+        return $this->hasMany(CloudFile::class);
+    }
+
+    public function shortUrls()
+    {
+        return $this->hasMany(ShortUrl::class);
+    }
 }

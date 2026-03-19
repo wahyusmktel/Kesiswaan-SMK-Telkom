@@ -13,7 +13,8 @@ class AppSetting extends Model
         'phone',
         'email',
         'address',
-        'allow_registration'
+        'allow_registration',
+        'theme'
     ];
 
     protected $casts = [
