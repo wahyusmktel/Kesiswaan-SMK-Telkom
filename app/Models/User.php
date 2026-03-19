@@ -152,4 +152,9 @@ class User extends Authenticatable implements WebAuthnAuthenticatableContract
     {
         return $this->hasMany(ShortUrl::class);
     }
+
+    public function iqTestResults()
+    {
+        return $this->hasMany(IqTestResult::class);
+    }
 }

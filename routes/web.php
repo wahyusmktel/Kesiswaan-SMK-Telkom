@@ -171,6 +171,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/{shortUrl}', [\App\Http\Controllers\ShortUrlController::class, 'destroy'])->name('destroy');
     });
 
+    // Tes IQ (Semua Role)
+    Route::prefix('tes-iq')->name('tes-iq.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\IqTestController::class, 'index'])->name('start');
+        Route::get('/pertanyaan', [\App\Http\Controllers\IqTestController::class, 'test'])->name('test');
+        Route::post('/submit', [\App\Http\Controllers\IqTestController::class, 'submit'])->name('submit');
+        Route::get('/hasil/{result}', [\App\Http\Controllers\IqTestController::class, 'result'])->name('result');
+        Route::get('/sertifikat/{result}', [\App\Http\Controllers\IqTestController::class, 'downloadCertificate'])->name('certificate');
+    });
+
     // Absensi Saya (Semua Role)
     Route::prefix('absensi-saya')->name('absensi-saya.')->group(function () {
         Route::get('/', [AbsensiSayaController::class, 'index'])->name('index');
@@ -747,6 +756,11 @@ Route::middleware(['auth', 'role:Super Admin|Waka Kesiswaan|Guru BK|Guru Piket|K
         Route::post('/{id}/pinjam', [SharedAssetController::class, 'requestBorrow'])->name('borrow');
         Route::get('/{id}', [SharedAssetController::class, 'show'])->name('show');
     });
+
+// ============================================================
+// PUBLIC VERIFICATION FOR IQ TEST CERTIFICATE
+// ============================================================
+Route::get('/verifikasi-iq/{code}', [\App\Http\Controllers\IqVerificationController::class, 'verify'])->name('tes-iq.verify');
 
 // ============================================================
 // REDIRECT SHORTENER URL (CATCH-ALL)
