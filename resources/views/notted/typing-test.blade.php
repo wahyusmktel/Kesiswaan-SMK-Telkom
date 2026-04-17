@@ -227,6 +227,109 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Top Global Leaderboard -->
+            <div class="bg-white p-8 rounded-[32px] shadow-xl border border-slate-200 mb-20 animate-in fade-in slide-in-from-bottom-6 duration-1000">
+                <div class="flex items-center justify-between mb-8">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 notted-gradient rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-black text-slate-900 tracking-tight">Top Global Ngetik di Sekolah</h3>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">10 Besar Peringkat Mengetik</p>
+                        </div>
+                    </div>
+                    <div class="hidden sm:flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-100 rounded-2xl">
+                        <svg class="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                        <span class="text-[10px] font-black text-amber-700 uppercase tracking-widest">Best Record</span>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                                <th class="pb-4 pl-2 w-12">#</th>
+                                <th class="pb-4">Pengguna</th>
+                                <th class="pb-4 text-center">KPM Tertinggi</th>
+                                <th class="pb-4 text-center">Akurasi</th>
+                                <th class="pb-4 text-center hidden sm:table-cell">Total Test</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-50">
+                            @forelse($leaderboard as $index => $entry)
+                                <tr class="{{ $entry->user_id === Auth::id() ? 'bg-indigo-50/50' : '' }} hover:bg-slate-50/80 transition-colors">
+                                    <td class="py-4 pl-2">
+                                        @if($index === 0)
+                                            <div class="w-8 h-8 bg-gradient-to-br from-amber-400 to-amber-500 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/20">
+                                                <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                                </svg>
+                                            </div>
+                                        @elseif($index === 1)
+                                            <div class="w-8 h-8 bg-gradient-to-br from-slate-300 to-slate-400 rounded-xl flex items-center justify-center shadow-sm">
+                                                <span class="text-xs font-black text-white">2</span>
+                                            </div>
+                                        @elseif($index === 2)
+                                            <div class="w-8 h-8 bg-gradient-to-br from-amber-600 to-amber-700 rounded-xl flex items-center justify-center shadow-sm">
+                                                <span class="text-xs font-black text-white">3</span>
+                                            </div>
+                                        @else
+                                            <div class="w-8 h-8 bg-slate-100 rounded-xl flex items-center justify-center">
+                                                <span class="text-xs font-black text-slate-500">{{ $index + 1 }}</span>
+                                            </div>
+                                        @endif
+                                    </td>
+                                    <td class="py-4">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-9 h-9 rounded-xl overflow-hidden bg-slate-100 border {{ $index < 3 ? 'border-indigo-200' : 'border-slate-200' }} flex-shrink-0">
+                                                <img src="https://ui-avatars.com/api/?name={{ urlencode($entry->user->name ?? 'User') }}&background={{ $index === 0 ? 'f59e0b' : '6366f1' }}&color=fff" class="w-full h-full object-cover">
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-bold text-slate-900 leading-tight {{ $entry->user_id === Auth::id() ? 'text-indigo-700' : '' }}">
+                                                    {{ $entry->user->name ?? 'Unknown' }}
+                                                    @if($entry->user_id === Auth::id())
+                                                        <span class="text-[8px] font-black text-indigo-500 uppercase ml-1 px-1.5 py-0.5 bg-indigo-100 rounded-md">Kamu</span>
+                                                    @endif
+                                                </p>
+                                                <p class="text-[10px] text-slate-400 font-bold">{{ $entry->user->email ?? '' }}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 text-center">
+                                        <span class="text-lg font-black {{ $index === 0 ? 'text-amber-500' : ($index < 3 ? 'text-indigo-600' : 'text-slate-800') }}">{{ $entry->best_kpm }}</span>
+                                        <span class="text-[9px] font-bold text-slate-400 uppercase ml-0.5">KPM</span>
+                                    </td>
+                                    <td class="py-4 text-center">
+                                        <span class="text-sm font-black text-emerald-600">{{ $entry->best_accuracy }}%</span>
+                                    </td>
+                                    <td class="py-4 text-center hidden sm:table-cell">
+                                        <span class="px-2.5 py-1 bg-slate-100 text-[10px] font-bold rounded-lg text-slate-500">{{ $entry->total_tests }}x</span>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="py-12 text-center">
+                                        <div class="flex flex-col items-center gap-3">
+                                            <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center">
+                                                <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                                                </svg>
+                                            </div>
+                                            <p class="text-sm text-slate-400 italic font-medium">Belum ada data. Jadilah yang pertama menyelesaikan test!</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </main>
 

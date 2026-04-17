@@ -66,7 +66,18 @@ class NottedController extends Controller
         // Data for chart (last 10 tests, chronological order)
         $chartData = $history->reverse()->values();
 
-        return view('notted.typing-test', compact('history', 'chartData'));
+        // Top 10 Global Leaderboard (best KPM per user)
+        $leaderboard = NottedTypingResult::select('user_id')
+            ->selectRaw('MAX(kpm) as best_kpm')
+            ->selectRaw('MAX(accuracy) as best_accuracy')
+            ->selectRaw('COUNT(*) as total_tests')
+            ->groupBy('user_id')
+            ->orderByDesc('best_kpm')
+            ->take(10)
+            ->with('user')
+            ->get();
+
+        return view('notted.typing-test', compact('history', 'chartData', 'leaderboard'));
     }
 
     /**
