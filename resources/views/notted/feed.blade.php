@@ -2,19 +2,102 @@
 
 @section('content')
 <div class="col-span-1 lg:col-span-6 flex flex-col gap-6">
-    <!-- Stories -->
-    <div class="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-        @for ($i = 0; $i <= 6; $i++)
-            <a href="#" class="flex-shrink-0 flex flex-col items-center gap-2 group cursor-pointer hover:scale-105 transition-transform">
-                <div class="relative w-16 h-16 rounded-2xl p-0.5 notted-gradient">
-                    <div class="w-full h-full bg-slate-200 rounded-[14px] overflow-hidden">
-                        <img src="https://ui-avatars.com/api/?name=User+{{ $i }}&background=random"
-                            class="w-full h-full object-cover">
-                    </div>
-                </div>
-                <span class="text-[10px] font-bold text-slate-400 uppercase">User {{ $i }}</span>
+    <!-- Reels Carousel -->
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 overflow-hidden">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+                <div class="w-1 h-5 notted-gradient rounded-full"></div>
+                <h3 class="text-xs font-black text-slate-800 uppercase tracking-widest">Reels Terbaru</h3>
+            </div>
+            <a href="{{ route('notted.reels') }}" class="text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:text-indigo-700 transition-colors flex items-center gap-1">
+                Lihat Semua
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
             </a>
-        @endfor
+        </div>
+        <div class="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
+            @if(isset($latestReels) && $latestReels->count() > 0)
+                @foreach ($latestReels as $reel)
+                    <a href="{{ route('notted.reels') }}" class="flex-shrink-0 group cursor-pointer">
+                        <div class="relative w-24 h-40 rounded-2xl overflow-hidden bg-slate-900 shadow-lg group-hover:shadow-xl group-hover:scale-[1.03] transition-all duration-300">
+                            {{-- Video thumbnail / poster --}}
+                            <video class="w-full h-full object-cover" src="{{ asset('storage/' . $reel->video) }}" muted preload="metadata" class="pointer-events-none"></video>
+                            {{-- Gradient overlay --}}
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+                            {{-- Play icon --}}
+                            <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div class="w-8 h-8 bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M8 5v14l11-7z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            {{-- Bottom info --}}
+                            <div class="absolute bottom-0 left-0 right-0 p-2">
+                                <div class="flex items-center gap-1.5 mb-1">
+                                    <div class="w-5 h-5 rounded-full bg-white/20 border border-white/50 overflow-hidden">
+                                        <img src="https://ui-avatars.com/api/?name={{ urlencode($reel->user->name) }}&background=6366f1&color=fff&size=20" class="w-full h-full object-cover">
+                                    </div>
+                                    <span class="text-[8px] font-bold text-white truncate max-w-[50px]">{{ explode(' ', $reel->user->name)[0] }}</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[8px] font-bold text-white/70 flex items-center gap-0.5">
+                                        <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                                        </svg>
+                                        {{ $reel->likes_count }}
+                                    </span>
+                                    <span class="text-[8px] font-bold text-white/70 flex items-center gap-0.5">
+                                        <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                        </svg>
+                                        {{ $reel->comments_count }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                @endforeach
+
+                {{-- "Create Reel" card --}}
+                <a href="{{ route('notted.reels') }}" class="flex-shrink-0 group cursor-pointer">
+                    <div class="relative w-24 h-40 rounded-2xl overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg group-hover:shadow-xl group-hover:scale-[1.03] transition-all duration-300 flex items-center justify-center">
+                        <div class="flex flex-col items-center gap-2">
+                            <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                            </div>
+                            <span class="text-[9px] font-bold text-white uppercase">Buat Reel</span>
+                        </div>
+                    </div>
+                </a>
+            @else
+                {{-- Empty state --}}
+                <a href="{{ route('notted.reels') }}" class="flex-shrink-0 group cursor-pointer">
+                    <div class="relative w-24 h-40 rounded-2xl overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg group-hover:shadow-xl group-hover:scale-[1.03] transition-all duration-300 flex items-center justify-center">
+                        <div class="flex flex-col items-center gap-2">
+                            <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                            <span class="text-[9px] font-bold text-white uppercase text-center leading-tight">Buat Reel Pertama</span>
+                        </div>
+                    </div>
+                </a>
+                @for ($i = 0; $i < 4; $i++)
+                    <div class="flex-shrink-0">
+                        <div class="w-24 h-40 rounded-2xl bg-slate-100 border-2 border-dashed border-slate-200 flex items-center justify-center">
+                            <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                    </div>
+                @endfor
+            @endif
+        </div>
     </div>
 
     <!-- Create Post -->

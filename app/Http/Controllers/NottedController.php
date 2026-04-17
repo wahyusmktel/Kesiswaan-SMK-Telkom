@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\NottedPost;
 use App\Models\NottedComment;
 use App\Models\NottedLike;
+use App\Models\NottedReel;
+use App\Models\NottedReelComment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -113,7 +115,15 @@ class NottedController extends Controller
             ->withCount(['likes', 'comments'])
             ->latest()
             ->paginate(10);
-        return view('notted.feed', compact('posts'));
+
+        // Fetch latest reels for feed carousel
+        $latestReels = NottedReel::with('user')
+            ->withCount(['likes', 'comments'])
+            ->latest()
+            ->take(10)
+            ->get();
+
+        return view('notted.feed', compact('posts', 'latestReels'));
     }
 
     /**
@@ -179,17 +189,23 @@ class NottedController extends Controller
     }
 
     /**
-     * Toggle like for a post or comment.
+     * Toggle like for a post, comment, reel, or reel comment.
      */
     public function toggleLike(Request $request)
     {
         $request->validate([
             'id' => 'required|integer',
-            'type' => 'required|string|in:post,comment',
+            'type' => 'required|string|in:post,comment,reel,reel_comment',
         ]);
 
         $userId = Auth::id();
-        $likeableType = $request->input('type') === 'post' ? NottedPost::class : NottedComment::class;
+        $typeMap = [
+            'post' => NottedPost::class,
+            'comment' => NottedComment::class,
+            'reel' => NottedReel::class,
+            'reel_comment' => NottedReelComment::class,
+        ];
+        $likeableType = $typeMap[$request->input('type')];
         $likeableId = $request->input('id');
 
         $like = NottedLike::where('user_id', $userId)
@@ -216,6 +232,123 @@ class NottedController extends Controller
         return response()->json([
             'status' => $status,
             'count' => $count,
+        ]);
+    }
+
+    // ================================================
+    //                REELS FEATURE
+    // ================================================
+
+    /**
+     * Show Reels Page
+     */
+    public function reels()
+    {
+        $reels = NottedReel::with(['user', 'originalReel.user'])
+            ->withCount(['likes', 'comments', 'reposts'])
+            ->latest()
+            ->paginate(20);
+
+        return view('notted.reels', compact('reels'));
+    }
+
+    /**
+     * Store a newly created reel.
+     */
+    public function storeReel(Request $request)
+    {
+        $request->validate([
+            'video' => 'required|mimes:mp4,webm,mov|max:51200',
+            'caption' => 'nullable|string|max:500',
+        ]);
+
+        $videoPath = $request->file('video')->store('notted/reels', 'public');
+
+        $reel = NottedReel::create([
+            'user_id' => Auth::id(),
+            'video' => $videoPath,
+            'caption' => $request->input('caption'),
+        ]);
+
+        return response()->json($reel->load('user')->loadCount(['likes', 'comments']));
+    }
+
+    /**
+     * Display the specified reel as JSON.
+     */
+    public function showReel(NottedReel $reel)
+    {
+        // Increment view count
+        $reel->increment('views_count');
+
+        $reel->load([
+            'user',
+            'originalReel.user',
+            'comments' => function ($query) {
+                $query->with(['user', 'likes', 'replies.user'])
+                    ->withCount(['likes', 'replies'])
+                    ->whereNull('parent_id')
+                    ->latest();
+            },
+            'likes'
+        ])->loadCount(['likes', 'comments', 'reposts']);
+
+        return response()->json($reel);
+    }
+
+    /**
+     * Store a comment on a reel.
+     */
+    public function storeReelComment(Request $request, NottedReel $reel)
+    {
+        $request->validate([
+            'content' => 'required|string',
+            'parent_id' => 'nullable|exists:notted_reel_comments,id',
+        ]);
+
+        $comment = NottedReelComment::create([
+            'notted_reel_id' => $reel->id,
+            'user_id' => Auth::id(),
+            'content' => $request->input('content'),
+            'parent_id' => $request->input('parent_id'),
+        ]);
+
+        return response()->json($comment->load(['user', 'likes'])->loadCount(['likes', 'replies']));
+    }
+
+    /**
+     * Repost a reel.
+     */
+    public function repostReel(NottedReel $reel)
+    {
+        // Prevent reposting own reel
+        if ($reel->user_id === Auth::id()) {
+            return response()->json(['message' => 'Tidak bisa repost reel sendiri'], 422);
+        }
+
+        // Determine which reel is the original
+        $originalId = $reel->repost_from_id ?? $reel->id;
+
+        // Check if already reposted
+        $existing = NottedReel::where('user_id', Auth::id())
+            ->where('repost_from_id', $originalId)
+            ->first();
+
+        if ($existing) {
+            return response()->json(['message' => 'Kamu sudah pernah repost reel ini'], 422);
+        }
+
+        $repost = NottedReel::create([
+            'user_id' => Auth::id(),
+            'video' => $reel->video,
+            'thumbnail' => $reel->thumbnail,
+            'caption' => $reel->caption,
+            'repost_from_id' => $originalId,
+        ]);
+
+        return response()->json([
+            'message' => 'Reel berhasil di-repost!',
+            'reel' => $repost->load(['user', 'originalReel.user'])->loadCount(['likes', 'comments']),
         ]);
     }
 }

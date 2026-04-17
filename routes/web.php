@@ -111,6 +111,13 @@ Route::middleware(['auth'])->prefix('notted')->name('notted.')->group(function (
     Route::get('/typing-test', [App\Http\Controllers\NottedController::class, 'typingTest'])->name('typing-test');
     Route::post('/typing-test', [App\Http\Controllers\NottedController::class, 'storeTypingResult'])->name('typing-test.store');
 
+    // Reels Routes
+    Route::get('/reels', [App\Http\Controllers\NottedController::class, 'reels'])->name('reels');
+    Route::post('/reels', [App\Http\Controllers\NottedController::class, 'storeReel'])->name('reels.store');
+    Route::get('/reels/{reel}', [App\Http\Controllers\NottedController::class, 'showReel'])->name('reels.show');
+    Route::post('/reels/{reel}/comment', [App\Http\Controllers\NottedController::class, 'storeReelComment'])->name('reels.comment');
+    Route::post('/reels/{reel}/repost', [App\Http\Controllers\NottedController::class, 'repostReel'])->name('reels.repost');
+
     // Millionaire Game Routes
     Route::get('/millionaire', [App\Http\Controllers\MillionaireGameController::class, 'index'])->name('millionaire.index');
     Route::get('/millionaire/play/{set}', [App\Http\Controllers\MillionaireGameController::class, 'play'])->name('millionaire.play');
