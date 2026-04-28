@@ -397,6 +397,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Pengumuman Kelulusan Siswa
         Route::get('/pengumuman-kelulusan', [SiswaPengumumanKelulusanController::class, 'index'])->name('pengumuman-kelulusan.index');
         Route::get('/pengumuman-kelulusan/download-skl', [SiswaPengumumanKelulusanController::class, 'downloadSKL'])->name('pengumuman-kelulusan.download-skl');
+        Route::get('/pengumuman-kelulusan/kartu', [SiswaPengumumanKelulusanController::class, 'kartuKelulusan'])->name('pengumuman-kelulusan.kartu');
     });
 
     // Monitoring Pelanggaran & Keterlambatan (Shared BK & Waka)

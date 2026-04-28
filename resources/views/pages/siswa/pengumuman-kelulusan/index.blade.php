@@ -309,8 +309,9 @@
                         </div>
                     </div>
 
-                    {{-- Download SKL --}}
+                    {{-- Download SKL + Bagikan Kartu --}}
                     @if($isLulus)
+                        {{-- SKL PDF --}}
                         <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col sm:flex-row items-center gap-4">
                             <div class="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center flex-shrink-0">
                                 <svg class="w-7 h-7 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -329,6 +330,41 @@
                                 Download SKL
                             </a>
                         </div>
+
+                        {{-- Kartu Kelulusan Sosmed --}}
+                        <a href="{{ route('siswa.pengumuman-kelulusan.kartu') }}"
+                            class="group block rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300">
+                            <div class="relative bg-gradient-to-br from-[#0d0d1a] via-[#1a0a2e] to-[#060614] p-6 flex flex-col sm:flex-row items-center gap-4 border border-purple-900/40">
+                                {{-- Dekorasi orb di background --}}
+                                <div class="absolute top-0 right-0 w-40 h-40 rounded-full opacity-20 pointer-events-none"
+                                    style="background:radial-gradient(circle,#a855f7,transparent 70%)"></div>
+                                <div class="absolute bottom-0 left-0 w-28 h-28 rounded-full opacity-15 pointer-events-none"
+                                    style="background:radial-gradient(circle,#06b6d4,transparent 70%)"></div>
+
+                                <div class="relative z-10 w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 text-2xl
+                                    bg-gradient-to-br from-purple-600 to-cyan-500 shadow-lg shadow-purple-900/40">
+                                    🎓
+                                </div>
+                                <div class="relative z-10 flex-1 text-center sm:text-left">
+                                    <h4 class="font-black text-white text-base">Bagikan Kartu Kelulusan ✨</h4>
+                                    <p class="text-purple-300/80 text-sm mt-0.5 font-medium">Bikin kartu kelulusan aesthetic buat di-post ke Reels, Story & TikTok!</p>
+                                    <div class="flex flex-wrap gap-1.5 mt-2 justify-center sm:justify-start">
+                                        <span class="text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full">📸 Instagram</span>
+                                        <span class="text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded-full">🎵 TikTok</span>
+                                        <span class="text-[10px] font-bold bg-pink-500/20 text-pink-300 border border-pink-500/30 px-2 py-0.5 rounded-full">🎬 Reels</span>
+                                        <span class="text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full">⬇ JPG 1080×1920</span>
+                                    </div>
+                                </div>
+                                <div class="relative z-10 flex-shrink-0">
+                                    <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-cyan-500 text-white font-bold rounded-xl text-sm shadow-lg shadow-purple-900/40 group-hover:shadow-purple-900/60 group-hover:scale-105 transition-all">
+                                        Buat Kartu
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                                        </svg>
+                                    </span>
+                                </div>
+                            </div>
+                        </a>
                     @endif
 
                     {{-- Info Pengumuman --}}
