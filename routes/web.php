@@ -52,6 +52,8 @@ use App\Http\Controllers\Operator\DashboardController as OperatorDashboardContro
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Kurikulum\DistribusiMapelController;
 use App\Http\Controllers\Kurikulum\AnalisaKurikulumController;
+use App\Http\Controllers\Kurikulum\PengumumanKelulusanController as KurikulumPengumumanKelulusanController;
+use App\Http\Controllers\Siswa\PengumumanKelulusanController as SiswaPengumumanKelulusanController;
 use App\Http\Controllers\Security\GateTerminalController;
 use App\Http\Controllers\Auth\SecurityLoginController;
 use App\Http\Controllers\WaliKelas\WaliKelasMentoringController;
@@ -391,6 +393,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/assignment/{assignment}', [App\Http\Controllers\Siswa\LmsController::class, 'showAssignment'])->name('assignment.show');
             Route::post('/assignment/{assignment}/submit', [App\Http\Controllers\Siswa\LmsController::class, 'storeSubmission'])->name('assignment.submit');
         });
+
+        // Pengumuman Kelulusan Siswa
+        Route::get('/pengumuman-kelulusan', [SiswaPengumumanKelulusanController::class, 'index'])->name('pengumuman-kelulusan.index');
+        Route::get('/pengumuman-kelulusan/download-skl', [SiswaPengumumanKelulusanController::class, 'downloadSKL'])->name('pengumuman-kelulusan.download-skl');
     });
 
     // Monitoring Pelanggaran & Keterlambatan (Shared BK & Waka)
@@ -499,6 +505,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('analisa-semester', [AnalisaKurikulumController::class, 'index'])->middleware('permission:view analisa kurikulum')->name('analisa-semester.index');
         Route::get('analisa-semester/export', [AnalisaKurikulumController::class, 'export'])->middleware('permission:view analisa kurikulum')->name('analisa-semester.export');
         Route::get('analisa-semester/pdf', [AnalisaKurikulumController::class, 'exportPdf'])->middleware('permission:view analisa kurikulum')->name('analisa-semester.pdf');
+
+        // Pengumuman Kelulusan
+        Route::get('pengumuman-kelulusan', [KurikulumPengumumanKelulusanController::class, 'index'])->name('pengumuman-kelulusan.index');
+        Route::post('pengumuman-kelulusan/store', [KurikulumPengumumanKelulusanController::class, 'storePengumuman'])->name('pengumuman-kelulusan.store');
+        Route::post('pengumuman-kelulusan/update-status', [KurikulumPengumumanKelulusanController::class, 'updateStatus'])->name('pengumuman-kelulusan.update-status');
+        Route::post('pengumuman-kelulusan/bulk-status', [KurikulumPengumumanKelulusanController::class, 'updateStatusBulk'])->name('pengumuman-kelulusan.bulk-status');
+        Route::get('pengumuman-kelulusan/{pengumuman}/siswa/{siswa}/skl', [KurikulumPengumumanKelulusanController::class, 'downloadSKL'])->name('pengumuman-kelulusan.download-skl');
     });
 
     // Grup Route untuk Guru Kelas

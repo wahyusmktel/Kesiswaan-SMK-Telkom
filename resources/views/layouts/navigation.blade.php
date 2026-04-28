@@ -496,6 +496,19 @@
             <span class="nav-text">Data Dapodik</span>
         </a>
     </li>
+    <li>
+        <a href="{{ route('siswa.pengumuman-kelulusan.index') }}"
+            class="nav-link {{ request()->routeIs('siswa.pengumuman-kelulusan.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                </svg>
+            </div>
+            <span class="nav-text">Pengumuman Kelulusan</span>
+            <span class="nav-badge bg-emerald-100 text-emerald-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">XII</span>
+        </a>
+    </li>
 @endif
 @endrole
 
@@ -1319,6 +1332,20 @@
                             Persetujuan Izin Guru
                         </a>
                     </div>
+                </li>
+
+                {{-- Menu Pengumuman Kelulusan --}}
+                <li>
+                    <a href="{{ route('kurikulum.pengumuman-kelulusan.index') }}"
+                        class="nav-link {{ request()->routeIs('kurikulum.pengumuman-kelulusan.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                        <div class="nav-icon-container">
+                            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                            </svg>
+                        </div>
+                        <span class="nav-text">Pengumuman Kelulusan</span>
+                    </a>
                 </li>
     @endif
         @endrole
