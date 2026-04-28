@@ -2,324 +2,382 @@
 <html lang="id">
 <head>
     <meta charset="utf-8">
-    <title>Surat Keterangan Lulus - {{ $siswa->nama_lengkap }}</title>
+    <title>Surat Keterangan Lulus</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        @page {
+            size: A4 portrait;
+            margin: 0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Times New Roman', Times, serif;
-            font-size: 12pt;
-            color: #1a1a1a;
+            font-family: 'DejaVu Serif', 'Times New Roman', Times, serif;
+            font-size: 11pt;
+            color: #111;
             background: #fff;
+            line-height: 1.5;
+        }
+
+        /* ====== BINGKAI HALAMAN ====== */
+        .outer-border {
+            position: fixed;
+            top: 10mm;
+            left: 10mm;
+            right: 10mm;
+            bottom: 10mm;
+            border: 3pt solid #1a3a5c;
+        }
+        .inner-border {
+            position: fixed;
+            top: 13.5mm;
+            left: 13.5mm;
+            right: 13.5mm;
+            bottom: 13.5mm;
+            border: 1pt solid #1a3a5c;
+        }
+
+        /* ====== KONTEN UTAMA ====== */
+        .content-wrap {
+            padding: 22mm 22mm 18mm 26mm;
+        }
+
+        /* ====== KOP SURAT ====== */
+        .kop-table {
+            width: 100%;
+            border-collapse: collapse;
+            border-bottom: 4pt double #1a3a5c;
+            padding-bottom: 8pt;
+            margin-bottom: 12pt;
+        }
+        .kop-table td {
+            vertical-align: middle;
             padding: 0;
         }
-        .page {
-            width: 210mm;
-            min-height: 297mm;
-            padding: 20mm 20mm 15mm 25mm;
-            position: relative;
+        .kop-logo-cell {
+            width: 65pt;
+            text-align: center;
         }
-
-        /* ============ BORDER GANDA ============ */
-        .border-outer {
-            position: absolute;
-            top: 8mm; left: 8mm; right: 8mm; bottom: 8mm;
-            border: 3px solid #1a3a5c;
-        }
-        .border-inner {
-            position: absolute;
-            top: 11mm; left: 11mm; right: 11mm; bottom: 11mm;
-            border: 1px solid #1a3a5c;
-        }
-
-        /* ============ HEADER KOP SURAT ============ */
-        .kop {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding-bottom: 12px;
-            border-bottom: 4px double #1a3a5c;
-            margin-bottom: 18px;
-        }
-        .kop-logo {
-            width: 70px;
-            height: 70px;
-            flex-shrink: 0;
-        }
-        .kop-logo img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-        .kop-logo-placeholder {
-            width: 70px;
-            height: 70px;
-            border: 2px solid #1a3a5c;
+        .kop-logo-box {
+            width: 58pt;
+            height: 58pt;
+            border: 2pt solid #1a3a5c;
             border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 9pt;
+            display: inline-block;
+            text-align: center;
+            padding-top: 14pt;
+            font-size: 8pt;
             font-weight: bold;
             color: #1a3a5c;
-            text-align: center;
-            line-height: 1.2;
+            line-height: 1.3;
         }
-        .kop-text {
-            flex: 1;
+        .kop-garuda-box {
+            width: 58pt;
+            height: 58pt;
+            border: 2pt solid #8b6914;
+            border-radius: 50%;
+            display: inline-block;
             text-align: center;
-        }
-        .kop-school { font-size: 20pt; font-weight: bold; text-transform: uppercase; color: #1a3a5c; letter-spacing: 1px; }
-        .kop-tagline { font-size: 10pt; color: #444; margin-top: 2px; }
-        .kop-address { font-size: 9pt; color: #555; margin-top: 3px; line-height: 1.4; }
-        .kop-nss { font-size: 8.5pt; color: #666; margin-top: 2px; }
-
-        /* ============ JUDUL SURAT ============ */
-        .title-section {
-            text-align: center;
-            margin: 18px 0 20px;
-        }
-        .title-main {
-            font-size: 16pt;
+            padding-top: 14pt;
+            font-size: 8pt;
             font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: #1a3a5c;
-            text-decoration: underline;
-            text-underline-offset: 4px;
+            color: #8b6914;
+            line-height: 1.3;
+            background: #fffbf0;
         }
-        .title-nomor {
-            font-size: 10pt;
-            color: #555;
-            margin-top: 6px;
-        }
-
-        /* ============ BODY SURAT ============ */
-        .body-text {
-            line-height: 1.8;
-            text-align: justify;
-            margin-bottom: 14px;
-        }
-        .body-text p { margin-bottom: 8px; }
-
-        /* ============ TABEL DATA SISWA ============ */
-        .data-siswa {
-            margin: 14px 0 14px 20px;
-            width: calc(100% - 20px);
-        }
-        .data-siswa tr td {
-            padding: 3px 0;
-            vertical-align: top;
-            font-size: 11.5pt;
-        }
-        .data-siswa td:first-child { width: 160px; font-weight: normal; }
-        .data-siswa td:nth-child(2) { width: 16px; text-align: center; }
-        .data-siswa td:last-child { font-weight: bold; }
-
-        /* ============ BOX KELULUSAN ============ */
-        .kelulusan-box {
-            border: 2px solid #1a5c2a;
-            background: #f0fdf4;
-            border-radius: 6px;
-            padding: 12px 16px;
-            margin: 16px 0;
+        .kop-text-cell {
             text-align: center;
+            padding: 0 8pt;
         }
-        .kelulusan-status {
+        .kop-school {
             font-size: 18pt;
             font-weight: bold;
-            color: #1a5c2a;
             text-transform: uppercase;
-            letter-spacing: 4px;
+            color: #1a3a5c;
+            letter-spacing: 1pt;
         }
-        .kelulusan-label {
-            font-size: 10pt;
-            color: #2d6a3a;
-            margin-top: 4px;
+        .kop-tagline {
+            font-size: 9.5pt;
+            color: #444;
+            margin-top: 2pt;
+        }
+        .kop-address {
+            font-size: 8.5pt;
+            color: #555;
+            margin-top: 3pt;
+        }
+        .kop-nss {
+            font-size: 8pt;
+            color: #666;
+            margin-top: 2pt;
         }
 
-        /* ============ FOOTER / TTD ============ */
-        .footer-section {
-            margin-top: 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-        }
-        .footer-left {
-            font-size: 10pt;
-            color: #555;
-            line-height: 1.6;
-        }
-        .footer-right {
+        /* ====== JUDUL SURAT ====== */
+        .title-wrap {
             text-align: center;
-            min-width: 200px;
+            margin: 10pt 0 8pt;
         }
-        .ttd-place-date {
-            font-size: 11pt;
-            margin-bottom: 4px;
-        }
-        .ttd-title {
-            font-size: 11pt;
-            margin-bottom: 60px;
-        }
-        .ttd-name {
-            font-size: 12pt;
+        .title-main {
+            font-size: 15pt;
             font-weight: bold;
-            border-top: 1px solid #333;
-            padding-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 2pt;
+            color: #1a3a5c;
+            text-decoration: underline;
         }
-        .ttd-nip {
+        .title-nomor {
             font-size: 9.5pt;
             color: #555;
-            margin-top: 2px;
+            margin-top: 4pt;
         }
 
-        /* ============ WATERMARK / LATAR BELAKANG ============ */
-        .watermark {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(-30deg);
-            font-size: 72pt;
-            font-weight: 900;
-            color: rgba(26, 90, 44, 0.04);
+        /* ====== PEMBUKA SURAT ====== */
+        .pembuka {
+            font-size: 11pt;
+            text-align: justify;
+            margin: 10pt 0 6pt;
+        }
+
+        /* ====== TABEL DATA SISWA ====== */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 6pt 0 6pt 14pt;
+        }
+        .data-table td {
+            font-size: 11pt;
+            padding: 2.5pt 0;
+            vertical-align: top;
+        }
+        .data-table .col-label {
+            width: 140pt;
+            font-weight: normal;
+            color: #222;
+        }
+        .data-table .col-sep {
+            width: 14pt;
+            text-align: center;
+            font-weight: normal;
+        }
+        .data-table .col-value {
+            font-weight: bold;
+            color: #111;
+        }
+
+        /* ====== BOX STATUS LULUS ====== */
+        .status-box {
+            border: 2pt solid #1a5c2a;
+            background-color: #f0fdf4;
+            text-align: center;
+            padding: 10pt 0;
+            margin: 12pt 0;
+        }
+        .status-text {
+            font-size: 17pt;
+            font-weight: bold;
+            color: #155724;
+            letter-spacing: 4pt;
             text-transform: uppercase;
-            letter-spacing: 10px;
-            pointer-events: none;
-            white-space: nowrap;
-            z-index: 0;
+        }
+        .status-sub {
+            font-size: 9.5pt;
+            color: #2d6a3a;
+            margin-top: 3pt;
         }
 
-        /* ============ CATATAN ============ */
+        /* ====== CATATAN ====== */
         .catatan-box {
-            border-left: 4px solid #1a3a5c;
-            padding: 6px 12px;
-            margin: 14px 0;
+            border-left: 4pt solid #1a3a5c;
+            padding: 5pt 10pt;
+            margin: 8pt 0;
             background: #f0f4f8;
             font-size: 10pt;
-            color: #444;
-            border-radius: 0 4px 4px 0;
+            color: #333;
+        }
+
+        /* ====== TEKS PENUTUP ====== */
+        .penutup {
+            font-size: 11pt;
+            text-align: justify;
+            margin: 6pt 0 4pt;
+        }
+
+        /* ====== AREA TTD ====== */
+        .ttd-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20pt;
+        }
+        .ttd-table td {
+            vertical-align: top;
+            font-size: 10.5pt;
+        }
+        .ttd-left {
+            width: 50%;
+            padding-top: 2pt;
+            color: #555;
+        }
+        .ttd-right {
+            width: 50%;
+            text-align: center;
+        }
+        .ttd-kota-tanggal {
+            font-size: 10.5pt;
+            margin-bottom: 2pt;
+        }
+        .ttd-jabatan {
+            font-size: 10.5pt;
+            margin-bottom: 56pt;
+        }
+        .ttd-nama {
+            font-size: 11pt;
+            font-weight: bold;
+            border-top: 1pt solid #333;
+            padding-top: 3pt;
+            display: inline-block;
+            min-width: 160pt;
+        }
+        .ttd-nip {
+            font-size: 9pt;
+            color: #555;
+            margin-top: 2pt;
         }
     </style>
 </head>
 <body>
-<div class="page">
-    {{-- Border dekoratif --}}
-    <div class="border-outer"></div>
-    <div class="border-inner"></div>
 
-    {{-- Watermark --}}
-    <div class="watermark">LULUS</div>
+    {{-- Bingkai ganda --}}
+    <div class="outer-border"></div>
+    <div class="inner-border"></div>
 
-    {{-- KOP SURAT --}}
-    <div class="kop">
-        <div class="kop-logo">
-            <div class="kop-logo-placeholder">SMK<br>TELKOM</div>
-        </div>
-        <div class="kop-text">
-            <div class="kop-school">{{ config('app.name', 'SMK Telkom') }}</div>
-            <div class="kop-tagline">Sekolah Menengah Kejuruan Teknologi & Komunikasi</div>
-            <div class="kop-address">
-                Alamat Sekolah, Kecamatan, Kabupaten/Kota, Provinsi
+    <div class="content-wrap">
+
+        {{-- ===== KOP SURAT ===== --}}
+        <table class="kop-table">
+            <tr>
+                <td class="kop-logo-cell">
+                    <div class="kop-logo-box">SMK<br>TELKOM</div>
+                </td>
+                <td class="kop-text-cell">
+                    <div class="kop-school">{{ config('app.name', 'SMK Telkom') }}</div>
+                    <div class="kop-tagline">Sekolah Menengah Kejuruan Teknologi &amp; Komunikasi</div>
+                    <div class="kop-address">Alamat Sekolah, Kecamatan, Kabupaten/Kota, Provinsi</div>
+                    <div class="kop-nss">NSS/NPSN: ________________ &nbsp;|&nbsp; Website: smktelkom.sch.id &nbsp;|&nbsp; Email: info@smktelkom.sch.id</div>
+                </td>
+                <td class="kop-logo-cell">
+                    <div class="kop-garuda-box">LAMBANG<br>GARUDA</div>
+                </td>
+            </tr>
+        </table>
+
+        {{-- ===== JUDUL ===== --}}
+        <div class="title-wrap">
+            <div class="title-main">Surat Keterangan Lulus</div>
+            <div class="title-nomor">
+                Nomor: {{ str_pad($siswa->id, 4, '0', STR_PAD_LEFT) }}/SKL/{{ str_replace(' ', '-', strtoupper(config('app.name', 'SMK-TLK'))) }}/{{ $tahunPelajaran->tahun }}
             </div>
-            <div class="kop-nss">NSS/NPSN: ________________ | Website: smktelkom.sch.id | Email: info@smktelkom.sch.id</div>
         </div>
-        <div class="kop-logo">
-            <div class="kop-logo-placeholder" style="background:#fffbf0;border-color:#8b6914;color:#8b6914">GARUDA</div>
-        </div>
-    </div>
 
-    {{-- JUDUL --}}
-    <div class="title-section">
-        <div class="title-main">Surat Keterangan Lulus</div>
-        <div class="title-nomor">
-            Nomor: {{ str_pad($siswa->id, 4, '0', STR_PAD_LEFT) }}/SKL/{{ config('app.name', 'SMK-TLK') }}/{{ $tahunPelajaran->tahun }}
-        </div>
-    </div>
-
-    {{-- BODY --}}
-    <div class="body-text">
-        <p>Yang bertanda tangan di bawah ini, Kepala {{ config('app.name', 'SMK Telkom') }}, menerangkan bahwa siswa yang namanya tersebut di bawah ini:</p>
-    </div>
-
-    {{-- DATA SISWA --}}
-    <table class="data-siswa">
-        <tr>
-            <td>Nama Lengkap</td>
-            <td>:</td>
-            <td>{{ strtoupper($siswa->nama_lengkap) }}</td>
-        </tr>
-        <tr>
-            <td>NIS</td>
-            <td>:</td>
-            <td>{{ $siswa->nis }}</td>
-        </tr>
-        @if($siswa->dapodik && $siswa->dapodik->nisn)
-        <tr>
-            <td>NISN</td>
-            <td>:</td>
-            <td>{{ $siswa->dapodik->nisn }}</td>
-        </tr>
-        @endif
-        <tr>
-            <td>Tempat, Tanggal Lahir</td>
-            <td>:</td>
-            <td>{{ $siswa->tempat_lahir }}, {{ $siswa->tanggal_lahir ? $siswa->tanggal_lahir->translatedFormat('d F Y') : '-' }}</td>
-        </tr>
-        <tr>
-            <td>Kelas</td>
-            <td>:</td>
-            <td>{{ $rombel?->kelas->nama_kelas ?? '-' }}</td>
-        </tr>
-        <tr>
-            <td>Tahun Pelajaran</td>
-            <td>:</td>
-            <td>{{ $tahunPelajaran->tahun }}</td>
-        </tr>
-        @if($siswa->jenis_kelamin)
-        <tr>
-            <td>Jenis Kelamin</td>
-            <td>:</td>
-            <td>{{ $siswa->jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan' }}</td>
-        </tr>
-        @endif
-    </table>
-
-    {{-- BOX STATUS LULUS --}}
-    <div class="kelulusan-box">
-        <div class="kelulusan-status">&#10003; LULUS</div>
-        <div class="kelulusan-label">
-            dari {{ config('app.name', 'SMK Telkom') }} pada Tahun Pelajaran {{ $tahunPelajaran->tahun }}
-        </div>
-    </div>
-
-    <div class="body-text">
-        <p>
-            Surat keterangan lulus ini diterbitkan sebagai bukti kelulusan sementara sebelum diterbitkannya ijazah resmi.
-            Surat ini berlaku untuk keperluan administrasi pendidikan dan pekerjaan.
+        {{-- ===== PEMBUKA ===== --}}
+        <p class="pembuka">
+            Yang bertanda tangan di bawah ini, Kepala {{ config('app.name', 'SMK Telkom') }},
+            menerangkan bahwa siswa yang namanya tersebut di bawah ini:
         </p>
+
+        {{-- ===== DATA SISWA ===== --}}
+        <table class="data-table">
+            <tr>
+                <td class="col-label">Nama Lengkap</td>
+                <td class="col-sep">:</td>
+                <td class="col-value">{{ strtoupper($siswa->nama_lengkap) }}</td>
+            </tr>
+            <tr>
+                <td class="col-label">NIS</td>
+                <td class="col-sep">:</td>
+                <td class="col-value">{{ $siswa->nis }}</td>
+            </tr>
+            @if($siswa->dapodik && $siswa->dapodik->nisn)
+            <tr>
+                <td class="col-label">NISN</td>
+                <td class="col-sep">:</td>
+                <td class="col-value">{{ $siswa->dapodik->nisn }}</td>
+            </tr>
+            @endif
+            <tr>
+                <td class="col-label">Tempat, Tanggal Lahir</td>
+                <td class="col-sep">:</td>
+                <td class="col-value">
+                    {{ $siswa->tempat_lahir }}, {{ $siswa->tanggal_lahir ? $siswa->tanggal_lahir->translatedFormat('d F Y') : '-' }}
+                </td>
+            </tr>
+            @if($siswa->jenis_kelamin)
+            <tr>
+                <td class="col-label">Jenis Kelamin</td>
+                <td class="col-sep">:</td>
+                <td class="col-value">{{ $siswa->jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan' }}</td>
+            </tr>
+            @endif
+            <tr>
+                <td class="col-label">Kelas</td>
+                <td class="col-sep">:</td>
+                <td class="col-value">{{ $rombel?->kelas->nama_kelas ?? '-' }}</td>
+            </tr>
+            <tr>
+                <td class="col-label">Tahun Pelajaran</td>
+                <td class="col-sep">:</td>
+                <td class="col-value">{{ $tahunPelajaran->tahun }}</td>
+            </tr>
+        </table>
+
+        {{-- ===== STATUS LULUS ===== --}}
+        <div class="status-box">
+            <div class="status-text">&#10003;&nbsp; LULUS</div>
+            <div class="status-sub">
+                dari {{ config('app.name', 'SMK Telkom') }} pada Tahun Pelajaran {{ $tahunPelajaran->tahun }}
+            </div>
+        </div>
+
+        {{-- ===== PENUTUP ===== --}}
+        <p class="penutup">
+            Surat keterangan lulus ini diterbitkan sebagai bukti kelulusan sementara sebelum
+            diterbitkannya ijazah resmi, dan berlaku untuk keperluan administrasi pendidikan
+            maupun pekerjaan.
+        </p>
+
         @if($kelulusan->catatan)
         <div class="catatan-box">
             <strong>Catatan:</strong> {{ $kelulusan->catatan }}
         </div>
         @endif
-        <p>Demikian surat keterangan ini dibuat dengan sebenarnya untuk dapat dipergunakan sebagaimana mestinya.</p>
-    </div>
 
-    {{-- TTD --}}
-    <div class="footer-section">
-        <div class="footer-left">
-            <p>Diterbitkan pada:</p>
-            <p>{{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</p>
-        </div>
-        <div class="footer-right">
-            <div class="ttd-place-date">
-                _________________, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}
-            </div>
-            <div class="ttd-title">Kepala Sekolah,</div>
-            <div class="ttd-name">____________________________</div>
-            <div class="ttd-nip">NIP. ________________________</div>
-        </div>
-    </div>
-</div>
+        <p class="penutup">
+            Demikian surat keterangan ini dibuat dengan sebenarnya untuk dapat dipergunakan
+            sebagaimana mestinya.
+        </p>
+
+        {{-- ===== TANDA TANGAN ===== --}}
+        <table class="ttd-table">
+            <tr>
+                <td class="ttd-left">
+                    Diterbitkan pada:<br>
+                    {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}
+                </td>
+                <td class="ttd-right">
+                    <div class="ttd-kota-tanggal">
+                        _______________, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}
+                    </div>
+                    <div class="ttd-jabatan">Kepala Sekolah,</div>
+                    <div class="ttd-nama">______________________________</div>
+                    <div class="ttd-nip">NIP. __________________________</div>
+                </td>
+            </tr>
+        </table>
+
+    </div>{{-- end content-wrap --}}
+
 </body>
 </html>
