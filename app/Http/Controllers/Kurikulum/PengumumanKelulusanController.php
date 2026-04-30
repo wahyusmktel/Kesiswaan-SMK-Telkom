@@ -74,10 +74,11 @@ class PengumumanKelulusanController extends Controller
     public function storePengumuman(Request $request)
     {
         $request->validate([
-            'judul'           => 'required|string|max:255',
-            'keterangan'      => 'nullable|string',
-            'waktu_publikasi' => 'required|date',
+            'judul'              => 'required|string|max:255',
+            'keterangan'         => 'nullable|string',
+            'waktu_publikasi'    => 'required|date',
             'tahun_pelajaran_id' => 'required|exists:tahun_pelajaran,id',
+            'skl_aktif'          => 'nullable|boolean',
         ]);
 
         PengumumanKelulusan::updateOrCreate(
@@ -86,6 +87,7 @@ class PengumumanKelulusanController extends Controller
                 'judul'           => $request->judul,
                 'keterangan'      => $request->keterangan,
                 'waktu_publikasi' => $request->waktu_publikasi,
+                'skl_aktif'       => $request->boolean('skl_aktif'),
                 'created_by'      => Auth::id(),
             ]
         );

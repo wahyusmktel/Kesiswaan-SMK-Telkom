@@ -126,6 +126,29 @@
                                         value="{{ $pengumuman ? $pengumuman->waktu_publikasi->format('Y-m-d\TH:i') : '' }}"
                                         class="w-full rounded-xl border-gray-200 text-sm font-medium focus:ring-indigo-500 focus:border-indigo-500">
                                 </div>
+                                {{-- Toggle Download SKL --}}
+                                <div class="flex items-center justify-between p-4 rounded-xl border-2 transition-colors
+                                    {{ ($pengumuman && $pengumuman->skl_aktif) ? 'bg-emerald-50 border-emerald-200' : 'bg-gray-50 border-gray-200' }}"
+                                    id="skl-toggle-wrap">
+                                    <div>
+                                        <p class="text-sm font-bold text-gray-800">Download SKL</p>
+                                        <p class="text-xs text-gray-500 mt-0.5">
+                                            Izinkan siswa download Surat Keterangan Lulus
+                                        </p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-3">
+                                        <input type="checkbox" name="skl_aktif" value="1" id="skl_aktif_toggle"
+                                            class="sr-only peer"
+                                            {{ ($pengumuman && $pengumuman->skl_aktif) ? 'checked' : '' }}>
+                                        <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-400 rounded-full peer
+                                            peer-checked:after:translate-x-full peer-checked:after:border-white
+                                            after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+                                            after:bg-white after:border-gray-300 after:border after:rounded-full
+                                            after:h-5 after:w-5 after:transition-all
+                                            peer-checked:bg-emerald-500"></div>
+                                    </label>
+                                </div>
+
                                 <button type="submit"
                                     class="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition-all shadow-sm hover:shadow-md">
                                     Simpan Pengaturan
@@ -195,6 +218,20 @@
                                     <span class="font-bold {{ $pengumuman->sudahDipublikasikan() ? 'text-green-700' : 'text-amber-700' }}">
                                         {{ $pengumuman->sudahDipublikasikan() ? 'Sudah Dipublikasikan' : 'Menunggu Publikasi' }}
                                     </span>
+                                </li>
+                                <li class="flex justify-between gap-2">
+                                    <span class="text-indigo-700 font-medium">Download SKL</span>
+                                    @if($pengumuman->skl_aktif)
+                                        <span class="inline-flex items-center gap-1 font-bold text-emerald-700">
+                                            <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                                            Aktif
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 font-bold text-gray-400">
+                                            <span class="w-2 h-2 rounded-full bg-gray-300 inline-block"></span>
+                                            Nonaktif
+                                        </span>
+                                    @endif
                                 </li>
                             </ul>
                         </div>
@@ -316,6 +353,21 @@
 
     @push('scripts')
         <script>
+            // Toggle SKL visual feedback
+            const sklToggle = document.getElementById('skl_aktif_toggle');
+            const sklWrap   = document.getElementById('skl-toggle-wrap');
+            if (sklToggle && sklWrap) {
+                sklToggle.addEventListener('change', function () {
+                    if (this.checked) {
+                        sklWrap.classList.remove('bg-gray-50', 'border-gray-200');
+                        sklWrap.classList.add('bg-emerald-50', 'border-emerald-200');
+                    } else {
+                        sklWrap.classList.remove('bg-emerald-50', 'border-emerald-200');
+                        sklWrap.classList.add('bg-gray-50', 'border-gray-200');
+                    }
+                });
+            }
+
             // Live search & filter tabel
             const searchInput = document.getElementById('searchSiswa');
             const filterKelas = document.getElementById('filterKelas');

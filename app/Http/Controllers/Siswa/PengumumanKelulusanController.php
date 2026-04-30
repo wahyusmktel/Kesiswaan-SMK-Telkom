@@ -113,6 +113,10 @@ class PengumumanKelulusanController extends Controller
             abort(403, 'Pengumuman kelulusan belum dipublikasikan.');
         }
 
+        if (!$pengumuman->skl_aktif) {
+            abort(403, 'Download SKL belum diaktifkan oleh Waka Kurikulum.');
+        }
+
         $kelulusan = SiswaKelulusan::where('pengumuman_kelulusan_id', $pengumuman->id)
             ->where('master_siswa_id', $siswa->id)
             ->first();

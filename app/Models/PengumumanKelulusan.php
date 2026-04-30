@@ -11,12 +11,14 @@ class PengumumanKelulusan extends Model
         'judul',
         'keterangan',
         'waktu_publikasi',
+        'skl_aktif',
         'tahun_pelajaran_id',
         'created_by',
     ];
 
     protected $casts = [
         'waktu_publikasi' => 'datetime',
+        'skl_aktif'       => 'boolean',
     ];
 
     public function tahunPelajaran()
