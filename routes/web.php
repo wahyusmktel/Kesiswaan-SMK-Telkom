@@ -95,6 +95,9 @@ Route::get('/verifikasi/surat-terlambat/{uuid}', [PublicVerifikasiController::cl
 Route::get('/verifikasi/dispensasi/{dispensasi}', [PublicVerifikasiController::class, 'showDispensasi'])
     ->name('verifikasi.dispensasi');
 
+Route::get('/verifikasi/skl/{token}', [PublicVerifikasiController::class, 'showSKL'])
+    ->name('verifikasi.skl');
+
 // Route Pengaduan Orang Tua (Publik)
 Route::get('/pengaduan', [PengaduanController::class, 'create'])->name('pengaduan.create');
 Route::post('/pengaduan', [PengaduanController::class, 'store'])->name('pengaduan.store');

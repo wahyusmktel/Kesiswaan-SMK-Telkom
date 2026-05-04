@@ -168,6 +168,7 @@
         .ttd-nama {
             font-size: 11pt;
             font-weight: bold;
+            border-bottom: 1pt solid #000000;
             padding-top: 1pt;
             display: inline-block;
             min-width: 150pt;
@@ -297,7 +298,16 @@
         <div class="ttd-wrap">
             <table class="ttd-table">
                 <tr>
-                    <td class="ttd-left"></td>
+                    <td class="ttd-left">
+                        @if(isset($qrBase64))
+                            <div style="margin-top: 15pt;">
+                                <img src="{{ $qrBase64 }}" style="width: 65pt; height: 65pt;" alt="QR Code Verifikasi">
+                                <div style="font-size: 8pt; margin-top: 4pt; color: #444; line-height: 1.2;">
+                                    Dokumen ini resmi dan diverifikasi<br>oleh sistem SMK Telkom Lampung
+                                </div>
+                            </div>
+                        @endif
+                    </td>
                     <td class="ttd-right">
                         @php
                             $kotaTanggal = ($pengumuman->kota_surat ?? '_______') . ', ';

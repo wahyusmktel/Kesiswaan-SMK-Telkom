@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class SiswaKelulusan extends Model
 {
@@ -11,7 +12,19 @@ class SiswaKelulusan extends Model
         'master_siswa_id',
         'status',
         'catatan',
+        'verification_token',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->verification_token)) {
+                $model->verification_token = Str::random(32);
+            }
+        });
+    }
 
     public function pengumumanKelulusan()
     {

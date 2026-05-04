@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Keterlambatan;
+use App\Models\SiswaKelulusan;
 use Illuminate\Http\Request;
 use App\Models\Dispensasi;
 
@@ -39,5 +40,20 @@ class PublicVerifikasiController extends Controller
         ]);
 
         return view('pages.publik.verifikasi-dispensasi', compact('dispensasi'));
+    }
+
+    /**
+     * Menampilkan halaman verifikasi publik untuk Surat Keterangan Lulus (SKL).
+     */
+    public function showSKL($token)
+    {
+        $kelulusan = SiswaKelulusan::where('verification_token', $token)
+            ->with([
+                'siswa.rombels.kelas',
+                'pengumumanKelulusan.tahunPelajaran',
+            ])
+            ->firstOrFail();
+
+        return view('pages.publik.verifikasi-skl', compact('kelulusan'));
     }
 }

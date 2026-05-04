@@ -188,6 +188,12 @@ class PengumumanKelulusanController extends Controller
             ->where('master_siswa_id', $siswa->id)
             ->firstOrFail();
 
+        // Ensure verification token exists
+        if (empty($kelulusan->verification_token)) {
+            $kelulusan->verification_token = \Illuminate\Support\Str::random(32);
+            $kelulusan->save();
+        }
+
         $siswa->load(['rombels.kelas', 'rombels.tahunPelajaran']);
 
         $rombelXII = $siswa->rombels
@@ -200,6 +206,14 @@ class PengumumanKelulusanController extends Controller
         $kopBase64  = $this->imageToBase64($pengumuman->kop_surat_path);
         $ttdBase64  = $this->imageToBase64($pengumuman->ttd_stempel_path);
 
+        // Generate QR Code as base64 SVG
+        $verificationUrl = route('verifikasi.skl', $kelulusan->verification_token);
+        $qrCodeSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
+            ->size(150)
+            ->errorCorrection('M')
+            ->generate($verificationUrl);
+        $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrCodeSvg);
+
         $pdf = Pdf::loadView('pdf.surat-keterangan-lulus', [
             'pengumuman'    => $pengumuman,
             'siswa'         => $siswa,
@@ -209,6 +223,8 @@ class PengumumanKelulusanController extends Controller
             'nomorSurat'    => $nomorSurat,
             'kopBase64'     => $kopBase64,
             'ttdBase64'     => $ttdBase64,
+            'qrBase64'      => $qrBase64,
+            'verificationUrl' => $verificationUrl,
         ])->setPaper('A4', 'portrait');
 
         $filename = 'SKL_' . str_replace(' ', '_', $siswa->nama_lengkap) . '.pdf';
