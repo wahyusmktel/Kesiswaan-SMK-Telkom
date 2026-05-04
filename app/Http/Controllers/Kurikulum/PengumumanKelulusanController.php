@@ -74,22 +74,54 @@ class PengumumanKelulusanController extends Controller
     public function storePengumuman(Request $request)
     {
         $request->validate([
-            'judul'              => 'required|string|max:255',
-            'keterangan'         => 'nullable|string',
-            'waktu_publikasi'    => 'required|date',
-            'tahun_pelajaran_id' => 'required|exists:tahun_pelajaran,id',
-            'skl_aktif'          => 'nullable|boolean',
+            'judul'               => 'required|string|max:255',
+            'keterangan'          => 'nullable|string',
+            'waktu_publikasi'     => 'required|date',
+            'tahun_pelajaran_id'  => 'required|exists:tahun_pelajaran,id',
+            'skl_aktif'           => 'nullable|boolean',
+            'kop_surat'           => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'nomor_surat_prefix'  => 'nullable|string|max:100',
+            'nomor_surat_start'   => 'nullable|integer|min:1',
+            'kota_surat'          => 'nullable|string|max:100',
+            'tanggal_surat'       => 'nullable|date',
+            'nama_kepala_sekolah' => 'nullable|string|max:255',
+            'nip_kepala_sekolah'  => 'nullable|string|max:50',
+            'ttd_stempel'         => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
+
+        $existing = PengumumanKelulusan::where('tahun_pelajaran_id', $request->tahun_pelajaran_id)->first();
+
+        $data = [
+            'judul'               => $request->judul,
+            'keterangan'          => $request->keterangan,
+            'waktu_publikasi'     => $request->waktu_publikasi,
+            'skl_aktif'           => $request->boolean('skl_aktif'),
+            'created_by'          => Auth::id(),
+            'nomor_surat_prefix'  => $request->nomor_surat_prefix,
+            'nomor_surat_start'   => $request->nomor_surat_start ?? 1,
+            'kota_surat'          => $request->kota_surat,
+            'tanggal_surat'       => $request->tanggal_surat,
+            'nama_kepala_sekolah' => $request->nama_kepala_sekolah,
+            'nip_kepala_sekolah'  => $request->nip_kepala_sekolah,
+        ];
+
+        if ($request->hasFile('kop_surat')) {
+            if ($existing?->kop_surat_path) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($existing->kop_surat_path);
+            }
+            $data['kop_surat_path'] = $request->file('kop_surat')->store('pengumuman-kelulusan', 'public');
+        }
+
+        if ($request->hasFile('ttd_stempel')) {
+            if ($existing?->ttd_stempel_path) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($existing->ttd_stempel_path);
+            }
+            $data['ttd_stempel_path'] = $request->file('ttd_stempel')->store('pengumuman-kelulusan', 'public');
+        }
 
         PengumumanKelulusan::updateOrCreate(
             ['tahun_pelajaran_id' => $request->tahun_pelajaran_id],
-            [
-                'judul'           => $request->judul,
-                'keterangan'      => $request->keterangan,
-                'waktu_publikasi' => $request->waktu_publikasi,
-                'skl_aktif'       => $request->boolean('skl_aktif'),
-                'created_by'      => Auth::id(),
-            ]
+            $data
         );
 
         return back()->with('success', 'Pengumuman kelulusan berhasil disimpan.');
@@ -156,15 +188,64 @@ class PengumumanKelulusanController extends Controller
             ->firstOrFail();
 
         $siswa->load(['rombels.kelas', 'rombels.tahunPelajaran']);
-        $rombel = $siswa->rombels->first();
+
+        $rombelXII = $siswa->rombels
+            ->filter(fn($r) => str_starts_with($r->kelas->nama_kelas ?? '', 'XII'))
+            ->first() ?? $siswa->rombels->first();
 
         $tahunPelajaran = $pengumuman->tahunPelajaran;
 
-        $pdf = Pdf::loadView('pdf.surat-keterangan-lulus', compact('pengumuman', 'siswa', 'kelulusan', 'rombel', 'tahunPelajaran'))
-            ->setPaper('A4', 'portrait');
+        $nomorSurat = $this->generateNomorSurat($pengumuman, $siswa->id);
+        $kopBase64  = $this->imageToBase64($pengumuman->kop_surat_path);
+        $ttdBase64  = $this->imageToBase64($pengumuman->ttd_stempel_path);
+
+        $pdf = Pdf::loadView('pdf.surat-keterangan-lulus', [
+            'pengumuman'    => $pengumuman,
+            'siswa'         => $siswa,
+            'kelulusan'     => $kelulusan,
+            'rombel'        => $rombelXII,
+            'tahunPelajaran'=> $tahunPelajaran,
+            'nomorSurat'    => $nomorSurat,
+            'kopBase64'     => $kopBase64,
+            'ttdBase64'     => $ttdBase64,
+        ])->setPaper('A4', 'portrait');
 
         $filename = 'SKL_' . str_replace(' ', '_', $siswa->nama_lengkap) . '.pdf';
 
         return $pdf->download($filename);
+    }
+
+    private function generateNomorSurat(PengumumanKelulusan $pengumuman, int $siswaId): string
+    {
+        $siswaIds = SiswaKelulusan::where('pengumuman_kelulusan_id', $pengumuman->id)
+            ->join('master_siswa', 'siswa_kelulusans.master_siswa_id', '=', 'master_siswa.id')
+            ->orderBy('master_siswa.nama_lengkap')
+            ->pluck('siswa_kelulusans.master_siswa_id')
+            ->values();
+
+        $rank  = $siswaIds->search($siswaId);
+        $nomor = $pengumuman->nomor_surat_start + ($rank !== false ? $rank : 0);
+        $bulan = $pengumuman->tanggal_surat
+            ? \Carbon\Carbon::parse($pengumuman->tanggal_surat)->format('m')
+            : now()->format('m');
+        $tahun = $pengumuman->tahunPelajaran->tahun ?? now()->year;
+        $tahunAngka = (int) explode('/', $tahun)[0];
+
+        $prefix = $pengumuman->nomor_surat_prefix ?? 'SKL';
+
+        return str_pad($nomor, 4, '0', STR_PAD_LEFT) . '/' . $prefix . '/' . \Carbon\Carbon::createFromFormat('m', $bulan)->translatedFormat('n') . '/' . $tahunAngka;
+    }
+
+    private function imageToBase64(?string $storagePath): ?string
+    {
+        if (!$storagePath) return null;
+
+        $fullPath = storage_path('app/public/' . $storagePath);
+        if (!file_exists($fullPath)) return null;
+
+        $mime = mime_content_type($fullPath);
+        $data = base64_encode(file_get_contents($fullPath));
+
+        return "data:{$mime};base64,{$data}";
     }
 }

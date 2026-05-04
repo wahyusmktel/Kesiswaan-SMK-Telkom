@@ -117,7 +117,7 @@ class PengumumanKelulusanController extends Controller
             abort(403, 'Download SKL belum diaktifkan oleh Waka Kurikulum.');
         }
 
-        $kelulusan = SiswaKelulusan::where('pengumuman_kelulusan_id', $pengumuman->id)
+        $kelulusan = \App\Models\SiswaKelulusan::where('pengumuman_kelulusan_id', $pengumuman->id)
             ->where('master_siswa_id', $siswa->id)
             ->first();
 
@@ -129,9 +129,55 @@ class PengumumanKelulusanController extends Controller
         $rombel         = $rombelXII;
         $tahunPelajaran = $rombelXII->tahunPelajaran;
 
-        $pdf = Pdf::loadView('pdf.surat-keterangan-lulus', compact('pengumuman', 'siswa', 'kelulusan', 'rombel', 'tahunPelajaran'))
-            ->setPaper('A4', 'portrait');
+        $nomorSurat = $this->generateNomorSurat($pengumuman, $siswa->id);
+        $kopBase64  = $this->imageToBase64($pengumuman->kop_surat_path);
+        $ttdBase64  = $this->imageToBase64($pengumuman->ttd_stempel_path);
+
+        $pdf = Pdf::loadView('pdf.surat-keterangan-lulus', [
+            'pengumuman'    => $pengumuman,
+            'siswa'         => $siswa,
+            'kelulusan'     => $kelulusan,
+            'rombel'        => $rombel,
+            'tahunPelajaran'=> $tahunPelajaran,
+            'nomorSurat'    => $nomorSurat,
+            'kopBase64'     => $kopBase64,
+            'ttdBase64'     => $ttdBase64,
+        ])->setPaper('A4', 'portrait');
 
         return $pdf->download('SKL_' . str_replace(' ', '_', $siswa->nama_lengkap) . '.pdf');
+    }
+
+    private function generateNomorSurat(\App\Models\PengumumanKelulusan $pengumuman, int $siswaId): string
+    {
+        $siswaIds = \App\Models\SiswaKelulusan::where('pengumuman_kelulusan_id', $pengumuman->id)
+            ->join('master_siswa', 'siswa_kelulusans.master_siswa_id', '=', 'master_siswa.id')
+            ->orderBy('master_siswa.nama_lengkap')
+            ->pluck('siswa_kelulusans.master_siswa_id')
+            ->values();
+
+        $rank  = $siswaIds->search($siswaId);
+        $nomor = $pengumuman->nomor_surat_start + ($rank !== false ? $rank : 0);
+        $bulan = $pengumuman->tanggal_surat
+            ? \Carbon\Carbon::parse($pengumuman->tanggal_surat)->format('m')
+            : now()->format('m');
+        $tahun = $pengumuman->tahunPelajaran->tahun ?? now()->year;
+        $tahunAngka = (int) explode('/', $tahun)[0];
+
+        $prefix = $pengumuman->nomor_surat_prefix ?? 'SKL';
+
+        return str_pad($nomor, 4, '0', STR_PAD_LEFT) . '/' . $prefix . '/' . \Carbon\Carbon::createFromFormat('m', $bulan)->translatedFormat('n') . '/' . $tahunAngka;
+    }
+
+    private function imageToBase64(?string $storagePath): ?string
+    {
+        if (!$storagePath) return null;
+
+        $fullPath = storage_path('app/public/' . $storagePath);
+        if (!file_exists($fullPath)) return null;
+
+        $mime = mime_content_type($fullPath);
+        $data = base64_encode(file_get_contents($fullPath));
+
+        return "data:{$mime};base64,{$data}";
     }
 }

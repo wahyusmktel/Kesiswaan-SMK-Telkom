@@ -89,7 +89,7 @@
                             <h4 class="font-bold text-gray-800">Pengaturan Pengumuman</h4>
                         </div>
                         <div class="p-6">
-                            <form action="{{ route('kurikulum.pengumuman-kelulusan.store') }}" method="POST" class="space-y-4">
+                            <form action="{{ route('kurikulum.pengumuman-kelulusan.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
                                 @csrf
                                 <div>
                                     <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Tahun Pelajaran</label>
@@ -148,6 +148,103 @@
                                             peer-checked:bg-emerald-500"></div>
                                     </label>
                                 </div>
+
+                                {{-- ===== KONFIGURASI SKL ===== --}}
+                                <div class="border-t border-gray-100 pt-4 mt-2">
+                                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                        </svg>
+                                        Konfigurasi Format SKL
+                                    </p>
+
+                                    {{-- Kop Surat --}}
+                                    <div class="mb-3">
+                                        <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+                                            Kop Surat <span class="font-normal text-gray-400 lowercase">(JPG/PNG, lebar penuh)</span>
+                                        </label>
+                                        @if($pengumuman && $pengumuman->kop_surat_path)
+                                            <div class="mb-2 p-2 bg-gray-50 rounded-lg border border-gray-200">
+                                                <img src="{{ asset('storage/' . $pengumuman->kop_surat_path) }}" class="h-10 object-contain rounded" alt="Kop Surat">
+                                                <p class="text-[10px] text-gray-400 mt-1">Upload baru untuk mengganti</p>
+                                            </div>
+                                        @endif
+                                        <input type="file" name="kop_surat" accept="image/jpeg,image/png"
+                                            class="w-full text-xs text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 border border-gray-200 rounded-xl cursor-pointer">
+                                    </div>
+
+                                    {{-- Nomor Surat --}}
+                                    <div class="grid grid-cols-2 gap-2 mb-3">
+                                        <div>
+                                            <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+                                                Prefix Nomor Surat
+                                            </label>
+                                            <input type="text" name="nomor_surat_prefix"
+                                                value="{{ $pengumuman->nomor_surat_prefix ?? '' }}"
+                                                placeholder="cth: SMKTEL-LPG/KURL.15"
+                                                class="w-full rounded-xl border-gray-200 text-xs font-medium focus:ring-indigo-500 focus:border-indigo-500">
+                                            <p class="text-[10px] text-gray-400 mt-1">0425/<strong>prefix</strong>/V/2026</p>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+                                                Nomor Awal
+                                            </label>
+                                            <input type="number" name="nomor_surat_start" min="1"
+                                                value="{{ $pengumuman->nomor_surat_start ?? 1 }}"
+                                                class="w-full rounded-xl border-gray-200 text-xs font-medium focus:ring-indigo-500 focus:border-indigo-500">
+                                            <p class="text-[10px] text-gray-400 mt-1">Nomor urut pertama</p>
+                                        </div>
+                                    </div>
+
+                                    {{-- Kota & Tanggal Surat --}}
+                                    <div class="grid grid-cols-2 gap-2 mb-3">
+                                        <div>
+                                            <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Kota</label>
+                                            <input type="text" name="kota_surat"
+                                                value="{{ $pengumuman->kota_surat ?? '' }}"
+                                                placeholder="cth: Lampung"
+                                                class="w-full rounded-xl border-gray-200 text-xs font-medium focus:ring-indigo-500 focus:border-indigo-500">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Tanggal Surat</label>
+                                            <input type="date" name="tanggal_surat"
+                                                value="{{ $pengumuman?->tanggal_surat?->format('Y-m-d') ?? '' }}"
+                                                class="w-full rounded-xl border-gray-200 text-xs font-medium focus:ring-indigo-500 focus:border-indigo-500">
+                                        </div>
+                                    </div>
+
+                                    {{-- Kepala Sekolah --}}
+                                    <div class="mb-3">
+                                        <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Nama Kepala Sekolah</label>
+                                        <input type="text" name="nama_kepala_sekolah"
+                                            value="{{ $pengumuman->nama_kepala_sekolah ?? '' }}"
+                                            placeholder="cth: Drs. Ahmad Fauzi, M.Pd."
+                                            class="w-full rounded-xl border-gray-200 text-sm font-medium focus:ring-indigo-500 focus:border-indigo-500">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">NIP Kepala Sekolah</label>
+                                        <input type="text" name="nip_kepala_sekolah"
+                                            value="{{ $pengumuman->nip_kepala_sekolah ?? '' }}"
+                                            placeholder="cth: 196804151994031002"
+                                            class="w-full rounded-xl border-gray-200 text-sm font-medium focus:ring-indigo-500 focus:border-indigo-500">
+                                    </div>
+
+                                    {{-- Tanda Tangan + Stempel --}}
+                                    <div>
+                                        <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
+                                            Tanda Tangan &amp; Stempel <span class="font-normal text-gray-400 lowercase">(PNG transparan lebih baik)</span>
+                                        </label>
+                                        @if($pengumuman && $pengumuman->ttd_stempel_path)
+                                            <div class="mb-2 p-2 bg-gray-50 rounded-lg border border-gray-200 flex items-center gap-3">
+                                                <img src="{{ asset('storage/' . $pengumuman->ttd_stempel_path) }}" class="h-12 object-contain rounded" alt="TTD Stempel">
+                                                <p class="text-[10px] text-gray-400">Upload baru untuk mengganti</p>
+                                            </div>
+                                        @endif
+                                        <input type="file" name="ttd_stempel" accept="image/jpeg,image/png"
+                                            class="w-full text-xs text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 border border-gray-200 rounded-xl cursor-pointer">
+                                    </div>
+                                </div>
+                                {{-- ===== END KONFIGURASI SKL ===== --}}
 
                                 <button type="submit"
                                     class="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition-all shadow-sm hover:shadow-md">

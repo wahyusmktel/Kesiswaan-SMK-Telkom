@@ -14,11 +14,21 @@ class PengumumanKelulusan extends Model
         'skl_aktif',
         'tahun_pelajaran_id',
         'created_by',
+        'kop_surat_path',
+        'nomor_surat_prefix',
+        'nomor_surat_start',
+        'kota_surat',
+        'tanggal_surat',
+        'nama_kepala_sekolah',
+        'nip_kepala_sekolah',
+        'ttd_stempel_path',
     ];
 
     protected $casts = [
         'waktu_publikasi' => 'datetime',
         'skl_aktif'       => 'boolean',
+        'tanggal_surat'   => 'date',
+        'nomor_surat_start' => 'integer',
     ];
 
     public function tahunPelajaran()
