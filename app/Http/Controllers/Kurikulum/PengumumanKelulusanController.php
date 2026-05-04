@@ -238,11 +238,11 @@ class PengumumanKelulusanController extends Controller
     private function generateQrBase64(string $url): string
     {
         $options = new \chillerlan\QRCode\QROptions([
-            'outputType'   => \chillerlan\QRCode\QRCode::OUTPUT_IMAGE_PNG,
-            'imageBase64'  => true,
-            'scale'        => 5,
-            'quietzoneSize'=> 1,
-            'eccLevel'     => \chillerlan\QRCode\QRCode::ECC_M,
+            'outputInterface' => \chillerlan\QRCode\Output\QRGdImagePNG::class,
+            'outputBase64'    => true,
+            'scale'           => 5,
+            'quietzoneSize'   => 1,
+            'eccLevel'        => \chillerlan\QRCode\Common\EccLevel::M,
         ]);
         return (new \chillerlan\QRCode\QRCode($options))->render($url);
     }
