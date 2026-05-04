@@ -205,10 +205,11 @@
                                             <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">
                                                 Nomor Awal
                                             </label>
-                                            <input type="number" name="nomor_surat_start" min="1"
-                                                value="{{ old('nomor_surat_start', $pengumuman->nomor_surat_start ?? 1) }}"
-                                                class="w-full rounded-xl border-gray-200 text-xs font-medium focus:ring-indigo-500 focus:border-indigo-500">
-                                            <p class="text-[10px] text-gray-400 mt-1">Nomor urut pertama</p>
+                                            <input type="text" name="nomor_surat_start" inputmode="numeric" pattern="[0-9]+"
+                                                value="{{ old('nomor_surat_start', str_pad($pengumuman->nomor_surat_start ?? 1, 4, '0', STR_PAD_LEFT)) }}"
+                                                placeholder="0001"
+                                                class="w-full rounded-xl border-gray-200 text-xs font-medium font-mono focus:ring-indigo-500 focus:border-indigo-500">
+                                            <p class="text-[10px] text-gray-400 mt-1">cth: <strong>0359</strong> → nomor pertama dicetak <strong>0359</strong></p>
                                         </div>
                                     </div>
 
