@@ -17,17 +17,17 @@
 
         body {
             font-family: 'DejaVu Serif', 'Times New Roman', Times, serif;
-            font-size: 11pt;
+            font-size: 10pt;
             color: #111;
             background: #fff;
-            line-height: 1.6;
+            line-height: 1.4;
         }
 
 
 
         /* ====== WRAPPER ====== */
         .page-wrap {
-            padding: 0 20mm 16mm 20mm;
+            padding: 0 18mm 8mm 18mm;
         }
 
         /* ====== KOP SURAT (gambar penuh lebar, tanpa margin) ====== */
@@ -46,36 +46,36 @@
         /* ====== JUDUL ====== */
         .judul-wrap {
             text-align: center;
-            margin: 4pt 0 2pt;
+            margin: 3pt 0 1pt;
         }
         .judul-title {
-            font-size: 14pt;
+            font-size: 13pt;
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 2pt;
             text-decoration: underline;
         }
         .judul-nomor {
-            font-size: 10pt;
-            margin-top: 3pt;
+            font-size: 9.5pt;
+            margin-top: 2pt;
         }
 
         /* ====== PEMBUKA ====== */
         .pembuka {
-            font-size: 11pt;
+            font-size: 10pt;
             text-align: justify;
-            margin: 12pt 0 6pt;
+            margin: 4pt 0 3pt;
         }
 
         /* ====== DATA SISWA ====== */
         .data-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 4pt 0 4pt 20pt;
+            margin: 2pt 0 2pt 20pt;
         }
         .data-table td {
-            font-size: 11pt;
-            padding: 2pt 0;
+            font-size: 10pt;
+            padding: 1pt 0;
             vertical-align: top;
         }
         .col-label { width: 145pt; }
@@ -84,62 +84,62 @@
 
         /* ====== DASAR HUKUM ====== */
         .dasar-wrap {
-            font-size: 10.5pt;
+            font-size: 9.5pt;
             text-align: justify;
-            margin: 8pt 0 4pt;
+            margin: 4pt 0 2pt;
         }
         .dasar-list {
-            margin: 3pt 0 0 18pt;
+            margin: 2pt 0 0 18pt;
         }
         .dasar-list li {
-            margin-bottom: 2pt;
+            margin-bottom: 1pt;
         }
 
         /* ====== BOX STATUS ====== */
         .status-wrap {
             text-align: center;
-            margin: 10pt 0 8pt;
+            margin: 6pt 0 4pt;
         }
         .status-box {
             display: inline-block;
             border: 1.5pt solid #111;
-            padding: 5pt 30pt;
+            padding: 4pt 25pt;
         }
         .status-lulus {
-            font-size: 13pt;
+            font-size: 12pt;
             font-weight: bold;
             letter-spacing: 3pt;
         }
         .status-tidak-lulus {
-            font-size: 13pt;
+            font-size: 12pt;
             font-weight: normal;
             text-decoration: line-through;
             color: #888;
             letter-spacing: 3pt;
         }
         .status-separator {
-            font-size: 12pt;
+            font-size: 11pt;
             font-weight: bold;
-            padding: 0 8pt;
+            padding: 0 6pt;
         }
 
         /* ====== PENUTUP ====== */
         .penutup {
-            font-size: 11pt;
+            font-size: 10pt;
             text-align: justify;
-            margin: 6pt 0;
+            margin: 3pt 0;
         }
 
         /* ====== CATATAN ====== */
         .catatan {
-            font-size: 10pt;
+            font-size: 9.5pt;
             text-align: justify;
-            margin: 4pt 0;
+            margin: 2pt 0;
         }
 
         /* ====== AREA TTD ====== */
         .ttd-wrap {
-            margin-top: 18pt;
+            margin-top: 8pt;
         }
         .ttd-table {
             width: 100%;
@@ -147,20 +147,20 @@
         }
         .ttd-table td {
             vertical-align: top;
-            font-size: 10.5pt;
+            font-size: 10pt;
         }
         .ttd-left  { width: 55%; }
         .ttd-right { width: 45%; text-align: left; }
-        .ttd-kota-tanggal { font-size: 10.5pt; margin-bottom: 0; }
-        .ttd-jabatan      { font-size: 10.5pt; margin-bottom: 0; }
+        .ttd-kota-tanggal { font-size: 10pt; margin-bottom: 0; }
+        .ttd-jabatan      { font-size: 10pt; margin-bottom: 0; }
         .ttd-image-wrap   {
-            height: 70pt;
+            height: 55pt;
             position: relative;
             text-align: left;
         }
         .ttd-image {
-            height: 70pt;
-            max-width: 160pt;
+            height: 55pt;
+            max-width: 140pt;
         }
         .ttd-nama {
             font-size: 11pt;
@@ -262,7 +262,7 @@
             </ol>
         </div>
 
-        <p class="pembuka" style="margin-top:8pt;">
+        <p class="pembuka" style="margin-top:3pt;">
             Dengan ini siswa tersebut di atas dinyatakan :
         </p>
 
@@ -287,7 +287,7 @@
         <p class="catatan"><em>Catatan: {{ $kelulusan->catatan }}</em></p>
         @endif
 
-        <p class="penutup" style="margin-top:6pt;">
+        <p class="penutup" style="margin-top:3pt;">
             Demikian surat keterangan ini dibuat, untuk dapat di pergunakan sebagaimana mestinya.
         </p>
 
