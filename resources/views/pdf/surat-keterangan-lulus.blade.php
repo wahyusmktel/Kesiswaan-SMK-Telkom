@@ -313,6 +313,9 @@
                                 <img src="{{ $ttdBase64 }}" class="ttd-image" alt="TTD">
                             @endif
                         </div>
+                        <br>
+                        <br>
+                        <br>
                         <div>
                             <span class="ttd-nama">{{ $pengumuman->nama_kepala_sekolah ?? '______________________________' }}</span>
                         </div>
