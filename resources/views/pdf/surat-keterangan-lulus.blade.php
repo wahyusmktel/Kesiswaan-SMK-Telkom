@@ -168,7 +168,6 @@
         .ttd-nama {
             font-size: 11pt;
             font-weight: bold;
-            border-top: 1pt solid #333;
             padding-top: 1pt;
             display: inline-block;
             min-width: 150pt;
@@ -313,7 +312,6 @@
                                 <img src="{{ $ttdBase64 }}" class="ttd-image" alt="TTD">
                             @endif
                         </div>
-                        <br>
                         <br>
                         <br>
                         <div>
