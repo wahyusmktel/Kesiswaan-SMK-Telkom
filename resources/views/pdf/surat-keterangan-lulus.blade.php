@@ -46,7 +46,7 @@
         /* ====== JUDUL ====== */
         .judul-wrap {
             text-align: center;
-            margin: 14pt 0 4pt;
+            margin: 4pt 0 2pt;
         }
         .judul-title {
             font-size: 14pt;
@@ -151,8 +151,8 @@
         }
         .ttd-left  { width: 55%; }
         .ttd-right { width: 45%; text-align: left; }
-        .ttd-kota-tanggal { font-size: 10.5pt; margin-bottom: 2pt; }
-        .ttd-jabatan      { font-size: 10.5pt; margin-bottom: 4pt; }
+        .ttd-kota-tanggal { font-size: 10.5pt; margin-bottom: 0; }
+        .ttd-jabatan      { font-size: 10.5pt; margin-bottom: 0; }
         .ttd-image-wrap   {
             height: 70pt;
             position: relative;
@@ -166,13 +166,13 @@
             font-size: 11pt;
             font-weight: bold;
             border-top: 1pt solid #333;
-            padding-top: 2pt;
+            padding-top: 1pt;
             display: inline-block;
             min-width: 150pt;
         }
         .ttd-nip {
             font-size: 9.5pt;
-            margin-top: 2pt;
+            margin-top: 0;
         }
     </style>
 </head>
@@ -229,7 +229,7 @@
                         if ($jurusan) {
                             preg_match('/^(XII[A-Z\s]*)/i', $namaKelas, $m);
                             $level = trim($m[1] ?? $namaKelas);
-                            $kelasLabel = $jurusan . ' / ' . $level;
+                            $kelasLabel = $level . ' / ' . $jurusan;
                         }
                     @endphp
                     {{ $kelasLabel }}
@@ -258,7 +258,7 @@
                 <li>Undang-Undang Nomor 20 Tahun 2003 tentang Sistem Pendidikan Nasional (Lembaran Negara Republik Indonesia Tahun 2003 Nomor 78, Tambahan Lembaran Negara Republik Indonesia Nomor 4301);</li>
                 <li>Peraturan Menteri Pendidikan, Kebudayaan, Riset dan Teknologi Republik Indonesia Nomor 21 Tahun 2022 tentang Standar Penilaian Pendidikan Pada Pendidikan Anak Usia Dini, Jenjang Pendidikan Dasar, Dan Jenjang Pendidikan Menengah;</li>
                 <li>Pedoman Pelaksanaan Ujian Sekolah dan UKK SMK Telkom Lampung Tahun Pelajaran 2025/2026;</li>
-                <li>KHasil Keputusan Rapat Pleno Kelulusan SMK Telkom Lampung yang diadakan pada hari Kamis, 30 April 2026 tentang Penetapan Kelulusan.</li>
+                <li>Hasil Keputusan Rapat Pleno Kelulusan SMK Telkom Lampung yang diadakan pada hari Kamis, 30 April 2026 tentang Penetapan Kelulusan.</li>
             </ol>
         </div>
 
