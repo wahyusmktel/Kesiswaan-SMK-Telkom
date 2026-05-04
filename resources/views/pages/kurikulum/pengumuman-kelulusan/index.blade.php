@@ -40,6 +40,22 @@
                 </div>
             @endif
 
+            @if($errors->any())
+                <div class="bg-red-50 border border-red-200 text-red-800 px-5 py-4 rounded-xl text-sm shadow-sm">
+                    <p class="font-bold mb-2 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Terdapat kesalahan pada form:
+                    </p>
+                    <ul class="list-disc list-inside space-y-1 text-red-700">
+                        @foreach($errors->all() as $err)
+                            <li>{{ $err }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             {{-- Header Banner --}}
             <div class="relative rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600 shadow-lg overflow-hidden p-7 animate-gradient">
                 <div class="absolute right-0 top-0 h-full w-1/3 bg-white/10 transform skew-x-12 blur-2xl"></div>
@@ -180,7 +196,7 @@
                                                 Prefix Nomor Surat
                                             </label>
                                             <input type="text" name="nomor_surat_prefix"
-                                                value="{{ $pengumuman->nomor_surat_prefix ?? '' }}"
+                                                value="{{ old('nomor_surat_prefix', $pengumuman->nomor_surat_prefix ?? '') }}"
                                                 placeholder="cth: SMKTEL-LPG/KURL.15"
                                                 class="w-full rounded-xl border-gray-200 text-xs font-medium focus:ring-indigo-500 focus:border-indigo-500">
                                             <p class="text-[10px] text-gray-400 mt-1">0425/<strong>prefix</strong>/V/2026</p>
@@ -190,7 +206,7 @@
                                                 Nomor Awal
                                             </label>
                                             <input type="number" name="nomor_surat_start" min="1"
-                                                value="{{ $pengumuman->nomor_surat_start ?? 1 }}"
+                                                value="{{ old('nomor_surat_start', $pengumuman->nomor_surat_start ?? 1) }}"
                                                 class="w-full rounded-xl border-gray-200 text-xs font-medium focus:ring-indigo-500 focus:border-indigo-500">
                                             <p class="text-[10px] text-gray-400 mt-1">Nomor urut pertama</p>
                                         </div>
@@ -201,14 +217,14 @@
                                         <div>
                                             <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Kota</label>
                                             <input type="text" name="kota_surat"
-                                                value="{{ $pengumuman->kota_surat ?? '' }}"
+                                                value="{{ old('kota_surat', $pengumuman->kota_surat ?? '') }}"
                                                 placeholder="cth: Lampung"
                                                 class="w-full rounded-xl border-gray-200 text-xs font-medium focus:ring-indigo-500 focus:border-indigo-500">
                                         </div>
                                         <div>
                                             <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Tanggal Surat</label>
                                             <input type="date" name="tanggal_surat"
-                                                value="{{ $pengumuman?->tanggal_surat?->format('Y-m-d') ?? '' }}"
+                                                value="{{ old('tanggal_surat', $pengumuman?->tanggal_surat?->format('Y-m-d') ?? '') }}"
                                                 class="w-full rounded-xl border-gray-200 text-xs font-medium focus:ring-indigo-500 focus:border-indigo-500">
                                         </div>
                                     </div>
@@ -217,14 +233,14 @@
                                     <div class="mb-3">
                                         <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Nama Kepala Sekolah</label>
                                         <input type="text" name="nama_kepala_sekolah"
-                                            value="{{ $pengumuman->nama_kepala_sekolah ?? '' }}"
+                                            value="{{ old('nama_kepala_sekolah', $pengumuman->nama_kepala_sekolah ?? '') }}"
                                             placeholder="cth: Drs. Ahmad Fauzi, M.Pd."
                                             class="w-full rounded-xl border-gray-200 text-sm font-medium focus:ring-indigo-500 focus:border-indigo-500">
                                     </div>
                                     <div class="mb-3">
                                         <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">NIP Kepala Sekolah</label>
                                         <input type="text" name="nip_kepala_sekolah"
-                                            value="{{ $pengumuman->nip_kepala_sekolah ?? '' }}"
+                                            value="{{ old('nip_kepala_sekolah', $pengumuman->nip_kepala_sekolah ?? '') }}"
                                             placeholder="cth: 196804151994031002"
                                             class="w-full rounded-xl border-gray-200 text-sm font-medium focus:ring-indigo-500 focus:border-indigo-500">
                                     </div>

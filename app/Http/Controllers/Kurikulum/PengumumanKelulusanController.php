@@ -13,6 +13,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class PengumumanKelulusanController extends Controller
 {
@@ -98,7 +99,7 @@ class PengumumanKelulusanController extends Controller
             'skl_aktif'           => $request->boolean('skl_aktif'),
             'created_by'          => Auth::id(),
             'nomor_surat_prefix'  => $request->nomor_surat_prefix,
-            'nomor_surat_start'   => $request->nomor_surat_start ?? 1,
+            'nomor_surat_start'   => (int) ($request->nomor_surat_start ?: 1),
             'kota_surat'          => $request->kota_surat,
             'tanggal_surat'       => $request->tanggal_surat,
             'nama_kepala_sekolah' => $request->nama_kepala_sekolah,
@@ -107,14 +108,14 @@ class PengumumanKelulusanController extends Controller
 
         if ($request->hasFile('kop_surat')) {
             if ($existing?->kop_surat_path) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($existing->kop_surat_path);
+                Storage::disk('public')->delete($existing->kop_surat_path);
             }
             $data['kop_surat_path'] = $request->file('kop_surat')->store('pengumuman-kelulusan', 'public');
         }
 
         if ($request->hasFile('ttd_stempel')) {
             if ($existing?->ttd_stempel_path) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($existing->ttd_stempel_path);
+                Storage::disk('public')->delete($existing->ttd_stempel_path);
             }
             $data['ttd_stempel_path'] = $request->file('ttd_stempel')->store('pengumuman-kelulusan', 'public');
         }
