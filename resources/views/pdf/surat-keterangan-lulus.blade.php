@@ -23,38 +23,24 @@
             line-height: 1.6;
         }
 
-        /* ====== BINGKAI ====== */
-        .border-outer {
-            position: fixed;
-            top: 8mm;
-            left: 8mm;
-            right: 8mm;
-            bottom: 8mm;
-            border: 2.5pt solid #1a1a1a;
-        }
-        .border-inner {
-            position: fixed;
-            top: 11mm;
-            left: 11mm;
-            right: 11mm;
-            bottom: 11mm;
-            border: 1pt solid #1a1a1a;
-        }
+
 
         /* ====== WRAPPER ====== */
         .page-wrap {
-            padding: 20mm 22mm 16mm 22mm;
+            padding: 0 20mm 16mm 20mm;
         }
 
-        /* ====== KOP SURAT (gambar penuh lebar) ====== */
+        /* ====== KOP SURAT (gambar penuh lebar, tanpa margin) ====== */
+        .kop-wrapper {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+        }
         .kop-image {
             width: 100%;
             display: block;
-        }
-        .kop-divider {
-            border: none;
-            border-top: 3pt double #111;
-            margin: 4pt 0 0;
+            margin: 0;
+            padding: 0;
         }
 
         /* ====== JUDUL ====== */
@@ -164,13 +150,13 @@
             font-size: 10.5pt;
         }
         .ttd-left  { width: 55%; }
-        .ttd-right { width: 45%; text-align: center; }
+        .ttd-right { width: 45%; text-align: left; }
         .ttd-kota-tanggal { font-size: 10.5pt; margin-bottom: 2pt; }
         .ttd-jabatan      { font-size: 10.5pt; margin-bottom: 4pt; }
         .ttd-image-wrap   {
             height: 70pt;
             position: relative;
-            text-align: center;
+            text-align: left;
         }
         .ttd-image {
             height: 70pt;
@@ -192,12 +178,8 @@
 </head>
 <body>
 
-    <div class="border-outer"></div>
-    <div class="border-inner"></div>
-
-    <div class="page-wrap">
-
-        {{-- ===== KOP SURAT ===== --}}
+    {{-- ===== KOP SURAT (full width, no margin) ===== --}}
+    <div class="kop-wrapper">
         @if($kopBase64)
             <img src="{{ $kopBase64 }}" class="kop-image" alt="Kop Surat">
         @else
@@ -214,7 +196,9 @@
                 </tr>
             </table>
         @endif
-        <hr class="kop-divider">
+    </div>
+
+    <div class="page-wrap">
 
         {{-- ===== JUDUL ===== --}}
         <div class="judul-wrap">
@@ -224,8 +208,7 @@
 
         {{-- ===== PEMBUKA ===== --}}
         <p class="pembuka">
-            Yang bertanda tangan di bawah ini, Kepala {{ config('app.name', 'SMK Telkom') }},
-            menerangkan bahwa siswa yang namanya tersebut di bawah ini:
+            Yang bertanda tangan dibawah ini Kepala SMK Telkom Lampung, Kabupaten Pringsewu Provinsi Lampung menerangkan bahwa :
         </p>
 
         {{-- ===== DATA SISWA ===== --}}
@@ -236,10 +219,20 @@
                 <td class="col-value">{{ strtoupper($siswa->nama_lengkap) }}</td>
             </tr>
             <tr>
-                <td class="col-label">NIS / NISN</td>
+                <td class="col-label">Kelas / Konsentrasi Keahlian</td>
                 <td class="col-sep">:</td>
                 <td class="col-value">
-                    {{ $siswa->nis }}{{ ($siswa->dapodik && $siswa->dapodik->nisn) ? ' / ' . $siswa->dapodik->nisn : '' }}
+                    @php
+                        $namaKelas = $rombel?->kelas->nama_kelas ?? '-';
+                        $jurusan   = $rombel?->kelas->jurusan ?? null;
+                        $kelasLabel = $namaKelas;
+                        if ($jurusan) {
+                            preg_match('/^(XII[A-Z\s]*)/i', $namaKelas, $m);
+                            $level = trim($m[1] ?? $namaKelas);
+                            $kelasLabel = $jurusan . ' / ' . $level;
+                        }
+                    @endphp
+                    {{ $kelasLabel }}
                 </td>
             </tr>
             <tr>
@@ -250,26 +243,11 @@
                 </td>
             </tr>
             <tr>
-                <td class="col-label">Program Keahlian / Kelas</td>
+                <td class="col-label">NIS / NISN</td>
                 <td class="col-sep">:</td>
                 <td class="col-value">
-                    @php
-                        $namaKelas = $rombel?->kelas->nama_kelas ?? '-';
-                        $jurusan   = $rombel?->kelas->jurusan ?? null;
-                        $kelasLabel = $namaKelas;
-                        if ($jurusan) {
-                            preg_match('/^(XII[A-Z\s]*)/i', $namaKelas, $m);
-                            $level = trim($m[1] ?? $namaKelas);
-                            $kelasLabel = $level . ' / ' . $jurusan;
-                        }
-                    @endphp
-                    {{ $kelasLabel }}
+                    {{ $siswa->nis }}{{ ($siswa->dapodik && $siswa->dapodik->nisn) ? ' / ' . $siswa->dapodik->nisn : '' }}
                 </td>
-            </tr>
-            <tr>
-                <td class="col-label">Tahun Pelajaran</td>
-                <td class="col-sep">:</td>
-                <td class="col-value">{{ $tahunPelajaran->tahun }}</td>
             </tr>
         </table>
 
@@ -277,15 +255,15 @@
         <div class="dasar-wrap">
             <p>Berdasarkan:</p>
             <ol class="dasar-list">
-                <li>Peraturan Pemerintah Nomor 57 Tahun 2021 tentang Standar Nasional Pendidikan;</li>
-                <li>Peraturan Menteri Pendidikan, Kebudayaan, Riset, dan Teknologi tentang Penilaian Hasil Belajar;</li>
-                <li>Hasil rapat dewan guru {{ config('app.name', 'SMK Telkom') }} tentang kelulusan Tahun Pelajaran {{ $tahunPelajaran->tahun }};</li>
-                <li>Keputusan Kepala {{ config('app.name', 'SMK Telkom') }} tentang kelulusan peserta didik Tahun Pelajaran {{ $tahunPelajaran->tahun }}.</li>
+                <li>Undang-Undang Nomor 20 Tahun 2003 tentang Sistem Pendidikan Nasional (Lembaran Negara Republik Indonesia Tahun 2003 Nomor 78, Tambahan Lembaran Negara Republik Indonesia Nomor 4301);</li>
+                <li>Peraturan Menteri Pendidikan, Kebudayaan, Riset dan Teknologi Republik Indonesia Nomor 21 Tahun 2022 tentang Standar Penilaian Pendidikan Pada Pendidikan Anak Usia Dini, Jenjang Pendidikan Dasar, Dan Jenjang Pendidikan Menengah;</li>
+                <li>Pedoman Pelaksanaan Ujian Sekolah dan UKK SMK Telkom Lampung Tahun Pelajaran 2025/2026;</li>
+                <li>KHasil Keputusan Rapat Pleno Kelulusan SMK Telkom Lampung yang diadakan pada hari Kamis, 30 April 2026 tentang Penetapan Kelulusan.</li>
             </ol>
         </div>
 
         <p class="pembuka" style="margin-top:8pt;">
-            Menyatakan bahwa siswa tersebut di atas dinyatakan:
+            Dengan ini siswa tersebut di atas dinyatakan :
         </p>
 
         {{-- ===== BOX STATUS LULUS / TIDAK LULUS ===== --}}
@@ -303,18 +281,14 @@
             </div>
         </div>
 
-        {{-- ===== PENUTUP ===== --}}
-        <p class="penutup">
-            dari {{ config('app.name', 'SMK Telkom') }} pada Tahun Pelajaran {{ $tahunPelajaran->tahun }}.
-        </p>
+        {{-- ===== PENUTUP ===== --}}        
 
         @if($kelulusan->catatan)
         <p class="catatan"><em>Catatan: {{ $kelulusan->catatan }}</em></p>
         @endif
 
         <p class="penutup" style="margin-top:6pt;">
-            Demikian surat keterangan ini dibuat dengan sebenar-benarnya untuk dapat dipergunakan
-            sebagaimana mestinya.
+            Demikian surat keterangan ini dibuat, untuk dapat di pergunakan sebagaimana mestinya.
         </p>
 
         {{-- ===== TANDA TANGAN ===== --}}
