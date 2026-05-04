@@ -705,6 +705,17 @@
 
         <div class="section-title">Layanan Guru</div>
         <li>
+            <a href="{{ route('tanda-tangan.index') }}"
+                class="nav-link {{ request()->routeIs('tanda-tangan.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                <div class="nav-icon-container">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                </div>
+                <span class="nav-text">Tanda Tangan Digital</span>
+            </a>
+        </li>
+        <li>
             <a href="{{ route('absensi-saya.index') }}"
                 class="nav-link {{ request()->routeIs('absensi-saya.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
                 <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1118,6 +1129,18 @@
         </li>
     @endcanany
 
+    <li>
+        <a href="{{ route('tanda-tangan.index') }}"
+            class="nav-link {{ request()->routeIs('tanda-tangan.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
+            </div>
+            <span class="nav-text">Tanda Tangan Digital</span>
+        </a>
+    </li>
+
 @endif
 @endrole
 
@@ -1332,6 +1355,19 @@
                             Persetujuan Izin Guru
                         </a>
                     </div>
+                </li>
+
+                {{-- Menu Tanda Tangan Digital --}}
+                <li>
+                    <a href="{{ route('tanda-tangan.index') }}"
+                        class="nav-link {{ request()->routeIs('tanda-tangan.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                        <div class="nav-icon-container">
+                            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                            </svg>
+                        </div>
+                        <span class="nav-text">Tanda Tangan Digital</span>
+                    </a>
                 </li>
 
                 {{-- Menu Pengumuman Kelulusan --}}
@@ -1835,6 +1871,19 @@
                     </a>
                 </li>
             @endcan
+
+            {{-- ====== TANDA TANGAN DIGITAL (KAUR SDM) ====== --}}
+            <li>
+                <a href="{{ route('tanda-tangan.index') }}"
+                    class="nav-link {{ request()->routeIs('tanda-tangan.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                    <div class="nav-icon-container">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                        </svg>
+                    </div>
+                    <span class="nav-text">Tanda Tangan Digital</span>
+                </a>
+            </li>
 
             {{-- ====== ABSENSI PEGAWAI (KAUR SDM) ====== --}}
             <div class="section-title">Absensi Pegawai</div>

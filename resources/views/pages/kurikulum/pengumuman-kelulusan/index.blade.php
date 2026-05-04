@@ -383,6 +383,7 @@
                                         <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wide kelas-col">Kelas</th>
                                         <th class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wide">Status</th>
                                         <th class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wide">SKL</th>
+                                        <th class="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wide">TTD Digital</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-50" id="siswaTableBody">
@@ -431,10 +432,30 @@
                                                     <span class="text-gray-300 text-xs">-</span>
                                                 @endif
                                             </td>
+                                            <td class="px-4 py-3 text-center">
+                                                @if($currentStatus === 'lulus')
+                                                    @php $sklRef = \App\Models\SiswaKelulusan::where('pengumuman_kelulusan_id', $pengumuman->id)->where('master_siswa_id', $item['siswa']->id)->first(); @endphp
+                                                    @php $signed = $sklRef ? \App\Models\DigitalDocument::where('document_type','SKL')->where('reference_id',$sklRef->id)->where('is_valid',true)->first() : null; @endphp
+                                                    @if($signed)
+                                                        <span class="inline-flex items-center gap-1 text-xs font-bold text-green-700 bg-green-50 border border-green-200 px-2 py-1 rounded-lg" title="Ditandatangani: {{ $signed->signer_name }}">
+                                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                                            Sah
+                                                        </span>
+                                                    @else
+                                                        <button onclick="openSignModal({{ $pengumuman->id }}, {{ $item['siswa']->id }}, '{{ addslashes($item['siswa']->nama_lengkap) }}', {{ $sklRef?->id ?? 'null' }})"
+                                                            class="inline-flex items-center gap-1 px-2.5 py-1 bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold rounded-lg transition">
+                                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                                                            TTD
+                                                        </button>
+                                                    @endif
+                                                @else
+                                                    <span class="text-gray-300 text-xs">-</span>
+                                                @endif
+                                            </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="5" class="py-16 text-center">
+                                            <td colspan="6" class="py-16 text-center">
                                                 <div class="flex flex-col items-center gap-3 text-gray-400">
                                                     <svg class="w-12 h-12 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
@@ -459,6 +480,72 @@
                                 </div>
                             </div>
                         @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal Tanda Tangan Digital --}}
+    <div id="signModal" class="fixed inset-0 z-50 flex items-center justify-center hidden" role="dialog" aria-modal="true">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeSignModal()"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            {{-- Header --}}
+            <div class="bg-gradient-to-r from-violet-600 to-purple-700 px-6 py-5">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-white font-bold text-base">Tanda Tangan Digital SKL</h3>
+                        <p class="text-purple-200 text-xs mt-0.5" id="signModalStudentName">-</p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Body --}}
+            <div class="p-6">
+                {{-- Success State --}}
+                <div id="signSuccessState" class="hidden text-center py-4">
+                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </div>
+                    <h4 class="font-bold text-gray-800 text-lg">Dokumen Berhasil Ditandatangani!</h4>
+                    <p class="text-gray-500 text-sm mt-1">SKL siswa kini memiliki tanda tangan digital yang sah dan dapat diverifikasi.</p>
+                    <p class="text-xs text-gray-400 mt-3">Halaman akan diperbarui...</p>
+                </div>
+
+                {{-- Form State --}}
+                <div id="signFormState">
+                    <div class="mb-4 p-3 bg-violet-50 border border-violet-100 rounded-xl text-xs text-violet-700">
+                        <p class="font-semibold mb-1">Konfirmasi dengan PIN Tanda Tangan Anda</p>
+                        <p class="text-violet-500">PIN digunakan untuk memverifikasi identitas penandatangan. Pastikan Anda sudah mengatur PIN di menu Tanda Tangan Digital.</p>
+                    </div>
+
+                    <div id="signErrorAlert" class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-semibold"></div>
+
+                    <div class="mb-5">
+                        <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">PIN Tanda Tangan Digital</label>
+                        <input type="password" id="signPinInput" inputmode="numeric" pattern="[0-9]{4,8}" maxlength="8"
+                            placeholder="Masukkan PIN (4–8 digit)"
+                            class="w-full rounded-xl border-gray-200 text-sm font-mono tracking-widest text-center focus:ring-violet-500 focus:border-violet-500 text-lg py-3">
+                        <p class="text-[11px] text-gray-400 mt-1.5 text-center">Tekan Enter atau klik tombol di bawah untuk menandatangani</p>
+                    </div>
+
+                    <div class="flex gap-3">
+                        <button type="button" onclick="closeSignModal()"
+                            class="flex-1 py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl text-sm transition">
+                            Batal
+                        </button>
+                        <button type="button" id="signSubmitBtn" onclick="submitSignature()"
+                            class="flex-1 py-2.5 px-4 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl text-sm transition shadow-sm hover:shadow-md">
+                            <span id="signBtnText">Tandatangani SKL</span>
+                            <span id="signBtnLoading" class="hidden">Memproses...</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -534,6 +621,107 @@
                     }
                 })
                 .catch(() => alert('Terjadi kesalahan. Silakan coba lagi.'));
+            }
+
+            // ===== Modal Tanda Tangan Digital =====
+            let _signPengumumanId = null;
+            let _signSiswaId = null;
+            let _signNama = null;
+            let _signSklRefId = null;
+
+            function openSignModal(pengumumanId, siswaId, namaLengkap, sklRefId) {
+                _signPengumumanId = pengumumanId;
+                _signSiswaId = siswaId;
+                _signNama = namaLengkap;
+                _signSklRefId = sklRefId;
+
+                document.getElementById('signModalStudentName').textContent = namaLengkap;
+                document.getElementById('signPinInput').value = '';
+                document.getElementById('signErrorAlert').classList.add('hidden');
+                document.getElementById('signErrorAlert').textContent = '';
+                document.getElementById('signFormState').classList.remove('hidden');
+                document.getElementById('signSuccessState').classList.add('hidden');
+                document.getElementById('signBtnText').classList.remove('hidden');
+                document.getElementById('signBtnLoading').classList.add('hidden');
+                document.getElementById('signSubmitBtn').disabled = false;
+
+                document.getElementById('signModal').classList.remove('hidden');
+                setTimeout(() => document.getElementById('signPinInput').focus(), 100);
+            }
+
+            function closeSignModal() {
+                document.getElementById('signModal').classList.add('hidden');
+            }
+
+            document.getElementById('signPinInput')?.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') submitSignature();
+            });
+
+            function submitSignature() {
+                const pin = document.getElementById('signPinInput').value.trim();
+                const errorEl = document.getElementById('signErrorAlert');
+
+                if (!pin || pin.length < 4) {
+                    errorEl.textContent = 'PIN minimal 4 digit.';
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+
+                if (!_signSklRefId) {
+                    errorEl.textContent = 'Data kelulusan siswa belum tersedia. Pastikan status siswa sudah diubah ke Lulus.';
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+
+                document.getElementById('signBtnText').classList.add('hidden');
+                document.getElementById('signBtnLoading').classList.remove('hidden');
+                document.getElementById('signSubmitBtn').disabled = true;
+                errorEl.classList.add('hidden');
+
+                const hashContent = 'SKL|' + _signSklRefId + '|' + _signSiswaId + '|' + _signNama;
+
+                fetch('{{ route('tanda-tangan.sign') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        pin: pin,
+                        document_type: 'SKL',
+                        document_title: 'SKL - ' + _signNama,
+                        reference_id: _signSklRefId,
+                        hash_content: hashContent,
+                    }),
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.token) {
+                        document.getElementById('signFormState').classList.add('hidden');
+                        document.getElementById('signSuccessState').classList.remove('hidden');
+                        setTimeout(() => {
+                            closeSignModal();
+                            window.location.reload();
+                        }, 2000);
+                    } else {
+                        const msg = data.message || 'PIN salah atau tanda tangan digital belum diatur.';
+                        errorEl.textContent = msg;
+                        errorEl.classList.remove('hidden');
+                        document.getElementById('signBtnText').classList.remove('hidden');
+                        document.getElementById('signBtnLoading').classList.add('hidden');
+                        document.getElementById('signSubmitBtn').disabled = false;
+                        document.getElementById('signPinInput').value = '';
+                        document.getElementById('signPinInput').focus();
+                    }
+                })
+                .catch(() => {
+                    errorEl.textContent = 'Terjadi kesalahan jaringan. Silakan coba lagi.';
+                    errorEl.classList.remove('hidden');
+                    document.getElementById('signBtnText').classList.remove('hidden');
+                    document.getElementById('signBtnLoading').classList.add('hidden');
+                    document.getElementById('signSubmitBtn').disabled = false;
+                });
             }
         </script>
     @endpush

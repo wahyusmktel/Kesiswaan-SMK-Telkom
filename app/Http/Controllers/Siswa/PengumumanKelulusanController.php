@@ -133,6 +133,13 @@ class PengumumanKelulusanController extends Controller
         $kopBase64  = $this->imageToBase64($pengumuman->kop_surat_path);
         $ttdBase64  = $this->imageToBase64($pengumuman->ttd_stempel_path);
 
+        $digitalDoc = \App\Models\DigitalDocument::where('document_type', 'SKL')
+            ->where('reference_id', $kelulusan->id)
+            ->where('is_valid', true)
+            ->first();
+
+        $qrBase64 = $digitalDoc ? $this->generateQrBase64(route('verifikasi.dokumen', $digitalDoc->token)) : null;
+
         $pdf = Pdf::loadView('pdf.surat-keterangan-lulus', [
             'pengumuman'    => $pengumuman,
             'siswa'         => $siswa,
@@ -142,9 +149,23 @@ class PengumumanKelulusanController extends Controller
             'nomorSurat'    => $nomorSurat,
             'kopBase64'     => $kopBase64,
             'ttdBase64'     => $ttdBase64,
+            'qrBase64'      => $qrBase64,
+            'digitalDoc'    => $digitalDoc,
         ])->setPaper('A4', 'portrait');
 
         return $pdf->download('SKL_' . str_replace(' ', '_', $siswa->nama_lengkap) . '.pdf');
+    }
+
+    private function generateQrBase64(string $url): string
+    {
+        $options = new \chillerlan\QRCode\QROptions([
+            'outputType'    => \chillerlan\QRCode\QRCode::OUTPUT_IMAGE_PNG,
+            'imageBase64'   => true,
+            'scale'         => 5,
+            'quietzoneSize' => 1,
+            'eccLevel'      => \chillerlan\QRCode\QRCode::ECC_M,
+        ]);
+        return (new \chillerlan\QRCode\QRCode($options))->render($url);
     }
 
     private function generateNomorSurat(\App\Models\PengumumanKelulusan $pengumuman, int $siswaId): string

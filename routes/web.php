@@ -782,6 +782,26 @@ Route::middleware(['auth', 'role:Super Admin|Waka Kesiswaan|Guru BK|Guru Piket|K
     });
 
 // ============================================================
+// TANDA TANGAN DIGITAL (Guru, Waka Kurikulum, Waka Kesiswaan, Kaur SDM)
+// ============================================================
+Route::middleware(['auth', 'role:Guru Kelas|Waka Kesiswaan|Kurikulum|KAUR SDM|Super Admin'])
+    ->prefix('tanda-tangan-digital')
+    ->name('tanda-tangan.')
+    ->group(function () {
+        Route::get('/', [\App\Http\Controllers\DigitalSignatureController::class, 'index'])->name('index');
+        Route::post('/setup', [\App\Http\Controllers\DigitalSignatureController::class, 'setup'])->name('setup');
+        Route::post('/sign', [\App\Http\Controllers\DigitalSignatureController::class, 'sign'])->name('sign');
+        Route::post('/revoke', [\App\Http\Controllers\DigitalSignatureController::class, 'revoke'])->name('revoke');
+    });
+
+// ============================================================
+// PUBLIC VERIFICATION FOR DIGITAL DOCUMENTS
+// ============================================================
+Route::get('/verifikasi/{token}', [\App\Http\Controllers\VerifikasiDokumenController::class, 'show'])
+    ->name('verifikasi.dokumen')
+    ->where('token', '[0-9a-f\-]{36}');
+
+// ============================================================
 // PUBLIC VERIFICATION FOR IQ TEST CERTIFICATE
 // ============================================================
 Route::get('/verifikasi-iq/{code}', [\App\Http\Controllers\IqVerificationController::class, 'verify'])->name('tes-iq.verify');

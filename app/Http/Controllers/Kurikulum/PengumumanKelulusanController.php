@@ -188,12 +188,6 @@ class PengumumanKelulusanController extends Controller
             ->where('master_siswa_id', $siswa->id)
             ->firstOrFail();
 
-        // Ensure verification token exists
-        if (empty($kelulusan->verification_token)) {
-            $kelulusan->verification_token = \Illuminate\Support\Str::random(32);
-            $kelulusan->save();
-        }
-
         $siswa->load(['rombels.kelas', 'rombels.tahunPelajaran']);
 
         $rombelXII = $siswa->rombels
@@ -206,13 +200,12 @@ class PengumumanKelulusanController extends Controller
         $kopBase64  = $this->imageToBase64($pengumuman->kop_surat_path);
         $ttdBase64  = $this->imageToBase64($pengumuman->ttd_stempel_path);
 
-        // Generate QR Code as base64 SVG
-        $verificationUrl = route('verifikasi.skl', $kelulusan->verification_token);
-        $qrCodeSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
-            ->size(150)
-            ->errorCorrection('M')
-            ->generate($verificationUrl);
-        $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrCodeSvg);
+        $digitalDoc = \App\Models\DigitalDocument::where('document_type', 'SKL')
+            ->where('reference_id', $kelulusan->id)
+            ->where('is_valid', true)
+            ->first();
+
+        $qrBase64 = $digitalDoc ? $this->generateQrBase64(route('verifikasi.dokumen', $digitalDoc->token)) : null;
 
         $pdf = Pdf::loadView('pdf.surat-keterangan-lulus', [
             'pengumuman'    => $pengumuman,
@@ -224,12 +217,24 @@ class PengumumanKelulusanController extends Controller
             'kopBase64'     => $kopBase64,
             'ttdBase64'     => $ttdBase64,
             'qrBase64'      => $qrBase64,
-            'verificationUrl' => $verificationUrl,
+            'digitalDoc'    => $digitalDoc,
         ])->setPaper('A4', 'portrait');
 
         $filename = 'SKL_' . str_replace(' ', '_', $siswa->nama_lengkap) . '.pdf';
 
         return $pdf->download($filename);
+    }
+
+    private function generateQrBase64(string $url): string
+    {
+        $options = new \chillerlan\QRCode\QROptions([
+            'outputType'   => \chillerlan\QRCode\QRCode::OUTPUT_IMAGE_PNG,
+            'imageBase64'  => true,
+            'scale'        => 5,
+            'quietzoneSize'=> 1,
+            'eccLevel'     => \chillerlan\QRCode\QRCode::ECC_M,
+        ]);
+        return (new \chillerlan\QRCode\QRCode($options))->render($url);
     }
 
     private function generateNomorSurat(PengumumanKelulusan $pengumuman, int $siswaId): string
