@@ -157,10 +157,13 @@
             height: 55pt;
             position: relative;
             text-align: left;
+            margin-top: -20pt;
+            margin-bottom: -20pt;
+            z-index: 10;
         }
         .ttd-image {
-            height: 55pt;
-            max-width: 140pt;
+            height: 90pt;
+            max-width: 180pt;
         }
         .ttd-nama {
             font-size: 11pt;
