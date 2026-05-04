@@ -311,6 +311,32 @@
                                         Semua Tidak Lulus
                                     </button>
                                 </form>
+
+                                {{-- TTD Massal --}}
+                                @if($totalLulus > 0)
+                                    <div class="pt-1 border-t border-gray-100">
+                                        <button type="button"
+                                            onclick="openBulkSignModal({{ $pengumuman->id }}, {{ $totalLulus }}, {{ $totalBelumTtd }})"
+                                            class="w-full flex items-center justify-between py-2.5 px-3 rounded-lg text-xs font-bold transition
+                                                {{ $totalBelumTtd > 0
+                                                    ? 'bg-violet-600 hover:bg-violet-700 text-white shadow-sm'
+                                                    : 'bg-violet-50 hover:bg-violet-100 text-violet-700 border border-violet-200' }}">
+                                            <span class="flex items-center gap-1.5">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                                                </svg>
+                                                TTD Massal SKL
+                                            </span>
+                                            @if($totalBelumTtd > 0)
+                                                <span class="bg-white/25 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full">
+                                                    {{ $totalBelumTtd }} belum
+                                                </span>
+                                            @else
+                                                <span class="text-violet-400 text-[10px] font-semibold">Semua sudah TTD</span>
+                                            @endif
+                                        </button>
+                                    </div>
+                                @endif
                             </div>
                         @endif
                     </div>
@@ -552,6 +578,94 @@
         </div>
     </div>
 
+    {{-- Modal TTD Massal --}}
+    <div id="bulkSignModal" class="fixed inset-0 z-50 flex items-center justify-center hidden" role="dialog" aria-modal="true">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeBulkSignModal()"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            {{-- Header --}}
+            <div class="bg-gradient-to-r from-violet-600 to-purple-700 px-6 py-5">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-white font-bold text-base">Tanda Tangan Digital Massal</h3>
+                        <p class="text-purple-200 text-xs mt-0.5">SKL seluruh siswa lulus sekaligus</p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Body --}}
+            <div class="p-6">
+                {{-- Success State --}}
+                <div id="bulkSignSuccessState" class="hidden text-center py-4">
+                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </div>
+                    <h4 class="font-bold text-gray-800 text-lg">Berhasil Ditandatangani!</h4>
+                    <p class="text-gray-500 text-sm mt-1" id="bulkSignResultText"></p>
+                    <p class="text-xs text-gray-400 mt-3">Halaman akan diperbarui...</p>
+                </div>
+
+                {{-- Form State --}}
+                <div id="bulkSignFormState">
+                    {{-- Info counts --}}
+                    <div class="mb-4 grid grid-cols-2 gap-3">
+                        <div class="p-3 bg-green-50 border border-green-100 rounded-xl text-center">
+                            <p class="text-2xl font-black text-green-700" id="bulkTotalLulus">-</p>
+                            <p class="text-[11px] font-semibold text-green-600">Siswa Lulus</p>
+                        </div>
+                        <div class="p-3 bg-violet-50 border border-violet-100 rounded-xl text-center">
+                            <p class="text-2xl font-black text-violet-700" id="bulkTotalBelum">-</p>
+                            <p class="text-[11px] font-semibold text-violet-600">Belum Ditandatangani</p>
+                        </div>
+                    </div>
+
+                    <div class="mb-4 p-3 bg-amber-50 border border-amber-100 rounded-xl text-xs text-amber-700">
+                        <p class="font-semibold mb-1">Proses ini akan menandatangani SKL semua siswa yang berstatus <span class="text-green-700">LULUS</span> dan belum memiliki tanda tangan digital.</p>
+                        <p class="text-amber-600">SKL yang sudah ditandatangani tidak akan ditimpa.</p>
+                    </div>
+
+                    <div id="bulkSignErrorAlert" class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-semibold"></div>
+
+                    <div class="mb-5">
+                        <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">PIN Tanda Tangan Digital</label>
+                        <input type="password" id="bulkSignPinInput" inputmode="numeric" pattern="[0-9]{4,8}" maxlength="8"
+                            placeholder="Masukkan PIN (4–8 digit)"
+                            class="w-full rounded-xl border-gray-200 text-sm font-mono tracking-widest text-center focus:ring-violet-500 focus:border-violet-500 text-lg py-3">
+                    </div>
+
+                    {{-- Progress bar (hidden until processing) --}}
+                    <div id="bulkSignProgress" class="hidden mb-4">
+                        <div class="flex justify-between text-xs text-gray-500 mb-1">
+                            <span>Memproses...</span>
+                            <span id="bulkProgressLabel">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-2">
+                            <div id="bulkProgressBar" class="bg-violet-500 h-2 rounded-full transition-all duration-300" style="width:0%"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3">
+                        <button type="button" onclick="closeBulkSignModal()"
+                            class="flex-1 py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl text-sm transition">
+                            Batal
+                        </button>
+                        <button type="button" id="bulkSignSubmitBtn" onclick="submitBulkSignature()"
+                            class="flex-1 py-2.5 px-4 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl text-sm transition shadow-sm hover:shadow-md">
+                            <span id="bulkSignBtnText">Tandatangani Semua</span>
+                            <span id="bulkSignBtnLoading" class="hidden">Memproses...</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @push('scripts')
         <script>
             // Toggle SKL visual feedback
@@ -656,6 +770,113 @@
             document.getElementById('signPinInput')?.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter') submitSignature();
             });
+
+            // ===== Modal TTD Massal =====
+            let _bulkPengumumanId = null;
+
+            function openBulkSignModal(pengumumanId, totalLulus, totalBelum) {
+                _bulkPengumumanId = pengumumanId;
+
+                document.getElementById('bulkTotalLulus').textContent = totalLulus;
+                document.getElementById('bulkTotalBelum').textContent = totalBelum;
+                document.getElementById('bulkSignPinInput').value = '';
+                document.getElementById('bulkSignErrorAlert').classList.add('hidden');
+                document.getElementById('bulkSignErrorAlert').textContent = '';
+                document.getElementById('bulkSignFormState').classList.remove('hidden');
+                document.getElementById('bulkSignSuccessState').classList.add('hidden');
+                document.getElementById('bulkSignBtnText').classList.remove('hidden');
+                document.getElementById('bulkSignBtnLoading').classList.add('hidden');
+                document.getElementById('bulkSignSubmitBtn').disabled = false;
+                document.getElementById('bulkSignProgress').classList.add('hidden');
+                document.getElementById('bulkProgressBar').style.width = '0%';
+
+                document.getElementById('bulkSignModal').classList.remove('hidden');
+                setTimeout(() => document.getElementById('bulkSignPinInput').focus(), 100);
+            }
+
+            function closeBulkSignModal() {
+                document.getElementById('bulkSignModal').classList.add('hidden');
+            }
+
+            document.getElementById('bulkSignPinInput')?.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') submitBulkSignature();
+            });
+
+            function submitBulkSignature() {
+                const pin     = document.getElementById('bulkSignPinInput').value.trim();
+                const errorEl = document.getElementById('bulkSignErrorAlert');
+
+                if (!pin || pin.length < 4) {
+                    errorEl.textContent = 'PIN minimal 4 digit.';
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+
+                document.getElementById('bulkSignBtnText').classList.add('hidden');
+                document.getElementById('bulkSignBtnLoading').classList.remove('hidden');
+                document.getElementById('bulkSignSubmitBtn').disabled = true;
+                document.getElementById('bulkSignProgress').classList.remove('hidden');
+                errorEl.classList.add('hidden');
+
+                // Animate progress bar while waiting
+                let fakeProgress = 0;
+                const progressInterval = setInterval(() => {
+                    fakeProgress = Math.min(fakeProgress + Math.random() * 8, 85);
+                    document.getElementById('bulkProgressBar').style.width = fakeProgress + '%';
+                    document.getElementById('bulkProgressLabel').textContent = Math.round(fakeProgress) + '%';
+                }, 200);
+
+                fetch('{{ route('tanda-tangan.sign-bulk') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        pin: pin,
+                        pengumuman_kelulusan_id: _bulkPengumumanId,
+                    }),
+                })
+                .then(res => res.json())
+                .then(data => {
+                    clearInterval(progressInterval);
+                    document.getElementById('bulkProgressBar').style.width = '100%';
+                    document.getElementById('bulkProgressLabel').textContent = '100%';
+
+                    if (data.success) {
+                        const msg = data.newly_signed > 0
+                            ? `${data.newly_signed} SKL berhasil ditandatangani` + (data.already_signed > 0 ? `, ${data.already_signed} sudah ditandatangani sebelumnya.` : '.')
+                            : `Semua ${data.already_signed} SKL sudah ditandatangani sebelumnya.`;
+                        document.getElementById('bulkSignResultText').textContent = msg;
+                        document.getElementById('bulkSignFormState').classList.add('hidden');
+                        document.getElementById('bulkSignSuccessState').classList.remove('hidden');
+                        setTimeout(() => {
+                            closeBulkSignModal();
+                            window.location.reload();
+                        }, 2500);
+                    } else {
+                        errorEl.textContent = data.message || 'PIN salah atau tanda tangan digital belum diatur.';
+                        errorEl.classList.remove('hidden');
+                        document.getElementById('bulkSignBtnText').classList.remove('hidden');
+                        document.getElementById('bulkSignBtnLoading').classList.add('hidden');
+                        document.getElementById('bulkSignSubmitBtn').disabled = false;
+                        document.getElementById('bulkSignProgress').classList.add('hidden');
+                        document.getElementById('bulkProgressBar').style.width = '0%';
+                        document.getElementById('bulkSignPinInput').value = '';
+                        document.getElementById('bulkSignPinInput').focus();
+                    }
+                })
+                .catch(() => {
+                    clearInterval(progressInterval);
+                    errorEl.textContent = 'Terjadi kesalahan jaringan. Silakan coba lagi.';
+                    errorEl.classList.remove('hidden');
+                    document.getElementById('bulkSignBtnText').classList.remove('hidden');
+                    document.getElementById('bulkSignBtnLoading').classList.add('hidden');
+                    document.getElementById('bulkSignSubmitBtn').disabled = false;
+                    document.getElementById('bulkSignProgress').classList.add('hidden');
+                });
+            }
 
             function submitSignature() {
                 const pin = document.getElementById('signPinInput').value.trim();

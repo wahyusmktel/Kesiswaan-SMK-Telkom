@@ -791,6 +791,7 @@ Route::middleware(['auth', 'role:Guru Kelas|Waka Kesiswaan|Kurikulum|KAUR SDM|Su
         Route::get('/', [\App\Http\Controllers\DigitalSignatureController::class, 'index'])->name('index');
         Route::post('/setup', [\App\Http\Controllers\DigitalSignatureController::class, 'setup'])->name('setup');
         Route::post('/sign', [\App\Http\Controllers\DigitalSignatureController::class, 'sign'])->name('sign');
+        Route::post('/sign-bulk', [\App\Http\Controllers\DigitalSignatureController::class, 'signBulk'])->name('sign-bulk');
         Route::post('/revoke', [\App\Http\Controllers\DigitalSignatureController::class, 'revoke'])->name('revoke');
     });
 

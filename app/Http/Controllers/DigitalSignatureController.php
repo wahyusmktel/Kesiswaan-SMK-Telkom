@@ -113,6 +113,85 @@ class DigitalSignatureController extends Controller
         ]);
     }
 
+    public function signBulk(Request $request)
+    {
+        $request->validate([
+            'pin'                     => 'required|string',
+            'pengumuman_kelulusan_id' => 'required|exists:pengumuman_kelulusans,id',
+        ]);
+
+        $user      = Auth::user();
+        $signature = UserDigitalSignature::where('user_id', $user->id)->first();
+
+        if (!$signature || !$signature->isReady()) {
+            return response()->json(['success' => false, 'message' => 'Tanda tangan digital belum disetup. Silakan setup terlebih dahulu di menu Tanda Tangan Digital.'], 422);
+        }
+
+        if (!$signature->verifyPin($request->pin)) {
+            return response()->json(['success' => false, 'message' => 'PIN salah. Coba lagi.'], 422);
+        }
+
+        $kelulusans = \App\Models\SiswaKelulusan::where('pengumuman_kelulusan_id', $request->pengumuman_kelulusan_id)
+            ->where('status', 'lulus')
+            ->with('siswa')
+            ->get();
+
+        $newlySigned  = 0;
+        $alreadySigned = 0;
+        $signerRole   = $user->getRoleNames()->first() ?? 'Staff';
+
+        foreach ($kelulusans as $kelulusan) {
+            $existing = DigitalDocument::where('document_type', 'SKL')
+                ->where('reference_id', $kelulusan->id)
+                ->where('is_valid', true)
+                ->first();
+
+            if ($existing) {
+                $alreadySigned++;
+                continue;
+            }
+
+            $nama        = $kelulusan->siswa->nama_lengkap ?? 'Siswa';
+            $hash        = DigitalDocument::generateHash(['SKL', (string) $kelulusan->id, (string) $kelulusan->master_siswa_id, $nama]);
+            $hmac        = DigitalDocument::generateHmac($hash);
+            $signerData  = [
+                'document_hash'  => $hash,
+                'hmac_signature' => $hmac,
+                'signed_by'      => $user->id,
+                'signer_name'    => $user->name,
+                'signer_nip'     => null,
+                'signer_role'    => $signerRole,
+                'signed_at'      => now(),
+                'is_valid'       => true,
+                'revoked_at'     => null,
+                'revoke_reason'  => null,
+            ];
+
+            $doc = DigitalDocument::where('document_type', 'SKL')
+                ->where('reference_id', $kelulusan->id)
+                ->first();
+
+            if ($doc) {
+                $doc->update($signerData);
+            } else {
+                DigitalDocument::create(array_merge($signerData, [
+                    'document_type'  => 'SKL',
+                    'document_title' => 'SKL - ' . $nama,
+                    'reference_id'   => $kelulusan->id,
+                ]));
+            }
+
+            $newlySigned++;
+        }
+
+        return response()->json([
+            'success'        => true,
+            'newly_signed'   => $newlySigned,
+            'already_signed' => $alreadySigned,
+            'total'          => $kelulusans->count(),
+        ]);
+    }
+
     public function revoke(Request $request)
     {
         $request->validate([

@@ -58,6 +58,15 @@ class PengumumanKelulusanController extends Controller
             ? SiswaKelulusan::where('pengumuman_kelulusan_id', $pengumuman->id)->where('status', 'tidak_lulus')->count()
             : 0;
 
+        $totalBelumTtd = 0;
+        if ($pengumuman && $totalLulus > 0) {
+            $lulusIds   = SiswaKelulusan::where('pengumuman_kelulusan_id', $pengumuman->id)
+                ->where('status', 'lulus')->pluck('id');
+            $sudahTtd   = \App\Models\DigitalDocument::where('document_type', 'SKL')
+                ->whereIn('reference_id', $lulusIds)->where('is_valid', true)->count();
+            $totalBelumTtd = $lulusIds->count() - $sudahTtd;
+        }
+
         $tahunPelajaranList = TahunPelajaran::orderByDesc('tahun')->get();
 
         return view('pages.kurikulum.pengumuman-kelulusan.index', compact(
@@ -69,6 +78,7 @@ class PengumumanKelulusanController extends Controller
             'totalSiswa',
             'totalLulus',
             'totalTidakLulus',
+            'totalBelumTtd',
         ));
     }
 
