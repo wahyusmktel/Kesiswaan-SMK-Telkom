@@ -242,7 +242,7 @@
                 <td class="col-label">Tempat, Tanggal Lahir</td>
                 <td class="col-sep">:</td>
                 <td class="col-value">
-                    {{ $siswa->tempat_lahir }}, {{ $siswa->tanggal_lahir ? $siswa->tanggal_lahir->translatedFormat('d F Y') : '-' }}
+                    {{ $siswa->tempat_lahir }}, {{ $siswa->tanggal_lahir ? \Carbon\Carbon::parse($siswa->tanggal_lahir)->locale('id')->translatedFormat('d F Y') : '-' }}
                 </td>
             </tr>
             <tr>
