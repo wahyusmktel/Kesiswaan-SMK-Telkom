@@ -70,6 +70,19 @@ class PersetujuanIzinGuruController extends Controller
             'kurikulum_at' => now(),
         ]);
 
+        // Auto-sign TTD Waka Kurikulum (izin guru)
+        $user = Auth::user();
+        $sig = \App\Models\UserDigitalSignature::where('user_id', $user->id)->first();
+        if ($sig && $sig->isReady() && $sig->auto_sign_izin_guru) {
+            \App\Models\DigitalDocument::autoSign(
+                $user,
+                'IZIN_GURU_KURIKULUM',
+                'Izin Guru (Kurikulum) - ' . ($izin->guru->nama_lengkap ?? ''),
+                $izin->id,
+                ['IZIN_GURU_KURIKULUM', (string) $izin->id, (string) $izin->master_guru_id, $izin->guru->nama_lengkap ?? '']
+            );
+        }
+
         // Notify SDM
         $approvers = \App\Models\User::role('KAUR SDM')->get();
         $msg = "Ada pengajuan Izin Guru (Luar Sekolah) yang perlu validasi akhir.";

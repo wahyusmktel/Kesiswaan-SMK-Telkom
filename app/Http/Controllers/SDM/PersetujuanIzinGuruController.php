@@ -73,6 +73,19 @@ class PersetujuanIzinGuruController extends Controller
             'sdm_at' => now(),
         ]);
 
+        // Auto-sign TTD KAUR SDM (izin guru)
+        $user = Auth::user();
+        $sig = \App\Models\UserDigitalSignature::where('user_id', $user->id)->first();
+        if ($sig && $sig->isReady() && $sig->auto_sign_izin_guru) {
+            \App\Models\DigitalDocument::autoSign(
+                $user,
+                'IZIN_GURU_SDM',
+                'Izin Guru (SDM) - ' . ($izin->guru->nama_lengkap ?? ''),
+                $izin->id,
+                ['IZIN_GURU_SDM', (string) $izin->id, (string) $izin->master_guru_id, $izin->guru->nama_lengkap ?? '']
+            );
+        }
+
         // Notify Teacher
         $teacherUser = $izin->guru->user;
         if ($teacherUser) {
@@ -106,6 +119,18 @@ class PersetujuanIzinGuruController extends Controller
         }
 
         return redirect()->back()->with('success', 'Permohonan izin telah disetujui sepenuhnya dan absensi telah diperbarui.');
+    }
+
+    private function generateQrBase64(string $url): string
+    {
+        $options = new \chillerlan\QRCode\QROptions([
+            'outputInterface' => \chillerlan\QRCode\Output\QRGdImagePNG::class,
+            'outputBase64'    => true,
+            'scale'           => 4,
+            'quietzoneSize'   => 1,
+            'eccLevel'        => \chillerlan\QRCode\Common\EccLevel::M,
+        ]);
+        return (new \chillerlan\QRCode\QRCode($options))->render($url);
     }
 
     public function reject(Request $request, GuruIzin $izin)
@@ -147,17 +172,30 @@ class PersetujuanIzinGuruController extends Controller
         }
 
         $izin->load([
-            'guru', 
-            'piket', 
-            'kurikulum', 
-            'sdm', 
-            'jadwals.rombel.kelas', 
+            'guru',
+            'piket',
+            'kurikulum',
+            'sdm',
+            'jadwals.rombel.kelas',
             'jadwals.mataPelajaran'
         ]);
-        
+
         $settings = AppSetting::first();
-        
-        $pdf = Pdf::loadView('pdf.izin-guru', compact('izin', 'settings'));
+
+        // Digital signature QR codes
+        $docPiket     = \App\Models\DigitalDocument::where('document_type', 'IZIN_GURU_PIKET')->where('reference_id', $izin->id)->where('is_valid', true)->first();
+        $docKurikulum = \App\Models\DigitalDocument::where('document_type', 'IZIN_GURU_KURIKULUM')->where('reference_id', $izin->id)->where('is_valid', true)->first();
+        $docSdm       = \App\Models\DigitalDocument::where('document_type', 'IZIN_GURU_SDM')->where('reference_id', $izin->id)->where('is_valid', true)->first();
+
+        $qrPiketBase64     = $docPiket     ? $this->generateQrBase64(route('verifikasi.dokumen', $docPiket->token))     : null;
+        $qrKurikulumBase64 = $docKurikulum ? $this->generateQrBase64(route('verifikasi.dokumen', $docKurikulum->token)) : null;
+        $qrSdmBase64       = $docSdm       ? $this->generateQrBase64(route('verifikasi.dokumen', $docSdm->token))       : null;
+
+        $pdf = Pdf::loadView('pdf.izin-guru', compact(
+            'izin', 'settings',
+            'docPiket', 'docKurikulum', 'docSdm',
+            'qrPiketBase64', 'qrKurikulumBase64', 'qrSdmBase64'
+        ));
         return $pdf->stream('Surat_Izin_Guru_' . str_replace(' ', '_', $izin->guru->nama_lengkap) . '.pdf');
     }
 }

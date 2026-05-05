@@ -145,6 +145,23 @@
             color: #718096;
             margin-top: 2px;
         }
+        .ttd-digital-wrap {
+            margin-bottom: 8px;
+        }
+        .ttd-digital-qr {
+            width: 55px;
+            height: 55px;
+            padding: 3px;
+            border: 1px solid #c7d2fe;
+            background: #fff;
+        }
+        .ttd-digital-badge {
+            font-size: 5.5pt;
+            color: #4f46e5;
+            margin-top: 3px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
     </style>
 </head>
 <body>
@@ -233,6 +250,14 @@
             <tr>
                 <td class="sig-box">
                     <div class="sig-role">Guru Piket</div>
+                    @if(!empty($qrPiketBase64))
+                        <div class="ttd-digital-wrap">
+                            <img src="{{ $qrPiketBase64 }}" class="ttd-digital-qr">
+                            <div class="ttd-digital-badge">&#9679; TTD DIGITAL SAH</div>
+                        </div>
+                    @else
+                        <div style="height:65px;"></div>
+                    @endif
                     <span class="sig-name">{{ $izin->piket->name ?? '..........................' }}</span>
                     @if($izin->piket)
                     <div class="sig-id">Tgl: {{ $izin->piket_at?->format('d/m/Y H:i') ?? '-' }}</div>
@@ -240,6 +265,14 @@
                 </td>
                 <td class="sig-box">
                     <div class="sig-role">Waka Kurikulum</div>
+                    @if(!empty($qrKurikulumBase64))
+                        <div class="ttd-digital-wrap">
+                            <img src="{{ $qrKurikulumBase64 }}" class="ttd-digital-qr">
+                            <div class="ttd-digital-badge">&#9679; TTD DIGITAL SAH</div>
+                        </div>
+                    @else
+                        <div style="height:65px;"></div>
+                    @endif
                     <span class="sig-name">{{ $izin->kurikulum->name ?? '..........................' }}</span>
                     @if($izin->kurikulum)
                     <div class="sig-id">Tgl: {{ $izin->kurikulum_at?->format('d/m/Y H:i') ?? '-' }}</div>
@@ -247,6 +280,14 @@
                 </td>
                 <td class="sig-box">
                     <div class="sig-role">KAUR SDM</div>
+                    @if(!empty($qrSdmBase64))
+                        <div class="ttd-digital-wrap">
+                            <img src="{{ $qrSdmBase64 }}" class="ttd-digital-qr">
+                            <div class="ttd-digital-badge">&#9679; TTD DIGITAL SAH</div>
+                        </div>
+                    @else
+                        <div style="height:65px;"></div>
+                    @endif
                     <span class="sig-name">{{ $izin->sdm->name ?? '..........................' }}</span>
                     @if($izin->sdm)
                     <div class="sig-id">Tgl: {{ $izin->sdm_at?->format('d/m/Y H:i') ?? '-' }}</div>

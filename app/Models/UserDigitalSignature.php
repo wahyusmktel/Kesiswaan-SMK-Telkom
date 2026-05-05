@@ -14,6 +14,7 @@ class UserDigitalSignature extends Model
         'is_active',
         'auto_sign_izin_keluar',
         'auto_sign_perizinan',
+        'auto_sign_izin_guru',
     ];
 
     protected $hidden = ['pin_hash'];
@@ -22,6 +23,7 @@ class UserDigitalSignature extends Model
         'is_active'             => 'boolean',
         'auto_sign_izin_keluar' => 'boolean',
         'auto_sign_perizinan'   => 'boolean',
+        'auto_sign_izin_guru'   => 'boolean',
     ];
 
     public function user()

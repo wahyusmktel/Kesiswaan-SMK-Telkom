@@ -31,6 +31,7 @@ class DigitalSignatureController extends Controller
             'pin_confirmation'      => 'nullable',
             'auto_sign_izin_keluar' => 'nullable|boolean',
             'auto_sign_perizinan'   => 'nullable|boolean',
+            'auto_sign_izin_guru'   => 'nullable|boolean',
         ]);
 
         $signature = UserDigitalSignature::firstOrNew(['user_id' => Auth::id()]);
@@ -49,6 +50,7 @@ class DigitalSignatureController extends Controller
         $signature->is_active             = true;
         $signature->auto_sign_izin_keluar = $request->boolean('auto_sign_izin_keluar');
         $signature->auto_sign_perizinan   = $request->boolean('auto_sign_perizinan');
+        $signature->auto_sign_izin_guru   = $request->boolean('auto_sign_izin_guru');
         $signature->save();
 
         return back()->with('success', 'Tanda tangan digital berhasil diperbarui.');

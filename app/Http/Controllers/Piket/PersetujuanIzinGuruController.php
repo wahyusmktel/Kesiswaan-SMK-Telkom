@@ -82,8 +82,21 @@ class PersetujuanIzinGuruController extends Controller
             $updateData['sdm_id'] = Auth::id();
             $updateData['kurikulum_at'] = now();
             $updateData['sdm_at'] = now();
-            
+
             $izin->update($updateData);
+
+            // Auto-sign TTD Guru Piket (izin guru) jika diaktifkan
+            $user = Auth::user();
+            $sig = \App\Models\UserDigitalSignature::where('user_id', $user->id)->first();
+            if ($sig && $sig->isReady() && $sig->auto_sign_izin_guru) {
+                \App\Models\DigitalDocument::autoSign(
+                    $user,
+                    'IZIN_GURU_PIKET',
+                    'Izin Guru (Piket) - ' . ($izin->guru->nama_lengkap ?? ''),
+                    $izin->id,
+                    ['IZIN_GURU_PIKET', (string) $izin->id, (string) $izin->master_guru_id, $izin->guru->nama_lengkap ?? '']
+                );
+            }
 
             // Notify Teacher
             $teacherUser = $izin->guru->user;
@@ -121,6 +134,19 @@ class PersetujuanIzinGuruController extends Controller
         }
 
         $izin->update($updateData);
+
+        // Auto-sign TTD Guru Piket (izin guru luar)
+        $user = Auth::user();
+        $sig = \App\Models\UserDigitalSignature::where('user_id', $user->id)->first();
+        if ($sig && $sig->isReady() && $sig->auto_sign_izin_guru) {
+            \App\Models\DigitalDocument::autoSign(
+                $user,
+                'IZIN_GURU_PIKET',
+                'Izin Guru (Piket) - ' . ($izin->guru->nama_lengkap ?? ''),
+                $izin->id,
+                ['IZIN_GURU_PIKET', (string) $izin->id, (string) $izin->master_guru_id, $izin->guru->nama_lengkap ?? '']
+            );
+        }
 
         // Notify Kurikulum
         $approvers = \App\Models\User::role('Kurikulum')->get();
