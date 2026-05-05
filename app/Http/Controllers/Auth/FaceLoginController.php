@@ -77,11 +77,40 @@ class FaceLoginController extends Controller
 
             if ($matchedUser) {
                 Auth::login($matchedUser, true);
+                
+                $request->session()->regenerate();
+
+                // Tentukan rute dashboard berdasarkan role
+                $redirectUrl = route('dashboard', absolute: false); // Default
+
+                if ($matchedUser->hasRole('Siswa')) {
+                    $redirectUrl = route('siswa.dashboard.index', absolute: false);
+                } elseif ($matchedUser->hasRole('Guru Kelas')) {
+                    $redirectUrl = route('guru-kelas.dashboard.index', absolute: false);
+                } elseif ($matchedUser->hasRole('Wali Kelas')) {
+                    $redirectUrl = route('wali-kelas.dashboard.index', absolute: false);
+                } elseif ($matchedUser->hasRole('Guru BK')) {
+                    $redirectUrl = route('bk.dashboard.index', absolute: false);
+                } elseif ($matchedUser->hasRole('Guru Piket')) {
+                    $redirectUrl = route('piket.dashboard.index', absolute: false);
+                } elseif ($matchedUser->hasRole('Waka Kesiswaan')) {
+                    $redirectUrl = route('kesiswaan.dashboard.index', absolute: false);
+                } elseif ($matchedUser->hasRole('Kurikulum')) {
+                    $redirectUrl = route('kurikulum.dashboard.index', absolute: false);
+                } elseif ($matchedUser->hasRole('Operator')) {
+                    $redirectUrl = route('operator.dashboard.index', absolute: false);
+                } elseif ($matchedUser->hasRole('Security')) {
+                    $redirectUrl = route('security.dashboard.index', absolute: false);
+                } elseif ($matchedUser->hasRole('KAUR SDM')) {
+                    $redirectUrl = route('sdm.dashboard.index', absolute: false);
+                } elseif ($matchedUser->hasRole('Super Admin')) {
+                    $redirectUrl = route('super-admin.dashboard.index', absolute: false);
+                }
 
                 return response()->json([
                     'success' => true,
                     'message' => 'Wajah dikenali! Selamat datang, ' . $matchedUser->name,
-                    'redirect' => '/dashboard',
+                    'redirect' => $redirectUrl,
                     'confidence' => round($bestScore * 100) . '%',
                 ]);
             }
