@@ -601,14 +601,11 @@
                     <p class="text-gray-400 text-sm">Pastikan wajah berada di dalam lingkaran</p>
                 </div>
                 <div id="faceActions" class="flex items-center justify-center gap-3">
-                    <button type="button" id="btnFaceCapture"
-                        class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-all flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        Verifikasi Wajah
-                    </button>
+                    <!-- Auto Capture Status -->
+                    <div id="autoCaptureStatus" class="flex flex-col items-center">
+                        <div class="text-3xl font-black text-red-500 mb-1" id="captureCountdown">5</div>
+                        <p class="text-sm font-bold text-gray-400 uppercase tracking-widest">Memindai...</p>
+                    </div>
                     <button type="button" id="btnFaceClose"
                         class="px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-all">
                         Batal
@@ -621,6 +618,17 @@
                 <div id="faceResult" style="display:none;" class="py-2">
                     <p id="faceResultMsg" class="font-bold text-lg"></p>
                 </div>
+
+                <!-- Info Box -->
+                <div class="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-start gap-3 text-left">
+                    <svg class="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p class="text-xs text-blue-200">
+                        <strong class="text-blue-400 block mb-0.5">Informasi:</strong>
+                        Pastikan Anda sudah mendaftarkan wajah Anda (Face ID) melalui menu Pengaturan Akun di dalam dashboard sebelum menggunakan fitur ini.
+                    </p>
+                </div>
             </div>
         </div>
     </div>
@@ -632,7 +640,8 @@
             const modal = document.getElementById('faceModal');
             const video = document.getElementById('faceVideo');
             const canvas = document.getElementById('faceCanvas');
-            const btnCapture = document.getElementById('btnFaceCapture');
+            const autoCaptureStatus = document.getElementById('autoCaptureStatus');
+            const captureCountdown = document.getElementById('captureCountdown');
             const btnClose = document.getElementById('btnFaceClose');
             const statusEl = document.getElementById('faceStatus');
             const actionsEl = document.getElementById('faceActions');
@@ -641,6 +650,8 @@
             const resultMsg = document.getElementById('faceResultMsg');
 
             let stream = null;
+            let countdownInterval = null;
+            let countdownValue = 5;
 
             function openModal() {
                 modal.classList.add('active');
@@ -660,10 +671,32 @@
                         audio: false
                     });
                     video.srcObject = stream;
+                    
+                    // Wait for video to be ready before starting countdown
+                    video.onloadedmetadata = () => {
+                        startCountdown();
+                    };
                 } catch (err) {
                     statusEl.innerHTML = '<p class="text-red-400 font-bold">Kamera tidak tersedia</p><p class="text-gray-400 text-sm">Izinkan akses kamera untuk menggunakan Face ID</p>';
                     actionsEl.style.display = 'none';
                 }
+            }
+
+            function startCountdown() {
+                clearInterval(countdownInterval);
+                countdownValue = 5;
+                captureCountdown.textContent = countdownValue;
+                autoCaptureStatus.style.display = 'flex';
+                
+                countdownInterval = setInterval(() => {
+                    countdownValue--;
+                    captureCountdown.textContent = countdownValue;
+                    
+                    if (countdownValue <= 0) {
+                        clearInterval(countdownInterval);
+                        captureAndVerify();
+                    }
+                }, 1000);
             }
 
             function stopCamera() {
@@ -672,6 +705,7 @@
                     stream = null;
                     video.srcObject = null;
                 }
+                clearInterval(countdownInterval);
             }
 
             function resetUI() {
@@ -679,6 +713,10 @@
                 actionsEl.style.display = 'flex';
                 loadingEl.style.display = 'none';
                 resultEl.style.display = 'none';
+                
+                if (stream) {
+                    startCountdown();
+                }
             }
 
             async function captureAndVerify() {
@@ -736,7 +774,6 @@
 
             btnOpen.addEventListener('click', openModal);
             btnClose.addEventListener('click', closeModal);
-            btnCapture.addEventListener('click', captureAndVerify);
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) closeModal();
             });
