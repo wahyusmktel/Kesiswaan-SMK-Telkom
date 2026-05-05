@@ -776,6 +776,11 @@ Route::middleware(['auth', 'permission:manage tu letter requests'])->group(funct
     Route::get('/layanan-persuratan/request/{letterRequest}/print', [\App\Http\Controllers\TU\LetterRequestController::class, 'print'])->name('correspondence.request.print');
 });
 
+// Group Route for Kantin
+Route::middleware(['auth', 'role:Kantin', 'permission:view kantin dashboard'])->prefix('kantin')->name('kantin.')->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\Kantin\DashboardController::class, 'index'])->name('dashboard.index');
+});
+
 require __DIR__ . '/auth.php';
 
 // ============================================================

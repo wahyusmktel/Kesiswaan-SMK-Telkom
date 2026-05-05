@@ -2337,6 +2337,28 @@
     </li>
 @endcan
 
+{{-- ============================================================ --}}
+{{-- ROLE: KANTIN --}}
+{{-- ============================================================ --}}
+@can('view kantin dashboard')
+    @role('Kantin')
+    @if(session('active_role') == 'Kantin' || auth()->user()->roles->count() === 1)
+        <li>
+            <a href="{{ route('kantin.dashboard.index') }}"
+                class="nav-link {{ request()->routeIs('kantin.dashboard.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                <div class="nav-icon-container">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                </div>
+                <span class="nav-text">Dashboard Kantin</span>
+                <span class="nav-badge bg-orange-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">BARU</span>
+            </a>
+        </li>
+    @endif
+    @endrole
+@endcan
+
 {{-- SEPARATOR & PROFILE MENU (Always Visible) --}}
 <li class="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent mx-6 my-4"></li>
 

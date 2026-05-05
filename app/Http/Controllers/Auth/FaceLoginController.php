@@ -105,6 +105,8 @@ class FaceLoginController extends Controller
                     $redirectUrl = route('sdm.dashboard.index', absolute: false);
                 } elseif ($matchedUser->hasRole('Super Admin')) {
                     $redirectUrl = route('super-admin.dashboard.index', absolute: false);
+                } elseif ($matchedUser->hasRole('Kantin')) {
+                    $redirectUrl = route('kantin.dashboard.index', absolute: false);
                 }
 
                 return response()->json([
