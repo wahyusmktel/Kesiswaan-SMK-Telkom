@@ -245,12 +245,115 @@
         .theme-light-red .btn-primary {
             color: #FFFFFF !important;
         }
+
+        /* Mood Welcome Popup */
+        [x-cloak] { display: none !important; }
+
+        .mood-popup-card {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow:
+                0 0 0 1px rgba(255, 255, 255, 0.05),
+                0 25px 50px -12px rgba(0, 0, 0, 0.5),
+                0 0 80px rgba(251, 191, 36, 0.06);
+        }
+
+        .mood-popup-icon {
+            animation: popupIconFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes popupIconFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-5px) rotate(3deg); }
+        }
+
+        .mood-popup-btn {
+            animation: popupBtnAppear 0.4s ease-out both;
+        }
+
+        @keyframes popupBtnAppear {
+            from { opacity: 0; transform: translateY(10px) scale(0.8); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
     </style>
 </head>
 
 <body class="antialiased overflow-x-hidden {{ $appSetting?->theme === 'light-red' ? 'theme-light-red' : '' }}" x-data="{ showVideo: false }">
     {{-- Premium Tech Preloader --}}
     @include('components.preloader')
+
+    {{-- Welcome Mood Popup --}}
+    <div x-data="moodPopup()" x-init="init()" x-cloak>
+        {{-- Backdrop --}}
+        <div x-show="showPopup"
+            x-transition:enter="transition ease-out duration-400"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-300"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="fixed inset-0 z-[9998] bg-black/60 backdrop-blur-sm">
+        </div>
+
+        {{-- Popup Card --}}
+        <div x-show="showPopup"
+            x-transition:enter="transition ease-out duration-500"
+            x-transition:enter-start="opacity-0 translate-y-8 scale-95"
+            x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+            x-transition:leave="transition ease-in duration-300"
+            x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+            x-transition:leave-end="opacity-0 translate-y-8 scale-95"
+            class="fixed inset-0 z-[9999] flex items-center justify-center p-4 pointer-events-none">
+
+            <div class="pointer-events-auto w-full max-w-md relative">
+                {{-- Card --}}
+                <div class="mood-popup-card rounded-[32px] p-8 text-center space-y-6 overflow-hidden relative">
+                    {{-- Decorative gradient blob --}}
+                    <div class="absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-yellow-400/20 to-orange-500/20 rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="absolute -bottom-16 -left-16 w-32 h-32 bg-gradient-to-br from-pink-500/10 to-red-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                    {{-- Header --}}
+                    <div class="relative space-y-4">
+                        <div class="w-20 h-20 mx-auto bg-gradient-to-br from-yellow-400 to-orange-500 rounded-3xl flex items-center justify-center text-5xl shadow-2xl shadow-orange-500/30 mood-popup-icon">
+                            💖
+                        </div>
+                        <div>
+                            <h3 class="font-outfit font-black text-white text-2xl tracking-tight">Hai, Selamat Datang! 👋</h3>
+                            <p class="text-sm text-slate-400 font-medium mt-1 max-w-xs mx-auto">Sebelum melanjutkan, ceritakan dulu bagaimana perasaanmu hari ini?</p>
+                        </div>
+                    </div>
+
+                    {{-- Mood Buttons --}}
+                    <div class="relative" x-show="!submitted">
+                        <div class="flex items-center justify-center gap-3">
+                            <template x-for="(mood, idx) in moods" :key="mood.level">
+                                <button @click="selectMood(mood)"
+                                    class="mood-popup-btn w-14 h-14 rounded-2xl flex items-center justify-center text-3xl transition-all duration-300 border border-white/10 bg-white/5 hover:bg-white/15 hover:scale-110 hover:border-white/25 active:scale-95 relative group"
+                                    :style="'animation-delay: ' + (idx * 80) + 'ms'"
+                                    :title="mood.label">
+                                    <span x-text="mood.emoji"></span>
+                                    <div class="absolute -bottom-7 left-1/2 -translate-x-1/2 bg-slate-800/90 backdrop-blur text-[9px] text-white px-2 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none font-bold">
+                                        <span x-text="mood.label"></span>
+                                    </div>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+
+                    {{-- Success State --}}
+                    <div x-show="submitted" class="space-y-3 py-2">
+                        <div class="w-16 h-16 mx-auto bg-emerald-500/20 rounded-2xl flex items-center justify-center text-4xl border border-emerald-500/30">
+                            ✅
+                        </div>
+                        <p class="text-white font-bold text-lg" x-text="successMessage"></p>
+                        <p class="text-xs text-slate-500 font-bold uppercase tracking-widest">Terima kasih! 🌟</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Blobs -->
     <div class="blob top-[-100px] left-[-100px]"></div>
@@ -1017,6 +1120,101 @@
                 }
             }
         }
+        // Mood Welcome Popup Component
+        function moodPopup() {
+            return {
+                showPopup: false,
+                submitted: false,
+                successMessage: '',
+                moods: [
+                    { level: 'sangat_bahagia', score: 5, emoji: '😄', label: 'Sangat Bahagia' },
+                    { level: 'bahagia', score: 4, emoji: '🙂', label: 'Bahagia' },
+                    { level: 'netral', score: 3, emoji: '😐', label: 'Netral' },
+                    { level: 'sedih', score: 2, emoji: '😢', label: 'Sedih' },
+                    { level: 'sangat_sedih', score: 1, emoji: '😭', label: 'Sangat Sedih' },
+                ],
+
+                init() {
+                    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+                    const lastMoodDate = localStorage.getItem('mood_submitted_date');
+
+                    // Only show if not submitted today
+                    if (lastMoodDate !== today) {
+                        // Delay popup so it appears after preloader finishes
+                        setTimeout(() => {
+                            this.showPopup = true;
+                        }, 3500);
+                    }
+                },
+
+                async selectMood(mood) {
+                    if (this.submitted) return;
+
+                    try {
+                        // Generate fingerprint (same as happinessMeter)
+                        const fp = await this.generateFingerprint();
+
+                        const response = await fetch('/api/happiness/store', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                            },
+                            body: JSON.stringify({
+                                fingerprint: fp,
+                                mood_level: mood.level,
+                                mood_score: mood.score,
+                            }),
+                        });
+
+                        const data = await response.json();
+
+                        this.submitted = true;
+                        this.successMessage = data.message || 'Terima kasih sudah berbagi! ' + mood.emoji;
+
+                        // Mark as submitted today
+                        const today = new Date().toISOString().split('T')[0];
+                        localStorage.setItem('mood_submitted_date', today);
+
+                        // Auto-close after brief moment
+                        setTimeout(() => {
+                            this.closePopup();
+                            // Sync with the hero widget if it exists
+                            window.dispatchEvent(new CustomEvent('mood-submitted'));
+                        }, 1500);
+                    } catch (error) {
+                        console.log('Mood popup submit failed:', error);
+                        this.successMessage = 'Gagal menyimpan, coba lagi nanti.';
+                        this.submitted = true;
+                        setTimeout(() => this.closePopup(), 1500);
+                    }
+                },
+
+                closePopup() {
+                    this.showPopup = false;
+                },
+
+                async generateFingerprint() {
+                    const components = [
+                        navigator.userAgent,
+                        navigator.language,
+                        screen.width + 'x' + screen.height,
+                        screen.colorDepth,
+                        new Date().getTimezoneOffset(),
+                        navigator.hardwareConcurrency || 'unknown',
+                        navigator.platform,
+                    ];
+                    const fingerprint = components.join('|');
+                    let hash = 0;
+                    for (let i = 0; i < fingerprint.length; i++) {
+                        const char = fingerprint.charCodeAt(i);
+                        hash = ((hash << 5) - hash) + char;
+                        hash = hash & hash;
+                    }
+                    return Math.abs(hash).toString(36);
+                }
+            };
+        }
 
         // Happiness Meter Component
         function happinessMeter() {
@@ -1046,6 +1244,13 @@
                     this.fingerprint = await this.generateFingerprint();
                     await this.checkStatus();
                     await this.loadStats();
+
+                    // Sync when mood is submitted via welcome popup
+                    window.addEventListener('mood-submitted', async () => {
+                        this.alreadySubmitted = true;
+                        this.submittedMessage = 'Terima kasih sudah berbagi!';
+                        await this.loadStats();
+                    });
                 },
 
                 async generateFingerprint() {
