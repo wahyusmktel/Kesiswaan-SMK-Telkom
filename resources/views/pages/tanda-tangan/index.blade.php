@@ -7,6 +7,9 @@
         }
         .glow-pulse { animation: pulse-glow 2s infinite; }
         .ttd-preview { background: repeating-linear-gradient(45deg, #f8faff 0, #f8faff 10px, #eef2ff 10px, #eef2ff 20px); }
+
+        #selectionBar { transition: transform 0.2s ease, opacity 0.2s ease; }
+        #selectionBar.bar-hidden { transform: translateY(100%); opacity: 0; pointer-events: none; }
     </style>
     @endpush
 
@@ -97,6 +100,10 @@
                             <div class="flex justify-between items-center text-sm">
                                 <span class="text-gray-500 font-medium">Dokumen Ditandatangani</span>
                                 <span class="font-bold text-indigo-700">{{ $documents->total() }}</span>
+                            </div>
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-gray-500 font-medium">Dokumen Aktif / Sah</span>
+                                <span class="font-bold {{ $validCount > 0 ? 'text-green-700' : 'text-gray-400' }}">{{ $validCount }}</span>
                             </div>
                         </div>
 
@@ -197,61 +204,98 @@
                 {{-- ===== KOLOM KANAN: Riwayat Dokumen ===== --}}
                 <div class="xl:col-span-2">
                     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-100">
-                            <h4 class="font-bold text-gray-800">Riwayat Dokumen Ditandatangani</h4>
-                            <p class="text-xs text-gray-400 mt-0.5">{{ $documents->total() }} dokumen total</p>
+
+                        {{-- Card Header --}}
+                        <div class="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div>
+                                <h4 class="font-bold text-gray-800">Riwayat Dokumen Ditandatangani</h4>
+                                <p class="text-xs text-gray-400 mt-0.5">{{ $documents->total() }} dokumen total &mdash; <span class="text-green-600 font-semibold">{{ $validCount }} aktif</span></p>
+                            </div>
+                            @if($validCount > 0)
+                                <div class="flex items-center gap-2 flex-shrink-0">
+                                    {{-- Pilih Semua checkbox --}}
+                                    <label class="flex items-center gap-1.5 text-xs font-semibold text-gray-500 cursor-pointer select-none">
+                                        <input type="checkbox" id="checkAll" class="rounded border-gray-300 text-red-500 focus:ring-red-400">
+                                        Pilih Semua
+                                    </label>
+                                    {{-- Cabut Semua --}}
+                                    <button onclick="openBulkRevokeModal('all')"
+                                        class="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold rounded-lg transition">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                        Cabut Semua ({{ $validCount }})
+                                    </button>
+                                </div>
+                            @endif
                         </div>
 
                         @if($documents->count())
-                            <div class="divide-y divide-gray-50">
+                            <div class="divide-y divide-gray-50" id="documentList">
                                 @foreach($documents as $doc)
-                                    <div class="px-6 py-4 hover:bg-gray-50 transition-colors">
-                                        <div class="flex items-start justify-between gap-4">
-                                            <div class="flex items-start gap-3 min-w-0">
-                                                <div class="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center
-                                                    {{ $doc->is_valid ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600' }}">
-                                                    @if($doc->is_valid)
-                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                                                        </svg>
-                                                    @else
-                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                                        </svg>
-                                                    @endif
-                                                </div>
-                                                <div class="min-w-0">
-                                                    <p class="font-semibold text-gray-800 text-sm truncate">{{ $doc->document_title }}</p>
-                                                    <p class="text-xs text-gray-400 mt-0.5">
-                                                        <span class="bg-indigo-50 text-indigo-600 font-semibold px-2 py-0.5 rounded-md">{{ $doc->document_type }}</span>
-                                                        &nbsp;·&nbsp;
-                                                        {{ $doc->signed_at->translatedFormat('d F Y, H:i') }} WIB
-                                                    </p>
-                                                    <p class="text-xs text-gray-400 mt-0.5 font-mono truncate">Token: {{ $doc->token }}</p>
-                                                </div>
-                                            </div>
-                                            <div class="flex items-center gap-2 flex-shrink-0">
+                                    <div class="px-6 py-4 hover:bg-gray-50 transition-colors doc-row {{ $doc->is_valid ? 'is-valid' : '' }}"
+                                         data-token="{{ $doc->token }}">
+                                        <div class="flex items-start gap-3">
+
+                                            {{-- Checkbox (hanya untuk dokumen valid) --}}
+                                            <div class="flex-shrink-0 pt-2.5">
                                                 @if($doc->is_valid)
-                                                    <span class="text-xs font-bold text-green-700 bg-green-50 border border-green-200 px-2.5 py-1 rounded-lg">Sah</span>
-                                                    <a href="{{ route('verifikasi.dokumen', $doc->token) }}" target="_blank"
-                                                        class="text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-lg hover:bg-indigo-100 transition">
-                                                        Verifikasi
-                                                    </a>
-                                                    {{-- Revoke Modal Trigger --}}
-                                                    <button onclick="openRevokeModal('{{ $doc->token }}')"
-                                                        class="text-xs font-bold text-red-500 hover:text-red-700 px-2 py-1 transition" title="Cabut tanda tangan">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                                        </svg>
-                                                    </button>
+                                                    <input type="checkbox" class="doc-checkbox rounded border-gray-300 text-red-500 focus:ring-red-400"
+                                                        value="{{ $doc->token }}">
                                                 @else
-                                                    <span class="text-xs font-bold text-red-600 bg-red-50 border border-red-200 px-2.5 py-1 rounded-lg">Dicabut</span>
+                                                    <div class="w-4 h-4"></div>
+                                                @endif
+                                            </div>
+
+                                            {{-- Icon --}}
+                                            <div class="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center
+                                                {{ $doc->is_valid ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600' }}">
+                                                @if($doc->is_valid)
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                                                    </svg>
+                                                @else
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                    </svg>
+                                                @endif
+                                            </div>
+
+                                            {{-- Info --}}
+                                            <div class="min-w-0 flex-1">
+                                                <div class="flex items-start justify-between gap-3">
+                                                    <div class="min-w-0">
+                                                        <p class="font-semibold text-gray-800 text-sm truncate">{{ $doc->document_title }}</p>
+                                                        <p class="text-xs text-gray-400 mt-0.5">
+                                                            <span class="bg-indigo-50 text-indigo-600 font-semibold px-2 py-0.5 rounded-md">{{ $doc->document_type }}</span>
+                                                            &nbsp;·&nbsp;
+                                                            {{ $doc->signed_at->translatedFormat('d F Y, H:i') }} WIB
+                                                        </p>
+                                                        <p class="text-xs text-gray-400 mt-0.5 font-mono truncate">Token: {{ $doc->token }}</p>
+                                                    </div>
+                                                    <div class="flex items-center gap-2 flex-shrink-0">
+                                                        @if($doc->is_valid)
+                                                            <span class="text-xs font-bold text-green-700 bg-green-50 border border-green-200 px-2.5 py-1 rounded-lg">Sah</span>
+                                                            <a href="{{ route('verifikasi.dokumen', $doc->token) }}" target="_blank"
+                                                                class="text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-lg hover:bg-indigo-100 transition">
+                                                                Verifikasi
+                                                            </a>
+                                                            <button onclick="openRevokeModal('{{ $doc->token }}')"
+                                                                class="text-xs font-bold text-red-400 hover:text-red-600 px-2 py-1 transition" title="Cabut tanda tangan">
+                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                                </svg>
+                                                            </button>
+                                                        @else
+                                                            <span class="text-xs font-bold text-red-600 bg-red-50 border border-red-200 px-2.5 py-1 rounded-lg">Dicabut</span>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                                @if(!$doc->is_valid && $doc->revoke_reason)
+                                                    <p class="mt-1 text-xs text-red-500 italic">Alasan: {{ $doc->revoke_reason }}</p>
                                                 @endif
                                             </div>
                                         </div>
-                                        @if(!$doc->is_valid && $doc->revoke_reason)
-                                            <p class="mt-2 ml-13 text-xs text-red-500 italic">Alasan: {{ $doc->revoke_reason }}</p>
-                                        @endif
                                     </div>
                                 @endforeach
                             </div>
@@ -275,9 +319,28 @@
         </div>
     </div>
 
-    {{-- Modal Cabut Tanda Tangan --}}
+    {{-- Floating Selection Action Bar --}}
+    <div id="selectionBar" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bar-hidden">
+        <div class="flex items-center gap-3 bg-gray-900 text-white px-5 py-3 rounded-2xl shadow-2xl border border-gray-700">
+            <span class="text-sm font-semibold" id="selectionCount">0 dipilih</span>
+            <div class="w-px h-5 bg-gray-600"></div>
+            <button onclick="openBulkRevokeModal('selected')"
+                class="flex items-center gap-1.5 px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+                Cabut Terpilih
+            </button>
+            <button onclick="clearSelection()"
+                class="text-gray-400 hover:text-white text-xs font-semibold transition">
+                Batalkan
+            </button>
+        </div>
+    </div>
+
+    {{-- Modal Cabut Satu --}}
     <div id="revokeModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6" x-data>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
             <h3 class="text-lg font-bold text-gray-800 mb-1">Cabut Tanda Tangan</h3>
             <p class="text-sm text-gray-500 mb-4">Dokumen yang dicabut tidak lagi dianggap sah. Masukkan PIN untuk konfirmasi.</p>
             <form action="{{ route('tanda-tangan.revoke') }}" method="POST" class="space-y-4">
@@ -308,19 +371,182 @@
         </div>
     </div>
 
+    {{-- Modal Cabut Massal / Semua --}}
+    <div id="bulkRevokeModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            {{-- Header --}}
+            <div id="bulkRevokeHeader" class="px-6 py-5 bg-gradient-to-r from-red-600 to-rose-700">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-white font-bold text-base" id="bulkRevokeTitle">Cabut Tanda Tangan Massal</h3>
+                        <p class="text-red-200 text-xs mt-0.5" id="bulkRevokeSubtitle"></p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Body --}}
+            <div class="p-6">
+                {{-- Warning info --}}
+                <div id="bulkRevokeInfo" class="mb-4 p-3 rounded-xl text-xs border"></div>
+
+                {{-- Form --}}
+                <form id="bulkRevokeForm" method="POST" class="space-y-4">
+                    @csrf
+                    {{-- Token inputs injected here by JS for "selected" mode --}}
+                    <div id="bulkTokenInputs"></div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Alasan Pencabutan <span class="font-normal text-gray-400 lowercase">(opsional)</span></label>
+                        <input type="text" name="revoke_reason" id="bulkRevokeReason" placeholder="cth: Dokumen direvisi, informasi tidak valid..."
+                            class="w-full rounded-xl border-gray-200 text-sm focus:ring-red-500 focus:border-red-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">PIN Keamanan</label>
+                        <input type="password" name="pin" id="bulkRevokePin" inputmode="numeric" maxlength="8" required
+                            placeholder="••••••" autocomplete="off"
+                            class="w-full rounded-xl border-gray-200 text-sm font-mono tracking-widest text-center text-lg py-3 focus:ring-red-500 focus:border-red-500">
+                    </div>
+                    <div class="flex gap-3 pt-2">
+                        <button type="button" onclick="closeBulkRevokeModal()"
+                            class="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl text-sm hover:bg-gray-50 transition">
+                            Batal
+                        </button>
+                        <button type="submit" id="bulkRevokeSubmitBtn"
+                            class="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-sm transition shadow-sm">
+                            <span id="bulkRevokeBtnText">Cabut Sekarang</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     @push('scripts')
     <script>
+        // ===== Single revoke modal =====
         function openRevokeModal(token) {
             document.getElementById('revokeToken').value = token;
-            document.getElementById('revokeModal').classList.remove('hidden');
-            document.getElementById('revokeModal').classList.add('flex');
+            const m = document.getElementById('revokeModal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
         }
         function closeRevokeModal() {
-            document.getElementById('revokeModal').classList.add('hidden');
-            document.getElementById('revokeModal').classList.remove('flex');
+            const m = document.getElementById('revokeModal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
         }
         document.getElementById('revokeModal').addEventListener('click', function(e) {
             if (e.target === this) closeRevokeModal();
+        });
+
+        // ===== Checkbox selection =====
+        const checkAll    = document.getElementById('checkAll');
+        const selectionBar = document.getElementById('selectionBar');
+        const selectionCount = document.getElementById('selectionCount');
+
+        function getChecked() {
+            return [...document.querySelectorAll('.doc-checkbox:checked')].map(cb => cb.value);
+        }
+
+        function updateSelectionBar() {
+            const checked = getChecked();
+            if (checked.length > 0) {
+                selectionCount.textContent = checked.length + ' dipilih';
+                selectionBar.classList.remove('bar-hidden');
+            } else {
+                selectionBar.classList.add('bar-hidden');
+            }
+            // Sync "Pilih Semua" state
+            if (checkAll) {
+                const total = document.querySelectorAll('.doc-checkbox').length;
+                checkAll.indeterminate = checked.length > 0 && checked.length < total;
+                checkAll.checked = total > 0 && checked.length === total;
+            }
+        }
+
+        document.querySelectorAll('.doc-checkbox').forEach(cb => {
+            cb.addEventListener('change', updateSelectionBar);
+        });
+
+        if (checkAll) {
+            checkAll.addEventListener('change', function() {
+                document.querySelectorAll('.doc-checkbox').forEach(cb => {
+                    cb.checked = this.checked;
+                });
+                updateSelectionBar();
+            });
+        }
+
+        function clearSelection() {
+            document.querySelectorAll('.doc-checkbox').forEach(cb => cb.checked = false);
+            if (checkAll) checkAll.checked = false;
+            updateSelectionBar();
+        }
+
+        // ===== Bulk revoke modal =====
+        let _bulkRevokeMode = 'selected'; // 'selected' or 'all'
+
+        function openBulkRevokeModal(mode) {
+            _bulkRevokeMode = mode;
+            const form        = document.getElementById('bulkRevokeForm');
+            const titleEl     = document.getElementById('bulkRevokeTitle');
+            const subtitleEl  = document.getElementById('bulkRevokeSubtitle');
+            const infoEl      = document.getElementById('bulkRevokeInfo');
+            const tokenInputs = document.getElementById('bulkTokenInputs');
+
+            // Clear previous token inputs
+            tokenInputs.innerHTML = '';
+            document.getElementById('bulkRevokePin').value = '';
+            document.getElementById('bulkRevokeReason').value = '';
+
+            if (mode === 'all') {
+                form.action = '{{ route('tanda-tangan.revoke-all') }}';
+                titleEl.textContent = 'Cabut Semua Tanda Tangan';
+                subtitleEl.textContent = 'Seluruh dokumen aktif akan dicabut';
+                infoEl.className = 'mb-4 p-3 rounded-xl text-xs border bg-red-50 border-red-200 text-red-700';
+                infoEl.innerHTML = '<p class="font-bold mb-1">⚠️ Tindakan ini akan mencabut <strong>semua {{ $validCount }} dokumen aktif</strong> milik Anda.</p><p>Dokumen yang sudah dicabut tidak lagi dianggap sah dan tidak bisa dibatalkan secara otomatis.</p>';
+            } else {
+                const tokens = getChecked();
+                if (tokens.length === 0) return;
+
+                form.action = '{{ route('tanda-tangan.revoke-selected') }}';
+                titleEl.textContent = 'Cabut Tanda Tangan Terpilih';
+                subtitleEl.textContent = tokens.length + ' dokumen akan dicabut';
+                infoEl.className = 'mb-4 p-3 rounded-xl text-xs border bg-amber-50 border-amber-200 text-amber-700';
+                infoEl.innerHTML = '<p class="font-bold mb-1">Anda akan mencabut <strong>' + tokens.length + ' dokumen</strong> yang dipilih.</p><p>Dokumen yang dicabut tidak lagi dapat diverifikasi sebagai sah.</p>';
+
+                tokens.forEach(token => {
+                    const input = document.createElement('input');
+                    input.type  = 'hidden';
+                    input.name  = 'tokens[]';
+                    input.value = token;
+                    tokenInputs.appendChild(input);
+                });
+            }
+
+            const m = document.getElementById('bulkRevokeModal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            setTimeout(() => document.getElementById('bulkRevokePin').focus(), 100);
+        }
+
+        function closeBulkRevokeModal() {
+            const m = document.getElementById('bulkRevokeModal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        document.getElementById('bulkRevokeModal').addEventListener('click', function(e) {
+            if (e.target === this) closeBulkRevokeModal();
+        });
+
+        document.getElementById('bulkRevokePin')?.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') document.getElementById('bulkRevokeForm').submit();
         });
     </script>
     @endpush

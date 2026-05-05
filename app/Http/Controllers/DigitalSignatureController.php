@@ -13,13 +13,14 @@ class DigitalSignatureController extends Controller
 {
     public function index()
     {
-        $user      = Auth::user();
-        $signature = UserDigitalSignature::where('user_id', $user->id)->first();
-        $documents = DigitalDocument::where('signed_by', $user->id)
+        $user       = Auth::user();
+        $signature  = UserDigitalSignature::where('user_id', $user->id)->first();
+        $documents  = DigitalDocument::where('signed_by', $user->id)
             ->orderByDesc('signed_at')
             ->paginate(10);
+        $validCount = DigitalDocument::where('signed_by', $user->id)->where('is_valid', true)->count();
 
-        return view('pages.tanda-tangan.index', compact('signature', 'documents'));
+        return view('pages.tanda-tangan.index', compact('signature', 'documents', 'validCount'));
     }
 
     public function setup(Request $request)
@@ -218,5 +219,58 @@ class DigitalSignatureController extends Controller
         ]);
 
         return back()->with('success', 'Tanda tangan berhasil dicabut.');
+    }
+
+    public function revokeSelected(Request $request)
+    {
+        $request->validate([
+            'pin'           => 'required|string',
+            'tokens'        => 'required|array|min:1',
+            'tokens.*'      => 'required|string|exists:digital_documents,token',
+            'revoke_reason' => 'nullable|string|max:255',
+        ]);
+
+        $user      = Auth::user();
+        $signature = UserDigitalSignature::where('user_id', $user->id)->first();
+
+        if (!$signature || !$signature->verifyPin($request->pin)) {
+            return back()->with('error', 'PIN salah. Pencabutan gagal.');
+        }
+
+        $count = DigitalDocument::whereIn('token', $request->tokens)
+            ->where('signed_by', $user->id)
+            ->where('is_valid', true)
+            ->update([
+                'is_valid'      => false,
+                'revoked_at'    => now(),
+                'revoke_reason' => $request->revoke_reason ?: 'Dicabut massal oleh penandatangan.',
+            ]);
+
+        return back()->with('success', "{$count} tanda tangan berhasil dicabut.");
+    }
+
+    public function revokeAll(Request $request)
+    {
+        $request->validate([
+            'pin'           => 'required|string',
+            'revoke_reason' => 'nullable|string|max:255',
+        ]);
+
+        $user      = Auth::user();
+        $signature = UserDigitalSignature::where('user_id', $user->id)->first();
+
+        if (!$signature || !$signature->verifyPin($request->pin)) {
+            return back()->with('error', 'PIN salah. Pencabutan gagal.');
+        }
+
+        $count = DigitalDocument::where('signed_by', $user->id)
+            ->where('is_valid', true)
+            ->update([
+                'is_valid'      => false,
+                'revoked_at'    => now(),
+                'revoke_reason' => $request->revoke_reason ?: 'Dicabut semua oleh penandatangan.',
+            ]);
+
+        return back()->with('success', "Semua {$count} tanda tangan berhasil dicabut.");
     }
 }

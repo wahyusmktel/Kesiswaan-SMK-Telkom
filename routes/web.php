@@ -784,7 +784,7 @@ Route::middleware(['auth', 'role:Super Admin|Waka Kesiswaan|Guru BK|Guru Piket|K
 // ============================================================
 // TANDA TANGAN DIGITAL (Guru, Waka Kurikulum, Waka Kesiswaan, Kaur SDM)
 // ============================================================
-Route::middleware(['auth', 'role:Guru Kelas|Waka Kesiswaan|Kurikulum|KAUR SDM|Super Admin'])
+Route::middleware(['auth', 'role:Guru Kelas|Waka Kesiswaan|Kurikulum|KAUR SDM|Kepala Sekolah|Super Admin'])
     ->prefix('tanda-tangan-digital')
     ->name('tanda-tangan.')
     ->group(function () {
@@ -793,6 +793,8 @@ Route::middleware(['auth', 'role:Guru Kelas|Waka Kesiswaan|Kurikulum|KAUR SDM|Su
         Route::post('/sign', [\App\Http\Controllers\DigitalSignatureController::class, 'sign'])->name('sign');
         Route::post('/sign-bulk', [\App\Http\Controllers\DigitalSignatureController::class, 'signBulk'])->name('sign-bulk');
         Route::post('/revoke', [\App\Http\Controllers\DigitalSignatureController::class, 'revoke'])->name('revoke');
+        Route::post('/revoke-selected', [\App\Http\Controllers\DigitalSignatureController::class, 'revokeSelected'])->name('revoke-selected');
+        Route::post('/revoke-all', [\App\Http\Controllers\DigitalSignatureController::class, 'revokeAll'])->name('revoke-all');
     });
 
 // ============================================================
