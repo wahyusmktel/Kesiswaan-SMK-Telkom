@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Masuk — SISFO SMK Telkom Lampung</title>
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
     @vite(['resources/css/app.css', 'resources/css/authentication.css', 'resources/js/app.js'])
@@ -171,6 +172,114 @@
             left: 0;
             z-index: 1;
         }
+
+        /* Face ID Modal */
+        .face-modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .face-modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .face-modal-card {
+            background: #111827;
+            border-radius: 28px;
+            border: 1px solid rgba(255,255,255,0.08);
+            width: 100%;
+            max-width: 440px;
+            overflow: hidden;
+            transform: translateY(20px) scale(0.95);
+            transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        .face-modal-overlay.active .face-modal-card {
+            transform: translateY(0) scale(1);
+        }
+        .face-video-wrap {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1;
+            overflow: hidden;
+            background: #000;
+        }
+        .face-video-wrap video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+        .face-scan-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+        .face-scan-ring {
+            width: 220px;
+            height: 220px;
+            border: 3px solid rgba(255,255,255,0.25);
+            border-radius: 50%;
+            position: relative;
+        }
+        .face-scan-ring::before {
+            content: '';
+            position: absolute;
+            inset: -6px;
+            border: 2px solid transparent;
+            border-top-color: #dc2626;
+            border-radius: 50%;
+            animation: faceScanSpin 1.8s linear infinite;
+        }
+        .face-scan-ring::after {
+            content: '';
+            position: absolute;
+            inset: -12px;
+            border: 1px dashed rgba(255,255,255,0.1);
+            border-radius: 50%;
+            animation: faceScanSpin 4s linear infinite reverse;
+        }
+        @keyframes faceScanSpin {
+            to { transform: rotate(360deg); }
+        }
+        .face-scan-line {
+            position: absolute;
+            left: 15%;
+            right: 15%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(220,38,38,0.6), transparent);
+            animation: faceScanMove 2.5s ease-in-out infinite;
+        }
+        @keyframes faceScanMove {
+            0%, 100% { top: 25%; opacity: 0; }
+            50% { top: 70%; opacity: 1; }
+        }
+        .face-corners {
+            position: absolute;
+            inset: 0;
+        }
+        .face-corners span {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            border-color: rgba(255,255,255,0.5);
+            border-style: solid;
+            border-width: 0;
+        }
+        .face-corners .fc-tl { top: 20%; left: 20%; border-top-width: 3px; border-left-width: 3px; border-radius: 6px 0 0 0; }
+        .face-corners .fc-tr { top: 20%; right: 20%; border-top-width: 3px; border-right-width: 3px; border-radius: 0 6px 0 0; }
+        .face-corners .fc-bl { bottom: 20%; left: 20%; border-bottom-width: 3px; border-left-width: 3px; border-radius: 0 0 0 6px; }
+        .face-corners .fc-br { bottom: 20%; right: 20%; border-bottom-width: 3px; border-right-width: 3px; border-radius: 0 0 6px 0; }
     </style>
 </head>
 
@@ -382,6 +491,15 @@
                     <span>Masuk dengan Stella Access Card</span>
                 </a>
 
+                <!-- Face ID Login Button -->
+                <button type="button" id="btn-face-login"
+                    class="flex items-center justify-center gap-3 w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 border border-transparent rounded-lg font-bold text-white hover:from-purple-700 hover:to-indigo-700 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 mb-6">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                    </svg>
+                    <span>Masuk dengan Face ID</span>
+                </button>
+
                 <!-- Register Link -->
                 <p class="text-center text-gray-600">
                     Belum punya akun?
@@ -458,6 +576,171 @@
                 });
             });
         }
+    </script>
+
+    <!-- Face ID Modal -->
+    <div id="faceModal" class="face-modal-overlay">
+        <div class="face-modal-card">
+            <div class="face-video-wrap">
+                <video id="faceVideo" autoplay playsinline muted></video>
+                <canvas id="faceCanvas" style="display:none;"></canvas>
+                <div class="face-scan-overlay">
+                    <div class="face-scan-ring"></div>
+                    <div class="face-scan-line"></div>
+                    <div class="face-corners">
+                        <span class="fc-tl"></span>
+                        <span class="fc-tr"></span>
+                        <span class="fc-bl"></span>
+                        <span class="fc-br"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 text-center space-y-4">
+                <div id="faceStatus">
+                    <p class="text-white font-bold text-lg">Posisikan wajah Anda</p>
+                    <p class="text-gray-400 text-sm">Pastikan wajah berada di dalam lingkaran</p>
+                </div>
+                <div id="faceActions" class="flex items-center justify-center gap-3">
+                    <button type="button" id="btnFaceCapture"
+                        class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-all flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        Verifikasi Wajah
+                    </button>
+                    <button type="button" id="btnFaceClose"
+                        class="px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-all">
+                        Batal
+                    </button>
+                </div>
+                <div id="faceLoading" style="display:none;" class="flex flex-col items-center gap-3 py-2">
+                    <div class="w-8 h-8 border-3 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p class="text-white font-bold text-sm">Memverifikasi wajah...</p>
+                </div>
+                <div id="faceResult" style="display:none;" class="py-2">
+                    <p id="faceResultMsg" class="font-bold text-lg"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Face ID Login
+        (function() {
+            const btnOpen = document.getElementById('btn-face-login');
+            const modal = document.getElementById('faceModal');
+            const video = document.getElementById('faceVideo');
+            const canvas = document.getElementById('faceCanvas');
+            const btnCapture = document.getElementById('btnFaceCapture');
+            const btnClose = document.getElementById('btnFaceClose');
+            const statusEl = document.getElementById('faceStatus');
+            const actionsEl = document.getElementById('faceActions');
+            const loadingEl = document.getElementById('faceLoading');
+            const resultEl = document.getElementById('faceResult');
+            const resultMsg = document.getElementById('faceResultMsg');
+
+            let stream = null;
+
+            function openModal() {
+                modal.classList.add('active');
+                startCamera();
+            }
+
+            function closeModal() {
+                modal.classList.remove('active');
+                stopCamera();
+                resetUI();
+            }
+
+            async function startCamera() {
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 640 } },
+                        audio: false
+                    });
+                    video.srcObject = stream;
+                } catch (err) {
+                    statusEl.innerHTML = '<p class="text-red-400 font-bold">Kamera tidak tersedia</p><p class="text-gray-400 text-sm">Izinkan akses kamera untuk menggunakan Face ID</p>';
+                    actionsEl.style.display = 'none';
+                }
+            }
+
+            function stopCamera() {
+                if (stream) {
+                    stream.getTracks().forEach(t => t.stop());
+                    stream = null;
+                    video.srcObject = null;
+                }
+            }
+
+            function resetUI() {
+                statusEl.innerHTML = '<p class="text-white font-bold text-lg">Posisikan wajah Anda</p><p class="text-gray-400 text-sm">Pastikan wajah berada di dalam lingkaran</p>';
+                actionsEl.style.display = 'flex';
+                loadingEl.style.display = 'none';
+                resultEl.style.display = 'none';
+            }
+
+            async function captureAndVerify() {
+                // Capture frame
+                canvas.width = video.videoWidth || 640;
+                canvas.height = video.videoHeight || 640;
+                const ctx = canvas.getContext('2d');
+                ctx.translate(canvas.width, 0);
+                ctx.scale(-1, 1); // Mirror to match preview
+                ctx.drawImage(video, 0, 0);
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+                // Show loading
+                actionsEl.style.display = 'none';
+                statusEl.innerHTML = '';
+                loadingEl.style.display = 'flex';
+
+                try {
+                    const response = await fetch('/face-login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({ face_image: dataUrl }),
+                    });
+
+                    const data = await response.json();
+                    loadingEl.style.display = 'none';
+                    resultEl.style.display = 'block';
+
+                    if (data.success) {
+                        resultMsg.className = 'font-bold text-lg text-emerald-400';
+                        resultMsg.textContent = data.message;
+                        stopCamera();
+                        setTimeout(() => {
+                            window.location.href = data.redirect || '/dashboard';
+                        }, 1000);
+                    } else {
+                        resultMsg.className = 'font-bold text-lg text-red-400';
+                        resultMsg.textContent = data.message;
+                        setTimeout(() => {
+                            resetUI();
+                        }, 2500);
+                    }
+                } catch (error) {
+                    loadingEl.style.display = 'none';
+                    resultEl.style.display = 'block';
+                    resultMsg.className = 'font-bold text-lg text-red-400';
+                    resultMsg.textContent = 'Terjadi kesalahan. Silakan coba lagi.';
+                    setTimeout(() => resetUI(), 2500);
+                }
+            }
+
+            btnOpen.addEventListener('click', openModal);
+            btnClose.addEventListener('click', closeModal);
+            btnCapture.addEventListener('click', captureAndVerify);
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            });
+        })();
     </script>
     <script src="{{ asset('vendor/webauthn/webauthn.js') }}"></script>
     <script>

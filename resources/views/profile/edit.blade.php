@@ -146,6 +146,11 @@
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A10.003 10.003 0 0012 21a10.003 10.003 0 008.384-4.51m-2.408-4.69L11 11m-1 8L7 11V9a5 5 0 0110 0v2l-3 4" /></svg>
                                     Fingerprint
                                 </button>
+                                <button @click="activeTab = 'faceid'" :class="activeTab === 'faceid' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'text-gray-600 hover:bg-gray-50 border-transparent'"
+                                    class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all border">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    Face ID
+                                </button>
                                 <button @click="activeTab = 'danger'" :class="activeTab === 'danger' ? 'bg-red-50 text-red-700 border-red-200' : 'text-gray-600 hover:bg-gray-50 border-transparent'"
                                     class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all border">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
@@ -215,6 +220,26 @@
                             </div>
                             <div class="p-8">
                                 @include('profile.partials.fingerprint-setup')
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Face ID Form --}}
+                    <div x-show="activeTab === 'faceid'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
+                        <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+                            <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-8 py-5">
+                                <div class="flex items-center gap-4">
+                                    <div class="p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
+                                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    </div>
+                                    <div>
+                                        <h2 class="text-lg font-black text-white">Login Face ID</h2>
+                                        <p class="text-sm text-blue-100">Daftarkan wajah Anda untuk login yang cepat dan aman.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-8">
+                                @include('profile.partials.face-id-setup')
                             </div>
                         </div>
                     </div>

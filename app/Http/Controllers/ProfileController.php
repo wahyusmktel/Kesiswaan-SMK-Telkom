@@ -57,6 +57,40 @@ class ProfileController extends Controller
     }
 
     /**
+     * Update the user's face ID photo.
+     */
+    public function updateFaceId(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'face_image' => ['required', 'string'],
+        ]);
+
+        try {
+            $imageData = $request->input('face_image');
+            $imageData = preg_replace('/^data:image\/\w+;base64,/', '', $imageData);
+            $imageData = base64_decode($imageData);
+
+            if (!$imageData) {
+                return Redirect::back()->withErrors(['face_image' => 'Format gambar tidak valid.']);
+            }
+
+            if ($request->user()->face_photo) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($request->user()->face_photo);
+            }
+            
+            $path = 'faces/' . uniqid('face_') . '.jpg';
+            \Illuminate\Support\Facades\Storage::disk('public')->put($path, $imageData);
+            
+            $request->user()->update(['face_photo' => $path]);
+
+            return Redirect::route('profile.edit')->with('status', 'face-id-updated');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Face ID save error: ' . $e->getMessage());
+            return Redirect::back()->withErrors(['face_image' => 'Gagal menyimpan Face ID.']);
+        }
+    }
+
+    /**
      * Delete the user's account.
      */
     public function destroy(Request $request): RedirectResponse

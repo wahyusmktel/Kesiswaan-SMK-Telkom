@@ -695,6 +695,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::patch('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar.update');
+    Route::patch('/profile/face', [ProfileController::class, 'updateFaceId'])->name('profile.face.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Monitoring Keterlambatan Shared
@@ -744,6 +745,9 @@ Route::post('/switch-role', [\App\Http\Controllers\RoleSwitchController::class, 
 // Stella Access Card Login Routes
 Route::get('/stella-login', [\App\Http\Controllers\Auth\StellaLoginController::class, 'showScanPage'])->name('stella-login');
 Route::post('/stella-login', [\App\Http\Controllers\Auth\StellaLoginController::class, 'login'])->name('stella-login.submit');
+
+// Face ID Login Routes
+Route::post('/face-login', [\App\Http\Controllers\Auth\FaceLoginController::class, 'login'])->name('face-login.submit');
 
 // Group Route for Tata Usaha
 Route::middleware(['auth', 'role:Tata Usaha', 'permission:view tu dashboard'])->prefix('tu')->name('tu.')->group(function () {
