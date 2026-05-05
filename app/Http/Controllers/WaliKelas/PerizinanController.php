@@ -75,13 +75,26 @@ class PerizinanController extends Controller
         }
 
         try {
+            $wali = Auth::user();
             $perizinan->update([
-                'status' => 'disetujui',
-                'disetujui_oleh' => Auth::id(),
+                'status'        => 'disetujui',
+                'disetujui_oleh'=> $wali->id,
             ]);
 
             // Kirim notifikasi ke siswa
             $perizinan->user->notify(new IzinDisetujuiNotification($perizinan));
+
+            // Auto-sign TTD Wali Kelas jika diaktifkan
+            $sig = \App\Models\UserDigitalSignature::where('user_id', $wali->id)->first();
+            if ($sig && $sig->isReady() && $sig->auto_sign_perizinan) {
+                \App\Models\DigitalDocument::autoSign(
+                    $wali,
+                    'PERIZINAN',
+                    'Perizinan - ' . $perizinan->user->name,
+                    $perizinan->id,
+                    ['PERIZINAN', (string) $perizinan->id, (string) $perizinan->user_id, $perizinan->user->name]
+                );
+            }
 
             toast('Pengajuan izin telah disetujui.', 'success');
             return redirect()->back();

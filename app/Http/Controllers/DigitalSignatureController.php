@@ -26,9 +26,11 @@ class DigitalSignatureController extends Controller
     public function setup(Request $request)
     {
         $request->validate([
-            'ttd_image'   => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'pin'         => 'nullable|digits_between:4,8|confirmed',
-            'pin_confirmation' => 'nullable',
+            'ttd_image'             => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'pin'                   => 'nullable|digits_between:4,8|confirmed',
+            'pin_confirmation'      => 'nullable',
+            'auto_sign_izin_keluar' => 'nullable|boolean',
+            'auto_sign_perizinan'   => 'nullable|boolean',
         ]);
 
         $signature = UserDigitalSignature::firstOrNew(['user_id' => Auth::id()]);
@@ -44,7 +46,9 @@ class DigitalSignatureController extends Controller
             $signature->pin_hash = Hash::make($request->pin);
         }
 
-        $signature->is_active = true;
+        $signature->is_active             = true;
+        $signature->auto_sign_izin_keluar = $request->boolean('auto_sign_izin_keluar');
+        $signature->auto_sign_perizinan   = $request->boolean('auto_sign_perizinan');
         $signature->save();
 
         return back()->with('success', 'Tanda tangan digital berhasil diperbarui.');

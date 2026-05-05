@@ -784,7 +784,7 @@ Route::middleware(['auth', 'role:Super Admin|Waka Kesiswaan|Guru BK|Guru Piket|K
 // ============================================================
 // TANDA TANGAN DIGITAL (Guru, Waka Kurikulum, Waka Kesiswaan, Kaur SDM)
 // ============================================================
-Route::middleware(['auth', 'role:Guru Kelas|Waka Kesiswaan|Kurikulum|KAUR SDM|Kepala Sekolah|Super Admin'])
+Route::middleware(['auth', 'role:Guru Kelas|Guru Piket|Wali Kelas|Waka Kesiswaan|Kurikulum|KAUR SDM|Kepala Sekolah|Super Admin'])
     ->prefix('tanda-tangan-digital')
     ->name('tanda-tangan.')
     ->group(function () {

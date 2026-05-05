@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use App\Models\User;
 
 class DigitalDocument extends Model
 {
@@ -64,5 +65,40 @@ class DigitalDocument extends Model
     {
         $expected = self::generateHmac($this->document_hash);
         return hash_equals($expected, $this->hmac_signature);
+    }
+
+    /**
+     * Tandatangani dokumen secara otomatis (tanpa PIN) — hanya dipanggil server-side saat persetujuan.
+     */
+    public static function autoSign(User $user, string $type, string $title, int $refId, array $hashParts): ?self
+    {
+        $hash = self::generateHash($hashParts);
+        $hmac = self::generateHmac($hash);
+
+        $signerData = [
+            'document_title' => $title,
+            'document_hash'  => $hash,
+            'hmac_signature' => $hmac,
+            'signed_by'      => $user->id,
+            'signer_name'    => $user->name,
+            'signer_nip'     => null,
+            'signer_role'    => $user->getRoleNames()->first() ?? 'Staff',
+            'signed_at'      => now(),
+            'is_valid'       => true,
+            'revoked_at'     => null,
+            'revoke_reason'  => null,
+        ];
+
+        $existing = self::where('document_type', $type)->where('reference_id', $refId)->first();
+
+        if ($existing) {
+            $existing->update($signerData);
+            return $existing->refresh();
+        }
+
+        return self::create(array_merge($signerData, [
+            'document_type' => $type,
+            'reference_id'  => $refId,
+        ]));
     }
 }

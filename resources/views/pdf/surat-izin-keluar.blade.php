@@ -130,6 +130,26 @@
             line-height: 1.2;
         }
 
+        .ttd-digital-qr {
+            width: 55px;
+            height: 55px;
+            padding: 3px;
+            border: 1px solid #c7d2fe;
+            background: #fff;
+        }
+
+        .ttd-digital-badge {
+            font-size: 5.5pt;
+            color: #4f46e5;
+            margin-top: 3px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        .ttd-digital-wrap {
+            margin-bottom: 8px;
+        }
+
         .date-line {
             text-align: right;
             margin-bottom: 15px;
@@ -202,10 +222,26 @@
                 <tr>
                     <td>
                         <div class="sig-role">Guru Kelas</div>
+                        @if(!empty($qrGKBase64))
+                            <div class="ttd-digital-wrap">
+                                <img src="{{ $qrGKBase64 }}" class="ttd-digital-qr">
+                                <div class="ttd-digital-badge">&#9679; TTD DIGITAL SAH</div>
+                            </div>
+                        @else
+                            <div style="height:65px;"></div>
+                        @endif
                         <div class="sig-name">{{ $izin->guruKelasApprover->name ?? '..........................' }}</div>
                     </td>
                     <td>
                         <div class="sig-role">Guru Piket</div>
+                        @if(!empty($qrGPBase64))
+                            <div class="ttd-digital-wrap">
+                                <img src="{{ $qrGPBase64 }}" class="ttd-digital-qr">
+                                <div class="ttd-digital-badge">&#9679; TTD DIGITAL SAH</div>
+                            </div>
+                        @else
+                            <div style="height:65px;"></div>
+                        @endif
                         <div class="sig-name">{{ $izin->guruPiketApprover->name ?? '..........................' }}</div>
                     </td>
                     <td>

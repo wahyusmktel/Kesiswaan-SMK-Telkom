@@ -12,11 +12,17 @@ class UserDigitalSignature extends Model
         'ttd_image_path',
         'pin_hash',
         'is_active',
+        'auto_sign_izin_keluar',
+        'auto_sign_perizinan',
     ];
 
     protected $hidden = ['pin_hash'];
 
-    protected $casts = ['is_active' => 'boolean'];
+    protected $casts = [
+        'is_active'             => 'boolean',
+        'auto_sign_izin_keluar' => 'boolean',
+        'auto_sign_perizinan'   => 'boolean',
+    ];
 
     public function user()
     {

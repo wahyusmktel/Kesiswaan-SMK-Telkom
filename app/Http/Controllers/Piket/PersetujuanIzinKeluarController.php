@@ -71,20 +71,33 @@ class PersetujuanIzinKeluarController extends Controller
                 ->where('jam_selesai', '>=', $waktuSaatIni)
                 ->first();
 
-            IzinMeninggalkanKelas::create([
-                'user_id' => $user->id,
-                'rombel_id' => $rombelAktif->id,
-                'jadwal_pelajaran_id' => $jadwalSaatIni?->id,
-                'jenis_izin' => $request->jenis_izin,
-                'tujuan' => $request->tujuan,
-                'keterangan' => $request->keterangan,
-                'estimasi_kembali' => now()->setTimeFromTimeString($request->estimasi_kembali),
-                'status' => 'disetujui_guru_piket',
+            $piketUser = Auth::user();
+            $izinBaru  = IzinMeninggalkanKelas::create([
+                'user_id'                => $user->id,
+                'rombel_id'              => $rombelAktif->id,
+                'jadwal_pelajaran_id'    => $jadwalSaatIni?->id,
+                'jenis_izin'             => $request->jenis_izin,
+                'tujuan'                 => $request->tujuan,
+                'keterangan'             => $request->keterangan,
+                'estimasi_kembali'       => now()->setTimeFromTimeString($request->estimasi_kembali),
+                'status'                 => 'disetujui_guru_piket',
                 'guru_kelas_approval_id' => $jadwalSaatIni?->guru?->user_id,
                 'guru_kelas_approved_at' => $jadwalSaatIni ? now() : null,
-                'guru_piket_approval_id' => Auth::id(),
+                'guru_piket_approval_id' => $piketUser->id,
                 'guru_piket_approved_at' => now(),
             ]);
+
+            // Auto-sign TTD Guru Piket jika diaktifkan
+            $sig = \App\Models\UserDigitalSignature::where('user_id', $piketUser->id)->first();
+            if ($sig && $sig->isReady() && $sig->auto_sign_izin_keluar) {
+                \App\Models\DigitalDocument::autoSign(
+                    $piketUser,
+                    'IZIN_KELUAR_GP',
+                    'Izin Keluar (Guru Piket) - ' . $user->name,
+                    $izinBaru->id,
+                    ['IZIN_KELUAR_GP', (string) $izinBaru->id, (string) $user->id, $user->name]
+                );
+            }
 
             toast('Izin siswa berhasil dicatat dan disetujui.', 'success');
             return redirect()->route('piket.persetujuan-izin-keluar.index');
@@ -146,15 +159,15 @@ class PersetujuanIzinKeluarController extends Controller
     public function approve(IzinMeninggalkanKelas $izin)
     {
         try {
+            $user       = Auth::user();
             $updateData = [
-                'status' => 'disetujui_guru_piket',
-                'guru_piket_approval_id' => Auth::id(),
+                'status'                 => 'disetujui_guru_piket',
+                'guru_piket_approval_id' => $user->id,
                 'guru_piket_approved_at' => now(),
             ];
 
             // Auto-fill Guru Kelas if empty and we have a schedule
             if (!$izin->guru_kelas_approval_id && $izin->jadwal_pelajaran_id) {
-                // Ensure relationship is loaded
                 $izin->load('jadwalPelajaran.guru');
                 if ($izin->jadwalPelajaran?->guru?->user_id) {
                     $updateData['guru_kelas_approval_id'] = $izin->jadwalPelajaran->guru->user_id;
@@ -163,6 +176,20 @@ class PersetujuanIzinKeluarController extends Controller
             }
 
             $izin->update($updateData);
+            $izin->load('siswa');
+
+            // Auto-sign TTD Guru Piket
+            $sig = \App\Models\UserDigitalSignature::where('user_id', $user->id)->first();
+            if ($sig && $sig->isReady() && $sig->auto_sign_izin_keluar) {
+                \App\Models\DigitalDocument::autoSign(
+                    $user,
+                    'IZIN_KELUAR_GP',
+                    'Izin Keluar (Guru Piket) - ' . $izin->siswa->name,
+                    $izin->id,
+                    ['IZIN_KELUAR_GP', (string) $izin->id, (string) $izin->user_id, $izin->siswa->name]
+                );
+            }
+
             toast('Izin berhasil disetujui. Silakan cetak surat izin.', 'success');
         } catch (\Exception $e) {
             Log::error('Error approving leave permit by picket teacher: ' . $e->getMessage());
@@ -197,23 +224,47 @@ class PersetujuanIzinKeluarController extends Controller
 
         $izin->load(['siswa.masterSiswa.rombels.kelas', 'guruKelasApprover', 'guruPiketApprover', 'securityVerifier', 'jadwalPelajaran.mataPelajaran', 'jadwalPelajaran.guru']);
 
-        // 1. URL untuk verifikasi publik (tetap sama)
-        $publicUrl = route('verifikasi.surat', $izin->uuid);
-        $publicQrCode = QrCode::format('svg')->size(70)->generate($publicUrl);
-        $publicQrCodeBase64 = 'data:image/svg+xml;base64,' . base64_encode($publicQrCode);
+        // QR verifikasi publik dan security (existing)
+        $publicUrl           = route('verifikasi.surat', $izin->uuid);
+        $publicQrCode        = QrCode::format('svg')->size(70)->generate($publicUrl);
+        $publicQrCodeBase64  = 'data:image/svg+xml;base64,' . base64_encode($publicQrCode);
 
-        // 2. URL untuk aksi internal security (diubah ke route cerdas yang baru)
-        $securityUrl = route('security.verifikasi.process-scan', $izin->uuid); // <-- BARIS INI DIPERBARUI
-        $securityQrCode = QrCode::format('svg')->size(70)->generate($securityUrl);
+        $securityUrl          = route('security.verifikasi.process-scan', $izin->uuid);
+        $securityQrCode       = QrCode::format('svg')->size(70)->generate($securityUrl);
         $securityQrCodeBase64 = 'data:image/svg+xml;base64,' . base64_encode($securityQrCode);
 
+        // Digital signature dokumen Guru Kelas & Guru Piket
+        $docGK = \App\Models\DigitalDocument::where('document_type', 'IZIN_KELUAR_GK')
+            ->where('reference_id', $izin->id)->where('is_valid', true)->first();
+        $docGP = \App\Models\DigitalDocument::where('document_type', 'IZIN_KELUAR_GP')
+            ->where('reference_id', $izin->id)->where('is_valid', true)->first();
+
+        $qrGKBase64 = $docGK ? $this->generateQrBase64(route('verifikasi.dokumen', $docGK->token)) : null;
+        $qrGPBase64 = $docGP ? $this->generateQrBase64(route('verifikasi.dokumen', $docGP->token)) : null;
+
         $pdf = Pdf::loadView('pdf.surat-izin-keluar', [
-            'izin' => $izin,
-            'publicQrCodeBase64' => $publicQrCodeBase64,
+            'izin'                 => $izin,
+            'publicQrCodeBase64'   => $publicQrCodeBase64,
             'securityQrCodeBase64' => $securityQrCodeBase64,
+            'docGK'                => $docGK,
+            'docGP'                => $docGP,
+            'qrGKBase64'           => $qrGKBase64,
+            'qrGPBase64'           => $qrGPBase64,
         ]);
 
         return $pdf->stream('surat-izin-' . $izin->siswa->name . '.pdf');
+    }
+
+    private function generateQrBase64(string $url): string
+    {
+        $options = new \chillerlan\QRCode\QROptions([
+            'outputInterface' => \chillerlan\QRCode\Output\QRGdImagePNG::class,
+            'outputBase64'    => true,
+            'scale'           => 4,
+            'quietzoneSize'   => 1,
+            'eccLevel'        => \chillerlan\QRCode\Common\EccLevel::M,
+        ]);
+        return (new \chillerlan\QRCode\QRCode($options))->render($url);
     }
 
     /**

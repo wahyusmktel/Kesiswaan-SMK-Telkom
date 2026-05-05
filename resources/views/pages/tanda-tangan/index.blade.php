@@ -169,6 +169,60 @@
                                     </div>
                                 </div>
 
+                                {{-- Auto-sign Toggles --}}
+                                @if($signature && $signature->isReady())
+                                <div class="border-t border-gray-100 pt-4">
+                                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                                        <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                        </svg>
+                                        Tanda Tangan Otomatis
+                                    </p>
+
+                                    @role('Guru Kelas|Guru Piket')
+                                    <div id="auto-izin-wrap" class="flex items-center justify-between p-3 rounded-xl border-2 mb-2 transition-colors
+                                        {{ $signature->auto_sign_izin_keluar ? 'bg-indigo-50 border-indigo-200' : 'bg-gray-50 border-gray-200' }}">
+                                        <div>
+                                            <p class="text-xs font-bold text-gray-800">Auto-TTD Izin Keluar</p>
+                                            <p class="text-[10px] text-gray-500 mt-0.5">Otomatis tandatangani saat menyetujui izin keluar siswa</p>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-3">
+                                            <input type="checkbox" name="auto_sign_izin_keluar" value="1" id="auto_izin_toggle"
+                                                class="sr-only peer"
+                                                {{ $signature->auto_sign_izin_keluar ? 'checked' : '' }}>
+                                            <div class="w-10 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer
+                                                peer-checked:after:translate-x-full peer-checked:after:border-white
+                                                after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+                                                after:bg-white after:border-gray-300 after:border after:rounded-full
+                                                after:h-4 after:w-4 after:transition-all
+                                                peer-checked:bg-indigo-500"></div>
+                                        </label>
+                                    </div>
+                                    @endrole
+
+                                    @role('Wali Kelas')
+                                    <div id="auto-perizinan-wrap" class="flex items-center justify-between p-3 rounded-xl border-2 mb-2 transition-colors
+                                        {{ $signature->auto_sign_perizinan ? 'bg-indigo-50 border-indigo-200' : 'bg-gray-50 border-gray-200' }}">
+                                        <div>
+                                            <p class="text-xs font-bold text-gray-800">Auto-TTD Perizinan</p>
+                                            <p class="text-[10px] text-gray-500 mt-0.5">Otomatis tandatangani saat menyetujui perizinan tidak masuk</p>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-3">
+                                            <input type="checkbox" name="auto_sign_perizinan" value="1" id="auto_perizinan_toggle"
+                                                class="sr-only peer"
+                                                {{ $signature->auto_sign_perizinan ? 'checked' : '' }}>
+                                            <div class="w-10 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer
+                                                peer-checked:after:translate-x-full peer-checked:after:border-white
+                                                after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+                                                after:bg-white after:border-gray-300 after:border after:rounded-full
+                                                after:h-4 after:w-4 after:transition-all
+                                                peer-checked:bg-indigo-500"></div>
+                                        </label>
+                                    </div>
+                                    @endrole
+                                </div>
+                                @endif
+
                                 <button type="submit"
                                     class="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition-all shadow-sm hover:shadow-md glow-pulse">
                                     Simpan Identitas Digital
@@ -428,6 +482,36 @@
 
     @push('scripts')
     <script>
+        // Toggle visual auto-sign izin keluar
+        const autoIzinToggle = document.getElementById('auto_izin_toggle');
+        const autoIzinWrap   = document.getElementById('auto-izin-wrap');
+        if (autoIzinToggle && autoIzinWrap) {
+            autoIzinToggle.addEventListener('change', function () {
+                if (this.checked) {
+                    autoIzinWrap.classList.replace('bg-gray-50', 'bg-indigo-50');
+                    autoIzinWrap.classList.replace('border-gray-200', 'border-indigo-200');
+                } else {
+                    autoIzinWrap.classList.replace('bg-indigo-50', 'bg-gray-50');
+                    autoIzinWrap.classList.replace('border-indigo-200', 'border-gray-200');
+                }
+            });
+        }
+
+        // Toggle visual auto-sign perizinan
+        const autoPerizinanToggle = document.getElementById('auto_perizinan_toggle');
+        const autoPerizinanWrap   = document.getElementById('auto-perizinan-wrap');
+        if (autoPerizinanToggle && autoPerizinanWrap) {
+            autoPerizinanToggle.addEventListener('change', function () {
+                if (this.checked) {
+                    autoPerizinanWrap.classList.replace('bg-gray-50', 'bg-indigo-50');
+                    autoPerizinanWrap.classList.replace('border-gray-200', 'border-indigo-200');
+                } else {
+                    autoPerizinanWrap.classList.replace('bg-indigo-50', 'bg-gray-50');
+                    autoPerizinanWrap.classList.replace('border-indigo-200', 'border-gray-200');
+                }
+            });
+        }
+
         // ===== Single revoke modal =====
         function openRevokeModal(token) {
             document.getElementById('revokeToken').value = token;

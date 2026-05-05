@@ -46,11 +46,25 @@ class PersetujuanIzinKeluarController extends Controller
     public function approve(IzinMeninggalkanKelas $izin)
     {
         try {
+            $user = Auth::user();
             $izin->update([
-                'status' => 'disetujui_guru_kelas',
-                'guru_kelas_approval_id' => Auth::id(),
+                'status'                 => 'disetujui_guru_kelas',
+                'guru_kelas_approval_id' => $user->id,
                 'guru_kelas_approved_at' => now(),
             ]);
+            $izin->load('siswa');
+
+            $sig = \App\Models\UserDigitalSignature::where('user_id', $user->id)->first();
+            if ($sig && $sig->isReady() && $sig->auto_sign_izin_keluar) {
+                \App\Models\DigitalDocument::autoSign(
+                    $user,
+                    'IZIN_KELUAR_GK',
+                    'Izin Keluar (Guru Kelas) - ' . $izin->siswa->name,
+                    $izin->id,
+                    ['IZIN_KELUAR_GK', (string) $izin->id, (string) $izin->user_id, $izin->siswa->name]
+                );
+            }
+
             toast('Izin berhasil disetujui.', 'success');
         } catch (\Exception $e) {
             Log::error('Error approving leave permit by class teacher: ' . $e->getMessage());
