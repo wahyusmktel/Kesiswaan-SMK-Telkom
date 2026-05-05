@@ -5,8 +5,8 @@
         </h2>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+    <div class="py-6 w-full">
+        <div class="w-full px-4 sm:px-6 lg:px-8 space-y-6">
 
             {{-- Welcome Hero Card --}}
             <div class="bg-gradient-to-r from-orange-500 to-amber-500 rounded-[32px] p-8 text-white relative overflow-hidden shadow-2xl shadow-orange-500/20">
