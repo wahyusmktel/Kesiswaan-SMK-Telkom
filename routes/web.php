@@ -772,14 +772,35 @@ Route::middleware(['auth', 'role:Tata Usaha', 'permission:view tu dashboard'])->
 Route::middleware(['auth', 'permission:manage tu letter requests'])->group(function () {
     Route::get('/layanan-persuratan/request', [\App\Http\Controllers\TU\LetterRequestController::class, 'create'])->name('correspondence.request');
     Route::post('/layanan-persuratan/request', [\App\Http\Controllers\TU\LetterRequestController::class, 'store'])->name('correspondence.request.store');
-    Route::get('/layanan-persuratan/request/{letterRequest}/download', [\App\Http\Controllers\TU\LetterRequestController::class, 'download'])->name('correspondence.request.download');
-    Route::get('/layanan-persuratan/request/{letterRequest}/print', [\App\Http\Controllers\TU\LetterRequestController::class, 'print'])->name('correspondence.request.print');
+});
+
+// ============================================================
+// FOOD ORDER SYSTEM (Untuk Semua Role, tapi biasanya bukan Kantin)
+// ============================================================
+Route::middleware(['auth'])->prefix('pesan-makanan')->name('food-order.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\FoodOrderController::class, 'index'])->name('index');
+    Route::get('/kantin/{id}', [\App\Http\Controllers\FoodOrderController::class, 'kantin'])->name('kantin');
+    Route::post('/checkout', [\App\Http\Controllers\FoodOrderController::class, 'checkout'])->name('checkout');
+    Route::get('/success/{order}', [\App\Http\Controllers\FoodOrderController::class, 'success'])->name('success');
+    Route::get('/history', [\App\Http\Controllers\FoodOrderController::class, 'history'])->name('history');
 });
 
 // Group Route for Kantin
 Route::middleware(['auth', 'role:Kantin', 'permission:view kantin dashboard'])->prefix('kantin')->name('kantin.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Kantin\DashboardController::class, 'index'])->name('dashboard.index');
     Route::resource('menu', \App\Http\Controllers\KantinMenuController::class)->except(['show']);
+    
+    // Kantin Settings
+    Route::get('/settings', [\App\Http\Controllers\KantinProfileController::class, 'edit'])->name('settings.index');
+    Route::patch('/settings', [\App\Http\Controllers\KantinProfileController::class, 'update'])->name('settings.update');
+
+    // Kantin Orders
+    Route::get('/orders', [\App\Http\Controllers\KantinOrderController::class, 'index'])->name('orders.index');
+    Route::patch('/orders/{order}/status', [\App\Http\Controllers\KantinOrderController::class, 'updateStatus'])->name('orders.update-status');
+    Route::get('/orders/{order}/receipt', [\App\Http\Controllers\KantinOrderController::class, 'printReceipt'])->name('orders.receipt');
+    
+    // API for notification
+    Route::get('/api/orders/pending-count', [\App\Http\Controllers\KantinOrderController::class, 'pendingCount'])->name('api.orders.pending-count');
 });
 
 require __DIR__ . '/auth.php';

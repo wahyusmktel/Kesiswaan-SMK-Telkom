@@ -202,6 +202,17 @@
                                 class="bg-transparent border-0 focus:ring-0 text-sm text-gray-700 placeholder-gray-500 w-40 lg:w-64 p-0">
                         </div>
 
+                        {{-- Kantin Top Bar Notification --}}
+                        @if(session('active_role') == 'Kantin')
+                        <div x-data="{ count: {{ \App\Models\KantinOrder::where('kantin_id', Auth::id())->where('status', 'pending')->count() }} }" @kantin-orders-updated.window="count = $event.detail.count" class="relative hidden sm:flex items-center">
+                            <a href="{{ route('kantin.orders.index') }}" class="p-2 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-colors relative">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                </svg>
+                                <span x-show="count > 0" x-transition x-cloak class="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full animate-pulse"></span>
+                            </a>
+                        </div>
+                        @endif
                         <div class="flex items-center gap-3">
                             <span
                                 class="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-50 text-red-700 border border-red-100">
