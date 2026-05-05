@@ -158,4 +158,9 @@ class User extends Authenticatable implements WebAuthnAuthenticatableContract
     {
         return $this->hasMany(IqTestResult::class);
     }
+
+    public function kantinProfile()
+    {
+        return $this->hasOne(KantinProfile::class);
+    }
 }
