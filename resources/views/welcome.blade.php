@@ -249,6 +249,9 @@
 </head>
 
 <body class="antialiased overflow-x-hidden {{ $appSetting?->theme === 'light-red' ? 'theme-light-red' : '' }}" x-data="{ showVideo: false }">
+    {{-- Premium Tech Preloader --}}
+    @include('components.preloader')
+
     <!-- Blobs -->
     <div class="blob top-[-100px] left-[-100px]"></div>
     <div class="blob bottom-[10%] right-[-100px]" style="background: #3B82F6; opacity: 0.1;"></div>
