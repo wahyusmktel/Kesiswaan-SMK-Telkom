@@ -728,6 +728,114 @@
         </div>
     </section>
 
+    <!-- Berita Terbaru Slider -->
+    <section class="py-24 px-6 relative" x-data="beritaSlider()" x-init="init()">
+        <div class="max-w-7xl mx-auto space-y-12">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div class="space-y-3">
+                    <div
+                        class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-600/10 border border-red-600/20 text-red-500 text-xs font-black uppercase tracking-widest">
+                        📰 Berita Terkini
+                    </div>
+                    <h2 class="text-3xl md:text-5xl font-extrabold text-gradient leading-tight">Informasi &
+                        Berita<br>Terbaru</h2>
+                    <p class="text-slate-400 max-w-xl font-medium">Ikuti perkembangan terbaru seputar kegiatan,
+                        prestasi, dan informasi penting dari SMK Telkom Lampung.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button @click="prev()" :disabled="currentSlide === 0"
+                        class="w-12 h-12 glass rounded-2xl flex items-center justify-center hover:bg-white/10 transition-all disabled:opacity-30 disabled:cursor-not-allowed">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <button @click="next()" :disabled="currentSlide >= maxSlide"
+                        class="w-12 h-12 glass rounded-2xl flex items-center justify-center hover:bg-white/10 transition-all disabled:opacity-30 disabled:cursor-not-allowed">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Slider Container -->
+            <div class="relative overflow-hidden rounded-[32px]">
+                <div class="flex transition-transform duration-500 ease-out"
+                    :style="'transform: translateX(-' + (currentSlide * slideWidth) + '%)'">
+                    <template x-for="(berita, index) in beritas" :key="berita.id">
+                        <div class="w-full md:w-1/2 lg:w-1/3 flex-shrink-0 px-3">
+                            <a :href="berita.url"
+                                class="block glass-card rounded-[24px] overflow-hidden group h-full hover:border-red-500/30">
+                                <div class="aspect-video overflow-hidden relative">
+                                    <template x-if="berita.gambar_url">
+                                        <img :src="berita.gambar_url" :alt="berita.judul"
+                                            class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                                    </template>
+                                    <template x-if="!berita.gambar_url">
+                                        <div
+                                            class="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center">
+                                            <svg class="w-12 h-12 text-slate-700" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                                            </svg>
+                                        </div>
+                                    </template>
+                                    <div class="absolute top-4 left-4">
+                                        <span
+                                            class="px-3 py-1 rounded-full bg-black/50 backdrop-blur-md text-[10px] font-black uppercase tracking-widest text-white"
+                                            x-text="berita.kategori"></span>
+                                    </div>
+                                </div>
+                                <div class="p-6 space-y-3">
+                                    <h3 class="text-lg font-bold text-white group-hover:text-red-400 transition-colors line-clamp-2 leading-snug"
+                                        x-text="berita.judul"></h3>
+                                    <p class="text-sm text-slate-400 line-clamp-2 leading-relaxed"
+                                        x-text="berita.ringkasan || ''"></p>
+                                    <div class="flex items-center justify-between pt-2">
+                                        <span class="text-xs text-slate-500 font-medium"
+                                            x-text="berita.published_at"></span>
+                                        <span
+                                            class="text-xs font-bold text-red-500 group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
+                                            Baca
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </span>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Dots Indicator -->
+            <div class="flex items-center justify-center gap-2" x-show="beritas.length > 0">
+                <template x-for="i in (maxSlide + 1)" :key="i">
+                    <button @click="currentSlide = i - 1"
+                        class="transition-all duration-300 rounded-full"
+                        :class="currentSlide === (i - 1) ? 'w-8 h-2 bg-red-500' : 'w-2 h-2 bg-slate-600 hover:bg-slate-500'">
+                    </button>
+                </template>
+            </div>
+
+            <!-- Empty state -->
+            <div x-show="beritas.length === 0 && loaded" class="text-center py-12">
+                <div
+                    class="glass p-12 rounded-[32px] max-w-md mx-auto space-y-4">
+                    <div class="text-5xl">📰</div>
+                    <p class="text-lg font-bold text-slate-400">Belum ada berita</p>
+                    <p class="text-sm text-slate-500">Informasi dan berita terbaru akan segera hadir.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Call to action -->
     <section class="py-24 px-6 relative">
         <div class="max-w-5xl mx-auto glass p-12 md:p-20 rounded-[40px] text-center space-y-8 relative overflow-hidden">
@@ -1031,6 +1139,81 @@
                     } finally {
                         this.isSubmitting = false;
                     }
+                }
+            };
+        }
+
+        // Berita Slider Component
+        function beritaSlider() {
+            return {
+                beritas: [],
+                currentSlide: 0,
+                slideWidth: 33.333,
+                maxSlide: 0,
+                autoplayInterval: null,
+                loaded: false,
+
+                async init() {
+                    this.updateSlideWidth();
+                    window.addEventListener('resize', () => this.updateSlideWidth());
+
+                    try {
+                        const response = await fetch('/api/berita/latest');
+                        this.beritas = await response.json();
+                        this.calculateMaxSlide();
+                        this.startAutoplay();
+                    } catch (error) {
+                        console.log('Failed to load news:', error);
+                    }
+                    this.loaded = true;
+                },
+
+                updateSlideWidth() {
+                    if (window.innerWidth < 768) {
+                        this.slideWidth = 100;
+                    } else if (window.innerWidth < 1024) {
+                        this.slideWidth = 50;
+                    } else {
+                        this.slideWidth = 33.333;
+                    }
+                    this.calculateMaxSlide();
+                },
+
+                calculateMaxSlide() {
+                    const visibleSlides = Math.round(100 / this.slideWidth);
+                    this.maxSlide = Math.max(0, this.beritas.length - visibleSlides);
+                    if (this.currentSlide > this.maxSlide) {
+                        this.currentSlide = this.maxSlide;
+                    }
+                },
+
+                next() {
+                    if (this.currentSlide < this.maxSlide) {
+                        this.currentSlide++;
+                    }
+                    this.restartAutoplay();
+                },
+
+                prev() {
+                    if (this.currentSlide > 0) {
+                        this.currentSlide--;
+                    }
+                    this.restartAutoplay();
+                },
+
+                startAutoplay() {
+                    this.autoplayInterval = setInterval(() => {
+                        if (this.currentSlide < this.maxSlide) {
+                            this.currentSlide++;
+                        } else {
+                            this.currentSlide = 0;
+                        }
+                    }, 5000);
+                },
+
+                restartAutoplay() {
+                    clearInterval(this.autoplayInterval);
+                    this.startAutoplay();
                 }
             };
         }

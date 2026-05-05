@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\BeritaController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\IzinController;
 use App\Http\Controllers\WaliKelas\PerizinanController as WaliKelasPerizinanController;
@@ -150,6 +151,9 @@ Route::prefix('api/happiness')->name('happiness.')->group(function () {
     Route::post('/store', [App\Http\Controllers\HappinessMetricController::class, 'store'])->name('store');
     Route::get('/stats', [App\Http\Controllers\HappinessMetricController::class, 'getStats'])->name('stats');
 });
+
+// Berita API (Public)
+Route::get('/api/berita/latest', [BeritaController::class, 'latestApi'])->name('api.berita.latest');
 
 // Documentation Routes (Public)
 Route::group(['prefix' => 'panduan', 'as' => 'docs.'], function () {
@@ -681,6 +685,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Sinkronisasi Aset
         Route::get('/asset-sync', [AssetSyncController::class, 'index'])->name('asset-sync.index');
         Route::post('/asset-sync', [AssetSyncController::class, 'sync'])->name('asset-sync.process');
+
+        // Manajemen Berita
+        Route::resource('berita', BeritaController::class)->except(['show']);
     });
 });
 
@@ -808,6 +815,11 @@ Route::get('/verifikasi/{token}', [\App\Http\Controllers\VerifikasiDokumenContro
 // PUBLIC VERIFICATION FOR IQ TEST CERTIFICATE
 // ============================================================
 Route::get('/verifikasi-iq/{code}', [\App\Http\Controllers\IqVerificationController::class, 'verify'])->name('tes-iq.verify');
+
+// ============================================================
+// PUBLIC BERITA DETAIL PAGE
+// ============================================================
+Route::get('/berita/{slug}', [BeritaController::class, 'show'])->name('berita.show');
 
 // ============================================================
 // REDIRECT SHORTENER URL (CATCH-ALL)
