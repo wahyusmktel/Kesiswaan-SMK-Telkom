@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\GeneralController;
 use App\Http\Controllers\Api\ExitPermitController;
 use App\Http\Controllers\Api\BKController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\DigitalSignatureApiController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -56,4 +57,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/messages/{roomId}', [BKController::class, 'getMessages']);
         Route::post('/messages/{roomId}', [BKController::class, 'sendMessage']);
     });
+
+    // Tanda Tangan Digital — diakses SARPRA untuk impor gambar TTD
+    Route::get('/signature/my-image', [DigitalSignatureApiController::class, 'myImage']);
 });
