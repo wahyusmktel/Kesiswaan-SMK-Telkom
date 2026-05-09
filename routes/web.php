@@ -471,6 +471,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Route untuk Verifikasi Keterlambatan
         Route::get('/verifikasi-terlambat', [VerifikasiTerlambatController::class, 'index'])->middleware('permission:manage penanganan terlambat')->name('verifikasi-terlambat.index');
+        Route::post('/verifikasi-terlambat/verify-all', [VerifikasiTerlambatController::class, 'verifyAll'])->middleware('permission:manage penanganan terlambat')->name('verifikasi-terlambat.verify-all');
         Route::get('/verifikasi-terlambat/{keterlambatan}', [VerifikasiTerlambatController::class, 'show'])->name('verifikasi-terlambat.show');
         Route::put('/verifikasi-terlambat/{keterlambatan}', [VerifikasiTerlambatController::class, 'update'])->middleware('permission:manage penanganan terlambat')->name('verifikasi-terlambat.update');
 

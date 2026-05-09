@@ -20,12 +20,83 @@ class VerifikasiTerlambatController extends Controller
     // Menampilkan daftar siswa yang perlu diverifikasi
     public function index()
     {
-        $daftarSiswaTerlambat = Keterlambatan::with('siswa.rombels.kelas')
+        $daftarSiswaTerlambat = Keterlambatan::with('siswa.rombels.kelas', 'security')
             ->where('status', 'dicatat_security')
             ->latest('waktu_dicatat_security')
             ->get();
 
         return view('pages.piket.verifikasi-terlambat.index', compact('daftarSiswaTerlambat'));
+    }
+
+    // Verifikasi semua data sekaligus (bulk)
+    public function verifyAll(Request $request)
+    {
+        $pending = Keterlambatan::with('siswa.rombels')
+            ->where('status', 'dicatat_security')
+            ->get();
+
+        if ($pending->isEmpty()) {
+            toast('Tidak ada data yang perlu diverifikasi.', 'info');
+            return back();
+        }
+
+        $berhasil = 0;
+
+        foreach ($pending as $keterlambatan) {
+            try {
+                $rombelSiswa   = $keterlambatan->siswa->rombels()->first();
+                $waktuTercatat = Carbon::parse($keterlambatan->waktu_dicatat_security);
+                $namaHari      = $waktuTercatat->isoFormat('dddd');
+                $waktu         = $waktuTercatat->format('H:i:s');
+
+                $jadwalSaatItu = null;
+                if ($rombelSiswa) {
+                    $jadwalSaatItu = JadwalPelajaran::where('rombel_id', $rombelSiswa->id)
+                        ->where('hari', $namaHari)
+                        ->where('jam_mulai', '<=', $waktu)
+                        ->where('jam_selesai', '>=', $waktu)
+                        ->first();
+                }
+
+                $keterlambatan->update([
+                    'tindak_lanjut_piket'        => 'Diverifikasi massal oleh Guru Piket.',
+                    'diverifikasi_oleh_piket_id'  => Auth::id(),
+                    'waktu_verifikasi_piket'      => now(),
+                    'jadwal_pelajaran_id'         => $jadwalSaatItu?->id,
+                    'status'                      => 'diverifikasi_piket',
+                ]);
+
+                // Poin pelanggaran
+                $peraturanTerlambat = PoinPeraturan::whereHas('category', fn($q) =>
+                    $q->where('name', 'Kedisiplinan'))
+                    ->where('pasal', 'Ketertiban')
+                    ->where('deskripsi', 'Terlambat')
+                    ->first();
+
+                if (!$peraturanTerlambat) {
+                    $category = PoinCategory::firstOrCreate(['name' => 'Kedisiplinan']);
+                    $peraturanTerlambat = PoinPeraturan::firstOrCreate(
+                        ['deskripsi' => 'Terlambat', 'poin_category_id' => $category->id],
+                        ['pasal' => 'Ketertiban', 'bobot_poin' => 1]
+                    );
+                }
+
+                SiswaPelanggaran::create([
+                    'master_siswa_id'   => $keterlambatan->master_siswa_id,
+                    'poin_peraturan_id' => $peraturanTerlambat->id,
+                    'tanggal'           => now()->toDateString(),
+                    'catatan'           => 'Terlambat (' . $peraturanTerlambat->bobot_poin . ' Poin) - verifikasi massal pada hari ' . $namaHari,
+                    'pelapor_id'        => Auth::id(),
+                ]);
+
+                $berhasil++;
+            } catch (\Exception $e) {
+                Log::error('Bulk verify error: ' . $e->getMessage());
+            }
+        }
+
+        toast("Berhasil memverifikasi {$berhasil} data keterlambatan.", 'success');
+        return redirect()->route('piket.verifikasi-terlambat.index');
     }
 
     // Menampilkan halaman detail untuk verifikasi
