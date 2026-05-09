@@ -62,8 +62,17 @@ class ProfileController extends Controller
     public function updateFaceId(Request $request): RedirectResponse
     {
         $request->validate([
-            'face_image' => ['required', 'string'],
+            'face_image'      => ['required', 'string'],
+            'face_descriptor' => ['required', 'string'],
         ]);
+
+        // Validate descriptor is a 128-element float array
+        $descriptor = json_decode($request->input('face_descriptor'), true);
+        if (!is_array($descriptor) || count($descriptor) !== 128) {
+            return Redirect::back()->withErrors([
+                'face_image' => 'Data wajah tidak valid. Pastikan wajah terdeteksi dengan jelas sebelum menyimpan.',
+            ]);
+        }
 
         try {
             $imageData = $request->input('face_image');
@@ -77,11 +86,14 @@ class ProfileController extends Controller
             if ($request->user()->face_photo) {
                 \Illuminate\Support\Facades\Storage::disk('public')->delete($request->user()->face_photo);
             }
-            
+
             $path = 'faces/' . uniqid('face_') . '.jpg';
             \Illuminate\Support\Facades\Storage::disk('public')->put($path, $imageData);
-            
-            $request->user()->update(['face_photo' => $path]);
+
+            $request->user()->update([
+                'face_photo'       => $path,
+                'face_descriptor'  => $request->input('face_descriptor'),
+            ]);
 
             return Redirect::route('profile.edit')->with('status', 'face-id-updated');
         } catch (\Exception $e) {

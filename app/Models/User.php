@@ -28,6 +28,7 @@ class User extends Authenticatable implements WebAuthnAuthenticatableContract
         'google_id',
         'avatar',
         'face_photo',
+        'face_descriptor',
     ];
 
     /**

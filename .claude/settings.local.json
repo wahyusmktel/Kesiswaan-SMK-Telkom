@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(php artisan *)"
+      "Bash(php artisan *)",
+      "Bash(xargs grep *)",
+      "PowerShell(New-Item -ItemType Directory -Force -Path \"C:\\\\Projects\\\\Kesiswaan-SMK-Telkom\\\\public\\\\models\")"
     ]
   }
 }

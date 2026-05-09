@@ -600,11 +600,16 @@
                     <p class="text-white font-bold text-lg">Posisikan wajah Anda</p>
                     <p class="text-gray-400 text-sm">Pastikan wajah berada di dalam lingkaran</p>
                 </div>
+                {{-- Face detected indicator --}}
+                <div id="faceDetectedBadge" style="display:none;" class="inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/20 border border-emerald-400/30 rounded-full text-xs font-bold text-emerald-400">
+                    <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+                    Wajah terdeteksi
+                </div>
                 <div id="faceActions" class="flex items-center justify-center gap-3">
-                    <!-- Auto Capture Status -->
-                    <div id="autoCaptureStatus" class="flex flex-col items-center">
-                        <div class="text-3xl font-black text-red-500 mb-1" id="captureCountdown">5</div>
-                        <p class="text-sm font-bold text-gray-400 uppercase tracking-widest">Memindai...</p>
+                    <!-- Countdown -->
+                    <div id="autoCaptureStatus" style="display:none;" class="flex flex-col items-center">
+                        <div class="text-3xl font-black text-emerald-400 mb-1" id="captureCountdown">3</div>
+                        <p class="text-sm font-bold text-gray-400 uppercase tracking-widest">Menangkap...</p>
                     </div>
                     <button type="button" id="btnFaceClose"
                         class="px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-all">
@@ -612,8 +617,8 @@
                     </button>
                 </div>
                 <div id="faceLoading" style="display:none;" class="flex flex-col items-center gap-3 py-2">
-                    <div class="w-8 h-8 border-3 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-                    <p class="text-white font-bold text-sm">Memverifikasi wajah...</p>
+                    <div class="w-8 h-8 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p id="faceLoadingMsg" class="text-white font-bold text-sm">Memuat AI...</p>
                 </div>
                 <div id="faceResult" style="display:none;" class="py-2">
                     <p id="faceResultMsg" class="font-bold text-lg"></p>
@@ -633,26 +638,62 @@
         </div>
     </div>
 
+    <script src="{{ asset('js/face-api.min.js') }}"></script>
     <script>
-        // Face ID Login
+        // Face ID Login — face-api.js (128D descriptor, Euclidean distance)
         (function() {
-            const btnOpen = document.getElementById('btn-face-login');
-            const modal = document.getElementById('faceModal');
-            const video = document.getElementById('faceVideo');
-            const canvas = document.getElementById('faceCanvas');
-            const autoCaptureStatus = document.getElementById('autoCaptureStatus');
-            const captureCountdown = document.getElementById('captureCountdown');
-            const btnClose = document.getElementById('btnFaceClose');
-            const statusEl = document.getElementById('faceStatus');
-            const actionsEl = document.getElementById('faceActions');
-            const loadingEl = document.getElementById('faceLoading');
-            const resultEl = document.getElementById('faceResult');
-            const resultMsg = document.getElementById('faceResultMsg');
+            const btnOpen        = document.getElementById('btn-face-login');
+            const modal          = document.getElementById('faceModal');
+            const video          = document.getElementById('faceVideo');
+            const canvas         = document.getElementById('faceCanvas');
+            const badgeEl        = document.getElementById('faceDetectedBadge');
+            const autoCaptureEl  = document.getElementById('autoCaptureStatus');
+            const countdownEl    = document.getElementById('captureCountdown');
+            const btnClose       = document.getElementById('btnFaceClose');
+            const statusEl       = document.getElementById('faceStatus');
+            const actionsEl      = document.getElementById('faceActions');
+            const loadingEl      = document.getElementById('faceLoading');
+            const loadingMsgEl   = document.getElementById('faceLoadingMsg');
+            const resultEl       = document.getElementById('faceResult');
+            const resultMsg      = document.getElementById('faceResultMsg');
 
-            let stream = null;
+            const MODELS_URL     = '{{ asset('models') }}';
+            const CSRF           = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+            let stream            = null;
+            let detectInterval    = null;
             let countdownInterval = null;
-            let countdownValue = 5;
+            let countdownValue    = 3;
+            let faceDetected      = false;
+            let modelsLoaded      = window._faceApiModelsLoaded || false;
+            let modelsLoading     = false;
 
+            // ── Model loading ───────────────────────────────────────────
+            async function ensureModels() {
+                if (modelsLoaded) return;
+                if (modelsLoading) {
+                    // Wait until done
+                    await new Promise(r => { const t = setInterval(() => { if (modelsLoaded) { clearInterval(t); r(); } }, 100); });
+                    return;
+                }
+                modelsLoading = true;
+                await Promise.all([
+                    faceapi.nets.tinyFaceDetector.loadFromUri(MODELS_URL),
+                    faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODELS_URL),
+                    faceapi.nets.faceRecognitionNet.loadFromUri(MODELS_URL),
+                ]);
+                modelsLoaded = true;
+                window._faceApiModelsLoaded = true;
+                modelsLoading = false;
+            }
+
+            // Preload models when button is visible
+            const observer = new IntersectionObserver(entries => {
+                if (entries[0].isIntersecting) { ensureModels().catch(() => {}); observer.disconnect(); }
+            });
+            if (btnOpen) observer.observe(btnOpen);
+
+            // ── Modal open/close ────────────────────────────────────────
             function openModal() {
                 modal.classList.add('active');
                 startCamera();
@@ -660,123 +701,179 @@
 
             function closeModal() {
                 modal.classList.remove('active');
-                stopCamera();
+                stopAll();
                 resetUI();
             }
 
+            function stopAll() {
+                if (detectInterval)    { clearInterval(detectInterval);    detectInterval    = null; }
+                if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+                if (stream)            { stream.getTracks().forEach(t => t.stop()); stream = null; video.srcObject = null; }
+                faceDetected = false;
+            }
+
+            // ── Camera ──────────────────────────────────────────────────
             async function startCamera() {
+                showStatus('<p class="text-white font-bold text-lg">Menghubungkan kamera...</p>');
                 try {
                     stream = await navigator.mediaDevices.getUserMedia({
                         video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 640 } },
-                        audio: false
+                        audio: false,
                     });
                     video.srcObject = stream;
-                    
-                    // Wait for video to be ready before starting countdown
-                    video.onloadedmetadata = () => {
-                        startCountdown();
-                    };
+                    await new Promise(r => { video.onloadedmetadata = r; });
+                    showStatus('<p class="text-white font-bold text-lg">Posisikan wajah Anda</p><p class="text-gray-400 text-sm">Sistem akan otomatis mendeteksi wajah</p>');
+                    startLiveDetection();
                 } catch (err) {
-                    statusEl.innerHTML = '<p class="text-red-400 font-bold">Kamera tidak tersedia</p><p class="text-gray-400 text-sm">Izinkan akses kamera untuk menggunakan Face ID</p>';
+                    showStatus('<p class="text-red-400 font-bold">Kamera tidak tersedia</p><p class="text-gray-400 text-sm">Izinkan akses kamera untuk menggunakan Face ID</p>');
                     actionsEl.style.display = 'none';
                 }
             }
 
+            // ── Live face detection loop ────────────────────────────────
+            function startLiveDetection() {
+                if (detectInterval) clearInterval(detectInterval);
+
+                detectInterval = setInterval(async () => {
+                    if (!stream || !video.videoWidth) return;
+                    try {
+                        const det = await faceapi.detectSingleFace(
+                            video,
+                            new faceapi.TinyFaceDetectorOptions({ minConfidence: 0.55, inputSize: 224 })
+                        );
+
+                        if (det && !faceDetected) {
+                            // Face just appeared
+                            faceDetected = true;
+                            badgeEl.style.display = 'inline-flex';
+                            showStatus('<p class="text-emerald-400 font-bold text-lg">Wajah terdeteksi</p><p class="text-gray-400 text-sm">Tetap diam, sedang menangkap...</p>');
+                            startCountdown();
+                        } else if (!det && faceDetected) {
+                            // Face disappeared
+                            faceDetected = false;
+                            badgeEl.style.display = 'none';
+                            if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+                            autoCaptureEl.style.display = 'none';
+                            showStatus('<p class="text-white font-bold text-lg">Posisikan wajah Anda</p><p class="text-gray-400 text-sm">Sistem akan otomatis mendeteksi wajah</p>');
+                        }
+                    } catch (_) {}
+                }, 500);
+            }
+
+            // ── Countdown then capture ──────────────────────────────────
             function startCountdown() {
-                clearInterval(countdownInterval);
-                countdownValue = 5;
-                captureCountdown.textContent = countdownValue;
-                autoCaptureStatus.style.display = 'flex';
-                
+                if (countdownInterval) clearInterval(countdownInterval);
+                countdownValue = 3;
+                countdownEl.textContent = countdownValue;
+                autoCaptureEl.style.display = 'flex';
+
                 countdownInterval = setInterval(() => {
                     countdownValue--;
-                    captureCountdown.textContent = countdownValue;
-                    
+                    countdownEl.textContent = countdownValue;
                     if (countdownValue <= 0) {
                         clearInterval(countdownInterval);
+                        countdownInterval = null;
+                        autoCaptureEl.style.display = 'none';
                         captureAndVerify();
                     }
                 }, 1000);
             }
 
-            function stopCamera() {
-                if (stream) {
-                    stream.getTracks().forEach(t => t.stop());
-                    stream = null;
-                    video.srcObject = null;
-                }
-                clearInterval(countdownInterval);
-            }
-
-            function resetUI() {
-                statusEl.innerHTML = '<p class="text-white font-bold text-lg">Posisikan wajah Anda</p><p class="text-gray-400 text-sm">Pastikan wajah berada di dalam lingkaran</p>';
-                actionsEl.style.display = 'flex';
-                loadingEl.style.display = 'none';
-                resultEl.style.display = 'none';
-                
-                if (stream) {
-                    startCountdown();
-                }
-            }
-
+            // ── Capture & verify ────────────────────────────────────────
             async function captureAndVerify() {
-                // Capture frame
-                canvas.width = video.videoWidth || 640;
-                canvas.height = video.videoHeight || 640;
-                const ctx = canvas.getContext('2d');
-                ctx.translate(canvas.width, 0);
-                ctx.scale(-1, 1); // Mirror to match preview
-                ctx.drawImage(video, 0, 0);
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                if (detectInterval) { clearInterval(detectInterval); detectInterval = null; }
 
-                // Show loading
+                // Capture un-mirrored for face detection
+                canvas.width  = video.videoWidth  || 640;
+                canvas.height = video.videoHeight || 640;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+
                 actionsEl.style.display = 'none';
-                statusEl.innerHTML = '';
+                statusEl.innerHTML      = '';
                 loadingEl.style.display = 'flex';
 
                 try {
+                    // Ensure models are ready
+                    loadingMsgEl.textContent = 'Memuat AI...';
+                    await ensureModels();
+
+                    // Detect face and compute 128D descriptor
+                    loadingMsgEl.textContent = 'Mendeteksi wajah...';
+                    const detection = await faceapi
+                        .detectSingleFace(canvas, new faceapi.TinyFaceDetectorOptions({ minConfidence: 0.5, inputSize: 416 }))
+                        .withFaceLandmarks(true)
+                        .withFaceDescriptor();
+
+                    if (!detection) {
+                        loadingEl.style.display = 'none';
+                        resultEl.style.display  = 'block';
+                        resultMsg.className     = 'font-bold text-lg text-amber-400';
+                        resultMsg.textContent   = 'Wajah tidak terdeteksi. Pastikan wajah terlihat jelas.';
+                        setTimeout(resetUI, 2500);
+                        return;
+                    }
+
+                    // Send descriptor to server
+                    loadingMsgEl.textContent = 'Memverifikasi identitas...';
+                    const descriptor = JSON.stringify(Array.from(detection.descriptor));
+
                     const response = await fetch('/face-login', {
-                        method: 'POST',
+                        method:  'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
-                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': CSRF,
+                            'Accept':       'application/json',
                         },
-                        body: JSON.stringify({ face_image: dataUrl }),
+                        body: JSON.stringify({ face_descriptor: descriptor }),
                     });
 
                     const data = await response.json();
                     loadingEl.style.display = 'none';
-                    resultEl.style.display = 'block';
+                    resultEl.style.display  = 'block';
 
                     if (data.success) {
-                        resultMsg.className = 'font-bold text-lg text-emerald-400';
-                        resultMsg.textContent = data.message;
-                        stopCamera();
-                        setTimeout(() => {
-                            window.location.href = data.redirect || '/dashboard';
-                        }, 1000);
+                        resultMsg.className   = 'font-bold text-lg text-emerald-400';
+                        resultMsg.textContent = data.message + (data.confidence ? ' (' + data.confidence + ')' : '');
+                        stopAll();
+                        setTimeout(() => { window.location.href = data.redirect || '/dashboard'; }, 1200);
                     } else {
-                        resultMsg.className = 'font-bold text-lg text-red-400';
+                        resultMsg.className   = 'font-bold text-lg text-red-400';
                         resultMsg.textContent = data.message;
-                        setTimeout(() => {
-                            resetUI();
-                        }, 2500);
+                        setTimeout(resetUI, 2800);
                     }
+
                 } catch (error) {
                     loadingEl.style.display = 'none';
-                    resultEl.style.display = 'block';
-                    resultMsg.className = 'font-bold text-lg text-red-400';
-                    resultMsg.textContent = 'Terjadi kesalahan. Silakan coba lagi.';
-                    setTimeout(() => resetUI(), 2500);
+                    resultEl.style.display  = 'block';
+                    resultMsg.className     = 'font-bold text-lg text-red-400';
+                    resultMsg.textContent   = 'Terjadi kesalahan. Silakan coba lagi.';
+                    setTimeout(resetUI, 2500);
                 }
             }
 
-            btnOpen.addEventListener('click', openModal);
-            btnClose.addEventListener('click', closeModal);
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) closeModal();
-            });
+            // ── Helpers ─────────────────────────────────────────────────
+            function showStatus(html) { statusEl.innerHTML = html; }
+
+            function resetUI() {
+                badgeEl.style.display       = 'none';
+                autoCaptureEl.style.display = 'none';
+                actionsEl.style.display     = 'flex';
+                loadingEl.style.display     = 'none';
+                resultEl.style.display      = 'none';
+                faceDetected                = false;
+
+                if (stream) {
+                    showStatus('<p class="text-white font-bold text-lg">Posisikan wajah Anda</p><p class="text-gray-400 text-sm">Sistem akan otomatis mendeteksi wajah</p>');
+                    startLiveDetection();
+                } else {
+                    showStatus('<p class="text-white font-bold text-lg">Posisikan wajah Anda</p><p class="text-gray-400 text-sm">Pastikan wajah berada di dalam lingkaran</p>');
+                }
+            }
+
+            // ── Event listeners ─────────────────────────────────────────
+            if (btnOpen) btnOpen.addEventListener('click', openModal);
+            if (btnClose) btnClose.addEventListener('click', closeModal);
+            modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
         })();
     </script>
     <script src="{{ asset('vendor/webauthn/webauthn.js') }}"></script>
