@@ -878,28 +878,64 @@
     </script>
     <script src="{{ asset('vendor/webauthn/webauthn.js') }}"></script>
     <script>
-        if (WebAuthn.supportsWebAuthn()) {
+        // WebAuthn Fingerprint Login
+        // Instance dibuat di luar Proxy/reactive context agar private class fields (#field) bekerja dengan benar.
+        (function () {
+            if (!WebAuthn.supportsWebAuthn()) return;
+
             const btnFingerprint = document.getElementById('btn-fingerprint');
-            if (btnFingerprint) {
-                btnFingerprint.style.display = 'flex';
-                const webauthn = new WebAuthn();
-                
-                btnFingerprint.addEventListener('click', async () => {
-                    btnFingerprint.disabled = true;
-                    btnFingerprint.innerHTML = '<div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div><span>Memproses...</span>';
-                    
-                    try {
-                        await webauthn.login();
-                        window.location.href = '/dashboard';
-                    } catch (error) {
-                        console.error('Fingerprint login failed:', error);
-                        alert('Login fingerprint gagal. Pastikan perangkat Anda sudah terdaftar dan Anda telah memberikan akses.');
-                        btnFingerprint.disabled = false;
-                        btnFingerprint.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A10.003 10.003 0 0012 21a10.003 10.003 0 008.384-4.51m-2.408-4.69L11 11m-1 8L7 11V9a5 5 0 0110 0v2l-3 4" /></svg><span>Masuk dengan Fingerprint</span>';
-                    }
-                });
+            if (!btnFingerprint) return;
+
+            btnFingerprint.style.display = 'flex';
+
+            // Instance di closure biasa — TIDAK di dalam Alpine.js atau Proxy apapun
+            let _webauthn;
+            try {
+                _webauthn = new WebAuthn();
+            } catch (initErr) {
+                console.warn('[WebAuthn] Init gagal:', initErr.message);
+                return;
             }
-        }
+
+            const originalHTML = btnFingerprint.innerHTML;
+
+            function setLoading(on) {
+                btnFingerprint.disabled = on;
+                btnFingerprint.innerHTML = on
+                    ? '<div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div><span>Memproses...</span>'
+                    : originalHTML;
+            }
+
+            function friendlyError(err) {
+                if (!err) return 'Terjadi kesalahan tidak diketahui.';
+                if (err instanceof Response || err?.status) {
+                    if (err.status === 422) return 'Verifikasi gagal (422). Pastikan Anda sudah mendaftarkan fingerprint di Pengaturan Akun.';
+                    return `Server error (${err.status}). Coba lagi.`;
+                }
+                const n = err?.name || '';
+                if (n === 'NotAllowedError')   return 'Permintaan biometrik dibatalkan atau ditolak. Izinkan akses fingerprint dan coba lagi.';
+                if (n === 'NotSupportedError') return 'Perangkat tidak mendukung autentikasi ini.';
+                if (n === 'SecurityError')     return 'Kesalahan keamanan. Pastikan situs menggunakan HTTPS.';
+                if (n === 'InvalidStateError') return 'Tidak ada credential yang cocok untuk situs ini. Daftarkan fingerprint terlebih dahulu.';
+                if (n === 'TimeoutError')      return 'Waktu habis. Sentuhkan jari ke sensor dan coba lagi.';
+                if (n === 'AbortError')        return 'Proses dibatalkan.';
+                return err?.message || 'Login fingerprint gagal.';
+            }
+
+            btnFingerprint.addEventListener('click', async () => {
+                setLoading(true);
+                try {
+                    const result  = await _webauthn.login();
+                    // Controller mengembalikan JSON { redirect: '/path' }
+                    const target  = (result && result.redirect) ? result.redirect : '/dashboard';
+                    window.location.href = target;
+                } catch (err) {
+                    console.error('[WebAuthn] Login gagal:', err);
+                    alert('Login Fingerprint gagal.\n\n' + friendlyError(err));
+                    setLoading(false);
+                }
+            });
+        })();
     </script>
 </body>
 
