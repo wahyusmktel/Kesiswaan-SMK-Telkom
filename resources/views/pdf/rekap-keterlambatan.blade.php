@@ -43,7 +43,7 @@
                 <tr>
                     <td>{{ $index + 1 }}</td>
                     <td>
-                        <strong>{{ $late->siswa->user->name }}</strong><br>
+                        <strong>{{ $late->siswa->nama_lengkap }}</strong><br>
                         NIS: {{ $late->siswa->nis }}
                     </td>
                     <td>{{ $late->siswa->rombels->first()?->kelas->nama_kelas ?? '-' }}</td>

@@ -18,7 +18,7 @@ class MonitoringKeterlambatanController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $query = Keterlambatan::with(['siswa.user', 'siswa.rombels.kelas', 'security', 'guruPiket']);
+        $query = Keterlambatan::with(['siswa.rombels.kelas', 'security', 'guruPiket']);
 
         // Role-based Data Scoping
         if ($user->hasRole('Wali Kelas')) {
@@ -53,10 +53,11 @@ class MonitoringKeterlambatanController extends Controller
         // Filter by Search
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->whereHas('siswa.user', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%");
-            })->orWhereHas('siswa', function ($q) use ($search) {
-                $q->where('nis', 'like', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('siswa', function ($sub) use ($search) {
+                    $sub->where('nama_lengkap', 'like', "%{$search}%")
+                        ->orWhere('nis', 'like', "%{$search}%");
+                });
             });
         }
 
@@ -78,7 +79,7 @@ class MonitoringKeterlambatanController extends Controller
         $fileName = 'rekap-keterlambatan-' . now()->format('Y-md-His');
 
         if ($type === 'pdf') {
-            $query = Keterlambatan::with(['siswa.user', 'siswa.rombels.kelas', 'security', 'guruPiket']);
+            $query = Keterlambatan::with(['siswa.rombels.kelas', 'security', 'guruPiket']);
 
             if (isset($filters['start_date']) && isset($filters['end_date'])) {
                 $query->whereBetween('waktu_dicatat_security', [$filters['start_date'] . ' 00:00:00', $filters['end_date'] . ' 23:59:59']);

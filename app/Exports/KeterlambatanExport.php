@@ -21,7 +21,7 @@ class KeterlambatanExport implements FromQuery, WithHeadings, WithMapping
 
     public function query()
     {
-        $query = Keterlambatan::with(['siswa.user', 'siswa.rombels.kelas', 'security', 'guruPiket']);
+        $query = Keterlambatan::with(['siswa.rombels.kelas', 'security', 'guruPiket']);
 
         if (isset($this->filters['start_date']) && isset($this->filters['end_date'])) {
             $query->whereBetween('waktu_dicatat_security', [$this->filters['start_date'] . ' 00:00:00', $this->filters['end_date'] . ' 23:59:59']);
@@ -71,14 +71,14 @@ class KeterlambatanExport implements FromQuery, WithHeadings, WithMapping
 
         return [
             $no,
-            $late->siswa->user->name,
+            $late->siswa->nama_lengkap,
             $late->siswa->nis,
-            $late->siswa->rombels->first()?->kelas->nama_kelas ?? 'N/A',
+            $late->siswa->rombels->first()?->kelas?->nama_kelas ?? 'N/A',
             $late->waktu_dicatat_security->format('d/m/Y H:i'),
             $late->alasan_siswa,
             str_replace('_', ' ', strtoupper($late->status)),
-            $late->security->name,
-            $late->guruPiket->name ?? '-',
+            $late->security?->name ?? 'N/A',
+            $late->guruPiket?->name ?? '-',
             $late->waktu_verifikasi_piket ? $late->waktu_verifikasi_piket->format('d/m/Y H:i') : '-',
         ];
     }

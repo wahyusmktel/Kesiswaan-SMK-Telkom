@@ -97,20 +97,20 @@
                             @forelse ($data as $late)
                                 <tr class="bg-white hover:bg-gray-50/80 transition-colors duration-200">
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="font-semibold text-gray-900">{{ $late->siswa->user->name }}</div>
+                                        <div class="font-semibold text-gray-900">{{ $late->siswa->nama_lengkap }}</div>
                                         <div class="text-xs text-gray-500">NIS: {{ $late->siswa->nis }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
-                                            {{ $late->siswa->rombels->first()?->kelas->nama_kelas ?? 'N/A' }}
+                                            {{ $late->siswa->rombels->first()?->kelas?->nama_kelas ?? 'N/A' }}
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap font-mono text-gray-600">
                                         {{ $late->waktu_dicatat_security->format('d M Y H:i') }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-gray-600">
-                                        <div class="text-xs">Sec: {{ $late->security->name }}</div>
-                                        <div class="text-[10px] text-gray-400">Piket: {{ $late->guruPiket->name ?? '-' }}</div>
+                                        <div class="text-xs">Sec: {{ $late->security?->name ?? 'N/A' }}</div>
+                                        <div class="text-[10px] text-gray-400">Piket: {{ $late->guruPiket?->name ?? '-' }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @php

@@ -17,9 +17,9 @@
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-2xl border border-gray-200">
                         <div class="p-8 text-center border-b border-gray-100 bg-gray-50/50">
                             <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-red-100 text-red-600 mb-4 border-4 border-white shadow-sm">
-                                <span class="text-3xl font-black">{{ substr($keterlambatan->siswa->user->name, 0, 1) }}</span>
+                                <span class="text-3xl font-black">{{ substr($keterlambatan->siswa->nama_lengkap, 0, 1) }}</span>
                             </div>
-                            <h3 class="text-xl font-black text-gray-900 leading-tight">{{ $keterlambatan->siswa->user->name }}</h3>
+                            <h3 class="text-xl font-black text-gray-900 leading-tight">{{ $keterlambatan->siswa->nama_lengkap }}</h3>
                             <p class="text-sm text-gray-500 font-medium">NIS: {{ $keterlambatan->siswa->nis }}</p>
                             <div class="mt-4 inline-flex items-center px-3 py-1 bg-red-50 text-red-700 rounded-full text-xs font-black uppercase tracking-wider border border-red-100 italic">
                                 Terlambat
@@ -103,7 +103,7 @@
                                                 <div class="flex items-start gap-4">
                                                     <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-white border border-amber-200 flex items-center justify-center text-amber-500 font-bold uppercase tracking-widest text-[10px]">P</div>
                                                     <div>
-                                                        <p class="text-sm font-black text-gray-900">Guru Piket: {{ $keterlambatan->guruPiket->name ?? '-' }}</p>
+                                                        <p class="text-sm font-black text-gray-900">Guru Piket: {{ $keterlambatan->guruPiket?->name ?? '-' }}</p>
                                                         <div class="mt-4 grid grid-cols-2 gap-4">
                                                             <div>
                                                                 <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Status:</span>
