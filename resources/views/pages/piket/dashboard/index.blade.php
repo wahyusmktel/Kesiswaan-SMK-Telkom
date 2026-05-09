@@ -67,6 +67,108 @@
                 </div>
             </div>
 
+            {{-- ══ RUNNING TEXT MANAGER ══ --}}
+            <div class="bg-white border border-gray-200 shadow-sm rounded-2xl overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-violet-50 flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center shadow-sm shadow-indigo-200">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-black text-gray-800 text-sm">Running Text Smart TV</h3>
+                            <p class="text-xs text-gray-500 font-medium">Informasi yang tampil di layar TV jadwal pelajaran</p>
+                        </div>
+                    </div>
+                    <a href="{{ route('tv.jadwal') }}" target="_blank"
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-all shadow-sm">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        Lihat TV
+                    </a>
+                </div>
+
+                <div class="p-6">
+                    {{-- Form tambah --}}
+                    <form action="{{ route('piket.info-ticker.store') }}" method="POST" class="flex gap-3 mb-5">
+                        @csrf
+                        <input type="text" name="konten" required maxlength="500"
+                               placeholder="Ketik informasi untuk running text... (maks 500 karakter)"
+                               class="flex-1 rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-medium focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition-all bg-gray-50 focus:bg-white">
+                        <button type="submit"
+                                class="flex-shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all shadow-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            Tambah
+                        </button>
+                    </form>
+
+                    {{-- Daftar ticker --}}
+                    @if($infoTickers->isEmpty())
+                        <div class="flex flex-col items-center justify-center py-8 text-center border-2 border-dashed border-gray-100 rounded-xl">
+                            <svg class="w-10 h-10 text-gray-200 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                            </svg>
+                            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Belum ada running text</p>
+                        </div>
+                    @else
+                        <div class="space-y-2 max-h-52 overflow-y-auto pr-1">
+                            @foreach($infoTickers as $ticker)
+                                <div class="flex items-center gap-3 px-4 py-3 rounded-xl border transition-all
+                                    {{ $ticker->is_active ? 'bg-indigo-50/50 border-indigo-100' : 'bg-gray-50 border-gray-100 opacity-60' }}">
+                                    {{-- Toggle aktif --}}
+                                    <form action="{{ route('piket.info-ticker.toggle', $ticker) }}" method="POST">
+                                        @csrf @method('PATCH')
+                                        <button type="submit" title="{{ $ticker->is_active ? 'Nonaktifkan' : 'Aktifkan' }}"
+                                                class="w-8 h-8 rounded-lg flex items-center justify-center transition-all
+                                                {{ $ticker->is_active ? 'bg-indigo-100 text-indigo-600 hover:bg-indigo-200' : 'bg-gray-200 text-gray-400 hover:bg-gray-300' }}">
+                                            @if($ticker->is_active)
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                                </svg>
+                                            @else
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                                                </svg>
+                                            @endif
+                                        </button>
+                                    </form>
+
+                                    <p class="flex-1 text-sm font-medium text-gray-700 truncate">{{ $ticker->konten }}</p>
+
+                                    <span class="text-[10px] font-bold text-gray-400 flex-shrink-0 hidden sm:block">
+                                        {{ $ticker->creator->name ?? '-' }}
+                                    </span>
+
+                                    {{-- Badge status --}}
+                                    <span class="flex-shrink-0 text-[10px] font-black px-2 py-0.5 rounded-full
+                                        {{ $ticker->is_active ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-200 text-gray-500' }}">
+                                        {{ $ticker->is_active ? 'AKTIF' : 'NONAKTIF' }}
+                                    </span>
+
+                                    {{-- Hapus --}}
+                                    <form action="{{ route('piket.info-ticker.destroy', $ticker) }}" method="POST"
+                                          onsubmit="return confirm('Hapus info ini?')">
+                                        @csrf @method('DELETE')
+                                        <button type="submit"
+                                                class="w-7 h-7 rounded-lg flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                            </svg>
+                                        </button>
+                                    </form>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            </div>
+            {{-- ══ END RUNNING TEXT ══ --}}
+
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div
                     class="bg-white rounded-2xl p-6 border border-indigo-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">

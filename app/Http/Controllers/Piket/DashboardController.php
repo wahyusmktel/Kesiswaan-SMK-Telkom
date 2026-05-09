@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\JamPelajaran;
+use App\Models\InfoTicker;
 
 class DashboardController extends Controller
 {
@@ -214,6 +215,7 @@ class DashboardController extends Controller
             'topKelasTerlambat' => $topKelasTerlambat,
             'detailKeterlambatan' => $detailKeterlambatanHariIni,
             'recentActivity' => $recentActivity,
+            'infoTickers'    => InfoTicker::with('creator')->latest()->get(),
         ]);
     }
 

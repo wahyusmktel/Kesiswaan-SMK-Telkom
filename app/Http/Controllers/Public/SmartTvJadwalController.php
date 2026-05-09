@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
+use App\Models\InfoTicker;
 use App\Models\JadwalPelajaran;
 use App\Models\JamPelajaran;
 use App\Models\Rombel;
@@ -93,18 +94,22 @@ class SmartTvJadwalController extends Controller
             ];
         })->values()->toArray();
 
-        // Cari kegiatan khusus yang sedang berlangsung (untuk JS)
-        $activitySlotsJson = collect($todaySlots)
+        // Kegiatan khusus untuk JS (sebagai PHP array, bukan JSON string)
+        $activitySlots = collect($todaySlots)
             ->where('is_activity', true)
             ->values()
-            ->toJson();
+            ->toArray();
+
+        // Running text aktif
+        $tickers = InfoTicker::active()->latest()->pluck('konten')->toArray();
 
         return view('public.smart-tv-jadwal', [
             'kelasData'    => $kelasData,
             'todaySlots'   => array_values($todaySlots),
             'todayName'    => $todayName,
             'tahunAktif'   => $tahunAktif,
-            'activitySlots'=> $activitySlotsJson,
+            'activitySlots'=> $activitySlots,
+            'tickers'      => $tickers,
         ]);
     }
 

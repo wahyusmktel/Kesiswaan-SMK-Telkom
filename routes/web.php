@@ -481,6 +481,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Route untuk Monitoring Izin Guru
         Route::get('/monitoring-izin-guru', [\App\Http\Controllers\Piket\MonitoringIzinGuruController::class, 'index'])->name('monitoring-izin-guru.index');
+
+        // Info Running Text (Smart TV Ticker)
+        Route::post('/info-ticker', [\App\Http\Controllers\Piket\InfoTickerController::class, 'store'])->name('info-ticker.store');
+        Route::patch('/info-ticker/{ticker}/toggle', [\App\Http\Controllers\Piket\InfoTickerController::class, 'toggle'])->name('info-ticker.toggle');
+        Route::delete('/info-ticker/{ticker}', [\App\Http\Controllers\Piket\InfoTickerController::class, 'destroy'])->name('info-ticker.destroy');
     });
 
     // Route ini kita namakan 'api.siswa.search' sesuai panggilan di JavaScript

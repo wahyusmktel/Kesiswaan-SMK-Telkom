@@ -10,16 +10,17 @@
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-            --bg:      #060c1e;
-            --indigo:  #6366f1;
-            --violet:  #7c3aed;
-            --cyan:    #06b6d4;
-            --emerald: #10b981;
-            --amber:   #f59e0b;
-            --rose:    #f43f5e;
-            --text:    #f1f5f9;
-            --muted:   #64748b;
-            --slide-t: 14000; /* ms per slide */
+            --bg:       #060c1e;
+            --indigo:   #6366f1;
+            --violet:   #7c3aed;
+            --cyan:     #06b6d4;
+            --emerald:  #10b981;
+            --amber:    #f59e0b;
+            --rose:     #f43f5e;
+            --text:     #f1f5f9;
+            --muted:    #64748b;
+            --topbar-h: 72px;
+            --ticker-h: 40px;
         }
 
         html, body {
@@ -43,13 +44,64 @@
         ══════════════════════════════ */
         .topbar {
             position: fixed; top: 0; left: 0; right: 0; z-index: 50;
-            height: 72px;
+            height: var(--topbar-h);
             display: flex; align-items: center;
             padding: 0 2.5rem;
             gap: 1.5rem;
             background: rgba(6,12,30,0.7);
             backdrop-filter: blur(24px);
             border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        /* ══════════════════════════════
+           RUNNING TEXT TICKER
+        ══════════════════════════════ */
+        .ticker-bar {
+            position: fixed;
+            top: var(--topbar-h); left: 0; right: 0;
+            height: var(--ticker-h);
+            z-index: 49;
+            display: flex; align-items: center; overflow: hidden;
+            background: linear-gradient(90deg, rgba(20,14,60,0.95) 0%, rgba(10,16,40,0.95) 100%);
+            border-bottom: 1px solid rgba(99,102,241,0.2);
+        }
+        .ticker-label {
+            flex-shrink: 0;
+            height: 100%; padding: 0 18px 0 20px;
+            display: flex; align-items: center; gap: 7px;
+            background: linear-gradient(135deg, var(--indigo), #4f46e5);
+            font-size: 0.62rem; font-weight: 800;
+            letter-spacing: 0.15em; text-transform: uppercase;
+            color: white; white-space: nowrap;
+            clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%);
+            padding-right: 28px;
+        }
+        .ticker-label svg { width: 12px; height: 12px; }
+        .ticker-track { flex: 1; overflow: hidden; position: relative; }
+        .ticker-inner {
+            display: inline-flex; align-items: center; gap: 0;
+            white-space: nowrap;
+            animation: ticker-run 35s linear infinite;
+            will-change: transform;
+        }
+        .ticker-inner:hover { animation-play-state: paused; }
+        @keyframes ticker-run {
+            0%   { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .ticker-item {
+            display: inline-flex; align-items: center;
+            font-size: 0.78rem; font-weight: 600;
+            color: rgba(226,232,240,0.85);
+            padding: 0 32px;
+        }
+        .ticker-sep {
+            color: var(--indigo); opacity: 0.5;
+            font-size: 0.9rem; padding: 0 4px;
+        }
+        .ticker-empty {
+            font-size: 0.72rem; font-weight: 600; color: rgba(100,116,139,0.6);
+            font-style: italic; padding: 0 20px;
         }
 
         .tb-logo {
@@ -100,7 +152,8 @@
         ══════════════════════════════ */
         .slider-stage {
             position: fixed;
-            top: 72px; bottom: 56px; left: 0; right: 0;
+            top: calc(var(--topbar-h) + var(--ticker-h));
+            bottom: 56px; left: 0; right: 0;
             z-index: 1;
             overflow: hidden;
         }
@@ -392,7 +445,7 @@
         ══════════════════════════════ */
         .slide-progress-track {
             position: fixed; bottom: 56px; left: 0; right: 0; z-index: 50;
-            height: 3px; background: rgba(255,255,255,0.05);
+            height: 3px; background: rgba(255,255,255,0.08);
         }
         .slide-progress-fill {
             height: 100%;
@@ -571,6 +624,31 @@
         </div>
     </div>
 </header>
+
+{{-- ══ RUNNING TEXT TICKER ══ --}}
+<div class="ticker-bar">
+    <div class="ticker-label">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
+        </svg>
+        INFO
+    </div>
+    <div class="ticker-track">
+        @if(count($tickers) > 0)
+            <div class="ticker-inner">
+                @foreach($tickers as $t)
+                    <span class="ticker-item">{{ $t }}</span><span class="ticker-sep">✦</span>
+                @endforeach
+                {{-- Duplicate for seamless loop --}}
+                @foreach($tickers as $t)
+                    <span class="ticker-item">{{ $t }}</span><span class="ticker-sep">✦</span>
+                @endforeach
+            </div>
+        @else
+            <span class="ticker-empty">Belum ada informasi running text. Tambahkan melalui Dashboard Guru Piket.</span>
+        @endif
+    </div>
+</div>
 
 {{-- ══ SLIDES ══ --}}
 <div class="slider-stage" id="slider-stage">
@@ -787,8 +865,8 @@
 {{-- ══ DATA JSON ══ --}}
 <script>
 // ─── Data dari PHP ────────────────────────────────────────────────
-const ACTIVITY_SLOTS = @json($activitySlots);
-const KELAS_DATA     = @json($kelasData);
+const ACTIVITY_SLOTS = @json($activitySlots) ?? [];
+const KELAS_DATA     = @json($kelasData) ?? [];
 const TODAY_NAME     = @json($todayName);
 const SLIDE_DURATION = 14000; // ms
 const MONTHS_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
@@ -1006,13 +1084,15 @@ function updateOverlayCountdown() {
 }
 
 function checkSpecialActivity() {
+    if (!Array.isArray(ACTIVITY_SLOTS) || ACTIVITY_SLOTS.length === 0) return;
+
     const now    = new Date();
     const nowMin = now.getHours()*60 + now.getMinutes();
     let found    = null;
 
     for (const slot of ACTIVITY_SLOTS) {
-        const mulai   = timeToMin(slot.jam_mulai);
-        const selesai = timeToMin(slot.jam_selesai);
+        const mulai   = timeToMin(slot.jam_mulai   || '00:00');
+        const selesai = timeToMin(slot.jam_selesai || '23:59');
         if (nowMin >= mulai && nowMin < selesai) { found = slot; break; }
     }
 
@@ -1021,16 +1101,18 @@ function checkSpecialActivity() {
     if (overlayActive) updateOverlayCountdown();
 }
 checkSpecialActivity();
-setInterval(checkSpecialActivity, 10000); // check every 10s
+setInterval(checkSpecialActivity, 10000);
 
 // ─── Slider ───────────────────────────────────────────────────────
 function goToSlide(idx, userTriggered=false) {
-    if (idx === currentSlide) return;
+    if (idx === currentSlide && !userTriggered) return;
+    if (slides.length <= 1) { startProgress(); return; }
 
     // Exit current
     slides[currentSlide].classList.remove('active');
     slides[currentSlide].classList.add('exit');
-    setTimeout(() => slides[currentSlide]?.classList.remove('exit'), 800);
+    const exitIdx = currentSlide;
+    setTimeout(() => slides[exitIdx]?.classList.remove('exit'), 800);
 
     // Activate next
     currentSlide = idx;
