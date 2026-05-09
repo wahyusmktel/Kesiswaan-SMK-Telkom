@@ -266,7 +266,7 @@ class WebAuthn {
             authenticatorAttachment: credentials.authenticatorAttachment,
             clientExtensionResults: credentials.getClientExtensionResults(),
             response: {},
-        }
+        };
 
         [
             "clientDataJSON",

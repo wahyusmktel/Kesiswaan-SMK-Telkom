@@ -9,6 +9,8 @@ use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\WebAuthn\WebAuthnLoginController;
+use App\Http\Controllers\WebAuthn\WebAuthnRegisterController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -57,7 +59,12 @@ Route::middleware('auth')->group(function () {
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
 
-    // WebAuthn Routes
-    \Laragear\WebAuthn\Http\Routes::register();
-    Route::delete('webauthn/unregister/{id}', [\App\Http\Controllers\WebAuthn\WebAuthnRegisterController::class, 'destroy'])->name('webauthn.destroy');
+    // WebAuthn - register routes (requires auth)
+    Route::post('webauthn/register/options', [WebAuthnRegisterController::class, 'options'])->name('webauthn.register.options');
+    Route::post('webauthn/register', [WebAuthnRegisterController::class, 'register'])->name('webauthn.register');
+    Route::delete('webauthn/unregister/{id}', [WebAuthnRegisterController::class, 'destroy'])->name('webauthn.destroy');
 });
+
+// WebAuthn - login routes (no auth required — unauthenticated users need these)
+Route::post('webauthn/login/options', [WebAuthnLoginController::class, 'options'])->name('webauthn.login.options');
+Route::post('webauthn/login', [WebAuthnLoginController::class, 'login'])->name('webauthn.login');
