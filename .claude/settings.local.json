@@ -3,7 +3,8 @@
     "allow": [
       "Bash(php artisan *)",
       "Bash(xargs grep *)",
-      "PowerShell(New-Item -ItemType Directory -Force -Path \"C:\\\\Projects\\\\Kesiswaan-SMK-Telkom\\\\public\\\\models\")"
+      "PowerShell(New-Item -ItemType Directory -Force -Path \"C:\\\\Projects\\\\Kesiswaan-SMK-Telkom\\\\public\\\\models\")",
+      "Bash(grep -n \"response: {},\" \"c:/Projects/Kesiswaan-SMK-Telkom/public/vendor/webauthn/webauthn.js\")"
     ]
   }
 }

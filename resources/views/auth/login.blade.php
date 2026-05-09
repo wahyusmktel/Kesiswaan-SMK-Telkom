@@ -876,7 +876,7 @@
             modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
         })();
     </script>
-    <script src="{{ asset('vendor/webauthn/webauthn.js') }}"></script>
+    <script src="{{ asset('vendor/webauthn/webauthn.js') }}?v={{ filemtime(public_path('vendor/webauthn/webauthn.js')) }}"></script>
     <script>
         // WebAuthn Fingerprint Login
         // Instance dibuat di luar Proxy/reactive context agar private class fields (#field) bekerja dengan benar.

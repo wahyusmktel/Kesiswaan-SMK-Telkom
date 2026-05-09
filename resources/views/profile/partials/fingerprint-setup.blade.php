@@ -107,7 +107,7 @@
 </section>
 
 @push('scripts')
-<script src="{{ asset('vendor/webauthn/webauthn.js') }}"></script>
+<script src="{{ asset('vendor/webauthn/webauthn.js') }}?v={{ filemtime(public_path('vendor/webauthn/webauthn.js')) }}"></script>
 <script>
     // PENTING: Instance WebAuthn dibuat di LUAR Alpine.js reactive context.
     // Alpine.js membungkus semua property dalam Proxy untuk reaktivitas.
