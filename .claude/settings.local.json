@@ -4,7 +4,8 @@
       "Bash(php artisan *)",
       "Bash(xargs grep *)",
       "PowerShell(New-Item -ItemType Directory -Force -Path \"C:\\\\Projects\\\\Kesiswaan-SMK-Telkom\\\\public\\\\models\")",
-      "Bash(grep -n \"response: {},\" \"c:/Projects/Kesiswaan-SMK-Telkom/public/vendor/webauthn/webauthn.js\")"
+      "Bash(grep -n \"response: {},\" \"c:/Projects/Kesiswaan-SMK-Telkom/public/vendor/webauthn/webauthn.js\")",
+      "PowerShell(php -l \"c:\\\\Projects\\\\Kesiswaan-SMK-Telkom\\\\app\\\\Http\\\\Controllers\\\\Public\\\\SmartTvJadwalController.php\" 2>&1)"
     ]
   }
 }

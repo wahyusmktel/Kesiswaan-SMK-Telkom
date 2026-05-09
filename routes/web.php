@@ -103,6 +103,9 @@ Route::get('/verifikasi/skl/{token}', [PublicVerifikasiController::class, 'showS
 Route::get('/pengaduan', [PengaduanController::class, 'create'])->name('pengaduan.create');
 Route::post('/pengaduan', [PengaduanController::class, 'store'])->name('pengaduan.store');
 
+// Smart TV Jadwal Pelajaran (Publik — tanpa login)
+Route::get('/tv/jadwal', [\App\Http\Controllers\Public\SmartTvJadwalController::class, 'index'])->name('tv.jadwal');
+
 // NOTTED Social Media Routes
 Route::get('/notted', [App\Http\Controllers\NottedController::class, 'index'])->name('notted.landing');
 
