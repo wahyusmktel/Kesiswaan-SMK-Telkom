@@ -1,20 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <div>
-                <h2 class="font-bold text-xl text-gray-800 leading-tight">Manajemen Pegawai</h2>
-                <p class="text-sm text-gray-500 mt-0.5">Kelola seluruh akun guru, staf, dan pegawai sekolah</p>
-            </div>
-            <button
-                x-data
-                @click="$dispatch('open-add-pegawai')"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-md transition-all hover:-translate-y-0.5">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                </svg>
-                Tambah Pegawai
-            </button>
-        </div>
+        <h2 class="font-bold text-xl text-gray-800 leading-tight">Manajemen Pegawai</h2>
+        <p class="text-sm text-gray-500 mt-0.5">Kelola seluruh akun guru, staf, dan pegawai sekolah</p>
     </x-slot>
 
     @php
@@ -355,11 +342,20 @@
                                 Menampilkan {{ $pegawai->count() }} dari {{ $pegawai->total() }} pegawai
                             </p>
                         </div>
-                        @if(request('search') || request('role'))
-                            <span class="text-xs bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full font-bold border border-indigo-100">
-                                Filter aktif
-                            </span>
-                        @endif
+                        <div class="flex items-center gap-3">
+                            @if(request('search') || request('role'))
+                                <span class="text-xs bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full font-bold border border-indigo-100">
+                                    Filter aktif
+                                </span>
+                            @endif
+                            <button @click="showAdd = true"
+                                class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-sm transition-all">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                                Tambah Pegawai
+                            </button>
+                        </div>
                     </div>
 
                     <div class="overflow-x-auto">
