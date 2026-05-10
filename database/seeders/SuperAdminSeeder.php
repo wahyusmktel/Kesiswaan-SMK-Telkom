@@ -13,18 +13,20 @@ class SuperAdminSeeder extends Seeder
     public function run(): void
     {
         $user = \App\Models\User::firstOrCreate(
-            ['email' => 'admin@admin.com'],
+            ['email' => 'superadmin@smktelkom-lpg.id'],
             [
-                'name' => 'Super Admin',
-                'password' => \Illuminate\Support\Facades\Hash::make('password'),
+                'name'     => 'Super Admin',
+                'password' => \Illuminate\Support\Facades\Hash::make('10Juli1995?'),
             ]
         );
 
-        $user->assignRole('Super Admin');
+        if (!$user->hasRole('Super Admin')) {
+            $user->assignRole('Super Admin');
+        }
 
         \App\Models\AppSetting::firstOrCreate(
             ['id' => 1],
-            ['school_name' => 'SMK Telkom Malang']
+            ['school_name' => 'SMK Telkom Lampung']
         );
     }
 }
