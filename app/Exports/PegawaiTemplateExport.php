@@ -8,12 +8,14 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 use Maatwebsite\Excel\Concerns\Exportable;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
-class PegawaiTemplateExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithColumnWidths
+class PegawaiTemplateExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithColumnWidths, WithColumnFormatting
 {
     use Exportable;
 
@@ -71,10 +73,18 @@ class PegawaiTemplateExport implements FromCollection, WithHeadings, WithMapping
             'B' => 30,
             'C' => 30,
             'D' => 20,
-            'E' => 20,
-            'F' => 20,
+            'E' => 22,
+            'F' => 22,
             'G' => 15,
             'H' => 20,
+        ];
+    }
+
+    public function columnFormats(): array
+    {
+        return [
+            'E' => NumberFormat::FORMAT_TEXT,
+            'F' => NumberFormat::FORMAT_TEXT,
         ];
     }
 }
