@@ -106,6 +106,9 @@ Route::post('/pengaduan', [PengaduanController::class, 'store'])->name('pengadua
 // Smart TV Jadwal Pelajaran (Publik — tanpa login)
 Route::get('/tv/jadwal', [\App\Http\Controllers\Public\SmartTvJadwalController::class, 'index'])->name('tv.jadwal');
 
+// DigiReligi — Platform Al-Qur'an Digital & Jadwal Sholat (Publik)
+Route::get('/digireligi', [\App\Http\Controllers\Public\DigiReligiController::class, 'index'])->name('digireligi');
+
 // NOTTED Social Media Routes
 Route::get('/notted', [App\Http\Controllers\NottedController::class, 'index'])->name('notted.landing');
 

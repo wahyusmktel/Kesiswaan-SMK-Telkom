@@ -8,7 +8,8 @@
       "PowerShell(php -l \"c:\\\\Projects\\\\Kesiswaan-SMK-Telkom\\\\app\\\\Http\\\\Controllers\\\\Public\\\\SmartTvJadwalController.php\" 2>&1)",
       "PowerShell(php -l \"c:\\\\Projects\\\\Kesiswaan-SMK-Telkom\\\\app\\\\Http\\\\Controllers\\\\Public\\\\SmartTvJadwalController.php\")",
       "PowerShell(php -l \"c:\\\\Projects\\\\Kesiswaan-SMK-Telkom\\\\app\\\\Http\\\\Controllers\\\\Piket\\\\InfoTickerController.php\")",
-      "PowerShell(php -l \"c:\\\\Projects\\\\Kesiswaan-SMK-Telkom\\\\app\\\\Models\\\\InfoTicker.php\" 2>&1)"
+      "PowerShell(php -l \"c:\\\\Projects\\\\Kesiswaan-SMK-Telkom\\\\app\\\\Models\\\\InfoTicker.php\" 2>&1)",
+      "Bash(grep -n \"Route::get.*public\\\\|tv/jadwal\\\\|pengaduan\\\\|Public\\\\\\\\\\\\\\\\\" \"c:/Projects/Kesiswaan-SMK-Telkom/routes/web.php\")"
     ]
   }
 }
