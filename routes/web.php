@@ -720,6 +720,15 @@ Route::middleware('auth')->group(function () {
         Route::post('/manajemen-pegawai/import-update', [\App\Http\Controllers\Shared\ManajemenPegawaiController::class, 'importUpdate'])->name('manajemen-pegawai.import-update');
     });
 
+    // Dapodik Guru (Operator & KAUR SDM)
+    Route::middleware(['role:Operator|KAUR SDM'])->group(function () {
+        Route::post('/dapodik-guru/import', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'import'])->name('dapodik-guru.import');
+        Route::get('/dapodik-guru', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'index'])->name('dapodik-guru.index');
+        Route::get('/dapodik-guru/{dapodikGuru}', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'show'])->name('dapodik-guru.show');
+        Route::get('/dapodik-guru/{dapodikGuru}/edit', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'edit'])->name('dapodik-guru.edit');
+        Route::put('/dapodik-guru/{dapodikGuru}', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'update'])->name('dapodik-guru.update');
+    });
+
     // Monitoring Keterlambatan Shared
     Route::get('/monitoring-keterlambatan', [\App\Http\Controllers\Shared\MonitoringKeterlambatanController::class, 'index'])
         ->name('monitoring-keterlambatan.index');
