@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DigiReligi — Al-Qur'an Digital & Jadwal Sholat | SMK Telkom Pringsewu</title>
+    <title>DigiReligi — Al-Qur'an Digital & Jadwal Sholat | SMK Telkom Lampung</title>
     <meta name="description" content="Platform Al-Qur'an digital lengkap dengan terjemahan Bahasa Indonesia dan jadwal sholat otomatis untuk wilayah Kabupaten Pringsewu, Lampung.">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -195,7 +195,7 @@
                     <div class="font-black text-base tracking-tight">
                         <span class="text-white">Digi</span><span class="text-emerald-400">Religi</span>
                     </div>
-                    <div class="text-[10px] text-emerald-600 hidden sm:block">SMK Telkom Pringsewu</div>
+                    <div class="text-[10px] text-emerald-600 hidden sm:block">SMK Telkom Lampung</div>
                 </div>
             </div>
 
@@ -286,7 +286,7 @@
             <p class="text-base sm:text-lg text-emerald-400 font-medium mb-2">
                 Platform Al-Qur'an Digital & Reminder Beribadah Otomatis
             </p>
-            <p class="text-sm text-emerald-700 mb-8">SMK Telkom Pringsewu — Kabupaten Pringsewu, Lampung</p>
+            <p class="text-sm text-emerald-700 mb-8">SMK Telkom Lampung — Kabupaten Pringsewu, Lampung</p>
 
             {{-- Feature badges --}}
             <div class="flex flex-wrap justify-center gap-3 mb-8">
@@ -621,7 +621,7 @@
                 </div>
                 <div>
                     <div class="text-sm font-black text-white">DigiReligi</div>
-                    <div class="text-[10px] text-emerald-700">SMK Telkom Pringsewu — {{ date('Y') }}</div>
+                    <div class="text-[10px] text-emerald-700">SMK Telkom Lampung — {{ date('Y') }}</div>
                 </div>
             </div>
             <div class="flex items-center gap-4 text-xs text-emerald-700">
