@@ -710,6 +710,14 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile/face', [ProfileController::class, 'updateFaceId'])->name('profile.face.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    // Manajemen Pegawai (Operator & KAUR SDM)
+    Route::middleware(['role:Operator|KAUR SDM'])->group(function () {
+        Route::get('/manajemen-pegawai', [\App\Http\Controllers\Shared\ManajemenPegawaiController::class, 'index'])->name('manajemen-pegawai.index');
+        Route::post('/manajemen-pegawai', [\App\Http\Controllers\Shared\ManajemenPegawaiController::class, 'store'])->name('manajemen-pegawai.store');
+        Route::put('/manajemen-pegawai/{user}', [\App\Http\Controllers\Shared\ManajemenPegawaiController::class, 'update'])->name('manajemen-pegawai.update');
+        Route::delete('/manajemen-pegawai/{user}', [\App\Http\Controllers\Shared\ManajemenPegawaiController::class, 'destroy'])->name('manajemen-pegawai.destroy');
+    });
+
     // Monitoring Keterlambatan Shared
     Route::get('/monitoring-keterlambatan', [\App\Http\Controllers\Shared\MonitoringKeterlambatanController::class, 'index'])
         ->name('monitoring-keterlambatan.index');
