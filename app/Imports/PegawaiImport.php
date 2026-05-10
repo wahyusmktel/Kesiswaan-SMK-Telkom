@@ -7,9 +7,7 @@ use App\Models\User;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
-use Spatie\Permission\Models\Role;
 
 class PegawaiImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
 {
@@ -38,7 +36,6 @@ class PegawaiImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
 
             $name  = trim($row['nama_lengkap'] ?? '');
             $email = trim($row['email'] ?? '');
-            $role  = trim($row['role_jabatan'] ?? '');
 
             if (!$name || !$email) {
                 $this->errors[] = "Baris {$rowNum}: Nama atau Email tidak boleh kosong.";
@@ -92,11 +89,6 @@ class PegawaiImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
 
             // Update user
             $user->update(['name' => $name, 'email' => $email]);
-
-            // Update role
-            if ($role && Role::where('name', $role)->exists()) {
-                $user->syncRoles([$role]);
-            }
 
             // Update or create MasterGuru
             MasterGuru::updateOrCreate(
