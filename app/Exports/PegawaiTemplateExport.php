@@ -1,0 +1,80 @@
+<?php
+
+namespace App\Exports;
+
+use App\Models\User;
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use Maatwebsite\Excel\Concerns\Exportable;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+
+class PegawaiTemplateExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithColumnWidths
+{
+    use Exportable;
+
+    public function collection()
+    {
+        return User::with(['roles', 'masterGuru'])
+            ->whereDoesntHave('roles', fn($q) => $q->where('name', 'Siswa'))
+            ->orderBy('name')
+            ->get();
+    }
+
+    public function headings(): array
+    {
+        return [
+            'user_id',
+            'Nama Lengkap',
+            'Email',
+            'Role / Jabatan',
+            'NIK',
+            'NUPTK',
+            'Kode Guru',
+            'Jenis Kelamin (L/P)',
+        ];
+    }
+
+    public function map($user): array
+    {
+        return [
+            $user->id,
+            $user->name,
+            $user->email,
+            $user->roles->first()?->name ?? '',
+            $user->masterGuru?->nik ?? '',
+            $user->masterGuru?->nuptk ?? '',
+            $user->masterGuru?->kode_guru ?? '',
+            $user->masterGuru?->jenis_kelamin ?? '',
+        ];
+    }
+
+    public function styles(Worksheet $sheet): array
+    {
+        return [
+            1 => [
+                'font'      => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
+                'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF4F46E5']],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+            ],
+        ];
+    }
+
+    public function columnWidths(): array
+    {
+        return [
+            'A' => 12,
+            'B' => 30,
+            'C' => 30,
+            'D' => 20,
+            'E' => 20,
+            'F' => 20,
+            'G' => 15,
+            'H' => 20,
+        ];
+    }
+}

@@ -27,6 +27,7 @@
             showAdd:    false,
             showEdit:   false,
             showDelete: false,
+            showImport: false,
             eu: {},
             du: {},
             openEdit(u)   { this.eu = u; this.showEdit   = true; },
@@ -95,10 +96,15 @@
 
                         <div class="border-t border-gray-100 pt-4">
                             <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Data Kepegawaian <span class="font-normal text-gray-300">(Opsional)</span></p>
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 mb-1">NIK</label>
+                                    <input type="text" name="nik" placeholder="16 digit NIK"
+                                        class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                </div>
                                 <div>
                                     <label class="block text-xs font-bold text-gray-500 mb-1">NUPTK</label>
-                                    <input type="text" name="nuptk" placeholder="16 digit"
+                                    <input type="text" name="nuptk" placeholder="16 digit NUPTK"
                                         class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
                                 </div>
                                 <div>
@@ -189,10 +195,15 @@
 
                         <div class="border-t border-gray-100 pt-4">
                             <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Data Kepegawaian <span class="font-normal text-gray-300">(Opsional)</span></p>
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 mb-1">NIK</label>
+                                    <input type="text" name="nik" :value="eu.nik" placeholder="16 digit NIK"
+                                        class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                                </div>
                                 <div>
                                     <label class="block text-xs font-bold text-gray-500 mb-1">NUPTK</label>
-                                    <input type="text" name="nuptk" :value="eu.nuptk" placeholder="16 digit"
+                                    <input type="text" name="nuptk" :value="eu.nuptk" placeholder="16 digit NUPTK"
                                         class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent">
                                 </div>
                                 <div>
@@ -262,6 +273,85 @@
             </div>
         </div>
 
+        {{-- ── IMPORT UPDATE MODAL ── --}}
+        <div x-show="showImport" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display:none">
+            {{-- No backdrop click close — intentional, user must use X or Batal --}}
+            <div x-show="showImport"
+                 x-transition:enter="ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                 x-transition:leave="ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+                 class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm"></div>
+
+            <div x-show="showImport"
+                 x-transition:enter="ease-out duration-200" x-transition:enter-start="opacity-0 scale-95 translate-y-4" x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                 x-transition:leave="ease-in duration-150" x-transition:leave-start="opacity-100 scale-100 translate-y-0" x-transition:leave-end="opacity-0 scale-95 translate-y-4"
+                 class="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden">
+                <div class="h-1 bg-gradient-to-r from-emerald-500 to-teal-500"></div>
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-5">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                            </div>
+                            <div>
+                                <h3 class="text-base font-bold text-gray-900">Import Update Massal</h3>
+                                <p class="text-xs text-gray-400">Perbarui data pegawai via file Excel</p>
+                            </div>
+                        </div>
+                        <button @click="showImport=false" class="text-gray-400 hover:text-gray-600 transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+
+                    {{-- Step 1: Download template --}}
+                    <div class="rounded-xl border border-emerald-100 bg-emerald-50 p-4 mb-4">
+                        <p class="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-1">Langkah 1 — Download Template</p>
+                        <p class="text-sm text-emerald-700 mb-3">Download template Excel yang sudah berisi seluruh data pegawai saat ini. Edit data yang diinginkan, lalu upload kembali.</p>
+                        <a href="{{ route('manajemen-pegawai.download-template') }}"
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-bold rounded-xl hover:bg-emerald-500 transition-colors shadow-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            Download Template Excel
+                        </a>
+                    </div>
+
+                    {{-- Warning --}}
+                    <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 mb-4 flex gap-3">
+                        <svg class="w-5 h-5 text-amber-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        <div class="text-xs text-amber-700 leading-relaxed">
+                            <strong class="font-bold">Jangan ubah format Excel!</strong> Kolom <code class="bg-amber-100 px-1 rounded font-mono">user_id</code> wajib tetap ada dan tidak boleh diubah nilainya. Hanya isi data pada kolom yang tersedia — jangan tambah, hapus, atau ubah urutan kolom.
+                        </div>
+                    </div>
+
+                    {{-- Step 2: Upload --}}
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Langkah 2 — Upload File yang Sudah Diedit</p>
+                    <form method="POST" action="{{ route('manajemen-pegawai.import-update') }}" enctype="multipart/form-data" class="space-y-4">
+                        @csrf
+                        <div x-data="{ fileName: '' }">
+                            <label class="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 transition-all group">
+                                <div x-show="!fileName" class="flex flex-col items-center gap-1.5 pointer-events-none">
+                                    <svg class="w-8 h-8 text-gray-300 group-hover:text-emerald-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                    <span class="text-sm text-gray-400">Klik untuk pilih file <strong>.xlsx</strong> atau <strong>.xls</strong></span>
+                                    <span class="text-xs text-gray-300">Maks. 5 MB</span>
+                                </div>
+                                <div x-show="fileName" class="flex items-center gap-2 pointer-events-none">
+                                    <svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <span class="text-sm font-semibold text-emerald-700" x-text="fileName"></span>
+                                </div>
+                                <input type="file" name="file_import" accept=".xlsx,.xls" required class="hidden"
+                                    @change="fileName = $event.target.files[0]?.name ?? ''">
+                            </label>
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-1">
+                            <button type="button" @click="showImport=false" class="px-4 py-2 border border-gray-200 text-gray-600 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">Batal</button>
+                            <button type="submit" class="px-5 py-2 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-500 transition-all shadow-md">
+                                Proses Import
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         {{-- ─── PAGE CONTENT ─── --}}
         <div class="py-6">
             <div class="w-full px-4 sm:px-6 lg:px-8 space-y-6">
@@ -306,6 +396,23 @@
                     </div>
                 </div>
 
+                {{-- Import Errors --}}
+                @if(session('import_errors'))
+                    <div class="bg-red-50 border border-red-200 rounded-2xl p-4">
+                        <div class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <div class="flex-1">
+                                <p class="text-sm font-bold text-red-700 mb-2">Beberapa baris gagal diproses saat import:</p>
+                                <ul class="space-y-1">
+                                    @foreach(session('import_errors') as $err)
+                                        <li class="text-xs text-red-600">• {{ $err }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
                 {{-- Search & Filter --}}
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
                     <form method="GET" action="{{ route('manajemen-pegawai.index') }}" class="flex flex-col sm:flex-row gap-3">
@@ -348,6 +455,13 @@
                                     Filter aktif
                                 </span>
                             @endif
+                            <button @click="showImport = true"
+                                class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white text-sm font-bold rounded-xl shadow-sm transition-all">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                </svg>
+                                Import Update
+                            </button>
                             <button @click="showAdd = true"
                                 class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-sm transition-all">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -365,7 +479,7 @@
                                     <th class="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider w-12">#</th>
                                     <th class="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Pegawai</th>
                                     <th class="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Role / Jabatan</th>
-                                    <th class="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">NUPTK / Kode</th>
+                                    <th class="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">NIK / NUPTK</th>
                                     <th class="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Bergabung</th>
                                     <th class="text-right px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Aksi</th>
                                 </tr>
@@ -405,12 +519,21 @@
                                             </div>
                                         </td>
 
-                                        {{-- NUPTK / Kode --}}
+                                        {{-- NIK / NUPTK / Kode --}}
                                         <td class="px-6 py-4">
                                             @if ($user->masterGuru)
-                                                <div class="space-y-0.5">
+                                                <div class="space-y-1">
+                                                    @if ($user->masterGuru->nik)
+                                                        <div class="flex items-center gap-1.5">
+                                                            <span class="text-[10px] font-bold text-slate-400 uppercase">NIK</span>
+                                                            <div class="font-mono text-xs text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">{{ $user->masterGuru->nik }}</div>
+                                                        </div>
+                                                    @endif
                                                     @if ($user->masterGuru->nuptk)
-                                                        <div class="font-mono text-xs text-gray-700 bg-gray-100 px-2 py-0.5 rounded-md inline-block">{{ $user->masterGuru->nuptk }}</div>
+                                                        <div class="flex items-center gap-1.5">
+                                                            <span class="text-[10px] font-bold text-indigo-400 uppercase">NUPTK</span>
+                                                            <div class="font-mono text-xs text-gray-700 bg-gray-100 px-2 py-0.5 rounded-md">{{ $user->masterGuru->nuptk }}</div>
+                                                        </div>
                                                     @endif
                                                     @if ($user->masterGuru->kode_guru)
                                                         <div class="text-xs text-gray-500">{{ $user->masterGuru->kode_guru }}</div>
@@ -436,6 +559,7 @@
                                                         'name'          => $user->name,
                                                         'email'         => $user->email,
                                                         'role'          => $user->roles->first()?->name ?? '',
+                                                        'nik'           => $user->masterGuru?->nik,
                                                         'nuptk'         => $user->masterGuru?->nuptk,
                                                         'kode_guru'     => $user->masterGuru?->kode_guru,
                                                         'jenis_kelamin' => $user->masterGuru?->jenis_kelamin,

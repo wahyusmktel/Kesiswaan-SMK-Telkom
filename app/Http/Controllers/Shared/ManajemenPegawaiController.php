@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Shared;
 
+use App\Exports\PegawaiTemplateExport;
 use App\Http\Controllers\Controller;
+use App\Imports\PegawaiImport;
 use App\Models\MasterGuru;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -10,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use Maatwebsite\Excel\Facades\Excel;
 use Spatie\Permission\Models\Role;
 
 class ManajemenPegawaiController extends Controller
@@ -35,13 +38,13 @@ class ManajemenPegawaiController extends Controller
 
         $allRoles = Role::where('name', '!=', 'Siswa')->orderBy('name')->get();
 
-        $totalPegawai   = User::whereDoesntHave('roles', fn($q) => $q->where('name', 'Siswa'))->count();
+        $totalPegawai     = User::whereDoesntHave('roles', fn($q) => $q->where('name', 'Siswa'))->count();
         $totalDenganNuptk = MasterGuru::whereNotNull('nuptk')->count();
-        $totalRoles     = $allRoles->count();
-        $pegawaiBaru    = User::whereDoesntHave('roles', fn($q) => $q->where('name', 'Siswa'))
-                              ->whereMonth('created_at', now()->month)
-                              ->whereYear('created_at', now()->year)
-                              ->count();
+        $totalRoles       = $allRoles->count();
+        $pegawaiBaru      = User::whereDoesntHave('roles', fn($q) => $q->where('name', 'Siswa'))
+                                ->whereMonth('created_at', now()->month)
+                                ->whereYear('created_at', now()->year)
+                                ->count();
 
         return view('pages.shared.manajemen-pegawai.index', compact(
             'pegawai', 'allRoles', 'totalPegawai', 'totalDenganNuptk', 'totalRoles', 'pegawaiBaru'
@@ -55,6 +58,7 @@ class ManajemenPegawaiController extends Controller
             'email'         => 'required|email|unique:users,email',
             'password'      => 'required|string|min:8',
             'role'          => 'required|string|exists:roles,name',
+            'nik'           => 'nullable|string|max:20|unique:master_gurus,nik',
             'nuptk'         => 'nullable|string|max:20|unique:master_gurus,nuptk',
             'kode_guru'     => 'nullable|string|max:20',
             'jenis_kelamin' => 'nullable|in:L,P',
@@ -69,15 +73,14 @@ class ManajemenPegawaiController extends Controller
 
             $user->assignRole($request->role);
 
-            if ($request->filled('nuptk') || $request->filled('kode_guru')) {
-                MasterGuru::create([
-                    'user_id'       => $user->id,
-                    'nama_lengkap'  => $request->name,
-                    'nuptk'         => $request->nuptk,
-                    'kode_guru'     => $request->kode_guru,
-                    'jenis_kelamin' => $request->jenis_kelamin ?? 'L',
-                ]);
-            }
+            MasterGuru::create([
+                'user_id'       => $user->id,
+                'nama_lengkap'  => $request->name,
+                'nik'           => $request->nik,
+                'nuptk'         => $request->nuptk,
+                'kode_guru'     => $request->kode_guru,
+                'jenis_kelamin' => $request->jenis_kelamin ?? 'L',
+            ]);
 
             toast('Pegawai berhasil ditambahkan.', 'success');
         } catch (\Exception $e) {
@@ -95,6 +98,7 @@ class ManajemenPegawaiController extends Controller
             'email'         => ['required', 'email', Rule::unique('users', 'email')->ignore($user->id)],
             'password'      => 'nullable|string|min:8',
             'role'          => 'required|string|exists:roles,name',
+            'nik'           => ['nullable', 'string', 'max:20', Rule::unique('master_gurus', 'nik')->ignore($user->masterGuru?->id)],
             'nuptk'         => ['nullable', 'string', 'max:20', Rule::unique('master_gurus', 'nuptk')->ignore($user->masterGuru?->id)],
             'kode_guru'     => 'nullable|string|max:20',
             'jenis_kelamin' => 'nullable|in:L,P',
@@ -109,17 +113,16 @@ class ManajemenPegawaiController extends Controller
 
             $user->syncRoles([$request->role]);
 
-            if ($request->filled('nuptk') || $request->filled('kode_guru')) {
-                MasterGuru::updateOrCreate(
-                    ['user_id' => $user->id],
-                    [
-                        'nama_lengkap'  => $request->name,
-                        'nuptk'         => $request->nuptk,
-                        'kode_guru'     => $request->kode_guru,
-                        'jenis_kelamin' => $request->jenis_kelamin ?? $user->masterGuru?->jenis_kelamin ?? 'L',
-                    ]
-                );
-            }
+            MasterGuru::updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'nama_lengkap'  => $request->name,
+                    'nik'           => $request->nik,
+                    'nuptk'         => $request->nuptk,
+                    'kode_guru'     => $request->kode_guru,
+                    'jenis_kelamin' => $request->jenis_kelamin ?? $user->masterGuru?->jenis_kelamin ?? 'L',
+                ]
+            );
 
             toast('Data pegawai berhasil diperbarui.', 'success');
         } catch (\Exception $e) {
@@ -144,6 +147,39 @@ class ManajemenPegawaiController extends Controller
         } catch (\Exception $e) {
             Log::error('ManajemenPegawai destroy error: ' . $e->getMessage());
             toast('Gagal menghapus pegawai. Data mungkin masih terhubung ke sistem lain.', 'error');
+        }
+
+        return back();
+    }
+
+    public function downloadTemplate()
+    {
+        $filename = 'template-update-pegawai-' . now()->format('Ymd') . '.xlsx';
+        return Excel::download(new PegawaiTemplateExport(), $filename);
+    }
+
+    public function importUpdate(Request $request)
+    {
+        $request->validate([
+            'file_import' => 'required|file|mimes:xlsx,xls|max:5120',
+        ]);
+
+        try {
+            $import = new PegawaiImport();
+            Excel::import($import, $request->file('file_import'));
+
+            if ($import->updated > 0) {
+                toast("Berhasil memperbarui {$import->updated} data pegawai." . ($import->skipped > 0 ? " {$import->skipped} baris dilewati." : ''), 'success');
+            } else {
+                toast('Tidak ada data yang diperbarui.' . ($import->skipped > 0 ? " {$import->skipped} baris dilewati karena kesalahan." : ''), 'warning');
+            }
+
+            if (!empty($import->errors)) {
+                session()->flash('import_errors', $import->errors);
+            }
+        } catch (\Exception $e) {
+            Log::error('ManajemenPegawai importUpdate error: ' . $e->getMessage());
+            toast('Gagal memproses file: ' . $e->getMessage(), 'error');
         }
 
         return back();

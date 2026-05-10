@@ -716,6 +716,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/manajemen-pegawai', [\App\Http\Controllers\Shared\ManajemenPegawaiController::class, 'store'])->name('manajemen-pegawai.store');
         Route::put('/manajemen-pegawai/{user}', [\App\Http\Controllers\Shared\ManajemenPegawaiController::class, 'update'])->name('manajemen-pegawai.update');
         Route::delete('/manajemen-pegawai/{user}', [\App\Http\Controllers\Shared\ManajemenPegawaiController::class, 'destroy'])->name('manajemen-pegawai.destroy');
+        Route::get('/manajemen-pegawai/download-template', [\App\Http\Controllers\Shared\ManajemenPegawaiController::class, 'downloadTemplate'])->name('manajemen-pegawai.download-template');
+        Route::post('/manajemen-pegawai/import-update', [\App\Http\Controllers\Shared\ManajemenPegawaiController::class, 'importUpdate'])->name('manajemen-pegawai.import-update');
     });
 
     // Monitoring Keterlambatan Shared
