@@ -37,9 +37,9 @@
                             <div class="absolute bottom-0 left-0 right-0 p-2">
                                 <div class="flex items-center gap-1.5 mb-1">
                                     <div class="w-5 h-5 rounded-full bg-white/20 border border-white/50 overflow-hidden">
-                                        <img src="https://ui-avatars.com/api/?name={{ urlencode($reel->user->name) }}&background=6366f1&color=fff&size=20" class="w-full h-full object-cover">
+                                        <img src="https://ui-avatars.com/api/?name={{ urlencode($reel->user?->name ?? 'Pengguna') }}&background=6366f1&color=fff&size=20" class="w-full h-full object-cover">
                                     </div>
-                                    <span class="text-[8px] font-bold text-white truncate max-w-[50px]">{{ explode(' ', $reel->user->name)[0] }}</span>
+                                    <span class="text-[8px] font-bold text-white truncate max-w-[50px]">{{ explode(' ', $reel->user?->name ?? 'Pengguna')[0] }}</span>
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <span class="text-[8px] font-bold text-white/70 flex items-center gap-0.5">
@@ -157,10 +157,10 @@
                 <div class="flex items-center gap-3 mb-6">
                     <a href="{{ route('notted.profile', $post->user_id) }}" class="w-10 h-10 rounded-xl bg-slate-100 overflow-hidden block hover:scale-105 transition-transform border border-slate-100">
                         <img
-                            src="https://ui-avatars.com/api/?name={{ urlencode($post->user->name) }}&background=6366f1&color=fff">
+                            src="https://ui-avatars.com/api/?name={{ urlencode($post->user?->name ?? 'Pengguna') }}&background=6366f1&color=fff">
                     </a>
                     <div>
-                        <a href="{{ route('notted.profile', $post->user_id) }}" class="text-sm font-bold text-slate-900 leading-none mb-1 hover:text-indigo-600 transition-colors block">{{ $post->user->name }}
+                        <a href="{{ route('notted.profile', $post->user_id) }}" class="text-sm font-bold text-slate-900 leading-none mb-1 hover:text-indigo-600 transition-colors block">{{ $post->user?->name ?? 'Pengguna dihapus' }}
                         </a>
                         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                             {{ $post->created_at->diffForHumans() }}
@@ -252,12 +252,12 @@
                     @foreach ($post->comments as $previewComment)
                         <div class="flex gap-2 items-start animate-in fade-in slide-in-from-bottom-2 duration-300">
                             <div class="w-6 h-6 rounded-lg bg-slate-100 flex-shrink-0 overflow-hidden">
-                                <img src="https://ui-avatars.com/api/?name={{ urlencode($previewComment->user->name) }}&background=random"
+                                <img src="https://ui-avatars.com/api/?name={{ urlencode($previewComment->user?->name ?? 'Pengguna') }}&background=random"
                                     class="w-full h-full object-cover">
                             </div>
                             <div class="group relative flex-1">
                                 <div class="bg-slate-50 px-3 py-2 rounded-2xl text-[11px] border border-slate-100">
-                                    <span class="font-bold text-slate-800">{{ $previewComment->user->name }}</span>
+                                    <span class="font-bold text-slate-800">{{ $previewComment->user?->name ?? 'Pengguna dihapus' }}</span>
                                     <span class="text-slate-600 ml-1">{!! preg_replace('/(@[a-zA-Z0-9_]+)/', '<span class="mention-link">$1</span>', e(Str::limit($previewComment->content, 60))) !!}</span>
                                 </div>
                                 <div class="mt-1 flex gap-3 px-1">
@@ -268,7 +268,7 @@
                                         </svg>
                                         <span class="like-count">{{ $previewComment->likes_count ?? 0 }}</span>
                                     </button>
-                                    <button onclick="setInlineReply({{ $post->id }}, {{ $previewComment->id }}, '{{ addslashes($previewComment->user->name) }}', '{{ addslashes(Str::limit($previewComment->content, 40)) }}')"
+                                    <button onclick="setInlineReply({{ $post->id }}, {{ $previewComment->id }}, '{{ addslashes($previewComment->user?->name ?? 'Pengguna') }}', '{{ addslashes(Str::limit($previewComment->content, 40)) }}')"
                                         class="flex items-center gap-1 text-[9px] font-bold uppercase tracking-tighter text-slate-400 hover:text-indigo-600 transition-colors">
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
