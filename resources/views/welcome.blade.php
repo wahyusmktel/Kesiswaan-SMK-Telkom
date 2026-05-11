@@ -1,7 +1,14 @@
 @php
     $hasBirthdays = isset($birthdaySiswa, $birthdayGuru) && ($birthdaySiswa->count() + $birthdayGuru->count()) > 0;
-    $bdSessionKey = 'bdClosed_' . now()->format('Y-m-d');
     $bdDuration   = $hasBirthdays ? max(25, ($birthdaySiswa->count() + $birthdayGuru->count()) * 8) : 0;
+    $bdSiswaCards = $hasBirthdays ? $birthdaySiswa->map(fn($s) => [
+        'nama'  => $s->nama_lengkap,
+        'nis'   => $s->nis ?? '-',
+        'jk'    => $s->jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan',
+        'kelas' => $s->rombels->first()?->kelas?->nama_kelas ?? 'Belum ada kelas',
+        'asal'  => $s->tempat_lahir ?? '-',
+        'umur'  => $s->tanggal_lahir ? (int) $s->tanggal_lahir->age : '-',
+    ])->values()->all() : [];
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth">
@@ -301,8 +308,17 @@
 <body class="antialiased overflow-x-hidden {{ $appSetting?->theme === 'light-red' ? 'theme-light-red' : '' }}"
     x-data="{
         showVideo: false,
-        bdVisible: @js($hasBirthdays) ? !sessionStorage.getItem(@js($bdSessionKey)) : false,
-        bdClose() { this.bdVisible = false; sessionStorage.setItem(@js($bdSessionKey), '1'); }
+        bdVisible: @js($hasBirthdays),
+        bdClose() { this.bdVisible = false; },
+        bdTip: { show: false, x: 0, y: 0, d: null },
+        bdShowTip(d, e) { this.bdTip.d = d; this.bdTip.show = true; this.bdMoveTip(e); },
+        bdMoveTip(e) {
+            let x = e.clientX + 18, y = e.clientY - 100;
+            if (x + 230 > window.innerWidth) x = e.clientX - 248;
+            if (y < 8) y = e.clientY + 20;
+            this.bdTip.x = x; this.bdTip.y = y;
+        },
+        bdHideTip() { this.bdTip.show = false; }
     }">
     {{-- Premium Tech Preloader --}}
     @include('components.preloader')
@@ -343,11 +359,15 @@
                             </span>
                             <span class="opacity-40 text-white">✦</span>
                         @endforeach
-                        @foreach($birthdaySiswa as $siswa)
+                        @foreach($birthdaySiswa as $i => $siswa)
                             <span class="inline-flex items-center gap-1.5">
                                 <span>🎈</span>
                                 <span>Selamat Ulang Tahun,</span>
-                                <span class="font-black text-yellow-200">{{ $siswa->nama_lengkap }}</span>
+                                <span
+                                    @mouseenter="bdShowTip(@js($bdSiswaCards[$i] ?? []), $event)"
+                                    @mouseleave="bdHideTip()"
+                                    @mousemove="bdMoveTip($event)"
+                                    class="font-black text-yellow-200 cursor-default underline underline-offset-2 decoration-dotted decoration-yellow-200/40">{{ $siswa->nama_lengkap }}</span>
                                 <span class="bg-white/20 text-white rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wide">Siswa</span>
                                 <span>Semoga bahagia &amp; berprestasi!</span>
                                 <span>🎊</span>
@@ -368,11 +388,15 @@
                             </span>
                             <span class="opacity-40 text-white">✦</span>
                         @endforeach
-                        @foreach($birthdaySiswa as $siswa)
+                        @foreach($birthdaySiswa as $i => $siswa)
                             <span class="inline-flex items-center gap-1.5">
                                 <span>🎈</span>
                                 <span>Selamat Ulang Tahun,</span>
-                                <span class="font-black text-yellow-200">{{ $siswa->nama_lengkap }}</span>
+                                <span
+                                    @mouseenter="bdShowTip(@js($bdSiswaCards[$i] ?? []), $event)"
+                                    @mouseleave="bdHideTip()"
+                                    @mousemove="bdMoveTip($event)"
+                                    class="font-black text-yellow-200 cursor-default underline underline-offset-2 decoration-dotted decoration-yellow-200/40">{{ $siswa->nama_lengkap }}</span>
                                 <span class="bg-white/20 text-white rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wide">Siswa</span>
                                 <span>Semoga bahagia &amp; berprestasi!</span>
                                 <span>🎊</span>
@@ -391,6 +415,54 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
             </button>
+        </div>
+    </div>
+    @endif
+
+    {{-- Birthday Student Tooltip --}}
+    @if($hasBirthdays)
+    <div x-show="bdTip.show" x-cloak
+        :style="`left:${bdTip.x}px;top:${bdTip.y}px`"
+        x-transition:enter="transition ease-out duration-150"
+        x-transition:enter-start="opacity-0 scale-90 translate-y-1"
+        x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+        x-transition:leave="transition ease-in duration-100"
+        x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-90"
+        class="fixed z-[70] pointer-events-none"
+        style="width:228px">
+        <div class="bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl shadow-black/50">
+            {{-- Header --}}
+            <div class="flex items-center gap-2.5 mb-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center text-lg shadow-lg shrink-0">🎂</div>
+                <div class="min-w-0">
+                    <div class="text-[9px] font-black uppercase tracking-widest text-pink-400 leading-none mb-0.5">Ulang Tahun Hari Ini!</div>
+                    <div class="text-[10px] text-slate-400 font-semibold" x-text="bdTip.d?.umur ? `Tahun ke-${bdTip.d.umur}` : ''"></div>
+                </div>
+            </div>
+            {{-- Name --}}
+            <div class="font-black text-sm text-yellow-300 leading-tight mb-3 pb-3 border-b border-white/10 truncate" x-text="bdTip.d?.nama"></div>
+            {{-- Detail rows --}}
+            <div class="space-y-2 text-[11px]">
+                <div class="flex items-center gap-2">
+                    <span class="text-slate-500 w-10 shrink-0 font-medium">NIS</span>
+                    <span class="text-slate-200 font-bold truncate" x-text="bdTip.d?.nis"></span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-slate-500 w-10 shrink-0 font-medium">Kelas</span>
+                    <span class="text-slate-200 font-bold truncate" x-text="bdTip.d?.kelas"></span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-slate-500 w-10 shrink-0 font-medium">JK</span>
+                    <span class="text-slate-200 font-bold" x-text="bdTip.d?.jk"></span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-slate-500 w-10 shrink-0 font-medium">Asal</span>
+                    <span class="text-slate-200 font-bold truncate" x-text="bdTip.d?.asal"></span>
+                </div>
+            </div>
+            {{-- Confetti dots --}}
+            <div class="absolute top-2 right-3 text-base opacity-60 pointer-events-none select-none">🎉</div>
         </div>
     </div>
     @endif

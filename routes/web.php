@@ -149,10 +149,11 @@ Route::middleware(['auth'])->prefix('notted')->name('notted.')->group(function (
 
 Route::get('/', function () {
     $today = now();
-    $birthdaySiswa = \App\Models\MasterSiswa::whereNotNull('tanggal_lahir')
+    $birthdaySiswa = \App\Models\MasterSiswa::with(['rombels.kelas'])
+        ->whereNotNull('tanggal_lahir')
         ->whereMonth('tanggal_lahir', $today->month)
         ->whereDay('tanggal_lahir', $today->day)
-        ->get(['nama_lengkap']);
+        ->get(['id', 'nama_lengkap', 'nis', 'tanggal_lahir', 'jenis_kelamin', 'tempat_lahir']);
     $birthdayGuru = \App\Models\DapodikGuru::whereNotNull('tanggal_lahir')
         ->whereMonth('tanggal_lahir', $today->month)
         ->whereDay('tanggal_lahir', $today->day)
