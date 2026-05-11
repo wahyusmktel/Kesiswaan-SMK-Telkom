@@ -1,19 +1,21 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <div>
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">Ajukan Perubahan Data Dapodik</h2>
-                <p class="text-sm text-gray-500 mt-1">Ubah hanya field yang perlu diperbarui, lalu kirim untuk diverifikasi Operator.</p>
-            </div>
-            <a href="{{ route('guru.dapodik.index') }}"
-                class="inline-flex items-center px-4 py-2 bg-gray-500 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-600 transition shadow-sm">
-                Kembali
-            </a>
-        </div>
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">Ajukan Perubahan Data Dapodik</h2>
+        <p class="text-sm text-gray-500 mt-1">Ubah hanya field yang perlu diperbarui, lalu kirim untuk diverifikasi Operator.</p>
     </x-slot>
 
     <div class="py-6">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+
+            <div class="mb-4">
+                <a href="{{ route('guru.dapodik.index') }}"
+                    class="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-gray-700 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    Kembali ke Data Dapodik
+                </a>
+            </div>
 
             @if ($errors->any())
                 <div class="mb-4 p-4 bg-red-50 border border-red-300 rounded-xl">

@@ -1,15 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <div>
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">Riwayat Pengajuan Dapodik</h2>
-                <p class="text-sm text-gray-500 mt-1">Pantau status pengajuan perubahan data Dapodik Anda.</p>
-            </div>
-            <a href="{{ route('guru.dapodik.index') }}"
-                class="inline-flex items-center px-4 py-2 bg-gray-500 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-600 transition shadow-sm">
-                Kembali
-            </a>
-        </div>
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">Riwayat Pengajuan Dapodik</h2>
+        <p class="text-sm text-gray-500 mt-1">Pantau status pengajuan perubahan data Dapodik Anda.</p>
     </x-slot>
 
     <div class="py-6">

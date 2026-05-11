@@ -1,10 +1,13 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <div>
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">Data Dapodik Saya</h2>
-                <p class="text-sm text-gray-500 mt-1">{{ $guru->nama_lengkap }} — {{ $guru->nuptk ?? 'NUPTK belum diisi' }}</p>
-            </div>
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">Data Dapodik Saya</h2>
+        <p class="text-sm text-gray-500 mt-1">{{ $guru->nama_lengkap }} — {{ $guru->nuptk ?? 'NUPTK belum diisi' }}</p>
+    </x-slot>
+
+    <div class="py-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+
+            {{-- Action buttons --}}
             <div class="flex gap-2">
                 @unless($pendingSubmission)
                     <a href="{{ route('guru.dapodik.edit') }}"
@@ -23,11 +26,6 @@
                     Riwayat Pengajuan
                 </a>
             </div>
-        </div>
-    </x-slot>
-
-    <div class="py-6">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
 
             @if(session('success'))
                 <div class="p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg text-sm">{{ session('success') }}</div>
