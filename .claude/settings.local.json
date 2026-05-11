@@ -9,7 +9,14 @@
       "PowerShell(php -l \"c:\\\\Projects\\\\Kesiswaan-SMK-Telkom\\\\app\\\\Http\\\\Controllers\\\\Public\\\\SmartTvJadwalController.php\")",
       "PowerShell(php -l \"c:\\\\Projects\\\\Kesiswaan-SMK-Telkom\\\\app\\\\Http\\\\Controllers\\\\Piket\\\\InfoTickerController.php\")",
       "PowerShell(php -l \"c:\\\\Projects\\\\Kesiswaan-SMK-Telkom\\\\app\\\\Models\\\\InfoTicker.php\" 2>&1)",
-      "Bash(grep -n \"Route::get.*public\\\\|tv/jadwal\\\\|pengaduan\\\\|Public\\\\\\\\\\\\\\\\\" \"c:/Projects/Kesiswaan-SMK-Telkom/routes/web.php\")"
+      "Bash(grep -n \"Route::get.*public\\\\|tv/jadwal\\\\|pengaduan\\\\|Public\\\\\\\\\\\\\\\\\" \"c:/Projects/Kesiswaan-SMK-Telkom/routes/web.php\")",
+      "WebFetch(domain:github.com)",
+      "WebSearch",
+      "WebFetch(domain:equran.id)",
+      "Bash(curl -s \"https://equran.id/api/v2/surat/1\")",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); s=d['data']; print\\('Keys:', list\\(s.keys\\(\\)\\)\\); print\\('audioFull:', s.get\\('audioFull',{}\\)\\); ayat=s['ayat'][0]; print\\('Ayat keys:', list\\(ayat.keys\\(\\)\\)\\); print\\('Ayat audio:', ayat.get\\('audio',{}\\)\\)\")",
+      "Bash(curl -s \"https://api.npoint.io/99c279bb173a6e28359c/data\")",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); k=list\\(d.keys\\(\\)\\) if isinstance\\(d,dict\\) else 'array'; print\\('Top keys:', k\\)\")"
     ]
   }
 }

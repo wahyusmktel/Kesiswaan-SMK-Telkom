@@ -169,6 +169,34 @@
 
         .quick-prayer-item { white-space: nowrap; }
 
+        /* ── Audio Player ── */
+        .audio-bar {
+            background: rgba(3, 18, 12, 0.97);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-top: 1px solid rgba(52, 211, 153, 0.2);
+        }
+        .ayah-playing {
+            background: linear-gradient(90deg, rgba(52,211,153,0.06) 0%, transparent 100%) !important;
+            border-left: 3px solid rgba(52, 211, 153, 0.45) !important;
+            padding-left: calc(1.25rem - 3px) !important;
+        }
+        @keyframes soundwave {
+            0%, 100% { transform: scaleY(0.35); }
+            50%       { transform: scaleY(1); }
+        }
+        .sw-bar {
+            display: inline-block;
+            width: 2.5px;
+            border-radius: 2px;
+            background: currentColor;
+            transform-origin: bottom;
+            animation: soundwave 0.75s ease-in-out infinite;
+        }
+        .sw-bar:nth-child(2) { animation-delay: 0.15s; }
+        .sw-bar:nth-child(3) { animation-delay: 0.3s;  }
+        .sw-bar:nth-child(4) { animation-delay: 0.12s; }
+
         @media (max-width: 640px) {
             .bismillah-display { font-size: 1.5rem; }
         }
@@ -335,7 +363,8 @@
     {{-- ═══════════════════════════════════════
          MAIN CONTENT
     ═══════════════════════════════════════ --}}
-    <main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 pb-16">
+    <main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 pb-16"
+        :class="(isPlaying || playingAyah !== null) ? 'pb-32' : 'pb-16'">
 
         {{-- ─── AL-QUR'AN TAB ─── --}}
         <div x-show="activeTab === 'quran'" x-cloak>
@@ -465,6 +494,48 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                         </button>
                     </div>
+
+                    {{-- ── Audio Controls ── --}}
+                    <div x-show="!loadingAyahs && ayahs.length > 0"
+                         class="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-emerald-900/30">
+
+                        {{-- Mic icon --}}
+                        <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                        </svg>
+
+                        {{-- Reciter dropdown --}}
+                        <select @change="changeReciter($event.target.value)"
+                            class="flex-1 min-w-0 bg-black/40 border border-emerald-900/50 rounded-xl px-3 py-1.5 text-xs text-emerald-300 font-bold focus:outline-none focus:border-emerald-600/50 cursor-pointer">
+                            <template x-for="r in reciters" :key="r.id">
+                                <option :value="r.id" :selected="r.id === selectedReciter" x-text="r.name"></option>
+                            </template>
+                        </select>
+
+                        {{-- Auto-next toggle --}}
+                        <label class="flex items-center gap-1.5 cursor-pointer shrink-0" @click.prevent="autoNext = !autoNext">
+                            <div class="w-7 h-3.5 rounded-full transition-colors border relative"
+                                :class="autoNext ? 'bg-emerald-600 border-emerald-500' : 'bg-black/40 border-emerald-900/50'">
+                                <div class="absolute top-[1px] left-[1px] w-[10px] h-[10px] rounded-full bg-white shadow transition-transform"
+                                    :class="autoNext ? 'translate-x-[14px]' : ''"></div>
+                            </div>
+                            <span class="text-[10px] text-emerald-600 font-bold uppercase tracking-wide">Auto-lanjut</span>
+                        </label>
+
+                        {{-- Play all button --}}
+                        <button @click="playAyah(ayahs[0])"
+                            x-show="!isPlaying"
+                            class="shrink-0 flex items-center gap-1 px-3 py-1.5 bg-emerald-900/40 border border-emerald-800/40 rounded-xl text-xs font-bold text-emerald-400 hover:bg-emerald-800/50 hover:text-emerald-200 transition-all">
+                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                            Putar Semua
+                        </button>
+                        <button @click="stopAudio()"
+                            x-show="isPlaying || playingAyah !== null"
+                            class="shrink-0 flex items-center gap-1 px-3 py-1.5 bg-red-900/30 border border-red-900/50 rounded-xl text-xs font-bold text-red-400 hover:bg-red-900/50 transition-all">
+                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
+                            Stop
+                        </button>
+                    </div>
                 </div>
 
                 {{-- Bismillah Header --}}
@@ -484,14 +555,53 @@
                 {{-- Ayah List --}}
                 <div x-show="!loadingAyahs && ayahs.length > 0" class="space-y-0 glass rounded-2xl border border-emerald-900/30 overflow-hidden">
                     <template x-for="(ayah, idx) in ayahs" :key="ayah.nomorAyat">
-                        <div class="ayah-item border-b border-emerald-900/20 last:border-b-0 p-5">
-                            {{-- Ayah number badge --}}
+                        <div class="ayah-item border-b border-emerald-900/20 last:border-b-0 p-5 transition-all duration-300"
+                            :id="'ayah-' + ayah.nomorAyat"
+                            :class="playingAyah === ayah.nomorAyat ? 'ayah-playing' : ''">
+
+                            {{-- Ayah header row --}}
                             <div class="flex items-center justify-between mb-4">
-                                <div class="w-8 h-8 rounded-full bg-emerald-900/70 border border-emerald-800/60 flex items-center justify-center">
-                                    <span class="text-xs font-black text-emerald-300" x-text="ayah.nomorAyat"></span>
+                                {{-- Left: number badge (or soundwave when playing) --}}
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 border"
+                                        :class="playingAyah === ayah.nomorAyat
+                                            ? 'bg-emerald-500/25 border-emerald-500/50'
+                                            : 'bg-emerald-900/70 border-emerald-800/60'">
+                                        <template x-if="playingAyah === ayah.nomorAyat && isPlaying">
+                                            <div class="flex items-end gap-[2px] h-4 text-emerald-400">
+                                                <span class="sw-bar" style="height:6px"></span>
+                                                <span class="sw-bar" style="height:10px"></span>
+                                                <span class="sw-bar" style="height:7px"></span>
+                                                <span class="sw-bar" style="height:4px"></span>
+                                            </div>
+                                        </template>
+                                        <template x-if="!(playingAyah === ayah.nomorAyat && isPlaying)">
+                                            <span class="text-xs font-black"
+                                                :class="playingAyah === ayah.nomorAyat ? 'text-emerald-400' : 'text-emerald-300'"
+                                                x-text="ayah.nomorAyat"></span>
+                                        </template>
+                                    </div>
+                                    <span x-show="playingAyah === ayah.nomorAyat"
+                                        class="text-[10px] font-bold transition-colors"
+                                        :class="isPlaying ? 'text-emerald-500' : 'text-yellow-500'"
+                                        x-text="isPlaying ? 'Sedang diputar...' : 'Dijeda'"></span>
                                 </div>
+
+                                {{-- Right: ayat label + play/pause button --}}
                                 <div class="flex items-center gap-2">
-                                    <span class="text-[10px] text-emerald-700 font-mono">Ayat <span x-text="ayah.nomorAyat"></span></span>
+                                    <span class="text-[10px] text-emerald-800 font-mono">Ayat <span x-text="ayah.nomorAyat"></span></span>
+                                    <button @click="toggleAyah(ayah)"
+                                        class="w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200 border"
+                                        :class="playingAyah === ayah.nomorAyat
+                                            ? (isPlaying
+                                                ? 'bg-emerald-500/30 border-emerald-500/60 text-emerald-300 shadow-sm shadow-emerald-900/50'
+                                                : 'bg-yellow-500/20 border-yellow-600/40 text-yellow-400')
+                                            : 'bg-emerald-900/40 border-emerald-900/60 text-emerald-700 hover:text-emerald-300 hover:border-emerald-700/60 hover:bg-emerald-800/40'">
+                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                            <path x-show="!(playingAyah === ayah.nomorAyat && isPlaying)" d="M8 5v14l11-7z"/>
+                                            <path x-show="playingAyah === ayah.nomorAyat && isPlaying" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                                        </svg>
+                                    </button>
                                 </div>
                             </div>
 
@@ -632,6 +742,77 @@
         </div>
     </footer>
 
+    {{-- ══════════════════════════════════
+         STICKY BOTTOM AUDIO PLAYER BAR
+    ══════════════════════════════════ --}}
+    <div x-show="isPlaying || playingAyah !== null"
+        x-cloak
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="translate-y-full opacity-0"
+        x-transition:enter-end="translate-y-0 opacity-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="translate-y-0 opacity-100"
+        x-transition:leave-end="translate-y-full opacity-0"
+        class="fixed bottom-0 left-0 right-0 z-[60] audio-bar px-4 py-3 safe-area-bottom">
+        <div class="max-w-3xl mx-auto flex items-center gap-3">
+
+            {{-- Info --}}
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1.5 mb-0.5">
+                    <div x-show="isPlaying" class="flex items-end gap-[2px] h-3 text-emerald-400">
+                        <span class="sw-bar" style="height:5px"></span>
+                        <span class="sw-bar" style="height:9px"></span>
+                        <span class="sw-bar" style="height:6px"></span>
+                        <span class="sw-bar" style="height:4px"></span>
+                    </div>
+                    <span class="text-[10px] font-bold uppercase tracking-wide"
+                        :class="isPlaying ? 'text-emerald-500' : 'text-yellow-500/80'"
+                        x-text="isPlaying ? 'Sedang Diputar' : 'Dijeda'"></span>
+                </div>
+                <p class="text-sm font-black text-white truncate leading-tight" x-text="playingAyahLabel"></p>
+                <p class="text-[10px] text-emerald-700 truncate" x-text="currentReciterName"></p>
+            </div>
+
+            {{-- Prev ayah --}}
+            <button @click="playPrevAyah()"
+                :disabled="playingAyah === null || ayahs.findIndex(a => a.nomorAyat === playingAyah) <= 0"
+                class="w-9 h-9 rounded-full flex items-center justify-center text-emerald-600 hover:text-white hover:bg-emerald-900/60 transition-all disabled:opacity-25 disabled:cursor-not-allowed">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/>
+                </svg>
+            </button>
+
+            {{-- Play / Pause --}}
+            <button @click="isPlaying ? pauseAudio() : resumeAudio()"
+                class="w-12 h-12 rounded-full flex items-center justify-center text-white transition-all border shadow-lg"
+                :class="isPlaying
+                    ? 'bg-emerald-600 border-emerald-500 shadow-emerald-900/60'
+                    : 'bg-emerald-900/70 border-emerald-700/60'">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path x-show="isPlaying"  d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                    <path x-show="!isPlaying" d="M8 5v14l11-7z"/>
+                </svg>
+            </button>
+
+            {{-- Next ayah --}}
+            <button @click="playNextAyah()"
+                :disabled="playingAyah === null || ayahs.findIndex(a => a.nomorAyat === playingAyah) >= ayahs.length - 1"
+                class="w-9 h-9 rounded-full flex items-center justify-center text-emerald-600 hover:text-white hover:bg-emerald-900/60 transition-all disabled:opacity-25 disabled:cursor-not-allowed">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
+                </svg>
+            </button>
+
+            {{-- Stop / Close --}}
+            <button @click="stopAudio()"
+                class="w-9 h-9 rounded-full flex items-center justify-center text-emerald-700 hover:text-red-400 hover:bg-red-900/20 transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
 </div>{{-- end relative z-10 --}}
 
 {{-- ═══════════════════════════════════════
@@ -651,6 +832,30 @@ function digiReligi() {
         loadingAyahs: false,
         searchQuery: '',
         view: 'list',
+
+        // Audio
+        reciters: [
+            { id: '01', name: 'Abdullah Al-Juhany' },
+            { id: '02', name: 'Abdul-Muhsin Al-Qasim' },
+            { id: '03', name: 'Abdurrahman as-Sudais' },
+            { id: '04', name: 'Ibrahim Al-Dossari' },
+            { id: '05', name: 'Misyari Rasyid Al-Afasi' },
+            { id: '06', name: 'Yasser Al-Dosari' },
+        ],
+        selectedReciter: '05',
+        audioFull: {},
+        currentAudio: null,
+        playingAyah: null,
+        isPlaying: false,
+        autoNext: true,
+
+        get currentReciterName() {
+            return this.reciters.find(r => r.id === this.selectedReciter)?.name ?? '';
+        },
+        get playingAyahLabel() {
+            if (this.playingAyah === null) return '';
+            return `Ayat ${this.playingAyah}  —  ${this.selectedSurah?.namaLatin ?? ''}`;
+        },
 
         // Prayer
         prayerTimes: null,
@@ -717,9 +922,11 @@ function digiReligi() {
 
         async selectSurah(surah) {
             if (!surah) return;
+            this.stopAudio();
             this.selectedSurah = surah;
             this.view = 'reader';
             this.ayahs = [];
+            this.audioFull = {};
             this.loadingAyahs = true;
             window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -727,19 +934,21 @@ function digiReligi() {
                 const res = await fetch(`https://equran.id/api/v2/surat/${surah.nomor}`);
                 if (!res.ok) throw new Error('Network error');
                 const json = await res.json();
-                this.ayahs = json.data.ayat ?? [];
+                this.ayahs    = json.data.ayat     ?? [];
+                this.audioFull = json.data.audioFull ?? {};
             } catch (e) {
-                // Fallback to al-quran.cloud
+                // Fallback to al-quran.cloud (no audio in fallback)
                 try {
                     const res = await fetch(`https://api.alquran.cloud/v1/surah/${surah.nomor}/editions/quran-uthmani,id.indonesian`);
                     const json = await res.json();
-                    const arabic = json.data[0].ayahs;
+                    const arabic   = json.data[0].ayahs;
                     const terjemah = json.data[1].ayahs;
                     this.ayahs = arabic.map((a, i) => ({
-                        nomorAyat: a.numberInSurah,
-                        teksArab: a.text,
-                        teksLatin: '',
+                        nomorAyat:    a.numberInSurah,
+                        teksArab:     a.text,
+                        teksLatin:    '',
                         teksIndonesia: terjemah[i]?.text ?? '',
+                        audio:        {},
                     }));
                 } catch (e2) {
                     console.error('All ayah APIs failed', e2);
@@ -749,10 +958,89 @@ function digiReligi() {
         },
 
         backToList() {
+            this.stopAudio();
             this.view = 'list';
             this.selectedSurah = null;
             this.ayahs = [];
+            this.audioFull = {};
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        },
+
+        // ── Audio methods ──
+        playAyah(ayah) {
+            if (!ayah) return;
+            this.stopAudio();
+            const url = ayah.audio?.[this.selectedReciter];
+            if (!url) return;
+            this.playingAyah  = ayah.nomorAyat;
+            this.currentAudio = new Audio(url);
+            this.isPlaying    = true;
+            this.currentAudio.play().catch(() => { this.isPlaying = false; });
+            this.currentAudio.onended = () => {
+                if (this.autoNext) this.playNextAyah();
+                else this.isPlaying = false;
+            };
+            // Scroll playing ayah into view
+            setTimeout(() => {
+                const el = document.getElementById('ayah-' + ayah.nomorAyat);
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        },
+
+        toggleAyah(ayah) {
+            if (this.playingAyah === ayah.nomorAyat) {
+                this.isPlaying ? this.pauseAudio() : this.resumeAudio();
+            } else {
+                this.playAyah(ayah);
+            }
+        },
+
+        pauseAudio() {
+            this.currentAudio?.pause();
+            this.isPlaying = false;
+        },
+
+        resumeAudio() {
+            if (!this.currentAudio) return;
+            this.currentAudio.play().catch(() => {});
+            this.isPlaying = true;
+        },
+
+        stopAudio() {
+            if (this.currentAudio) {
+                this.currentAudio.onended = null;
+                this.currentAudio.pause();
+                this.currentAudio.src = '';
+                this.currentAudio = null;
+            }
+            this.isPlaying   = false;
+            this.playingAyah = null;
+        },
+
+        playNextAyah() {
+            const idx = this.ayahs.findIndex(a => a.nomorAyat === this.playingAyah);
+            if (idx !== -1 && idx < this.ayahs.length - 1) {
+                this.playAyah(this.ayahs[idx + 1]);
+            } else {
+                this.isPlaying   = false;
+                this.playingAyah = null;
+            }
+        },
+
+        playPrevAyah() {
+            const idx = this.ayahs.findIndex(a => a.nomorAyat === this.playingAyah);
+            if (idx > 0) this.playAyah(this.ayahs[idx - 1]);
+        },
+
+        changeReciter(id) {
+            const wasPlaying = this.isPlaying;
+            const wasAyah    = this.playingAyah;
+            this.stopAudio();
+            this.selectedReciter = id;
+            if (wasPlaying && wasAyah !== null) {
+                const ayah = this.ayahs.find(a => a.nomorAyat === wasAyah);
+                if (ayah) setTimeout(() => this.playAyah(ayah), 50);
+            }
         },
 
         async loadPrayerTimes() {
