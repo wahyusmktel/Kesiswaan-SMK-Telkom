@@ -206,44 +206,6 @@
 
 
 {{-- ============================================================ --}}
-{{-- MENU UMUM --}}
-{{-- ============================================================ --}}
-<div class="section-title">Layanan Umum</div>
-<li>
-    <a href="{{ route('cloud-files.index') }}"
-        class="nav-link {{ request()->routeIs('cloud-files.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
-        <div class="nav-icon-container">
-            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-            </svg>
-        </div>
-        <span class="nav-text">Cloud Storage</span>
-    </a>
-</li>
-<li>
-    <a href="{{ route('shortener.index') }}"
-        class="nav-link {{ request()->routeIs('shortener.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
-        <div class="nav-icon-container">
-            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-            </svg>
-        </div>
-        <span class="nav-text">URL Shortener</span>
-    </a>
-</li>
-<li>
-    <a href="{{ route('tes-iq.start') }}"
-        class="nav-link {{ request()->routeIs('tes-iq.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
-        <div class="nav-icon-container">
-            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-            </svg>
-        </div>
-        <span class="nav-text">Tes IQ</span>
-    </a>
-</li>
-
-{{-- ============================================================ --}}
 {{-- ROLE: ADMIN / KEPALA SEKOLAH (Tanpa Dashboard Spesifik) --}}
 {{-- ============================================================ --}}
 @role('Super Admin|Kepala Sekolah')
@@ -2302,6 +2264,44 @@
     @endif
     @endrole
 @endcan
+
+{{-- ============================================================ --}}
+{{-- MENU UMUM --}}
+{{-- ============================================================ --}}
+<div class="section-title">Layanan Umum</div>
+<li>
+    <a href="{{ route('cloud-files.index') }}"
+        class="nav-link {{ request()->routeIs('cloud-files.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+        <div class="nav-icon-container">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+            </svg>
+        </div>
+        <span class="nav-text">Cloud Storage</span>
+    </a>
+</li>
+<li>
+    <a href="{{ route('shortener.index') }}"
+        class="nav-link {{ request()->routeIs('shortener.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+        <div class="nav-icon-container">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+            </svg>
+        </div>
+        <span class="nav-text">URL Shortener</span>
+    </a>
+</li>
+<li>
+    <a href="{{ route('tes-iq.start') }}"
+        class="nav-link {{ request()->routeIs('tes-iq.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+        <div class="nav-icon-container">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+        </div>
+        <span class="nav-text">Tes IQ</span>
+    </a>
+</li>
 
 <div class="section-title">Layanan & Survei</div>
 <li>
