@@ -53,6 +53,11 @@ class NottedController extends Controller
         return view('notted.games');
     }
 
+    public function snakeLadder()
+    {
+        return view('notted.snake-ladder');
+    }
+
     /**
      * Typing Test Feature
      */

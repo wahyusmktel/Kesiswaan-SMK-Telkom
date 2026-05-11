@@ -85,16 +85,53 @@
                     </div>
                 </div>
 
-                <!-- Coming Soon Placeholder 1 -->
-                <div class="group relative bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200 border-spacing-8 overflow-hidden flex flex-col opacity-60">
-                    <div class="p-8 flex-1 flex flex-col items-center justify-center text-center">
-                        <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
-                            <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
+                <!-- Snake & Ladder Game -->
+                <div class="group relative bg-white rounded-3xl border border-gray-100 shadow-xl shadow-gray-100/50 hover:shadow-2xl hover:shadow-emerald-500/10 transition-all duration-300 overflow-hidden flex flex-col">
+                    <div class="relative h-48 bg-gradient-to-tr from-emerald-500 to-teal-600 overflow-hidden">
+                        <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_80%_20%,#fff_0,transparent_10%)]"></div>
+                        <!-- Mini board preview -->
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="grid grid-cols-5 gap-0.5 opacity-30">
+                                <template x-if="true"></template>
+                                @for($i = 0; $i < 25; $i++)
+                                    <div class="w-5 h-5 rounded-sm {{ in_array($i, [0,4,10,18,24]) ? 'bg-red-300' : (in_array($i, [3,7,15,20]) ? 'bg-yellow-200' : 'bg-white/40') }}"></div>
+                                @endfor
+                            </div>
+                            <!-- Snake -->
+                            <svg class="absolute w-32 h-32 text-white/70 group-hover:scale-110 transition-transform duration-300 drop-shadow-lg" viewBox="0 0 100 100" fill="none">
+                                <path d="M20 80 Q50 60 80 40 Q95 30 90 15 Q85 5 75 8 Q65 12 70 25 Q75 35 60 45 Q40 58 15 70 Q5 77 8 88 Q12 97 22 95" stroke="currentColor" stroke-width="6" stroke-linecap="round" fill="none"/>
+                                <circle cx="22" cy="95" r="5" fill="currentColor"/>
+                                <ellipse cx="8" cy="88" rx="4" ry="3" fill="currentColor"/>
+                                <!-- Ladder -->
+                                <line x1="30" y1="75" x2="55" y2="25" stroke="#fde68a" stroke-width="4" stroke-linecap="round"/>
+                                <line x1="42" y1="75" x2="67" y2="25" stroke="#fde68a" stroke-width="4" stroke-linecap="round"/>
+                                <line x1="33" y1="65" x2="58" y2="35" stroke="#fde68a" stroke-width="2.5" stroke-linecap="round"/>
+                                <line x1="36" y1="55" x2="61" y2="43" stroke="#fde68a" stroke-width="2.5" stroke-linecap="round"/>
                             </svg>
                         </div>
-                        <h4 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">Coming Soon</h4>
-                        <p class="text-xs text-gray-400 font-medium">Wait for the next exciting game!</p>
+                        <div class="absolute top-4 left-4 px-3 py-1 bg-white/20 backdrop-blur-md rounded-lg text-[10px] font-black text-white uppercase tracking-widest border border-white/20">
+                            Edukasi
+                        </div>
+                        <div class="absolute top-4 right-4 px-3 py-1 bg-emerald-800/40 backdrop-blur-md rounded-lg text-[10px] font-black text-emerald-200 uppercase tracking-widest border border-emerald-500/30">
+                            2–4 Pemain
+                        </div>
+                    </div>
+                    <div class="p-6 flex-1 flex flex-col">
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">Ular Tangga IT</h3>
+                        <p class="text-gray-500 text-sm leading-relaxed mb-6 flex-1">
+                            Ular Tangga edukatif bertema IT! Jawab soal jaringan & coding untuk naik tangga dan hindari ular.
+                        </p>
+                        <div class="flex items-center justify-between mt-auto">
+                            <div class="flex items-center text-xs font-bold text-gray-400">
+                                <svg class="w-4 h-4 mr-1 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                                </svg>
+                                Baru
+                            </div>
+                            <a href="{{ route('notted.snake-ladder') }}" class="px-5 py-2 bg-emerald-50 text-emerald-700 font-bold text-sm rounded-xl border border-emerald-100 hover:bg-emerald-600 hover:text-white transition-all transform hover:scale-105">
+                                Mainkan
+                            </a>
+                        </div>
                     </div>
                 </div>
 
