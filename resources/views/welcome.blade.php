@@ -1,3 +1,8 @@
+@php
+    $hasBirthdays = isset($birthdaySiswa, $birthdayGuru) && ($birthdaySiswa->count() + $birthdayGuru->count()) > 0;
+    $bdSessionKey = 'bdClosed_' . now()->format('Y-m-d');
+    $bdDuration   = $hasBirthdays ? max(25, ($birthdaySiswa->count() + $birthdayGuru->count()) * 8) : 0;
+@endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth">
 
@@ -246,6 +251,19 @@
             color: #FFFFFF !important;
         }
 
+        /* Birthday Running Text Banner */
+        @keyframes bdScroll {
+            0%   { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .bd-marquee-track {
+            display: inline-flex;
+            white-space: nowrap;
+            animation: bdScroll {{ $bdDuration }}s linear infinite;
+            will-change: transform;
+        }
+        .bd-marquee-track:hover { animation-play-state: paused; }
+
         /* Mood Welcome Popup */
         [x-cloak] { display: none !important; }
 
@@ -280,9 +298,102 @@
     </style>
 </head>
 
-<body class="antialiased overflow-x-hidden {{ $appSetting?->theme === 'light-red' ? 'theme-light-red' : '' }}" x-data="{ showVideo: false }">
+<body class="antialiased overflow-x-hidden {{ $appSetting?->theme === 'light-red' ? 'theme-light-red' : '' }}"
+    x-data="{
+        showVideo: false,
+        bdVisible: @js($hasBirthdays) ? !sessionStorage.getItem(@js($bdSessionKey)) : false,
+        bdClose() { this.bdVisible = false; sessionStorage.setItem(@js($bdSessionKey), '1'); }
+    }">
     {{-- Premium Tech Preloader --}}
     @include('components.preloader')
+
+    {{-- Birthday Running Text Banner --}}
+    @if($hasBirthdays)
+    <div x-show="bdVisible"
+        x-transition:enter="transition-all duration-500 ease-out"
+        x-transition:enter-start="opacity-0 -translate-y-full"
+        x-transition:enter-end="opacity-100 translate-y-0"
+        x-transition:leave="transition-all duration-400 ease-in"
+        x-transition:leave-start="opacity-100 translate-y-0"
+        x-transition:leave-end="opacity-0 -translate-y-full"
+        class="fixed top-0 left-0 right-0 z-[60] overflow-hidden">
+        <div class="relative flex items-center h-9 bg-gradient-to-r from-pink-600 via-rose-500 to-amber-500 shadow-lg">
+            {{-- Shimmer overlay --}}
+            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 pointer-events-none"></div>
+
+            {{-- Left birthday icon --}}
+            <div class="flex-none px-2.5 flex items-center gap-1 text-white text-sm font-black shrink-0 border-r border-white/25 h-full">
+                <span class="text-base leading-none">🎂</span>
+                <span class="hidden sm:inline text-[10px] font-black uppercase tracking-widest leading-none opacity-90">Ulang Tahun</span>
+            </div>
+
+            {{-- Scrolling track --}}
+            <div class="overflow-hidden flex-1 h-full flex items-center">
+                <div class="bd-marquee-track text-white text-[11px] sm:text-xs font-bold">
+                    {{-- First copy --}}
+                    <span class="inline-flex items-center gap-4 sm:gap-8 px-6">
+                        @foreach($birthdayGuru as $guru)
+                            <span class="inline-flex items-center gap-1.5">
+                                <span>🎉</span>
+                                <span>Selamat Ulang Tahun,</span>
+                                <span class="font-black text-yellow-200">{{ $guru->nama }}</span>
+                                <span class="bg-white/20 text-white rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wide">Guru</span>
+                                <span>Semoga sehat &amp; sukses selalu!</span>
+                                <span>🎊</span>
+                            </span>
+                            <span class="opacity-40 text-white">✦</span>
+                        @endforeach
+                        @foreach($birthdaySiswa as $siswa)
+                            <span class="inline-flex items-center gap-1.5">
+                                <span>🎈</span>
+                                <span>Selamat Ulang Tahun,</span>
+                                <span class="font-black text-yellow-200">{{ $siswa->nama_lengkap }}</span>
+                                <span class="bg-white/20 text-white rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wide">Siswa</span>
+                                <span>Semoga bahagia &amp; berprestasi!</span>
+                                <span>🎊</span>
+                            </span>
+                            <span class="opacity-40 text-white">✦</span>
+                        @endforeach
+                    </span>
+                    {{-- Duplicate for seamless loop --}}
+                    <span class="inline-flex items-center gap-4 sm:gap-8 px-6" aria-hidden="true">
+                        @foreach($birthdayGuru as $guru)
+                            <span class="inline-flex items-center gap-1.5">
+                                <span>🎉</span>
+                                <span>Selamat Ulang Tahun,</span>
+                                <span class="font-black text-yellow-200">{{ $guru->nama }}</span>
+                                <span class="bg-white/20 text-white rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wide">Guru</span>
+                                <span>Semoga sehat &amp; sukses selalu!</span>
+                                <span>🎊</span>
+                            </span>
+                            <span class="opacity-40 text-white">✦</span>
+                        @endforeach
+                        @foreach($birthdaySiswa as $siswa)
+                            <span class="inline-flex items-center gap-1.5">
+                                <span>🎈</span>
+                                <span>Selamat Ulang Tahun,</span>
+                                <span class="font-black text-yellow-200">{{ $siswa->nama_lengkap }}</span>
+                                <span class="bg-white/20 text-white rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wide">Siswa</span>
+                                <span>Semoga bahagia &amp; berprestasi!</span>
+                                <span>🎊</span>
+                            </span>
+                            <span class="opacity-40 text-white">✦</span>
+                        @endforeach
+                    </span>
+                </div>
+            </div>
+
+            {{-- Close button --}}
+            <button @click="bdClose()"
+                class="flex-none w-9 h-full flex items-center justify-center text-white/80 hover:text-white hover:bg-black/15 transition-colors shrink-0 border-l border-white/25"
+                aria-label="Tutup banner ulang tahun">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+    @endif
 
     {{-- Welcome Mood Popup --}}
     <div x-data="moodPopup()" x-init="init()" x-cloak>
@@ -360,7 +471,8 @@
     <div class="blob bottom-[10%] right-[-100px]" style="background: #3B82F6; opacity: 0.1;"></div>
 
     <!-- Navigation -->
-    <nav class="fixed top-0 left-0 right-0 z-50 px-6 py-4">
+    <nav class="fixed left-0 right-0 z-50 px-6 py-4 transition-all duration-300 ease-out"
+        :class="bdVisible ? 'top-9' : 'top-0'">
         <div class="max-w-7xl mx-auto flex items-center justify-between glass py-3 px-6 rounded-2xl">
             <div class="flex items-center gap-3">
                 <div

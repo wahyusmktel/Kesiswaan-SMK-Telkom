@@ -148,7 +148,16 @@ Route::middleware(['auth'])->prefix('notted')->name('notted.')->group(function (
 });
 
 Route::get('/', function () {
-    return view('welcome');
+    $today = now();
+    $birthdaySiswa = \App\Models\MasterSiswa::whereNotNull('tanggal_lahir')
+        ->whereMonth('tanggal_lahir', $today->month)
+        ->whereDay('tanggal_lahir', $today->day)
+        ->get(['nama_lengkap']);
+    $birthdayGuru = \App\Models\DapodikGuru::whereNotNull('tanggal_lahir')
+        ->whereMonth('tanggal_lahir', $today->month)
+        ->whereDay('tanggal_lahir', $today->day)
+        ->get(['nama']);
+    return view('welcome', compact('birthdaySiswa', 'birthdayGuru'));
 })->name('welcome');
 
 // Happiness Meter (Public API)
