@@ -779,6 +779,17 @@
                 <span class="nav-text">Pengajuan Izin Guru</span>
             </a>
         </li>
+        <li>
+            <a href="{{ route('guru.dapodik.index') }}"
+                class="nav-link {{ request()->routeIs('guru.dapodik.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                <div class="nav-icon-container">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/>
+                    </svg>
+                </div>
+                <span class="nav-text">Data Dapodik Saya</span>
+            </a>
+        </li>
     @endif
     @endrole
 @endcan
@@ -2184,7 +2195,7 @@
         {{-- Dapodik Guru --}}
         <li>
             <a href="{{ route('dapodik-guru.index') }}"
-                class="nav-link {{ request()->routeIs('dapodik-guru.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                class="nav-link {{ request()->routeIs('dapodik-guru.index') || request()->routeIs('dapodik-guru.show') || request()->routeIs('dapodik-guru.edit') ? 'nav-link-active' : 'nav-link-inactive' }}">
                 <div class="nav-icon-container">
                     <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -2193,6 +2204,24 @@
                 <span class="nav-text">Dapodik Guru</span>
             </a>
         </li>
+        {{-- Verifikasi Dapodik Guru (Operator only — not KAUR SDM) --}}
+        @role('Operator')
+        <li>
+            <a href="{{ route('operator.dapodik-guru.submissions.index') }}"
+                class="nav-link {{ request()->routeIs('operator.dapodik-guru.submissions.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                <div class="nav-icon-container">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <span class="nav-text">Verifikasi Dapodik Guru</span>
+                @php $pendingGuruCount = \App\Models\DapodikGuruSubmission::where('status', 'pending')->count(); @endphp
+                @if($pendingGuruCount > 0)
+                    <span class="nav-badge bg-amber-100 text-amber-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">{{ $pendingGuruCount }}</span>
+                @endif
+            </a>
+        </li>
+        @endrole
 
         {{-- Manajemen Pegawai --}}
         <li>

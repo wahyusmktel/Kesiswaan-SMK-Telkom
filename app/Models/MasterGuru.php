@@ -42,4 +42,14 @@ class MasterGuru extends Model
     {
         return $this->hasOne(DapodikGuru::class);
     }
+
+    public function dapodikSubmissions()
+    {
+        return $this->hasMany(DapodikGuruSubmission::class);
+    }
+
+    public function pendingDapodikSubmission()
+    {
+        return $this->hasOne(DapodikGuruSubmission::class)->where('status', 'pending')->latest();
+    }
 }

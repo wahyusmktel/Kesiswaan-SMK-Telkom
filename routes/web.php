@@ -279,11 +279,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/dapodik/sync', [DapodikManagementController::class, 'sync'])->middleware('permission:manage dapodik')->name('dapodik.sync');
         Route::get('/dapodik/template', [DapodikManagementController::class, 'downloadTemplate'])->middleware('permission:manage dapodik')->name('dapodik.template');
 
-        // Dapodik Submissions (Operator Approval)
+        // Dapodik Submissions Siswa (Operator Approval)
         Route::get('/dapodik/submissions', [\App\Http\Controllers\Operator\DapodikSubmissionController::class, 'index'])->middleware('permission:manage dapodik')->name('dapodik.submissions.index');
         Route::get('/dapodik/submissions/{submission}', [\App\Http\Controllers\Operator\DapodikSubmissionController::class, 'show'])->middleware('permission:manage dapodik')->name('dapodik.submissions.show');
         Route::patch('/dapodik/submissions/{submission}/approve', [\App\Http\Controllers\Operator\DapodikSubmissionController::class, 'approve'])->middleware('permission:manage dapodik')->name('dapodik.submissions.approve');
         Route::patch('/dapodik/submissions/{submission}/reject', [\App\Http\Controllers\Operator\DapodikSubmissionController::class, 'reject'])->middleware('permission:manage dapodik')->name('dapodik.submissions.reject');
+
+        // Dapodik Guru Submissions (Operator Approval only — NOT KAUR SDM)
+        Route::prefix('dapodik-guru/submissions')->name('dapodik-guru.submissions.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Operator\DapodikGuruSubmissionController::class, 'index'])->name('index');
+            Route::get('/{submission}', [\App\Http\Controllers\Operator\DapodikGuruSubmissionController::class, 'show'])->name('show');
+            Route::patch('/{submission}/approve', [\App\Http\Controllers\Operator\DapodikGuruSubmissionController::class, 'approve'])->name('approve');
+            Route::patch('/{submission}/reject', [\App\Http\Controllers\Operator\DapodikGuruSubmissionController::class, 'reject'])->name('reject');
+        });
     });
 
     // Grup Route untuk Kesiswaan
@@ -550,6 +558,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Grup Route untuk Guru (Submission)
     Route::middleware(['role:Guru Kelas'])->prefix('guru')->name('guru.')->group(function () {
+        // Dapodik Guru
+        Route::get('/dapodik', [\App\Http\Controllers\Guru\DapodikController::class, 'index'])->name('dapodik.index');
+        Route::get('/dapodik/edit', [\App\Http\Controllers\Guru\DapodikController::class, 'edit'])->name('dapodik.edit');
+        Route::post('/dapodik/submission', [\App\Http\Controllers\Guru\DapodikController::class, 'storeSubmission'])->name('dapodik.store-submission');
+        Route::get('/dapodik/history', [\App\Http\Controllers\Guru\DapodikController::class, 'history'])->name('dapodik.history');
+
         Route::get('/izin', [\App\Http\Controllers\Guru\IzinGuruController::class, 'index'])->name('izin.index');
         Route::get('/izin/create', [\App\Http\Controllers\Guru\IzinGuruController::class, 'create'])->name('izin.create');
         Route::post('/izin', [\App\Http\Controllers\Guru\IzinGuruController::class, 'store'])->name('izin.store');
