@@ -570,6 +570,10 @@
                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
                     DigiReligi
                 </a>
+                <a href="{{ route('gallery-photo.index') }}" class="nav-link text-slate-300 hover:text-red-400 flex items-center gap-1.5 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2 1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    Galery Photo
+                </a>
                 @auth
                     <a href="{{ url('/dashboard') }}"
                         class="btn-primary px-6 py-2.5 rounded-xl font-bold text-sm shadow-xl">Dashboard Utama</a>

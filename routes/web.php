@@ -45,6 +45,7 @@ use App\Http\Controllers\MasterData\TahunPelajaranController;
 use App\Http\Controllers\PengaduanController;
 use App\Http\Controllers\Admin\SuperAdminController;
 use App\Http\Controllers\Admin\PermissionManagementController;
+use App\Http\Controllers\Admin\SystemUpdateController;
 use App\Http\Controllers\SDM\NdeReferensiController;
 use App\Http\Controllers\Shared\NotaDinasController;
 use App\Http\Controllers\MasterData\DapodikSiswaController;
@@ -108,6 +109,12 @@ Route::get('/tv/jadwal', [\App\Http\Controllers\Public\SmartTvJadwalController::
 
 // DigiReligi — Platform Al-Qur'an Digital & Jadwal Sholat (Publik)
 Route::get('/digireligi', [\App\Http\Controllers\Public\DigiReligiController::class, 'index'])->name('digireligi');
+
+Route::get('/galeri-photo', [\App\Http\Controllers\Public\GalleryPhotoController::class, 'index'])->name('gallery-photo.index');
+Route::middleware(['auth', 'role:Guru Kelas|Operator|Super Admin|Siswa|Guru Piket'])->group(function () {
+    Route::post('/galeri-photo', [\App\Http\Controllers\Public\GalleryPhotoController::class, 'store'])->name('gallery-photo.store');
+    Route::delete('/galeri-photo/{photo}', [\App\Http\Controllers\Public\GalleryPhotoController::class, 'destroy'])->name('gallery-photo.destroy');
+});
 
 // NOTTED Social Media Routes
 Route::get('/notted', [App\Http\Controllers\NottedController::class, 'index'])->name('notted.landing');
