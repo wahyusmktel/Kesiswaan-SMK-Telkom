@@ -46,6 +46,26 @@
         'cover' => $album->coverPhoto?->image_url,
         'latest' => $photoItems->where('album_id', $album->id)->take(4)->pluck('url')->values(),
     ])->values();
+
+    $authUser = auth()->user();
+    $profilePayload = null;
+    if ($authUser) {
+        $authUser->loadMissing(['masterSiswa', 'masterGuru']);
+        $isSiswa = $authUser->hasRole('Siswa') || $authUser->hasRole('siswa');
+        $isGuru = $authUser->hasRole('Guru Kelas') || $authUser->hasRole('Guru Piket');
+        $profilePayload = [
+            'name' => $authUser->masterSiswa?->nama_lengkap ?? $authUser->masterGuru?->nama_lengkap ?? $authUser->name,
+            'role' => session('active_role') ?? $authUser->getRoleNames()->first(),
+            'avatar' => $authUser->avatar ? Storage::url($authUser->avatar) : 'https://ui-avatars.com/api/?name=' . urlencode($authUser->name) . '&background=0f172a&color=ffffff',
+            'identifier_label' => $isSiswa ? 'NIS' : ($isGuru ? 'NIP' : 'ID'),
+            'identifier' => $isSiswa
+                ? ($authUser->masterSiswa?->nis ?? '-')
+                : ($authUser->masterGuru?->nuptk ?? $authUser->masterGuru?->nik ?? $authUser->masterGuru?->kode_guru ?? '-'),
+            'photos_count' => $photos->where('user_id', $authUser->id)->count(),
+            'albums_count' => $albums->where('user_id', $authUser->id)->count(),
+            'loved_count' => \App\Models\GalleryPhotoLike::where('user_id', $authUser->id)->count(),
+        ];
+    }
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth">
@@ -94,9 +114,9 @@
         }
     </style>
 </head>
-<body x-data="galleryPage(@js($albumItems), @js($photoItems), @js($canInteract))" x-init="init()" class="min-h-screen">
+<body x-data="galleryPage(@js($albumItems), @js($photoItems), @js($canInteract), @js($profilePayload))" x-init="init()" class="min-h-screen">
     <header class="sticky top-0 z-40 border-b border-slate-200/80 bg-white/85 backdrop-blur-xl">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-16 py-3 grid gap-3 lg:grid-cols-[280px_1fr_auto] lg:items-center">
             <a href="{{ route('welcome') }}" class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-xl bg-white border border-slate-200 shadow-sm p-1 overflow-hidden">
                     @if($appSetting?->logo)
@@ -111,7 +131,38 @@
                 </div>
             </a>
 
-            <div class="flex items-center gap-2">
+            <div class="relative order-3 lg:order-none">
+                <div class="relative">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <input x-model.debounce.120ms="searchQuery" @focus="searchOpen = true" @keydown.escape="searchOpen = false" type="search" class="w-full rounded-2xl border-slate-200 bg-slate-50 pl-10 pr-4 py-2.5 text-sm font-semibold text-slate-700 placeholder:text-slate-400 focus:border-red-500 focus:ring-red-500" placeholder="Cari judul, album, keterangan, uploader...">
+                </div>
+                <div x-show="searchOpen && searchQuery.trim().length" x-cloak @click.outside="searchOpen = false" class="absolute left-0 right-0 top-full mt-2 z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+                    <div class="max-h-96 overflow-y-auto p-2">
+                        <template x-for="photo in searchResults" :key="photo.id">
+                            <button @click="openPhoto(photo); searchOpen = false" type="button" class="w-full grid grid-cols-[56px_1fr] gap-3 rounded-xl p-2 text-left hover:bg-slate-50">
+                                <img :src="photo.url" :alt="photo.title" class="w-14 h-14 rounded-xl object-cover bg-slate-100">
+                                <div class="min-w-0 self-center">
+                                    <p class="text-sm font-black text-slate-900 truncate" x-text="photo.title"></p>
+                                    <p class="text-xs text-slate-500 truncate" x-text="photo.album + ' - ' + photo.uploader"></p>
+                                </div>
+                            </button>
+                        </template>
+                        <div x-show="!searchResults.length" class="p-5 text-center text-sm text-slate-500">Tidak ada foto yang cocok.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2">
+                <a href="{{ route('welcome') }}" class="hidden sm:inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-slate-50" title="Halaman utama aplikasi">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M3 12l9-9 9 9M5 10v10h14V10"/></svg>
+                    Home
+                </a>
+                @auth
+                    <a href="{{ route('dashboard') }}" class="hidden sm:inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-slate-50" title="Dashboard utama">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 6a2 2 0 012-2h4v6H4V6zm10-2h4a2 2 0 012 2v4h-6V4zM4 14h6v6H6a2 2 0 01-2-2v-4zm10 0h6v4a2 2 0 01-2 2h-4v-6z"/></svg>
+                        Dashboard
+                    </a>
+                @endauth
                 @if($canUpload)
                     <button @click="uploadOpen = true" class="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white hover:bg-red-600 transition-colors">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 4v16m8-8H4"/></svg>
@@ -120,6 +171,37 @@
                 @elseif(!auth()->check())
                     <a href="{{ route('login') }}" class="rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white hover:bg-red-600 transition-colors">Masuk</a>
                 @endif
+                @auth
+                    <div class="relative">
+                        <button @click="profileOpen = !profileOpen" type="button" class="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-md ring-1 ring-slate-200 bg-slate-100" title="Profil">
+                            <img :src="profile.avatar" alt="Profil" class="w-full h-full object-cover">
+                        </button>
+                        <div x-show="profileOpen" x-cloak @click.outside="profileOpen = false" class="absolute right-0 top-full mt-2 w-80 rounded-3xl border border-slate-200 bg-white p-4 shadow-2xl">
+                            <div class="flex items-center gap-3">
+                                <img :src="profile.avatar" alt="Profil" class="w-14 h-14 rounded-2xl object-cover bg-slate-100">
+                                <div class="min-w-0">
+                                    <p class="font-black text-slate-900 truncate" x-text="profile.name"></p>
+                                    <p class="text-xs font-bold text-slate-500 truncate" x-text="profile.role"></p>
+                                    <p class="text-xs font-black text-red-600 mt-1"><span x-text="profile.identifier_label"></span>: <span x-text="profile.identifier"></span></p>
+                                </div>
+                            </div>
+                            <div class="mt-4 grid grid-cols-3 gap-2">
+                                <div class="rounded-2xl bg-slate-50 p-3 text-center">
+                                    <p class="text-xl font-black" x-text="profile.photos_count"></p>
+                                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Foto</p>
+                                </div>
+                                <div class="rounded-2xl bg-slate-50 p-3 text-center">
+                                    <p class="text-xl font-black" x-text="profile.albums_count"></p>
+                                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Album</p>
+                                </div>
+                                <div class="rounded-2xl bg-slate-50 p-3 text-center">
+                                    <p class="text-xl font-black" x-text="profile.loved_count"></p>
+                                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Love</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endauth
             </div>
         </div>
     </header>
@@ -288,9 +370,13 @@
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.3" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
         <div class="h-full grid lg:grid-cols-[1fr_420px] gap-6">
-            <div class="relative min-h-0 flex items-center justify-center overflow-hidden">
+            <div class="relative min-h-0 flex items-center justify-center overflow-hidden" @pointermove.window="dragMove($event)" @pointerup.window="dragEnd()" @pointercancel.window="dragEnd()">
                 <template x-if="selectedPhoto">
-                    <img :src="selectedPhoto.url" :alt="selectedPhoto.title" class="max-h-full max-w-full rounded-2xl object-contain shadow-2xl transition-transform duration-200 ease-out" :style="'transform: scale(' + zoom + ')'">
+                    <img :src="selectedPhoto.url" :alt="selectedPhoto.title"
+                        @pointerdown.prevent="dragStart($event)"
+                        class="max-h-full max-w-full rounded-2xl object-contain shadow-2xl transition-transform duration-100 ease-out select-none"
+                        :class="zoom > 1 ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-default'"
+                        :style="'transform: translate(' + panX + 'px, ' + panY + 'px) scale(' + zoom + ')'">
                 </template>
                 <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-2xl bg-white/10 p-2 backdrop-blur-xl border border-white/10">
                     <button @click="zoomOut()" type="button" class="w-10 h-10 rounded-xl bg-white/10 text-white hover:bg-white/20 flex items-center justify-center" title="Zoom out">
@@ -305,11 +391,15 @@
                 </div>
             </div>
             <div class="rounded-3xl bg-white text-slate-950 p-5 self-center max-h-full overflow-y-auto">
-                <p class="text-xs font-black uppercase tracking-widest text-red-600" x-text="selectedPhoto?.album"></p>
+                <button @click="goToAlbum(selectedPhoto?.album_id)" type="button" class="inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-1.5 text-xs font-black uppercase tracking-widest text-red-600 hover:bg-red-100">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M3 7a2 2 0 012-2h5l2 2h7a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
+                    <span x-text="selectedPhoto?.album"></span>
+                </button>
                 <h2 class="font-outfit text-2xl font-black mt-2" x-text="selectedPhoto?.title"></h2>
                 <p class="text-sm text-slate-600 mt-2" x-text="selectedPhoto?.caption || 'Tidak ada keterangan foto.'"></p>
                 <div class="mt-5 space-y-2 text-sm">
                     <p><span class="text-slate-400">Uploader:</span> <b x-text="selectedPhoto?.uploader"></b></p>
+                    <p><span class="text-slate-400">Album:</span> <button @click="goToAlbum(selectedPhoto?.album_id)" type="button" class="font-black text-red-600 hover:underline" x-text="selectedPhoto?.album"></button></p>
                     <p><span class="text-slate-400">Tanggal:</span> <b x-text="selectedPhoto?.date"></b></p>
                     <p><span class="text-slate-400">Ukuran:</span> <b x-text="selectedPhoto?.size"></b></p>
                 </div>
@@ -472,11 +562,15 @@
     @endif
 
     <script>
-        function galleryPage(albums, photos, canInteract) {
+        function galleryPage(albums, photos, canInteract, profile) {
             return {
                 albums,
                 photos,
                 canInteract,
+                profile,
+                profileOpen: false,
+                searchQuery: '',
+                searchOpen: false,
                 selectedAlbum: null,
                 selectedPhoto: null,
                 featuredPhoto: null,
@@ -486,9 +580,26 @@
                 commentBusy: false,
                 replyTarget: null,
                 zoom: 1,
+                panX: 0,
+                panY: 0,
+                isDragging: false,
+                dragStartX: 0,
+                dragStartY: 0,
+                dragOriginX: 0,
+                dragOriginY: 0,
                 init() {
                     this.featuredPhoto = this.photos[0] || null;
                     this.selectedPhoto = this.photos[0] || null;
+                },
+                get searchResults() {
+                    const q = this.searchQuery.trim().toLowerCase();
+                    if (!q) return [];
+                    return this.photos.filter(photo => [
+                        photo.title,
+                        photo.caption,
+                        photo.album,
+                        photo.uploader,
+                    ].filter(Boolean).some(value => String(value).toLowerCase().includes(q))).slice(0, 8);
                 },
                 get filteredPhotos() {
                     if (this.selectedAlbum === null) return this.photos;
@@ -581,9 +692,39 @@
                 },
                 zoomOut() {
                     this.zoom = Math.max(0.5, Number((this.zoom - 0.25).toFixed(2)));
+                    if (this.zoom <= 1) {
+                        this.panX = 0;
+                        this.panY = 0;
+                    }
                 },
                 resetZoom() {
                     this.zoom = 1;
+                    this.panX = 0;
+                    this.panY = 0;
+                    this.isDragging = false;
+                },
+                dragStart(event) {
+                    if (this.zoom <= 1) return;
+                    this.isDragging = true;
+                    this.dragStartX = event.clientX;
+                    this.dragStartY = event.clientY;
+                    this.dragOriginX = this.panX;
+                    this.dragOriginY = this.panY;
+                },
+                dragMove(event) {
+                    if (!this.isDragging) return;
+                    this.panX = this.dragOriginX + event.clientX - this.dragStartX;
+                    this.panY = this.dragOriginY + event.clientY - this.dragStartY;
+                },
+                dragEnd() {
+                    this.isDragging = false;
+                },
+                goToAlbum(albumId) {
+                    if (!albumId) return;
+                    this.selectAlbum(albumId);
+                    this.lightboxOpen = false;
+                    this.searchOpen = false;
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 },
             }
         }
