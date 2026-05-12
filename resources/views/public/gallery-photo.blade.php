@@ -9,8 +9,21 @@
         'uploader' => $photo->uploader?->name ?? 'Kontributor',
         'date' => optional($photo->taken_at ?? $photo->created_at)->format('d M Y'),
         'size' => $photo->size_for_humans,
+        'likes_count' => $photo->likes_count,
+        'comments_count' => $photo->comments_count,
+        'liked_by_me' => $photo->likes->isNotEmpty(),
+        'love_url' => route('gallery-photo.love', $photo),
+        'comment_url' => route('gallery-photo.comments.store', $photo),
         'delete_url' => route('gallery-photo.destroy', $photo),
         'can_delete' => auth()->check() && (auth()->id() === $photo->user_id || auth()->user()->hasRole('Super Admin')),
+        'comments' => $photo->comments->sortByDesc('created_at')->map(fn ($comment) => [
+            'id' => $comment->id,
+            'author' => $comment->author?->name ?? 'Pengguna',
+            'body' => $comment->body,
+            'date' => $comment->created_at->diffForHumans(),
+            'delete_url' => route('gallery-photo.comments.destroy', $comment),
+            'can_delete' => auth()->check() && (auth()->id() === $comment->user_id || auth()->user()->hasRole('Super Admin')),
+        ])->values(),
     ])->values();
 
     $albumItems = $albums->map(fn ($album) => [
@@ -46,7 +59,7 @@
         .masonry-item { break-inside: avoid; margin-bottom: 1rem; }
     </style>
 </head>
-<body x-data="galleryPage(@js($albumItems), @js($photoItems))" x-init="init()" class="min-h-screen">
+<body x-data="galleryPage(@js($albumItems), @js($photoItems), @js($canInteract))" x-init="init()" class="min-h-screen">
     <header class="sticky top-0 z-40 border-b border-slate-200/80 bg-white/85 backdrop-blur-xl">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <a href="{{ route('welcome') }}" class="flex items-center gap-3">
@@ -79,7 +92,7 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         @if ($errors->any())
             <div class="mb-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-                <p class="font-bold mb-1">Upload belum bisa diproses.</p>
+                <p class="font-bold mb-1">Permintaan belum bisa diproses.</p>
                 @foreach ($errors->all() as $error)
                     <p>{{ $error }}</p>
                 @endforeach
@@ -150,7 +163,19 @@
                                     <div class="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                     <div class="absolute left-3 right-3 bottom-3 opacity-0 group-hover:opacity-100 transition-opacity text-white">
                                         <p class="text-sm font-black truncate" x-text="photo.title"></p>
-                                        <p class="text-xs text-white/80 truncate" x-text="photo.album"></p>
+                                        <div class="flex items-center justify-between gap-3 text-xs text-white/80">
+                                            <span class="truncate" x-text="photo.album"></span>
+                                            <span class="shrink-0 inline-flex items-center gap-2">
+                                                <span class="inline-flex items-center gap-1">
+                                                    <svg class="w-3.5 h-3.5" :class="photo.liked_by_me ? 'fill-red-500 text-red-500' : 'text-white'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                                                    <span x-text="photo.likes_count"></span>
+                                                </span>
+                                                <span class="inline-flex items-center gap-1">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+                                                    <span x-text="photo.comments_count"></span>
+                                                </span>
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             </button>
@@ -207,6 +232,18 @@
                             <div class="rounded-xl bg-white/10 p-3"><span class="block text-slate-400">Uploader</span><b x-text="selectedPhoto?.uploader"></b></div>
                             <div class="rounded-xl bg-white/10 p-3"><span class="block text-slate-400">Tanggal</span><b x-text="selectedPhoto?.date"></b></div>
                         </div>
+                        <div class="mt-3 flex items-center gap-2">
+                            <form x-show="canInteract" :action="selectedPhoto?.love_url" method="POST" class="flex-1">
+                                @csrf
+                                <button class="w-full rounded-xl px-3 py-2 text-xs font-black transition-colors" :class="selectedPhoto?.liked_by_me ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-white/10 text-white hover:bg-white/20'">
+                                    <span x-text="selectedPhoto?.liked_by_me ? 'Loved' : 'Love'"></span>
+                                    <span x-text="'(' + (selectedPhoto?.likes_count || 0) + ')'"></span>
+                                </button>
+                            </form>
+                            <button @click="lightboxOpen = true" class="flex-1 rounded-xl bg-white/10 px-3 py-2 text-xs font-black text-white hover:bg-white/20">
+                                Komentar <span x-text="'(' + (selectedPhoto?.comments_count || 0) + ')'"></span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </aside>
@@ -217,13 +254,13 @@
         <button @click="lightboxOpen = false" class="absolute top-4 right-4 z-10 w-11 h-11 rounded-full bg-white/10 text-white hover:bg-white/20 flex items-center justify-center">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.3" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
-        <div class="h-full grid lg:grid-cols-[1fr_340px] gap-6">
+        <div class="h-full grid lg:grid-cols-[1fr_420px] gap-6">
             <div class="min-h-0 flex items-center justify-center">
                 <template x-if="selectedPhoto">
                     <img :src="selectedPhoto.url" :alt="selectedPhoto.title" class="max-h-full max-w-full rounded-2xl object-contain shadow-2xl">
                 </template>
             </div>
-            <div class="rounded-3xl bg-white text-slate-950 p-5 self-center">
+            <div class="rounded-3xl bg-white text-slate-950 p-5 self-center max-h-full overflow-y-auto">
                 <p class="text-xs font-black uppercase tracking-widest text-red-600" x-text="selectedPhoto?.album"></p>
                 <h2 class="font-outfit text-2xl font-black mt-2" x-text="selectedPhoto?.title"></h2>
                 <p class="text-sm text-slate-600 mt-2" x-text="selectedPhoto?.caption || 'Tidak ada keterangan foto.'"></p>
@@ -231,6 +268,57 @@
                     <p><span class="text-slate-400">Uploader:</span> <b x-text="selectedPhoto?.uploader"></b></p>
                     <p><span class="text-slate-400">Tanggal:</span> <b x-text="selectedPhoto?.date"></b></p>
                     <p><span class="text-slate-400">Ukuran:</span> <b x-text="selectedPhoto?.size"></b></p>
+                </div>
+                <div class="mt-5 flex items-center gap-2">
+                    <form x-show="canInteract" :action="selectedPhoto?.love_url" method="POST" class="flex-1">
+                        @csrf
+                        <button class="w-full rounded-xl px-4 py-2.5 text-sm font-black transition-colors" :class="selectedPhoto?.liked_by_me ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-slate-100 text-slate-700 hover:bg-red-50 hover:text-red-700'">
+                            <span x-text="selectedPhoto?.liked_by_me ? 'Loved' : 'Love'"></span>
+                            <span x-text="'(' + (selectedPhoto?.likes_count || 0) + ')'"></span>
+                        </button>
+                    </form>
+                    <div class="flex-1 rounded-xl bg-slate-100 px-4 py-2.5 text-center text-sm font-black text-slate-700">
+                        Komentar <span x-text="'(' + (selectedPhoto?.comments_count || 0) + ')'"></span>
+                    </div>
+                </div>
+                <div class="mt-6 border-t border-slate-200 pt-5">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-outfit text-lg font-black">Komentar</h3>
+                        <span class="text-xs font-bold text-slate-400" x-text="(selectedPhoto?.comments_count || 0) + ' diskusi'"></span>
+                    </div>
+                    <template x-if="canInteract">
+                        <form :action="selectedPhoto?.comment_url" method="POST" class="mb-4">
+                            @csrf
+                            <textarea name="body" required rows="3" maxlength="1000" class="w-full rounded-2xl border-slate-300 text-sm focus:border-red-500 focus:ring-red-500" placeholder="Tulis komentar untuk foto ini..."></textarea>
+                            <div class="mt-2 flex justify-end">
+                                <button class="rounded-xl bg-slate-950 px-4 py-2 text-xs font-black text-white hover:bg-red-600">Kirim Komentar</button>
+                            </div>
+                        </form>
+                    </template>
+                    <template x-if="!canInteract">
+                        <p class="mb-4 rounded-2xl bg-slate-50 p-3 text-sm text-slate-500">Masuk dengan role yang diizinkan untuk memberi love dan komentar.</p>
+                    </template>
+                    <div class="space-y-3">
+                        <template x-for="comment in (selectedPhoto?.comments || [])" :key="comment.id">
+                            <div class="rounded-2xl bg-slate-50 p-3 border border-slate-100">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-black text-slate-900 truncate" x-text="comment.author"></p>
+                                        <p class="text-[11px] font-bold text-slate-400" x-text="comment.date"></p>
+                                    </div>
+                                    <template x-if="comment.can_delete">
+                                        <form :action="comment.delete_url" method="POST" onsubmit="return confirm('Hapus komentar ini?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button class="text-[11px] font-black text-red-600 hover:text-red-800">Hapus</button>
+                                        </form>
+                                    </template>
+                                </div>
+                                <p class="mt-2 whitespace-pre-line text-sm text-slate-700" x-text="comment.body"></p>
+                            </div>
+                        </template>
+                        <p x-show="!(selectedPhoto?.comments || []).length" class="rounded-2xl border border-dashed border-slate-200 p-5 text-center text-sm text-slate-500">Belum ada komentar.</p>
+                    </div>
                 </div>
                 <template x-if="selectedPhoto?.can_delete">
                     <form :action="selectedPhoto.delete_url" method="POST" class="mt-5" onsubmit="return confirm('Hapus foto ini dari galeri?')">
@@ -308,10 +396,11 @@
     @endif
 
     <script>
-        function galleryPage(albums, photos) {
+        function galleryPage(albums, photos, canInteract) {
             return {
                 albums,
                 photos,
+                canInteract,
                 selectedAlbum: null,
                 selectedPhoto: null,
                 featuredPhoto: null,

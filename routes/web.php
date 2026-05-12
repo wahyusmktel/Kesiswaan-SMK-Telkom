@@ -113,6 +113,9 @@ Route::get('/digireligi', [\App\Http\Controllers\Public\DigiReligiController::cl
 Route::get('/galeri-photo', [\App\Http\Controllers\Public\GalleryPhotoController::class, 'index'])->name('gallery-photo.index');
 Route::middleware(['auth', 'role:Guru Kelas|Operator|Super Admin|Siswa|Guru Piket'])->group(function () {
     Route::post('/galeri-photo', [\App\Http\Controllers\Public\GalleryPhotoController::class, 'store'])->name('gallery-photo.store');
+    Route::post('/galeri-photo/{photo}/love', [\App\Http\Controllers\Public\GalleryPhotoController::class, 'toggleLove'])->name('gallery-photo.love');
+    Route::post('/galeri-photo/{photo}/comments', [\App\Http\Controllers\Public\GalleryPhotoController::class, 'storeComment'])->name('gallery-photo.comments.store');
+    Route::delete('/galeri-photo/comments/{comment}', [\App\Http\Controllers\Public\GalleryPhotoController::class, 'destroyComment'])->name('gallery-photo.comments.destroy');
     Route::delete('/galeri-photo/{photo}', [\App\Http\Controllers\Public\GalleryPhotoController::class, 'destroy'])->name('gallery-photo.destroy');
 });
 

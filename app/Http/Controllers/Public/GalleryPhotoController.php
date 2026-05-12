@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Models\GalleryAlbum;
+use App\Models\GalleryPhotoComment;
 use App\Models\GalleryPhoto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,13 +21,22 @@ class GalleryPhotoController extends Controller
             ->latest()
             ->get();
 
-        $photos = GalleryPhoto::with(['album', 'uploader'])
+        $photos = GalleryPhoto::with([
+                'album',
+                'uploader',
+                'comments.author',
+                'likes' => fn ($query) => Auth::check()
+                    ? $query->where('user_id', Auth::id())
+                    : $query->whereRaw('1 = 0'),
+            ])
+            ->withCount(['likes', 'comments'])
             ->latest()
             ->get();
 
         $canUpload = Auth::check() && Auth::user()->hasAnyRole(self::UPLOAD_ROLES);
+        $canInteract = $canUpload;
 
-        return view('public.gallery-photo', compact('albums', 'photos', 'canUpload'));
+        return view('public.gallery-photo', compact('albums', 'photos', 'canUpload', 'canInteract'));
     }
 
     public function store(Request $request)
@@ -96,6 +106,55 @@ class GalleryPhotoController extends Controller
         $photo->delete();
 
         toast('Foto berhasil dihapus.', 'success');
+
+        return redirect()->route('gallery-photo.index');
+    }
+
+    public function toggleLove(GalleryPhoto $photo)
+    {
+        abort_unless(Auth::check() && Auth::user()->hasAnyRole(self::UPLOAD_ROLES), 403);
+
+        $like = $photo->likes()->where('user_id', Auth::id())->first();
+
+        if ($like) {
+            $like->delete();
+            toast('Love pada foto dibatalkan.', 'info');
+        } else {
+            $photo->likes()->create(['user_id' => Auth::id()]);
+            toast('Foto berhasil disukai.', 'success');
+        }
+
+        return redirect()->route('gallery-photo.index');
+    }
+
+    public function storeComment(Request $request, GalleryPhoto $photo)
+    {
+        abort_unless(Auth::check() && Auth::user()->hasAnyRole(self::UPLOAD_ROLES), 403);
+
+        $validated = $request->validate([
+            'body' => ['required', 'string', 'max:1000'],
+        ]);
+
+        $photo->comments()->create([
+            'user_id' => Auth::id(),
+            'body' => $validated['body'],
+        ]);
+
+        toast('Komentar berhasil ditambahkan.', 'success');
+
+        return redirect()->route('gallery-photo.index');
+    }
+
+    public function destroyComment(GalleryPhotoComment $comment)
+    {
+        abort_unless(Auth::check(), 403);
+
+        $user = Auth::user();
+        abort_unless($user->hasRole('Super Admin') || $comment->user_id === $user->id, 403);
+
+        $comment->delete();
+
+        toast('Komentar berhasil dihapus.', 'success');
 
         return redirect()->route('gallery-photo.index');
     }
