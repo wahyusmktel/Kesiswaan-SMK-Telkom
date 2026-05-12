@@ -112,13 +112,20 @@
             0% { opacity: 1; transform: translate(-50%, -50%) scale(0.25) rotate(0deg); }
             100% { opacity: 0; transform: translate(-50%, -50%) scale(1.6) rotate(35deg); }
         }
+        @media (max-width: 767px) {
+            body { background: #f1f5f9; }
+            .mobile-scrollbar-none::-webkit-scrollbar { display: none; }
+            .mobile-scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+            .masonry { column-count: 2; column-gap: 0.625rem; }
+            .masonry-item { margin-bottom: 0.625rem; border-radius: 1rem; }
+        }
     </style>
 </head>
 <body x-data="galleryPage(@js($albumItems), @js($photoItems), @js($canInteract), @js($profilePayload))" x-init="init()" class="min-h-screen">
-    <header class="sticky top-0 z-40 border-b border-slate-200/80 bg-white/85 backdrop-blur-xl">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-16 py-3 grid gap-3 lg:grid-cols-[280px_1fr_auto] lg:items-center">
+    <header class="sticky top-0 z-40 border-b border-slate-200/80 bg-white/95 backdrop-blur-xl">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 min-h-16 py-3 grid gap-3 lg:grid-cols-[280px_1fr_auto] lg:items-center">
             <a href="{{ route('welcome') }}" class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-white border border-slate-200 shadow-sm p-1 overflow-hidden">
+                <div class="w-10 h-10 sm:w-9 sm:h-9 rounded-2xl sm:rounded-xl bg-white border border-slate-200 shadow-sm p-1 overflow-hidden">
                     @if($appSetting?->logo)
                         <img src="{{ Storage::url($appSetting->logo) }}" alt="Logo" class="w-full h-full object-contain">
                     @else
@@ -127,14 +134,14 @@
                 </div>
                 <div>
                     <p class="font-outfit text-sm font-black leading-none">Galeri Photo</p>
-                    <p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">SMK Telkom Lampung</p>
+                    <p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold hidden min-[380px]:block">SMK Telkom Lampung</p>
                 </div>
             </a>
 
             <div class="relative order-3 lg:order-none">
                 <div class="relative">
                     <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                    <input x-model.debounce.120ms="searchQuery" @focus="searchOpen = true" @keydown.escape="searchOpen = false" type="search" class="w-full rounded-2xl border-slate-200 bg-slate-50 pl-10 pr-4 py-2.5 text-sm font-semibold text-slate-700 placeholder:text-slate-400 focus:border-red-500 focus:ring-red-500" placeholder="Cari judul, album, keterangan, uploader...">
+                    <input x-model.debounce.120ms="searchQuery" @focus="searchOpen = true" @keydown.escape="searchOpen = false" type="search" class="w-full rounded-2xl border-slate-200 bg-slate-50 pl-10 pr-4 py-3 sm:py-2.5 text-[16px] sm:text-sm font-semibold text-slate-700 placeholder:text-slate-400 focus:border-red-500 focus:ring-red-500" placeholder="Cari foto...">
                 </div>
                 <div x-show="searchOpen && searchQuery.trim().length" x-cloak @click.outside="searchOpen = false" class="absolute left-0 right-0 top-full mt-2 z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
                     <div class="max-h-96 overflow-y-auto p-2">
@@ -152,7 +159,7 @@
                 </div>
             </div>
 
-            <div class="flex items-center justify-end gap-2">
+            <div class="absolute right-3 top-3 lg:static flex items-center justify-end gap-1.5 sm:gap-2">
                 <a href="{{ route('welcome') }}" class="hidden sm:inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-slate-50" title="Halaman utama aplikasi">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M3 12l9-9 9 9M5 10v10h14V10"/></svg>
                     Home
@@ -164,9 +171,9 @@
                     </a>
                 @endauth
                 @if($canUpload)
-                    <button @click="uploadOpen = true" class="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white hover:bg-red-600 transition-colors">
+                    <button @click="uploadOpen = true" class="inline-flex items-center gap-2 rounded-2xl sm:rounded-xl bg-slate-950 p-2.5 sm:px-4 sm:py-2 text-sm font-bold text-white hover:bg-red-600 transition-colors" title="Tambah Foto">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 4v16m8-8H4"/></svg>
-                        Tambah Foto
+                        <span class="hidden sm:inline">Tambah Foto</span>
                     </button>
                 @elseif(!auth()->check())
                     <a href="{{ route('login') }}" class="rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white hover:bg-red-600 transition-colors">Masuk</a>
@@ -176,7 +183,7 @@
                         <button @click="profileOpen = !profileOpen" type="button" class="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-md ring-1 ring-slate-200 bg-slate-100" title="Profil">
                             <img :src="profile.avatar" alt="Profil" class="w-full h-full object-cover">
                         </button>
-                        <div x-show="profileOpen" x-cloak @click.outside="profileOpen = false" class="absolute right-0 top-full mt-2 w-80 rounded-3xl border border-slate-200 bg-white p-4 shadow-2xl">
+                        <div x-show="profileOpen" x-cloak @click.outside="profileOpen = false" class="fixed left-3 right-3 top-20 sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-80 rounded-3xl border border-slate-200 bg-white p-4 shadow-2xl">
                             <div class="flex items-center gap-3">
                                 <img :src="profile.avatar" alt="Profil" class="w-14 h-14 rounded-2xl object-cover bg-slate-100">
                                 <div class="min-w-0">
@@ -206,7 +213,7 @@
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
         @if ($errors->any())
             <div class="mb-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
                 <p class="font-bold mb-1">Permintaan belum bisa diproses.</p>
@@ -216,37 +223,37 @@
             </div>
         @endif
 
-        <section class="grid lg:grid-cols-[1fr_360px] gap-6 items-start">
-            <div class="space-y-6">
-                <div class="rounded-[28px] overflow-hidden bg-slate-950 text-white border border-slate-900">
-                    <div class="grid md:grid-cols-[1.1fr_0.9fr] min-h-[300px]">
-                        <div class="p-7 sm:p-10 flex flex-col justify-between gap-8">
+        <section class="grid lg:grid-cols-[1fr_360px] gap-4 sm:gap-6 items-start">
+            <div class="space-y-4 sm:space-y-6">
+                <div class="rounded-3xl sm:rounded-[28px] overflow-hidden bg-slate-950 text-white border border-slate-900 shadow-sm">
+                    <div class="grid md:grid-cols-[1.1fr_0.9fr] min-h-[220px] sm:min-h-[300px]">
+                        <div class="p-5 sm:p-10 flex flex-col justify-between gap-5 sm:gap-8">
                             <div>
-                                <p class="text-xs font-black uppercase tracking-[0.28em] text-red-300">Koleksi Dokumentasi</p>
-                                <h1 class="font-outfit text-4xl sm:text-5xl font-black tracking-tight mt-3">Momen sekolah dalam satu ruang visual.</h1>
-                                <p class="text-slate-300 mt-4 max-w-2xl">Jelajahi album kegiatan, dokumentasi kelas, agenda piket, prestasi, dan keseharian sekolah dengan tampilan grid modern.</p>
+                                <p class="text-[10px] sm:text-xs font-black uppercase tracking-[0.22em] sm:tracking-[0.28em] text-red-300">Koleksi Dokumentasi</p>
+                                <h1 class="font-outfit text-2xl min-[380px]:text-3xl sm:text-5xl font-black tracking-tight mt-2 sm:mt-3 leading-tight">Momen sekolah dalam satu ruang visual.</h1>
+                                <p class="text-slate-300 mt-3 sm:mt-4 max-w-2xl text-sm sm:text-base leading-relaxed">Jelajahi album kegiatan, dokumentasi kelas, agenda piket, prestasi, dan keseharian sekolah.</p>
                             </div>
-                            <div class="grid grid-cols-3 gap-3 max-w-lg">
-                                <div class="rounded-2xl bg-white/10 p-4 border border-white/10">
-                                    <p class="text-2xl font-black">{{ $photos->count() }}</p>
+                            <div class="grid grid-cols-3 gap-2 sm:gap-3 max-w-lg">
+                                <div class="rounded-2xl bg-white/10 p-3 sm:p-4 border border-white/10">
+                                    <p class="text-xl sm:text-2xl font-black">{{ $photos->count() }}</p>
                                     <p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Foto</p>
                                 </div>
-                                <div class="rounded-2xl bg-white/10 p-4 border border-white/10">
-                                    <p class="text-2xl font-black">{{ $albums->count() }}</p>
+                                <div class="rounded-2xl bg-white/10 p-3 sm:p-4 border border-white/10">
+                                    <p class="text-xl sm:text-2xl font-black">{{ $albums->count() }}</p>
                                     <p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Album</p>
                                 </div>
-                                <div class="rounded-2xl bg-white/10 p-4 border border-white/10">
-                                    <p class="text-2xl font-black">{{ $photos->unique('user_id')->count() }}</p>
+                                <div class="rounded-2xl bg-white/10 p-3 sm:p-4 border border-white/10">
+                                    <p class="text-xl sm:text-2xl font-black">{{ $photos->unique('user_id')->count() }}</p>
                                     <p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Kontributor</p>
                                 </div>
                             </div>
                         </div>
-                        <div class="relative bg-slate-900 min-h-[260px]">
+                        <div class="relative bg-slate-900 min-h-[190px] sm:min-h-[260px]">
                             <template x-if="featuredPhoto">
                                 <img :src="featuredPhoto.url" :alt="featuredPhoto.title" class="absolute inset-0 w-full h-full object-cover">
                             </template>
                             <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent"></div>
-                            <div class="absolute bottom-5 left-5 right-5" x-show="featuredPhoto">
+                            <div class="absolute bottom-4 sm:bottom-5 left-4 sm:left-5 right-4 sm:right-5" x-show="featuredPhoto">
                                 <p class="text-sm font-black" x-text="featuredPhoto?.title"></p>
                                 <p class="text-xs text-slate-300" x-text="featuredPhoto?.album"></p>
                             </div>
@@ -254,10 +261,10 @@
                     </div>
                 </div>
 
-                <div class="flex gap-2 overflow-x-auto pb-1">
-                    <button @click="selectAlbum(null)" :class="selectedAlbum === null ? 'bg-slate-950 text-white' : 'bg-white text-slate-700 border-slate-200'" class="shrink-0 rounded-full border px-4 py-2 text-sm font-bold transition-colors">Semua Foto</button>
+                <div class="mobile-scrollbar-none flex gap-2 overflow-x-auto pb-1 -mx-3 px-3 sm:mx-0 sm:px-0">
+                    <button @click="selectAlbum(null)" :class="selectedAlbum === null ? 'bg-slate-950 text-white' : 'bg-white text-slate-700 border-slate-200'" class="shrink-0 rounded-full border px-4 py-2.5 sm:py-2 text-sm font-bold transition-colors shadow-sm">Semua Foto</button>
                     <template x-for="album in albums" :key="album.id">
-                        <button @click="selectAlbum(album.id)" :class="selectedAlbum === album.id ? 'bg-red-600 text-white border-red-600' : 'bg-white text-slate-700 border-slate-200'" class="shrink-0 rounded-full border px-4 py-2 text-sm font-bold transition-colors">
+                        <button @click="selectAlbum(album.id)" :class="selectedAlbum === album.id ? 'bg-red-600 text-white border-red-600' : 'bg-white text-slate-700 border-slate-200'" class="shrink-0 rounded-full border px-4 py-2.5 sm:py-2 text-sm font-bold transition-colors shadow-sm">
                             <span x-text="album.name"></span>
                             <span class="opacity-70" x-text="'(' + album.count + ')'"></span>
                         </button>
@@ -265,9 +272,9 @@
                 </div>
 
                 <section>
-                    <div class="flex items-end justify-between gap-4 mb-4">
+                    <div class="flex items-end justify-between gap-4 mb-3 sm:mb-4">
                         <div>
-                            <h2 class="font-outfit text-2xl font-black" x-text="activeTitle"></h2>
+                            <h2 class="font-outfit text-xl sm:text-2xl font-black" x-text="activeTitle"></h2>
                             <p class="text-sm text-slate-500" x-text="filteredPhotos.length + ' foto ditampilkan'"></p>
                         </div>
                     </div>
@@ -315,9 +322,9 @@
                         <h2 class="font-outfit font-black text-xl">Album</h2>
                         <span class="text-xs font-bold text-slate-400">{{ $albums->count() }} koleksi</span>
                     </div>
-                    <div class="space-y-3 max-h-[520px] overflow-y-auto pr-1">
+                    <div class="mobile-scrollbar-none flex lg:block gap-3 lg:space-y-3 max-h-none lg:max-h-[520px] overflow-x-auto lg:overflow-x-visible lg:overflow-y-auto pr-1 -mx-1 px-1">
                         <template x-for="album in albums" :key="album.id">
-                            <button @click="selectAlbum(album.id)" class="w-full rounded-2xl border p-2 text-left transition-all" :class="selectedAlbum === album.id ? 'border-red-200 bg-red-50' : 'border-slate-200 hover:bg-slate-50'">
+                            <button @click="selectAlbum(album.id)" class="shrink-0 w-64 lg:w-full rounded-2xl border p-2 text-left transition-all" :class="selectedAlbum === album.id ? 'border-red-200 bg-red-50' : 'border-slate-200 hover:bg-slate-50'">
                                 <div class="grid grid-cols-[72px_1fr] gap-3 items-center">
                                     <div class="h-16 rounded-xl overflow-hidden bg-slate-100 grid grid-cols-2 gap-0.5">
                                         <template x-for="url in album.latest.length ? album.latest : [album.cover]" :key="url">
@@ -335,7 +342,7 @@
                     </div>
                 </div>
 
-                <div x-show="selectedPhoto" class="rounded-3xl bg-slate-950 text-white border border-slate-900 p-4 shadow-sm">
+                <div x-show="selectedPhoto" class="hidden lg:block rounded-3xl bg-slate-950 text-white border border-slate-900 p-4 shadow-sm">
                     <p class="text-[10px] uppercase tracking-widest text-slate-400 font-black mb-3">Preview Lightroom</p>
                     <div class="aspect-[4/5] rounded-2xl overflow-hidden bg-slate-900">
                         <template x-if="selectedPhoto">
@@ -365,12 +372,12 @@
         </section>
     </main>
 
-    <div x-show="lightboxOpen" x-cloak class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl p-4 sm:p-8" @keydown.escape.window="lightboxOpen = false">
-        <button @click="lightboxOpen = false" class="absolute top-4 right-4 z-10 w-11 h-11 rounded-full bg-white/10 text-white hover:bg-white/20 flex items-center justify-center">
+    <div x-show="lightboxOpen" x-cloak class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl p-0 sm:p-8" @keydown.escape.window="lightboxOpen = false">
+        <button @click="lightboxOpen = false" class="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 w-11 h-11 rounded-full bg-white/10 text-white hover:bg-white/20 flex items-center justify-center">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.3" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
-        <div class="h-full grid lg:grid-cols-[1fr_420px] gap-6">
-            <div class="relative min-h-0 flex items-center justify-center overflow-hidden" @pointermove.window="dragMove($event)" @pointerup.window="dragEnd()" @pointercancel.window="dragEnd()">
+        <div class="h-full grid lg:grid-cols-[1fr_420px] gap-0 sm:gap-6">
+            <div class="relative min-h-0 h-[48vh] sm:h-auto flex items-center justify-center overflow-hidden" @pointermove.window="dragMove($event)" @pointerup.window="dragEnd()" @pointercancel.window="dragEnd()">
                 <template x-if="selectedPhoto">
                     <img :src="selectedPhoto.url" :alt="selectedPhoto.title"
                         @pointerdown.prevent="dragStart($event)"
@@ -378,7 +385,7 @@
                         :class="zoom > 1 ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-default'"
                         :style="'transform: translate(' + panX + 'px, ' + panY + 'px) scale(' + zoom + ')'">
                 </template>
-                <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-2xl bg-white/10 p-2 backdrop-blur-xl border border-white/10">
+                <div class="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-2xl bg-white/10 p-2 backdrop-blur-xl border border-white/10">
                     <button @click="zoomOut()" type="button" class="w-10 h-10 rounded-xl bg-white/10 text-white hover:bg-white/20 flex items-center justify-center" title="Zoom out">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M20 20l-4.35-4.35M8 11h6m4 0a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     </button>
@@ -390,12 +397,12 @@
                     </button>
                 </div>
             </div>
-            <div class="rounded-3xl bg-white text-slate-950 p-5 self-center max-h-full overflow-y-auto">
+            <div class="rounded-t-[28px] lg:rounded-3xl bg-white text-slate-950 p-4 sm:p-5 self-end lg:self-center h-[52vh] lg:h-auto max-h-full overflow-y-auto shadow-2xl lg:shadow-none">
                 <button @click="goToAlbum(selectedPhoto?.album_id)" type="button" class="inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-1.5 text-xs font-black uppercase tracking-widest text-red-600 hover:bg-red-100">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M3 7a2 2 0 012-2h5l2 2h7a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
                     <span x-text="selectedPhoto?.album"></span>
                 </button>
-                <h2 class="font-outfit text-2xl font-black mt-2" x-text="selectedPhoto?.title"></h2>
+                <h2 class="font-outfit text-xl sm:text-2xl font-black mt-2" x-text="selectedPhoto?.title"></h2>
                 <p class="text-sm text-slate-600 mt-2" x-text="selectedPhoto?.caption || 'Tidak ada keterangan foto.'"></p>
                 <div class="mt-5 space-y-2 text-sm">
                     <p><span class="text-slate-400">Uploader:</span> <b x-text="selectedPhoto?.uploader"></b></p>
@@ -403,7 +410,7 @@
                     <p><span class="text-slate-400">Tanggal:</span> <b x-text="selectedPhoto?.date"></b></p>
                     <p><span class="text-slate-400">Ukuran:</span> <b x-text="selectedPhoto?.size"></b></p>
                 </div>
-                <div class="mt-5 flex items-center gap-2">
+                <div class="mt-4 sm:mt-5 grid grid-cols-[1fr_1fr_auto] items-center gap-2">
                     <button x-show="canInteract" @click="toggleLove(selectedPhoto, $event)" type="button" class="flex-1 inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-black transition-colors" :class="selectedPhoto?.liked_by_me ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-slate-100 text-slate-700 hover:bg-red-50 hover:text-red-700'">
                         <svg class="w-5 h-5 transition-transform" :class="selectedPhoto?.liked_by_me ? 'fill-current scale-110' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
                         <span x-text="selectedPhoto?.likes_count || 0"></span>
@@ -416,7 +423,7 @@
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4-4 4m0 0-4-4m4 4V4"/></svg>
                     </a>
                 </div>
-                <div class="mt-6 border-t border-slate-200 pt-5">
+                <div class="mt-5 sm:mt-6 border-t border-slate-200 pt-5">
                     <div class="flex items-center justify-between mb-3">
                         <h3 class="font-outfit text-lg font-black">Komentar</h3>
                         <span class="text-xs font-bold text-slate-400" x-text="(selectedPhoto?.comments_count || 0) + ' diskusi'"></span>
@@ -498,20 +505,20 @@
     </div>
 
     @if($canUpload)
-        <div x-show="uploadOpen" x-cloak class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm p-4">
-            <div class="min-h-full flex items-center justify-center">
-                <form action="{{ route('gallery-photo.store') }}" method="POST" enctype="multipart/form-data" class="w-full max-w-2xl rounded-3xl bg-white shadow-2xl overflow-hidden">
+        <div x-show="uploadOpen" x-cloak class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm p-0 sm:p-4">
+            <div class="min-h-full flex items-end sm:items-center justify-center">
+                <form action="{{ route('gallery-photo.store') }}" method="POST" enctype="multipart/form-data" class="w-full max-w-2xl rounded-t-[28px] sm:rounded-3xl bg-white shadow-2xl overflow-hidden">
                     @csrf
-                    <div class="p-6 border-b border-slate-200 flex items-center justify-between">
+                    <div class="p-5 sm:p-6 border-b border-slate-200 flex items-center justify-between">
                         <div>
-                            <h2 class="font-outfit text-2xl font-black">Tambah Foto Galeri</h2>
+                            <h2 class="font-outfit text-xl sm:text-2xl font-black">Tambah Foto Galeri</h2>
                             <p class="text-sm text-slate-500">Upload sampai 20 foto, format JPG, PNG, atau WEBP.</p>
                         </div>
                         <button @click="uploadOpen = false" type="button" class="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M6 18L18 6M6 6l12 12"/></svg>
                         </button>
                     </div>
-                    <div class="p-6 space-y-5">
+                    <div class="p-5 sm:p-6 space-y-5 max-h-[70vh] overflow-y-auto">
                         <div class="grid sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-black uppercase tracking-widest text-slate-500 mb-2">Pilih Album</label>
@@ -552,7 +559,7 @@
                             <input type="file" name="photos[]" accept="image/jpeg,image/png,image/webp" multiple required class="sr-only" @change="uploadCount = $event.target.files.length">
                         </label>
                     </div>
-                    <div class="p-6 bg-slate-50 flex flex-col sm:flex-row justify-end gap-3">
+                    <div class="p-5 sm:p-6 bg-slate-50 flex flex-col sm:flex-row justify-end gap-3">
                         <button type="button" @click="uploadOpen = false" class="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-100">Batal</button>
                         <button type="submit" class="rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-red-700">Upload Foto</button>
                     </div>
