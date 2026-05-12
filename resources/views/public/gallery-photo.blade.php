@@ -1,5 +1,22 @@
 @php
-    $photoItems = $photos->map(fn ($photo) => [
+    $commentPayload = function ($comment, $allComments) use (&$commentPayload) {
+        return [
+            'id' => $comment->id,
+            'author' => $comment->author?->name ?? 'Pengguna',
+            'body' => $comment->body,
+            'date' => $comment->created_at->diffForHumans(),
+            'delete_url' => route('gallery-photo.comments.destroy', $comment),
+            'can_delete' => auth()->check() && (auth()->id() === $comment->user_id || auth()->user()->hasRole('Super Admin')),
+            'replies' => $allComments->where('parent_id', $comment->id)
+                ->sortBy('created_at')
+                ->map(fn ($reply) => $commentPayload($reply, collect()))
+                ->values(),
+        ];
+    };
+
+    $photoItems = $photos->map(function ($photo) use ($commentPayload) {
+        $comments = $photo->comments->sortByDesc('created_at');
+        return [
         'id' => $photo->id,
         'album_id' => $photo->gallery_album_id,
         'album' => $photo->album?->name ?? 'Tanpa Album',
@@ -14,17 +31,12 @@
         'liked_by_me' => $photo->likes->isNotEmpty(),
         'love_url' => route('gallery-photo.love', $photo),
         'comment_url' => route('gallery-photo.comments.store', $photo),
+        'download_url' => route('gallery-photo.download', $photo),
         'delete_url' => route('gallery-photo.destroy', $photo),
         'can_delete' => auth()->check() && (auth()->id() === $photo->user_id || auth()->user()->hasRole('Super Admin')),
-        'comments' => $photo->comments->sortByDesc('created_at')->map(fn ($comment) => [
-            'id' => $comment->id,
-            'author' => $comment->author?->name ?? 'Pengguna',
-            'body' => $comment->body,
-            'date' => $comment->created_at->diffForHumans(),
-            'delete_url' => route('gallery-photo.comments.destroy', $comment),
-            'can_delete' => auth()->check() && (auth()->id() === $comment->user_id || auth()->user()->hasRole('Super Admin')),
-        ])->values(),
-    ])->values();
+        'comments' => $comments->whereNull('parent_id')->values()->map(fn ($comment) => $commentPayload($comment, $comments))->values(),
+        ];
+    })->values();
 
     $albumItems = $albums->map(fn ($album) => [
         'id' => $album->id,
@@ -57,6 +69,29 @@
         @media (min-width: 640px) { .masonry { column-count: 2; } }
         @media (min-width: 1024px) { .masonry { column-count: 3; } }
         .masonry-item { break-inside: avoid; margin-bottom: 1rem; }
+        .love-burst {
+            position: fixed;
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: #ef4444;
+            pointer-events: none;
+            z-index: 80;
+            animation: loveBurst 650ms ease-out forwards;
+            box-shadow:
+                0 -26px 0 #ef4444,
+                18px -18px 0 #f97316,
+                26px 0 0 #facc15,
+                18px 18px 0 #fb7185,
+                0 26px 0 #ef4444,
+                -18px 18px 0 #f97316,
+                -26px 0 0 #facc15,
+                -18px -18px 0 #fb7185;
+        }
+        @keyframes loveBurst {
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(0.25) rotate(0deg); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1.6) rotate(35deg); }
+        }
     </style>
 </head>
 <body x-data="galleryPage(@js($albumItems), @js($photoItems), @js($canInteract))" x-init="init()" class="min-h-screen">
@@ -233,15 +268,13 @@
                             <div class="rounded-xl bg-white/10 p-3"><span class="block text-slate-400">Tanggal</span><b x-text="selectedPhoto?.date"></b></div>
                         </div>
                         <div class="mt-3 flex items-center gap-2">
-                            <form x-show="canInteract" :action="selectedPhoto?.love_url" method="POST" class="flex-1">
-                                @csrf
-                                <button class="w-full rounded-xl px-3 py-2 text-xs font-black transition-colors" :class="selectedPhoto?.liked_by_me ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-white/10 text-white hover:bg-white/20'">
-                                    <span x-text="selectedPhoto?.liked_by_me ? 'Loved' : 'Love'"></span>
-                                    <span x-text="'(' + (selectedPhoto?.likes_count || 0) + ')'"></span>
-                                </button>
-                            </form>
-                            <button @click="lightboxOpen = true" class="flex-1 rounded-xl bg-white/10 px-3 py-2 text-xs font-black text-white hover:bg-white/20">
-                                Komentar <span x-text="'(' + (selectedPhoto?.comments_count || 0) + ')'"></span>
+                            <button x-show="canInteract" @click="toggleLove(selectedPhoto, $event)" type="button" class="flex-1 inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs font-black transition-colors" :class="selectedPhoto?.liked_by_me ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-white/10 text-white hover:bg-white/20'">
+                                <svg class="w-4 h-4 transition-transform" :class="selectedPhoto?.liked_by_me ? 'fill-current scale-110' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                                <span x-text="selectedPhoto?.likes_count || 0"></span>
+                            </button>
+                            <button @click="openPhoto(selectedPhoto)" class="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-xs font-black text-white hover:bg-white/20">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+                                <span x-text="selectedPhoto?.comments_count || 0"></span>
                             </button>
                         </div>
                     </div>
@@ -255,10 +288,21 @@
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.3" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
         <div class="h-full grid lg:grid-cols-[1fr_420px] gap-6">
-            <div class="min-h-0 flex items-center justify-center">
+            <div class="relative min-h-0 flex items-center justify-center overflow-hidden">
                 <template x-if="selectedPhoto">
-                    <img :src="selectedPhoto.url" :alt="selectedPhoto.title" class="max-h-full max-w-full rounded-2xl object-contain shadow-2xl">
+                    <img :src="selectedPhoto.url" :alt="selectedPhoto.title" class="max-h-full max-w-full rounded-2xl object-contain shadow-2xl transition-transform duration-200 ease-out" :style="'transform: scale(' + zoom + ')'">
                 </template>
+                <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-2xl bg-white/10 p-2 backdrop-blur-xl border border-white/10">
+                    <button @click="zoomOut()" type="button" class="w-10 h-10 rounded-xl bg-white/10 text-white hover:bg-white/20 flex items-center justify-center" title="Zoom out">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M20 20l-4.35-4.35M8 11h6m4 0a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    </button>
+                    <button @click="resetZoom()" type="button" class="w-10 h-10 rounded-xl bg-white/10 text-white hover:bg-white/20 flex items-center justify-center" title="Reset zoom">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 4v6h6M20 20v-6h-6M5 19A9 9 0 0119 5"/></svg>
+                    </button>
+                    <button @click="zoomIn()" type="button" class="w-10 h-10 rounded-xl bg-white/10 text-white hover:bg-white/20 flex items-center justify-center" title="Zoom in">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M20 20l-4.35-4.35M11 8v6m-3-3h6m4 0a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    </button>
+                </div>
             </div>
             <div class="rounded-3xl bg-white text-slate-950 p-5 self-center max-h-full overflow-y-auto">
                 <p class="text-xs font-black uppercase tracking-widest text-red-600" x-text="selectedPhoto?.album"></p>
@@ -270,16 +314,17 @@
                     <p><span class="text-slate-400">Ukuran:</span> <b x-text="selectedPhoto?.size"></b></p>
                 </div>
                 <div class="mt-5 flex items-center gap-2">
-                    <form x-show="canInteract" :action="selectedPhoto?.love_url" method="POST" class="flex-1">
-                        @csrf
-                        <button class="w-full rounded-xl px-4 py-2.5 text-sm font-black transition-colors" :class="selectedPhoto?.liked_by_me ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-slate-100 text-slate-700 hover:bg-red-50 hover:text-red-700'">
-                            <span x-text="selectedPhoto?.liked_by_me ? 'Loved' : 'Love'"></span>
-                            <span x-text="'(' + (selectedPhoto?.likes_count || 0) + ')'"></span>
-                        </button>
-                    </form>
-                    <div class="flex-1 rounded-xl bg-slate-100 px-4 py-2.5 text-center text-sm font-black text-slate-700">
-                        Komentar <span x-text="'(' + (selectedPhoto?.comments_count || 0) + ')'"></span>
+                    <button x-show="canInteract" @click="toggleLove(selectedPhoto, $event)" type="button" class="flex-1 inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-black transition-colors" :class="selectedPhoto?.liked_by_me ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-slate-100 text-slate-700 hover:bg-red-50 hover:text-red-700'">
+                        <svg class="w-5 h-5 transition-transform" :class="selectedPhoto?.liked_by_me ? 'fill-current scale-110' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                        <span x-text="selectedPhoto?.likes_count || 0"></span>
+                    </button>
+                    <div class="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-100 px-4 py-2.5 text-center text-sm font-black text-slate-700">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+                        <span x-text="selectedPhoto?.comments_count || 0"></span>
                     </div>
+                    <a :href="selectedPhoto?.download_url" class="w-11 h-11 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-950 hover:text-white flex items-center justify-center" title="Download foto">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4-4 4m0 0-4-4m4 4V4"/></svg>
+                    </a>
                 </div>
                 <div class="mt-6 border-t border-slate-200 pt-5">
                     <div class="flex items-center justify-between mb-3">
@@ -287,11 +332,13 @@
                         <span class="text-xs font-bold text-slate-400" x-text="(selectedPhoto?.comments_count || 0) + ' diskusi'"></span>
                     </div>
                     <template x-if="canInteract">
-                        <form :action="selectedPhoto?.comment_url" method="POST" class="mb-4">
-                            @csrf
+                        <form @submit.prevent="submitComment($event)" class="mb-4">
                             <textarea name="body" required rows="3" maxlength="1000" class="w-full rounded-2xl border-slate-300 text-sm focus:border-red-500 focus:ring-red-500" placeholder="Tulis komentar untuk foto ini..."></textarea>
                             <div class="mt-2 flex justify-end">
-                                <button class="rounded-xl bg-slate-950 px-4 py-2 text-xs font-black text-white hover:bg-red-600">Kirim Komentar</button>
+                                <button class="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2 text-xs font-black text-white hover:bg-red-600 disabled:opacity-60" :disabled="commentBusy">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                                    Kirim
+                                </button>
                             </div>
                         </form>
                     </template>
@@ -306,15 +353,44 @@
                                         <p class="text-sm font-black text-slate-900 truncate" x-text="comment.author"></p>
                                         <p class="text-[11px] font-bold text-slate-400" x-text="comment.date"></p>
                                     </div>
-                                    <template x-if="comment.can_delete">
-                                        <form :action="comment.delete_url" method="POST" onsubmit="return confirm('Hapus komentar ini?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button class="text-[11px] font-black text-red-600 hover:text-red-800">Hapus</button>
-                                        </form>
-                                    </template>
+                                    <div class="flex items-center gap-2">
+                                        <button x-show="canInteract" @click="setReply(comment)" type="button" class="inline-flex items-center gap-1 text-[11px] font-black text-slate-500 hover:text-red-600">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6 6-6"/></svg>
+                                            Balas
+                                        </button>
+                                        <button x-show="comment.can_delete" @click="deleteComment(comment)" type="button" class="text-[11px] font-black text-red-600 hover:text-red-800">Hapus</button>
+                                    </div>
                                 </div>
                                 <p class="mt-2 whitespace-pre-line text-sm text-slate-700" x-text="comment.body"></p>
+                                <template x-if="replyTarget?.id === comment.id">
+                                    <form @submit.prevent="submitComment($event, comment.id)" class="mt-3 rounded-2xl border border-red-100 bg-white p-3">
+                                        <div class="mb-2 flex items-center justify-between gap-2">
+                                            <p class="text-xs font-black text-red-600">Balas komentar <span x-text="comment.author"></span></p>
+                                            <button @click="replyTarget = null" type="button" class="text-xs font-black text-slate-400 hover:text-slate-700">Batal</button>
+                                        </div>
+                                        <textarea name="body" required rows="2" maxlength="1000" class="w-full rounded-xl border-slate-300 text-sm focus:border-red-500 focus:ring-red-500" placeholder="Tulis balasan..."></textarea>
+                                        <div class="mt-2 flex justify-end">
+                                            <button class="rounded-xl bg-red-600 px-4 py-2 text-xs font-black text-white hover:bg-red-700 disabled:opacity-60" :disabled="commentBusy">Kirim Balasan</button>
+                                        </div>
+                                    </form>
+                                </template>
+                                <div x-show="(comment.replies || []).length" class="mt-3 space-y-2 border-l-2 border-slate-200 pl-3">
+                                    <template x-for="reply in (comment.replies || [])" :key="reply.id">
+                                        <div class="rounded-2xl bg-white p-3 border border-slate-100">
+                                            <div class="flex items-start justify-between gap-3">
+                                                <div class="min-w-0">
+                                                    <p class="text-sm font-black text-slate-900 truncate" x-text="reply.author"></p>
+                                                    <p class="text-[11px] font-bold text-slate-400" x-text="reply.date"></p>
+                                                </div>
+                                                <div class="flex items-center gap-2">
+                                                    <button x-show="canInteract" @click="setReply(comment)" type="button" class="text-[11px] font-black text-slate-500 hover:text-red-600">Balas</button>
+                                                    <button x-show="reply.can_delete" @click="deleteComment(reply)" type="button" class="text-[11px] font-black text-red-600 hover:text-red-800">Hapus</button>
+                                                </div>
+                                            </div>
+                                            <p class="mt-2 whitespace-pre-line text-sm text-slate-700" x-text="reply.body"></p>
+                                        </div>
+                                    </template>
+                                </div>
                             </div>
                         </template>
                         <p x-show="!(selectedPhoto?.comments || []).length" class="rounded-2xl border border-dashed border-slate-200 p-5 text-center text-sm text-slate-500">Belum ada komentar.</p>
@@ -407,6 +483,9 @@
                 lightboxOpen: false,
                 uploadOpen: false,
                 uploadCount: 0,
+                commentBusy: false,
+                replyTarget: null,
+                zoom: 1,
                 init() {
                     this.featuredPhoto = this.photos[0] || null;
                     this.selectedPhoto = this.photos[0] || null;
@@ -427,7 +506,84 @@
                 openPhoto(photo) {
                     this.selectedPhoto = photo;
                     this.featuredPhoto = photo;
+                    this.replyTarget = null;
+                    this.resetZoom();
                     this.lightboxOpen = true;
+                },
+                updatePhoto(photo) {
+                    const idx = this.photos.findIndex(item => item.id === photo.id);
+                    if (idx !== -1) this.photos.splice(idx, 1, photo);
+                    if (this.selectedPhoto?.id === photo.id) this.selectedPhoto = photo;
+                    if (this.featuredPhoto?.id === photo.id) this.featuredPhoto = photo;
+                },
+                async requestJson(url, options = {}) {
+                    const response = await fetch(url, {
+                        ...options,
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            ...(options.headers || {}),
+                        },
+                    });
+
+                    if (!response.ok) throw new Error('Request gagal');
+                    return response.json();
+                },
+                async toggleLove(photo, event) {
+                    if (!photo || !this.canInteract) return;
+                    this.burstAt(event);
+                    const data = await this.requestJson(photo.love_url, { method: 'POST' });
+                    this.updatePhoto(data.photo);
+                },
+                burstAt(event) {
+                    const burst = document.createElement('span');
+                    burst.className = 'love-burst';
+                    const rect = event.currentTarget.getBoundingClientRect();
+                    burst.style.left = (rect.left + rect.width / 2) + 'px';
+                    burst.style.top = (rect.top + rect.height / 2) + 'px';
+                    document.body.appendChild(burst);
+                    setTimeout(() => burst.remove(), 700);
+                },
+                async submitComment(event, parentId = null) {
+                    if (!this.selectedPhoto || this.commentBusy) return;
+                    const form = event.currentTarget;
+                    const body = form.body.value.trim();
+                    if (!body) return;
+
+                    this.commentBusy = true;
+                    try {
+                        const payload = new FormData();
+                        payload.append('body', body);
+                        if (parentId) payload.append('parent_id', parentId);
+
+                        const data = await this.requestJson(this.selectedPhoto.comment_url, {
+                            method: 'POST',
+                            body: payload,
+                        });
+                        this.updatePhoto(data.photo);
+                        form.reset();
+                        this.replyTarget = null;
+                    } finally {
+                        this.commentBusy = false;
+                    }
+                },
+                async deleteComment(comment) {
+                    if (!comment || !confirm('Hapus komentar ini?')) return;
+                    const data = await this.requestJson(comment.delete_url, { method: 'DELETE' });
+                    this.updatePhoto(data.photo);
+                },
+                setReply(comment) {
+                    this.replyTarget = comment;
+                },
+                zoomIn() {
+                    this.zoom = Math.min(3, Number((this.zoom + 0.25).toFixed(2)));
+                },
+                zoomOut() {
+                    this.zoom = Math.max(0.5, Number((this.zoom - 0.25).toFixed(2)));
+                },
+                resetZoom() {
+                    this.zoom = 1;
                 },
             }
         }

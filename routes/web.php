@@ -111,6 +111,7 @@ Route::get('/tv/jadwal', [\App\Http\Controllers\Public\SmartTvJadwalController::
 Route::get('/digireligi', [\App\Http\Controllers\Public\DigiReligiController::class, 'index'])->name('digireligi');
 
 Route::get('/galeri-photo', [\App\Http\Controllers\Public\GalleryPhotoController::class, 'index'])->name('gallery-photo.index');
+Route::get('/galeri-photo/{photo}/download', [\App\Http\Controllers\Public\GalleryPhotoController::class, 'download'])->name('gallery-photo.download');
 Route::middleware(['auth', 'role:Guru Kelas|Operator|Super Admin|Siswa|Guru Piket'])->group(function () {
     Route::post('/galeri-photo', [\App\Http\Controllers\Public\GalleryPhotoController::class, 'store'])->name('gallery-photo.store');
     Route::post('/galeri-photo/{photo}/love', [\App\Http\Controllers\Public\GalleryPhotoController::class, 'toggleLove'])->name('gallery-photo.love');

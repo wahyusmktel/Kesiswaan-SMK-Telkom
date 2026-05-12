@@ -12,6 +12,7 @@ class GalleryPhotoComment extends Model
     protected $fillable = [
         'gallery_photo_id',
         'user_id',
+        'parent_id',
         'body',
     ];
 
@@ -23,5 +24,15 @@ class GalleryPhotoComment extends Model
     public function author()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    public function replies()
+    {
+        return $this->hasMany(self::class, 'parent_id')->oldest();
     }
 }

@@ -9,6 +9,7 @@ use App\Models\GalleryPhoto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class GalleryPhotoController extends Controller
 {
@@ -114,14 +115,23 @@ class GalleryPhotoController extends Controller
     {
         abort_unless(Auth::check() && Auth::user()->hasAnyRole(self::UPLOAD_ROLES), 403);
 
+        $expectsJson = $this->expectsJson(request());
         $like = $photo->likes()->where('user_id', Auth::id())->first();
 
         if ($like) {
             $like->delete();
-            toast('Love pada foto dibatalkan.', 'info');
+            if (!$expectsJson) {
+                toast('Love pada foto dibatalkan.', 'info');
+            }
         } else {
             $photo->likes()->create(['user_id' => Auth::id()]);
-            toast('Foto berhasil disukai.', 'success');
+            if (!$expectsJson) {
+                toast('Foto berhasil disukai.', 'success');
+            }
+        }
+
+        if ($expectsJson) {
+            return response()->json(['photo' => $this->photoPayload($photo->fresh())]);
         }
 
         return redirect()->route('gallery-photo.index');
@@ -133,15 +143,26 @@ class GalleryPhotoController extends Controller
 
         $validated = $request->validate([
             'body' => ['required', 'string', 'max:1000'],
+            'parent_id' => ['nullable', 'exists:gallery_photo_comments,id'],
         ]);
+
+        $parentId = $validated['parent_id'] ?? null;
+        if ($parentId) {
+            $parent = GalleryPhotoComment::where('gallery_photo_id', $photo->id)->findOrFail($parentId);
+            $parentId = $parent->parent_id ?: $parent->id;
+        }
 
         $photo->comments()->create([
             'user_id' => Auth::id(),
+            'parent_id' => $parentId,
             'body' => $validated['body'],
         ]);
 
-        toast('Komentar berhasil ditambahkan.', 'success');
+        if ($this->expectsJson($request)) {
+            return response()->json(['photo' => $this->photoPayload($photo->fresh())], 201);
+        }
 
+        toast('Komentar berhasil ditambahkan.', 'success');
         return redirect()->route('gallery-photo.index');
     }
 
@@ -152,10 +173,81 @@ class GalleryPhotoController extends Controller
         $user = Auth::user();
         abort_unless($user->hasRole('Super Admin') || $comment->user_id === $user->id, 403);
 
+        $photo = $comment->photo;
         $comment->delete();
+
+        if ($this->expectsJson(request())) {
+            return response()->json(['photo' => $this->photoPayload($photo->fresh())]);
+        }
 
         toast('Komentar berhasil dihapus.', 'success');
 
         return redirect()->route('gallery-photo.index');
+    }
+
+    public function download(GalleryPhoto $photo): StreamedResponse
+    {
+        abort_unless(Storage::disk('public')->exists($photo->image_path), 404);
+
+        $name = $photo->original_name ?: 'galeri-photo-' . $photo->id . '.' . pathinfo($photo->image_path, PATHINFO_EXTENSION);
+
+        return Storage::disk('public')->download($photo->image_path, $name);
+    }
+
+    private function expectsJson(Request $request): bool
+    {
+        return $request->expectsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest';
+    }
+
+    private function photoPayload(GalleryPhoto $photo): array
+    {
+        $photo->load([
+            'album',
+            'uploader',
+            'comments.author',
+            'likes' => fn ($query) => Auth::check()
+                ? $query->where('user_id', Auth::id())
+                : $query->whereRaw('1 = 0'),
+        ])->loadCount(['likes', 'comments']);
+
+        $comments = $photo->comments->sortByDesc('created_at');
+        $topLevelComments = $comments->whereNull('parent_id')->values();
+
+        return [
+            'id' => $photo->id,
+            'album_id' => $photo->gallery_album_id,
+            'album' => $photo->album?->name ?? 'Tanpa Album',
+            'title' => $photo->title ?: ($photo->album?->name ?? 'Foto Galeri'),
+            'caption' => $photo->caption,
+            'url' => $photo->image_url,
+            'uploader' => $photo->uploader?->name ?? 'Kontributor',
+            'date' => optional($photo->taken_at ?? $photo->created_at)->format('d M Y'),
+            'size' => $photo->size_for_humans,
+            'likes_count' => $photo->likes_count,
+            'comments_count' => $photo->comments_count,
+            'liked_by_me' => $photo->likes->isNotEmpty(),
+            'love_url' => route('gallery-photo.love', $photo),
+            'comment_url' => route('gallery-photo.comments.store', $photo),
+            'download_url' => route('gallery-photo.download', $photo),
+            'delete_url' => route('gallery-photo.destroy', $photo),
+            'can_delete' => Auth::check() && (Auth::id() === $photo->user_id || Auth::user()->hasRole('Super Admin')),
+            'comments' => $topLevelComments->map(fn ($comment) => $this->commentPayload($comment, $comments))->values(),
+        ];
+    }
+
+    private function commentPayload(GalleryPhotoComment $comment, $allComments): array
+    {
+        return [
+            'id' => $comment->id,
+            'author' => $comment->author?->name ?? 'Pengguna',
+            'body' => $comment->body,
+            'date' => $comment->created_at->diffForHumans(),
+            'delete_url' => route('gallery-photo.comments.destroy', $comment),
+            'can_delete' => Auth::check() && (Auth::id() === $comment->user_id || Auth::user()->hasRole('Super Admin')),
+            'replies' => $allComments->where('parent_id', $comment->id)
+                ->sortBy('created_at')
+                ->map(fn ($reply) => $this->commentPayload($reply, collect()))
+                ->values(),
+        ];
     }
 }
