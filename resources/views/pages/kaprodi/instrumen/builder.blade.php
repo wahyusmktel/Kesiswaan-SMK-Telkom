@@ -302,8 +302,8 @@
                             </div>
                         </div>
 
-                        {{-- Indicators --}}
-                        <div class="p-3 bg-white flex flex-col gap-1.5">
+                        {{-- Indicators (scrollable) --}}
+                        <div class="px-3 pt-2 pb-1 bg-white flex flex-col gap-1.5 overflow-y-auto" style="max-height:200px">
                             <template x-for="(ind, ii) in kat.indikator" :key="ind._key">
                                 <div class="indikator-row">
                                     <div class="row-num" style="background:#10b981;font-size:.6rem" x-text="ii+1"></div>
@@ -324,9 +324,11 @@
                             <div x-show="kat.indikator.length === 0" class="text-xs text-gray-400 text-center py-2 italic">
                                 Belum ada indikator untuk kategori ini.
                             </div>
+                        </div>
 
-                            {{-- Add indicator --}}
-                            <button @click="addIndikator(ki)" class="btn-add mt-1" style="border-color:#a7f3d0;color:#059669">
+                        {{-- Add indicator — always pinned at bottom of card --}}
+                        <div class="px-3 pb-3 pt-2 bg-white border-t border-gray-100">
+                            <button @click="addIndikator(ki)" class="btn-add" style="border-color:#a7f3d0;color:#059669">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                                 </svg>
