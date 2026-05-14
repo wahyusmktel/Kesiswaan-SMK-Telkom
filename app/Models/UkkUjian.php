@@ -27,4 +27,9 @@ class UkkUjian extends Model
     {
         return $this->belongsToMany(Rombel::class, 'ukk_rombel_mappings');
     }
+
+    public function penguji()
+    {
+        return $this->belongsToMany(User::class, 'ukk_penguji');
+    }
 }

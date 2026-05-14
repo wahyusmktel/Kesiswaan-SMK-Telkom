@@ -891,6 +891,11 @@ Route::middleware(['auth', 'role:Kaprodi'])->prefix('kaprodi')->name('kaprodi.')
         Route::get('/instrumen/{instrumen}/edit', [\App\Http\Controllers\Kaprodi\InstrumenController::class, 'edit'])->name('instrumen.edit');
         Route::put('/instrumen/{instrumen}', [\App\Http\Controllers\Kaprodi\InstrumenController::class, 'update'])->name('instrumen.update');
         Route::delete('/instrumen/{instrumen}', [\App\Http\Controllers\Kaprodi\InstrumenController::class, 'destroy'])->name('instrumen.destroy');
+
+        // Set Penguji
+        Route::get('/penguji', [\App\Http\Controllers\Kaprodi\PengujiController::class, 'index'])->name('penguji.index');
+        Route::post('/penguji/{ujian}', [\App\Http\Controllers\Kaprodi\PengujiController::class, 'store'])->name('penguji.store');
+        Route::delete('/penguji/{ujian}/{user}', [\App\Http\Controllers\Kaprodi\PengujiController::class, 'destroy'])->name('penguji.destroy');
     });
 });
 
