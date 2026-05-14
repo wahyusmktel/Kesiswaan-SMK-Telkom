@@ -61,6 +61,15 @@
                 </svg>
                 <span x-text="saving ? 'Menyimpan…' : '💾 Simpan'"></span>
             </button>
+
+            {{-- Cetak PDF --}}
+            <button @click="isComplete && window.open('{{ route('guru-kelas.penilaian-ukk.pdf', [$ujian->id, $siswa->id]) }}', '_blank')"
+                :disabled="!isComplete"
+                :class="isComplete ? 'bg-violet-600 hover:bg-violet-500 text-white shadow-md' : 'bg-gray-200 text-gray-400 cursor-not-allowed'"
+                class="flex-shrink-0 inline-flex items-center gap-2 px-5 py-2.5 font-black rounded-xl transition-all text-sm"
+                :title="isComplete ? 'Cetak PDF penilaian' : 'Selesaikan penilaian 100% terlebih dahulu'">
+                🖨️ <span class="hidden sm:inline">Cetak PDF</span>
+            </button>
         </div>
     </div>
 
@@ -250,14 +259,23 @@
                             Nilai Akhir: <strong x-text="nilaiAkhir.toFixed(1)"></strong>
                         </span>
                     </div>
-                    <button @click="simpan()" :disabled="saving"
-                        class="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-black rounded-xl shadow-md hover:from-orange-400 hover:to-amber-400 transition-all disabled:opacity-50 text-sm">
-                        <svg x-show="saving" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                        </svg>
-                        <span x-text="saving ? 'Menyimpan…' : '💾 Simpan Penilaian'"></span>
-                    </button>
+                    <div class="flex gap-2">
+                        <button @click="simpan()" :disabled="saving"
+                            class="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-black rounded-xl shadow-md hover:from-orange-400 hover:to-amber-400 transition-all disabled:opacity-50 text-sm">
+                            <svg x-show="saving" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                            </svg>
+                            <span x-text="saving ? 'Menyimpan…' : '💾 Simpan Penilaian'"></span>
+                        </button>
+                        <button @click="isComplete && window.open('{{ route('guru-kelas.penilaian-ukk.pdf', [$ujian->id, $siswa->id]) }}', '_blank')"
+                            :disabled="!isComplete"
+                            :class="isComplete ? 'bg-violet-600 hover:bg-violet-500 text-white' : 'bg-gray-200 text-gray-400 cursor-not-allowed'"
+                            class="inline-flex items-center gap-2 px-5 py-2.5 font-black rounded-xl transition-all text-sm"
+                            :title="isComplete ? 'Cetak PDF' : 'Selesaikan penilaian 100% terlebih dahulu'">
+                            🖨️ Cetak PDF
+                        </button>
+                    </div>
                 </div>
             </div>
         @endif
@@ -312,6 +330,15 @@ function penilaianForm() {
 
         benarCount(soalIds) {
             return soalIds.filter(id => this.nilaiP[id] === 1).length;
+        },
+
+        get isComplete() {
+            if (!INSTRUMENS.length) return false;
+            const allSoalIds = INSTRUMENS.flatMap(i => i.soal);
+            const allIndIds  = INSTRUMENS.flatMap(i => i.kategori.flatMap(k => k.indikator));
+            const soalOk = allSoalIds.length === 0 || allSoalIds.every(id => this.nilaiP[id] !== undefined);
+            const indOk  = allIndIds.length === 0  || allIndIds.every(id => this.nilaiK[id] !== undefined);
+            return soalOk && indOk;
         },
 
         // ── Score calculation across all instrumens ──

@@ -3,15 +3,21 @@
 namespace App\Http\Controllers\GuruKelas;
 
 use App\Http\Controllers\Controller;
+use App\Models\AppSetting;
+use App\Models\DigitalDocument;
 use App\Models\MasterSiswa;
 use App\Models\UkkInstrumenIndikator;
 use App\Models\UkkInstrumenSoal;
 use App\Models\UkkNilaiKeterampilan;
 use App\Models\UkkNilaiPengetahuan;
 use App\Models\UkkUjian;
+use App\Models\UserDigitalSignature;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class PenilaianUkkController extends Controller
 {
@@ -158,5 +164,119 @@ class PenilaianUkkController extends Controller
         });
 
         return response()->json(['message' => 'Penilaian berhasil disimpan.']);
+    }
+
+    public function cetakPdf(UkkUjian $ujian, MasterSiswa $siswa)
+    {
+        $this->authorizeAsPenguji($ujian);
+
+        $ujian->load([
+            'tahunPelajaran',
+            'instrumens.soalPengetahuan',
+            'instrumens.kategoriKeterampilan.indikator',
+        ]);
+
+        $allSoalIds      = $ujian->instrumens->flatMap(fn ($i) => $i->soalPengetahuan->pluck('id'));
+        $allIndikatorIds = $ujian->instrumens->flatMap(fn ($i) =>
+            $i->kategoriKeterampilan->flatMap(fn ($k) => $k->indikator->pluck('id'))
+        );
+
+        $nilaiP = UkkNilaiPengetahuan::where('master_siswa_id', $siswa->id)
+            ->whereIn('soal_id', $allSoalIds)
+            ->pluck('nilai', 'soal_id');
+
+        $nilaiK = UkkNilaiKeterampilan::where('master_siswa_id', $siswa->id)
+            ->whereIn('indikator_id', $allIndikatorIds)
+            ->pluck('nilai', 'indikator_id');
+
+        // App settings & logo
+        $settings  = AppSetting::first();
+        $logoBase64 = null;
+        if ($settings && $settings->logo && Storage::disk('public')->exists($settings->logo)) {
+            $logoData   = Storage::disk('public')->get($settings->logo);
+            $logoMime   = Storage::disk('public')->mimeType($settings->logo);
+            $logoBase64 = 'data:' . $logoMime . ';base64,' . base64_encode($logoData);
+        }
+
+        // Penguji digital signature
+        $user      = Auth::user();
+        $sigRecord = UserDigitalSignature::where('user_id', $user->id)->first();
+        $ttdBase64 = null;
+        if ($sigRecord && $sigRecord->ttd_image_path && Storage::disk('public')->exists($sigRecord->ttd_image_path)) {
+            $ttdData   = Storage::disk('public')->get($sigRecord->ttd_image_path);
+            $ttdMime   = Storage::disk('public')->mimeType($sigRecord->ttd_image_path);
+            $ttdBase64 = 'data:' . $ttdMime . ';base64,' . base64_encode($ttdData);
+        }
+
+        // Auto-sign if enabled
+        $docType  = 'PENILAIAN_UKK_' . $ujian->id;
+        $digDoc   = null;
+        $qrBase64 = null;
+
+        if ($sigRecord && $sigRecord->isReady() && $sigRecord->auto_sign_penilaian_ukk) {
+            $digDoc = DigitalDocument::autoSign(
+                $user,
+                $docType,
+                'Penilaian UKK — ' . $siswa->nama_lengkap . ' (' . $ujian->nama_ujian . ')',
+                $siswa->id,
+                ['PENILAIAN_UKK', (string) $ujian->id, (string) $siswa->id, $siswa->nama_lengkap]
+            );
+        } else {
+            $digDoc = DigitalDocument::where('document_type', $docType)
+                ->where('reference_id', $siswa->id)
+                ->where('is_valid', true)
+                ->first();
+        }
+
+        if ($digDoc) {
+            $qrSvg    = QrCode::format('svg')->size(90)->margin(0)->generate(route('verifikasi.dokumen', $digDoc->token));
+            $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
+        }
+
+        // Compute scores per instrumen
+        $instrumenScores = $ujian->instrumens->map(function ($ins) use ($nilaiP, $nilaiK) {
+            $soalIds     = $ins->soalPengetahuan->pluck('id');
+            $totalSoal   = $soalIds->count();
+            $benar       = $soalIds->filter(fn ($id) => ($nilaiP[$id] ?? null) === 1)->count();
+            $skorP       = $totalSoal > 0 ? round($benar / $totalSoal * 100, 1) : 0;
+
+            $totalIndMax = 0;
+            $totalIndVal = 0;
+            foreach ($ins->kategoriKeterampilan as $kat) {
+                $indIds = $kat->indikator->pluck('id');
+                foreach ($indIds as $indId) {
+                    $totalIndMax += 3;
+                    $totalIndVal += ($nilaiK[$indId] ?? 0);
+                }
+            }
+            $skorK = $totalIndMax > 0 ? round($totalIndVal / $totalIndMax * 100, 1) : 0;
+
+            $bp          = $ins->bobot_pengetahuan / 100;
+            $nilaiAkhir  = round($skorP * $bp + $skorK * (1 - $bp), 1);
+
+            return [
+                'instrumen'   => $ins,
+                'benar'       => $benar,
+                'total_soal'  => $totalSoal,
+                'skor_p'      => $skorP,
+                'skor_k'      => $skorK,
+                'nilai_akhir' => $nilaiAkhir,
+            ];
+        });
+
+        $nilaiAkhirFinal = $instrumenScores->count()
+            ? round($instrumenScores->avg('nilai_akhir'), 1)
+            : 0;
+
+        $pdf = Pdf::loadView('pdf.penilaian-ukk', compact(
+            'ujian', 'siswa', 'nilaiP', 'nilaiK',
+            'settings', 'logoBase64',
+            'user', 'ttdBase64', 'digDoc', 'qrBase64',
+            'instrumenScores', 'nilaiAkhirFinal'
+        ))->setPaper('a4', 'portrait');
+
+        $filename = 'Penilaian_UKK_' . str_replace(' ', '_', $siswa->nama_lengkap) . '.pdf';
+
+        return $pdf->stream($filename);
     }
 }

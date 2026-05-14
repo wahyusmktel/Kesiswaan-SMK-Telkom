@@ -15,15 +15,17 @@ class UserDigitalSignature extends Model
         'auto_sign_izin_keluar',
         'auto_sign_perizinan',
         'auto_sign_izin_guru',
+        'auto_sign_penilaian_ukk',
     ];
 
     protected $hidden = ['pin_hash'];
 
     protected $casts = [
-        'is_active'             => 'boolean',
-        'auto_sign_izin_keluar' => 'boolean',
-        'auto_sign_perizinan'   => 'boolean',
-        'auto_sign_izin_guru'   => 'boolean',
+        'is_active'                => 'boolean',
+        'auto_sign_izin_keluar'    => 'boolean',
+        'auto_sign_perizinan'      => 'boolean',
+        'auto_sign_izin_guru'      => 'boolean',
+        'auto_sign_penilaian_ukk'  => 'boolean',
     ];
 
     public function user()

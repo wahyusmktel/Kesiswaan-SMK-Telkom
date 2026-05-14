@@ -241,6 +241,27 @@
                                         </label>
                                     </div>
                                     @endrole
+
+                                    @role('Guru Kelas')
+                                    <div id="auto-penilaian-ukk-wrap" class="flex items-center justify-between p-3 rounded-xl border-2 mb-2 transition-colors
+                                        {{ $signature->auto_sign_penilaian_ukk ? 'bg-indigo-50 border-indigo-200' : 'bg-gray-50 border-gray-200' }}">
+                                        <div>
+                                            <p class="text-xs font-bold text-gray-800">Auto-TTD Penilaian UKK</p>
+                                            <p class="text-[10px] text-gray-500 mt-0.5">Otomatis tandatangani saat mencetak lembar penilaian UKK</p>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-3">
+                                            <input type="checkbox" name="auto_sign_penilaian_ukk" value="1" id="auto_penilaian_ukk_toggle"
+                                                class="sr-only peer"
+                                                {{ $signature->auto_sign_penilaian_ukk ? 'checked' : '' }}>
+                                            <div class="w-10 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer
+                                                peer-checked:after:translate-x-full peer-checked:after:border-white
+                                                after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+                                                after:bg-white after:border-gray-300 after:border after:rounded-full
+                                                after:h-4 after:w-4 after:transition-all
+                                                peer-checked:bg-indigo-500"></div>
+                                        </label>
+                                    </div>
+                                    @endrole
                                 </div>
                                 @endif
 
@@ -544,6 +565,21 @@
                 } else {
                     autoIzinGuruWrap.classList.replace('bg-indigo-50', 'bg-gray-50');
                     autoIzinGuruWrap.classList.replace('border-indigo-200', 'border-gray-200');
+                }
+            });
+        }
+
+        // Toggle visual auto-sign penilaian ukk
+        const autoPenilaianUkkToggle = document.getElementById('auto_penilaian_ukk_toggle');
+        const autoPenilaianUkkWrap   = document.getElementById('auto-penilaian-ukk-wrap');
+        if (autoPenilaianUkkToggle && autoPenilaianUkkWrap) {
+            autoPenilaianUkkToggle.addEventListener('change', function () {
+                if (this.checked) {
+                    autoPenilaianUkkWrap.classList.replace('bg-gray-50', 'bg-indigo-50');
+                    autoPenilaianUkkWrap.classList.replace('border-gray-200', 'border-indigo-200');
+                } else {
+                    autoPenilaianUkkWrap.classList.replace('bg-indigo-50', 'bg-gray-50');
+                    autoPenilaianUkkWrap.classList.replace('border-indigo-200', 'border-gray-200');
                 }
             });
         }

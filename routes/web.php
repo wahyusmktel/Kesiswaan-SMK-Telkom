@@ -582,6 +582,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/penilaian-ukk/{ujian}', [\App\Http\Controllers\GuruKelas\PenilaianUkkController::class, 'show'])->name('penilaian-ukk.show');
         Route::get('/penilaian-ukk/{ujian}/{siswa}', [\App\Http\Controllers\GuruKelas\PenilaianUkkController::class, 'penilaian'])->name('penilaian-ukk.penilaian');
         Route::post('/penilaian-ukk/{ujian}/{siswa}', [\App\Http\Controllers\GuruKelas\PenilaianUkkController::class, 'simpan'])->name('penilaian-ukk.simpan');
+        Route::get('/penilaian-ukk/{ujian}/{siswa}/pdf', [\App\Http\Controllers\GuruKelas\PenilaianUkkController::class, 'cetakPdf'])->name('penilaian-ukk.pdf');
     });
 
     // Grup Route untuk Guru (Submission)
