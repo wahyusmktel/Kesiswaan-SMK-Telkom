@@ -877,11 +877,20 @@ require __DIR__ . '/auth.php';
 // ============================================================
 Route::middleware(['auth', 'role:Kaprodi'])->prefix('kaprodi')->name('kaprodi.')->group(function () {
     Route::prefix('ukk')->name('ukk.')->group(function () {
+        // Set UKK
         Route::get('/set-ukk', [\App\Http\Controllers\Kaprodi\UkkController::class, 'index'])->name('index');
         Route::post('/set-ukk', [\App\Http\Controllers\Kaprodi\UkkController::class, 'store'])->name('store');
         Route::put('/set-ukk/{ujian}', [\App\Http\Controllers\Kaprodi\UkkController::class, 'update'])->name('update');
         Route::delete('/set-ukk/{ujian}', [\App\Http\Controllers\Kaprodi\UkkController::class, 'destroy'])->name('destroy');
         Route::get('/rombel-by-jurusan', [\App\Http\Controllers\Kaprodi\UkkController::class, 'getRombel'])->name('rombel-by-jurusan');
+
+        // Set Instrumen Penilaian
+        Route::get('/instrumen', [\App\Http\Controllers\Kaprodi\InstrumenController::class, 'index'])->name('instrumen.index');
+        Route::get('/instrumen/create', [\App\Http\Controllers\Kaprodi\InstrumenController::class, 'create'])->name('instrumen.create');
+        Route::post('/instrumen', [\App\Http\Controllers\Kaprodi\InstrumenController::class, 'store'])->name('instrumen.store');
+        Route::get('/instrumen/{instrumen}/edit', [\App\Http\Controllers\Kaprodi\InstrumenController::class, 'edit'])->name('instrumen.edit');
+        Route::put('/instrumen/{instrumen}', [\App\Http\Controllers\Kaprodi\InstrumenController::class, 'update'])->name('instrumen.update');
+        Route::delete('/instrumen/{instrumen}', [\App\Http\Controllers\Kaprodi\InstrumenController::class, 'destroy'])->name('instrumen.destroy');
     });
 });
 

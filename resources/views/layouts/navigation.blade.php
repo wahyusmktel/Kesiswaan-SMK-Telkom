@@ -2559,6 +2559,11 @@
                 <span class="submenu-dot"></span>
                 Set UKK
             </a>
+            <a href="{{ route('kaprodi.ukk.instrumen.index') }}"
+                class="submenu-item {{ request()->routeIs('kaprodi.ukk.instrumen.*') ? 'submenu-item-active' : '' }}">
+                <span class="submenu-dot"></span>
+                Set Instrumen Penilaian
+            </a>
         </div>
 
         <!-- Flyout Submenu (Collapsed Sidebar) -->
@@ -2568,7 +2573,13 @@
                 class="submenu-item {{ request()->routeIs('kaprodi.ukk.index') ? 'submenu-item-active' : '' }}">
                 Set UKK
             </a>
+            <a href="{{ route('kaprodi.ukk.instrumen.index') }}"
+                class="submenu-item {{ request()->routeIs('kaprodi.ukk.instrumen.*') ? 'submenu-item-active' : '' }}">
+                Set Instrumen Penilaian
+            </a>
         </div>
+
+        {{-- also expand when on instrumen pages --}}
     </li>
 @endif
 @endrole
