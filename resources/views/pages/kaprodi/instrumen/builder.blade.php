@@ -29,7 +29,6 @@
     .kategori-card {
         border: 2px solid #e5e7eb;
         border-radius: 1rem;
-        overflow: hidden;
         transition: border-color .2s;
     }
     .kategori-card:focus-within { border-color: #a78bfa; }
@@ -38,6 +37,10 @@
         padding: .875rem 1rem;
         background: linear-gradient(to right, #f5f3ff, #ede9fe);
         border-bottom: 1px solid #e5e7eb;
+        border-radius: .875rem .875rem 0 0;
+    }
+    .indikator-add-btn {
+        border-radius: 0 0 .875rem .875rem;
     }
     .bobot-pill {
         display: inline-flex; align-items: center; gap: .25rem;
@@ -327,7 +330,7 @@
                         </div>
 
                         {{-- Add indicator — always pinned at bottom of card --}}
-                        <div class="px-3 pb-3 pt-2 bg-white border-t border-gray-100">
+                        <div class="indikator-add-btn px-3 pb-3 pt-2 bg-white border-t border-gray-100">
                             <button @click="addIndikator(ki)" class="btn-add" style="border-color:#a7f3d0;color:#059669">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
