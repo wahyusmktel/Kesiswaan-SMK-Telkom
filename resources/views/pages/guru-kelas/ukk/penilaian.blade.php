@@ -265,11 +265,8 @@
     </div>
 </div>
 
-@push('scripts')
-<script>
-function penilaianForm() {
-    // Initial data from PHP
-    const INSTRUMENS = @json($ujian->instrumens->map(fn($i) => [
+@php
+    $instrumensData = $ujian->instrumens->map(fn($i) => [
         'id'                => $i->id,
         'bobot_pengetahuan' => $i->bobot_pengetahuan,
         'soal'              => $i->soalPengetahuan->pluck('id')->all(),
@@ -277,12 +274,17 @@ function penilaianForm() {
             'id'        => $k->id,
             'bobot'     => $k->bobot,
             'indikator' => $k->indikator->pluck('id')->all(),
-        ])->all(),
-    ])->values()->all());
+        ])->values()->all(),
+    ])->values()->all();
+@endphp
 
-    const INIT_P = @json($nilaiP);  // {soal_id: nilai}
-    const INIT_K = @json($nilaiK);  // {indikator_id: nilai}
-    const SAVE_URL = '{{ route("guru-kelas.penilaian-ukk.simpan", [$ujian->id, $siswa->id]) }}';
+@push('scripts')
+<script>
+function penilaianForm() {
+    const INSTRUMENS = @json($instrumensData);
+    const INIT_P     = @json($nilaiP);
+    const INIT_K     = @json($nilaiK);
+    const SAVE_URL   = '{{ route("guru-kelas.penilaian-ukk.simpan", [$ujian->id, $siswa->id]) }}';
 
     return {
         saving: false,
