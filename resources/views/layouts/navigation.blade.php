@@ -2517,6 +2517,62 @@
     </li>
 @endif
 
+{{-- ============================================================ --}}
+{{-- ROLE: KAPRODI --}}
+{{-- ============================================================ --}}
+@role('Kaprodi')
+@if(session('active_role') == 'Kaprodi')
+    <div class="section-title">Menu Utama</div>
+
+    {{-- UKK Dropdown --}}
+    <li class="submenu-dropdown"
+        x-data="{
+            expanded: {{ request()->routeIs(['kaprodi.ukk.*']) ? 'true' : 'false' }},
+            flyoutTop: 0,
+            updateFlyoutPosition() {
+                const rect = this.$el.querySelector('button').getBoundingClientRect();
+                this.flyoutTop = rect.top;
+            }
+        }"
+        @mouseenter="updateFlyoutPosition()">
+        <button @click="expanded = !expanded"
+            class="nav-link w-full {{ request()->routeIs(['kaprodi.ukk.*']) ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="flex items-center">
+                <div class="nav-icon-container">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+                    </svg>
+                </div>
+                <span class="nav-text">UKK</span>
+            </div>
+            <svg :class="expanded ? 'rotate-180' : ''"
+                class="dropdown-arrow w-4 h-4 transition-transform transform text-white/60" fill="none"
+                stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+        </button>
+
+        <!-- Inline Card Submenu (Expanded Sidebar) -->
+        <div x-show="expanded" x-collapse class="submenu-card">
+            <a href="{{ route('kaprodi.ukk.index') }}"
+                class="submenu-item {{ request()->routeIs('kaprodi.ukk.index') ? 'submenu-item-active' : '' }}">
+                <span class="submenu-dot"></span>
+                Set UKK
+            </a>
+        </div>
+
+        <!-- Flyout Submenu (Collapsed Sidebar) -->
+        <div class="submenu-flyout" :style="'top: ' + flyoutTop + 'px'">
+            <div class="submenu-flyout-title">UKK</div>
+            <a href="{{ route('kaprodi.ukk.index') }}"
+                class="submenu-item {{ request()->routeIs('kaprodi.ukk.index') ? 'submenu-item-active' : '' }}">
+                Set UKK
+            </a>
+        </div>
+    </li>
+@endif
+@endrole
+
 {{-- SEPARATOR & PROFILE MENU (Always Visible) --}}
 <li class="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent mx-6 my-4"></li>
 

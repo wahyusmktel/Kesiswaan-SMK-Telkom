@@ -873,6 +873,19 @@ Route::middleware(['auth', 'role:Kantin', 'permission:view kantin dashboard'])->
 require __DIR__ . '/auth.php';
 
 // ============================================================
+// KAPRODI
+// ============================================================
+Route::middleware(['auth', 'role:Kaprodi'])->prefix('kaprodi')->name('kaprodi.')->group(function () {
+    Route::prefix('ukk')->name('ukk.')->group(function () {
+        Route::get('/set-ukk', [\App\Http\Controllers\Kaprodi\UkkController::class, 'index'])->name('index');
+        Route::post('/set-ukk', [\App\Http\Controllers\Kaprodi\UkkController::class, 'store'])->name('store');
+        Route::put('/set-ukk/{ujian}', [\App\Http\Controllers\Kaprodi\UkkController::class, 'update'])->name('update');
+        Route::delete('/set-ukk/{ujian}', [\App\Http\Controllers\Kaprodi\UkkController::class, 'destroy'])->name('destroy');
+        Route::get('/rombel-by-jurusan', [\App\Http\Controllers\Kaprodi\UkkController::class, 'getRombel'])->name('rombel-by-jurusan');
+    });
+});
+
+// ============================================================
 // Integrasi Inventaris Aset (semua role kecuali Siswa)
 // ============================================================
 Route::middleware(['auth', 'role:Super Admin|Waka Kesiswaan|Guru BK|Guru Piket|Kurikulum|Wali Kelas|Tata Usaha|Security|KAUR SDM|Operator|Koordinator Prakerin|Guru Kelas'])
