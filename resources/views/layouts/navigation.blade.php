@@ -696,6 +696,23 @@
             @endif
         @endcan
 
+        @php $isUkkPenguji = \App\Models\UkkUjian::whereHas('penguji', fn($q) => $q->where('user_id', auth()->id()))->exists(); @endphp
+        @if($isUkkPenguji)
+        <div class="section-title">UKK</div>
+        <li>
+            <a href="{{ route('guru-kelas.penilaian-ukk.index') }}"
+                class="nav-link {{ request()->routeIs('guru-kelas.penilaian-ukk.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                <div class="nav-icon-container">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                </div>
+                <span class="nav-text">Penilaian UKK</span>
+            </a>
+        </li>
+        @endif
+
         <div class="section-title">Sosial Media</div>
         <li>
             <a href="{{ route('notted.landing') }}"

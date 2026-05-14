@@ -8,6 +8,8 @@ use App\Models\MasterGuru;
 use App\Models\IzinMeninggalkanKelas;
 use App\Models\Perizinan;
 use App\Models\Rombel;
+use App\Models\UkkNilaiPengetahuan;
+use App\Models\UkkUjian;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
@@ -54,6 +56,22 @@ class DashboardController extends Controller
             }
         }
 
+        // UKK: ujian di mana guru ini menjadi penguji
+        $ukkPenguji = UkkUjian::with(['tahunPelajaran', 'rombels', 'instrumens'])
+            ->whereHas('penguji', fn ($q) => $q->where('user_id', $user->id))
+            ->get()
+            ->map(function ($ujian) {
+                $siswaIds = $ujian->rombels->flatMap(fn ($r) => $r->siswa->pluck('id'))->unique();
+                $soalIds  = $ujian->instrumens->flatMap(fn ($i) => $i->soalPengetahuan->pluck('id'));
+                $ujian->total_siswa   = $siswaIds->count();
+                $ujian->sudah_dinilai = $soalIds->isEmpty() ? 0
+                    : UkkNilaiPengetahuan::whereIn('soal_id', $soalIds)
+                        ->whereIn('master_siswa_id', $siswaIds)
+                        ->distinct('master_siswa_id')
+                        ->count('master_siswa_id');
+                return $ujian;
+            });
+
         // Jika data master guru tidak ditemukan, langsung kembalikan view dengan data default
         if (!$masterGuru) {
             return view('pages.guru-kelas.dashboard.index', compact(
@@ -63,7 +81,8 @@ class DashboardController extends Controller
                 'siswaSedangKeluar',
                 'topSiswaIzinKeluarChartData',
                 'tujuanIzinKeluarChartData',
-                'kegiatanSaatIni'
+                'kegiatanSaatIni',
+                'ukkPenguji'
             ));
         }
 
@@ -139,7 +158,8 @@ class DashboardController extends Controller
             'siswaSedangKeluar',
             'topSiswaIzinKeluarChartData',
             'tujuanIzinKeluarChartData',
-            'kegiatanSaatIni'
+            'kegiatanSaatIni',
+            'ukkPenguji'
         ));
     }
 

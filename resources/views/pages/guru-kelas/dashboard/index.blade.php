@@ -30,6 +30,29 @@
     <div class="py-6 w-full">
         <div class="w-full px-4 sm:px-6 lg:px-8 space-y-8">
 
+            {{-- ── ALERT: UKK Penguji ── --}}
+            @if(isset($ukkPenguji) && $ukkPenguji->isNotEmpty())
+                @php $adaBelumSelesai = $ukkPenguji->some(fn($u) => $u->sudah_dinilai < $u->total_siswa); @endphp
+                @if($adaBelumSelesai)
+                <div class="rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 p-5 shadow-lg text-white flex flex-col sm:flex-row sm:items-center gap-4">
+                    <div class="flex-shrink-0 w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center text-2xl">📋</div>
+                    <div class="flex-1">
+                        <p class="font-black text-lg leading-tight">Anda memiliki tugas penilaian UKK!</p>
+                        <p class="text-orange-100 text-sm mt-0.5">
+                            @foreach($ukkPenguji->where(fn($u) => $u->sudah_dinilai < $u->total_siswa) as $u)
+                                <span class="font-semibold">{{ $u->nama_ujian }}</span>
+                                ({{ $u->sudah_dinilai }}/{{ $u->total_siswa }} siswa dinilai)@if(!$loop->last), @endif
+                            @endforeach
+                        </p>
+                    </div>
+                    <a href="{{ route('guru-kelas.penilaian-ukk.index') }}"
+                        class="flex-shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-white text-orange-600 font-black rounded-xl hover:bg-orange-50 transition-all text-sm shadow-md">
+                        Mulai Menilai →
+                    </a>
+                </div>
+                @endif
+            @endif
+
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
                 <div class="lg:col-span-3">
                     <div

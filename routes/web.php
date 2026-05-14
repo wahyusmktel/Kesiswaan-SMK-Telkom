@@ -576,6 +576,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Route baru untuk verifikasi keterlambatan via scan
         Route::get('/verifikasi-terlambat/scan/{uuid}', [GuruKelasVerifikasiTerlambatController::class, 'scanAndVerify'])->name('verifikasi-terlambat.scan');
+
+        // Penilaian UKK (khusus guru yang menjadi penguji)
+        Route::get('/penilaian-ukk', [\App\Http\Controllers\GuruKelas\PenilaianUkkController::class, 'index'])->name('penilaian-ukk.index');
+        Route::get('/penilaian-ukk/{ujian}', [\App\Http\Controllers\GuruKelas\PenilaianUkkController::class, 'show'])->name('penilaian-ukk.show');
+        Route::get('/penilaian-ukk/{ujian}/{siswa}', [\App\Http\Controllers\GuruKelas\PenilaianUkkController::class, 'penilaian'])->name('penilaian-ukk.penilaian');
+        Route::post('/penilaian-ukk/{ujian}/{siswa}', [\App\Http\Controllers\GuruKelas\PenilaianUkkController::class, 'simpan'])->name('penilaian-ukk.simpan');
     });
 
     // Grup Route untuk Guru (Submission)
