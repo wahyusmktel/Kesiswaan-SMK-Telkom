@@ -1392,6 +1392,20 @@
                     </div>
                 </li>
 
+                {{-- UKK --}}
+                <div class="section-title">UKK</div>
+                <li>
+                    <a href="{{ route('kurikulum.ukk.rekap-nilai.index') }}"
+                        class="nav-link {{ request()->routeIs('kurikulum.ukk.rekap-nilai.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                        <div class="nav-icon-container">
+                            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                            </svg>
+                        </div>
+                        <span class="nav-text">Rekap Nilai UKK</span>
+                    </a>
+                </li>
+
                 {{-- Menu Tanda Tangan Digital --}}
                 <li>
                     <a href="{{ route('tanda-tangan.index') }}"
@@ -2586,6 +2600,11 @@
                 <span class="submenu-dot"></span>
                 Set Penguji
             </a>
+            <a href="{{ route('kaprodi.ukk.rekap-nilai.index') }}"
+                class="submenu-item {{ request()->routeIs('kaprodi.ukk.rekap-nilai.*') ? 'submenu-item-active' : '' }}">
+                <span class="submenu-dot"></span>
+                Rekap Nilai UKK
+            </a>
         </div>
 
         <!-- Flyout Submenu (Collapsed Sidebar) -->
@@ -2602,6 +2621,10 @@
             <a href="{{ route('kaprodi.ukk.penguji.index') }}"
                 class="submenu-item {{ request()->routeIs('kaprodi.ukk.penguji.*') ? 'submenu-item-active' : '' }}">
                 Set Penguji
+            </a>
+            <a href="{{ route('kaprodi.ukk.rekap-nilai.index') }}"
+                class="submenu-item {{ request()->routeIs('kaprodi.ukk.rekap-nilai.*') ? 'submenu-item-active' : '' }}">
+                Rekap Nilai UKK
             </a>
         </div>
 
