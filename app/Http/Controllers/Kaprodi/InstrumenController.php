@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers\Kaprodi;
 
+use App\Exports\UkkIndikatorTemplateExport;
+use App\Exports\UkkSoalTemplateExport;
 use App\Http\Controllers\Controller;
 use App\Models\UkkInstrumen;
 use App\Models\UkkUjian;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class InstrumenController extends Controller
 {
@@ -138,6 +142,91 @@ class InstrumenController extends Controller
         $instrumen->delete(); // cascades to soal, kategori, indikator
 
         return response()->json(['message' => 'Instrumen penilaian berhasil dihapus.']);
+    }
+
+    public function downloadTemplateSoal()
+    {
+        return Excel::download(new UkkSoalTemplateExport(), 'Template_Soal_Pengetahuan_UKK.xlsx');
+    }
+
+    public function downloadTemplateIndikator(Request $request)
+    {
+        $nama = $request->query('kategori', '');
+        return Excel::download(new UkkIndikatorTemplateExport($nama), 'Template_Indikator_Keterampilan_UKK.xlsx');
+    }
+
+    public function importSoal(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:5120',
+        ], [
+            'file.required' => 'Pilih file Excel terlebih dahulu.',
+            'file.mimes'    => 'Format file harus xlsx, xls, atau csv.',
+            'file.max'      => 'Ukuran file maksimal 5 MB.',
+        ]);
+
+        try {
+            $path        = $request->file('file')->getRealPath();
+            $spreadsheet = IOFactory::load($path);
+            $rows        = $spreadsheet->getActiveSheet()->toArray(null, true, true, false);
+
+            $items = [];
+            foreach (array_slice($rows, 1) as $row) {
+                $val = trim((string) ($row[1] ?? ''));
+                if ($val !== '' && count($items) < 100) {
+                    $items[] = $val;
+                }
+            }
+
+            if (empty($items)) {
+                return response()->json([
+                    'message' => 'Tidak ada data yang ditemukan. Pastikan data berada di kolom B mulai baris ke-2.',
+                ], 422);
+            }
+
+            return response()->json(['items' => $items, 'count' => count($items)]);
+        } catch (\Throwable) {
+            return response()->json([
+                'message' => 'File tidak valid atau rusak. Gunakan template yang tersedia.',
+            ], 422);
+        }
+    }
+
+    public function importIndikator(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:5120',
+        ], [
+            'file.required' => 'Pilih file Excel terlebih dahulu.',
+            'file.mimes'    => 'Format file harus xlsx, xls, atau csv.',
+            'file.max'      => 'Ukuran file maksimal 5 MB.',
+        ]);
+
+        try {
+            $path        = $request->file('file')->getRealPath();
+            $spreadsheet = IOFactory::load($path);
+            $rows        = $spreadsheet->getActiveSheet()->toArray(null, true, true, false);
+
+            $items = [];
+            foreach (array_slice($rows, 1) as $row) {
+                $val = trim((string) ($row[1] ?? ''));
+                if ($val !== '' && count($items) < 100) {
+                    $items[] = $val;
+                }
+            }
+
+            if (empty($items)) {
+                return response()->json([
+                    'message' => 'Tidak ada data yang ditemukan. Pastikan data berada di kolom B mulai baris ke-2.',
+                ], 422);
+            }
+
+            return response()->json(['items' => $items, 'count' => count($items)]);
+        } catch (\Throwable) {
+            return response()->json([
+                'message' => 'File tidak valid atau rusak. Gunakan template yang tersedia.',
+            ], 422);
+        }
     }
 
     private function syncNested(UkkInstrumen $instrumen, array $validated): void

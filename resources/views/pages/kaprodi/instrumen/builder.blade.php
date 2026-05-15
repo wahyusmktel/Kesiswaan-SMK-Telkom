@@ -81,14 +81,115 @@
         font-size: .7rem; font-weight: 800; flex-shrink: 0;
     }
     input[type="range"] { accent-color: #7c3aed; }
+
+    /* Import modal */
+    .import-modal-backdrop {
+        position: fixed; inset: 0;
+        background: rgba(0,0,0,.55);
+        backdrop-filter: blur(3px);
+        z-index: 9800;
+        display: flex; align-items: center; justify-content: center;
+        padding: 1rem;
+    }
+    .import-modal-box {
+        background: #fff;
+        border-radius: 1.25rem;
+        box-shadow: 0 25px 60px rgba(0,0,0,.25);
+        width: 100%;
+        max-width: 540px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        max-height: 90vh;
+    }
+    .import-modal-box.maximized {
+        position: fixed !important;
+        inset: 0 !important;
+        max-width: 100vw !important;
+        max-height: 100vh !important;
+        border-radius: 0 !important;
+        width: 100vw !important;
+    }
+    .import-modal-box.positioned {
+        position: fixed;
+    }
+    .import-modal-header {
+        display: flex; align-items: center; gap: .625rem;
+        padding: .875rem 1rem .875rem 1.25rem;
+        flex-shrink: 0;
+        border-bottom: 1px solid #e5e7eb;
+        user-select: none;
+    }
+    .import-modal-body {
+        padding: 1.25rem;
+        overflow-y: auto;
+        flex: 1;
+    }
+    .import-modal-footer {
+        padding: 1rem 1.25rem;
+        border-top: 1px solid #e5e7eb;
+        display: flex; align-items: center; gap: .75rem;
+        flex-shrink: 0;
+    }
+    .panduan-box {
+        background: #f0f9ff;
+        border: 1px solid #bae6fd;
+        border-radius: .75rem;
+        padding: .875rem 1rem;
+        margin-bottom: 1rem;
+    }
+    .panduan-box p { font-size: .8rem; color: #0c4a6e; }
+    .panduan-box ul { margin: .4rem 0 0 1rem; font-size: .78rem; color: #0369a1; }
+    .panduan-box ul li { margin-bottom: .2rem; list-style: disc; }
+    .file-drop-zone {
+        border: 2px dashed #c7d2fe;
+        border-radius: .875rem;
+        padding: 1.25rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all .2s;
+        background: #f5f7ff;
+    }
+    .file-drop-zone:hover, .file-drop-zone.has-file { border-color: #6366f1; background: #eef2ff; }
+    .file-drop-zone input[type=file] { display: none; }
+    .btn-template {
+        display: inline-flex; align-items: center; gap: .5rem;
+        padding: .5rem .875rem;
+        background: #ecfdf5; border: 1px solid #6ee7b7;
+        border-radius: .625rem; color: #065f46;
+        font-size: .78rem; font-weight: 700;
+        cursor: pointer; transition: all .15s; text-decoration: none;
+    }
+    .btn-template:hover { background: #d1fae5; border-color: #059669; }
+    .btn-import-soal {
+        display: inline-flex; align-items: center; gap: .375rem;
+        padding: .375rem .75rem;
+        background: #eff6ff; border: 1px solid #93c5fd;
+        border-radius: .625rem; color: #1d4ed8;
+        font-size: .7rem; font-weight: 700; cursor: pointer;
+        transition: all .15s; flex-shrink: 0;
+    }
+    .btn-import-soal:hover { background: #dbeafe; border-color: #3b82f6; }
+    .btn-import-ind {
+        display: inline-flex; align-items: center; gap: .25rem;
+        padding: .3rem .625rem;
+        background: #f0fdf4; border: 1px solid #86efac;
+        border-radius: .5rem; color: #166534;
+        font-size: .65rem; font-weight: 700; cursor: pointer;
+        transition: all .15s; flex-shrink: 0;
+    }
+    .btn-import-ind:hover { background: #dcfce7; border-color: #22c55e; }
 </style>
 
-<div x-data="instrumenBuilder()" x-init="init()" class="min-h-screen bg-slate-50">
+<div x-data="instrumenBuilder()"
+     x-init="init()"
+     @mousemove.window="onImportDrag($event)"
+     @mouseup.window="stopImportDrag()"
+     class="min-h-screen bg-slate-50">
 
     {{-- ═══ STICKY HEADER ═══ --}}
     <div class="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
         <div class="flex items-center gap-3 px-4 py-3 max-w-screen-2xl mx-auto">
-            {{-- Back --}}
             <a href="{{ route('kaprodi.ukk.instrumen.index') }}"
                 class="flex-shrink-0 w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
                 <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -96,12 +197,10 @@
                 </svg>
             </a>
 
-            {{-- Instrument name --}}
             <input x-model="form.nama_instrumen" type="text"
                 placeholder="Nama Instrumen Penilaian…"
                 class="flex-1 text-lg font-black text-gray-900 border-0 border-b-2 border-transparent focus:border-violet-500 focus:outline-none bg-transparent py-1 transition-colors placeholder-gray-300">
 
-            {{-- UKK Ujian select --}}
             <select x-model="form.ukk_ujian_id"
                 class="hidden sm:block text-sm font-bold border border-gray-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-violet-400 text-gray-700 max-w-[220px]">
                 <option value="">— Pilih Ujian UKK —</option>
@@ -110,7 +209,6 @@
                 @endforeach
             </select>
 
-            {{-- Save --}}
             <button @click="save()" :disabled="saving"
                 class="flex-shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-black rounded-xl shadow-md hover:from-violet-500 hover:to-indigo-500 transition-all disabled:opacity-50 text-sm">
                 <svg x-show="saving" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
@@ -121,7 +219,6 @@
             </button>
         </div>
 
-        {{-- UKK Ujian (mobile) --}}
         <div class="sm:hidden px-4 pb-2">
             <select x-model="form.ukk_ujian_id"
                 class="w-full text-sm font-bold border border-gray-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-violet-400 text-gray-700">
@@ -132,7 +229,6 @@
             </select>
         </div>
 
-        {{-- BOBOT BAR --}}
         <div class="px-4 pb-3 max-w-screen-2xl mx-auto">
             <div class="flex items-center gap-3">
                 <span class="text-xs font-black text-gray-500 w-20 shrink-0">Bobot Akhir</span>
@@ -173,7 +269,6 @@
         ══════════════════════════════════════ --}}
         <div class="builder-section flex flex-col">
 
-            {{-- Section header --}}
             <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-xl bg-blue-500 flex items-center justify-center text-white text-lg">📝</div>
@@ -182,7 +277,6 @@
                         <p class="text-xs text-gray-400">Tanya jawab / tes tertulis &middot; Penilaian Benar / Salah</p>
                     </div>
                 </div>
-                {{-- Bobot input --}}
                 <div class="flex items-center gap-2 shrink-0">
                     <span class="text-xs font-bold text-gray-500">Bobot</span>
                     <div class="flex items-center gap-1">
@@ -194,7 +288,6 @@
                 </div>
             </div>
 
-            {{-- Bobot slider --}}
             <div class="px-5 py-3 border-b border-gray-100 bg-blue-50/40">
                 <input type="range" min="0" max="100" x-model.number="form.bobot_pengetahuan" class="w-full">
                 <div class="flex justify-between text-[10px] text-gray-400 font-semibold mt-0.5">
@@ -202,14 +295,19 @@
                 </div>
             </div>
 
-            {{-- Legend --}}
-            <div class="flex gap-2 px-5 py-2.5 border-b border-gray-100 bg-gray-50/60 flex-wrap">
+            <div class="flex gap-2 px-5 py-2.5 border-b border-gray-100 bg-gray-50/60 flex-wrap items-center">
                 <span class="bobot-pill bg-emerald-100 text-emerald-700">✓ Benar — 1 poin</span>
                 <span class="bobot-pill bg-red-100 text-red-700">✗ Salah — 0 poin</span>
-                <span class="text-xs text-gray-400 self-center ml-auto"><span class="font-bold text-blue-600" x-text="form.soal_pengetahuan.length"></span> soal ditambahkan</span>
+                <span class="text-xs text-gray-400 ml-auto self-center"><span class="font-bold text-blue-600" x-text="form.soal_pengetahuan.length"></span> soal</span>
+                {{-- Import button --}}
+                <button @click="openImportModal('soal')" class="btn-import-soal">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                    </svg>
+                    Import Excel
+                </button>
             </div>
 
-            {{-- Question list --}}
             <div class="p-4 flex-1 flex flex-col gap-2 overflow-y-auto" style="min-height:240px; max-height:520px">
                 <template x-for="(soal, i) in form.soal_pengetahuan" :key="soal._key">
                     <div class="soal-row">
@@ -223,11 +321,10 @@
                 </template>
 
                 <div x-show="form.soal_pengetahuan.length === 0" class="flex-1 flex items-center justify-center py-8 text-gray-400 text-sm">
-                    Belum ada soal. Klik tombol di bawah untuk menambahkan.
+                    Belum ada soal. Tambahkan manual atau import dari Excel.
                 </div>
             </div>
 
-            {{-- Add soal --}}
             <div class="p-4 border-t border-gray-100">
                 <button @click="addSoal()" class="btn-add">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -243,7 +340,6 @@
         ══════════════════════════════════════ --}}
         <div class="builder-section flex flex-col">
 
-            {{-- Section header --}}
             <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-emerald-50 to-teal-50">
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-xl bg-emerald-500 flex items-center justify-center text-white text-lg">⚙️</div>
@@ -252,13 +348,11 @@
                         <p class="text-xs text-gray-400">Nilai 0–3 per indikator &middot; Bobot otomatis</p>
                     </div>
                 </div>
-                {{-- Auto bobot --}}
                 <div class="flex items-center gap-1 shrink-0 px-3 py-1.5 bg-emerald-100 rounded-xl">
                     <span class="text-sm font-black text-emerald-700" x-text="bobot_keterampilan + '%'"></span>
                 </div>
             </div>
 
-            {{-- Scoring guide --}}
             <div class="flex gap-1.5 px-4 py-2.5 border-b border-gray-100 bg-gray-50/60 flex-wrap">
                 <span class="score-chip bg-gray-100 text-gray-500 text-[10px]">0 Belum</span>
                 <span class="score-chip bg-amber-100 text-amber-700 text-[10px]">1 Cukup</span>
@@ -272,12 +366,10 @@
                 </span>
             </div>
 
-            {{-- Categories --}}
             <div class="p-4 flex-1 flex flex-col gap-3 overflow-y-auto" style="max-height:600px">
                 <template x-for="(kat, ki) in form.kategori_keterampilan" :key="kat._key">
                     <div class="kategori-card">
 
-                        {{-- Category header --}}
                         <div class="kategori-header">
                             <div class="w-7 h-7 rounded-lg bg-violet-600 text-white flex items-center justify-center text-xs font-black shrink-0"
                                 x-text="ki+1"></div>
@@ -285,7 +377,6 @@
                                 placeholder="Nama Kategori…"
                                 class="flex-1 font-black text-sm text-gray-800 bg-transparent border-0 border-b border-violet-300/50 focus:border-violet-500 focus:outline-none py-0.5 placeholder-violet-300 min-w-0">
 
-                            {{-- Bobot input per kategori --}}
                             <div class="flex items-center gap-1 shrink-0">
                                 <span class="text-xs text-violet-600 font-bold">Bobot</span>
                                 <input x-model.number="kat.bobot" type="number" min="0" max="100"
@@ -293,11 +384,17 @@
                                 <span class="text-xs font-black text-violet-600">%</span>
                             </div>
 
-                            {{-- Delete category --}}
+                            {{-- Import indikator button per kategori --}}
+                            <button @click="openImportModal('indikator', ki, kat.nama_kategori)" class="btn-import-ind" title="Import indikator dari Excel">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                </svg>
+                                Import
+                            </button>
+
                             <button @click="removeKategori(ki)" class="del-btn" title="Hapus kategori">&times;</button>
                         </div>
 
-                        {{-- Bobot mini-bar --}}
                         <div class="px-4 pt-2 pb-1 bg-white">
                             <div class="bobot-bar-track">
                                 <div class="h-full rounded-full bg-violet-500 transition-all duration-300"
@@ -305,7 +402,6 @@
                             </div>
                         </div>
 
-                        {{-- Indicators (scrollable) --}}
                         <div class="px-3 pt-2 pb-1 bg-white flex flex-col gap-1.5 overflow-y-auto" style="max-height:200px">
                             <template x-for="(ind, ii) in kat.indikator" :key="ind._key">
                                 <div class="indikator-row">
@@ -313,7 +409,6 @@
                                     <input x-model="ind.nama_indikator" type="text"
                                         :placeholder="'Indikator ' + (ii+1) + '…'"
                                         class="flex-1 text-sm text-gray-700 bg-transparent border-0 focus:outline-none">
-                                    {{-- Score chips preview --}}
                                     <div class="flex gap-0.5 shrink-0">
                                         <span class="score-chip bg-gray-100 text-gray-500" style="width:1.4rem;height:1.4rem;font-size:.6rem">0</span>
                                         <span class="score-chip bg-amber-100 text-amber-600" style="width:1.4rem;height:1.4rem;font-size:.6rem">1</span>
@@ -325,11 +420,10 @@
                             </template>
 
                             <div x-show="kat.indikator.length === 0" class="text-xs text-gray-400 text-center py-2 italic">
-                                Belum ada indikator untuk kategori ini.
+                                Belum ada indikator. Tambahkan manual atau import dari Excel.
                             </div>
                         </div>
 
-                        {{-- Add indicator — always pinned at bottom of card --}}
                         <div class="indikator-add-btn px-3 pb-3 pt-2 bg-white border-t border-gray-100">
                             <button @click="addIndikator(ki)" class="btn-add" style="border-color:#a7f3d0;color:#059669">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -346,7 +440,6 @@
                 </div>
             </div>
 
-            {{-- Bobot warning --}}
             <div x-show="form.kategori_keterampilan.length > 0 && total_bobot_kategori !== 100"
                 class="mx-4 mb-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 font-semibold flex items-center gap-2">
                 <span class="text-base">⚠️</span>
@@ -355,7 +448,6 @@
                 (selisih: <span x-text="(100 - total_bobot_kategori) + '%'"></span>)
             </div>
 
-            {{-- Add category --}}
             <div class="p-4 border-t border-gray-100">
                 <button @click="addKategori()" class="btn-add" style="border-color:#6ee7b7;color:#059669">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -393,14 +485,189 @@
         </div>
     </div>
 
+    {{-- ═══════════════════════════════════════════════════
+         IMPORT MODAL (shared for soal & indikator)
+    ═══════════════════════════════════════════════════ --}}
+    <template x-if="importModal.open">
+        <div class="import-modal-backdrop" style="z-index:9800">
+
+            <div x-ref="importModalBox"
+                 class="import-modal-box"
+                 :class="{
+                     'maximized': importModal.maximized,
+                     'positioned': !importModal.maximized && importModal.pos.x !== null
+                 }"
+                 :style="!importModal.maximized && importModal.pos.x !== null
+                     ? 'left:' + importModal.pos.x + 'px; top:' + importModal.pos.y + 'px; width:540px;'
+                     : ''">
+
+                {{-- ── Header (drag handle) ── --}}
+                <div class="import-modal-header"
+                     :class="!importModal.maximized ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'"
+                     @mousedown="startImportDrag($event)"
+                     :style="importModal.type === 'soal'
+                         ? 'background:linear-gradient(to right,#eff6ff,#dbeafe);border-bottom:1px solid #bfdbfe'
+                         : 'background:linear-gradient(to right,#f0fdf4,#dcfce7);border-bottom:1px solid #86efac'">
+
+                    <div class="w-8 h-8 rounded-xl flex items-center justify-center text-white text-base flex-shrink-0"
+                         :class="importModal.type === 'soal' ? 'bg-blue-500' : 'bg-emerald-500'">
+                        📥
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-black text-gray-900 text-sm truncate"
+                           x-text="importModal.type === 'soal' ? 'Import Soal Pengetahuan' : 'Import Indikator — ' + (importModal.katName || 'Kategori')"></p>
+                        <p class="text-[11px] text-gray-500"
+                           x-text="importModal.type === 'soal' ? 'Upload file Excel berisi daftar soal' : 'Upload file Excel berisi daftar indikator keterampilan'"></p>
+                    </div>
+
+                    {{-- Maximize button --}}
+                    <button @click="toggleImportMaximize()"
+                        class="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:bg-white/60 hover:text-gray-700 transition-colors flex-shrink-0"
+                        :title="importModal.maximized ? 'Kembalikan ukuran' : 'Perbesar'"
+                        @mousedown.stop>
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <template x-if="!importModal.maximized">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+                            </template>
+                            <template x-if="importModal.maximized">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"/>
+                            </template>
+                        </svg>
+                    </button>
+
+                    {{-- Close button (only way to close) --}}
+                    <button @click="closeImportModal()"
+                        class="w-7 h-7 rounded-lg flex items-center justify-center bg-red-100 text-red-500 hover:bg-red-500 hover:text-white transition-colors flex-shrink-0 font-black text-base"
+                        title="Tutup modal"
+                        @mousedown.stop>
+                        &times;
+                    </button>
+                </div>
+
+                {{-- ── Body ── --}}
+                <div class="import-modal-body">
+
+                    {{-- Panduan --}}
+                    <div class="panduan-box">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-base">ℹ️</span>
+                            <p class="font-black text-[#0c4a6e] text-xs uppercase tracking-wide">Panduan Import Excel</p>
+                        </div>
+                        <ul>
+                            <li>Gunakan template Excel yang tersedia agar format sesuai.</li>
+                            <li x-show="importModal.type === 'soal'">Isi kolom <strong>B</strong> (Pertanyaan) mulai dari baris ke-2 (baris pertama adalah header).</li>
+                            <li x-show="importModal.type === 'indikator'">Isi kolom <strong>B</strong> (Nama Indikator) mulai dari baris ke-2 (baris pertama adalah header).</li>
+                            <li>Kolom <strong>A</strong> (No) bersifat opsional, bisa dikosongkan.</li>
+                            <li>Setiap baris yang tidak kosong akan diimpor sebagai satu item baru.</li>
+                            <li>Maksimal <strong>100 baris</strong> per import. Format: <strong>.xlsx, .xls, .csv</strong> (maks. 5 MB).</li>
+                            <li>Data yang diimport akan <strong>ditambahkan</strong> ke data yang sudah ada (tidak menggantikan).</li>
+                        </ul>
+                    </div>
+
+                    {{-- Download template --}}
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="text-xs text-gray-500 font-semibold">Unduh template:</span>
+                        <template x-if="importModal.type === 'soal'">
+                            <a href="{{ route('kaprodi.ukk.instrumen.template-soal') }}"
+                                target="_blank" class="btn-template" @mousedown.stop>
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                </svg>
+                                Template Soal Pengetahuan.xlsx
+                            </a>
+                        </template>
+                        <template x-if="importModal.type === 'indikator'">
+                            <a :href="'{{ route('kaprodi.ukk.instrumen.template-indikator') }}' + '?kategori=' + encodeURIComponent(importModal.katName)"
+                                target="_blank" class="btn-template" @mousedown.stop>
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                </svg>
+                                Template Indikator Keterampilan.xlsx
+                            </a>
+                        </template>
+                    </div>
+
+                    {{-- File upload zone --}}
+                    <div class="file-drop-zone"
+                         :class="importModal.fileName ? 'has-file' : ''"
+                         @click="$refs.fileInput.click()">
+                        <input type="file" x-ref="fileInput"
+                            accept=".xlsx,.xls,.csv"
+                            @change="handleFileSelect($event)">
+
+                        <template x-if="!importModal.fileName">
+                            <div>
+                                <div class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center mx-auto mb-2">
+                                    <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                    </svg>
+                                </div>
+                                <p class="text-sm font-bold text-gray-600">Klik untuk memilih file</p>
+                                <p class="text-xs text-gray-400 mt-0.5">atau drag & drop di sini</p>
+                                <p class="text-[10px] text-gray-300 mt-1">.xlsx, .xls, .csv · maks. 5 MB</p>
+                            </div>
+                        </template>
+
+                        <template x-if="importModal.fileName">
+                            <div class="flex items-center justify-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </div>
+                                <div class="text-left">
+                                    <p class="text-sm font-black text-gray-800" x-text="importModal.fileName"></p>
+                                    <p class="text-xs text-emerald-600 font-semibold">File siap diimport · klik untuk ganti</p>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    {{-- Error --}}
+                    <div x-show="importModal.fileError" class="mt-3 flex items-start gap-2 p-3 rounded-xl bg-red-50 border border-red-200">
+                        <span class="text-red-500 text-base flex-shrink-0">❌</span>
+                        <p class="text-xs text-red-700 font-semibold" x-text="importModal.fileError"></p>
+                    </div>
+
+                </div>
+
+                {{-- ── Footer ── --}}
+                <div class="import-modal-footer">
+                    <button @click="closeImportModal()"
+                        class="flex-1 py-2.5 border-2 border-gray-200 text-gray-600 font-bold rounded-xl text-sm hover:bg-gray-50 transition-colors">
+                        Batal
+                    </button>
+                    <button @click="doImport()"
+                        :disabled="importModal.uploading || !importModal.fileName"
+                        :class="importModal.fileName && !importModal.uploading
+                            ? (importModal.type === 'soal' ? 'bg-blue-600 hover:bg-blue-500' : 'bg-emerald-600 hover:bg-emerald-500')
+                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'"
+                        class="flex-1 py-2.5 text-white font-black rounded-xl text-sm transition-all inline-flex items-center justify-center gap-2">
+                        <svg x-show="importModal.uploading" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                        </svg>
+                        <span x-text="importModal.uploading ? 'Memproses…' : '📥 Import Sekarang'"></span>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </template>
+
 </div>
 
 @push('scripts')
 <script>
 function instrumenBuilder() {
-    const INITIAL   = @json($initialData);
-    const IS_EDIT   = @json($instrumen ? true : false);
+    const INITIAL      = @json($initialData);
+    const IS_EDIT      = @json($instrumen ? true : false);
     const INSTRUMEN_ID = @json($instrumen?->id);
+
+    const IMPORT_SOAL_URL      = '{{ route("kaprodi.ukk.instrumen.import-soal") }}';
+    const IMPORT_INDIKATOR_URL = '{{ route("kaprodi.ukk.instrumen.import-indikator") }}';
 
     let keySeq = 0;
     const mk = () => ++keySeq;
@@ -426,6 +693,21 @@ function instrumenBuilder() {
             bobot_pengetahuan:     INITIAL.bobot_pengetahuan ?? 30,
             soal_pengetahuan:      mapSoal(INITIAL.soal_pengetahuan),
             kategori_keterampilan: mapKat(INITIAL.kategori_keterampilan),
+        },
+
+        // ── Import modal state ──
+        importModal: {
+            open:       false,
+            type:       'soal',   // 'soal' | 'indikator'
+            katIdx:     null,
+            katName:    '',
+            maximized:  false,
+            dragging:   false,
+            pos:        { x: null, y: null },
+            dragOffset: { x: 0, y: 0 },
+            uploading:  false,
+            fileName:   null,
+            fileError:  null,
         },
 
         get bobot_keterampilan() {
@@ -475,6 +757,123 @@ function instrumenBuilder() {
         },
         removeIndikator(ki, ii) {
             this.form.kategori_keterampilan[ki].indikator.splice(ii, 1);
+        },
+
+        // ── Import Modal ──
+        openImportModal(type, katIdx = null, katName = '') {
+            this.importModal.open      = true;
+            this.importModal.type      = type;
+            this.importModal.katIdx    = katIdx;
+            this.importModal.katName   = katName || '';
+            this.importModal.maximized = false;
+            this.importModal.uploading = false;
+            this.importModal.fileName  = null;
+            this.importModal.fileError = null;
+            this.importModal.pos       = { x: null, y: null };
+            this.$nextTick(() => {
+                if (this.$refs.fileInput) this.$refs.fileInput.value = '';
+            });
+        },
+
+        closeImportModal() {
+            this.importModal.open = false;
+        },
+
+        toggleImportMaximize() {
+            this.importModal.maximized = !this.importModal.maximized;
+            if (this.importModal.maximized) {
+                this.importModal.pos = { x: null, y: null };
+            }
+        },
+
+        startImportDrag(e) {
+            if (this.importModal.maximized) return;
+            this.importModal.dragging = true;
+            const box = this.$refs.importModalBox;
+            const rect = box.getBoundingClientRect();
+            this.importModal.pos       = { x: rect.left, y: rect.top };
+            this.importModal.dragOffset = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+        },
+
+        onImportDrag(e) {
+            if (!this.importModal.dragging) return;
+            const maxX = window.innerWidth  - 100;
+            const maxY = window.innerHeight - 60;
+            this.importModal.pos.x = Math.max(0, Math.min(e.clientX - this.importModal.dragOffset.x, maxX));
+            this.importModal.pos.y = Math.max(0, Math.min(e.clientY - this.importModal.dragOffset.y, maxY));
+        },
+
+        stopImportDrag() {
+            this.importModal.dragging = false;
+        },
+
+        handleFileSelect(e) {
+            const file = e.target.files?.[0];
+            this.importModal.fileError = null;
+            this.importModal.fileName  = file ? file.name : null;
+        },
+
+        async doImport() {
+            if (!this.$refs.fileInput?.files?.[0]) {
+                this.importModal.fileError = 'Pilih file Excel terlebih dahulu.';
+                return;
+            }
+
+            const file = this.$refs.fileInput.files[0];
+            if (file.size > 5 * 1024 * 1024) {
+                this.importModal.fileError = 'Ukuran file terlalu besar (maks. 5 MB).';
+                return;
+            }
+
+            this.importModal.uploading  = true;
+            this.importModal.fileError  = null;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const url = this.importModal.type === 'soal' ? IMPORT_SOAL_URL : IMPORT_INDIKATOR_URL;
+
+            try {
+                const res  = await fetch(url, {
+                    method:  'POST',
+                    headers: {
+                        'Accept':           'application/json',
+                        'X-CSRF-TOKEN':     document.querySelector('meta[name="csrf-token"]').content,
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: formData,
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    this.importModal.fileError = data.message || 'Terjadi kesalahan saat memproses file.';
+                    return;
+                }
+
+                const items  = data.items || [];
+                const count  = items.length;
+                const type   = this.importModal.type;
+                const katIdx = this.importModal.katIdx;
+
+                if (type === 'soal') {
+                    const newSoal = items.map(p => ({ _key: mk(), id: null, pertanyaan: p }));
+                    this.form.soal_pengetahuan.push(...newSoal);
+                } else {
+                    const newInd = items.map(n => ({ _key: mk(), id: null, nama_indikator: n }));
+                    this.form.kategori_keterampilan[katIdx].indikator.push(...newInd);
+                }
+
+                this.closeImportModal();
+                this.toast(
+                    'Berhasil mengimport ' + count + ' ' + (type === 'soal' ? 'soal pengetahuan' : 'indikator keterampilan') + '.',
+                    'success'
+                );
+
+            } catch {
+                this.importModal.fileError = 'Koneksi gagal. Silakan coba lagi.';
+            } finally {
+                this.importModal.uploading = false;
+            }
         },
 
         // ── Validate & Save ──
@@ -554,7 +953,6 @@ function instrumenBuilder() {
 
                 this.toast(data.message, 'success');
 
-                // Jika baru dibuat, redirect ke edit page
                 if (!IS_EDIT && data.instrumen_id) {
                     setTimeout(() => {
                         window.location.href = '/kaprodi/ukk/instrumen/' + data.instrumen_id + '/edit';

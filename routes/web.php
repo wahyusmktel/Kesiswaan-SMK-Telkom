@@ -894,7 +894,11 @@ Route::middleware(['auth', 'role:Kaprodi'])->prefix('kaprodi')->name('kaprodi.')
         // Set Instrumen Penilaian
         Route::get('/instrumen', [\App\Http\Controllers\Kaprodi\InstrumenController::class, 'index'])->name('instrumen.index');
         Route::get('/instrumen/create', [\App\Http\Controllers\Kaprodi\InstrumenController::class, 'create'])->name('instrumen.create');
+        Route::get('/instrumen/template-soal', [\App\Http\Controllers\Kaprodi\InstrumenController::class, 'downloadTemplateSoal'])->name('instrumen.template-soal');
+        Route::get('/instrumen/template-indikator', [\App\Http\Controllers\Kaprodi\InstrumenController::class, 'downloadTemplateIndikator'])->name('instrumen.template-indikator');
         Route::post('/instrumen', [\App\Http\Controllers\Kaprodi\InstrumenController::class, 'store'])->name('instrumen.store');
+        Route::post('/instrumen/import-soal', [\App\Http\Controllers\Kaprodi\InstrumenController::class, 'importSoal'])->name('instrumen.import-soal');
+        Route::post('/instrumen/import-indikator', [\App\Http\Controllers\Kaprodi\InstrumenController::class, 'importIndikator'])->name('instrumen.import-indikator');
         Route::get('/instrumen/{instrumen}/edit', [\App\Http\Controllers\Kaprodi\InstrumenController::class, 'edit'])->name('instrumen.edit');
         Route::put('/instrumen/{instrumen}', [\App\Http\Controllers\Kaprodi\InstrumenController::class, 'update'])->name('instrumen.update');
         Route::delete('/instrumen/{instrumen}', [\App\Http\Controllers\Kaprodi\InstrumenController::class, 'destroy'])->name('instrumen.destroy');
