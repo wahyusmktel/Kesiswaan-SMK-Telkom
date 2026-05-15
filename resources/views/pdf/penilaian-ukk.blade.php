@@ -8,249 +8,245 @@
         * { box-sizing: border-box; }
         body {
             font-family: 'DejaVu Sans', sans-serif;
-            color: #111827;
-            font-size: 9.5pt;
+            color: #1e293b;
+            font-size: 9pt;
             margin: 0;
             padding: 0;
+            letter-spacing: -.05px;
         }
 
         /* ── KOP ── */
         .kop { width: 100%; margin: 0; padding: 0; }
-        .kop img {
-            width: 100%;
-            height: 90px;
-            display: block;
-        }
+        .kop img { width: 100%; height: 90px; display: block; }
         .kop-text {
-            background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
-            padding: 14px 24px 12px;
+            background: #1e293b;
+            padding: 13px 24px 11px;
             color: #fff;
             text-align: center;
         }
-        .kop-text h1 { margin: 0 0 3px; font-size: 14pt; font-weight: 900; letter-spacing: .5px; }
-        .kop-text p  { margin: 0; font-size: 8pt; opacity: .88; }
-        .kop-divider { height: 3px; background: #1e3a5f; margin: 0; }
+        .kop-text h1 { margin: 0 0 3px; font-size: 13pt; font-weight: 900; }
+        .kop-text p  { margin: 0; font-size: 8pt; color: #cbd5e1; }
+        .kop-divider { height: 3px; background: #94a3b8; margin: 0; }
 
         /* ── CONTENT ── */
-        .content { padding: 16px 24px 14px; }
+        .content { padding: 15px 24px 14px; }
 
-        /* ── TITLE BLOCK ── */
+        /* ── TITLE ── */
         .title-block {
             text-align: center;
-            border-bottom: 2px solid #111827;
-            padding-bottom: 10px;
             margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1.5px solid #1e293b;
         }
         .title-block h2 {
-            font-size: 12pt;
+            font-size: 11.5pt;
             font-weight: 900;
             text-transform: uppercase;
-            letter-spacing: .5px;
+            letter-spacing: .4px;
             margin: 0 0 2px;
+            color: #0f172a;
         }
         .title-block p {
             font-size: 9pt;
             font-weight: 600;
             margin: 0;
-            color: #374151;
+            color: #475569;
         }
 
         /* ── INFO TABLE ── */
-        .info-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; font-size: 9pt; }
-        .info-table td { padding: 2.5px 0; vertical-align: top; }
-        .info-table .lbl { width: 135px; font-weight: 700; color: #374151; }
-        .info-table .sep { width: 14px; text-align: center; color: #6b7280; }
-        .info-divider { height: 1px; background: #e5e7eb; margin: 8px 0; }
+        .info-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 8.5pt; }
+        .info-table td { padding: 2px 0; vertical-align: top; }
+        .info-table .lbl { width: 132px; font-weight: 700; color: #475569; }
+        .info-table .sep { width: 12px; text-align: center; color: #94a3b8; }
+        .info-divider { height: 1px; background: #e2e8f0; margin: 7px 0; }
 
         /* ── SECTION HEAD ── */
         .section-head {
-            font-size: 9.5pt;
+            font-size: 9pt;
             font-weight: 900;
             text-transform: uppercase;
             letter-spacing: .4px;
-            background: #1e3a5f;
-            color: #fff;
-            padding: 5px 10px;
+            color: #0f172a;
+            padding: 4px 8px 4px 10px;
+            border-left: 3px solid #334155;
+            background: #f1f5f9;
             margin: 14px 0 8px;
-            border-radius: 4px;
         }
 
         /* ── INSTRUMEN BLOCK ── */
         .instrumen-block {
-            border: 1px solid #d1d5db;
-            border-radius: 5px;
-            margin-bottom: 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            margin-bottom: 13px;
             overflow: hidden;
         }
         .instrumen-head {
-            background: #f3f4f6;
-            border-bottom: 1px solid #d1d5db;
+            background: #f8fafc;
+            border-bottom: 1px solid #cbd5e1;
             padding: 6px 10px;
             font-weight: 900;
-            font-size: 9.5pt;
-            color: #111827;
+            font-size: 9pt;
+            color: #0f172a;
         }
-        .instrumen-head small {
-            font-size: 8pt;
-            font-weight: 600;
-            color: #6b7280;
-        }
+        .instrumen-head small { font-size: 7.5pt; font-weight: 500; color: #64748b; }
         .instrumen-inner { padding: 10px; }
 
         /* ── ASPECT HEAD ── */
         .aspect-head {
-            font-size: 9pt;
+            font-size: 8.5pt;
             font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: .3px;
             padding: 4px 8px;
             border-left: 3px solid;
             margin: 10px 0 6px;
         }
-        .aspect-head.p { border-color: #2563eb; color: #1d4ed8; background: #eff6ff; }
-        .aspect-head.k { border-color: #059669; color: #065f46; background: #f0fdf4; }
+        .aspect-head.p { border-color: #3b82f6; color: #1d4ed8; background: #f0f7ff; }
+        .aspect-head.k { border-color: #22c55e; color: #166534; background: #f0fdf4; }
 
         /* ── PENGETAHUAN TABLE ── */
-        .soal-table { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
+        .soal-table { width: 100%; border-collapse: collapse; font-size: 8pt; }
         .soal-table th {
-            background: #1d4ed8;
-            color: #fff;
-            border: 1px solid #1d4ed8;
+            background: #f0f7ff;
+            color: #1e3a5f;
+            border: 1px solid #bfdbfe;
             padding: 4px 6px;
             font-weight: 800;
             text-align: center;
-            line-height: 1.3;
+            font-size: 7.5pt;
         }
         .soal-table th.left { text-align: left; }
         .soal-table td {
-            border: 1px solid #d1d5db;
+            border: 1px solid #e2e8f0;
             padding: 4px 6px;
             vertical-align: middle;
         }
         .soal-table td.center { text-align: center; }
         .soal-table tbody tr:nth-child(even) td { background: #f8fafc; }
         .soal-table .foot-row td {
-            background: #dbeafe;
+            background: #e0f0ff;
             font-weight: 800;
             color: #1e40af;
+            border-color: #bfdbfe;
         }
+        .chk { font-size: 11pt; font-weight: 900; color: #0f172a; }
 
         /* ── KETERAMPILAN TABLE ── */
-        .ket-table { width: 100%; border-collapse: collapse; font-size: 8pt; }
+        .ket-table { width: 100%; border-collapse: collapse; font-size: 7.5pt; }
         .ket-table th {
-            background: #065f46;
-            color: #fff;
-            border: 1px solid #065f46;
+            background: #f0fdf4;
+            color: #166534;
+            border: 1px solid #bbf7d0;
             padding: 4px 5px;
             font-weight: 800;
             text-align: center;
+            font-size: 7.5pt;
             line-height: 1.25;
         }
-        .ket-table th.ya-head { background: #047857; border-color: #047857; }
-        .ket-table th.score-row {
-            background: #d1fae5;
-            color: #065f46;
+        .ket-table th.ya-sub {
+            background: #dcfce7;
+            color: #14532d;
+            border-color: #86efac;
+        }
+        .ket-table th.score-num {
+            background: #ecfdf5;
+            color: #15803d;
+            border-color: #bbf7d0;
             font-size: 8pt;
             font-weight: 900;
-            border-color: #6ee7b7;
         }
         .ket-table td {
-            border: 1px solid #d1d5db;
+            border: 1px solid #e2e8f0;
             padding: 4px 5px;
             vertical-align: middle;
         }
         .ket-table td.center { text-align: center; }
-        .ket-table tbody tr:nth-child(even) td { background: #f8fafb; }
+        .ket-table tbody tr:nth-child(even) td { background: #f8fafc; }
         .kat-row td {
-            background: #e5e7eb !important;
+            background: #f1f5f9 !important;
             font-weight: 800;
-            font-size: 8.5pt;
+            font-size: 8pt;
             padding: 5px 6px;
+            color: #0f172a;
+            border-color: #cbd5e1;
         }
         .rerata-row td {
-            background: #ecfdf5 !important;
-            font-weight: 700;
+            background: #f0fdf4 !important;
             font-style: italic;
-            font-size: 7.5pt;
-            color: #065f46;
+            font-size: 7pt;
+            color: #166534;
+            border-color: #d1fae5;
         }
         .ket-foot-row td {
-            background: #d1fae5 !important;
+            background: #dcfce7 !important;
             font-weight: 900;
-            color: #065f46;
-        }
-        .check-mark {
-            font-size: 11pt;
-            font-weight: 900;
-            color: #111827;
+            color: #166534;
+            border-color: #86efac;
         }
 
         /* ── REKAP TABLE ── */
-        .rekap-table { width: 100%; border-collapse: collapse; font-size: 9pt; margin-top: 2px; }
+        .rekap-table { width: 100%; border-collapse: collapse; font-size: 9pt; }
         .rekap-table th {
-            background: #1e3a5f;
-            color: #fff;
-            border: 1px solid #1e3a5f;
+            background: #f1f5f9;
+            color: #1e293b;
+            border: 1px solid #cbd5e1;
             padding: 5px 8px;
             font-weight: 800;
             text-align: center;
+            font-size: 8pt;
         }
         .rekap-table th.left { text-align: left; }
         .rekap-table td {
-            border: 1px solid #d1d5db;
+            border: 1px solid #e2e8f0;
             padding: 5px 8px;
             text-align: center;
         }
         .rekap-table tbody tr:nth-child(even) td { background: #f8fafc; }
         .rekap-table .final-row td {
-            background: #fef3c7;
+            background: #fef9c3;
             font-weight: 900;
-            font-size: 11pt;
-            color: #92400e;
+            color: #713f12;
+            border-color: #fde047;
         }
-        .rekap-table .sub-row td { background: #f1f5f9; font-style: italic; font-size: 8.5pt; }
 
         /* ── SIGNATURE ── */
         .sig-section { margin-top: 20px; page-break-inside: avoid; }
         .sig-grid { width: 100%; }
         .sig-cell { width: 50%; vertical-align: top; padding: 0 8px; }
-        .sig-label { font-size: 8.5pt; font-weight: 700; color: #374151; margin-bottom: 6px; }
-        .sig-blank { height: 56px; }
-        .sig-img-wrap { height: 62px; display: flex; align-items: center; margin-bottom: 2px; }
-        .sig-img-wrap img { max-height: 58px; max-width: 155px; }
-        .sig-line { border-bottom: 1.5px solid #111827; margin: 4px 0 3px; width: 170px; }
-        .sig-name { font-size: 9pt; font-weight: 900; }
-        .sig-role { font-size: 8pt; color: #6b7280; }
-        .qr-wrap { margin-top: 5px; }
-        .qr-wrap img { width: 68px; height: 68px; }
-        .qr-label { font-size: 7pt; color: #6b7280; margin-top: 2px; }
-        .doc-token { font-size: 6pt; color: #9ca3af; font-family: monospace; margin-top: 1px; }
+        .sig-label { font-size: 8.5pt; font-weight: 700; color: #475569; margin-bottom: 6px; }
+        .sig-blank { height: 54px; }
+        .sig-img-wrap { height: 60px; display: flex; align-items: center; margin-bottom: 2px; }
+        .sig-img-wrap img { max-height: 56px; max-width: 150px; }
+        .sig-line { border-bottom: 1px solid #1e293b; margin: 4px 0 3px; width: 170px; }
+        .sig-name { font-size: 9pt; font-weight: 900; color: #0f172a; }
+        .sig-role { font-size: 7.5pt; color: #64748b; }
+        .qr-wrap { margin-top: 4px; }
+        .qr-wrap img { width: 66px; height: 66px; }
+        .doc-token { font-size: 6pt; color: #94a3b8; font-family: monospace; margin-top: 1px; }
         .verified-badge {
             display: inline-block;
-            background: #d1fae5;
-            color: #065f46;
-            font-size: 7.5pt;
+            background: #dcfce7;
+            color: #166534;
+            font-size: 7pt;
             font-weight: 800;
-            padding: 2px 6px;
+            padding: 2px 5px;
             border-radius: 3px;
-            margin-top: 3px;
-            border: 1px solid #6ee7b7;
+            margin-top: 2px;
+            border: 1px solid #86efac;
         }
 
         /* ── FOOTER ── */
         .page-footer {
             margin-top: 12px;
-            border-top: 1px solid #e5e7eb;
+            border-top: 1px solid #e2e8f0;
             padding-top: 5px;
             font-size: 7pt;
-            color: #9ca3af;
+            color: #94a3b8;
             text-align: center;
         }
     </style>
 </head>
 <body>
 
-{{-- ════════════ KOP ════════════ --}}
+{{-- ════════ KOP ════════ --}}
 <div class="kop">
     @if($logoBase64)
         <img src="{{ $logoBase64 }}" alt="Kop Sekolah">
@@ -267,10 +263,10 @@
     @endif
 </div>
 
-{{-- ════════════ CONTENT ════════════ --}}
+{{-- ════════ CONTENT ════════ --}}
 <div class="content">
 
-    {{-- ── Title ── --}}
+    {{-- Title --}}
     <div class="title-block">
         <h2>Lembar Penilaian Ujian Kompetensi Keahlian (UKK)</h2>
         <p>
@@ -281,7 +277,7 @@
         </p>
     </div>
 
-    {{-- ── Info Table ── --}}
+    {{-- Info --}}
     <table class="info-table">
         <tr>
             <td class="lbl">Jurusan / Kompetensi</td>
@@ -324,151 +320,148 @@
         </tr>
     </table>
 
-    {{-- ════════════ RINCIAN PER INSTRUMEN ════════════ --}}
+    {{-- ════════ RINCIAN PENILAIAN ════════ --}}
     <div class="section-head">Rincian Penilaian Per Instrumen</div>
 
     @foreach($instrumenScores as $item)
     @php
         $ins = $item['instrumen'];
-        $romanNumerals = ['I','II','III','IV','V','VI','VII','VIII','IX','X'];
+        $romans = ['I','II','III','IV','V','VI','VII','VIII','IX','X'];
+        $totalSoal = $item['total_soal'];
+        $poinSoal  = $totalSoal > 0 ? round(100 / $totalSoal) : 0;
     @endphp
 
     <div class="instrumen-block">
         <div class="instrumen-head">
             {{ $loop->iteration }}. {{ $ins->nama_instrumen }}
-            <small>&mdash; Bobot Pengetahuan {{ $ins->bobot_pengetahuan }}% &middot; Keterampilan {{ 100 - $ins->bobot_pengetahuan }}%</small>
+            <small>&nbsp;&mdash; Pengetahuan {{ $ins->bobot_pengetahuan }}% &middot; Keterampilan {{ 100 - $ins->bobot_pengetahuan }}%</small>
         </div>
         <div class="instrumen-inner">
 
-            {{-- ── 1. Penilaian Aspek Pengetahuan ── --}}
+            {{-- 1. Aspek Pengetahuan --}}
             @if($ins->soalPengetahuan->isNotEmpty())
             <div class="aspect-head p">1. Penilaian Aspek Pengetahuan</div>
-            @php $totalSoal = $item['total_soal']; @endphp
             <table class="soal-table">
                 <thead>
                     <tr>
                         <th rowspan="2" style="width:26px;">No</th>
                         <th rowspan="2" class="left">Soal / Pertanyaan</th>
                         <th colspan="2">Jawaban</th>
-                        <th rowspan="2" style="width:36px;">Skor</th>
+                        <th rowspan="2" style="width:34px;">Skor</th>
                     </tr>
                     <tr>
-                        <th style="width:42px;">Benar</th>
-                        <th style="width:42px;">Salah</th>
+                        <th style="width:40px;">Benar</th>
+                        <th style="width:40px;">Salah</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($ins->soalPengetahuan as $soal)
                     @php
-                        $vp      = $nilaiP[$soal->id] ?? null;
-                        $isBenar = $vp !== null && (int)$vp === 1;
-                        $isSalah = $vp !== null && (int)$vp === 0;
-                        $poinSoal = $totalSoal > 0 ? round(100 / $totalSoal) : 0;
+                        $vp      = isset($nilaiP[$soal->id]) ? (int)$nilaiP[$soal->id] : null;
+                        $isBenar = $vp === 1;
+                        $isSalah = $vp === 0;
                     @endphp
                     <tr>
                         <td class="center">{{ $loop->iteration }}</td>
                         <td>{{ $soal->pertanyaan }}</td>
-                        <td class="center"><span class="check-mark">{{ $isBenar ? '✓' : '' }}</span></td>
-                        <td class="center"><span class="check-mark">{{ $isSalah ? '✓' : '' }}</span></td>
-                        <td class="center">{{ $vp !== null ? ($isBenar ? $poinSoal : 0) : '' }}</td>
+                        <td class="center"><span class="chk">@if($isBenar)&#10003;@endif</span></td>
+                        <td class="center"><span class="chk">@if($isSalah)&#10003;@endif</span></td>
+                        <td class="center">@if($vp !== null){{ $isBenar ? $poinSoal : 0 }}@endif</td>
                     </tr>
                     @endforeach
                     <tr class="foot-row">
-                        <td colspan="3" style="text-align:right;">Jawaban Benar: <strong>{{ $item['benar'] }} / {{ $totalSoal }}</strong></td>
-                        <td class="center" colspan="2"><strong>{{ $item['skor_p'] }}</strong></td>
+                        <td colspan="3" style="text-align:right;padding-right:8px;">
+                            Jawaban Benar: <strong>{{ $item['benar'] }} / {{ $totalSoal }}</strong>
+                        </td>
+                        <td colspan="2" class="center"><strong>{{ $item['skor_p'] }}</strong></td>
                     </tr>
                 </tbody>
             </table>
             @endif
 
-            {{-- ── 2. Penilaian Aspek Keterampilan ── --}}
+            {{-- 2. Aspek Keterampilan --}}
             @if($ins->kategoriKeterampilan->isNotEmpty())
-            <div class="aspect-head k" style="margin-top:12px;">2. Penilaian Aspek Keterampilan</div>
+            <div class="aspect-head k" style="margin-top:11px;">2. Penilaian Aspek Keterampilan</div>
             <table class="ket-table">
                 <thead>
                     <tr>
-                        <th rowspan="4" style="width:28px;">No</th>
-                        <th rowspan="4" class="left" style="text-align:left; padding-left:7px;">Komponen / Sub Komponen</th>
+                        <th rowspan="4" style="width:27px;">No</th>
+                        <th rowspan="4" style="text-align:left;padding-left:7px;">Komponen / Sub Komponen</th>
                         <th colspan="4">Kompeten</th>
-                        <th rowspan="4" style="width:55px;">Catatan</th>
+                        <th rowspan="4" style="width:52px;">Catatan</th>
                     </tr>
                     <tr>
-                        <th rowspan="2" style="width:38px;" class="ya-head">Belum</th>
-                        <th colspan="3" class="ya-head">Ya</th>
+                        <th rowspan="2" style="width:38px;">Belum</th>
+                        <th colspan="3" class="ya-sub">Ya</th>
                     </tr>
                     <tr>
-                        <th style="width:38px;" class="ya-head">Cukup</th>
-                        <th style="width:38px;" class="ya-head">Baik</th>
-                        <th style="width:48px;" class="ya-head">Sangat<br>Baik</th>
+                        <th style="width:38px;" class="ya-sub">Cukup</th>
+                        <th style="width:38px;" class="ya-sub">Baik</th>
+                        <th style="width:46px;" class="ya-sub">Sangat<br>Baik</th>
                     </tr>
                     <tr>
-                        <th class="score-row">0</th>
-                        <th class="score-row">1</th>
-                        <th class="score-row">2</th>
-                        <th class="score-row">3</th>
+                        <th class="score-num">0</th>
+                        <th class="score-num">1</th>
+                        <th class="score-num">2</th>
+                        <th class="score-num">3</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($ins->kategoriKeterampilan as $katIdx => $kat)
-                    {{-- Category header row --}}
+                    @foreach($ins->kategoriKeterampilan as $ki => $kat)
                     <tr class="kat-row">
-                        <td class="center"><strong>{{ $romanNumerals[$katIdx] ?? ($katIdx + 1) }}</strong></td>
+                        <td class="center"><strong>{{ $romans[$ki] ?? ($ki + 1) }}</strong></td>
                         <td colspan="5">
                             <strong>{{ $kat->nama_kategori }}</strong>
-                            <span style="font-weight:600;font-size:7.5pt;color:#6b7280;">(Bobot: {{ $kat->bobot }}%)</span>
+                            <span style="font-weight:500;font-size:7pt;color:#64748b;">(Bobot: {{ $kat->bobot }}%)</span>
                         </td>
                         <td></td>
                     </tr>
-                    {{-- Indikator rows --}}
-                    @foreach($kat->indikator as $indIdx => $ind)
+                    @foreach($kat->indikator as $ii => $ind)
                     @php $vk = isset($nilaiK[$ind->id]) ? (int)$nilaiK[$ind->id] : null; @endphp
                     <tr>
-                        <td class="center" style="font-size:7.5pt;">{{ $katIdx + 1 }}.{{ $indIdx + 1 }}</td>
+                        <td class="center" style="font-size:7pt;color:#64748b;">{{ $ki + 1 }}.{{ $ii + 1 }}</td>
                         <td>{{ $ind->nama_indikator }}</td>
-                        <td class="center"><span class="check-mark">{{ $vk === 0 ? '✓' : '' }}</span></td>
-                        <td class="center"><span class="check-mark">{{ $vk === 1 ? '✓' : '' }}</span></td>
-                        <td class="center"><span class="check-mark">{{ $vk === 2 ? '✓' : '' }}</span></td>
-                        <td class="center"><span class="check-mark">{{ $vk === 3 ? '✓' : '' }}</span></td>
+                        <td class="center"><span class="chk">@if($vk === 0)&#10003;@endif</span></td>
+                        <td class="center"><span class="chk">@if($vk === 1)&#10003;@endif</span></td>
+                        <td class="center"><span class="chk">@if($vk === 2)&#10003;@endif</span></td>
+                        <td class="center"><span class="chk">@if($vk === 3)&#10003;@endif</span></td>
                         <td></td>
                     </tr>
                     @endforeach
-                    {{-- Rerata row --}}
                     @php
-                        $indIds   = $kat->indikator->pluck('id');
-                        $vals     = $indIds->map(fn($id) => isset($nilaiK[$id]) ? (int)$nilaiK[$id] : 0);
-                        $rerata   = $vals->count() ? $vals->avg() : 0;
-                        $rRounded = (int)round($rerata);
+                        $ids      = $kat->indikator->pluck('id');
+                        $avg      = $ids->count() ? $ids->avg(fn($id) => isset($nilaiK[$id]) ? (int)$nilaiK[$id] : 0) : 0;
+                        $rRounded = (int)round($avg);
                     @endphp
                     <tr class="rerata-row">
                         <td></td>
                         <td>Rerata komponen {{ $kat->nama_kategori }} (Pembulatan)</td>
-                        <td class="center">{{ $rRounded === 0 ? $rRounded : '' }}</td>
-                        <td class="center">{{ $rRounded === 1 ? $rRounded : '' }}</td>
-                        <td class="center">{{ $rRounded === 2 ? $rRounded : '' }}</td>
-                        <td class="center">{{ $rRounded === 3 ? $rRounded : '' }}</td>
+                        <td class="center">@if($rRounded === 0){{ $rRounded }}@endif</td>
+                        <td class="center">@if($rRounded === 1){{ $rRounded }}@endif</td>
+                        <td class="center">@if($rRounded === 2){{ $rRounded }}@endif</td>
+                        <td class="center">@if($rRounded === 3){{ $rRounded }}@endif</td>
                         <td></td>
                     </tr>
                     @endforeach
-                    {{-- Skor Keterampilan footer --}}
                     <tr class="ket-foot-row">
-                        <td colspan="2" style="text-align:right;font-weight:900;">Skor Keterampilan</td>
-                        <td colspan="4" class="center" style="font-size:10pt;font-weight:900;">{{ $item['skor_k'] }}</td>
+                        <td colspan="2" style="text-align:right;padding-right:8px;font-weight:900;">Skor Keterampilan</td>
+                        <td colspan="4" class="center" style="font-size:10.5pt;font-weight:900;">{{ $item['skor_k'] }}</td>
                         <td></td>
                     </tr>
                 </tbody>
             </table>
             @endif
 
-        </div>{{-- /instrumen-inner --}}
-    </div>{{-- /instrumen-block --}}
+        </div>
+    </div>
     @endforeach
 
-    {{-- ════════════ REKAPITULASI NILAI AKHIR ════════════ --}}
+    {{-- ════════ REKAPITULASI ════════ --}}
     <div class="section-head">Rekapitulasi Nilai Akhir</div>
     <table class="rekap-table">
         <thead>
             <tr>
-                <th class="left" style="width:34%;">Instrumen</th>
+                <th class="left" style="width:36%;">Instrumen Penilaian</th>
                 <th>Bobot P</th>
                 <th>Skor Pengetahuan</th>
                 <th>Bobot K</th>
@@ -489,13 +482,13 @@
             </tr>
             @endforeach
             <tr class="final-row">
-                <td colspan="5" style="text-align:right;">NILAI AKHIR UKK</td>
+                <td colspan="5" style="text-align:right;font-weight:900;font-size:9.5pt;">NILAI AKHIR UKK</td>
                 <td style="font-size:13pt;font-weight:900;">{{ $nilaiAkhirFinal }}</td>
             </tr>
         </tbody>
     </table>
 
-    {{-- ════════════ TANDA TANGAN ════════════ --}}
+    {{-- ════════ TANDA TANGAN ════════ --}}
     <div class="sig-section">
         <table class="sig-grid">
             <tr>
@@ -535,7 +528,6 @@
         </table>
     </div>
 
-    {{-- Footer --}}
     <div class="page-footer">
         Dicetak pada {{ \Carbon\Carbon::now()->isoFormat('D MMMM Y, HH:mm') }} WIB
         @if($settings) &middot; {{ $settings->school_name }} @endif
