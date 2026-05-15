@@ -189,13 +189,14 @@ class PenilaianUkkController extends Controller
             ->whereIn('indikator_id', $allIndikatorIds)
             ->pluck('nilai', 'indikator_id');
 
-        // App settings & logo
-        $settings  = AppSetting::first();
+        // App settings & kop surat
+        $settings   = AppSetting::first();
         $logoBase64 = null;
-        if ($settings && $settings->logo && Storage::disk('public')->exists($settings->logo)) {
-            $logoData   = Storage::disk('public')->get($settings->logo);
-            $logoMime   = Storage::disk('public')->mimeType($settings->logo);
-            $logoBase64 = 'data:' . $logoMime . ';base64,' . base64_encode($logoData);
+        $kopPath    = $settings->kop_surat_ukk ?? null;
+        if ($kopPath && Storage::disk('public')->exists($kopPath)) {
+            $kopData    = Storage::disk('public')->get($kopPath);
+            $kopMime    = Storage::disk('public')->mimeType($kopPath);
+            $logoBase64 = 'data:' . $kopMime . ';base64,' . base64_encode($kopData);
         }
 
         // Penguji digital signature

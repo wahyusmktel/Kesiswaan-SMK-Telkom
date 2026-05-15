@@ -40,6 +40,38 @@
                                 @error('logo') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                             </div>
 
+                            <!-- Kop Surat UKK -->
+                            <div class="col-span-1 md:col-span-2 space-y-2">
+                                <label class="block text-sm font-medium text-gray-700">
+                                    Kop Surat — Lembar Penilaian UKK
+                                </label>
+                                <p class="text-[10px] text-gray-500 -mt-1">
+                                    Gambar ini ditampilkan sebagai kop surat pada PDF Lembar Penilaian Ujian Kompetensi Keahlian (UKK).
+                                    Gunakan gambar kop sekolah dengan lebar penuh (format landscape/horizontal).
+                                </p>
+                                <div class="flex items-start gap-4">
+                                    <div class="flex-shrink-0 w-full max-w-xs h-20 bg-gray-100 rounded-lg border border-gray-200 overflow-hidden flex items-center justify-center">
+                                        @if($setting->kop_surat_ukk)
+                                            <img src="{{ Storage::url($setting->kop_surat_ukk) }}" alt="Kop Surat UKK" class="object-contain w-full h-full">
+                                        @else
+                                            <div class="text-center text-gray-300 px-4">
+                                                <svg class="w-7 h-7 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                <span class="text-[10px]">Belum ada kop surat</span>
+                                            </div>
+                                        @endif
+                                    </div>
+                                    <div class="flex-1">
+                                        <input type="file" name="kop_surat_ukk" accept="image/jpeg,image/png,image/jpg"
+                                            class="block w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100">
+                                        <p class="text-[10px] text-gray-400 mt-1">Format: JPG, PNG. Maks 4MB. Disarankan ukuran 2480×350 px (landscape).</p>
+                                        @if($setting->kop_surat_ukk)
+                                            <p class="text-[10px] text-green-600 mt-1 font-semibold">&#10003; Kop surat sudah dikonfigurasi. Upload ulang untuk mengganti.</p>
+                                        @endif
+                                    </div>
+                                </div>
+                                @error('kop_surat_ukk') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                            </div>
+
                             <!-- Favicon -->
                             <div class="space-y-2">
                                 <label class="block text-sm font-medium text-gray-700">Favicon</label>
