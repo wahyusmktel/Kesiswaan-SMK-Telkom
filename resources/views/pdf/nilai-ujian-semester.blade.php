@@ -41,7 +41,7 @@
         <tr>
             <td>Mata Pelajaran</td>
             <td>:</td>
-            <td>{{ $mapel->nama_mapel }}</td>
+            <td>{{ $ujianMapel->nama_mapel }}</td>
             <td>Jumlah Soal</td>
             <td>:</td>
             <td>{{ $ujianMapel->jumlah_soal }}</td>

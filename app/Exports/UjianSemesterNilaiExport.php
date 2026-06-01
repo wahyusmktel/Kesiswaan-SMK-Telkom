@@ -62,7 +62,7 @@ class UjianSemesterNilaiExport implements FromCollection, WithHeadings, WithMapp
             $row->kode_peserta,
             $row->nama_lengkap,
             $row->kelas,
-            $row->mataPelajaran?->nama_mapel,
+            $row->nama_mapel ?: $row->ujianMapel?->nama_mapel,
             $row->jumlah_benar,
             $row->jumlah_soal,
             $row->nilai_akhir !== null ? (float) $row->nilai_akhir : null,

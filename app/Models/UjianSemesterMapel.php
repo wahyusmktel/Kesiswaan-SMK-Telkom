@@ -9,6 +9,7 @@ class UjianSemesterMapel extends Model
     protected $fillable = [
         'ujian_semester_id',
         'mata_pelajaran_id',
+        'nama_mapel',
         'jumlah_soal',
     ];
 

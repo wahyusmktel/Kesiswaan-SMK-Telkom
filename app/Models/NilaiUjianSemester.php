@@ -8,7 +8,9 @@ class NilaiUjianSemester extends Model
 {
     protected $fillable = [
         'ujian_semester_id',
+        'ujian_semester_mapel_id',
         'mata_pelajaran_id',
+        'nama_mapel',
         'master_siswa_id',
         'rombel_id',
         'nomor_urut',
@@ -39,6 +41,11 @@ class NilaiUjianSemester extends Model
     public function mataPelajaran()
     {
         return $this->belongsTo(MataPelajaran::class);
+    }
+
+    public function ujianMapel()
+    {
+        return $this->belongsTo(UjianSemesterMapel::class, 'ujian_semester_mapel_id');
     }
 
     public function siswa()

@@ -17,12 +17,12 @@
                 </div>
                 @if ($selectedUjian)
                     <div class="flex flex-wrap gap-2">
-                        <a href="{{ route('kesiswaan.ujian-semester.export', request()->only(['ujian_id', 'mata_pelajaran_id', 'kelas', 'sort'])) }}"
+                        <a href="{{ route('kesiswaan.ujian-semester.export', request()->only(['ujian_id', 'ujian_mapel_id', 'kelas', 'sort'])) }}"
                             class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg font-semibold text-sm shadow-sm">
                             Export Excel
                         </a>
-                        @if (request('mata_pelajaran_id'))
-                            <a href="{{ route('kesiswaan.ujian-semester.report-pdf', request()->only(['ujian_id', 'mata_pelajaran_id', 'kelas', 'sort'])) }}"
+                        @if (request('ujian_mapel_id'))
+                            <a href="{{ route('kesiswaan.ujian-semester.report-pdf', request()->only(['ujian_id', 'ujian_mapel_id', 'kelas', 'sort'])) }}"
                                 target="_blank"
                                 class="inline-flex items-center px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg font-semibold text-sm shadow-sm">
                                 Print PDF
@@ -44,7 +44,7 @@
             @endif
 
             <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 xl:col-span-2" x-data="ujianForm()">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 xl:col-span-2" x-data="ujianForm({{ Js::from($mapelOptions) }})">
                     <div class="flex items-center gap-3 mb-5">
                         <div class="w-10 h-10 rounded-lg bg-red-600 text-white flex items-center justify-center">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -83,16 +83,25 @@
                             <label class="block text-sm font-semibold text-gray-700 mb-1">Daftar Mata Pelajaran Ujian</label>
                             <div class="space-y-3">
                                 <template x-for="(row, index) in rows" :key="row.key">
-                                    <div class="grid grid-cols-1 lg:grid-cols-[1fr_140px_44px] gap-3">
-                                        <select :name="`mapels[${index}][mata_pelajaran_id]`"
-                                            class="rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500" required>
-                                            <option value="">Pilih mata pelajaran</option>
-                                            @foreach ($mataPelajaran as $mapel)
-                                                <option value="{{ $mapel->id }}">
-                                                    {{ $mapel->nama_mapel }}{{ $mapel->kelas ? ' - ' . $mapel->kelas->nama_kelas : '' }}
-                                                </option>
-                                            @endforeach
-                                        </select>
+                                    <div class="grid grid-cols-1 lg:grid-cols-[1fr_140px_44px] gap-3 items-start">
+                                        <div>
+                                            <input type="text" :name="`mapels[${index}][nama_mapel]`" x-model="row.query"
+                                                placeholder="Ketik nama mata pelajaran..."
+                                                class="w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500" required>
+
+                                            <div x-show="hasMatches(row)" class="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+                                                Mata pelajaran sudah tersedia, silakan pilih di bawah ini.
+                                            </div>
+
+                                            <div x-show="suggestions(row).length" class="mt-2 flex flex-wrap gap-2">
+                                                <template x-for="option in suggestions(row)" :key="option.nama">
+                                                    <button type="button" @click="select(row, option)"
+                                                        class="px-3 py-1.5 rounded-lg bg-white border border-gray-200 hover:border-red-300 hover:bg-red-50 text-xs font-semibold text-gray-700">
+                                                        <span x-text="option.label"></span>
+                                                    </button>
+                                                </template>
+                                            </div>
+                                        </div>
                                         <input type="number" min="1" max="500" :name="`mapels[${index}][jumlah_soal]`"
                                             placeholder="Jumlah soal"
                                             class="rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500" required>
@@ -134,11 +143,11 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700 mb-1">Mata Pelajaran</label>
-                                <select name="mata_pelajaran_id" class="w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500" required>
+                                <select name="ujian_semester_mapel_id" class="w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500" required>
                                     <option value="">Pilih mata pelajaran ujian</option>
                                     @foreach ($allowedMapels as $ujianMapel)
-                                        <option value="{{ $ujianMapel->mata_pelajaran_id }}" {{ request('mata_pelajaran_id') == $ujianMapel->mata_pelajaran_id ? 'selected' : '' }}>
-                                            {{ $ujianMapel->mataPelajaran?->nama_mapel }} ({{ $ujianMapel->jumlah_soal }} soal)
+                                        <option value="{{ $ujianMapel->id }}" {{ request('ujian_mapel_id') == $ujianMapel->id ? 'selected' : '' }}>
+                                            {{ $ujianMapel->nama_mapel }} ({{ $ujianMapel->jumlah_soal }} soal)
                                         </option>
                                     @endforeach
                                 </select>
@@ -161,7 +170,7 @@
             </div>
 
             @if ($selectedUjian)
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6" x-data="ujianForm()">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6" x-data="ujianForm({{ Js::from($mapelOptions) }})">
                     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
                         <div>
                             <h3 class="font-bold text-gray-900">Mapel Terdaftar: {{ $selectedUjian->nama_ujian }}</h3>
@@ -170,7 +179,7 @@
                         <div class="flex flex-wrap gap-2">
                             @foreach ($allowedMapels as $ujianMapel)
                                 <span class="px-3 py-1 rounded-full bg-red-50 text-red-700 border border-red-100 text-xs font-bold">
-                                    {{ $ujianMapel->mataPelajaran?->nama_mapel }}: {{ $ujianMapel->jumlah_soal }} soal
+                                    {{ $ujianMapel->nama_mapel }}: {{ $ujianMapel->jumlah_soal }} soal
                                 </span>
                             @endforeach
                         </div>
@@ -178,13 +187,25 @@
                     <form method="POST" action="{{ route('kesiswaan.ujian-semester.mapel.store', $selectedUjian) }}" class="space-y-3">
                         @csrf
                         <template x-for="(row, index) in rows" :key="row.key">
-                            <div class="grid grid-cols-1 lg:grid-cols-[1fr_140px_44px] gap-3">
-                                <select :name="`mapels[${index}][mata_pelajaran_id]`" class="rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500" required>
-                                    <option value="">Pilih mata pelajaran</option>
-                                    @foreach ($mataPelajaran as $mapel)
-                                        <option value="{{ $mapel->id }}">{{ $mapel->nama_mapel }}{{ $mapel->kelas ? ' - ' . $mapel->kelas->nama_kelas : '' }}</option>
-                                    @endforeach
-                                </select>
+                            <div class="grid grid-cols-1 lg:grid-cols-[1fr_140px_44px] gap-3 items-start">
+                                <div>
+                                    <input type="text" :name="`mapels[${index}][nama_mapel]`" x-model="row.query"
+                                        placeholder="Ketik nama mata pelajaran..."
+                                        class="w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500" required>
+
+                                    <div x-show="hasMatches(row)" class="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+                                        Mata pelajaran sudah tersedia, silakan pilih di bawah ini.
+                                    </div>
+
+                                    <div x-show="suggestions(row).length" class="mt-2 flex flex-wrap gap-2">
+                                        <template x-for="option in suggestions(row)" :key="option.nama">
+                                            <button type="button" @click="select(row, option)"
+                                                class="px-3 py-1.5 rounded-lg bg-white border border-gray-200 hover:border-red-300 hover:bg-red-50 text-xs font-semibold text-gray-700">
+                                                <span x-text="option.label"></span>
+                                            </button>
+                                        </template>
+                                    </div>
+                                </div>
                                 <input type="number" min="1" max="500" :name="`mapels[${index}][jumlah_soal]`" placeholder="Jumlah soal"
                                     class="rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500" required>
                                 <button type="button" @click="remove(index)" x-show="rows.length > 1" class="h-10 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 font-bold">-</button>
@@ -272,11 +293,11 @@
                             <form method="GET" action="{{ route('kesiswaan.ujian-semester.index') }}" class="grid grid-cols-1 md:grid-cols-5 gap-3">
                                 <input type="hidden" name="ujian_id" value="{{ $selectedUjian->id }}">
                                 <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari NIS, nama, kelas..." class="rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500 text-sm">
-                                <select name="mata_pelajaran_id" class="rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500 text-sm">
+                                <select name="ujian_mapel_id" class="rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500 text-sm">
                                     <option value="">Semua mapel ujian</option>
                                     @foreach ($allowedMapels as $ujianMapel)
-                                        <option value="{{ $ujianMapel->mata_pelajaran_id }}" {{ request('mata_pelajaran_id') == $ujianMapel->mata_pelajaran_id ? 'selected' : '' }}>
-                                            {{ $ujianMapel->mataPelajaran?->nama_mapel }}
+                                        <option value="{{ $ujianMapel->id }}" {{ request('ujian_mapel_id') == $ujianMapel->id ? 'selected' : '' }}>
+                                            {{ $ujianMapel->nama_mapel }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -317,7 +338,7 @@
                                         <td class="px-6 py-3 font-mono text-gray-700">{{ $item->kode_peserta }}</td>
                                         <td class="px-6 py-3 font-semibold text-gray-900">{{ $item->nama_lengkap }}</td>
                                         <td class="px-6 py-3 text-gray-600">{{ $item->kelas ?: '-' }}</td>
-                                        <td class="px-6 py-3 text-gray-600">{{ $item->mataPelajaran?->nama_mapel ?: '-' }}</td>
+                                        <td class="px-6 py-3 text-gray-600">{{ $item->nama_mapel ?: $item->ujianMapel?->nama_mapel ?: '-' }}</td>
                                         <td class="px-6 py-3 text-center font-semibold">{{ $item->jumlah_benar ?? '-' }}/{{ $item->jumlah_soal ?? '-' }}</td>
                                         <td class="px-6 py-3 text-right font-bold text-gray-900">{{ $item->nilai_akhir !== null ? number_format((float) $item->nilai_akhir, 2, ',', '.') : '-' }}</td>
                                         <td class="px-6 py-3">
@@ -333,7 +354,7 @@
                                                     'nis' => $item->kode_peserta,
                                                     'nama' => $item->nama_lengkap,
                                                     'kelas' => $item->kelas,
-                                                    'mapel' => $item->mataPelajaran?->nama_mapel,
+                                                    'mapel' => $item->nama_mapel ?: $item->ujianMapel?->nama_mapel,
                                                     'benar' => $item->jumlah_benar,
                                                     'soal' => $item->jumlah_soal,
                                                     'nilai' => $item->nilai_akhir !== null ? number_format((float) $item->nilai_akhir, 2, ',', '.') : '-',
@@ -385,14 +406,37 @@
     </div>
 
     <script>
-        function ujianForm() {
+        function ujianForm(mapelOptions = []) {
             return {
-                rows: [{ key: Date.now() }],
+                options: mapelOptions,
+                rows: [{ key: Date.now(), query: '' }],
                 add() {
-                    this.rows.push({ key: Date.now() + Math.random() });
+                    this.rows.push({ key: Date.now() + Math.random(), query: '' });
                 },
                 remove(index) {
                     this.rows.splice(index, 1);
+                },
+                normalized(value) {
+                    return (value || '').toString().trim().toLowerCase();
+                },
+                suggestions(row) {
+                    const query = this.normalized(row.query);
+
+                    if (query.length < 3) {
+                        return [];
+                    }
+
+                    return this.options
+                        .filter((option) => option.search.includes(query) || this.normalized(option.nama) === query)
+                        .slice(0, 8);
+                },
+                hasMatches(row) {
+                    const query = this.normalized(row.query);
+
+                    return query.length >= 3 && this.options.some((option) => this.normalized(option.nama) === query);
+                },
+                select(row, option) {
+                    row.query = option.nama;
                 }
             };
         }

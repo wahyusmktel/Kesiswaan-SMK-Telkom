@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Kesiswaan;
 
 use App\Exports\UjianSemesterNilaiExport;
 use App\Http\Controllers\Controller;
-use App\Models\MataPelajaran;
 use App\Models\MasterSiswa;
 use App\Models\NilaiUjianSemester;
 use App\Models\Rombel;
@@ -23,18 +22,18 @@ class UjianSemesterController extends Controller
     {
         $tahunAktif = TahunPelajaran::where('is_active', true)->first();
 
-        $ujians = UjianSemester::with(['tahunPelajaran', 'ujianMapels.mataPelajaran.kelas'])
+        $ujians = UjianSemester::with(['tahunPelajaran', 'ujianMapels'])
             ->withCount('nilai')
             ->withMax('nilai', 'imported_at')
             ->latest()
             ->paginate(10, ['*'], 'ujian_page');
 
         $selectedUjian = $request->filled('ujian_id')
-            ? UjianSemester::with(['tahunPelajaran', 'ujianMapels.mataPelajaran.kelas'])->find($request->ujian_id)
+            ? UjianSemester::with(['tahunPelajaran', 'ujianMapels'])->find($request->ujian_id)
             : null;
 
         $allowedMapels = $selectedUjian
-            ? $selectedUjian->ujianMapels->sortBy(fn ($item) => $item->mataPelajaran?->nama_mapel)
+            ? $selectedUjian->ujianMapels->sortBy('nama_mapel')
             : collect();
 
         $kelasOptions = $selectedUjian
@@ -59,14 +58,14 @@ class UjianSemesterController extends Controller
 
         if ($selectedUjian) {
             $nilaiQuery = $this->nilaiQuery($request, $selectedUjian)
-                ->with(['mataPelajaran', 'siswa', 'rombel.kelas']);
+                ->with(['ujianMapel', 'siswa', 'rombel.kelas']);
 
             $statsQuery = $this->nilaiQuery($request, $selectedUjian);
             $nilaiStats = [
                 'total' => (clone $statsQuery)->count(),
                 'matched' => (clone $statsQuery)->whereNotNull('master_siswa_id')->count(),
                 'unmatched' => (clone $statsQuery)->whereNull('master_siswa_id')->count(),
-                'mapel' => (clone $statsQuery)->distinct('mata_pelajaran_id')->count('mata_pelajaran_id'),
+                'mapel' => (clone $statsQuery)->distinct('ujian_semester_mapel_id')->count('ujian_semester_mapel_id'),
                 'nilai_terbesar' => (clone $statsQuery)->max('nilai_akhir'),
                 'nilai_terkecil' => (clone $statsQuery)->min('nilai_akhir'),
                 'rata_rata' => (clone $statsQuery)->avg('nilai_akhir'),
@@ -86,10 +85,18 @@ class UjianSemesterController extends Controller
                 ->withQueryString();
         }
 
-        $mataPelajaran = MataPelajaran::with('kelas')
+        $mapelOptions = UjianSemesterMapel::query()
+            ->whereNotNull('nama_mapel')
+            ->select('nama_mapel')
+            ->distinct()
             ->orderBy('nama_mapel')
-            ->orderBy('kode_mapel')
-            ->get();
+            ->pluck('nama_mapel')
+            ->map(fn ($nama) => [
+                'nama' => $nama,
+                'label' => $nama,
+                'search' => strtolower($nama),
+            ])
+            ->values();
 
         return view('pages.kesiswaan.ujian-semester.index', compact(
             'tahunAktif',
@@ -99,7 +106,7 @@ class UjianSemesterController extends Controller
             'kelasOptions',
             'nilai',
             'nilaiStats',
-            'mataPelajaran'
+            'mapelOptions'
         ));
     }
 
@@ -118,7 +125,7 @@ class UjianSemesterController extends Controller
             'tanggal_ujian' => 'nullable|date',
             'keterangan' => 'nullable|string|max:1000',
             'mapels' => 'required|array|min:1',
-            'mapels.*.mata_pelajaran_id' => 'required|exists:mata_pelajarans,id',
+            'mapels.*.nama_mapel' => 'required|string|max:255',
             'mapels.*.jumlah_soal' => 'required|integer|min:1|max:500',
         ]);
 
@@ -147,7 +154,7 @@ class UjianSemesterController extends Controller
     {
         $validated = $request->validate([
             'mapels' => 'required|array|min:1',
-            'mapels.*.mata_pelajaran_id' => 'required|exists:mata_pelajarans,id',
+            'mapels.*.nama_mapel' => 'required|string|max:255',
             'mapels.*.jumlah_soal' => 'required|integer|min:1|max:500',
         ]);
 
@@ -162,14 +169,13 @@ class UjianSemesterController extends Controller
     {
         $validated = $request->validate([
             'ujian_semester_id' => 'required|exists:ujian_semesters,id',
-            'mata_pelajaran_id' => 'required|exists:mata_pelajarans,id',
+            'ujian_semester_mapel_id' => 'required|exists:ujian_semester_mapels,id',
             'file_nilai' => 'required|file|mimes:xls,xlsx,csv|max:10240',
         ]);
 
         $ujian = UjianSemester::findOrFail($validated['ujian_semester_id']);
-        $ujianMapel = UjianSemesterMapel::with('mataPelajaran')
-            ->where('ujian_semester_id', $ujian->id)
-            ->where('mata_pelajaran_id', $validated['mata_pelajaran_id'])
+        $ujianMapel = UjianSemesterMapel::where('ujian_semester_id', $ujian->id)
+            ->where('id', $validated['ujian_semester_mapel_id'])
             ->first();
 
         if (!$ujianMapel) {
@@ -191,7 +197,7 @@ class UjianSemesterController extends Controller
 
         return redirect()->route('kesiswaan.ujian-semester.index', [
             'ujian_id' => $ujian->id,
-            'mata_pelajaran_id' => $ujianMapel->mata_pelajaran_id,
+            'ujian_mapel_id' => $ujianMapel->id,
         ]);
     }
 
@@ -199,47 +205,45 @@ class UjianSemesterController extends Controller
     {
         $validated = $request->validate([
             'ujian_id' => 'required|exists:ujian_semesters,id',
-            'mata_pelajaran_id' => 'nullable|exists:mata_pelajarans,id',
+            'ujian_mapel_id' => 'nullable|exists:ujian_semester_mapels,id',
             'kelas' => 'nullable|string|max:255',
             'sort' => 'nullable|in:kelas,nilai_desc,nilai_asc',
         ]);
 
         $ujian = UjianSemester::with('tahunPelajaran')->findOrFail($validated['ujian_id']);
         $data = $this->nilaiQuery($request, $ujian)
-            ->with(['mataPelajaran', 'siswa', 'rombel.kelas'])
+            ->with(['ujianMapel', 'siswa', 'rombel.kelas'])
             ->orderBy('kelas')
             ->orderByDesc('nilai_akhir')
             ->get();
 
         $filename = 'rekap-nilai-' . str($ujian->nama_ujian)->slug() . '-' . now()->format('Ymd-His') . '.xlsx';
 
-        return Excel::download(new UjianSemesterNilaiExport($ujian, $data, $request->only(['mata_pelajaran_id', 'kelas'])), $filename);
+        return Excel::download(new UjianSemesterNilaiExport($ujian, $data, $request->only(['ujian_mapel_id', 'kelas'])), $filename);
     }
 
     public function reportPdf(Request $request)
     {
         $validated = $request->validate([
             'ujian_id' => 'required|exists:ujian_semesters,id',
-            'mata_pelajaran_id' => 'required|exists:mata_pelajarans,id',
+            'ujian_mapel_id' => 'required|exists:ujian_semester_mapels,id',
             'kelas' => 'nullable|string|max:255',
             'sort' => 'nullable|in:kelas,nilai_desc,nilai_asc',
         ]);
 
         $ujian = UjianSemester::with('tahunPelajaran')->findOrFail($validated['ujian_id']);
-        $mapel = MataPelajaran::with('kelas')->findOrFail($validated['mata_pelajaran_id']);
         $ujianMapel = UjianSemesterMapel::where('ujian_semester_id', $ujian->id)
-            ->where('mata_pelajaran_id', $mapel->id)
+            ->where('id', $validated['ujian_mapel_id'])
             ->firstOrFail();
 
         $data = $this->nilaiQuery($request, $ujian)
-            ->with(['mataPelajaran', 'siswa', 'rombel.kelas'])
+            ->with(['ujianMapel', 'siswa', 'rombel.kelas'])
             ->orderBy('kelas')
             ->orderByDesc('nilai_akhir')
             ->get();
 
         $pdf = Pdf::loadView('pdf.nilai-ujian-semester', [
             'ujian' => $ujian,
-            'mapel' => $mapel,
             'ujianMapel' => $ujianMapel,
             'data' => $data,
             'kelas' => $request->kelas,
@@ -267,7 +271,7 @@ class UjianSemesterController extends Controller
     {
         return NilaiUjianSemester::query()
             ->where('ujian_semester_id', $ujian->id)
-            ->when($request->filled('mata_pelajaran_id'), fn ($query) => $query->where('mata_pelajaran_id', $request->mata_pelajaran_id))
+            ->when($request->filled('ujian_mapel_id'), fn ($query) => $query->where('ujian_semester_mapel_id', $request->ujian_mapel_id))
             ->when($request->filled('kelas'), fn ($query) => $query->where('kelas', $request->kelas))
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->search;
@@ -282,35 +286,40 @@ class UjianSemesterController extends Controller
     private function syncMapelRows(UjianSemester $ujian, array $rows): void
     {
         foreach ($rows as $row) {
-            UjianSemesterMapel::updateOrCreate(
+            $namaMapel = $this->normalizeMapelName($row['nama_mapel']);
+
+            $ujianMapel = UjianSemesterMapel::updateOrCreate(
                 [
                     'ujian_semester_id' => $ujian->id,
-                    'mata_pelajaran_id' => $row['mata_pelajaran_id'],
+                    'nama_mapel' => $namaMapel,
                 ],
-                ['jumlah_soal' => $row['jumlah_soal']]
+                [
+                    'mata_pelajaran_id' => null,
+                    'jumlah_soal' => $row['jumlah_soal'],
+                ]
             );
 
-            $this->recalculateExistingScores($ujian, (int) $row['mata_pelajaran_id'], (int) $row['jumlah_soal']);
+            $this->recalculateExistingScores($ujianMapel, (int) $row['jumlah_soal']);
         }
     }
 
-    private function recalculateExistingScores(UjianSemester $ujian, int $mataPelajaranId, int $jumlahSoal): void
+    private function recalculateExistingScores(UjianSemesterMapel $ujianMapel, int $jumlahSoal): void
     {
         if ($jumlahSoal <= 0) {
             return;
         }
 
-        NilaiUjianSemester::where('ujian_semester_id', $ujian->id)
-            ->where('mata_pelajaran_id', $mataPelajaranId)
+        NilaiUjianSemester::where('ujian_semester_mapel_id', $ujianMapel->id)
             ->get()
             ->each(function (NilaiUjianSemester $nilai) use ($jumlahSoal) {
                 $jumlahBenar = $nilai->jumlah_benar ?? (int) $nilai->nilai;
+                $nilaiAkhir = min(100, round(($jumlahBenar / $jumlahSoal) * 100, 2));
 
                 $nilai->update([
                     'jumlah_benar' => $jumlahBenar,
                     'jumlah_soal' => $jumlahSoal,
-                    'nilai_akhir' => min(100, round(($jumlahBenar / $jumlahSoal) * 100, 2)),
-                    'nilai' => min(100, round(($jumlahBenar / $jumlahSoal) * 100, 2)),
+                    'nilai_akhir' => $nilaiAkhir,
+                    'nilai' => $nilaiAkhir,
                 ]);
             });
     }
@@ -395,10 +404,12 @@ class UjianSemesterController extends Controller
                 NilaiUjianSemester::updateOrCreate(
                     [
                         'ujian_semester_id' => $ujian->id,
-                        'mata_pelajaran_id' => $ujianMapel->mata_pelajaran_id,
+                        'ujian_semester_mapel_id' => $ujianMapel->id,
                         'kode_peserta' => $row['kode_peserta'],
                     ],
                     [
+                        'mata_pelajaran_id' => null,
+                        'nama_mapel' => $ujianMapel->nama_mapel,
                         'master_siswa_id' => $siswa?->id,
                         'rombel_id' => $rombel?->id,
                         'nomor_urut' => $row['nomor_urut'],
@@ -421,6 +432,11 @@ class UjianSemesterController extends Controller
             'imported' => count($rows),
             'unmatched' => $unmatched,
         ];
+    }
+
+    private function normalizeMapelName(string $value): string
+    {
+        return trim(preg_replace('/\s+/', ' ', $value));
     }
 
     private function normalizeHeader($value): string
