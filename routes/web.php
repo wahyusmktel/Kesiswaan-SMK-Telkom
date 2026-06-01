@@ -348,7 +348,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/riwayat-izin-keluar', [MonitoringIzinController::class, 'riwayatIzinKeluar'])->middleware('permission:monitoring izin')->name('riwayat-izin-keluar.index');
             Route::get('/ujian-semester', [UjianSemesterController::class, 'index'])->name('ujian-semester.index');
             Route::post('/ujian-semester', [UjianSemesterController::class, 'store'])->name('ujian-semester.store');
+            Route::post('/ujian-semester/{ujianSemester}/mapel', [UjianSemesterController::class, 'storeMapel'])->name('ujian-semester.mapel.store');
             Route::post('/ujian-semester/import', [UjianSemesterController::class, 'import'])->name('ujian-semester.import');
+            Route::get('/ujian-semester/export', [UjianSemesterController::class, 'export'])->name('ujian-semester.export');
+            Route::get('/ujian-semester/report-pdf', [UjianSemesterController::class, 'reportPdf'])->name('ujian-semester.report-pdf');
             Route::delete('/ujian-semester/{ujianSemester}', [UjianSemesterController::class, 'destroy'])->name('ujian-semester.destroy');
 
             // Route untuk Persetujuan Dispensasi

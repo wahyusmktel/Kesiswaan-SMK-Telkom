@@ -30,6 +30,18 @@ class UjianSemester extends Model
         return $this->hasMany(NilaiUjianSemester::class);
     }
 
+    public function ujianMapels()
+    {
+        return $this->hasMany(UjianSemesterMapel::class);
+    }
+
+    public function mataPelajaran()
+    {
+        return $this->belongsToMany(MataPelajaran::class, 'ujian_semester_mapels')
+            ->withPivot('jumlah_soal')
+            ->withTimestamps();
+    }
+
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');

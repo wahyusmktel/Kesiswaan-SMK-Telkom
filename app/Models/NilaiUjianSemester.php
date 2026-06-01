@@ -16,6 +16,9 @@ class NilaiUjianSemester extends Model
         'nama_lengkap',
         'kelas',
         'nilai',
+        'jumlah_benar',
+        'jumlah_soal',
+        'nilai_akhir',
         'baris_excel',
         'nama_file',
         'imported_by',
@@ -24,6 +27,7 @@ class NilaiUjianSemester extends Model
 
     protected $casts = [
         'nilai' => 'decimal:2',
+        'nilai_akhir' => 'decimal:2',
         'imported_at' => 'datetime',
     ];
 
