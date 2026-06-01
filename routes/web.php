@@ -12,6 +12,7 @@ use App\Http\Controllers\MasterData\RombelController;
 use App\Http\Controllers\Kesiswaan\MonitoringIzinController;
 use App\Http\Controllers\Kesiswaan\DashboardController;
 use App\Http\Controllers\Kesiswaan\AnalisaKeterlambatanController;
+use App\Http\Controllers\Kesiswaan\UjianSemesterController;
 use App\Http\Controllers\WaliKelas\DashboardController as WaliKelasDashboardController;
 use App\Http\Controllers\Siswa\DashboardController as SiswaDashboardController;
 use App\Http\Controllers\BK\DashboardController as BKDashboardController;
@@ -345,6 +346,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/monitoring-izin', [MonitoringIzinController::class, 'index'])->middleware('permission:monitoring izin')->name('monitoring-izin.index');
             Route::get('/analisa-keterlambatan', [AnalisaKeterlambatanController::class, 'index'])->middleware('permission:monitoring izin')->name('analisa-keterlambatan.index');
             Route::get('/riwayat-izin-keluar', [MonitoringIzinController::class, 'riwayatIzinKeluar'])->middleware('permission:monitoring izin')->name('riwayat-izin-keluar.index');
+            Route::get('/ujian-semester', [UjianSemesterController::class, 'index'])->name('ujian-semester.index');
+            Route::post('/ujian-semester', [UjianSemesterController::class, 'store'])->name('ujian-semester.store');
+            Route::post('/ujian-semester/import', [UjianSemesterController::class, 'import'])->name('ujian-semester.import');
+            Route::delete('/ujian-semester/{ujianSemester}', [UjianSemesterController::class, 'destroy'])->name('ujian-semester.destroy');
 
             // Route untuk Persetujuan Dispensasi
             Route::get('/persetujuan-dispensasi', [PersetujuanDispensasiController::class, 'index'])->middleware('permission:manage dispensasi')->name('persetujuan-dispensasi.index');

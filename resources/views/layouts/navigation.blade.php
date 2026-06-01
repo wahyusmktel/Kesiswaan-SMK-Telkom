@@ -807,6 +807,19 @@
         </li>
     @endcan
 
+    <li>
+        <a href="{{ route('kesiswaan.ujian-semester.index') }}"
+            class="nav-link {{ request()->routeIs('kesiswaan.ujian-semester.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 17v-6h13M9 5h13M5 5h.01M5 11h.01M5 17h.01" />
+                </svg>
+            </div>
+            <span class="nav-text">Nilai Ujian Semester</span>
+        </a>
+    </li>
+
     {{-- Dropdown Master Data (Hybrid: Inline + Flyout) --}}
     @canany(['manage kelas', 'manage siswa', 'manage rombel'])
         <li class="submenu-dropdown"
