@@ -13,6 +13,7 @@ use App\Http\Controllers\Kesiswaan\MonitoringIzinController;
 use App\Http\Controllers\Kesiswaan\DashboardController;
 use App\Http\Controllers\Kesiswaan\AnalisaKeterlambatanController;
 use App\Http\Controllers\Kesiswaan\UjianSemesterController;
+use App\Http\Controllers\Kesiswaan\LegerNilaiController;
 use App\Http\Controllers\WaliKelas\DashboardController as WaliKelasDashboardController;
 use App\Http\Controllers\Siswa\DashboardController as SiswaDashboardController;
 use App\Http\Controllers\BK\DashboardController as BKDashboardController;
@@ -353,6 +354,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/ujian-semester/export', [UjianSemesterController::class, 'export'])->name('ujian-semester.export');
             Route::get('/ujian-semester/report-pdf', [UjianSemesterController::class, 'reportPdf'])->name('ujian-semester.report-pdf');
             Route::delete('/ujian-semester/{ujianSemester}', [UjianSemesterController::class, 'destroy'])->name('ujian-semester.destroy');
+            Route::get('/leger-nilai', [LegerNilaiController::class, 'index'])->name('leger-nilai.index');
+            Route::get('/leger-nilai/siswa/{siswa}', [LegerNilaiController::class, 'show'])->name('leger-nilai.show');
+            Route::get('/leger-nilai/siswa/{siswa}/export', [LegerNilaiController::class, 'exportStudent'])->name('leger-nilai.siswa.export');
+            Route::get('/leger-nilai/siswa/{siswa}/pdf', [LegerNilaiController::class, 'studentPdf'])->name('leger-nilai.siswa.pdf');
 
             // Route untuk Persetujuan Dispensasi
             Route::get('/persetujuan-dispensasi', [PersetujuanDispensasiController::class, 'index'])->middleware('permission:manage dispensasi')->name('persetujuan-dispensasi.index');

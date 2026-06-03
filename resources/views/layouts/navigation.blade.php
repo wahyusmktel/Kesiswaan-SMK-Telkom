@@ -807,17 +807,58 @@
         </li>
     @endcan
 
-    <li>
-        <a href="{{ route('kesiswaan.ujian-semester.index') }}"
-            class="nav-link {{ request()->routeIs('kesiswaan.ujian-semester.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
-            <div class="nav-icon-container">
-                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 17v-6h13M9 5h13M5 5h.01M5 11h.01M5 17h.01" />
-                </svg>
+    <li class="submenu-dropdown"
+        x-data="{ 
+            expanded: {{ request()->routeIs('kesiswaan.ujian-semester.*') || request()->routeIs('kesiswaan.leger-nilai.*') ? 'true' : 'false' }},
+            flyoutTop: 0,
+            updateFlyoutPosition() {
+                const rect = this.$el.querySelector('button').getBoundingClientRect();
+                this.flyoutTop = rect.top;
+            }
+        }"
+        @mouseenter="updateFlyoutPosition()">
+        <button @click="expanded = !expanded"
+            class="nav-link w-full {{ request()->routeIs('kesiswaan.ujian-semester.*') || request()->routeIs('kesiswaan.leger-nilai.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="flex items-center">
+                <div class="nav-icon-container">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 17v-6h13M9 5h13M5 5h.01M5 11h.01M5 17h.01" />
+                    </svg>
+                </div>
+                <span class="nav-text">Nilai Ujian Semester</span>
             </div>
-            <span class="nav-text">Nilai Ujian Semester</span>
-        </a>
+            <svg :class="expanded ? 'rotate-180' : ''"
+                class="dropdown-arrow w-4 h-4 transition-transform transform text-white/60" fill="none"
+                stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+        </button>
+
+        <div x-show="expanded" x-collapse class="submenu-card">
+            <a href="{{ route('kesiswaan.ujian-semester.index') }}"
+                class="submenu-item {{ request()->routeIs('kesiswaan.ujian-semester.*') ? 'submenu-item-active' : '' }}">
+                <span class="submenu-dot"></span>
+                Kelola Nilai
+            </a>
+            <a href="{{ route('kesiswaan.leger-nilai.index') }}"
+                class="submenu-item {{ request()->routeIs('kesiswaan.leger-nilai.*') ? 'submenu-item-active' : '' }}">
+                <span class="submenu-dot"></span>
+                Leger Nilai
+            </a>
+        </div>
+
+        <div class="submenu-flyout" :style="'top: ' + flyoutTop + 'px'">
+            <div class="submenu-flyout-title">Nilai Ujian Semester</div>
+            <a href="{{ route('kesiswaan.ujian-semester.index') }}"
+                class="submenu-item {{ request()->routeIs('kesiswaan.ujian-semester.*') ? 'submenu-item-active' : '' }}">
+                Kelola Nilai
+            </a>
+            <a href="{{ route('kesiswaan.leger-nilai.index') }}"
+                class="submenu-item {{ request()->routeIs('kesiswaan.leger-nilai.*') ? 'submenu-item-active' : '' }}">
+                Leger Nilai
+            </a>
+        </div>
     </li>
 
     {{-- Dropdown Master Data (Hybrid: Inline + Flyout) --}}
