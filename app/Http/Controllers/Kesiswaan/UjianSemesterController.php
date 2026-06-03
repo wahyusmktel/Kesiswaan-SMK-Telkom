@@ -217,6 +217,7 @@ class UjianSemesterController extends Controller
             'ujian_mapel_id' => 'nullable|exists:ujian_semester_mapels,id',
             'kelas' => 'nullable|string|max:255',
             'sort' => 'nullable|in:kelas,nilai_desc,nilai_asc',
+            'match_status' => 'nullable|in:matched,unmatched',
         ]);
 
         $ujian = UjianSemester::with('tahunPelajaran')->findOrFail($validated['ujian_id']);
@@ -238,6 +239,7 @@ class UjianSemesterController extends Controller
             'ujian_mapel_id' => 'required|exists:ujian_semester_mapels,id',
             'kelas' => 'nullable|string|max:255',
             'sort' => 'nullable|in:kelas,nilai_desc,nilai_asc',
+            'match_status' => 'nullable|in:matched,unmatched',
         ]);
 
         $ujian = UjianSemester::with('tahunPelajaran')->findOrFail($validated['ujian_id']);
@@ -282,6 +284,8 @@ class UjianSemesterController extends Controller
             ->where('ujian_semester_id', $ujian->id)
             ->when($request->filled('ujian_mapel_id'), fn ($query) => $query->where('ujian_semester_mapel_id', $request->ujian_mapel_id))
             ->when($request->filled('kelas'), fn ($query) => $query->where('kelas', $request->kelas))
+            ->when($request->get('match_status') === 'unmatched', fn ($query) => $query->whereNull('master_siswa_id'))
+            ->when($request->get('match_status') === 'matched', fn ($query) => $query->whereNotNull('master_siswa_id'))
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->search;
                 $query->where(function ($q) use ($search) {

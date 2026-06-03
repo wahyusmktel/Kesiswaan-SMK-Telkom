@@ -17,12 +17,12 @@
                 </div>
                 @if ($selectedUjian)
                     <div class="flex flex-wrap gap-2">
-                        <a href="{{ route('kesiswaan.ujian-semester.export', request()->only(['ujian_id', 'ujian_mapel_id', 'kelas', 'sort'])) }}"
+                        <a href="{{ route('kesiswaan.ujian-semester.export', request()->only(['ujian_id', 'ujian_mapel_id', 'kelas', 'sort', 'match_status'])) }}"
                             class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg font-semibold text-sm shadow-sm">
                             Export Excel
                         </a>
                         @if (request('ujian_mapel_id'))
-                            <a href="{{ route('kesiswaan.ujian-semester.report-pdf', request()->only(['ujian_id', 'ujian_mapel_id', 'kelas', 'sort'])) }}"
+                            <a href="{{ route('kesiswaan.ujian-semester.report-pdf', request()->only(['ujian_id', 'ujian_mapel_id', 'kelas', 'sort', 'match_status'])) }}"
                                 target="_blank"
                                 class="inline-flex items-center px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg font-semibold text-sm shadow-sm">
                                 Print PDF
@@ -309,7 +309,12 @@
                     <div class="bg-white rounded-xl border border-gray-100 p-4 shadow-sm"><div class="text-xs font-bold uppercase text-gray-500">Total</div><div class="text-2xl font-bold text-gray-900 mt-1">{{ $nilaiStats['total'] }}</div></div>
                     <div class="bg-white rounded-xl border border-gray-100 p-4 shadow-sm"><div class="text-xs font-bold uppercase text-gray-500">Mapel</div><div class="text-2xl font-bold text-gray-900 mt-1">{{ $nilaiStats['mapel'] }}</div></div>
                     <div class="bg-white rounded-xl border border-gray-100 p-4 shadow-sm"><div class="text-xs font-bold uppercase text-gray-500">Cocok</div><div class="text-2xl font-bold text-green-700 mt-1">{{ $nilaiStats['matched'] }}</div></div>
-                    <div class="bg-white rounded-xl border border-gray-100 p-4 shadow-sm"><div class="text-xs font-bold uppercase text-gray-500">Belum Cocok</div><div class="text-2xl font-bold text-red-700 mt-1">{{ $nilaiStats['unmatched'] }}</div></div>
+                    <a href="{{ route('kesiswaan.ujian-semester.index', array_merge(request()->only(['ujian_id', 'ujian_mapel_id', 'kelas', 'sort']), ['match_status' => 'unmatched'])) }}"
+                        class="block bg-white rounded-xl border border-red-100 p-4 shadow-sm hover:border-red-300 hover:bg-red-50 transition-colors">
+                        <div class="text-xs font-bold uppercase text-gray-500">Belum Cocok</div>
+                        <div class="text-2xl font-bold text-red-700 mt-1">{{ $nilaiStats['unmatched'] }}</div>
+                        <div class="text-[11px] text-red-600 font-semibold mt-1">Klik untuk analisa</div>
+                    </a>
                     <div class="bg-white rounded-xl border border-gray-100 p-4 shadow-sm"><div class="text-xs font-bold uppercase text-gray-500">Terbesar</div><div class="text-2xl font-bold text-gray-900 mt-1">{{ $nilaiStats['nilai_terbesar'] !== null ? number_format($nilaiStats['nilai_terbesar'], 2, ',', '.') : '-' }}</div></div>
                     <div class="bg-white rounded-xl border border-gray-100 p-4 shadow-sm"><div class="text-xs font-bold uppercase text-gray-500">Terkecil</div><div class="text-2xl font-bold text-gray-900 mt-1">{{ $nilaiStats['nilai_terkecil'] !== null ? number_format($nilaiStats['nilai_terkecil'], 2, ',', '.') : '-' }}</div></div>
                     <div class="bg-white rounded-xl border border-gray-100 p-4 shadow-sm"><div class="text-xs font-bold uppercase text-gray-500">Rata-rata</div><div class="text-2xl font-bold text-gray-900 mt-1">{{ $nilaiStats['rata_rata'] !== null ? number_format($nilaiStats['rata_rata'], 2, ',', '.') : '-' }}</div></div>
@@ -319,11 +324,23 @@
                     <div class="px-6 py-4 border-b border-gray-100">
                         <div class="flex flex-col gap-4">
                             <div>
-                                <h3 class="font-bold text-gray-900">Detail Nilai: {{ $selectedUjian->nama_ujian }}</h3>
+                                <h3 class="font-bold text-gray-900">
+                                    {{ request('match_status') === 'unmatched' ? 'Data Belum Cocok' : 'Detail Nilai' }}: {{ $selectedUjian->nama_ujian }}
+                                </h3>
                                 <p class="text-xs text-gray-500">{{ $selectedUjian->tahunPelajaran?->tahun }} - {{ $selectedUjian->semester }}</p>
                             </div>
+                            @if (request('match_status') === 'unmatched')
+                                <div class="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+                                    Menampilkan siswa yang NIS-nya belum cocok dengan master siswa.
+                                    <a href="{{ route('kesiswaan.ujian-semester.index', request()->except(['match_status', 'nilai_page'])) }}"
+                                        class="font-bold underline ml-1">Tampilkan semua data</a>
+                                </div>
+                            @endif
                             <form method="GET" action="{{ route('kesiswaan.ujian-semester.index') }}" class="grid grid-cols-1 md:grid-cols-5 gap-3">
                                 <input type="hidden" name="ujian_id" value="{{ $selectedUjian->id }}">
+                                @if (request('match_status'))
+                                    <input type="hidden" name="match_status" value="{{ request('match_status') }}">
+                                @endif
                                 <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari NIS, nama, kelas..." class="rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500 text-sm">
                                 <select name="ujian_mapel_id" class="rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500 text-sm">
                                     <option value="">Semua mapel ujian</option>
