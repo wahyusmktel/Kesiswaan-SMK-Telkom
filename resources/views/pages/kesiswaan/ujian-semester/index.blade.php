@@ -132,7 +132,7 @@
                     <p class="text-xs text-gray-500 mb-5">Pilih detail ujian dulu, lalu upload file LMS untuk mapel terdaftar.</p>
 
                     @if ($selectedUjian)
-                        <form method="POST" action="{{ route('kesiswaan.ujian-semester.import') }}" enctype="multipart/form-data" class="space-y-4">
+                        <form method="POST" action="{{ route('kesiswaan.ujian-semester.import') }}" enctype="multipart/form-data" class="space-y-4" x-data="multiExcelUpload()">
                             @csrf
                             <input type="hidden" name="ujian_semester_id" value="{{ $selectedUjian->id }}">
                             <div>
@@ -154,8 +154,40 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700 mb-1">File Nilai</label>
-                                <input type="file" name="file_nilai" accept=".xls,.xlsx,.csv"
-                                    class="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-white focus:outline-none file:mr-4 file:py-2.5 file:px-4 file:rounded-l-lg file:border-0 file:bg-gray-100 file:text-gray-700 file:font-semibold hover:file:bg-gray-200" required>
+                                <div @dragover.prevent="dragging = true" @dragleave.prevent="dragging = false" @drop.prevent="drop($event)"
+                                    :class="dragging ? 'border-red-400 bg-red-50' : 'border-gray-300 bg-white'"
+                                    class="relative rounded-xl border-2 border-dashed p-5 text-center transition-colors">
+                                    <input x-ref="input" type="file" name="file_nilai[]" accept=".xls,.xlsx,.csv" multiple
+                                        @change="pick($event)"
+                                        class="absolute inset-0 opacity-0 cursor-pointer" required>
+                                    <div class="mx-auto w-12 h-12 rounded-xl bg-green-50 text-green-700 flex items-center justify-center mb-3">
+                                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                    </div>
+                                    <p class="font-bold text-gray-900">Tarik file Excel ke sini</p>
+                                    <p class="text-xs text-gray-500 mt-1">atau klik untuk memilih beberapa file .xls, .xlsx, atau .csv</p>
+                                </div>
+
+                                <div x-show="files.length" class="mt-3 space-y-2">
+                                    <template x-for="(file, index) in files" :key="file.name + file.size + index">
+                                        <div class="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                                            <div class="w-10 h-10 rounded-lg bg-green-100 text-green-700 flex items-center justify-center shrink-0">
+                                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6M14 3v4a2 2 0 002 2h4" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3h9l5 5v11a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z" />
+                                                </svg>
+                                            </div>
+                                            <div class="min-w-0 flex-1 text-left">
+                                                <p class="text-sm font-semibold text-gray-900 truncate" x-text="file.name"></p>
+                                                <p class="text-xs text-gray-500" x-text="formatSize(file.size)"></p>
+                                            </div>
+                                            <button type="button" @click="remove(index)" class="px-2 py-1 rounded-md bg-white border border-gray-200 text-gray-500 hover:text-red-600 hover:border-red-200 text-xs font-bold">
+                                                Hapus
+                                            </button>
+                                        </div>
+                                    </template>
+                                </div>
                             </div>
                             <button type="submit" class="w-full px-5 py-2.5 bg-gray-900 hover:bg-gray-800 text-white rounded-lg font-semibold shadow-sm transition-colors">
                                 Import Nilai
@@ -437,6 +469,48 @@
                 },
                 select(row, option) {
                     row.query = option.nama;
+                }
+            };
+        }
+
+        function multiExcelUpload() {
+            return {
+                files: [],
+                dragging: false,
+                pick(event) {
+                    this.setFiles(event.target.files);
+                },
+                drop(event) {
+                    this.dragging = false;
+                    this.setFiles(event.dataTransfer.files);
+                },
+                setFiles(fileList) {
+                    const allowed = ['xls', 'xlsx', 'csv'];
+                    const merged = [...this.files, ...Array.from(fileList)]
+                        .filter((file) => allowed.includes((file.name.split('.').pop() || '').toLowerCase()));
+
+                    const unique = new Map();
+                    merged.forEach((file) => unique.set(`${file.name}-${file.size}-${file.lastModified}`, file));
+                    this.files = Array.from(unique.values());
+                    this.syncInput();
+                },
+                remove(index) {
+                    this.files.splice(index, 1);
+                    this.syncInput();
+                },
+                syncInput() {
+                    const transfer = new DataTransfer();
+                    this.files.forEach((file) => transfer.items.add(file));
+                    this.$refs.input.files = transfer.files;
+                },
+                formatSize(bytes) {
+                    if (!bytes) {
+                        return '0 KB';
+                    }
+
+                    const units = ['B', 'KB', 'MB', 'GB'];
+                    const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+                    return `${(bytes / Math.pow(1024, index)).toFixed(index === 0 ? 0 : 1)} ${units[index]}`;
                 }
             };
         }

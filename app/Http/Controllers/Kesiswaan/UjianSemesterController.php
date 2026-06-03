@@ -170,7 +170,8 @@ class UjianSemesterController extends Controller
         $validated = $request->validate([
             'ujian_semester_id' => 'required|exists:ujian_semesters,id',
             'ujian_semester_mapel_id' => 'required|exists:ujian_semester_mapels,id',
-            'file_nilai' => 'required|file|mimes:xls,xlsx,csv|max:10240',
+            'file_nilai' => 'required|array|min:1',
+            'file_nilai.*' => 'required|file|mimes:xls,xlsx,csv|max:10240',
         ]);
 
         $ujian = UjianSemester::findOrFail($validated['ujian_semester_id']);
@@ -183,13 +184,21 @@ class UjianSemesterController extends Controller
             return back();
         }
 
-        $file = $request->file('file_nilai');
-
         try {
-            $rows = $this->readNilaiRows($file->getRealPath(), $ujianMapel->jumlah_soal);
-            $result = $this->saveNilaiRows($rows, $ujian, $ujianMapel, $file->getClientOriginalName(), $request->user()?->id);
+            $totalImported = 0;
+            $totalUnmatched = 0;
+            $fileCount = 0;
 
-            toast("Import selesai. {$result['imported']} data tersimpan, {$result['unmatched']} NIS belum cocok dengan master siswa.", 'success');
+            foreach ($request->file('file_nilai', []) as $file) {
+                $rows = $this->readNilaiRows($file->getRealPath(), $ujianMapel->jumlah_soal);
+                $result = $this->saveNilaiRows($rows, $ujian, $ujianMapel, $file->getClientOriginalName(), $request->user()?->id);
+
+                $totalImported += $result['imported'];
+                $totalUnmatched += $result['unmatched'];
+                $fileCount++;
+            }
+
+            toast("Import selesai. {$fileCount} file diproses, {$totalImported} data tersimpan, {$totalUnmatched} NIS belum cocok dengan master siswa.", 'success');
         } catch (\Throwable $e) {
             report($e);
             toast('Gagal import nilai: ' . $e->getMessage(), 'error');
