@@ -13,6 +13,7 @@ class NottedPost extends Model
         'user_id',
         'content',
         'image',
+        'forum_category',
     ];
 
     /**

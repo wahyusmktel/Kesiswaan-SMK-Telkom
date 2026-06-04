@@ -122,6 +122,15 @@ Route::middleware(['auth', 'role:Guru Kelas|Operator|Super Admin|Siswa|Guru Pike
     Route::delete('/galeri-photo/{photo}', [\App\Http\Controllers\Public\GalleryPhotoController::class, 'destroy'])->name('gallery-photo.destroy');
 });
 
+// Forum Stella (landing publik, forum untuk seluruh pengguna yang login)
+Route::get('/forum-stella', [App\Http\Controllers\ForumStellaController::class, 'index'])->name('forum-stella.index');
+Route::get('/forum-stella/masuk', [App\Http\Controllers\ForumStellaController::class, 'enter'])
+    ->middleware('auth')
+    ->name('forum-stella.enter');
+Route::post('/forum-stella/posts', [App\Http\Controllers\ForumStellaController::class, 'store'])
+    ->middleware('auth')
+    ->name('forum-stella.posts.store');
+
 // NOTTED Social Media Routes
 Route::get('/notted', [App\Http\Controllers\NottedController::class, 'index'])->name('notted.landing');
 
