@@ -794,6 +794,20 @@ Route::middleware('auth')->group(function () {
         Route::put('/dapodik-guru/{dapodikGuru}', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'update'])->name('dapodik-guru.update');
     });
 
+    // Fingerprint GF1600 / ZKTeco (Super Admin, Operator, KAUR SDM)
+    Route::middleware(['role:Super Admin|Operator|KAUR SDM'])->prefix('fingerprint')->name('fingerprint.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\FingerprintController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\FingerprintController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\FingerprintController::class, 'store'])->name('store');
+        Route::get('/logs', [\App\Http\Controllers\FingerprintController::class, 'logs'])->name('logs');
+        Route::get('/{fingerprint}/edit', [\App\Http\Controllers\FingerprintController::class, 'edit'])->name('edit');
+        Route::put('/{fingerprint}', [\App\Http\Controllers\FingerprintController::class, 'update'])->name('update');
+        Route::delete('/{fingerprint}', [\App\Http\Controllers\FingerprintController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/test-connection', [\App\Http\Controllers\FingerprintController::class, 'testConnection'])->name('test-connection');
+        Route::post('/{id}/sync-users', [\App\Http\Controllers\FingerprintController::class, 'syncUsers'])->name('sync-users');
+        Route::post('/{id}/sync-attendances', [\App\Http\Controllers\FingerprintController::class, 'syncAttendances'])->name('sync-attendances');
+    });
+
     // Monitoring Keterlambatan Shared
     Route::get('/monitoring-keterlambatan', [\App\Http\Controllers\Shared\MonitoringKeterlambatanController::class, 'index'])
         ->name('monitoring-keterlambatan.index');

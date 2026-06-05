@@ -340,6 +340,30 @@
         </a>
     </li>
 
+    @if(session('active_role') == 'Super Admin')
+    <li class="submenu-dropdown" x-data="{ expanded: {{ request()->routeIs('fingerprint.*') ? 'true' : 'false' }}, flyoutTop:0, updateFlyoutPosition(){ const r=this.$el.querySelector('button').getBoundingClientRect(); this.flyoutTop=r.top; } }" @mouseenter="updateFlyoutPosition()">
+        <button @click="expanded = !expanded"
+            class="nav-link w-full {{ request()->routeIs('fingerprint.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="flex items-center">
+                <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c1.657 0 3-1.567 3-3.5S13.657 4 12 4 9 5.567 9 7.5 10.343 11 12 11zm0 0v9m-5-7.5c-1.657 0-3 1.343-3 3V20m16 0v-4.5c0-1.657-1.343-3-3-3" />
+                    </svg></div>
+                <span class="nav-text">Fingerprint</span>
+            </div>
+            <svg :class="expanded ? 'rotate-180' : ''" class="dropdown-arrow w-4 h-4 transition-transform text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+        </button>
+        <div x-show="expanded" x-collapse class="submenu-card">
+            <a href="{{ route('fingerprint.index') }}" class="submenu-item {{ request()->routeIs('fingerprint.index', 'fingerprint.create', 'fingerprint.edit') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Mesin Fingerprint</a>
+            <a href="{{ route('fingerprint.logs') }}" class="submenu-item {{ request()->routeIs('fingerprint.logs') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Log Absensi</a>
+        </div>
+        <div class="submenu-flyout" :style="'top: ' + flyoutTop + 'px'">
+            <div class="submenu-flyout-title">Fingerprint</div>
+            <a href="{{ route('fingerprint.index') }}" class="submenu-item {{ request()->routeIs('fingerprint.index', 'fingerprint.create', 'fingerprint.edit') ? 'submenu-item-active' : '' }}">Mesin Fingerprint</a>
+            <a href="{{ route('fingerprint.logs') }}" class="submenu-item {{ request()->routeIs('fingerprint.logs') ? 'submenu-item-active' : '' }}">Log Absensi</a>
+        </div>
+    </li>
+    @endif
+
     @if(session('active_role') == 'Kepala Sekolah')
         <div class="section-title">Layanan Digital</div>
         <li>
@@ -2014,6 +2038,28 @@
                 </a>
             </li>
 
+            <li class="submenu-dropdown" x-data="{ expanded: {{ request()->routeIs('fingerprint.*') ? 'true' : 'false' }}, flyoutTop:0, updateFlyoutPosition(){ const r=this.$el.querySelector('button').getBoundingClientRect(); this.flyoutTop=r.top; } }" @mouseenter="updateFlyoutPosition()">
+                <button @click="expanded = !expanded"
+                    class="nav-link w-full {{ request()->routeIs('fingerprint.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                    <div class="flex items-center">
+                        <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c1.657 0 3-1.567 3-3.5S13.657 4 12 4 9 5.567 9 7.5 10.343 11 12 11zm0 0v9m-5-7.5c-1.657 0-3 1.343-3 3V20m16 0v-4.5c0-1.657-1.343-3-3-3" />
+                            </svg></div>
+                        <span class="nav-text">Fingerprint</span>
+                    </div>
+                    <svg :class="expanded ? 'rotate-180' : ''" class="dropdown-arrow w-4 h-4 transition-transform text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                </button>
+                <div x-show="expanded" x-collapse class="submenu-card">
+                    <a href="{{ route('fingerprint.index') }}" class="submenu-item {{ request()->routeIs('fingerprint.index', 'fingerprint.create', 'fingerprint.edit') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Mesin Fingerprint</a>
+                    <a href="{{ route('fingerprint.logs') }}" class="submenu-item {{ request()->routeIs('fingerprint.logs') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Log Absensi</a>
+                </div>
+                <div class="submenu-flyout" :style="'top: ' + flyoutTop + 'px'">
+                    <div class="submenu-flyout-title">Fingerprint</div>
+                    <a href="{{ route('fingerprint.index') }}" class="submenu-item {{ request()->routeIs('fingerprint.index', 'fingerprint.create', 'fingerprint.edit') ? 'submenu-item-active' : '' }}">Mesin Fingerprint</a>
+                    <a href="{{ route('fingerprint.logs') }}" class="submenu-item {{ request()->routeIs('fingerprint.logs') ? 'submenu-item-active' : '' }}">Log Absensi</a>
+                </div>
+            </li>
+
             {{-- ====== TANDA TANGAN DIGITAL (KAUR SDM) ====== --}}
             <li>
                 <a href="{{ route('tanda-tangan.index') }}"
@@ -2283,6 +2329,28 @@
                 </div>
                 <span class="nav-text">Manajemen Pegawai</span>
             </a>
+        </li>
+
+        <li class="submenu-dropdown" x-data="{ expanded: {{ request()->routeIs('fingerprint.*') ? 'true' : 'false' }}, flyoutTop:0, updateFlyoutPosition(){ const r=this.$el.querySelector('button').getBoundingClientRect(); this.flyoutTop=r.top; } }" @mouseenter="updateFlyoutPosition()">
+            <button @click="expanded = !expanded"
+                class="nav-link w-full {{ request()->routeIs('fingerprint.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                <div class="flex items-center">
+                    <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c1.657 0 3-1.567 3-3.5S13.657 4 12 4 9 5.567 9 7.5 10.343 11 12 11zm0 0v9m-5-7.5c-1.657 0-3 1.343-3 3V20m16 0v-4.5c0-1.657-1.343-3-3-3" />
+                        </svg></div>
+                    <span class="nav-text">Fingerprint</span>
+                </div>
+                <svg :class="expanded ? 'rotate-180' : ''" class="dropdown-arrow w-4 h-4 transition-transform text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+            </button>
+            <div x-show="expanded" x-collapse class="submenu-card">
+                <a href="{{ route('fingerprint.index') }}" class="submenu-item {{ request()->routeIs('fingerprint.index', 'fingerprint.create', 'fingerprint.edit') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Mesin Fingerprint</a>
+                <a href="{{ route('fingerprint.logs') }}" class="submenu-item {{ request()->routeIs('fingerprint.logs') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Log Absensi</a>
+            </div>
+            <div class="submenu-flyout" :style="'top: ' + flyoutTop + 'px'">
+                <div class="submenu-flyout-title">Fingerprint</div>
+                <a href="{{ route('fingerprint.index') }}" class="submenu-item {{ request()->routeIs('fingerprint.index', 'fingerprint.create', 'fingerprint.edit') ? 'submenu-item-active' : '' }}">Mesin Fingerprint</a>
+                <a href="{{ route('fingerprint.logs') }}" class="submenu-item {{ request()->routeIs('fingerprint.logs') ? 'submenu-item-active' : '' }}">Log Absensi</a>
+            </div>
         </li>
     @endif
     @endrole
