@@ -98,10 +98,10 @@
                                 $earlyMinutes = $hasCheckout && $lastScan->lessThan($checkoutStart) ? (int) ceil($lastScan->diffInMinutes($checkoutStart)) : 0;
                                 $notes = [];
                                 if ($lateMinutes > 0) {
-                                    $notes[] = 'Terlambat ' . $lateMinutes . ' menit';
+                                    $notes[] = 'Terlambat ' . \App\Support\AttendanceDuration::humanizeMinutes($lateMinutes);
                                 }
                                 if ($earlyMinutes > 0) {
-                                    $notes[] = 'Pulang cepat ' . $earlyMinutes . ' menit';
+                                    $notes[] = 'Pulang cepat ' . \App\Support\AttendanceDuration::humanizeMinutes($earlyMinutes);
                                 }
                                 $statusClass = $firstScan
                                     ? ($hasCheckout ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700')

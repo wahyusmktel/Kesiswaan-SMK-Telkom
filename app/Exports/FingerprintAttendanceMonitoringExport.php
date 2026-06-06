@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\FingerprintAttendanceSetting;
+use App\Support\AttendanceDuration;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
@@ -65,11 +66,11 @@ class FingerprintAttendanceMonitoringExport implements FromCollection, WithHeadi
         $notes = [];
 
         if ($lateMinutes > 0) {
-            $notes[] = "Terlambat {$lateMinutes} menit";
+            $notes[] = 'Terlambat ' . AttendanceDuration::humanizeMinutes($lateMinutes);
         }
 
         if ($earlyMinutes > 0) {
-            $notes[] = "Pulang cepat {$earlyMinutes} menit";
+            $notes[] = 'Pulang cepat ' . AttendanceDuration::humanizeMinutes($earlyMinutes);
         }
 
         return [
