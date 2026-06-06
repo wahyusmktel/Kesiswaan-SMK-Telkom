@@ -6,7 +6,7 @@
         </div>
     </x-slot>
 
-    <div class="space-y-6">
+    <div class="space-y-6" x-data="{ syncOpen: false, syncAction: '', rangeType: '1_month' }">
         @include('pages.fingerprint.partials.flash')
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -76,10 +76,7 @@
                                             @csrf
                                             <button class="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700 hover:bg-emerald-100">Tarik User</button>
                                         </form>
-                                        <form method="POST" action="{{ route('fingerprint.sync-attendances', $device->id) }}">
-                                            @csrf
-                                            <button class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700 hover:bg-amber-100">Tarik Log</button>
-                                        </form>
+                                        <button type="button" @click="syncAction = '{{ route('fingerprint.sync-attendances', $device->id) }}'; syncOpen = true" class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700 hover:bg-amber-100">Tarik Log</button>
                                         <a href="{{ route('fingerprint.edit', $device) }}" class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50">Edit</a>
                                         <form method="POST" action="{{ route('fingerprint.destroy', $device) }}" onsubmit="return confirm('Hapus mesin fingerprint ini? Data user dan log dari mesin ini ikut terhapus.')">
                                             @csrf
@@ -105,6 +102,51 @@
             @endif
         </div>
 
-        @include('pages.fingerprint.partials.log-table', ['attendances' => $attendances, 'allDevices' => $allDevices, 'compact' => true])
+        @include('pages.fingerprint.partials.user-table', [
+            'fingerprintUsers' => $fingerprintUsers,
+            'allDevices' => $allDevices,
+            'title' => 'User Mesin Fingerprint',
+            'showMappingButton' => true,
+            'action' => route('fingerprint.index'),
+        ])
+
+        <div x-show="syncOpen" x-cloak class="fixed inset-0 z-50 overflow-y-auto bg-gray-900/60 backdrop-blur-sm p-4">
+            <div class="min-h-full flex items-center justify-center">
+                <form method="POST" :action="syncAction" class="w-full max-w-lg rounded-2xl bg-white shadow-2xl overflow-hidden">
+                    @csrf
+                    <div class="p-6 border-b border-gray-100">
+                        <h3 class="text-xl font-black text-gray-900">Konfirmasi Tarik Log</h3>
+                        <p class="text-sm text-gray-500 mt-1">Tarik log hanya memproses user mesin yang sudah dimapping ke pegawai sistem.</p>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        <label class="block">
+                            <span class="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Rentang Data</span>
+                            <select name="range_type" x-model="rangeType" class="w-full rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500">
+                                <option value="1_day">Hari ini</option>
+                                <option value="2_days">2 hari terakhir</option>
+                                <option value="1_month">1 bulan terakhir</option>
+                                <option value="2_months">2 bulan terakhir</option>
+                                <option value="custom">Kustom</option>
+                                <option value="all">Semua data</option>
+                            </select>
+                        </label>
+                        <div x-show="rangeType === 'custom'" class="grid grid-cols-2 gap-3">
+                            <label class="block">
+                                <span class="block text-xs font-bold text-gray-500 mb-1">Tanggal Awal</span>
+                                <input type="date" name="date_from" class="w-full rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500">
+                            </label>
+                            <label class="block">
+                                <span class="block text-xs font-bold text-gray-500 mb-1">Tanggal Akhir</span>
+                                <input type="date" name="date_to" class="w-full rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500">
+                            </label>
+                        </div>
+                    </div>
+                    <div class="p-6 bg-gray-50 flex justify-end gap-3">
+                        <button type="button" @click="syncOpen = false" class="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50">Batal</button>
+                        <button class="rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-amber-700">Mulai Tarik Log</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </x-app-layout>

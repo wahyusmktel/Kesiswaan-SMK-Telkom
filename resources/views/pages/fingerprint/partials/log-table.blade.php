@@ -12,23 +12,25 @@
             @endif
         </div>
 
-        <form method="GET" action="{{ ($compact ?? false) ? route('fingerprint.index') : route('fingerprint.logs') }}" class="grid grid-cols-1 md:grid-cols-5 gap-3">
-            <input type="date" name="date_from" value="{{ request('date_from') }}" class="rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500">
-            <input type="date" name="date_to" value="{{ request('date_to') }}" class="rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500">
-            <input name="search" value="{{ request('search') }}" class="rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500" placeholder="Nama / User ID">
-            <select name="device_id" class="rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500">
-                <option value="">Semua Mesin</option>
-                @foreach($allDevices as $deviceOption)
-                    <option value="{{ $deviceOption->id }}" {{ (string) request('device_id') === (string) $deviceOption->id ? 'selected' : '' }}>
-                        {{ $deviceOption->name }}
-                    </option>
-                @endforeach
-            </select>
-            <div class="flex gap-2">
-                <button class="flex-1 rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-bold text-white hover:bg-red-600">Filter</button>
-                <a href="{{ ($compact ?? false) ? route('fingerprint.index') : route('fingerprint.logs') }}" class="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50">Reset</a>
-            </div>
-        </form>
+        @if($showFilters ?? true)
+            <form method="GET" action="{{ ($compact ?? false) ? route('fingerprint.index') : route('fingerprint.logs') }}" class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                <input type="date" name="date_from" value="{{ request('date_from') }}" class="rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500">
+                <input type="date" name="date_to" value="{{ request('date_to') }}" class="rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500">
+                <input name="search" value="{{ request('search') }}" class="rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500" placeholder="Nama / User ID">
+                <select name="device_id" class="rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500">
+                    <option value="">Semua Mesin</option>
+                    @foreach($allDevices as $deviceOption)
+                        <option value="{{ $deviceOption->id }}" {{ (string) request('device_id') === (string) $deviceOption->id ? 'selected' : '' }}>
+                            {{ $deviceOption->name }}
+                        </option>
+                    @endforeach
+                </select>
+                <div class="flex gap-2">
+                    <button class="flex-1 rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-bold text-white hover:bg-red-600">Filter</button>
+                    <a href="{{ ($compact ?? false) ? route('fingerprint.index') : route('fingerprint.logs') }}" class="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50">Reset</a>
+                </div>
+            </form>
+        @endif
     </div>
 
     <div class="overflow-x-auto">

@@ -9,8 +9,8 @@ use App\Models\MasterGuru;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
 use Rats\Zkteco\Lib\ZKTeco;
 use Throwable;
 
@@ -22,10 +22,10 @@ class FingerprintController extends Controller
             ->latest()
             ->paginate(10);
 
-        $attendances = $this->attendanceQuery($request)->paginate(20)->withQueryString();
+        $fingerprintUsers = $this->fingerprintUserQuery($request)->paginate(20)->withQueryString();
         $allDevices = FingerprintDevice::orderBy('name')->get();
 
-        return view('pages.fingerprint.index', compact('devices', 'attendances', 'allDevices'));
+        return view('pages.fingerprint.index', compact('devices', 'fingerprintUsers', 'allDevices'));
     }
 
     public function create()
@@ -70,10 +70,100 @@ class FingerprintController extends Controller
 
     public function logs(Request $request)
     {
-        $attendances = $this->attendanceQuery($request)->paginate(25)->withQueryString();
+        [$dateFrom, $dateTo] = $this->resolveLogDateRange($request);
+        $summaryQuery = FingerprintAttendance::query()
+            ->select([
+                'app_user_id',
+                DB::raw('COUNT(*) as total_logs'),
+                DB::raw('COUNT(DISTINCT DATE(timestamp)) as total_days'),
+                DB::raw('MIN(timestamp) as first_scan'),
+                DB::raw('MAX(timestamp) as last_scan'),
+            ])
+            ->with('appUser.masterGuru')
+            ->whereNotNull('app_user_id')
+            ->when($dateFrom, fn ($query) => $query->whereDate('timestamp', '>=', $dateFrom))
+            ->when($dateTo, fn ($query) => $query->whereDate('timestamp', '<=', $dateTo))
+            ->when($request->filled('device_id'), fn ($query) => $query->where('fingerprint_device_id', $request->device_id))
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = $request->search;
+                $query->whereHas('appUser', function ($userQuery) use ($search) {
+                    $userQuery->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhereHas('masterGuru', fn ($guruQuery) => $guruQuery->where('nama_lengkap', 'like', "%{$search}%"));
+                });
+            })
+            ->groupBy('app_user_id')
+            ->orderByDesc(DB::raw('MAX(timestamp)'));
+
+        $summaries = $summaryQuery->paginate(25)->withQueryString();
         $allDevices = FingerprintDevice::orderBy('name')->get();
 
-        return view('pages.fingerprint.logs', compact('attendances', 'allDevices'));
+        return view('pages.fingerprint.logs', compact('summaries', 'allDevices', 'dateFrom', 'dateTo'));
+    }
+
+    public function attendanceDetail(Request $request, User $user)
+    {
+        [$dateFrom, $dateTo] = $this->resolveDetailDateRange($request);
+
+        $attendances = FingerprintAttendance::with('device')
+            ->where('app_user_id', $user->id)
+            ->when($dateFrom, fn ($query) => $query->whereDate('timestamp', '>=', $dateFrom))
+            ->when($dateTo, fn ($query) => $query->whereDate('timestamp', '<=', $dateTo))
+            ->orderByDesc('timestamp')
+            ->paginate(50)
+            ->withQueryString();
+
+        $dailyRecaps = FingerprintAttendance::query()
+            ->select([
+                DB::raw('DATE(timestamp) as tanggal'),
+                DB::raw('MIN(timestamp) as scan_masuk'),
+                DB::raw('MAX(timestamp) as scan_keluar'),
+                DB::raw('COUNT(*) as total_scan'),
+            ])
+            ->where('app_user_id', $user->id)
+            ->when($dateFrom, fn ($query) => $query->whereDate('timestamp', '>=', $dateFrom))
+            ->when($dateTo, fn ($query) => $query->whereDate('timestamp', '<=', $dateTo))
+            ->groupBy(DB::raw('DATE(timestamp)'))
+            ->orderByDesc(DB::raw('DATE(timestamp)'))
+            ->get();
+
+        $user->load('masterGuru');
+
+        return view('pages.fingerprint.attendance-detail', compact('user', 'attendances', 'dailyRecaps', 'dateFrom', 'dateTo'));
+    }
+
+    public function mappings(Request $request)
+    {
+        $fingerprintUsers = $this->fingerprintUserQuery($request)
+            ->orderByRaw('app_user_id is null desc')
+            ->paginate(25)
+            ->withQueryString();
+
+        $employees = User::with('masterGuru')
+            ->whereDoesntHave('roles', fn ($query) => $query->whereIn('name', ['Siswa', 'siswa', 'Kantin']))
+            ->orderBy('name')
+            ->get();
+
+        $allDevices = FingerprintDevice::orderBy('name')->get();
+
+        return view('pages.fingerprint.mappings', compact('fingerprintUsers', 'employees', 'allDevices'));
+    }
+
+    public function updateMapping(Request $request, FingerprintUser $fingerprintUser)
+    {
+        $data = $request->validate([
+            'app_user_id' => ['nullable', 'exists:users,id'],
+        ]);
+
+        $fingerprintUser->update([
+            'app_user_id' => $data['app_user_id'] ?? null,
+        ]);
+
+        FingerprintAttendance::where('fingerprint_device_id', $fingerprintUser->fingerprint_device_id)
+            ->where('user_id', $fingerprintUser->user_id)
+            ->update(['app_user_id' => $data['app_user_id'] ?? null]);
+
+        return back()->with('success', 'Mapping pegawai berhasil diperbarui.');
     }
 
     public function testConnection($id)
@@ -119,8 +209,6 @@ class FingerprintController extends Controller
                 }
 
                 $name = trim((string) ($row['name'] ?? ''));
-                $appUser = $this->matchLocalUser($fingerprintUserId, $name);
-
                 FingerprintUser::updateOrCreate(
                     [
                         'fingerprint_device_id' => $device->id,
@@ -128,11 +216,12 @@ class FingerprintController extends Controller
                     ],
                     [
                         'uid' => $row['uid'] ?? null,
-                        'app_user_id' => $appUser?->id,
                         'name' => $name ?: $fingerprintUserId,
                         'role' => isset($row['role']) ? (string) $row['role'] : null,
                         'password' => $row['password'] ?? null,
                         'cardno' => isset($row['cardno']) ? trim((string) $row['cardno']) : null,
+                        'machine_registered_at' => $this->parseTimestamp($row['created_at'] ?? $row['register_time'] ?? $row['registered_at'] ?? null),
+                        'last_synced_at' => now(),
                     ]
                 );
 
@@ -148,9 +237,10 @@ class FingerprintController extends Controller
         }
     }
 
-    public function syncAttendances($id)
+    public function syncAttendances(Request $request, $id)
     {
         $device = FingerprintDevice::findOrFail($id);
+        [$dateFrom, $dateTo, $rangeLabel] = $this->resolveSyncRange($request);
 
         try {
             [$zk, $connected] = $this->connectDevice($device);
@@ -159,7 +249,20 @@ class FingerprintController extends Controller
             }
 
             $logs = $zk->getAttendance();
-            $synced = 0;
+            $mappedUsers = FingerprintUser::where('fingerprint_device_id', $device->id)
+                ->whereNotNull('app_user_id')
+                ->get()
+                ->keyBy('user_id');
+
+            if ($mappedUsers->isEmpty()) {
+                $zk->disconnect();
+                return back()->with('error', 'Belum ada user mesin yang dimapping ke pegawai. Lakukan mapping manual terlebih dahulu.');
+            }
+
+            $processed = 0;
+            $created = 0;
+            $updated = 0;
+            $skipped = 0;
 
             foreach ($logs as $row) {
                 $fingerprintUserId = trim((string) ($row['id'] ?? ''));
@@ -168,12 +271,17 @@ class FingerprintController extends Controller
                     continue;
                 }
 
-                $fingerprintUser = FingerprintUser::where('fingerprint_device_id', $device->id)
-                    ->where('user_id', $fingerprintUserId)
-                    ->first();
-                $appUser = $fingerprintUser?->appUser ?? $this->matchLocalUser($fingerprintUserId, $fingerprintUser?->name);
+                if (($dateFrom && $timestamp->lt($dateFrom->copy()->startOfDay())) || ($dateTo && $timestamp->gt($dateTo->copy()->endOfDay()))) {
+                    continue;
+                }
 
-                FingerprintAttendance::updateOrCreate(
+                $fingerprintUser = $mappedUsers->get($fingerprintUserId);
+                if (!$fingerprintUser) {
+                    $skipped++;
+                    continue;
+                }
+
+                $attendance = FingerprintAttendance::updateOrCreate(
                     [
                         'fingerprint_device_id' => $device->id,
                         'user_id' => $fingerprintUserId,
@@ -181,18 +289,19 @@ class FingerprintController extends Controller
                     ],
                     [
                         'uid' => $row['uid'] ?? null,
-                        'app_user_id' => $appUser?->id,
+                        'app_user_id' => $fingerprintUser->app_user_id,
                         'status' => isset($row['state']) ? (string) $row['state'] : null,
                         'punch' => isset($row['type']) ? (string) $row['type'] : null,
                     ]
                 );
 
-                $synced++;
+                $processed++;
+                $attendance->wasRecentlyCreated ? $created++ : ($attendance->wasChanged() ? $updated++ : null);
             }
 
             $zk->disconnect();
 
-            return back()->with('success', "Tarik log absensi selesai. {$synced} log diproses tanpa duplikasi.");
+            return back()->with('success', "Tarik log absensi {$rangeLabel} selesai. {$processed} log termapping diproses ({$created} baru, {$updated} diperbarui, {$skipped} dilewati karena belum mapping).");
         } catch (Throwable $e) {
             Log::error('Fingerprint sync attendances failed', ['device_id' => $device->id, 'error' => $e->getMessage()]);
             return back()->with('error', 'Gagal tarik log absensi: ' . $e->getMessage());
@@ -223,54 +332,6 @@ class FingerprintController extends Controller
         return [$zk, $connected];
     }
 
-    private function matchLocalUser(?string $fingerprintUserId, ?string $name): ?User
-    {
-        $fingerprintUserId = trim((string) $fingerprintUserId);
-        $name = trim((string) $name);
-
-        if ($fingerprintUserId !== '' && ctype_digit($fingerprintUserId)) {
-            $user = User::find((int) $fingerprintUserId);
-            if ($user) {
-                return $user;
-            }
-        }
-
-        if ($fingerprintUserId !== '') {
-            $matchColumns = array_filter(
-                ['nik', 'nuptk', 'kode_guru'],
-                fn ($column) => Schema::hasColumn('master_gurus', $column)
-            );
-
-            if (!empty($matchColumns)) {
-                $masterGuru = MasterGuru::with('user')
-                    ->where(function ($query) use ($fingerprintUserId, $matchColumns) {
-                        foreach ($matchColumns as $column) {
-                            $query->orWhere($column, $fingerprintUserId);
-                        }
-                    })
-                    ->first();
-
-                if ($masterGuru?->user) {
-                    return $masterGuru->user;
-                }
-            }
-        }
-
-        if ($name !== '') {
-            $user = User::where('name', $name)->first();
-            if ($user) {
-                return $user;
-            }
-
-            $masterGuru = MasterGuru::where('nama_lengkap', $name)->with('user')->first();
-            if ($masterGuru?->user) {
-                return $masterGuru->user;
-            }
-        }
-
-        return null;
-    }
-
     private function parseTimestamp($value): ?Carbon
     {
         if (!$value) {
@@ -282,6 +343,77 @@ class FingerprintController extends Controller
         } catch (Throwable) {
             return null;
         }
+    }
+
+    private function fingerprintUserQuery(Request $request)
+    {
+        return FingerprintUser::with(['device', 'appUser.masterGuru'])
+            ->when($request->filled('device_id'), fn ($query) => $query->where('fingerprint_device_id', $request->device_id))
+            ->when($request->filled('mapping_status'), function ($query) use ($request) {
+                $request->mapping_status === 'mapped'
+                    ? $query->whereNotNull('app_user_id')
+                    : $query->whereNull('app_user_id');
+            })
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = $request->search;
+                $query->where(function ($sub) use ($search) {
+                    $sub->where('user_id', 'like', "%{$search}%")
+                        ->orWhere('name', 'like', "%{$search}%")
+                        ->orWhereHas('appUser', fn ($userQuery) => $userQuery->where('name', 'like', "%{$search}%"))
+                        ->orWhereHas('appUser.masterGuru', fn ($guruQuery) => $guruQuery->where('nama_lengkap', 'like', "%{$search}%"));
+                });
+            })
+            ->latest('last_synced_at')
+            ->latest();
+    }
+
+    private function resolveSyncRange(Request $request): array
+    {
+        $data = $request->validate([
+            'range_type' => ['nullable', 'in:1_day,2_days,1_month,2_months,custom,all'],
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date'],
+        ]);
+
+        $type = $data['range_type'] ?? '1_month';
+        $today = now();
+
+        return match ($type) {
+            '1_day' => [$today->copy()->startOfDay(), $today->copy()->endOfDay(), 'hari ini'],
+            '2_days' => [$today->copy()->subDay()->startOfDay(), $today->copy()->endOfDay(), '2 hari terakhir'],
+            '2_months' => [$today->copy()->subMonthsNoOverflow(2)->startOfDay(), $today->copy()->endOfDay(), '2 bulan terakhir'],
+            'custom' => [
+                !empty($data['date_from']) ? Carbon::parse($data['date_from'])->startOfDay() : null,
+                !empty($data['date_to']) ? Carbon::parse($data['date_to'])->endOfDay() : null,
+                'rentang kustom',
+            ],
+            'all' => [null, null, 'semua data'],
+            default => [$today->copy()->subMonthNoOverflow()->startOfDay(), $today->copy()->endOfDay(), '1 bulan terakhir'],
+        };
+    }
+
+    private function resolveLogDateRange(Request $request): array
+    {
+        $dateFrom = $request->filled('date_from') ? Carbon::parse($request->date_from)->startOfDay() : now()->subMonthNoOverflow()->startOfDay();
+        $dateTo = $request->filled('date_to') ? Carbon::parse($request->date_to)->endOfDay() : now()->endOfDay();
+
+        return [$dateFrom, $dateTo];
+    }
+
+    private function resolveDetailDateRange(Request $request): array
+    {
+        $mode = $request->input('range', '1_month');
+
+        if ($mode === 'all') {
+            return [null, null];
+        }
+
+        if ($mode === 'day' && $request->filled('date')) {
+            $date = Carbon::parse($request->date);
+            return [$date->copy()->startOfDay(), $date->copy()->endOfDay()];
+        }
+
+        return [now()->subMonthNoOverflow()->startOfDay(), now()->endOfDay()];
     }
 
     private function attendanceQuery(Request $request)

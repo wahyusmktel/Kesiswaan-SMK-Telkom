@@ -799,10 +799,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [\App\Http\Controllers\FingerprintController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\FingerprintController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\FingerprintController::class, 'store'])->name('store');
+        Route::get('/mappings', [\App\Http\Controllers\FingerprintController::class, 'mappings'])->name('mappings');
         Route::get('/logs', [\App\Http\Controllers\FingerprintController::class, 'logs'])->name('logs');
+        Route::get('/logs/{user}', [\App\Http\Controllers\FingerprintController::class, 'attendanceDetail'])->name('logs.detail');
         Route::get('/{fingerprint}/edit', [\App\Http\Controllers\FingerprintController::class, 'edit'])->name('edit');
         Route::put('/{fingerprint}', [\App\Http\Controllers\FingerprintController::class, 'update'])->name('update');
         Route::delete('/{fingerprint}', [\App\Http\Controllers\FingerprintController::class, 'destroy'])->name('destroy');
+        Route::patch('/mappings/{fingerprintUser}', [\App\Http\Controllers\FingerprintController::class, 'updateMapping'])->name('mappings.update');
         Route::post('/{id}/test-connection', [\App\Http\Controllers\FingerprintController::class, 'testConnection'])->name('test-connection');
         Route::post('/{id}/sync-users', [\App\Http\Controllers\FingerprintController::class, 'syncUsers'])->name('sync-users');
         Route::post('/{id}/sync-attendances', [\App\Http\Controllers\FingerprintController::class, 'syncAttendances'])->name('sync-attendances');
