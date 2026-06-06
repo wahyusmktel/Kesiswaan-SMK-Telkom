@@ -1,7 +1,6 @@
 [Unit]
 Description=SISFO Fingerprint Redis Queue Worker
-After=network.target redis-server.service
-Requires=redis-server.service
+After=network.target
 
 [Service]
 Type=simple
