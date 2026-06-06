@@ -801,6 +801,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/', [\App\Http\Controllers\FingerprintController::class, 'store'])->name('store');
         Route::get('/mappings', [\App\Http\Controllers\FingerprintController::class, 'mappings'])->name('mappings');
         Route::get('/logs', [\App\Http\Controllers\FingerprintController::class, 'logs'])->name('logs');
+        Route::get('/monitoring', [\App\Http\Controllers\FingerprintController::class, 'monitoring'])->name('monitoring');
+        Route::get('/monitoring/export', [\App\Http\Controllers\FingerprintController::class, 'exportMonitoring'])->name('monitoring.export');
         Route::get('/logs/{user}', [\App\Http\Controllers\FingerprintController::class, 'attendanceDetail'])->name('logs.detail');
         Route::get('/{fingerprint}/edit', [\App\Http\Controllers\FingerprintController::class, 'edit'])->name('edit');
         Route::put('/{fingerprint}', [\App\Http\Controllers\FingerprintController::class, 'update'])->name('update');

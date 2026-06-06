@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\FingerprintAttendanceMonitoringExport;
 use App\Jobs\SyncFingerprintAttendancesJob;
 use App\Models\FingerprintAttendance;
 use App\Models\FingerprintDevice;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 use Rats\Zkteco\Lib\ZKTeco;
 use Throwable;
 
@@ -133,6 +135,35 @@ class FingerprintController extends Controller
         $user->load('masterGuru');
 
         return view('pages.fingerprint.attendance-detail', compact('user', 'attendances', 'dailyRecaps', 'dateFrom', 'dateTo'));
+    }
+
+    public function monitoring(Request $request)
+    {
+        $date = $request->filled('date') ? Carbon::parse($request->date)->toDateString() : now()->toDateString();
+        $rows = $this->monitoringRows($request, $date)->paginate(30)->withQueryString();
+        $allDevices = FingerprintDevice::orderBy('name')->get();
+
+        $stats = [
+            'total' => $rows->total(),
+            'present' => (clone $this->monitoringRows($request, $date))->whereNotNull('daily.first_scan')->count(),
+            'complete' => (clone $this->monitoringRows($request, $date))
+                ->whereNotNull('daily.first_scan')
+                ->whereColumn('daily.first_scan', '<>', 'daily.last_scan')
+                ->count(),
+        ];
+        $stats['incomplete'] = max($stats['present'] - $stats['complete'], 0);
+        $stats['absent'] = max($stats['total'] - $stats['present'], 0);
+
+        return view('pages.fingerprint.monitoring', compact('rows', 'allDevices', 'date', 'stats'));
+    }
+
+    public function exportMonitoring(Request $request)
+    {
+        $date = $request->filled('date') ? Carbon::parse($request->date)->toDateString() : now()->toDateString();
+        $rows = $this->monitoringRows($request, $date)->get();
+        $fileName = 'monitoring-absensi-fingerprint-' . Carbon::parse($date)->format('Y-m-d') . '.xlsx';
+
+        return Excel::download(new FingerprintAttendanceMonitoringExport($rows, $date, $request->only(['search', 'device_id'])), $fileName);
     }
 
     public function mappings(Request $request)
@@ -425,6 +456,48 @@ class FingerprintController extends Controller
                 });
             })
             ->latest('timestamp');
+    }
+
+    private function monitoringRows(Request $request, string $date)
+    {
+        $daily = FingerprintAttendance::query()
+            ->select([
+                'fingerprint_device_id',
+                'user_id',
+                DB::raw('MIN(timestamp) as first_scan'),
+                DB::raw('MAX(timestamp) as last_scan'),
+                DB::raw('COUNT(*) as total_scan'),
+            ])
+            ->whereDate('timestamp', $date)
+            ->whereNotNull('app_user_id')
+            ->groupBy('fingerprint_device_id', 'user_id');
+
+        return FingerprintUser::query()
+            ->with(['device', 'appUser.masterGuru'])
+            ->whereNotNull('app_user_id')
+            ->leftJoinSub($daily, 'daily', function ($join) {
+                $join->on('fingerprint_users.fingerprint_device_id', '=', 'daily.fingerprint_device_id')
+                    ->on('fingerprint_users.user_id', '=', 'daily.user_id');
+            })
+            ->select([
+                'fingerprint_users.*',
+                'daily.first_scan',
+                'daily.last_scan',
+                'daily.total_scan',
+            ])
+            ->when($request->filled('device_id'), fn ($query) => $query->where('fingerprint_users.fingerprint_device_id', $request->device_id))
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = $request->search;
+                $query->where(function ($sub) use ($search) {
+                    $sub->where('fingerprint_users.user_id', 'like', "%{$search}%")
+                        ->orWhere('fingerprint_users.name', 'like', "%{$search}%")
+                        ->orWhereHas('appUser', fn ($userQuery) => $userQuery->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"))
+                        ->orWhereHas('appUser.masterGuru', fn ($guruQuery) => $guruQuery->where('nama_lengkap', 'like', "%{$search}%")->orWhere('kode_guru', 'like', "%{$search}%"));
+                });
+            })
+            ->orderByRaw('daily.first_scan is null asc')
+            ->orderBy('daily.first_scan')
+            ->orderBy('fingerprint_users.name');
     }
 
     private function redirectWithSuccess(string $route, string $message)
