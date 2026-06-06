@@ -6,6 +6,7 @@ use App\Exports\FingerprintAttendanceMonitoringExport;
 use App\Jobs\SyncFingerprintAttendancesJob;
 use App\Models\FingerprintAttendance;
 use App\Models\FingerprintDevice;
+use App\Models\FingerprintAttendanceSetting;
 use App\Models\FingerprintUser;
 use App\Models\MasterGuru;
 use App\Models\User;
@@ -57,6 +58,35 @@ class FingerprintController extends Controller
         $device = $fingerprint;
 
         return view('pages.fingerprint.form', compact('device'));
+    }
+
+    public function timeSettings()
+    {
+        $setting = FingerprintAttendanceSetting::getSetting();
+
+        return view('pages.fingerprint.time-settings', compact('setting'));
+    }
+
+    public function updateTimeSettings(Request $request)
+    {
+        $data = $request->validate([
+            'checkin_start' => ['required', 'date_format:H:i'],
+            'checkin_end' => ['required', 'date_format:H:i', 'after:checkin_start'],
+            'checkout_start' => ['required', 'date_format:H:i'],
+            'checkout_end' => ['required', 'date_format:H:i', 'after:checkout_start'],
+        ], [
+            'checkin_end.after' => 'Jam akhir datang harus lebih besar dari jam mulai datang.',
+            'checkout_end.after' => 'Jam akhir checkout harus lebih besar dari jam mulai checkout.',
+        ]);
+
+        FingerprintAttendanceSetting::getSetting()->update([
+            'checkin_start' => $data['checkin_start'] . ':00',
+            'checkin_end' => $data['checkin_end'] . ':00',
+            'checkout_start' => $data['checkout_start'] . ':00',
+            'checkout_end' => $data['checkout_end'] . ':00',
+        ]);
+
+        return back()->with('success', 'Seting waktu absensi fingerprint berhasil diperbarui.');
     }
 
     public function update(Request $request, FingerprintDevice $fingerprint)
@@ -142,6 +172,7 @@ class FingerprintController extends Controller
         $date = $request->filled('date') ? Carbon::parse($request->date)->toDateString() : now()->toDateString();
         $rows = $this->monitoringRows($request, $date)->paginate(30)->withQueryString();
         $allDevices = FingerprintDevice::orderBy('name')->get();
+        $setting = FingerprintAttendanceSetting::getSetting();
 
         $stats = [
             'total' => $rows->total(),
@@ -154,16 +185,17 @@ class FingerprintController extends Controller
         $stats['incomplete'] = max($stats['present'] - $stats['complete'], 0);
         $stats['absent'] = max($stats['total'] - $stats['present'], 0);
 
-        return view('pages.fingerprint.monitoring', compact('rows', 'allDevices', 'date', 'stats'));
+        return view('pages.fingerprint.monitoring', compact('rows', 'allDevices', 'date', 'stats', 'setting'));
     }
 
     public function exportMonitoring(Request $request)
     {
         $date = $request->filled('date') ? Carbon::parse($request->date)->toDateString() : now()->toDateString();
         $rows = $this->monitoringRows($request, $date)->get();
+        $setting = FingerprintAttendanceSetting::getSetting();
         $fileName = 'monitoring-absensi-fingerprint-' . Carbon::parse($date)->format('Y-m-d') . '.xlsx';
 
-        return Excel::download(new FingerprintAttendanceMonitoringExport($rows, $date, $request->only(['search', 'device_id'])), $fileName);
+        return Excel::download(new FingerprintAttendanceMonitoringExport($rows, $date, $request->only(['search', 'device_id']), $setting), $fileName);
     }
 
     public function mappings(Request $request)

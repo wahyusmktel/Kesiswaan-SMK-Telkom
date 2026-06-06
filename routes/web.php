@@ -799,6 +799,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [\App\Http\Controllers\FingerprintController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\FingerprintController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\FingerprintController::class, 'store'])->name('store');
+        Route::get('/time-settings', [\App\Http\Controllers\FingerprintController::class, 'timeSettings'])->name('time-settings');
+        Route::put('/time-settings', [\App\Http\Controllers\FingerprintController::class, 'updateTimeSettings'])->name('time-settings.update');
         Route::get('/mappings', [\App\Http\Controllers\FingerprintController::class, 'mappings'])->name('mappings');
         Route::get('/logs', [\App\Http\Controllers\FingerprintController::class, 'logs'])->name('logs');
         Route::get('/monitoring', [\App\Http\Controllers\FingerprintController::class, 'monitoring'])->name('monitoring');

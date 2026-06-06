@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use App\Models\FingerprintAttendanceSetting;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
@@ -24,6 +25,7 @@ class FingerprintAttendanceMonitoringExport implements FromCollection, WithHeadi
         private Collection $rows,
         private string $date,
         private array $filters = [],
+        private ?FingerprintAttendanceSetting $setting = null,
     ) {}
 
     public function collection(): Collection
@@ -45,7 +47,7 @@ class FingerprintAttendanceMonitoringExport implements FromCollection, WithHeadi
             'Jam Pulang',
             'Total Scan',
             'Status',
-            'Catatan',
+            'Keterangan',
         ];
     }
 
@@ -55,6 +57,20 @@ class FingerprintAttendanceMonitoringExport implements FromCollection, WithHeadi
         $firstScan = $row->first_scan ? Carbon::parse($row->first_scan) : null;
         $lastScan = $row->last_scan ? Carbon::parse($row->last_scan) : null;
         $hasCheckout = $firstScan && $lastScan && !$firstScan->equalTo($lastScan);
+        $setting = $this->setting ?? FingerprintAttendanceSetting::getSetting();
+        $checkinEnd = Carbon::parse($this->date . ' ' . $setting->checkin_end);
+        $checkoutStart = Carbon::parse($this->date . ' ' . $setting->checkout_start);
+        $lateMinutes = $firstScan && $firstScan->greaterThan($checkinEnd) ? $checkinEnd->diffInMinutes($firstScan) : 0;
+        $earlyMinutes = $hasCheckout && $lastScan->lessThan($checkoutStart) ? $lastScan->diffInMinutes($checkoutStart) : 0;
+        $notes = [];
+
+        if ($lateMinutes > 0) {
+            $notes[] = "Terlambat {$lateMinutes} menit";
+        }
+
+        if ($earlyMinutes > 0) {
+            $notes[] = "Pulang cepat {$earlyMinutes} menit";
+        }
 
         return [
             $this->rowNumber,
@@ -68,7 +84,7 @@ class FingerprintAttendanceMonitoringExport implements FromCollection, WithHeadi
             $hasCheckout ? $lastScan->format('H:i:s') : '-',
             (int) ($row->total_scan ?? 0),
             $firstScan ? ($hasCheckout ? 'Hadir Lengkap' : 'Belum Scan Pulang') : 'Belum Ada Scan',
-            $firstScan ? 'Data dari mesin fingerprint' : 'Tidak ada log pada tanggal ini',
+            $notes ? implode(', ', $notes) : ($firstScan ? 'Sesuai jadwal' : 'Tidak ada log pada tanggal ini'),
         ];
     }
 

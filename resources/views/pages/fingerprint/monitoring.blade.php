@@ -82,7 +82,8 @@
                             <th class="px-6 py-3 text-center text-xs font-black uppercase tracking-wider text-gray-400">Jam Masuk</th>
                             <th class="px-6 py-3 text-center text-xs font-black uppercase tracking-wider text-gray-400">Jam Pulang</th>
                             <th class="px-6 py-3 text-center text-xs font-black uppercase tracking-wider text-gray-400">Scan</th>
-                            <th class="px-6 py-3 text-right text-xs font-black uppercase tracking-wider text-gray-400">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-black uppercase tracking-wider text-gray-400">Status</th>
+                            <th class="px-6 py-3 text-right text-xs font-black uppercase tracking-wider text-gray-400">Keterangan</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
@@ -91,10 +92,23 @@
                                 $firstScan = $row->first_scan ? \Carbon\Carbon::parse($row->first_scan) : null;
                                 $lastScan = $row->last_scan ? \Carbon\Carbon::parse($row->last_scan) : null;
                                 $hasCheckout = $firstScan && $lastScan && !$firstScan->equalTo($lastScan);
+                                $checkinEnd = \Carbon\Carbon::parse($date . ' ' . $setting->checkin_end);
+                                $checkoutStart = \Carbon\Carbon::parse($date . ' ' . $setting->checkout_start);
+                                $lateMinutes = $firstScan && $firstScan->greaterThan($checkinEnd) ? $checkinEnd->diffInMinutes($firstScan) : 0;
+                                $earlyMinutes = $hasCheckout && $lastScan->lessThan($checkoutStart) ? $lastScan->diffInMinutes($checkoutStart) : 0;
+                                $notes = [];
+                                if ($lateMinutes > 0) {
+                                    $notes[] = 'Terlambat ' . $lateMinutes . ' menit';
+                                }
+                                if ($earlyMinutes > 0) {
+                                    $notes[] = 'Pulang cepat ' . $earlyMinutes . ' menit';
+                                }
                                 $statusClass = $firstScan
                                     ? ($hasCheckout ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700')
                                     : 'bg-red-50 text-red-700';
                                 $statusText = $firstScan ? ($hasCheckout ? 'Hadir Lengkap' : 'Belum Scan Pulang') : 'Belum Ada Scan';
+                                $checkinBadgeClass = $lateMinutes > 0 ? 'bg-amber-100 text-amber-800 ring-1 ring-amber-200' : 'bg-gray-100 text-gray-800';
+                                $checkoutBadgeClass = $earlyMinutes > 0 ? 'bg-amber-100 text-amber-800 ring-1 ring-amber-200' : 'bg-gray-100 text-gray-800';
                             @endphp
                             <tr class="hover:bg-gray-50/70">
                                 <td class="px-6 py-4">
@@ -107,19 +121,30 @@
                                     <div class="text-xs text-gray-400">{{ $row->device?->ip_address }}{{ $row->device?->port ? ':' . $row->device->port : '' }}</div>
                                 </td>
                                 <td class="px-6 py-4 text-center">
-                                    <span class="inline-flex min-w-24 justify-center rounded-full bg-gray-100 px-3 py-1.5 text-sm font-black text-gray-800">{{ $firstScan?->format('H:i:s') ?? '-' }}</span>
+                                    <span class="inline-flex min-w-24 justify-center rounded-full px-3 py-1.5 text-sm font-black {{ $checkinBadgeClass }}">{{ $firstScan?->format('H:i:s') ?? '-' }}</span>
                                 </td>
                                 <td class="px-6 py-4 text-center">
-                                    <span class="inline-flex min-w-24 justify-center rounded-full bg-gray-100 px-3 py-1.5 text-sm font-black text-gray-800">{{ $hasCheckout ? $lastScan->format('H:i:s') : '-' }}</span>
+                                    <span class="inline-flex min-w-24 justify-center rounded-full px-3 py-1.5 text-sm font-black {{ $checkoutBadgeClass }}">{{ $hasCheckout ? $lastScan->format('H:i:s') : '-' }}</span>
                                 </td>
                                 <td class="px-6 py-4 text-center font-bold text-gray-900">{{ (int) ($row->total_scan ?? 0) }}</td>
-                                <td class="px-6 py-4 text-right">
+                                <td class="px-6 py-4">
                                     <span class="inline-flex rounded-full px-3 py-1.5 text-xs font-black {{ $statusClass }}">{{ $statusText }}</span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    @if(count($notes))
+                                        <div class="flex flex-wrap justify-end gap-1.5">
+                                            @foreach($notes as $note)
+                                                <span class="inline-flex rounded-full bg-amber-50 px-3 py-1.5 text-xs font-black text-amber-700">{{ $note }}</span>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <span class="text-sm font-semibold text-gray-400">Sesuai jadwal</span>
+                                    @endif
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                                <td colspan="8" class="px-6 py-12 text-center text-gray-500">
                                     Belum ada pegawai termapping untuk filter ini.
                                 </td>
                             </tr>
