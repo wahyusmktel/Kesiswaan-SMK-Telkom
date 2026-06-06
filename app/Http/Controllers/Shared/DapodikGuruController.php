@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Imports\DapodikGuruImport;
 use App\Models\DapodikGuru;
 use App\Models\MasterGuru;
+use App\Support\EmploymentStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
@@ -75,6 +76,7 @@ class DapodikGuruController extends Controller
             'tmt_pengangkatan'        => 'nullable|date',
             'tmt_pns'                 => 'nullable|date',
             'email_dapodik'           => 'nullable|email',
+            'status_kepegawaian'      => ['nullable', Rule::in(EmploymentStatus::options())],
         ]);
 
         try {

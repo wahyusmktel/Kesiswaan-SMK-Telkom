@@ -89,5 +89,72 @@
                 <button class="rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-red-700">Simpan Seting</button>
             </div>
         </form>
+
+        <form method="POST" action="{{ route('fingerprint.security-shift-settings.update') }}" class="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+            @csrf
+            @method('PUT')
+
+            <div class="px-6 py-4 border-b border-gray-100">
+                <h3 class="font-bold text-gray-900">Seting Waktu Kerja Security</h3>
+                <p class="mt-1 text-sm text-gray-500">Atur jam shift security dan pilih shift untuk setiap pegawai berstatus Security.</p>
+            </div>
+
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    @foreach($securityShifts as $shift)
+                        <div class="rounded-2xl border border-gray-100 bg-gray-50 p-5">
+                            <div class="flex items-center justify-between gap-3">
+                                <p class="text-sm font-black text-gray-900">{{ $shift->name }}</p>
+                                @if($shift->is_overnight)
+                                    <span class="rounded-full bg-indigo-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-indigo-700">Lintas Hari</span>
+                                @endif
+                            </div>
+                            <div class="mt-4 grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Mulai</label>
+                                    <input type="time" name="shifts[{{ $shift->id }}][starts_at]" value="{{ old("shifts.{$shift->id}.starts_at", substr($shift->starts_at, 0, 5)) }}" required class="w-full rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Selesai</label>
+                                    <input type="time" name="shifts[{{ $shift->id }}][ends_at]" value="{{ old("shifts.{$shift->id}.ends_at", substr($shift->ends_at, 0, 5)) }}" required class="w-full rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500">
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                <div class="rounded-2xl border border-gray-100 overflow-hidden">
+                    <div class="px-5 py-3 bg-gray-50 border-b border-gray-100">
+                        <p class="text-sm font-black text-gray-900">Penugasan Shift Security</p>
+                    </div>
+                    <div class="divide-y divide-gray-100">
+                        @forelse($securityEmployees as $employee)
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 p-5 items-center">
+                                <div class="md:col-span-2">
+                                    <div class="font-bold text-gray-900">{{ $employee->masterGuru?->nama_lengkap ?? $employee->name }}</div>
+                                    <div class="text-xs text-gray-400">{{ $employee->email }}{{ $employee->masterGuru?->kode_guru ? ' | ' . $employee->masterGuru->kode_guru : '' }}</div>
+                                </div>
+                                <select name="assignments[{{ $employee->id }}]" class="w-full rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500">
+                                    <option value="">Belum diset</option>
+                                    @foreach($securityShifts as $shift)
+                                        <option value="{{ $shift->id }}" {{ (int) old("assignments.{$employee->id}", $employee->securityShiftAssignment?->fingerprint_security_shift_id) === (int) $shift->id ? 'selected' : '' }}>
+                                            {{ $shift->name }} ({{ substr($shift->starts_at, 0, 5) }}-{{ substr($shift->ends_at, 0, 5) }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        @empty
+                            <div class="p-8 text-center text-sm text-gray-500">
+                                Belum ada pegawai Dapodik dengan status Security.
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+                <button class="rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-bold text-white hover:bg-red-600">Simpan Shift Security</button>
+            </div>
+        </form>
     </div>
 </x-app-layout>

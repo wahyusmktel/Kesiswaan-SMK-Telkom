@@ -92,23 +92,9 @@
                                 $firstScan = $row->first_scan ? \Carbon\Carbon::parse($row->first_scan) : null;
                                 $lastScan = $row->last_scan ? \Carbon\Carbon::parse($row->last_scan) : null;
                                 $hasCheckout = $firstScan && $lastScan && !$firstScan->equalTo($lastScan);
-                                $checkinEnd = \Carbon\Carbon::parse($date . ' ' . $setting->checkin_end);
-                                $checkoutStart = \Carbon\Carbon::parse($date . ' ' . $setting->checkout_start);
-                                $lateMinutes = $firstScan && $firstScan->greaterThan($checkinEnd) ? (int) ceil($checkinEnd->diffInMinutes($firstScan)) : 0;
-                                $earlyMinutes = $hasCheckout && $lastScan->lessThan($checkoutStart) ? (int) ceil($lastScan->diffInMinutes($checkoutStart)) : 0;
-                                $notes = [];
-                                if ($lateMinutes > 0) {
-                                    $notes[] = 'Terlambat ' . \App\Support\AttendanceDuration::humanizeMinutes($lateMinutes);
-                                }
-                                if ($earlyMinutes > 0) {
-                                    $notes[] = 'Pulang cepat ' . \App\Support\AttendanceDuration::humanizeMinutes($earlyMinutes);
-                                }
-                                $statusClass = $firstScan
-                                    ? ($hasCheckout ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700')
-                                    : 'bg-red-50 text-red-700';
-                                $statusText = $firstScan ? ($hasCheckout ? 'Hadir Lengkap' : 'Belum Scan Pulang') : 'Belum Ada Scan';
-                                $checkinBadgeClass = $lateMinutes > 0 ? 'bg-amber-100 text-amber-800 ring-1 ring-amber-200' : 'bg-gray-100 text-gray-800';
-                                $checkoutBadgeClass = $earlyMinutes > 0 ? 'bg-amber-100 text-amber-800 ring-1 ring-amber-200' : 'bg-gray-100 text-gray-800';
+                                $notes = $row->monitoring_notes ?? ['Sesuai jadwal'];
+                                $checkinBadgeClass = ((int) $row->monitoring_late_minutes) > 0 ? 'bg-amber-100 text-amber-800 ring-1 ring-amber-200' : 'bg-gray-100 text-gray-800';
+                                $checkoutBadgeClass = ((int) $row->monitoring_early_minutes) > 0 ? 'bg-amber-100 text-amber-800 ring-1 ring-amber-200' : 'bg-gray-100 text-gray-800';
                             @endphp
                             <tr class="hover:bg-gray-50/70">
                                 <td class="px-6 py-4">
@@ -128,7 +114,8 @@
                                 </td>
                                 <td class="px-6 py-4 text-center font-bold text-gray-900">{{ (int) ($row->total_scan ?? 0) }}</td>
                                 <td class="px-6 py-4">
-                                    <span class="inline-flex rounded-full px-3 py-1.5 text-xs font-black {{ $statusClass }}">{{ $statusText }}</span>
+                                    <span class="inline-flex rounded-full px-3 py-1.5 text-xs font-black {{ $row->monitoring_status_class }}">{{ $row->monitoring_status_text }}</span>
+                                    <div class="mt-1 text-[11px] font-semibold text-gray-400">{{ $row->monitoring_rule_label }}</div>
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     @if(count($notes))

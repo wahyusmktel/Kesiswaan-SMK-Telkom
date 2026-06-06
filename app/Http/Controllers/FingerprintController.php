@@ -7,9 +7,14 @@ use App\Jobs\SyncFingerprintAttendancesJob;
 use App\Models\FingerprintAttendance;
 use App\Models\FingerprintDevice;
 use App\Models\FingerprintAttendanceSetting;
+use App\Models\FingerprintSecurityShift;
+use App\Models\FingerprintSecurityShiftAssignment;
 use App\Models\FingerprintUser;
+use App\Models\JadwalPelajaran;
 use App\Models\MasterGuru;
 use App\Models\User;
+use App\Support\AttendanceDuration;
+use App\Support\EmploymentStatus;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -63,8 +68,13 @@ class FingerprintController extends Controller
     public function timeSettings()
     {
         $setting = FingerprintAttendanceSetting::getSetting();
+        $securityShifts = FingerprintSecurityShift::orderBy('starts_at')->get();
+        $securityEmployees = User::with(['masterGuru.dapodikGuru', 'securityShiftAssignment'])
+            ->whereHas('masterGuru.dapodikGuru', fn ($query) => $query->where('status_kepegawaian', EmploymentStatus::SECURITY))
+            ->orderBy('name')
+            ->get();
 
-        return view('pages.fingerprint.time-settings', compact('setting'));
+        return view('pages.fingerprint.time-settings', compact('setting', 'securityShifts', 'securityEmployees'));
     }
 
     public function updateTimeSettings(Request $request)
@@ -87,6 +97,43 @@ class FingerprintController extends Controller
         ]);
 
         return back()->with('success', 'Seting waktu absensi fingerprint berhasil diperbarui.');
+    }
+
+    public function updateSecurityShiftSettings(Request $request)
+    {
+        $data = $request->validate([
+            'shifts' => ['required', 'array'],
+            'shifts.*.starts_at' => ['required', 'date_format:H:i'],
+            'shifts.*.ends_at' => ['required', 'date_format:H:i'],
+            'assignments' => ['nullable', 'array'],
+            'assignments.*' => ['nullable', 'exists:fingerprint_security_shifts,id'],
+        ]);
+
+        foreach ($data['shifts'] as $shiftId => $shiftData) {
+            $shift = FingerprintSecurityShift::find($shiftId);
+            if (!$shift) {
+                continue;
+            }
+
+            $shift->update([
+                'starts_at' => $shiftData['starts_at'] . ':00',
+                'ends_at' => $shiftData['ends_at'] . ':00',
+                'is_overnight' => $shiftData['ends_at'] <= $shiftData['starts_at'],
+            ]);
+        }
+
+        foreach (($data['assignments'] ?? []) as $userId => $shiftId) {
+            if ($shiftId) {
+                FingerprintSecurityShiftAssignment::updateOrCreate(
+                    ['app_user_id' => $userId],
+                    ['fingerprint_security_shift_id' => $shiftId]
+                );
+            } else {
+                FingerprintSecurityShiftAssignment::where('app_user_id', $userId)->delete();
+            }
+        }
+
+        return back()->with('success', 'Seting shift security berhasil diperbarui.');
     }
 
     public function update(Request $request, FingerprintDevice $fingerprint)
@@ -173,17 +220,17 @@ class FingerprintController extends Controller
         $rows = $this->monitoringRows($request, $date)->paginate(30)->withQueryString();
         $allDevices = FingerprintDevice::orderBy('name')->get();
         $setting = FingerprintAttendanceSetting::getSetting();
+        $this->applyMonitoringRules($rows->getCollection(), $date, $setting);
+        $statsRows = $this->monitoringRows($request, $date)->get();
+        $this->applyMonitoringRules($statsRows, $date, $setting);
 
         $stats = [
-            'total' => $rows->total(),
-            'present' => (clone $this->monitoringRows($request, $date))->whereNotNull('daily.first_scan')->count(),
-            'complete' => (clone $this->monitoringRows($request, $date))
-                ->whereNotNull('daily.first_scan')
-                ->whereColumn('daily.first_scan', '<>', 'daily.last_scan')
-                ->count(),
+            'total' => $statsRows->count(),
+            'present' => $statsRows->filter(fn ($row) => $row->first_scan)->count(),
+            'complete' => $statsRows->where('monitoring_status_text', 'Hadir Lengkap')->count(),
+            'incomplete' => $statsRows->where('monitoring_status_text', 'Belum Scan Pulang')->count(),
+            'absent' => $statsRows->where('monitoring_status_text', 'Belum Ada Scan')->count(),
         ];
-        $stats['incomplete'] = max($stats['present'] - $stats['complete'], 0);
-        $stats['absent'] = max($stats['total'] - $stats['present'], 0);
 
         return view('pages.fingerprint.monitoring', compact('rows', 'allDevices', 'date', 'stats', 'setting'));
     }
@@ -193,6 +240,7 @@ class FingerprintController extends Controller
         $date = $request->filled('date') ? Carbon::parse($request->date)->toDateString() : now()->toDateString();
         $rows = $this->monitoringRows($request, $date)->get();
         $setting = FingerprintAttendanceSetting::getSetting();
+        $this->applyMonitoringRules($rows, $date, $setting);
         $fileName = 'monitoring-absensi-fingerprint-' . Carbon::parse($date)->format('Y-m-d') . '.xlsx';
 
         return Excel::download(new FingerprintAttendanceMonitoringExport($rows, $date, $request->only(['search', 'device_id']), $setting), $fileName);
@@ -505,7 +553,7 @@ class FingerprintController extends Controller
             ->groupBy('fingerprint_device_id', 'user_id');
 
         return FingerprintUser::query()
-            ->with(['device', 'appUser.masterGuru'])
+            ->with(['device', 'appUser.masterGuru.dapodikGuru', 'appUser.securityShiftAssignment.shift'])
             ->whereNotNull('app_user_id')
             ->leftJoinSub($daily, 'daily', function ($join) {
                 $join->on('fingerprint_users.fingerprint_device_id', '=', 'daily.fingerprint_device_id')
@@ -530,6 +578,206 @@ class FingerprintController extends Controller
             ->orderByRaw('daily.first_scan is null asc')
             ->orderBy('daily.first_scan')
             ->orderBy('fingerprint_users.name');
+    }
+
+    private function applyMonitoringRules($rows, string $date, FingerprintAttendanceSetting $setting): void
+    {
+        foreach ($rows as $row) {
+            $this->applyMonitoringRule($row, $date, $setting);
+        }
+    }
+
+    private function applyMonitoringRule(FingerprintUser $row, string $date, FingerprintAttendanceSetting $setting): void
+    {
+        $firstScan = $row->first_scan ? Carbon::parse($row->first_scan) : null;
+        $lastScan = $row->last_scan ? Carbon::parse($row->last_scan) : null;
+        $totalScan = (int) ($row->total_scan ?? 0);
+        $status = EmploymentStatus::normalize($row->appUser?->masterGuru?->dapodikGuru?->status_kepegawaian);
+        $rule = $this->attendanceRuleFor($row, $date, $setting, $status);
+
+        if (($rule['use_shift_window'] ?? false) && $rule['start_at'] && $rule['end_at']) {
+            $shiftLogs = FingerprintAttendance::where('fingerprint_device_id', $row->fingerprint_device_id)
+                ->where('user_id', $row->user_id)
+                ->whereBetween('timestamp', [$rule['start_at'], $rule['end_at']])
+                ->orderBy('timestamp')
+                ->get(['timestamp']);
+
+            $firstScan = $shiftLogs->first()?->timestamp;
+            $lastScan = $shiftLogs->last()?->timestamp;
+            $totalScan = $shiftLogs->count();
+        }
+
+        $hasCheckout = $firstScan && $lastScan && !$firstScan->equalTo($lastScan);
+        $lateMinutes = 0;
+        $earlyMinutes = 0;
+        $notes = [];
+
+        if ($rule['required']) {
+            if ($firstScan && $rule['checkin_deadline'] && $firstScan->greaterThan($rule['checkin_deadline'])) {
+                $lateMinutes = (int) ceil($rule['checkin_deadline']->diffInMinutes($firstScan));
+                $notes[] = 'Terlambat ' . AttendanceDuration::humanizeMinutes($lateMinutes);
+            }
+
+            if ($hasCheckout && $rule['checkout_minimum'] && $lastScan->lessThan($rule['checkout_minimum'])) {
+                $earlyMinutes = (int) ceil($lastScan->diffInMinutes($rule['checkout_minimum']));
+                $notes[] = 'Pulang cepat ' . AttendanceDuration::humanizeMinutes($earlyMinutes);
+            }
+        } elseif (!empty($rule['note'])) {
+            $notes[] = $rule['note'];
+        }
+
+        $statusText = match (true) {
+            !$rule['required'] && !$firstScan => 'Tidak Wajib Hadir',
+            !$rule['required'] && (bool) $firstScan => 'Hadir Opsional',
+            !$firstScan => 'Belum Ada Scan',
+            $hasCheckout => 'Hadir Lengkap',
+            default => 'Belum Scan Pulang',
+        };
+
+        $statusClass = match ($statusText) {
+            'Hadir Lengkap' => 'bg-emerald-50 text-emerald-700',
+            'Hadir Opsional' => 'bg-blue-50 text-blue-700',
+            'Tidak Wajib Hadir' => 'bg-gray-100 text-gray-600',
+            'Belum Scan Pulang' => 'bg-amber-50 text-amber-700',
+            default => 'bg-red-50 text-red-700',
+        };
+
+        $row->setAttribute('first_scan', $firstScan);
+        $row->setAttribute('last_scan', $lastScan);
+        $row->setAttribute('total_scan', $totalScan);
+        $row->setAttribute('monitoring_status_text', $statusText);
+        $row->setAttribute('monitoring_status_class', $statusClass);
+        $row->setAttribute('monitoring_notes', $notes ?: ['Sesuai jadwal']);
+        $row->setAttribute('monitoring_late_minutes', $lateMinutes);
+        $row->setAttribute('monitoring_early_minutes', $earlyMinutes);
+        $row->setAttribute('monitoring_required', $rule['required']);
+        $row->setAttribute('monitoring_rule_label', $rule['label']);
+    }
+
+    private function attendanceRuleFor(FingerprintUser $row, string $date, FingerprintAttendanceSetting $setting, ?string $status): array
+    {
+        if ($status === EmploymentStatus::PART_TIME) {
+            return $this->partTimeAttendanceRule($row, $date);
+        }
+
+        if ($status === EmploymentStatus::SECURITY) {
+            return $this->securityAttendanceRule($row, $date);
+        }
+
+        return $this->fullDayAttendanceRule($date, $setting);
+    }
+
+    private function fullDayAttendanceRule(string $date, FingerprintAttendanceSetting $setting): array
+    {
+        $day = Carbon::parse($date)->dayOfWeekIso;
+        $required = $day >= 1 && $day <= 5;
+
+        return [
+            'required' => $required,
+            'checkin_deadline' => $required ? Carbon::parse($date . ' ' . $setting->checkin_end) : null,
+            'checkout_minimum' => $required ? Carbon::parse($date . ' ' . $setting->checkout_start) : null,
+            'start_at' => $required ? Carbon::parse($date . ' ' . $setting->checkin_start) : null,
+            'end_at' => $required ? Carbon::parse($date . ' ' . $setting->checkout_end) : null,
+            'use_shift_window' => false,
+            'label' => 'Full day',
+            'note' => $required ? null : 'Tidak wajib hadir akhir pekan',
+        ];
+    }
+
+    private function partTimeAttendanceRule(FingerprintUser $row, string $date): array
+    {
+        $masterGuruId = $row->appUser?->masterGuru?->id;
+        $dayName = $this->indonesianDayName(Carbon::parse($date));
+
+        if (!$masterGuruId) {
+            return [
+                'required' => false,
+                'checkin_deadline' => null,
+                'checkout_minimum' => null,
+                'start_at' => null,
+                'end_at' => null,
+                'use_shift_window' => false,
+                'label' => 'Part time',
+                'note' => 'Data guru belum terhubung',
+            ];
+        }
+
+        $schedule = JadwalPelajaran::where('master_guru_id', $masterGuruId)
+            ->where('hari', $dayName)
+            ->selectRaw('MIN(jam_mulai) as starts_at, MAX(jam_selesai) as ends_at, COUNT(*) as total')
+            ->first();
+
+        if (!$schedule || (int) $schedule->total === 0) {
+            return [
+                'required' => false,
+                'checkin_deadline' => null,
+                'checkout_minimum' => null,
+                'start_at' => null,
+                'end_at' => null,
+                'use_shift_window' => false,
+                'label' => 'Part time',
+                'note' => 'Tidak ada jadwal mengajar',
+            ];
+        }
+
+        return [
+            'required' => true,
+            'checkin_deadline' => Carbon::parse($date . ' ' . $schedule->starts_at),
+            'checkout_minimum' => Carbon::parse($date . ' ' . $schedule->ends_at),
+            'start_at' => Carbon::parse($date . ' ' . $schedule->starts_at),
+            'end_at' => Carbon::parse($date . ' ' . $schedule->ends_at),
+            'use_shift_window' => false,
+            'label' => 'Part time ' . substr($schedule->starts_at, 0, 5) . '-' . substr($schedule->ends_at, 0, 5),
+            'note' => null,
+        ];
+    }
+
+    private function securityAttendanceRule(FingerprintUser $row, string $date): array
+    {
+        $shift = $row->appUser?->securityShiftAssignment?->shift;
+
+        if (!$shift) {
+            return [
+                'required' => false,
+                'checkin_deadline' => null,
+                'checkout_minimum' => null,
+                'start_at' => null,
+                'end_at' => null,
+                'use_shift_window' => false,
+                'label' => 'Security',
+                'note' => 'Shift security belum diset',
+            ];
+        }
+
+        $startAt = Carbon::parse($date . ' ' . $shift->starts_at);
+        $endAt = Carbon::parse($date . ' ' . $shift->ends_at);
+        if ($shift->is_overnight || $endAt->lessThanOrEqualTo($startAt)) {
+            $endAt->addDay();
+        }
+
+        return [
+            'required' => true,
+            'checkin_deadline' => $startAt,
+            'checkout_minimum' => $endAt,
+            'start_at' => $startAt,
+            'end_at' => $endAt,
+            'use_shift_window' => true,
+            'label' => $shift->name . ' ' . $startAt->format('H:i') . '-' . $endAt->format('H:i'),
+            'note' => null,
+        ];
+    }
+
+    private function indonesianDayName(Carbon $date): string
+    {
+        return [
+            1 => 'Senin',
+            2 => 'Selasa',
+            3 => 'Rabu',
+            4 => 'Kamis',
+            5 => 'Jumat',
+            6 => 'Sabtu',
+            7 => 'Minggu',
+        ][$date->dayOfWeekIso];
     }
 
     private function redirectWithSuccess(string $route, string $message)

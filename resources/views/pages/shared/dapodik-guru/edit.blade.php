@@ -101,7 +101,15 @@
                             </div>
                             <div>
                                 <label class="{{ $lab }}">Status Kepegawaian</label>
-                                <input type="text" name="status_kepegawaian" value="{{ $old('status_kepegawaian') }}" class="{{ $inp }}">
+                                <select name="status_kepegawaian" class="{{ $sel }}">
+                                    <option value="">Pilih status kepegawaian</option>
+                                    @foreach(\App\Support\EmploymentStatus::options() as $statusOption)
+                                        <option value="{{ $statusOption }}" {{ $old('status_kepegawaian') === $statusOption ? 'selected' : '' }}>
+                                            {{ $statusOption }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('status_kepegawaian') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label class="{{ $lab }}">Jenis PTK</label>
