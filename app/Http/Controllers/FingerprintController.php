@@ -231,6 +231,7 @@ class FingerprintController extends Controller
             $recap->monitoring_notes = $row->monitoring_notes;
             $recap->monitoring_late_minutes = $row->monitoring_late_minutes;
             $recap->monitoring_early_minutes = $row->monitoring_early_minutes;
+            $recap->monitoring_required = $row->monitoring_required;
             $recap->monitoring_rule_label = $row->monitoring_rule_label;
         });
 
