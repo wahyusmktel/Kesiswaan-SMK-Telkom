@@ -13,6 +13,7 @@ use App\Models\FingerprintUser;
 use App\Models\JadwalPelajaran;
 use App\Models\MasterGuru;
 use App\Models\User;
+use App\Models\WorkCalendarEvent;
 use App\Support\AttendanceDuration;
 use App\Support\EmploymentStatus;
 use Carbon\Carbon;
@@ -692,6 +693,11 @@ class FingerprintController extends Controller
 
     private function attendanceRuleFor(FingerprintUser $row, string $date, FingerprintAttendanceSetting $setting, ?string $status): array
     {
+        $nonWorkingRule = $this->nonWorkingDayRule($date);
+        if ($nonWorkingRule) {
+            return $nonWorkingRule;
+        }
+
         if ($status === EmploymentStatus::PART_TIME) {
             return $this->partTimeAttendanceRule($row, $date);
         }
@@ -701,6 +707,40 @@ class FingerprintController extends Controller
         }
 
         return $this->fullDayAttendanceRule($date, $setting);
+    }
+
+    private function nonWorkingDayRule(string $date): ?array
+    {
+        $dateObject = Carbon::parse($date);
+        $calendarEvent = WorkCalendarEvent::eventFor($dateObject);
+
+        if ($calendarEvent) {
+            return [
+                'required' => false,
+                'checkin_deadline' => null,
+                'checkout_minimum' => null,
+                'start_at' => null,
+                'end_at' => null,
+                'use_shift_window' => false,
+                'label' => $calendarEvent->type_label,
+                'note' => $calendarEvent->type_label . ': ' . $calendarEvent->title,
+            ];
+        }
+
+        if ($dateObject->isWeekend()) {
+            return [
+                'required' => false,
+                'checkin_deadline' => null,
+                'checkout_minimum' => null,
+                'start_at' => null,
+                'end_at' => null,
+                'use_shift_window' => false,
+                'label' => 'Akhir pekan',
+                'note' => 'Tidak wajib hadir Sabtu/Minggu',
+            ];
+        }
+
+        return null;
     }
 
     private function fullDayAttendanceRule(string $date, FingerprintAttendanceSetting $setting): array

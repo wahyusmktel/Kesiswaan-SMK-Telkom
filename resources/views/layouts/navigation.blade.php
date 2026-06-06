@@ -1972,6 +1972,16 @@
                 </a>
             </li>
             <li>
+                <a href="{{ route('sdm.calendar.index') }}"
+                    class="nav-link {{ request()->routeIs('sdm.calendar.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                    <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7V3m8 4V3M4 11h16M5 5h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" />
+                        </svg></div>
+                    <span class="nav-text">Kalender</span>
+                </a>
+            </li>
+            <li>
                 <a href="{{ route('sdm.monitoring.index') }}"
                     class="nav-link {{ request()->routeIs("sdm.monitoring.*") ? "nav-link-active" : "nav-link-inactive" }}">
                     <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">

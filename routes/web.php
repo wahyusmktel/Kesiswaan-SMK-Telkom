@@ -659,6 +659,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Grup Route untuk SDM (Approval Stage 3 - Final)
     Route::middleware(['role:KAUR SDM', 'permission:view sdm dashboard'])->prefix('sdm')->name('sdm.')->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\SDM\DashboardController::class, 'index'])->name('dashboard.index');
+        Route::get('/calendar', [\App\Http\Controllers\SDM\WorkCalendarController::class, 'index'])->name('calendar.index');
+        Route::post('/calendar', [\App\Http\Controllers\SDM\WorkCalendarController::class, 'store'])->name('calendar.store');
+        Route::delete('/calendar/{calendar}', [\App\Http\Controllers\SDM\WorkCalendarController::class, 'destroy'])->name('calendar.destroy');
         Route::get('/persetujuan-izin-guru', [\App\Http\Controllers\SDM\PersetujuanIzinGuruController::class, 'index'])->middleware('permission:manage perizinan guru')->name('persetujuan-izin-guru.index');
         Route::patch('/persetujuan-izin-guru/{izin}/approve', [\App\Http\Controllers\SDM\PersetujuanIzinGuruController::class, 'approve'])->middleware('permission:manage perizinan guru')->name('persetujuan-izin-guru.approve');
         Route::patch('/persetujuan-izin-guru/{izin}/reject', [\App\Http\Controllers\SDM\PersetujuanIzinGuruController::class, 'reject'])->middleware('permission:manage perizinan guru')->name('persetujuan-izin-guru.reject');
