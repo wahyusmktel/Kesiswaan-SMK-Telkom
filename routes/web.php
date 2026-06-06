@@ -809,6 +809,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/{id}/test-connection', [\App\Http\Controllers\FingerprintController::class, 'testConnection'])->name('test-connection');
         Route::post('/{id}/sync-users', [\App\Http\Controllers\FingerprintController::class, 'syncUsers'])->name('sync-users');
         Route::post('/{id}/sync-attendances', [\App\Http\Controllers\FingerprintController::class, 'syncAttendances'])->name('sync-attendances');
+        Route::get('/sync-progress/{progressId}', [\App\Http\Controllers\FingerprintController::class, 'syncProgress'])->name('sync-progress');
     });
 
     // Monitoring Keterlambatan Shared

@@ -1,0 +1,18 @@
+[Unit]
+Description=SISFO Fingerprint Redis Queue Worker
+After=network.target redis-server.service
+Requires=redis-server.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/Kesiswaan-SMK-Telkom
+ExecStart=/usr/bin/php artisan queue:work redis --queue=fingerprint --tries=1 --timeout=600 --sleep=3
+Restart=always
+RestartSec=5
+StandardOutput=append:/var/www/Kesiswaan-SMK-Telkom/storage/logs/fingerprint-queue.log
+StandardError=append:/var/www/Kesiswaan-SMK-Telkom/storage/logs/fingerprint-queue-error.log
+
+[Install]
+WantedBy=multi-user.target

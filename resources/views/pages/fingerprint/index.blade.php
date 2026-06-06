@@ -6,7 +6,7 @@
         </div>
     </x-slot>
 
-    <div class="space-y-6" x-data="{ syncOpen: false, syncAction: '', rangeType: '1_month' }">
+    <div class="space-y-6" x-data="fingerprintSyncModal()">
         @include('pages.fingerprint.partials.flash')
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -112,13 +112,13 @@
 
         <div x-show="syncOpen" x-cloak class="fixed inset-0 z-50 overflow-y-auto bg-gray-900/60 backdrop-blur-sm p-4">
             <div class="min-h-full flex items-center justify-center">
-                <form method="POST" :action="syncAction" class="w-full max-w-lg rounded-2xl bg-white shadow-2xl overflow-hidden">
+                <form @submit.prevent="startSync($event)" :action="syncAction" class="w-full max-w-lg rounded-2xl bg-white shadow-2xl overflow-hidden">
                     @csrf
                     <div class="p-6 border-b border-gray-100">
                         <h3 class="text-xl font-black text-gray-900">Konfirmasi Tarik Log</h3>
-                        <p class="text-sm text-gray-500 mt-1">Tarik log hanya memproses user mesin yang sudah dimapping ke pegawai sistem.</p>
+                        <p class="text-sm text-gray-500 mt-1" x-text="isRunning ? 'Proses berjalan di background worker. Halaman ini tetap aman digunakan.' : 'Tarik log hanya memproses user mesin yang sudah dimapping ke pegawai sistem.'"></p>
                     </div>
-                    <div class="p-6 space-y-4">
+                    <div x-show="!isRunning && !isDone" class="p-6 space-y-4">
                         <label class="block">
                             <span class="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Rentang Data</span>
                             <select name="range_type" x-model="rangeType" class="w-full rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500">
@@ -141,12 +141,151 @@
                             </label>
                         </div>
                     </div>
+                    <div x-show="isRunning || isDone" class="p-6 space-y-5">
+                        <div class="relative mx-auto h-28 w-28 rounded-full bg-gradient-to-br from-amber-100 to-red-100 flex items-center justify-center overflow-hidden">
+                            <div class="absolute inset-3 rounded-full border-4 border-white/80"></div>
+                            <div class="absolute h-16 w-16 rounded-2xl bg-gray-900 shadow-xl transition-transform duration-500"
+                                :class="progress.status === 'running' ? 'animate-bounce' : ''">
+                                <div class="absolute left-4 top-5 h-2 w-2 rounded-full bg-white"></div>
+                                <div class="absolute right-4 top-5 h-2 w-2 rounded-full bg-white"></div>
+                                <div class="absolute bottom-4 left-1/2 h-1.5 w-8 -translate-x-1/2 rounded-full bg-amber-400"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex items-center justify-between text-xs font-black uppercase tracking-widest text-gray-400 mb-2">
+                                <span x-text="progress.character"></span>
+                                <span x-text="progress.percent + '%'"></span>
+                            </div>
+                            <div class="h-4 rounded-full bg-gray-100 overflow-hidden">
+                                <div class="h-full rounded-full bg-gradient-to-r from-amber-500 via-red-500 to-rose-600 transition-all duration-500"
+                                    :style="'width:' + progress.percent + '%'"></div>
+                            </div>
+                            <p class="mt-3 text-sm font-semibold text-gray-700" x-text="progress.message"></p>
+                        </div>
+
+                        <div class="grid grid-cols-4 gap-2">
+                            <div class="rounded-2xl bg-gray-50 p-3 text-center">
+                                <p class="text-lg font-black text-gray-900" x-text="progress.processed"></p>
+                                <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">Proses</p>
+                            </div>
+                            <div class="rounded-2xl bg-emerald-50 p-3 text-center">
+                                <p class="text-lg font-black text-emerald-700" x-text="progress.created"></p>
+                                <p class="text-[10px] font-black uppercase tracking-widest text-emerald-500">Baru</p>
+                            </div>
+                            <div class="rounded-2xl bg-blue-50 p-3 text-center">
+                                <p class="text-lg font-black text-blue-700" x-text="progress.updated"></p>
+                                <p class="text-[10px] font-black uppercase tracking-widest text-blue-500">Update</p>
+                            </div>
+                            <div class="rounded-2xl bg-amber-50 p-3 text-center">
+                                <p class="text-lg font-black text-amber-700" x-text="progress.skipped"></p>
+                                <p class="text-[10px] font-black uppercase tracking-widest text-amber-500">Lewat</p>
+                            </div>
+                        </div>
+                    </div>
                     <div class="p-6 bg-gray-50 flex justify-end gap-3">
-                        <button type="button" @click="syncOpen = false" class="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50">Batal</button>
-                        <button class="rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-amber-700">Mulai Tarik Log</button>
+                        <button type="button" @click="closeSync()" class="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50" x-text="isRunning ? 'Tutup' : (isDone ? 'Selesai' : 'Batal')"></button>
+                        <button x-show="!isRunning && !isDone" class="rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-amber-700">Mulai Tarik Log</button>
+                        <a x-show="isDone && progress.status === 'finished'" href="{{ route('fingerprint.logs') }}" class="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-red-700">Lihat Rekap</a>
                     </div>
                 </form>
             </div>
         </div>
     </div>
+
+    <script>
+        function fingerprintSyncModal() {
+            return {
+                syncOpen: false,
+                syncAction: '',
+                rangeType: '1_month',
+                isRunning: false,
+                isDone: false,
+                poller: null,
+                progress: {
+                    status: 'idle',
+                    percent: 0,
+                    message: 'Menunggu konfirmasi.',
+                    character: 'Stella sedang bersiap',
+                    processed: 0,
+                    created: 0,
+                    updated: 0,
+                    skipped: 0,
+                },
+                async startSync(event) {
+                    const form = event.currentTarget;
+                    this.isRunning = true;
+                    this.isDone = false;
+                    this.progress = {
+                        status: 'queued',
+                        percent: 0,
+                        message: 'Mengirim job ke antrean worker...',
+                        character: 'Stella membuka antrean',
+                        processed: 0,
+                        created: 0,
+                        updated: 0,
+                        skipped: 0,
+                    };
+
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: new FormData(form),
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        },
+                    });
+
+                    const data = await response.json();
+                    if (!response.ok) {
+                        this.progress = {
+                            ...this.progress,
+                            status: 'failed',
+                            percent: 100,
+                            message: data.message || 'Gagal memulai tarik log.',
+                            character: 'Stella berhenti di gerbang',
+                        };
+                        this.isRunning = false;
+                        this.isDone = true;
+                        return;
+                    }
+
+                    this.pollProgress(data.status_url);
+                },
+                pollProgress(url) {
+                    clearInterval(this.poller);
+                    const tick = async () => {
+                        const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                        const data = await response.json();
+                        this.progress = {
+                            status: data.status || 'queued',
+                            percent: Number(data.percent || 0),
+                            message: data.message || 'Menunggu progress...',
+                            character: data.character || 'Stella sedang bekerja',
+                            processed: Number(data.processed || 0),
+                            created: Number(data.created || 0),
+                            updated: Number(data.updated || 0),
+                            skipped: Number(data.skipped || 0),
+                        };
+
+                        if (['finished', 'failed', 'missing'].includes(this.progress.status)) {
+                            clearInterval(this.poller);
+                            this.isRunning = false;
+                            this.isDone = true;
+                        }
+                    };
+
+                    tick();
+                    this.poller = setInterval(tick, 1200);
+                },
+                closeSync() {
+                    this.syncOpen = false;
+                    if (!this.isRunning) {
+                        this.isDone = false;
+                    }
+                },
+            }
+        }
+    </script>
 </x-app-layout>

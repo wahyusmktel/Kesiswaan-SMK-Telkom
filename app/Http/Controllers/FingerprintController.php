@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SyncFingerprintAttendancesJob;
 use App\Models\FingerprintAttendance;
 use App\Models\FingerprintDevice;
 use App\Models\FingerprintUser;
@@ -9,8 +10,10 @@ use App\Models\MasterGuru;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Rats\Zkteco\Lib\ZKTeco;
 use Throwable;
 
@@ -242,70 +245,61 @@ class FingerprintController extends Controller
         $device = FingerprintDevice::findOrFail($id);
         [$dateFrom, $dateTo, $rangeLabel] = $this->resolveSyncRange($request);
 
-        try {
-            [$zk, $connected] = $this->connectDevice($device);
-            if (!$connected) {
-                return back()->with('error', "Mesin {$device->name} tidak bisa dikoneksikan.");
+        if (!FingerprintUser::where('fingerprint_device_id', $device->id)->whereNotNull('app_user_id')->exists()) {
+            $message = 'Belum ada user mesin yang dimapping ke pegawai. Lakukan mapping manual terlebih dahulu.';
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $message], 422);
             }
 
-            $logs = $zk->getAttendance();
-            $mappedUsers = FingerprintUser::where('fingerprint_device_id', $device->id)
-                ->whereNotNull('app_user_id')
-                ->get()
-                ->keyBy('user_id');
-
-            if ($mappedUsers->isEmpty()) {
-                $zk->disconnect();
-                return back()->with('error', 'Belum ada user mesin yang dimapping ke pegawai. Lakukan mapping manual terlebih dahulu.');
-            }
-
-            $processed = 0;
-            $created = 0;
-            $updated = 0;
-            $skipped = 0;
-
-            foreach ($logs as $row) {
-                $fingerprintUserId = trim((string) ($row['id'] ?? ''));
-                $timestamp = $this->parseTimestamp($row['timestamp'] ?? null);
-                if ($fingerprintUserId === '' || !$timestamp) {
-                    continue;
-                }
-
-                if (($dateFrom && $timestamp->lt($dateFrom->copy()->startOfDay())) || ($dateTo && $timestamp->gt($dateTo->copy()->endOfDay()))) {
-                    continue;
-                }
-
-                $fingerprintUser = $mappedUsers->get($fingerprintUserId);
-                if (!$fingerprintUser) {
-                    $skipped++;
-                    continue;
-                }
-
-                $attendance = FingerprintAttendance::updateOrCreate(
-                    [
-                        'fingerprint_device_id' => $device->id,
-                        'user_id' => $fingerprintUserId,
-                        'timestamp' => $timestamp->format('Y-m-d H:i:s'),
-                    ],
-                    [
-                        'uid' => $row['uid'] ?? null,
-                        'app_user_id' => $fingerprintUser->app_user_id,
-                        'status' => isset($row['state']) ? (string) $row['state'] : null,
-                        'punch' => isset($row['type']) ? (string) $row['type'] : null,
-                    ]
-                );
-
-                $processed++;
-                $attendance->wasRecentlyCreated ? $created++ : ($attendance->wasChanged() ? $updated++ : null);
-            }
-
-            $zk->disconnect();
-
-            return back()->with('success', "Tarik log absensi {$rangeLabel} selesai. {$processed} log termapping diproses ({$created} baru, {$updated} diperbarui, {$skipped} dilewati karena belum mapping).");
-        } catch (Throwable $e) {
-            Log::error('Fingerprint sync attendances failed', ['device_id' => $device->id, 'error' => $e->getMessage()]);
-            return back()->with('error', 'Gagal tarik log absensi: ' . $e->getMessage());
+            return back()->with('error', $message);
         }
+
+        $progressId = (string) Str::uuid();
+        $initialPayload = [
+            'status' => 'queued',
+            'percent' => 0,
+            'message' => 'Job tarik log masuk antrean worker.',
+            'character' => 'Stella menunggu giliran',
+            'processed' => 0,
+            'created' => 0,
+            'updated' => 0,
+            'skipped' => 0,
+        ];
+
+        Cache::put($this->progressCacheKey($progressId), $initialPayload, now()->addHours(2));
+
+        SyncFingerprintAttendancesJob::dispatch(
+            $device->id,
+            $progressId,
+            $dateFrom?->toDateString(),
+            $dateTo?->toDateString(),
+            $rangeLabel,
+        );
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'progress_id' => $progressId,
+                'status_url' => route('fingerprint.sync-progress', $progressId),
+                'message' => 'Tarik log berjalan di background.',
+            ]);
+        }
+
+        return back()->with('success', 'Tarik log berjalan di background. Pastikan queue worker aktif.');
+    }
+
+    public function syncProgress(string $progressId)
+    {
+        return response()->json(Cache::get($this->progressCacheKey($progressId), [
+            'status' => 'missing',
+            'percent' => 0,
+            'message' => 'Progress tidak ditemukan atau sudah kedaluwarsa.',
+            'character' => 'Data progress tidak tersedia',
+            'processed' => 0,
+            'created' => 0,
+            'updated' => 0,
+            'skipped' => 0,
+        ]));
     }
 
     private function validatedDevice(Request $request): array
@@ -440,5 +434,10 @@ class FingerprintController extends Controller
         }
 
         return redirect()->route($route)->with('success', $message);
+    }
+
+    private function progressCacheKey(string $progressId): string
+    {
+        return "fingerprint:sync-progress:{$progressId}";
     }
 }
