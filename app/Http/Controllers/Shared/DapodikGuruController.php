@@ -8,6 +8,7 @@ use App\Models\DapodikGuru;
 use App\Models\MasterGuru;
 use App\Support\EmploymentStatus;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
@@ -47,8 +48,12 @@ class DapodikGuruController extends Controller
         $totalUnlinked = DapodikGuru::whereNull('master_guru_id')->count();
         $jenisPtkList  = DapodikGuru::select('jenis_ptk')->distinct()->whereNotNull('jenis_ptk')->orderBy('jenis_ptk')->pluck('jenis_ptk');
 
+        $employees = MasterGuru::with('user')
+            ->orderBy('nama_lengkap')
+            ->get();
+
         return view('pages.shared.dapodik-guru.index', compact(
-            'dapodikGurus', 'totalDapodik', 'totalLinked', 'totalUnlinked', 'jenisPtkList'
+            'dapodikGurus', 'totalDapodik', 'totalLinked', 'totalUnlinked', 'jenisPtkList', 'employees'
         ));
     }
 
@@ -98,6 +103,27 @@ class DapodikGuruController extends Controller
         }
 
         return redirect()->route('dapodik-guru.show', $dapodikGuru);
+    }
+
+    public function updateMapping(Request $request, DapodikGuru $dapodikGuru)
+    {
+        $data = $request->validate([
+            'master_guru_id' => ['nullable', 'exists:master_gurus,id'],
+        ]);
+
+        DB::transaction(function () use ($dapodikGuru, $data) {
+            $masterGuruId = $data['master_guru_id'] ?? null;
+
+            if ($masterGuruId) {
+                DapodikGuru::where('master_guru_id', $masterGuruId)
+                    ->whereKeyNot($dapodikGuru->id)
+                    ->update(['master_guru_id' => null]);
+            }
+
+            $dapodikGuru->update(['master_guru_id' => $masterGuruId]);
+        });
+
+        return back()->with('success', 'Mapping Dapodik Guru ke data pegawai berhasil diperbarui.');
     }
 
     public function import(Request $request)

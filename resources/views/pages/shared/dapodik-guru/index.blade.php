@@ -267,18 +267,27 @@
                                             @endif
                                         </td>
 
-                                        {{-- Link status --}}
+                                        {{-- Link akun --}}
                                         <td class="px-6 py-4">
+                                            <form method="POST" action="{{ route('dapodik-guru.mapping.update', $item) }}" class="flex min-w-[300px] items-center gap-2">
+                                                @csrf
+                                                @method('PATCH')
+                                                <select name="master_guru_id" class="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+                                                    <option value="">Tidak terhubung</option>
+                                                    @foreach($employees as $employee)
+                                                        <option value="{{ $employee->id }}" {{ (string) $item->master_guru_id === (string) $employee->id ? 'selected' : '' }}>
+                                                            {{ $employee->nama_lengkap }}{{ $employee->kode_guru ? ' - ' . $employee->kode_guru : '' }}{{ $employee->nik ? ' | NIK ' . $employee->nik : '' }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                                <button class="rounded-lg bg-gray-900 px-3 py-2 text-xs font-bold text-white hover:bg-blue-600">
+                                                    Simpan
+                                                </button>
+                                            </form>
                                             @if($item->masterGuru)
-                                                <div class="flex items-center gap-2">
-                                                    <span class="w-2 h-2 rounded-full bg-green-500 shrink-0"></span>
-                                                    <span class="text-xs text-green-700 font-semibold truncate max-w-[120px]">{{ $item->masterGuru->user?->name ?? $item->masterGuru->nama_lengkap }}</span>
-                                                </div>
+                                                <p class="mt-1 text-[11px] font-semibold text-green-600">Terhubung ke {{ $item->masterGuru->user?->name ?? $item->masterGuru->nama_lengkap }}</p>
                                             @else
-                                                <div class="flex items-center gap-2">
-                                                    <span class="w-2 h-2 rounded-full bg-gray-300 shrink-0"></span>
-                                                    <span class="text-xs text-gray-400">Tidak terhubung</span>
-                                                </div>
+                                                <p class="mt-1 text-[11px] font-semibold text-gray-400">Belum terhubung ke data pegawai.</p>
                                             @endif
                                         </td>
 
