@@ -187,7 +187,7 @@ class FingerprintController extends Controller
     {
         [$dateFrom, $dateTo] = $this->resolveDetailDateRange($request);
 
-        $attendances = FingerprintAttendance::with('device')
+        $attendances = FingerprintAttendance::with(['device', 'appUser.masterGuru.dapodikGuru', 'appUser.securityShiftAssignment.shift'])
             ->where('app_user_id', $user->id)
             ->when($dateFrom, fn ($query) => $query->whereDate('timestamp', '>=', $dateFrom))
             ->when($dateTo, fn ($query) => $query->whereDate('timestamp', '<=', $dateTo))
@@ -209,9 +209,45 @@ class FingerprintController extends Controller
             ->orderByDesc(DB::raw('DATE(timestamp)'))
             ->get();
 
-        $user->load('masterGuru');
+        $user->load(['masterGuru.dapodikGuru', 'securityShiftAssignment.shift']);
+        $setting = FingerprintAttendanceSetting::getSetting();
+        $dailyRecaps->each(function ($recap) use ($user, $setting) {
+            $row = new FingerprintUser([
+                'fingerprint_device_id' => null,
+                'user_id' => null,
+                'app_user_id' => $user->id,
+                'name' => $user->name,
+            ]);
+            $row->setRelation('appUser', $user);
+            $row->setAttribute('first_scan', $recap->scan_masuk);
+            $row->setAttribute('last_scan', $recap->scan_keluar);
+            $row->setAttribute('total_scan', $recap->total_scan);
 
-        return view('pages.fingerprint.attendance-detail', compact('user', 'attendances', 'dailyRecaps', 'dateFrom', 'dateTo'));
+            $this->applyMonitoringRule($row, (string) $recap->tanggal, $setting);
+
+            $recap->monitoring_status_text = $row->monitoring_status_text;
+            $recap->monitoring_status_class = $row->monitoring_status_class;
+            $recap->monitoring_notes = $row->monitoring_notes;
+            $recap->monitoring_late_minutes = $row->monitoring_late_minutes;
+            $recap->monitoring_early_minutes = $row->monitoring_early_minutes;
+            $recap->monitoring_rule_label = $row->monitoring_rule_label;
+        });
+
+        $chartRecaps = $dailyRecaps->sortBy('tanggal')->values();
+        $chartData = [
+            'labels' => $chartRecaps->map(fn ($recap) => Carbon::parse($recap->tanggal)->format('d M'))->all(),
+            'lateMinutes' => $chartRecaps->map(fn ($recap) => (int) $recap->monitoring_late_minutes)->all(),
+            'earlyMinutes' => $chartRecaps->map(fn ($recap) => (int) $recap->monitoring_early_minutes)->all(),
+        ];
+
+        $lateDays = $dailyRecaps->filter(fn ($recap) => (int) $recap->monitoring_late_minutes > 0)->count();
+        $earlyDays = $dailyRecaps->filter(fn ($recap) => (int) $recap->monitoring_early_minutes > 0)->count();
+        $disciplineDays = $dailyRecaps->filter(fn ($recap) => (int) $recap->monitoring_late_minutes === 0 && (int) $recap->monitoring_early_minutes === 0)->count();
+        $totalRecapDays = max($dailyRecaps->count(), 1);
+        $disciplineRate = (int) round(($disciplineDays / $totalRecapDays) * 100);
+        $appreciation = $this->attendanceAppreciation($disciplineRate, $lateDays, $earlyDays);
+
+        return view('pages.fingerprint.attendance-detail', compact('user', 'attendances', 'dailyRecaps', 'dateFrom', 'dateTo', 'chartData', 'appreciation', 'disciplineRate', 'lateDays', 'earlyDays'));
     }
 
     public function monitoring(Request $request)
@@ -595,7 +631,7 @@ class FingerprintController extends Controller
         $status = EmploymentStatus::normalize($row->appUser?->masterGuru?->dapodikGuru?->status_kepegawaian);
         $rule = $this->attendanceRuleFor($row, $date, $setting, $status);
 
-        if (($rule['use_shift_window'] ?? false) && $rule['start_at'] && $rule['end_at']) {
+        if (($rule['use_shift_window'] ?? false) && $rule['start_at'] && $rule['end_at'] && $row->fingerprint_device_id && $row->user_id) {
             $shiftLogs = FingerprintAttendance::where('fingerprint_device_id', $row->fingerprint_device_id)
                 ->where('user_id', $row->user_id)
                 ->whereBetween('timestamp', [$rule['start_at'], $rule['end_at']])
@@ -778,6 +814,47 @@ class FingerprintController extends Controller
             6 => 'Sabtu',
             7 => 'Minggu',
         ][$date->dayOfWeekIso];
+    }
+
+    private function attendanceAppreciation(int $disciplineRate, int $lateDays, int $earlyDays): array
+    {
+        if ($disciplineRate >= 95 && $lateDays === 0 && $earlyDays === 0) {
+            return [
+                'tone' => 'emerald',
+                'title' => 'Teladan Disiplin',
+                'message' => 'Konsistensi hadir dan pulang sesuai jadwal sangat baik. Ritme kerja seperti ini layak dipertahankan.',
+            ];
+        }
+
+        if ($disciplineRate >= 80) {
+            return [
+                'tone' => 'blue',
+                'title' => 'Disiplin Stabil',
+                'message' => 'Kehadiran sudah solid. Sedikit perbaikan pada hari yang terlambat akan membuat rekap semakin bersih.',
+            ];
+        }
+
+        if ($lateDays > $earlyDays) {
+            return [
+                'tone' => 'amber',
+                'title' => 'Perlu Perbaikan Jam Datang',
+                'message' => 'Beberapa hari masih tercatat terlambat. Fokus memperbaiki jam datang akan langsung menaikkan kualitas absensi.',
+            ];
+        }
+
+        if ($earlyDays > 0) {
+            return [
+                'tone' => 'amber',
+                'title' => 'Perhatikan Jam Pulang',
+                'message' => 'Ada catatan pulang lebih cepat. Pastikan checkout dilakukan sesuai rentang waktu kerja yang berlaku.',
+            ];
+        }
+
+        return [
+            'tone' => 'gray',
+            'title' => 'Data Masih Terbatas',
+            'message' => 'Belum banyak data untuk menilai pola disiplin. Rekap akan lebih informatif setelah log absensi bertambah.',
+        ];
     }
 
     private function redirectWithSuccess(string $route, string $message)
