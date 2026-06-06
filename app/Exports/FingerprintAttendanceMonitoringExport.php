@@ -60,8 +60,8 @@ class FingerprintAttendanceMonitoringExport implements FromCollection, WithHeadi
         $setting = $this->setting ?? FingerprintAttendanceSetting::getSetting();
         $checkinEnd = Carbon::parse($this->date . ' ' . $setting->checkin_end);
         $checkoutStart = Carbon::parse($this->date . ' ' . $setting->checkout_start);
-        $lateMinutes = $firstScan && $firstScan->greaterThan($checkinEnd) ? $checkinEnd->diffInMinutes($firstScan) : 0;
-        $earlyMinutes = $hasCheckout && $lastScan->lessThan($checkoutStart) ? $lastScan->diffInMinutes($checkoutStart) : 0;
+        $lateMinutes = $firstScan && $firstScan->greaterThan($checkinEnd) ? (int) ceil($checkinEnd->diffInMinutes($firstScan)) : 0;
+        $earlyMinutes = $hasCheckout && $lastScan->lessThan($checkoutStart) ? (int) ceil($lastScan->diffInMinutes($checkoutStart)) : 0;
         $notes = [];
 
         if ($lateMinutes > 0) {
