@@ -241,10 +241,11 @@ class FingerprintController extends Controller
             'earlyMinutes' => $chartRecaps->map(fn ($recap) => (int) $recap->monitoring_early_minutes)->all(),
         ];
 
-        $lateDays = $dailyRecaps->filter(fn ($recap) => (int) $recap->monitoring_late_minutes > 0)->count();
-        $earlyDays = $dailyRecaps->filter(fn ($recap) => (int) $recap->monitoring_early_minutes > 0)->count();
-        $disciplineDays = $dailyRecaps->filter(fn ($recap) => (int) $recap->monitoring_late_minutes === 0 && (int) $recap->monitoring_early_minutes === 0)->count();
-        $totalRecapDays = max($dailyRecaps->count(), 1);
+        $workingRecaps = $dailyRecaps->filter(fn ($recap) => (bool) $recap->monitoring_required);
+        $lateDays = $workingRecaps->filter(fn ($recap) => (int) $recap->monitoring_late_minutes > 0)->count();
+        $earlyDays = $workingRecaps->filter(fn ($recap) => (int) $recap->monitoring_early_minutes > 0)->count();
+        $disciplineDays = $workingRecaps->filter(fn ($recap) => (int) $recap->monitoring_late_minutes === 0 && (int) $recap->monitoring_early_minutes === 0)->count();
+        $totalRecapDays = max($workingRecaps->count(), 1);
         $disciplineRate = (int) round(($disciplineDays / $totalRecapDays) * 100);
         $appreciation = $this->attendanceAppreciation($disciplineRate, $lateDays, $earlyDays);
 
