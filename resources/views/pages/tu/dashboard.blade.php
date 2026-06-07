@@ -18,6 +18,8 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-10">
+
+            @include('shared.fingerprint-today-card')
             <!-- Welcome Banner -->
             <div
                 class="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-blue-600 to-indigo-800 rounded-[2.5rem] p-10 shadow-2xl shadow-indigo-200 group">

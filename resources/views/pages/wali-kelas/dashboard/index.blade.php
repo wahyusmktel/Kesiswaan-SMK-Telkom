@@ -30,6 +30,8 @@
     <div class="py-6 w-full">
         <div class="w-full px-4 sm:px-6 lg:px-8 space-y-8">
 
+            @include('shared.fingerprint-today-card')
+
             <div
                 class="relative rounded-2xl bg-gradient-to-r from-teal-500 via-emerald-500 to-green-500 shadow-lg overflow-hidden p-8 animate-gradient">
                 <div class="absolute right-0 top-0 h-full w-1/3 bg-white/10 transform skew-x-12 blur-2xl"></div>

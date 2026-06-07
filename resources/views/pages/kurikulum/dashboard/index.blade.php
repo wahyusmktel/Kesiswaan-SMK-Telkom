@@ -37,6 +37,8 @@
     <div class="py-6 w-full">
         <div class="w-full px-4 sm:px-6 lg:px-8 space-y-8">
 
+            @include('shared.fingerprint-today-card')
+
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
                 <div class="lg:col-span-3">
                     <div

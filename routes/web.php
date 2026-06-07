@@ -988,6 +988,10 @@ Route::middleware(['auth', 'role:Super Admin|Waka Kesiswaan|Guru BK|Guru Piket|K
         Route::get('/{id}', [SharedAssetController::class, 'show'])->name('show');
     });
 
+Route::middleware(['auth', 'role:Super Admin|Waka Kesiswaan|Guru BK|Guru Piket|Kurikulum|Wali Kelas|Tata Usaha|Security|KAUR SDM|Operator|Koordinator Prakerin|Guru Kelas'])
+    ->get('/fingerprint-saya', [\App\Http\Controllers\Shared\MyFingerprintAttendanceController::class, 'index'])
+    ->name('fingerprint-saya.index');
+
 // ============================================================
 // TANDA TANGAN DIGITAL (Guru, Waka Kurikulum, Waka Kesiswaan, Kaur SDM)
 // ============================================================

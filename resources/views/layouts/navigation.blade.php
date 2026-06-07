@@ -341,6 +341,7 @@
     </li>
 
     @if(session('active_role') == 'Super Admin')
+    @include('shared.fingerprint-saya-nav-link')
     <li class="submenu-dropdown" x-data="{ expanded: {{ request()->routeIs('fingerprint.*') ? 'true' : 'false' }}, flyoutTop:0, updateFlyoutPosition(){ const r=this.$el.querySelector('button').getBoundingClientRect(); this.flyoutTop=r.top; } }" @mouseenter="updateFlyoutPosition()">
         <button @click="expanded = !expanded"
             class="nav-link w-full {{ request()->routeIs('fingerprint.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
@@ -609,6 +610,7 @@
             <span class="nav-badge bg-teal-100 text-teal-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">GPS</span>
         </a>
     </li>
+    @include('shared.fingerprint-saya-nav-link')
     <div class="section-title">Layanan Digital</div>
     <li>
         <a href="{{ route('tanda-tangan.index') }}"
@@ -782,6 +784,7 @@
                 <span class="nav-badge bg-teal-100 text-teal-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">GPS</span>
             </a>
         </li>
+        @include('shared.fingerprint-saya-nav-link')
         <li>
             <a href="{{ route('guru.izin.index') }}"
                 class="nav-link {{ request()->routeIs("guru.izin.*") ? "nav-link-active" : "nav-link-inactive" }}">
@@ -837,6 +840,7 @@
                 <span class="nav-text">Dashboard Kesiswaan</span>
             </a>
         </li>
+        @include('shared.fingerprint-saya-nav-link')
     @endcan
 
     <li class="submenu-dropdown"
@@ -1294,6 +1298,7 @@
                         <span class="nav-text">Dashboard Kurikulum</span>
                     </a>
                 </li>
+                @include('shared.fingerprint-saya-nav-link')
 
                 <li class="submenu-dropdown" x-data="{ 
                                                                                                                                         expanded: {{ request()->routeIs('kurikulum.jam-pelajaran.*') || request()->routeIs('kurikulum.mata-pelajaran.*') || request()->routeIs('kurikulum.master-guru.*') || request()->routeIs('kurikulum.jadwal-pelajaran.*') ? 'true' : 'false' }},
@@ -1551,6 +1556,7 @@
         <span class="nav-text">Dashboard BK</span>
     </a>
 </li>
+@include('shared.fingerprint-saya-nav-link')
 @can('monitoring izin')
     <li>
         <a href="{{ route('bk.monitoring.index') }}"
@@ -1741,6 +1747,7 @@
                     <span class="nav-text">Dashboard Piket</span>
                 </a>
             </li>
+            @include('shared.fingerprint-saya-nav-link')
             @can('manage penanganan terlambat')
                 <li>
                     <a href="{{ route('piket.verifikasi-terlambat.index') }}"
@@ -1900,6 +1907,7 @@
                     <span class="nav-text">Dashboard Security</span>
                 </a>
             </li>
+            @include('shared.fingerprint-saya-nav-link')
             <li>
                 <a href="{{ route('security.pendataan-terlambat.index') }}"
                     class="nav-link {{ request()->routeIs("security.pendataan-terlambat.*") ? "nav-link-active" : "nav-link-inactive" }}">
@@ -1973,6 +1981,7 @@
                     <span class="nav-badge bg-teal-100 text-teal-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">GPS</span>
                 </a>
             </li>
+            @include('shared.fingerprint-saya-nav-link')
             <li>
                 <a href="{{ route('sdm.calendar.index') }}"
                     class="nav-link {{ request()->routeIs('sdm.calendar.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
@@ -2145,6 +2154,7 @@
             <span class="nav-text">Dashboard TU</span>
         </a>
     </li>
+    @include('shared.fingerprint-saya-nav-link')
     <li>
         <a href="{{ route('tu.incoming.index') }}"
             class="nav-link {{ request()->routeIs('tu.incoming.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
@@ -2199,6 +2209,7 @@
                 <span class="nav-text">Dashboard Operator</span>
             </a>
         </li>
+        @include('shared.fingerprint-saya-nav-link')
 
         {{-- Dropdown Master Data --}}
         @can('view master data')
