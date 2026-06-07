@@ -9,6 +9,39 @@
     <div class="space-y-6">
         @include('shared.fingerprint-today-card', ['summary' => $today])
 
+        @php
+            $appreciationToneClass = match($appreciation['tone']) {
+                'emerald' => 'from-emerald-500 to-teal-600',
+                'blue' => 'from-blue-500 to-indigo-600',
+                'amber' => 'from-amber-400 to-orange-500',
+                default => 'from-gray-700 to-gray-900',
+            };
+        @endphp
+        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r {{ $appreciationToneClass }} p-6 text-white shadow-sm">
+            <div class="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10"></div>
+            <div class="absolute right-10 bottom-0 h-16 w-16 rounded-full bg-white/10"></div>
+            <div class="relative grid grid-cols-1 gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
+                <div>
+                    <p class="text-xs font-black uppercase tracking-widest text-white/70">Apresiasi dan Evaluasi Diri</p>
+                    <h3 class="mt-2 text-2xl font-black tracking-tight">{{ $appreciation['title'] }}</h3>
+                    <p class="mt-2 max-w-3xl text-sm leading-relaxed text-white/85">{{ $appreciation['message'] }}</p>
+                    <p class="mt-3 text-xs font-bold text-white/70">
+                        Acuan: masuk maksimal {{ $appreciation['checkin_deadline'] }}, checkout mulai {{ $appreciation['checkout_minimum'] }}.
+                    </p>
+                </div>
+                <div class="rounded-2xl bg-white/15 p-5 text-center backdrop-blur-sm">
+                    <p class="text-xs font-black uppercase tracking-widest text-white/70">Skor Disiplin</p>
+                    <p class="mt-2 text-4xl font-black">{{ $appreciation['discipline_rate'] }}%</p>
+                </div>
+            </div>
+            <div class="relative mt-5 flex flex-wrap gap-2">
+                <span class="rounded-full bg-white/15 px-3 py-1.5 text-xs font-black">Hari hadir: {{ $appreciation['present_days'] }}</span>
+                <span class="rounded-full bg-white/15 px-3 py-1.5 text-xs font-black">Terlambat: {{ $appreciation['late_days'] }}</span>
+                <span class="rounded-full bg-white/15 px-3 py-1.5 text-xs font-black">Pulang cepat: {{ $appreciation['early_checkout_days'] }}</span>
+                <span class="rounded-full bg-white/15 px-3 py-1.5 text-xs font-black">Scan belum lengkap: {{ $appreciation['incomplete_days'] }}</span>
+            </div>
+        </div>
+
         <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
             <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div>
