@@ -1,3 +1,11 @@
+@php
+    $landingTheme = $appSetting?->theme ?? 'default';
+    $landingThemeClass = match($landingTheme) {
+        'light-red' => 'theme-light-red',
+        'tech-red' => 'theme-tech-red',
+        default => '',
+    };
+@endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth">
 
@@ -116,10 +124,44 @@
         .theme-light-red .btn-primary {
             color: #FFFFFF !important;
         }
+
+        .theme-tech-red {
+            color: #F8FAFC;
+            background-color: #080B12;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
+                linear-gradient(135deg, rgba(226,31,38,0.20), transparent 34%);
+            background-size: 44px 44px, 44px 44px, 100% 100%;
+        }
+        .theme-tech-red .glass {
+            background: rgba(8, 11, 18, 0.76);
+            border: 1px solid rgba(248, 250, 252, 0.10);
+            box-shadow: 0 18px 60px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        }
+        .theme-tech-red .btn-primary {
+            color: #FFFFFF !important;
+            background: linear-gradient(135deg, #FF3340 0%, #E21F26 48%, #8B0F14 100%);
+            box-shadow: 0 18px 38px -18px rgba(255, 51, 64, 0.85);
+        }
+        .theme-tech-red .text-gradient {
+            background: linear-gradient(135deg, #FFFFFF 0%, #E2E8F0 46%, #FF9BA1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .theme-tech-red .blob {
+            display: none;
+        }
+        .theme-tech-red .prose-dark {
+            color: #CBD5E1;
+        }
+        .theme-tech-red .prose-dark strong {
+            color: #FFFFFF;
+        }
     </style>
 </head>
 
-<body class="antialiased overflow-x-hidden {{ $appSetting?->theme === 'light-red' ? 'theme-light-red' : '' }}">
+<body class="antialiased overflow-x-hidden {{ $landingThemeClass }}">
     {{-- Premium Tech Preloader --}}
     @include('components.preloader')
 

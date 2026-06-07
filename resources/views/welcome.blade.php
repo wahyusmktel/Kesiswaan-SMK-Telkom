@@ -1,4 +1,10 @@
 @php
+    $landingTheme = $appSetting?->theme ?? 'default';
+    $landingThemeClass = match($landingTheme) {
+        'light-red' => 'theme-light-red',
+        'tech-red' => 'theme-tech-red',
+        default => '',
+    };
     $hasBirthdays = isset($birthdaySiswa, $birthdayGuru) && ($birthdaySiswa->count() + $birthdayGuru->count()) > 0;
     $bdDuration   = $hasBirthdays ? max(25, ($birthdaySiswa->count() + $birthdayGuru->count()) * 8) : 0;
     $bdSiswaCards = $hasBirthdays ? $birthdaySiswa->map(fn($s) => [
@@ -258,6 +264,102 @@
             color: #FFFFFF !important;
         }
 
+        /* Tech Red Theme Overrides */
+        .theme-tech-red {
+            color: #F8FAFC;
+            background-color: #080B12;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
+                linear-gradient(135deg, rgba(226,31,38,0.22), transparent 34%),
+                linear-gradient(225deg, rgba(14,165,233,0.10), transparent 38%);
+            background-size: 44px 44px, 44px 44px, 100% 100%, 100% 100%;
+        }
+
+        .theme-tech-red .glass {
+            background: rgba(8, 11, 18, 0.76);
+            border: 1px solid rgba(248, 250, 252, 0.10);
+            box-shadow: 0 18px 60px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        }
+
+        .theme-tech-red .glass-card {
+            background: linear-gradient(180deg, rgba(17, 24, 39, 0.82), rgba(8, 11, 18, 0.78));
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+        }
+
+        .theme-tech-red .glass-card:hover {
+            background: linear-gradient(180deg, rgba(30, 41, 59, 0.88), rgba(15, 23, 42, 0.82));
+            border-color: rgba(255, 77, 84, 0.70);
+            box-shadow: 0 24px 80px rgba(226, 31, 38, 0.16);
+        }
+
+        .theme-tech-red .btn-primary {
+            color: #FFFFFF !important;
+            background: linear-gradient(135deg, #FF3340 0%, #E21F26 48%, #8B0F14 100%);
+            box-shadow: 0 18px 38px -18px rgba(255, 51, 64, 0.85);
+        }
+
+        .theme-tech-red .btn-primary:hover {
+            box-shadow: 0 22px 48px -16px rgba(255, 51, 64, 0.95);
+        }
+
+        .theme-tech-red .text-gradient {
+            background: linear-gradient(135deg, #FFFFFF 0%, #E2E8F0 46%, #FF9BA1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .theme-tech-red .text-gradient-red {
+            background: linear-gradient(135deg, #FF9BA1 0%, #FF3340 48%, #F97316 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .theme-tech-red .nav-link {
+            color: #CBD5E1 !important;
+        }
+
+        .theme-tech-red .nav-link:hover {
+            color: #FFFFFF !important;
+        }
+
+        .theme-tech-red .nav-link::after {
+            background: linear-gradient(90deg, #FF3340, #F97316);
+        }
+
+        .theme-tech-red .blob {
+            display: none;
+        }
+
+        .theme-tech-red .bg-slate-900,
+        .theme-tech-red .bg-slate-900\/50 {
+            background-color: rgba(8, 11, 18, 0.82) !important;
+        }
+
+        .theme-tech-red .border-white\/5,
+        .theme-tech-red .border-white\/10 {
+            border-color: rgba(255, 255, 255, 0.10) !important;
+        }
+
+        .theme-tech-red .bg-white\/5 {
+            background-color: rgba(255, 255, 255, 0.06) !important;
+        }
+
+        .theme-tech-red .bisa-section {
+            background-color: #080B12 !important;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(226,31,38,0.11), transparent 42%) !important;
+            background-size: 38px 38px, 38px 38px, 100% 100% !important;
+        }
+
+        .theme-tech-red .bisa-text {
+            color: #FF2530 !important;
+            text-shadow: 0 0 34px rgba(255, 37, 48, 0.35), 0 20px 70px rgba(0, 0, 0, 0.5);
+        }
+
         /* Birthday Running Text Banner */
         @keyframes bdScroll {
             0%   { transform: translateX(0); }
@@ -305,7 +407,7 @@
     </style>
 </head>
 
-<body class="antialiased overflow-x-hidden {{ $appSetting?->theme === 'light-red' ? 'theme-light-red' : '' }}"
+<body class="antialiased overflow-x-hidden {{ $landingThemeClass }}"
     x-data="{
         showVideo: false,
         bdVisible: @js($hasBirthdays),
