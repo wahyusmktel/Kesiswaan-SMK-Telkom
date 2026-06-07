@@ -137,6 +137,101 @@ class FingerprintController extends Controller
         return back()->with('success', 'Seting shift security berhasil diperbarui.');
     }
 
+    public function manualAttendances(Request $request)
+    {
+        $fingerprintUsers = FingerprintUser::with(['device', 'appUser.masterGuru'])
+            ->whereNotNull('app_user_id')
+            ->orderBy('name')
+            ->get();
+
+        $attendances = FingerprintAttendance::with(['device', 'appUser.masterGuru', 'correctedBy'])
+            ->whereNotNull('app_user_id')
+            ->when($request->filled('date'), fn ($query) => $query->whereDate('timestamp', $request->date))
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = $request->search;
+                $query->where(function ($sub) use ($search) {
+                    $sub->where('user_id', 'like', "%{$search}%")
+                        ->orWhereHas('appUser', fn ($userQuery) => $userQuery->where('name', 'like', "%{$search}%"))
+                        ->orWhereHas('appUser.masterGuru', fn ($guruQuery) => $guruQuery->where('nama_lengkap', 'like', "%{$search}%"));
+                });
+            })
+            ->latest('timestamp')
+            ->paginate(30)
+            ->withQueryString();
+
+        return view('pages.fingerprint.manual-attendances', compact('fingerprintUsers', 'attendances'));
+    }
+
+    public function storeManualAttendance(Request $request)
+    {
+        $data = $request->validate([
+            'fingerprint_user_id' => ['required', 'exists:fingerprint_users,id'],
+            'attendance_date' => ['required', 'date'],
+            'attendance_time' => ['required', 'date_format:H:i'],
+            'punch' => ['required', 'in:checkin,checkout'],
+            'correction_note' => ['required', 'string', 'max:1000'],
+        ]);
+
+        $fingerprintUser = FingerprintUser::whereNotNull('app_user_id')->findOrFail($data['fingerprint_user_id']);
+        $timestamp = Carbon::parse($data['attendance_date'] . ' ' . $data['attendance_time']);
+
+        $exists = FingerprintAttendance::where('fingerprint_device_id', $fingerprintUser->fingerprint_device_id)
+            ->where('user_id', $fingerprintUser->user_id)
+            ->where('timestamp', $timestamp)
+            ->exists();
+
+        if ($exists) {
+            return back()->withInput()->with('error', 'Log dengan pegawai dan waktu yang sama sudah ada.');
+        }
+
+        FingerprintAttendance::create([
+            'fingerprint_device_id' => $fingerprintUser->fingerprint_device_id,
+            'uid' => null,
+            'user_id' => $fingerprintUser->user_id,
+            'app_user_id' => $fingerprintUser->app_user_id,
+            'timestamp' => $timestamp,
+            'status' => 'manual',
+            'punch' => $data['punch'],
+            'entry_source' => 'manual',
+            'corrected_by' => auth()->id(),
+            'correction_note' => $data['correction_note'],
+        ]);
+
+        return back()->with('success', 'Absensi manual berhasil ditambahkan.');
+    }
+
+    public function updateManualAttendance(Request $request, FingerprintAttendance $attendance)
+    {
+        $data = $request->validate([
+            'attendance_date' => ['required', 'date'],
+            'attendance_time' => ['required', 'date_format:H:i'],
+            'punch' => ['nullable', 'string', 'max:50'],
+            'correction_note' => ['required', 'string', 'max:1000'],
+        ]);
+
+        $timestamp = Carbon::parse($data['attendance_date'] . ' ' . $data['attendance_time']);
+        $conflict = FingerprintAttendance::where('fingerprint_device_id', $attendance->fingerprint_device_id)
+            ->where('user_id', $attendance->user_id)
+            ->where('timestamp', $timestamp)
+            ->whereKeyNot($attendance->id)
+            ->exists();
+
+        if ($conflict) {
+            return back()->withInput()->with('error', 'Perubahan gagal karena sudah ada log lain pada waktu tersebut.');
+        }
+
+        $attendance->update([
+            'timestamp' => $timestamp,
+            'punch' => $data['punch'] ?: $attendance->punch,
+            'entry_source' => $attendance->entry_source === 'manual' ? 'manual' : 'corrected',
+            'original_timestamp' => $attendance->original_timestamp ?? $attendance->getOriginal('timestamp'),
+            'corrected_by' => auth()->id(),
+            'correction_note' => $data['correction_note'],
+        ]);
+
+        return back()->with('success', 'Waktu absensi berhasil dikoreksi.');
+    }
+
     public function update(Request $request, FingerprintDevice $fingerprint)
     {
         $fingerprint->update($this->validatedDevice($request));

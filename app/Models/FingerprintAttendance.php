@@ -15,10 +15,15 @@ class FingerprintAttendance extends Model
         'timestamp',
         'status',
         'punch',
+        'entry_source',
+        'original_timestamp',
+        'corrected_by',
+        'correction_note',
     ];
 
     protected $casts = [
         'timestamp' => 'datetime',
+        'original_timestamp' => 'datetime',
     ];
 
     public function device(): BelongsTo
@@ -29,5 +34,10 @@ class FingerprintAttendance extends Model
     public function appUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'app_user_id');
+    }
+
+    public function correctedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'corrected_by');
     }
 }
