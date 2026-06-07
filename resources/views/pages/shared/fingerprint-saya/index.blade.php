@@ -110,20 +110,42 @@
                             <th class="px-6 py-3 text-left text-xs font-black uppercase tracking-wider text-gray-400">Tanggal</th>
                             <th class="px-6 py-3 text-left text-xs font-black uppercase tracking-wider text-gray-400">Jam Masuk</th>
                             <th class="px-6 py-3 text-left text-xs font-black uppercase tracking-wider text-gray-400">Jam Pulang</th>
+                            <th class="px-6 py-3 text-left text-xs font-black uppercase tracking-wider text-gray-400">Status</th>
+                            <th class="px-6 py-3 text-right text-xs font-black uppercase tracking-wider text-gray-400">Keterangan</th>
                             <th class="px-6 py-3 text-left text-xs font-black uppercase tracking-wider text-gray-400">Total Scan</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         @forelse($dailyRecaps as $recap)
+                            @php
+                                $checkinBadgeClass = ((int) $recap->monitoring_late_minutes) > 0 ? 'bg-amber-100 text-amber-800 ring-1 ring-amber-200' : 'bg-emerald-50 text-emerald-700';
+                                $checkoutBadgeClass = ((int) $recap->monitoring_early_minutes) > 0 ? 'bg-amber-100 text-amber-800 ring-1 ring-amber-200' : 'bg-blue-50 text-blue-700';
+                                $notes = $recap->monitoring_notes ?? ['Sesuai jadwal'];
+                                $dayName = [1 => 'Senin', 2 => 'Selasa', 3 => 'Rabu', 4 => 'Kamis', 5 => 'Jumat', 6 => 'Sabtu', 7 => 'Minggu'][\Carbon\Carbon::parse($recap->tanggal)->dayOfWeekIso];
+                            @endphp
                             <tr>
-                                <td class="px-6 py-4 font-bold text-gray-900">{{ \Carbon\Carbon::parse($recap->tanggal)->format('d M Y') }}</td>
-                                <td class="px-6 py-4"><span class="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-700">{{ \Carbon\Carbon::parse($recap->scan_masuk)->format('H:i:s') }}</span></td>
-                                <td class="px-6 py-4"><span class="rounded-full bg-blue-50 px-3 py-1.5 text-xs font-black text-blue-700">{{ $recap->total_scan > 1 ? \Carbon\Carbon::parse($recap->scan_keluar)->format('H:i:s') : '-' }}</span></td>
+                                <td class="px-6 py-4">
+                                    <div class="font-bold text-gray-900">{{ $dayName }}</div>
+                                    <div class="text-xs font-semibold text-gray-400">{{ \Carbon\Carbon::parse($recap->tanggal)->format('d M Y') }}</div>
+                                </td>
+                                <td class="px-6 py-4"><span class="inline-flex min-w-24 justify-center rounded-full px-3 py-1.5 text-xs font-black {{ $checkinBadgeClass }}">{{ \Carbon\Carbon::parse($recap->scan_masuk)->format('H:i:s') }}</span></td>
+                                <td class="px-6 py-4"><span class="inline-flex min-w-24 justify-center rounded-full px-3 py-1.5 text-xs font-black {{ $checkoutBadgeClass }}">{{ $recap->total_scan > 1 ? \Carbon\Carbon::parse($recap->scan_keluar)->format('H:i:s') : '-' }}</span></td>
+                                <td class="px-6 py-4">
+                                    <span class="inline-flex rounded-full px-3 py-1.5 text-xs font-black {{ $recap->monitoring_status_class }}">{{ $recap->monitoring_status_text }}</span>
+                                    <div class="mt-1 text-[11px] font-semibold text-gray-400">{{ $recap->monitoring_rule_label }}</div>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <div class="flex flex-wrap justify-end gap-1.5">
+                                        @foreach($notes as $note)
+                                            <span class="inline-flex rounded-full bg-amber-50 px-3 py-1.5 text-xs font-black text-amber-700">{{ $note }}</span>
+                                        @endforeach
+                                    </div>
+                                </td>
                                 <td class="px-6 py-4 text-sm font-bold text-gray-900">{{ $recap->total_scan }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="px-6 py-12 text-center text-gray-500">Belum ada data absensi fingerprint pada periode ini.</td>
+                                <td colspan="6" class="px-6 py-12 text-center text-gray-500">Belum ada data absensi fingerprint pada periode ini.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -245,6 +267,7 @@
                             titleFont: { weight: 'bold' },
                             bodyFont: { weight: '600' },
                             callbacks: {
+                                title: (items) => items.length ? items[0].label : '',
                                 label: (context) => `${context.dataset.label}: ${formatTime(context.parsed.y)}`,
                             },
                         },
