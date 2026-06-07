@@ -17,6 +17,7 @@ class MyFingerprintAttendanceController extends Controller
 
         $today = MyFingerprintAttendance::today($user);
         $dailyRecaps = MyFingerprintAttendance::dailyRecaps($user, $dateFrom, $dateTo);
+        $chartData = MyFingerprintAttendance::chartData($dailyRecaps);
         $logs = FingerprintAttendance::with('device')
             ->where('app_user_id', $user->id)
             ->when($dateFrom, fn ($query) => $query->whereDate('timestamp', '>=', $dateFrom))
@@ -25,7 +26,7 @@ class MyFingerprintAttendanceController extends Controller
             ->paginate(30)
             ->withQueryString();
 
-        return view('pages.shared.fingerprint-saya.index', compact('today', 'dailyRecaps', 'logs', 'dateFrom', 'dateTo'));
+        return view('pages.shared.fingerprint-saya.index', compact('today', 'dailyRecaps', 'chartData', 'logs', 'dateFrom', 'dateTo'));
     }
 
     private function resolveRange(Request $request): array

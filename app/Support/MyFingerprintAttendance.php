@@ -37,4 +37,32 @@ class MyFingerprintAttendance
             ->orderByDesc('tanggal')
             ->get();
     }
+
+    public static function chartData($dailyRecaps): array
+    {
+        $items = collect($dailyRecaps)->sortBy('tanggal')->values();
+
+        return [
+            'labels' => $items
+                ->map(fn ($recap) => Carbon::parse($recap->tanggal)->format('d M'))
+                ->all(),
+            'checkinTimes' => $items
+                ->map(fn ($recap) => self::minutesFromTimestamp($recap->scan_masuk))
+                ->all(),
+            'checkoutTimes' => $items
+                ->map(fn ($recap) => ((int) $recap->total_scan > 1) ? self::minutesFromTimestamp($recap->scan_keluar) : null)
+                ->all(),
+        ];
+    }
+
+    private static function minutesFromTimestamp($timestamp): ?int
+    {
+        if (!$timestamp) {
+            return null;
+        }
+
+        $time = Carbon::parse($timestamp);
+
+        return ($time->hour * 60) + $time->minute;
+    }
 }

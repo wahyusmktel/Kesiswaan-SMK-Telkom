@@ -9,6 +9,34 @@
     <div class="space-y-6">
         @include('shared.fingerprint-today-card', ['summary' => $today])
 
+        <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                    <p class="text-xs font-black uppercase tracking-widest text-gray-400">Statistik Kehadiran</p>
+                    <h3 class="mt-2 text-xl font-black text-gray-900">Jam Absen Masuk dan Pulang</h3>
+                    <p class="mt-1 text-sm text-gray-500">Visual waktu scan pertama dan terakhir pada periode yang dipilih.</p>
+                </div>
+                <div class="flex flex-wrap gap-2 text-xs font-bold">
+                    <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1.5 text-emerald-700">
+                        <span class="h-2 w-2 rounded-full bg-emerald-500"></span>Jam Masuk
+                    </span>
+                    <span class="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1.5 text-blue-700">
+                        <span class="h-2 w-2 rounded-full bg-blue-500"></span>Jam Pulang
+                    </span>
+                </div>
+            </div>
+
+            @if(count($chartData['labels']))
+                <div class="mt-6 h-72">
+                    <canvas id="myFingerprintAttendanceChart"></canvas>
+                </div>
+            @else
+                <div class="mt-6 flex h-72 items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50 text-sm font-semibold text-gray-400">
+                    Belum ada data untuk ditampilkan pada chart.
+                </div>
+            @endif
+        </div>
+
         <div class="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-100 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
@@ -113,4 +141,96 @@
             @endif
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const chartEl = document.getElementById('myFingerprintAttendanceChart');
+            if (!chartEl || typeof Chart === 'undefined') return;
+
+            const data = @json($chartData);
+            const ctx = chartEl.getContext('2d');
+            const emeraldGradient = ctx.createLinearGradient(0, 0, 0, 260);
+            emeraldGradient.addColorStop(0, 'rgba(16, 185, 129, 0.22)');
+            emeraldGradient.addColorStop(1, 'rgba(16, 185, 129, 0.02)');
+            const blueGradient = ctx.createLinearGradient(0, 0, 0, 260);
+            blueGradient.addColorStop(0, 'rgba(59, 130, 246, 0.20)');
+            blueGradient.addColorStop(1, 'rgba(59, 130, 246, 0.02)');
+
+            const formatTime = (minutes) => {
+                if (minutes === null || minutes === undefined || Number.isNaN(minutes)) return '-';
+                const total = Math.round(minutes);
+                const h = Math.floor(total / 60).toString().padStart(2, '0');
+                const m = (total % 60).toString().padStart(2, '0');
+                return `${h}:${m}`;
+            };
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            label: 'Jam masuk',
+                            data: data.checkinTimes,
+                            borderColor: '#10b981',
+                            backgroundColor: emeraldGradient,
+                            fill: true,
+                            tension: 0.42,
+                            pointRadius: 4,
+                            pointHoverRadius: 7,
+                            pointBackgroundColor: '#10b981',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2,
+                            borderWidth: 3,
+                        },
+                        {
+                            label: 'Jam pulang',
+                            data: data.checkoutTimes,
+                            borderColor: '#3b82f6',
+                            backgroundColor: blueGradient,
+                            fill: true,
+                            tension: 0.42,
+                            pointRadius: 4,
+                            pointHoverRadius: 7,
+                            pointBackgroundColor: '#3b82f6',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2,
+                            borderWidth: 3,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#111827',
+                            padding: 12,
+                            titleFont: { weight: 'bold' },
+                            bodyFont: { weight: '600' },
+                            callbacks: {
+                                label: (context) => `${context.dataset.label}: ${formatTime(context.parsed.y)}`,
+                            },
+                        },
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#64748b', font: { weight: '600' } },
+                        },
+                        y: {
+                            grid: { color: 'rgba(148, 163, 184, 0.18)' },
+                            ticks: {
+                                color: '#64748b',
+                                callback: (value) => formatTime(value),
+                            },
+                        },
+                    },
+                },
+            });
+        });
+    </script>
 </x-app-layout>
