@@ -116,7 +116,7 @@
                             <!-- Theme Selection -->
                             <div class="col-span-1 md:col-span-2 pt-4 border-t border-gray-100">
                                 <label class="block text-sm font-medium text-gray-700 mb-3">Tema Landing Page</label>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                                     <label class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none hover:border-gray-300">
                                         <input type="radio" name="theme" value="default" class="mt-0.5 h-4 w-4 text-red-600 border-gray-300 focus:ring-red-500" {{ old('theme', $setting->theme ?? 'default') === 'default' ? 'checked' : '' }}>
                                         <span class="ml-3 flex flex-col">
@@ -146,6 +146,14 @@
                                         <span class="ml-3 flex flex-col">
                                             <span class="block text-sm font-medium text-gray-900">Campus Flow</span>
                                             <span class="block text-sm text-gray-500">Layout editorial terang dan dinamis</span>
+                                        </span>
+                                    </label>
+
+                                    <label class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none hover:border-gray-300">
+                                        <input type="radio" name="theme" value="telkom-corporate" class="mt-0.5 h-4 w-4 text-red-600 border-gray-300 focus:ring-red-500" {{ old('theme', $setting->theme ?? 'default') === 'telkom-corporate' ? 'checked' : '' }}>
+                                        <span class="ml-3 flex flex-col">
+                                            <span class="block text-sm font-medium text-gray-900">Telkom Corporate</span>
+                                            <span class="block text-sm text-gray-500">Terinspirasi UI telkom.co.id</span>
                                         </span>
                                     </label>
                                 </div>

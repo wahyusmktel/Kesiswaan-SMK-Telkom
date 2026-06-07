@@ -4,6 +4,7 @@
         'light-red' => 'theme-light-red',
         'tech-red' => 'theme-tech-red',
         'campus-flow' => 'theme-campus-flow',
+        'telkom-corporate' => 'theme-telkom-corporate',
         default => '',
     };
     $hasBirthdays = isset($birthdaySiswa, $birthdayGuru) && ($birthdaySiswa->count() + $birthdayGuru->count()) > 0;
@@ -613,6 +614,273 @@
 
             .theme-campus-flow #features .glass-card {
                 grid-column: auto !important;
+            }
+        }
+
+        /* Telkom Corporate Theme: inspired by telkom.co.id visual language */
+        .theme-telkom-corporate {
+            color: #171717;
+            background-color: #FFFFFF;
+            background-image:
+                radial-gradient(circle at 18% 14%, rgba(230, 0, 18, 0.08), transparent 24rem),
+                radial-gradient(circle at 82% 10%, rgba(246, 59, 46, 0.08), transparent 22rem),
+                linear-gradient(180deg, #FFFFFF 0%, #F7F7F8 44%, #FFFFFF 100%);
+        }
+
+        .theme-telkom-corporate .blob {
+            display: none;
+        }
+
+        .theme-telkom-corporate nav {
+            padding: 1rem clamp(1rem, 3vw, 2rem) !important;
+        }
+
+        .theme-telkom-corporate nav > div {
+            max-width: 88rem !important;
+            border-radius: 1.25rem !important;
+            padding: 0.85rem 1.25rem !important;
+            background: rgba(255, 255, 255, 0.96) !important;
+            border: 1px solid rgba(23, 23, 23, 0.08) !important;
+            box-shadow: 0 12px 35px rgba(23, 23, 23, 0.08) !important;
+        }
+
+        .theme-telkom-corporate .glass {
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid rgba(23, 23, 23, 0.08);
+            box-shadow: 0 18px 48px rgba(23, 23, 23, 0.08);
+        }
+
+        .theme-telkom-corporate .glass-card {
+            background: #FFFFFF;
+            border: 1px solid rgba(23, 23, 23, 0.08);
+            box-shadow: 0 18px 45px rgba(23, 23, 23, 0.08);
+        }
+
+        .theme-telkom-corporate .glass-card:hover {
+            border-color: rgba(230, 0, 18, 0.38);
+            transform: translateY(-6px);
+            box-shadow: 0 24px 58px rgba(230, 0, 18, 0.11);
+        }
+
+        .theme-telkom-corporate .nav-link {
+            color: #333333 !important;
+            font-weight: 700;
+        }
+
+        .theme-telkom-corporate .nav-link:hover {
+            color: #E60012 !important;
+        }
+
+        .theme-telkom-corporate .nav-link::after {
+            height: 3px;
+            border-radius: 999px;
+            background-color: #E60012;
+        }
+
+        .theme-telkom-corporate .btn-primary {
+            color: #FFFFFF !important;
+            background: #E60012;
+            border-radius: 999px !important;
+            box-shadow: 0 18px 36px -18px rgba(230, 0, 18, 0.80);
+        }
+
+        .theme-telkom-corporate .btn-primary:hover {
+            background: #C90010;
+            box-shadow: 0 22px 42px -18px rgba(230, 0, 18, 0.95);
+        }
+
+        .theme-telkom-corporate .text-gradient {
+            background: linear-gradient(135deg, #171717 0%, #434343 62%, #E60012 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .theme-telkom-corporate .text-gradient-red {
+            background: linear-gradient(135deg, #E60012 0%, #F63B2E 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .theme-telkom-corporate .text-white:not(.btn-primary:not(.text-white), .btn-primary *, .text-white.btn-primary) {
+            color: #171717 !important;
+        }
+
+        .theme-telkom-corporate .text-slate-300,
+        .theme-telkom-corporate .text-slate-400 {
+            color: #555D68 !important;
+        }
+
+        .theme-telkom-corporate .text-slate-500 {
+            color: #7A828E !important;
+        }
+
+        .theme-telkom-corporate .border-white\/5,
+        .theme-telkom-corporate .border-white\/10 {
+            border-color: rgba(23, 23, 23, 0.08) !important;
+        }
+
+        .theme-telkom-corporate .bg-white\/5 {
+            background-color: rgba(23, 23, 23, 0.035) !important;
+        }
+
+        .theme-telkom-corporate .bg-slate-900,
+        .theme-telkom-corporate .bg-slate-900\/50 {
+            background-color: #F7F7F8 !important;
+        }
+
+        .theme-telkom-corporate section.min-h-screen {
+            min-height: auto !important;
+            padding-top: 8.75rem !important;
+            padding-bottom: 4rem !important;
+        }
+
+        .theme-telkom-corporate section.min-h-screen > .w-full.max-w-7xl {
+            margin-bottom: 1.5rem !important;
+        }
+
+        .theme-telkom-corporate section.min-h-screen > .w-full.max-w-7xl .glass {
+            border-radius: 1.5rem !important;
+            padding: 1.15rem 1.35rem !important;
+        }
+
+        .theme-telkom-corporate section.min-h-screen > .max-w-7xl.grid {
+            max-width: 88rem !important;
+            grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr) !important;
+            gap: 2.25rem !important;
+            align-items: stretch !important;
+            min-height: 39rem;
+        }
+
+        .theme-telkom-corporate section.min-h-screen > .max-w-7xl.grid > div:first-child {
+            text-align: left !important;
+            background: #FFFFFF;
+            border: 1px solid rgba(23, 23, 23, 0.08);
+            border-radius: 2rem;
+            padding: clamp(1.5rem, 3.5vw, 3rem);
+            box-shadow: 0 24px 64px rgba(23, 23, 23, 0.08);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .theme-telkom-corporate section.min-h-screen > .max-w-7xl.grid > div:first-child::before {
+            content: '#ElevatingYourFuture';
+            display: inline-flex;
+            width: fit-content;
+            margin-bottom: 1rem;
+            color: #E60012;
+            font-size: 0.78rem;
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .theme-telkom-corporate section.min-h-screen h1 {
+            font-size: clamp(3.4rem, 7vw, 6.7rem) !important;
+            line-height: 0.92 !important;
+            letter-spacing: 0 !important;
+        }
+
+        .theme-telkom-corporate section.min-h-screen p {
+            max-width: 38rem !important;
+        }
+
+        .theme-telkom-corporate section.min-h-screen .grid.grid-cols-3 {
+            border-top: 0 !important;
+            background: #F7F7F8;
+            border-radius: 1.35rem;
+            padding: 1rem;
+        }
+
+        .theme-telkom-corporate section.min-h-screen > .max-w-7xl.grid > div:last-child {
+            display: block !important;
+            min-height: 39rem;
+        }
+
+        .theme-telkom-corporate section.min-h-screen > .max-w-7xl.grid > div:last-child > .animate-float {
+            height: 100%;
+            animation: none !important;
+        }
+
+        .theme-telkom-corporate section.min-h-screen > .max-w-7xl.grid > div:last-child > .animate-float > .glass {
+            height: 100%;
+            padding: 0 !important;
+            border-radius: 2rem !important;
+            transform: none !important;
+            overflow: hidden;
+        }
+
+        .theme-telkom-corporate section.min-h-screen > .max-w-7xl.grid > div:last-child .aspect-video {
+            height: 100%;
+            aspect-ratio: auto !important;
+            border-radius: 2rem !important;
+        }
+
+        .theme-telkom-corporate section.min-h-screen > .max-w-7xl.grid > div:last-child img {
+            opacity: 0.9 !important;
+            filter: saturate(1.05) contrast(1.02);
+        }
+
+        .theme-telkom-corporate #features {
+            background: #FFFFFF;
+        }
+
+        .theme-telkom-corporate #features .text-center {
+            text-align: left !important;
+            display: grid;
+            grid-template-columns: minmax(0, 0.68fr) minmax(0, 1fr);
+            gap: 2rem;
+            align-items: end;
+        }
+
+        .theme-telkom-corporate #features .text-center p {
+            margin: 0 !important;
+            max-width: 38rem !important;
+        }
+
+        .theme-telkom-corporate #features .grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+            gap: 1.25rem !important;
+        }
+
+        .theme-telkom-corporate #features .glass-card {
+            border-radius: 1.5rem !important;
+            min-height: 20rem;
+        }
+
+        .theme-telkom-corporate #features .glass-card:nth-child(1),
+        .theme-telkom-corporate #features .glass-card:nth-child(2) {
+            grid-column: span 2 / span 2;
+        }
+
+        .theme-telkom-corporate .bisa-section {
+            background: #E60012 !important;
+        }
+
+        .theme-telkom-corporate .bisa-text {
+            color: #FFFFFF !important;
+            opacity: 1;
+            text-shadow: 0 20px 70px rgba(23, 23, 23, 0.16);
+        }
+
+        @media (max-width: 1023px) {
+            .theme-telkom-corporate section.min-h-screen > .max-w-7xl.grid,
+            .theme-telkom-corporate #features .text-center,
+            .theme-telkom-corporate #features .grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            .theme-telkom-corporate section.min-h-screen > .max-w-7xl.grid > div:first-child {
+                text-align: center !important;
+            }
+
+            .theme-telkom-corporate section.min-h-screen > .max-w-7xl.grid > div:last-child {
+                min-height: 22rem;
+            }
+
+            .theme-telkom-corporate #features .glass-card {
+                grid-column: auto !important;
+                min-height: auto;
             }
         }
 

@@ -4,6 +4,7 @@
         'light-red' => 'theme-light-red',
         'tech-red' => 'theme-tech-red',
         'campus-flow' => 'theme-campus-flow',
+        'telkom-corporate' => 'theme-telkom-corporate',
         default => '',
     };
 @endphp
@@ -193,6 +194,39 @@
         }
         .theme-campus-flow .prose-dark strong {
             color: #111827;
+        }
+
+        .theme-telkom-corporate {
+            color: #171717;
+            background-color: #FFFFFF;
+            background-image:
+                radial-gradient(circle at 18% 14%, rgba(230, 0, 18, 0.08), transparent 24rem),
+                linear-gradient(180deg, #FFFFFF 0%, #F7F7F8 44%, #FFFFFF 100%);
+        }
+        .theme-telkom-corporate .blob {
+            display: none;
+        }
+        .theme-telkom-corporate .glass {
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid rgba(23, 23, 23, 0.08);
+            box-shadow: 0 12px 35px rgba(23, 23, 23, 0.08);
+        }
+        .theme-telkom-corporate .btn-primary {
+            color: #FFFFFF !important;
+            background: #E60012;
+            border-radius: 999px !important;
+            box-shadow: 0 18px 36px -18px rgba(230, 0, 18, 0.80);
+        }
+        .theme-telkom-corporate .text-gradient {
+            background: linear-gradient(135deg, #171717 0%, #434343 62%, #E60012 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .theme-telkom-corporate .prose-dark {
+            color: #555D68;
+        }
+        .theme-telkom-corporate .prose-dark strong {
+            color: #171717;
         }
     </style>
 </head>
