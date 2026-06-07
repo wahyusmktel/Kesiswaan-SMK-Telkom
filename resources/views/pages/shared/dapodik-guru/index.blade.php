@@ -172,11 +172,18 @@
                             <h3 class="font-bold text-gray-900">Daftar Data Dapodik Guru</h3>
                             <p class="text-xs text-gray-400 mt-0.5">Menampilkan {{ $dapodikGurus->count() }} dari {{ $dapodikGurus->total() }} data</p>
                         </div>
-                        <button @click="showImport = true"
-                            class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-xl shadow-sm transition-all">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                            Import Dapodik
-                        </button>
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <a href="{{ route('dapodik-guru.create') }}"
+                                class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-xl shadow-sm transition-all">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                Tambah
+                            </a>
+                            <button @click="showImport = true"
+                                class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-xl shadow-sm transition-all">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                Import Dapodik
+                            </button>
+                        </div>
                     </div>
 
                     <div class="overflow-x-auto">

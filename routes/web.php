@@ -792,6 +792,8 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['role:Operator|KAUR SDM'])->group(function () {
         Route::post('/dapodik-guru/import', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'import'])->name('dapodik-guru.import');
         Route::get('/dapodik-guru', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'index'])->name('dapodik-guru.index');
+        Route::get('/dapodik-guru/create', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'create'])->name('dapodik-guru.create');
+        Route::post('/dapodik-guru', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'store'])->name('dapodik-guru.store');
         Route::patch('/dapodik-guru/{dapodikGuru}/mapping', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'updateMapping'])->name('dapodik-guru.mapping.update');
         Route::get('/dapodik-guru/{dapodikGuru}', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'show'])->name('dapodik-guru.show');
         Route::get('/dapodik-guru/{dapodikGuru}/edit', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'edit'])->name('dapodik-guru.edit');

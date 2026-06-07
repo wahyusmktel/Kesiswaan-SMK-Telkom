@@ -63,26 +63,49 @@ class DapodikGuruController extends Controller
         return view('pages.shared.dapodik-guru.show', compact('dapodikGuru'));
     }
 
+    public function create()
+    {
+        $dapodikGuru = new DapodikGuru();
+        $isCreate = true;
+
+        return view('pages.shared.dapodik-guru.edit', compact('dapodikGuru', 'isCreate'));
+    }
+
     public function edit(DapodikGuru $dapodikGuru)
     {
         $dapodikGuru->load('masterGuru.user');
         return view('pages.shared.dapodik-guru.edit', compact('dapodikGuru'));
     }
 
+    public function store(Request $request)
+    {
+        $data = $this->validatedData($request);
+
+        try {
+            $masterGuru = null;
+            if ($request->filled('nik')) {
+                $masterGuru = MasterGuru::where('nik', $request->nik)->first();
+            }
+
+            $dapodikGuru = DapodikGuru::create(array_merge(
+                $data,
+                ['master_guru_id' => $masterGuru?->id]
+            ));
+
+            toast('Data dapodik guru berhasil ditambahkan.', 'success');
+
+            return redirect()->route('dapodik-guru.show', $dapodikGuru);
+        } catch (\Exception $e) {
+            Log::error('DapodikGuru store error: ' . $e->getMessage());
+            toast('Gagal menambahkan: ' . $e->getMessage(), 'error');
+
+            return back()->withInput();
+        }
+    }
+
     public function update(Request $request, DapodikGuru $dapodikGuru)
     {
-        $request->validate([
-            'nama'                    => 'required|string|max:255',
-            'nik'                     => ['nullable', 'string', 'max:20', Rule::unique('dapodik_gurus', 'nik')->ignore($dapodikGuru->id)],
-            'nuptk'                   => 'nullable|string|max:20',
-            'jenis_kelamin'           => 'nullable|in:L,P',
-            'tanggal_lahir'           => 'nullable|date',
-            'tanggal_cpns'            => 'nullable|date',
-            'tmt_pengangkatan'        => 'nullable|date',
-            'tmt_pns'                 => 'nullable|date',
-            'email_dapodik'           => 'nullable|email',
-            'status_kepegawaian'      => ['nullable', Rule::in(EmploymentStatus::options())],
-        ]);
+        $data = $this->validatedData($request, $dapodikGuru);
 
         try {
             // Re-link master_guru if NIK changed
@@ -92,7 +115,7 @@ class DapodikGuruController extends Controller
             }
 
             $dapodikGuru->update(array_merge(
-                $request->except(['_token', '_method']),
+                $data,
                 ['master_guru_id' => $masterGuru?->id ?? $dapodikGuru->master_guru_id]
             ));
 
@@ -103,6 +126,62 @@ class DapodikGuruController extends Controller
         }
 
         return redirect()->route('dapodik-guru.show', $dapodikGuru);
+    }
+
+    private function validatedData(Request $request, ?DapodikGuru $dapodikGuru = null): array
+    {
+        return $request->validate([
+            'nama'                    => 'required|string|max:255',
+            'nik'                     => ['nullable', 'string', 'max:20', Rule::unique('dapodik_gurus', 'nik')->ignore($dapodikGuru?->id)],
+            'nuptk'                   => 'nullable|string|max:20',
+            'jenis_kelamin'           => 'nullable|in:L,P',
+            'tempat_lahir'            => 'nullable|string|max:255',
+            'tanggal_lahir'           => 'nullable|date',
+            'agama'                   => 'nullable|string|max:255',
+            'kewarganegaraan'         => 'nullable|string|max:5',
+            'no_kk'                   => 'nullable|string|max:20',
+            'nama_ibu_kandung'        => 'nullable|string|max:255',
+            'nip'                     => 'nullable|string|max:30',
+            'status_kepegawaian'      => ['nullable', Rule::in(EmploymentStatus::options())],
+            'jenis_ptk'               => 'nullable|string|max:255',
+            'tugas_tambahan'          => 'nullable|string|max:255',
+            'pangkat_golongan'        => 'nullable|string|max:255',
+            'sumber_gaji'             => 'nullable|string|max:255',
+            'lembaga_pengangkatan'    => 'nullable|string|max:255',
+            'sk_pengangkatan'         => 'nullable|string|max:255',
+            'tmt_pengangkatan'        => 'nullable|date',
+            'sk_cpns'                 => 'nullable|string|max:255',
+            'tanggal_cpns'            => 'nullable|date',
+            'tmt_pns'                 => 'nullable|date',
+            'nuks'                    => 'nullable|string|max:30',
+            'karpeg'                  => 'nullable|string|max:20',
+            'karis_karsu'             => 'nullable|string|max:20',
+            'alamat_jalan'            => 'nullable|string|max:255',
+            'rt'                      => 'nullable|string|max:5',
+            'rw'                      => 'nullable|string|max:5',
+            'nama_dusun'              => 'nullable|string|max:255',
+            'desa_kelurahan'          => 'nullable|string|max:255',
+            'kecamatan'               => 'nullable|string|max:255',
+            'kode_pos'                => 'nullable|string|max:10',
+            'telepon'                 => 'nullable|string|max:20',
+            'hp'                      => 'nullable|string|max:20',
+            'email_dapodik'           => 'nullable|email',
+            'lintang'                 => 'nullable|string|max:255',
+            'bujur'                   => 'nullable|string|max:255',
+            'status_perkawinan'       => 'nullable|string|max:255',
+            'nama_pasangan'           => 'nullable|string|max:255',
+            'nip_pasangan'            => 'nullable|string|max:30',
+            'pekerjaan_pasangan'      => 'nullable|string|max:255',
+            'npwp'                    => 'nullable|string|max:30',
+            'nama_wajib_pajak'        => 'nullable|string|max:255',
+            'bank'                    => 'nullable|string|max:255',
+            'no_rekening'             => 'nullable|string|max:30',
+            'rekening_atas_nama'      => 'nullable|string|max:255',
+            'lisensi_kepala_sekolah'  => 'nullable|in:Ya,Tidak',
+            'diklat_kepengawasan'     => 'nullable|in:Ya,Tidak',
+            'keahlian_braille'        => 'nullable|in:Ya,Tidak',
+            'keahlian_bahasa_isyarat' => 'nullable|in:Ya,Tidak',
+        ]);
     }
 
     public function updateMapping(Request $request, DapodikGuru $dapodikGuru)
