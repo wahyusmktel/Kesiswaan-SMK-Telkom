@@ -27,7 +27,7 @@ class SuperAdminController extends Controller
             'email'          => 'nullable|email|max:255',
             'address'        => 'nullable|string',
             'allow_registration' => 'nullable|boolean',
-            'theme'          => 'nullable|string|in:default,light-red,tech-red',
+            'theme'          => 'nullable|string|in:default,light-red,tech-red,campus-flow',
         ]);
 
         $setting = AppSetting::first() ?? new AppSetting();

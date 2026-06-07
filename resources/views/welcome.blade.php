@@ -3,6 +3,7 @@
     $landingThemeClass = match($landingTheme) {
         'light-red' => 'theme-light-red',
         'tech-red' => 'theme-tech-red',
+        'campus-flow' => 'theme-campus-flow',
         default => '',
     };
     $hasBirthdays = isset($birthdaySiswa, $birthdayGuru) && ($birthdaySiswa->count() + $birthdayGuru->count()) > 0;
@@ -358,6 +359,261 @@
         .theme-tech-red .bisa-text {
             color: #FF2530 !important;
             text-shadow: 0 0 34px rgba(255, 37, 48, 0.35), 0 20px 70px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Campus Flow Theme: editorial layout, brighter and asymmetric */
+        .theme-campus-flow {
+            color: #111827;
+            background-color: #F8FAFC;
+            background-image:
+                radial-gradient(circle at 12% 8%, rgba(226, 31, 38, 0.12), transparent 26rem),
+                radial-gradient(circle at 88% 12%, rgba(6, 182, 212, 0.11), transparent 24rem),
+                linear-gradient(135deg, rgba(15, 23, 42, 0.035) 25%, transparent 25%),
+                linear-gradient(225deg, rgba(15, 23, 42, 0.035) 25%, transparent 25%);
+            background-size: auto, auto, 34px 34px, 34px 34px;
+        }
+
+        .theme-campus-flow .blob {
+            display: none;
+        }
+
+        .theme-campus-flow nav {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+        }
+
+        .theme-campus-flow nav > div {
+            max-width: 82rem !important;
+            border-radius: 999px !important;
+            background: rgba(255, 255, 255, 0.88) !important;
+            border: 1px solid rgba(15, 23, 42, 0.08) !important;
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08) !important;
+        }
+
+        .theme-campus-flow .glass {
+            background: rgba(255, 255, 255, 0.78);
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            box-shadow: 0 18px 55px rgba(15, 23, 42, 0.08);
+        }
+
+        .theme-campus-flow .glass-card {
+            background: #FFFFFF;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+        }
+
+        .theme-campus-flow .glass-card:hover {
+            border-color: rgba(226, 31, 38, 0.42);
+            box-shadow: 0 24px 70px rgba(226, 31, 38, 0.12);
+            transform: translateY(-8px) rotate(-0.5deg);
+        }
+
+        .theme-campus-flow .nav-link {
+            color: #475569 !important;
+        }
+
+        .theme-campus-flow .nav-link:hover {
+            color: #E21F26 !important;
+        }
+
+        .theme-campus-flow .nav-link::after {
+            background-color: #E21F26;
+        }
+
+        .theme-campus-flow .text-gradient {
+            background: linear-gradient(135deg, #0F172A 0%, #334155 58%, #E21F26 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .theme-campus-flow .text-gradient-red {
+            background: linear-gradient(135deg, #E21F26 0%, #F97316 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .theme-campus-flow .btn-primary {
+            color: #FFFFFF !important;
+            background: #111827;
+            box-shadow: 0 20px 45px -20px rgba(17, 24, 39, 0.75);
+        }
+
+        .theme-campus-flow .btn-primary:hover {
+            background: #E21F26;
+            box-shadow: 0 22px 48px -18px rgba(226, 31, 38, 0.70);
+        }
+
+        .theme-campus-flow .text-white:not(.btn-primary:not(.text-white), .btn-primary *, .text-white.btn-primary) {
+            color: #111827 !important;
+        }
+
+        .theme-campus-flow .text-slate-300,
+        .theme-campus-flow .text-slate-400 {
+            color: #475569 !important;
+        }
+
+        .theme-campus-flow .text-slate-500 {
+            color: #64748B !important;
+        }
+
+        .theme-campus-flow .border-white\/5,
+        .theme-campus-flow .border-white\/10 {
+            border-color: rgba(15, 23, 42, 0.08) !important;
+        }
+
+        .theme-campus-flow .bg-white\/5 {
+            background-color: rgba(15, 23, 42, 0.04) !important;
+        }
+
+        .theme-campus-flow .bg-slate-900,
+        .theme-campus-flow .bg-slate-900\/50 {
+            background-color: #FFFFFF !important;
+        }
+
+        .theme-campus-flow section.min-h-screen {
+            min-height: auto !important;
+            padding-top: 9rem !important;
+            padding-bottom: 5rem !important;
+        }
+
+        .theme-campus-flow section.min-h-screen > .w-full.max-w-7xl {
+            margin-bottom: 2rem !important;
+        }
+
+        .theme-campus-flow section.min-h-screen > .w-full.max-w-7xl .glass {
+            border-radius: 1.5rem !important;
+            padding: 1.25rem !important;
+            transform: none !important;
+        }
+
+        .theme-campus-flow section.min-h-screen > .max-w-7xl.grid {
+            grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr) !important;
+            gap: 3rem !important;
+            align-items: stretch !important;
+            background: linear-gradient(135deg, rgba(255,255,255,0.92), rgba(255,255,255,0.72));
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: 2.5rem;
+            padding: clamp(1.5rem, 3vw, 3rem);
+            box-shadow: 0 30px 90px rgba(15, 23, 42, 0.10);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .theme-campus-flow section.min-h-screen > .max-w-7xl.grid::before {
+            content: '';
+            position: absolute;
+            inset: auto -12% -34% 38%;
+            height: 60%;
+            background: linear-gradient(135deg, rgba(226,31,38,0.18), rgba(6,182,212,0.11));
+            transform: rotate(-7deg);
+            border-radius: 4rem;
+            pointer-events: none;
+        }
+
+        .theme-campus-flow section.min-h-screen > .max-w-7xl.grid > div:first-child {
+            position: relative;
+            z-index: 1;
+            text-align: left !important;
+            background: #FFFFFF;
+            border-radius: 2rem;
+            padding: clamp(1.5rem, 4vw, 3rem);
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            box-shadow: 0 20px 55px rgba(15, 23, 42, 0.08);
+        }
+
+        .theme-campus-flow section.min-h-screen h1 {
+            font-size: clamp(3rem, 6vw, 5.8rem) !important;
+            letter-spacing: 0 !important;
+        }
+
+        .theme-campus-flow section.min-h-screen .grid.grid-cols-3 {
+            background: #F8FAFC;
+            border: 1px solid rgba(15, 23, 42, 0.06);
+            border-radius: 1.5rem;
+            padding: 1rem;
+            gap: 1rem !important;
+        }
+
+        .theme-campus-flow section.min-h-screen > .max-w-7xl.grid > div:last-child {
+            display: block !important;
+            align-self: stretch;
+            min-height: 34rem;
+        }
+
+        .theme-campus-flow section.min-h-screen > .max-w-7xl.grid > div:last-child > .animate-float {
+            height: 100%;
+            animation: none !important;
+        }
+
+        .theme-campus-flow section.min-h-screen > .max-w-7xl.grid > div:last-child > .animate-float > .glass {
+            height: 100%;
+            padding: 0 !important;
+            border-radius: 2rem !important;
+            transform: none !important;
+            overflow: hidden;
+        }
+
+        .theme-campus-flow section.min-h-screen > .max-w-7xl.grid > div:last-child .aspect-video {
+            height: 100%;
+            aspect-ratio: auto !important;
+            border-radius: 2rem !important;
+        }
+
+        .theme-campus-flow #features .text-center {
+            text-align: left !important;
+            max-width: 48rem;
+        }
+
+        .theme-campus-flow #features .text-center p {
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        }
+
+        .theme-campus-flow #features .grid {
+            grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+        }
+
+        .theme-campus-flow #features .glass-card {
+            grid-column: span 4 / span 4;
+            border-radius: 1.5rem !important;
+        }
+
+        .theme-campus-flow #features .glass-card:nth-child(1),
+        .theme-campus-flow #features .glass-card:nth-child(4) {
+            grid-column: span 6 / span 6;
+        }
+
+        .theme-campus-flow .bisa-section {
+            background: #111827 !important;
+        }
+
+        .theme-campus-flow .bisa-text {
+            color: #FFFFFF !important;
+            opacity: 0.96;
+            text-shadow: 0 24px 70px rgba(226, 31, 38, 0.25);
+        }
+
+        @media (max-width: 1023px) {
+            .theme-campus-flow section.min-h-screen > .max-w-7xl.grid {
+                grid-template-columns: 1fr !important;
+                padding: 1rem;
+            }
+
+            .theme-campus-flow section.min-h-screen > .max-w-7xl.grid > div:first-child {
+                text-align: center !important;
+            }
+
+            .theme-campus-flow section.min-h-screen > .max-w-7xl.grid > div:last-child {
+                min-height: 22rem;
+            }
+
+            .theme-campus-flow #features .grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            .theme-campus-flow #features .glass-card {
+                grid-column: auto !important;
+            }
         }
 
         /* Birthday Running Text Banner */

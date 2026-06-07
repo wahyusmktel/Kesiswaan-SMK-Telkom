@@ -3,6 +3,7 @@
     $landingThemeClass = match($landingTheme) {
         'light-red' => 'theme-light-red',
         'tech-red' => 'theme-tech-red',
+        'campus-flow' => 'theme-campus-flow',
         default => '',
     };
 @endphp
@@ -157,6 +158,41 @@
         }
         .theme-tech-red .prose-dark strong {
             color: #FFFFFF;
+        }
+
+        .theme-campus-flow {
+            color: #111827;
+            background-color: #F8FAFC;
+            background-image:
+                radial-gradient(circle at 12% 8%, rgba(226,31,38,0.12), transparent 26rem),
+                radial-gradient(circle at 88% 12%, rgba(6,182,212,0.11), transparent 24rem);
+        }
+        .theme-campus-flow .blob {
+            display: none;
+        }
+        .theme-campus-flow .glass {
+            background: rgba(255, 255, 255, 0.88);
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            box-shadow: 0 18px 55px rgba(15, 23, 42, 0.08);
+        }
+        .theme-campus-flow .btn-primary {
+            color: #FFFFFF !important;
+            background: #111827;
+            box-shadow: 0 20px 45px -20px rgba(17, 24, 39, 0.75);
+        }
+        .theme-campus-flow .btn-primary:hover {
+            background: #E21F26;
+        }
+        .theme-campus-flow .text-gradient {
+            background: linear-gradient(135deg, #0F172A 0%, #334155 58%, #E21F26 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .theme-campus-flow .prose-dark {
+            color: #475569;
+        }
+        .theme-campus-flow .prose-dark strong {
+            color: #111827;
         }
     </style>
 </head>
