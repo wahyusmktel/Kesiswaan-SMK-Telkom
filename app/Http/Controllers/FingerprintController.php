@@ -235,11 +235,24 @@ class FingerprintController extends Controller
             $recap->monitoring_rule_label = $row->monitoring_rule_label;
         });
 
-        $chartRecaps = $dailyRecaps->sortBy('tanggal')->values();
+        [$chartDateFrom, $chartDateTo, $chartRange] = $this->resolveAttendanceChartRange($request);
+        $chartRecaps = FingerprintAttendance::query()
+            ->select([
+                DB::raw('DATE(timestamp) as tanggal'),
+                DB::raw('MIN(timestamp) as scan_masuk'),
+                DB::raw('MAX(timestamp) as scan_keluar'),
+            ])
+            ->where('app_user_id', $user->id)
+            ->when($chartDateFrom, fn ($query) => $query->whereDate('timestamp', '>=', $chartDateFrom))
+            ->when($chartDateTo, fn ($query) => $query->whereDate('timestamp', '<=', $chartDateTo))
+            ->groupBy(DB::raw('DATE(timestamp)'))
+            ->orderBy(DB::raw('DATE(timestamp)'))
+            ->get();
+
         $chartData = [
             'labels' => $chartRecaps->map(fn ($recap) => Carbon::parse($recap->tanggal)->format('d M'))->all(),
-            'lateMinutes' => $chartRecaps->map(fn ($recap) => (int) $recap->monitoring_late_minutes)->all(),
-            'earlyMinutes' => $chartRecaps->map(fn ($recap) => (int) $recap->monitoring_early_minutes)->all(),
+            'checkinTimes' => $chartRecaps->map(fn ($recap) => $this->timeToChartMinutes($recap->scan_masuk))->all(),
+            'checkoutTimes' => $chartRecaps->map(fn ($recap) => $this->timeToChartMinutes($recap->scan_keluar))->all(),
         ];
 
         $workingRecaps = $dailyRecaps->filter(fn ($recap) => (bool) $recap->monitoring_required);
@@ -250,7 +263,7 @@ class FingerprintController extends Controller
         $disciplineRate = (int) round(($disciplineDays / $totalRecapDays) * 100);
         $appreciation = $this->attendanceAppreciation($disciplineRate, $lateDays, $earlyDays);
 
-        return view('pages.fingerprint.attendance-detail', compact('user', 'attendances', 'dailyRecaps', 'dateFrom', 'dateTo', 'chartData', 'appreciation', 'disciplineRate', 'lateDays', 'earlyDays'));
+        return view('pages.fingerprint.attendance-detail', compact('user', 'attendances', 'dailyRecaps', 'dateFrom', 'dateTo', 'chartData', 'chartRange', 'appreciation', 'disciplineRate', 'lateDays', 'earlyDays'));
     }
 
     public function monitoring(Request $request)
@@ -558,6 +571,28 @@ class FingerprintController extends Controller
         }
 
         return [now()->subMonthNoOverflow()->startOfDay(), now()->endOfDay()];
+    }
+
+    private function resolveAttendanceChartRange(Request $request): array
+    {
+        $range = $request->input('chart_range', '1_month');
+
+        return match ($range) {
+            '1_week' => [now()->subWeek()->startOfDay(), now()->endOfDay(), '1_week'],
+            'all' => [null, null, 'all'],
+            default => [now()->subMonthNoOverflow()->startOfDay(), now()->endOfDay(), '1_month'],
+        };
+    }
+
+    private function timeToChartMinutes($timestamp): ?int
+    {
+        if (!$timestamp) {
+            return null;
+        }
+
+        $time = Carbon::parse($timestamp);
+
+        return ($time->hour * 60) + $time->minute;
     }
 
     private function attendanceQuery(Request $request)

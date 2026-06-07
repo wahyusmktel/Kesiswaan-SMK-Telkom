@@ -80,12 +80,26 @@
                 <div class="rounded-2xl border border-gray-100 bg-gray-50 p-5">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                         <div>
-                            <h4 class="font-black text-gray-900">Tren Kedisiplinan Harian</h4>
-                            <p class="text-sm text-gray-500">Visual menit terlambat dan pulang cepat per hari.</p>
+                            <h4 class="font-black text-gray-900">Statistik Waktu Kehadiran</h4>
+                            <p class="text-sm text-gray-500">Visual jam masuk dan jam pulang pegawai per hari.</p>
                         </div>
-                        <div class="flex gap-2 text-xs font-bold">
-                            <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1.5 text-amber-700"><span class="h-2 w-2 rounded-full bg-amber-500"></span>Terlambat</span>
-                            <span class="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1.5 text-blue-700"><span class="h-2 w-2 rounded-full bg-blue-500"></span>Pulang cepat</span>
+                        <div class="flex flex-col sm:items-end gap-2">
+                            <div class="flex flex-wrap gap-2 text-xs font-bold">
+                                @foreach([
+                                    '1_week' => '1 Minggu',
+                                    '1_month' => '1 Bulan',
+                                    'all' => 'Selamanya',
+                                ] as $rangeKey => $rangeLabel)
+                                    <a href="{{ route('fingerprint.logs.detail', array_merge(['user' => $user], request()->query(), ['chart_range' => $rangeKey])) }}"
+                                        class="rounded-full px-3 py-1.5 {{ $chartRange === $rangeKey ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50' }}">
+                                        {{ $rangeLabel }}
+                                    </a>
+                                @endforeach
+                            </div>
+                            <div class="flex gap-2 text-xs font-bold">
+                                <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1.5 text-emerald-700"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Jam Masuk</span>
+                                <span class="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1.5 text-blue-700"><span class="h-2 w-2 rounded-full bg-blue-500"></span>Jam Pulang</span>
+                            </div>
                         </div>
                     </div>
                     <div class="h-72">
@@ -146,12 +160,19 @@
 
             const data = @json($chartData);
             const ctx = chartEl.getContext('2d');
-            const amberGradient = ctx.createLinearGradient(0, 0, 0, 260);
-            amberGradient.addColorStop(0, 'rgba(245, 158, 11, 0.28)');
-            amberGradient.addColorStop(1, 'rgba(245, 158, 11, 0.02)');
+            const emeraldGradient = ctx.createLinearGradient(0, 0, 0, 260);
+            emeraldGradient.addColorStop(0, 'rgba(16, 185, 129, 0.24)');
+            emeraldGradient.addColorStop(1, 'rgba(16, 185, 129, 0.02)');
             const blueGradient = ctx.createLinearGradient(0, 0, 0, 260);
             blueGradient.addColorStop(0, 'rgba(59, 130, 246, 0.22)');
             blueGradient.addColorStop(1, 'rgba(59, 130, 246, 0.02)');
+            const formatTime = (minutes) => {
+                if (minutes === null || minutes === undefined || Number.isNaN(minutes)) return '-';
+                const total = Math.round(minutes);
+                const h = Math.floor(total / 60).toString().padStart(2, '0');
+                const m = (total % 60).toString().padStart(2, '0');
+                return `${h}:${m}`;
+            };
 
             new Chart(ctx, {
                 type: 'line',
@@ -159,20 +180,20 @@
                     labels: data.labels,
                     datasets: [
                         {
-                            label: 'Menit terlambat',
-                            data: data.lateMinutes,
-                            borderColor: '#f59e0b',
-                            backgroundColor: amberGradient,
+                            label: 'Jam masuk',
+                            data: data.checkinTimes,
+                            borderColor: '#10b981',
+                            backgroundColor: emeraldGradient,
                             fill: true,
                             tension: 0.42,
                             pointRadius: 4,
                             pointHoverRadius: 7,
-                            pointBackgroundColor: '#f59e0b',
+                            pointBackgroundColor: '#10b981',
                             borderWidth: 3,
                         },
                         {
-                            label: 'Menit pulang cepat',
-                            data: data.earlyMinutes,
+                            label: 'Jam pulang',
+                            data: data.checkoutTimes,
                             borderColor: '#3b82f6',
                             backgroundColor: blueGradient,
                             fill: true,
@@ -195,13 +216,19 @@
                             padding: 12,
                             titleFont: { weight: 'bold' },
                             callbacks: {
-                                label: (context) => `${context.dataset.label}: ${context.parsed.y} menit`,
+                                label: (context) => `${context.dataset.label}: ${formatTime(context.parsed.y)}`,
                             },
                         },
                     },
                     scales: {
                         x: { grid: { display: false }, ticks: { color: '#64748b', font: { weight: '600' } } },
-                        y: { beginAtZero: true, grid: { color: 'rgba(148, 163, 184, 0.18)' }, ticks: { color: '#64748b', precision: 0 } },
+                        y: {
+                            grid: { color: 'rgba(148, 163, 184, 0.18)' },
+                            ticks: {
+                                color: '#64748b',
+                                callback: (value) => formatTime(value),
+                            },
+                        },
                     },
                 },
             });
