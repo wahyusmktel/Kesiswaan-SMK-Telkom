@@ -15,14 +15,19 @@ class MyFingerprintAttendance
 {
     public static function today(User $user): array
     {
+        $today = today();
+        $nonWorkingRule = self::nonWorkingDayRule($today->toDateString());
         $logs = FingerprintAttendance::with('device')
             ->where('app_user_id', $user->id)
-            ->whereDate('timestamp', today())
+            ->whereDate('timestamp', $today)
             ->orderBy('timestamp')
             ->get();
 
         return [
             'is_mapped' => FingerprintUser::where('app_user_id', $user->id)->exists(),
+            'is_non_working' => (bool) $nonWorkingRule,
+            'non_working_label' => $nonWorkingRule['label'] ?? null,
+            'non_working_note' => $nonWorkingRule['note'] ?? null,
             'first_scan' => $logs->first()?->timestamp,
             'last_scan' => $logs->count() > 1 ? $logs->last()?->timestamp : null,
             'total_scan' => $logs->count(),
