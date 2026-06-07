@@ -181,7 +181,11 @@ Route::get('/', function () {
         ->whereMonth('tanggal_lahir', $today->month)
         ->whereDay('tanggal_lahir', $today->day)
         ->get(['nama']);
-    return view('welcome', compact('birthdaySiswa', 'birthdayGuru'));
+    $landingView = \App\Models\AppSetting::first()?->theme === 'transformasi'
+        ? 'welcome-transformasi'
+        : 'welcome';
+
+    return view($landingView, compact('birthdaySiswa', 'birthdayGuru'));
 })->name('welcome');
 
 // Happiness Meter (Public API)

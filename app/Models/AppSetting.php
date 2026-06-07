@@ -16,9 +16,11 @@ class AppSetting extends Model
         'address',
         'allow_registration',
         'theme',
+        'transformasi_slider_images',
     ];
 
     protected $casts = [
         'allow_registration' => 'boolean',
+        'transformasi_slider_images' => 'array',
     ];
 }

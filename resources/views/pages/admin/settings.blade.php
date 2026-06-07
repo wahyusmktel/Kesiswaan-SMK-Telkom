@@ -11,7 +11,8 @@
                     <p class="text-xs text-gray-500">Kelola informasi dasar dan branding aplikasi di sini.</p>
                 </div>
 
-                <form action="{{ route('super-admin.settings.update') }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('super-admin.settings.update') }}" method="POST" enctype="multipart/form-data"
+                    x-data="{ selectedTheme: '{{ old('theme', $setting->theme ?? 'default') }}' }">
                     @csrf
                     <div class="p-6 space-y-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -118,7 +119,7 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-3">Tema Landing Page</label>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                                     <label class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none hover:border-gray-300">
-                                        <input type="radio" name="theme" value="default" class="mt-0.5 h-4 w-4 text-red-600 border-gray-300 focus:ring-red-500" {{ old('theme', $setting->theme ?? 'default') === 'default' ? 'checked' : '' }}>
+                                        <input type="radio" name="theme" value="default" x-model="selectedTheme" class="mt-0.5 h-4 w-4 text-red-600 border-gray-300 focus:ring-red-500" {{ old('theme', $setting->theme ?? 'default') === 'default' ? 'checked' : '' }}>
                                         <span class="ml-3 flex flex-col">
                                             <span class="block text-sm font-medium text-gray-900">Default Mode</span>
                                             <span class="block text-sm text-gray-500">Tema Gelap (Dark Blue & Red)</span>
@@ -126,7 +127,7 @@
                                     </label>
 
                                     <label class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none hover:border-gray-300">
-                                        <input type="radio" name="theme" value="light-red" class="mt-0.5 h-4 w-4 text-red-600 border-gray-300 focus:ring-red-500" {{ old('theme', $setting->theme ?? 'default') === 'light-red' ? 'checked' : '' }}>
+                                        <input type="radio" name="theme" value="light-red" x-model="selectedTheme" class="mt-0.5 h-4 w-4 text-red-600 border-gray-300 focus:ring-red-500" {{ old('theme', $setting->theme ?? 'default') === 'light-red' ? 'checked' : '' }}>
                                         <span class="ml-3 flex flex-col">
                                             <span class="block text-sm font-medium text-gray-900">Light Mode</span>
                                             <span class="block text-sm text-gray-500">Tema Terang (Merah Putih)</span>
@@ -134,7 +135,7 @@
                                     </label>
 
                                     <label class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none hover:border-gray-300">
-                                        <input type="radio" name="theme" value="tech-red" class="mt-0.5 h-4 w-4 text-red-600 border-gray-300 focus:ring-red-500" {{ old('theme', $setting->theme ?? 'default') === 'tech-red' ? 'checked' : '' }}>
+                                        <input type="radio" name="theme" value="tech-red" x-model="selectedTheme" class="mt-0.5 h-4 w-4 text-red-600 border-gray-300 focus:ring-red-500" {{ old('theme', $setting->theme ?? 'default') === 'tech-red' ? 'checked' : '' }}>
                                         <span class="ml-3 flex flex-col">
                                             <span class="block text-sm font-medium text-gray-900">Tech Red</span>
                                             <span class="block text-sm text-gray-500">Tema modern (Graphite, Red Glow)</span>
@@ -142,7 +143,7 @@
                                     </label>
 
                                     <label class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none hover:border-gray-300">
-                                        <input type="radio" name="theme" value="campus-flow" class="mt-0.5 h-4 w-4 text-red-600 border-gray-300 focus:ring-red-500" {{ old('theme', $setting->theme ?? 'default') === 'campus-flow' ? 'checked' : '' }}>
+                                        <input type="radio" name="theme" value="campus-flow" x-model="selectedTheme" class="mt-0.5 h-4 w-4 text-red-600 border-gray-300 focus:ring-red-500" {{ old('theme', $setting->theme ?? 'default') === 'campus-flow' ? 'checked' : '' }}>
                                         <span class="ml-3 flex flex-col">
                                             <span class="block text-sm font-medium text-gray-900">Campus Flow</span>
                                             <span class="block text-sm text-gray-500">Layout editorial terang dan dinamis</span>
@@ -150,14 +151,59 @@
                                     </label>
 
                                     <label class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none hover:border-gray-300">
-                                        <input type="radio" name="theme" value="telkom-corporate" class="mt-0.5 h-4 w-4 text-red-600 border-gray-300 focus:ring-red-500" {{ old('theme', $setting->theme ?? 'default') === 'telkom-corporate' ? 'checked' : '' }}>
+                                        <input type="radio" name="theme" value="telkom-corporate" x-model="selectedTheme" class="mt-0.5 h-4 w-4 text-red-600 border-gray-300 focus:ring-red-500" {{ old('theme', $setting->theme ?? 'default') === 'telkom-corporate' ? 'checked' : '' }}>
                                         <span class="ml-3 flex flex-col">
                                             <span class="block text-sm font-medium text-gray-900">Telkom Corporate</span>
                                             <span class="block text-sm text-gray-500">Terinspirasi UI telkom.co.id</span>
                                         </span>
                                     </label>
+
+                                    <label class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none hover:border-gray-300">
+                                        <input type="radio" name="theme" value="transformasi" x-model="selectedTheme" class="mt-0.5 h-4 w-4 text-red-600 border-gray-300 focus:ring-red-500" {{ old('theme', $setting->theme ?? 'default') === 'transformasi' ? 'checked' : '' }}>
+                                        <span class="ml-3 flex flex-col">
+                                            <span class="block text-sm font-medium text-gray-900">Transformasi</span>
+                                            <span class="block text-sm text-gray-500">Base baru dengan scroll showcase</span>
+                                        </span>
+                                    </label>
                                 </div>
                                 @error('theme') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div x-show="selectedTheme === 'transformasi'" x-cloak class="col-span-1 md:col-span-2 rounded-2xl border border-red-100 bg-red-50/40 p-5">
+                                <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-4">
+                                    <div>
+                                        <h3 class="text-sm font-black text-gray-900 uppercase tracking-wider">Konfigurasi Slider Transformasi</h3>
+                                        <p class="text-xs text-gray-500 mt-1">Upload sampai 8 gambar. Disarankan rasio landscape 16:9 atau 4:3, ukuran maksimal 4 MB per gambar.</p>
+                                    </div>
+                                    <span class="inline-flex w-fit rounded-full bg-red-600 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white">Scroll Showcase</span>
+                                </div>
+
+                                @php $transformasiImages = $setting->transformasi_slider_images ?? []; @endphp
+                                @if(count($transformasiImages))
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                                        @foreach($transformasiImages as $imagePath)
+                                            <label class="group relative overflow-hidden rounded-xl border border-white bg-white shadow-sm">
+                                                <img src="{{ Storage::url($imagePath) }}" alt="Slider Transformasi" class="h-28 w-full object-cover">
+                                                <div class="absolute inset-x-0 bottom-0 bg-black/60 p-2">
+                                                    <span class="flex items-center gap-2 text-[11px] font-bold text-white">
+                                                        <input type="checkbox" name="delete_transformasi_slider_images[]" value="{{ $imagePath }}" class="rounded border-white/40 text-red-600 focus:ring-red-500">
+                                                        Hapus
+                                                    </span>
+                                                </div>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                @endif
+
+                                <label class="flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-red-200 bg-white/80 p-5 text-center hover:border-red-400 hover:bg-white">
+                                    <svg class="h-9 w-9 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4-4a2 2 0 012.828 0L14 15m-2-2 1-1a2 2 0 012.828 0L20 16M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                    </svg>
+                                    <span class="mt-2 text-sm font-bold text-gray-900">Tambah gambar slider</span>
+                                    <span class="text-xs text-gray-500">Bisa pilih beberapa file sekaligus</span>
+                                    <input type="file" name="transformasi_slider_images[]" multiple accept=".jpg,.jpeg,.png,.webp" class="hidden">
+                                </label>
+                                @error('transformasi_slider_images.*') <p class="mt-2 text-xs text-red-600">{{ $message }}</p> @enderror
                             </div>
 
                             <!-- Registration Toggle -->
