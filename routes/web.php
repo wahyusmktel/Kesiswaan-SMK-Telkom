@@ -201,7 +201,14 @@ Route::group(['prefix' => 'panduan', 'as' => 'docs.'], function () {
 });
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
+    $routeName = \App\Support\DashboardRedirector::routeNameForUser(auth()->user());
+
+    if ($routeName) {
+        return redirect()->route($routeName);
+    }
+
+    return redirect()->route('profile.edit')
+        ->with('error', 'Dashboard untuk role aktif belum tersedia. Silakan lengkapi profil atau hubungi admin.');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware(['auth', 'role:Waka Kesiswaan|Super Admin'])->prefix('admin')->name('admin.')->group(function () {
