@@ -819,6 +819,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/logs', [\App\Http\Controllers\FingerprintController::class, 'logs'])->name('logs');
         Route::get('/monitoring', [\App\Http\Controllers\FingerprintController::class, 'monitoring'])->name('monitoring');
         Route::get('/monitoring/export', [\App\Http\Controllers\FingerprintController::class, 'exportMonitoring'])->name('monitoring.export');
+        Route::get('/analysis', [\App\Http\Controllers\FingerprintController::class, 'attendanceAnalysis'])->name('analysis');
+        Route::get('/analysis/{user}/pdf', [\App\Http\Controllers\FingerprintController::class, 'attendanceAnalysisPdf'])->name('analysis.pdf');
         Route::middleware(['role:Super Admin'])->group(function () {
             Route::get('/manual-attendances', [\App\Http\Controllers\FingerprintController::class, 'manualAttendances'])->name('manual-attendances');
             Route::post('/manual-attendances', [\App\Http\Controllers\FingerprintController::class, 'storeManualAttendance'])->name('manual-attendances.store');

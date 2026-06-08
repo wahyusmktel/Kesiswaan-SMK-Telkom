@@ -359,6 +359,7 @@
             <a href="{{ route('fingerprint.mappings') }}" class="submenu-item {{ request()->routeIs('fingerprint.mappings') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Mapping Pegawai</a>
             <a href="{{ route('fingerprint.logs') }}" class="submenu-item {{ request()->routeIs('fingerprint.logs', 'fingerprint.logs.detail') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Log Absensi</a>
             <a href="{{ route('fingerprint.monitoring') }}" class="submenu-item {{ request()->routeIs('fingerprint.monitoring', 'fingerprint.monitoring.export') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Monitoring Absensi</a>
+            <a href="{{ route('fingerprint.analysis') }}" class="submenu-item {{ request()->routeIs('fingerprint.analysis', 'fingerprint.analysis.pdf') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Analisa Kehadiran</a>
             <a href="{{ route('fingerprint.manual-attendances') }}" class="submenu-item {{ request()->routeIs('fingerprint.manual-attendances', 'fingerprint.manual-attendances.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Koreksi Absensi</a>
         </div>
         <div class="submenu-flyout" :style="'top: ' + flyoutTop + 'px'">
@@ -368,6 +369,7 @@
             <a href="{{ route('fingerprint.mappings') }}" class="submenu-item {{ request()->routeIs('fingerprint.mappings') ? 'submenu-item-active' : '' }}">Mapping Pegawai</a>
             <a href="{{ route('fingerprint.logs') }}" class="submenu-item {{ request()->routeIs('fingerprint.logs', 'fingerprint.logs.detail') ? 'submenu-item-active' : '' }}">Log Absensi</a>
             <a href="{{ route('fingerprint.monitoring') }}" class="submenu-item {{ request()->routeIs('fingerprint.monitoring', 'fingerprint.monitoring.export') ? 'submenu-item-active' : '' }}">Monitoring Absensi</a>
+            <a href="{{ route('fingerprint.analysis') }}" class="submenu-item {{ request()->routeIs('fingerprint.analysis', 'fingerprint.analysis.pdf') ? 'submenu-item-active' : '' }}">Analisa Kehadiran</a>
             <a href="{{ route('fingerprint.manual-attendances') }}" class="submenu-item {{ request()->routeIs('fingerprint.manual-attendances', 'fingerprint.manual-attendances.*') ? 'submenu-item-active' : '' }}">Koreksi Absensi</a>
         </div>
     </li>
@@ -2082,6 +2084,7 @@
                     <a href="{{ route('fingerprint.mappings') }}" class="submenu-item {{ request()->routeIs('fingerprint.mappings') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Mapping Pegawai</a>
                     <a href="{{ route('fingerprint.logs') }}" class="submenu-item {{ request()->routeIs('fingerprint.logs', 'fingerprint.logs.detail') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Log Absensi</a>
                     <a href="{{ route('fingerprint.monitoring') }}" class="submenu-item {{ request()->routeIs('fingerprint.monitoring', 'fingerprint.monitoring.export') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Monitoring Absensi</a>
+                    <a href="{{ route('fingerprint.analysis') }}" class="submenu-item {{ request()->routeIs('fingerprint.analysis', 'fingerprint.analysis.pdf') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Analisa Kehadiran</a>
                 </div>
                 <div class="submenu-flyout" :style="'top: ' + flyoutTop + 'px'">
                     <div class="submenu-flyout-title">Fingerprint</div>
@@ -2090,6 +2093,7 @@
                     <a href="{{ route('fingerprint.mappings') }}" class="submenu-item {{ request()->routeIs('fingerprint.mappings') ? 'submenu-item-active' : '' }}">Mapping Pegawai</a>
                     <a href="{{ route('fingerprint.logs') }}" class="submenu-item {{ request()->routeIs('fingerprint.logs', 'fingerprint.logs.detail') ? 'submenu-item-active' : '' }}">Log Absensi</a>
                     <a href="{{ route('fingerprint.monitoring') }}" class="submenu-item {{ request()->routeIs('fingerprint.monitoring', 'fingerprint.monitoring.export') ? 'submenu-item-active' : '' }}">Monitoring Absensi</a>
+                    <a href="{{ route('fingerprint.analysis') }}" class="submenu-item {{ request()->routeIs('fingerprint.analysis', 'fingerprint.analysis.pdf') ? 'submenu-item-active' : '' }}">Analisa Kehadiran</a>
                 </div>
             </li>
 
@@ -2383,6 +2387,7 @@
                 <a href="{{ route('fingerprint.mappings') }}" class="submenu-item {{ request()->routeIs('fingerprint.mappings') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Mapping Pegawai</a>
                 <a href="{{ route('fingerprint.logs') }}" class="submenu-item {{ request()->routeIs('fingerprint.logs', 'fingerprint.logs.detail') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Log Absensi</a>
                 <a href="{{ route('fingerprint.monitoring') }}" class="submenu-item {{ request()->routeIs('fingerprint.monitoring', 'fingerprint.monitoring.export') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Monitoring Absensi</a>
+                <a href="{{ route('fingerprint.analysis') }}" class="submenu-item {{ request()->routeIs('fingerprint.analysis', 'fingerprint.analysis.pdf') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Analisa Kehadiran</a>
             </div>
             <div class="submenu-flyout" :style="'top: ' + flyoutTop + 'px'">
                 <div class="submenu-flyout-title">Fingerprint</div>
@@ -2391,6 +2396,7 @@
                 <a href="{{ route('fingerprint.mappings') }}" class="submenu-item {{ request()->routeIs('fingerprint.mappings') ? 'submenu-item-active' : '' }}">Mapping Pegawai</a>
                 <a href="{{ route('fingerprint.logs') }}" class="submenu-item {{ request()->routeIs('fingerprint.logs', 'fingerprint.logs.detail') ? 'submenu-item-active' : '' }}">Log Absensi</a>
                 <a href="{{ route('fingerprint.monitoring') }}" class="submenu-item {{ request()->routeIs('fingerprint.monitoring', 'fingerprint.monitoring.export') ? 'submenu-item-active' : '' }}">Monitoring Absensi</a>
+                <a href="{{ route('fingerprint.analysis') }}" class="submenu-item {{ request()->routeIs('fingerprint.analysis', 'fingerprint.analysis.pdf') ? 'submenu-item-active' : '' }}">Analisa Kehadiran</a>
             </div>
         </li>
     @endif

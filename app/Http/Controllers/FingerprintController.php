@@ -17,6 +17,7 @@ use App\Models\User;
 use App\Models\WorkCalendarEvent;
 use App\Support\AttendanceDuration;
 use App\Support\EmploymentStatus;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -400,6 +401,45 @@ class FingerprintController extends Controller
         return Excel::download(new FingerprintAttendanceMonitoringExport($rows, $date, $request->only(['search', 'device_id']), $setting), $fileName);
     }
 
+    public function attendanceAnalysis(Request $request)
+    {
+        [$dateFrom, $dateTo] = $this->resolveAnalysisDateRange($request);
+        $analysis = $this->buildAttendanceAnalysis($request, $dateFrom, $dateTo);
+        $allDevices = FingerprintDevice::orderBy('name')->get();
+
+        return view('pages.fingerprint.analysis', [
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+            'allDevices' => $allDevices,
+            ...$analysis,
+        ]);
+    }
+
+    public function attendanceAnalysisPdf(Request $request, User $user)
+    {
+        [$dateFrom, $dateTo] = $this->resolveAnalysisDateRange($request);
+        $analysis = $this->buildAttendanceAnalysis($request, $dateFrom, $dateTo);
+        $employee = $analysis['rankings']->firstWhere('user_id', $user->id);
+
+        abort_if(!$employee, 404, 'Data analisa pegawai tidak ditemukan pada filter ini.');
+
+        $isCertificate = (int) $employee['rank'] <= 10;
+        $view = $isCertificate ? 'pdf.fingerprint-attendance-certificate' : 'pdf.fingerprint-attendance-evaluation';
+        $fileName = ($isCertificate ? 'Sertifikat-Apresiasi-' : 'Evaluasi-Kehadiran-')
+            . str($employee['name'])->slug('-')
+            . '-' . $dateFrom->format('Ymd') . '-' . $dateTo->format('Ymd') . '.pdf';
+
+        $pdf = Pdf::loadView($view, [
+            'employee' => $employee,
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+            'summary' => $analysis['summary'],
+            'generatedAt' => now(),
+        ])->setPaper('a4', $isCertificate ? 'landscape' : 'portrait');
+
+        return $pdf->download($fileName);
+    }
+
     public function mappings(Request $request)
     {
         $fingerprintUsers = $this->fingerprintUserQuery($request)
@@ -679,6 +719,22 @@ class FingerprintController extends Controller
         return [$dateFrom, $dateTo];
     }
 
+    private function resolveAnalysisDateRange(Request $request): array
+    {
+        $dateFrom = $request->filled('date_from')
+            ? Carbon::parse($request->date_from)->startOfDay()
+            : now()->startOfMonth();
+        $dateTo = $request->filled('date_to')
+            ? Carbon::parse($request->date_to)->endOfDay()
+            : now()->endOfDay();
+
+        if ($dateTo->lt($dateFrom)) {
+            [$dateFrom, $dateTo] = [$dateTo->copy()->startOfDay(), $dateFrom->copy()->endOfDay()];
+        }
+
+        return [$dateFrom, $dateTo];
+    }
+
     private function resolveDetailDateRange(Request $request): array
     {
         $mode = $request->input('range', '1_month');
@@ -843,6 +899,230 @@ class FingerprintController extends Controller
                     'class' => 'from-orange-500 to-red-400',
                 ],
             ],
+        ];
+    }
+
+    private function buildAttendanceAnalysis(Request $request, Carbon $dateFrom, Carbon $dateTo): array
+    {
+        $setting = FingerprintAttendanceSetting::getSetting();
+        $dates = collect();
+        $cursor = $dateFrom->copy()->startOfDay();
+
+        while ($cursor->lte($dateTo)) {
+            $dates->push($cursor->copy()->toDateString());
+            $cursor->addDay();
+        }
+
+        $users = User::with(['masterGuru.dapodikGuru', 'securityShiftAssignment.shift', 'fingerprintUsers.device'])
+            ->whereHas('fingerprintUsers', function ($query) use ($request) {
+                $query->whereNotNull('app_user_id')
+                    ->when($request->filled('device_id'), fn ($sub) => $sub->where('fingerprint_device_id', $request->device_id));
+            })
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = $request->search;
+                $query->where(function ($sub) use ($search) {
+                    $sub->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhereHas('masterGuru', fn ($guruQuery) => $guruQuery->where('nama_lengkap', 'like', "%{$search}%")->orWhere('kode_guru', 'like', "%{$search}%"));
+                });
+            })
+            ->orderBy('name')
+            ->get();
+
+        $dailyLogs = FingerprintAttendance::query()
+            ->select([
+                'app_user_id',
+                DB::raw('DATE(timestamp) as attendance_date'),
+                DB::raw('MIN(timestamp) as first_scan'),
+                DB::raw('MAX(timestamp) as last_scan'),
+                DB::raw('COUNT(*) as total_scan'),
+            ])
+            ->whereNotNull('app_user_id')
+            ->whereBetween('timestamp', [$dateFrom, $dateTo])
+            ->when($request->filled('device_id'), fn ($query) => $query->where('fingerprint_device_id', $request->device_id))
+            ->groupBy('app_user_id', DB::raw('DATE(timestamp)'))
+            ->get()
+            ->groupBy(fn ($row) => $row->app_user_id . '|' . $row->attendance_date);
+
+        $trend = $dates->mapWithKeys(fn ($date) => [$date => [
+            'date' => $date,
+            'present' => 0,
+            'late' => 0,
+            'absent' => 0,
+            'discipline' => 0,
+            'required' => 0,
+        ]])->all();
+
+        $rankings = $users->map(function (User $user) use ($dates, $dailyLogs, $setting, &$trend) {
+            $metrics = [
+                'required_days' => 0,
+                'required_present_days' => 0,
+                'present_days' => 0,
+                'complete_days' => 0,
+                'absent_days' => 0,
+                'late_days' => 0,
+                'early_days' => 0,
+                'discipline_days' => 0,
+                'optional_present_days' => 0,
+                'total_late_minutes' => 0,
+                'total_early_minutes' => 0,
+                'total_scan' => 0,
+            ];
+
+            foreach ($dates as $date) {
+                $log = $dailyLogs->get($user->id . '|' . $date)?->first();
+                $row = new FingerprintUser([
+                    'app_user_id' => $user->id,
+                    'name' => $user->name,
+                ]);
+                $row->setRelation('appUser', $user);
+                $row->setAttribute('first_scan', $log?->first_scan);
+                $row->setAttribute('last_scan', $log?->last_scan);
+                $row->setAttribute('total_scan', (int) ($log?->total_scan ?? 0));
+
+                $this->applyMonitoringRule($row, $date, $setting);
+
+                $isRequired = (bool) $row->monitoring_required;
+                $isPresent = (bool) $row->first_scan;
+                $isComplete = $row->monitoring_status_text === 'Hadir Lengkap';
+                $isLate = (int) $row->monitoring_late_minutes > 0;
+                $isEarly = (int) $row->monitoring_early_minutes > 0;
+                $isDisciplined = $isRequired && $isPresent && !$isLate && !$isEarly;
+
+                if ($isRequired) {
+                    $metrics['required_days']++;
+                    $trend[$date]['required']++;
+                }
+
+                if ($isPresent) {
+                    $metrics['present_days']++;
+                    $metrics['total_scan'] += (int) $row->total_scan;
+                    if ($isRequired) {
+                        $metrics['required_present_days']++;
+                        $trend[$date]['present']++;
+                    } else {
+                        $metrics['optional_present_days']++;
+                    }
+                }
+
+                if ($isComplete) {
+                    $metrics['complete_days']++;
+                }
+
+                if ($isRequired && !$isPresent) {
+                    $metrics['absent_days']++;
+                    $trend[$date]['absent']++;
+                }
+
+                if ($isLate) {
+                    $metrics['late_days']++;
+                    $metrics['total_late_minutes'] += (int) $row->monitoring_late_minutes;
+                    if ($isRequired) {
+                        $trend[$date]['late']++;
+                    }
+                }
+
+                if ($isEarly) {
+                    $metrics['early_days']++;
+                    $metrics['total_early_minutes'] += (int) $row->monitoring_early_minutes;
+                }
+
+                if ($isDisciplined) {
+                    $metrics['discipline_days']++;
+                    $trend[$date]['discipline']++;
+                }
+            }
+
+            $requiredDays = max($metrics['required_days'], 1);
+            $attendanceRate = (int) round(($metrics['required_present_days'] / $requiredDays) * 100);
+            $disciplineRate = (int) round(($metrics['discipline_days'] / $requiredDays) * 100);
+            $completeRate = (int) round(($metrics['complete_days'] / $requiredDays) * 100);
+            $score = min(100, max(0, (int) round(($attendanceRate * 0.45) + ($disciplineRate * 0.40) + ($completeRate * 0.15))));
+
+            return [
+                'user_id' => $user->id,
+                'name' => $user->masterGuru?->nama_lengkap ?? $user->name,
+                'email' => $user->email,
+                'employee_code' => $user->masterGuru?->kode_guru,
+                'employment_status' => $user->masterGuru?->dapodikGuru?->status_kepegawaian ?? '-',
+                ...$metrics,
+                'attendance_rate' => $attendanceRate,
+                'discipline_rate' => $disciplineRate,
+                'complete_rate' => $completeRate,
+                'score' => $score,
+                'evaluation' => $this->attendanceEvaluationMessage($score, $metrics),
+            ];
+        })->sortByDesc('score')
+            ->values()
+            ->map(function (array $employee, int $index) {
+                $employee['rank'] = $index + 1;
+
+                return $employee;
+            });
+
+        $summary = [
+            'employees' => $rankings->count(),
+            'required_days' => $rankings->sum('required_days'),
+            'present_days' => $rankings->sum('present_days'),
+            'required_present_days' => $rankings->sum('required_present_days'),
+            'complete_days' => $rankings->sum('complete_days'),
+            'absent_days' => $rankings->sum('absent_days'),
+            'late_days' => $rankings->sum('late_days'),
+            'early_days' => $rankings->sum('early_days'),
+            'average_score' => (int) round($rankings->avg('score') ?? 0),
+            'attendance_rate' => (int) round(($rankings->sum('required_present_days') / max($rankings->sum('required_days'), 1)) * 100),
+            'discipline_rate' => (int) round(($rankings->sum('discipline_days') / max($rankings->sum('required_days'), 1)) * 100),
+        ];
+
+        $chartData = [
+            'labels' => collect($trend)->map(fn ($row) => Carbon::parse($row['date'])->translatedFormat('d M'))->values(),
+            'present' => collect($trend)->pluck('present')->values(),
+            'late' => collect($trend)->pluck('late')->values(),
+            'absent' => collect($trend)->pluck('absent')->values(),
+            'discipline' => collect($trend)->pluck('discipline')->values(),
+        ];
+
+        return [
+            'summary' => $summary,
+            'rankings' => $rankings,
+            'topTen' => $rankings->take(10),
+            'chartData' => $chartData,
+        ];
+    }
+
+    private function attendanceEvaluationMessage(int $score, array $metrics): array
+    {
+        if ($score >= 95 && $metrics['late_days'] === 0 && $metrics['early_days'] === 0 && $metrics['absent_days'] === 0) {
+            return [
+                'title' => 'Teladan Kehadiran',
+                'message' => 'Konsistensi hadir tepat waktu dan pulang sesuai jadwal sangat kuat. Pegawai layak menjadi contoh disiplin kerja.',
+            ];
+        }
+
+        if ($score >= 85) {
+            return [
+                'title' => 'Sangat Baik',
+                'message' => 'Pola kehadiran sudah stabil. Pertahankan ketepatan jam datang dan kelengkapan scan pulang.',
+            ];
+        }
+
+        if ($score >= 70) {
+            return [
+                'title' => 'Cukup Baik',
+                'message' => 'Kehadiran cukup terjaga, tetapi masih ada ruang perbaikan pada keterlambatan, scan pulang, atau konsistensi hadir.',
+            ];
+        }
+
+        if ($metrics['absent_days'] > $metrics['late_days']) {
+            return [
+                'title' => 'Perlu Evaluasi Kehadiran',
+                'message' => 'Catatan tidak hadir masih dominan. Perlu evaluasi penyebab absensi dan tindak lanjut kedisiplinan.',
+            ];
+        }
+
+        return [
+            'title' => 'Perlu Perbaikan Disiplin Waktu',
+            'message' => 'Masih ada catatan keterlambatan atau pulang cepat. Fokus pada jam datang dan checkout akan memperbaiki skor.',
         ];
     }
 
