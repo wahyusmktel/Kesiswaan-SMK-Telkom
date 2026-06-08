@@ -379,9 +379,14 @@ class FingerprintController extends Controller
             'complete' => $statsRows->where('monitoring_status_text', 'Hadir Lengkap')->count(),
             'incomplete' => $statsRows->where('monitoring_status_text', 'Belum Scan Pulang')->count(),
             'absent' => $statsRows->where('monitoring_status_text', 'Belum Ada Scan')->count(),
+            'late' => $statsRows->filter(fn ($row) => (int) $row->monitoring_late_minutes > 0)->count(),
+            'early' => $statsRows->filter(fn ($row) => (int) $row->monitoring_early_minutes > 0)->count(),
         ];
 
-        return view('pages.fingerprint.monitoring', compact('rows', 'allDevices', 'date', 'stats', 'setting'));
+        $analysisData = $this->monitoringAnalysisData($statsRows, $stats);
+        $topDisciplinedEmployees = $this->topDisciplinedEmployees($statsRows);
+
+        return view('pages.fingerprint.monitoring', compact('rows', 'allDevices', 'date', 'stats', 'setting', 'analysisData', 'topDisciplinedEmployees'));
     }
 
     public function exportMonitoring(Request $request)
@@ -776,6 +781,91 @@ class FingerprintController extends Controller
         foreach ($rows as $row) {
             $this->applyMonitoringRule($row, $date, $setting);
         }
+    }
+
+    private function monitoringAnalysisData($rows, array $stats): array
+    {
+        $requiredRows = $rows->filter(fn ($row) => (bool) $row->monitoring_required);
+        $requiredTotal = max($requiredRows->count(), 1);
+        $present = (int) $stats['present'];
+        $complete = (int) $stats['complete'];
+        $absent = (int) $stats['absent'];
+        $late = (int) $stats['late'];
+        $early = (int) $stats['early'];
+        $onTime = $requiredRows
+            ->filter(fn ($row) => $row->first_scan && (int) $row->monitoring_late_minutes === 0)
+            ->count();
+        $discipline = $requiredRows
+            ->filter(fn ($row) => $row->first_scan && (int) $row->monitoring_late_minutes === 0 && (int) $row->monitoring_early_minutes === 0)
+            ->count();
+
+        return [
+            'required_total' => $requiredRows->count(),
+            'attendance_rate' => (int) round(($present / max((int) $stats['total'], 1)) * 100),
+            'discipline_rate' => (int) round(($discipline / $requiredTotal) * 100),
+            'segments' => [
+                [
+                    'label' => 'Hadir Lengkap',
+                    'value' => $complete,
+                    'percent' => (int) round(($complete / max((int) $stats['total'], 1)) * 100),
+                    'class' => 'bg-emerald-500',
+                ],
+                [
+                    'label' => 'Belum Pulang',
+                    'value' => (int) $stats['incomplete'],
+                    'percent' => (int) round(((int) $stats['incomplete'] / max((int) $stats['total'], 1)) * 100),
+                    'class' => 'bg-amber-400',
+                ],
+                [
+                    'label' => 'Belum Scan',
+                    'value' => $absent,
+                    'percent' => (int) round(($absent / max((int) $stats['total'], 1)) * 100),
+                    'class' => 'bg-red-500',
+                ],
+            ],
+            'bars' => [
+                [
+                    'label' => 'Tepat Waktu',
+                    'value' => $onTime,
+                    'percent' => (int) round(($onTime / $requiredTotal) * 100),
+                    'class' => 'from-emerald-500 to-teal-400',
+                ],
+                [
+                    'label' => 'Terlambat',
+                    'value' => $late,
+                    'percent' => (int) round(($late / $requiredTotal) * 100),
+                    'class' => 'from-amber-500 to-yellow-400',
+                ],
+                [
+                    'label' => 'Pulang Cepat',
+                    'value' => $early,
+                    'percent' => (int) round(($early / $requiredTotal) * 100),
+                    'class' => 'from-orange-500 to-red-400',
+                ],
+            ],
+        ];
+    }
+
+    private function topDisciplinedEmployees($rows)
+    {
+        return $rows
+            ->filter(fn ($row) => (bool) $row->monitoring_required
+                && $row->first_scan
+                && (int) $row->monitoring_late_minutes === 0
+                && (int) $row->monitoring_early_minutes === 0)
+            ->sort(function ($a, $b) {
+                $completeCompare = ($b->monitoring_status_text === 'Hadir Lengkap') <=> ($a->monitoring_status_text === 'Hadir Lengkap');
+
+                if ($completeCompare !== 0) {
+                    return $completeCompare;
+                }
+
+                $timeCompare = Carbon::parse($a->first_scan)->timestamp <=> Carbon::parse($b->first_scan)->timestamp;
+
+                return $timeCompare !== 0 ? $timeCompare : strcmp($a->name, $b->name);
+            })
+            ->take(10)
+            ->values();
     }
 
     private function applyMonitoringRule(FingerprintUser $row, string $date, FingerprintAttendanceSetting $setting): void

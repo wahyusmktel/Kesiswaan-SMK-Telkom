@@ -32,6 +32,120 @@
             </div>
         </div>
 
+        <div class="grid grid-cols-1 xl:grid-cols-[1.35fr_0.85fr] gap-6">
+            <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm overflow-hidden">
+                <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+                    <div>
+                        <p class="text-xs font-black uppercase tracking-widest text-gray-400">Analisa Kehadiran</p>
+                        <h3 class="mt-2 text-xl font-black text-gray-900">Kondisi Absensi Harian</h3>
+                        <p class="mt-1 text-sm text-gray-500">
+                            Ringkasan kualitas kehadiran tanggal {{ \Carbon\Carbon::parse($date)->translatedFormat('d F Y') }} berdasarkan filter aktif.
+                        </p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 min-w-56">
+                        <div class="rounded-2xl bg-gray-950 p-4 text-white">
+                            <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">Kehadiran</p>
+                            <p class="mt-2 text-3xl font-black">{{ $analysisData['attendance_rate'] }}%</p>
+                        </div>
+                        <div class="rounded-2xl bg-red-50 p-4 text-red-700">
+                            <p class="text-[10px] font-black uppercase tracking-widest text-red-400">Disiplin</p>
+                            <p class="mt-2 text-3xl font-black">{{ $analysisData['discipline_rate'] }}%</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6 items-center">
+                    <div class="mx-auto">
+                        @php
+                            $completePercent = $analysisData['segments'][0]['percent'] ?? 0;
+                            $incompletePercent = $analysisData['segments'][1]['percent'] ?? 0;
+                            $absentPercent = $analysisData['segments'][2]['percent'] ?? 0;
+                            $completeEnd = $completePercent;
+                            $incompleteEnd = $completePercent + $incompletePercent;
+                        @endphp
+                        <div class="relative h-52 w-52 rounded-full"
+                            style="background: conic-gradient(#10b981 0 {{ $completeEnd }}%, #f59e0b {{ $completeEnd }}% {{ $incompleteEnd }}%, #ef4444 {{ $incompleteEnd }}% {{ $incompleteEnd + $absentPercent }}%, #e5e7eb {{ $incompleteEnd + $absentPercent }}% 100%);">
+                            <div class="absolute inset-7 rounded-full bg-white shadow-inner flex flex-col items-center justify-center text-center">
+                                <p class="text-4xl font-black text-gray-900">{{ number_format($stats['present']) }}</p>
+                                <p class="text-xs font-black uppercase tracking-widest text-gray-400">Hadir</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-5">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            @foreach($analysisData['segments'] as $segment)
+                                <div class="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                                    <div class="flex items-center gap-2">
+                                        <span class="h-3 w-3 rounded-full {{ $segment['class'] }}"></span>
+                                        <p class="text-xs font-black uppercase tracking-widest text-gray-500">{{ $segment['label'] }}</p>
+                                    </div>
+                                    <p class="mt-3 text-2xl font-black text-gray-900">{{ number_format($segment['value']) }}</p>
+                                    <p class="text-xs font-semibold text-gray-400">{{ $segment['percent'] }}% dari data</p>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <div class="space-y-4">
+                            @foreach($analysisData['bars'] as $bar)
+                                <div>
+                                    <div class="mb-2 flex items-center justify-between gap-3">
+                                        <span class="text-sm font-black text-gray-700">{{ $bar['label'] }}</span>
+                                        <span class="text-xs font-black text-gray-400">{{ number_format($bar['value']) }} pegawai - {{ $bar['percent'] }}%</span>
+                                    </div>
+                                    <div class="h-3 overflow-hidden rounded-full bg-gray-100">
+                                        <div class="h-full rounded-full bg-gradient-to-r {{ $bar['class'] }}" style="width: {{ max($bar['percent'], $bar['value'] > 0 ? 4 : 0) }}%"></div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-xs font-black uppercase tracking-widest text-gray-400">Top Disiplin</p>
+                        <h3 class="mt-2 text-xl font-black text-gray-900">10 Pegawai Paling Disiplin</h3>
+                    </div>
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </span>
+                </div>
+
+                <div class="mt-5 space-y-3">
+                    @forelse($topDisciplinedEmployees as $employee)
+                        @php
+                            $firstScanTop = $employee->first_scan ? \Carbon\Carbon::parse($employee->first_scan) : null;
+                            $lastScanTop = $employee->last_scan ? \Carbon\Carbon::parse($employee->last_scan) : null;
+                            $hasCheckoutTop = $firstScanTop && $lastScanTop && !$firstScanTop->equalTo($lastScanTop);
+                        @endphp
+                        <div class="flex items-center gap-3 rounded-2xl border border-gray-100 bg-gray-50 p-3">
+                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full {{ $loop->iteration <= 3 ? 'bg-emerald-600 text-white' : 'bg-white text-gray-700 ring-1 ring-gray-200' }} text-sm font-black">
+                                {{ $loop->iteration }}
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <p class="truncate text-sm font-black text-gray-900">{{ $employee->appUser?->masterGuru?->nama_lengkap ?? $employee->appUser?->name ?? $employee->name }}</p>
+                                <p class="truncate text-xs font-semibold text-gray-400">{{ $employee->monitoring_rule_label }}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm font-black text-gray-900">{{ $firstScanTop?->format('H:i') ?? '-' }}</p>
+                                <p class="text-xs font-semibold text-gray-400">{{ $hasCheckoutTop ? $lastScanTop->format('H:i') : 'Belum pulang' }}</p>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-5 text-center">
+                            <p class="text-sm font-bold text-gray-600">Belum ada pegawai yang masuk kriteria disiplin pada filter ini.</p>
+                            <p class="mt-1 text-xs text-gray-400">Kriteria: wajib hadir, tidak terlambat, dan tidak pulang cepat.</p>
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+
         <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-100 flex flex-col gap-4">
                 <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
