@@ -145,6 +145,7 @@ Route::middleware(['auth'])->prefix('notted')->name('notted.')->group(function (
     Route::get('/typing-test', [App\Http\Controllers\NottedController::class, 'typingTest'])->name('typing-test');
     Route::post('/typing-test', [App\Http\Controllers\NottedController::class, 'storeTypingResult'])->name('typing-test.store');
     Route::get('/snake-ladder', [App\Http\Controllers\NottedController::class, 'snakeLadder'])->name('snake-ladder');
+    Route::get('/uno', [App\Http\Controllers\NottedController::class, 'uno'])->name('uno');
 
     // Reels Routes
     Route::get('/reels', [App\Http\Controllers\NottedController::class, 'reels'])->name('reels');

@@ -58,6 +58,11 @@ class NottedController extends Controller
         return view('notted.snake-ladder');
     }
 
+    public function uno()
+    {
+        return view('notted.uno');
+    }
+
     /**
      * Typing Test Feature
      */
