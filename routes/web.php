@@ -145,6 +145,18 @@ Route::middleware(['auth'])->prefix('notted')->name('notted.')->group(function (
     Route::get('/typing-test', [App\Http\Controllers\NottedController::class, 'typingTest'])->name('typing-test');
     Route::post('/typing-test', [App\Http\Controllers\NottedController::class, 'storeTypingResult'])->name('typing-test.store');
     Route::get('/snake-ladder', [App\Http\Controllers\NottedController::class, 'snakeLadder'])->name('snake-ladder');
+    Route::get('/uno', [App\Http\Controllers\NottedController::class, 'uno'])->name('uno');
+    Route::get('/uno/rooms', [App\Http\Controllers\NottedUnoController::class, 'rooms'])->name('uno.rooms');
+    Route::post('/uno/rooms', [App\Http\Controllers\NottedUnoController::class, 'create'])->name('uno.rooms.create');
+    Route::post('/uno/rooms/{room}/join', [App\Http\Controllers\NottedUnoController::class, 'join'])->name('uno.rooms.join');
+    Route::get('/uno/rooms/{room}/state', [App\Http\Controllers\NottedUnoController::class, 'state'])->name('uno.rooms.state');
+    Route::post('/uno/rooms/{room}/action', [App\Http\Controllers\NottedUnoController::class, 'action'])->name('uno.rooms.action');
+    Route::get('/scrabble', [App\Http\Controllers\NottedController::class, 'scrabble'])->name('scrabble');
+    Route::get('/scrabble/rooms', [App\Http\Controllers\NottedScrabbleController::class, 'rooms'])->name('scrabble.rooms');
+    Route::post('/scrabble/rooms', [App\Http\Controllers\NottedScrabbleController::class, 'create'])->name('scrabble.rooms.create');
+    Route::post('/scrabble/rooms/{room}/join', [App\Http\Controllers\NottedScrabbleController::class, 'join'])->name('scrabble.rooms.join');
+    Route::get('/scrabble/rooms/{room}/state', [App\Http\Controllers\NottedScrabbleController::class, 'state'])->name('scrabble.rooms.state');
+    Route::post('/scrabble/rooms/{room}/action', [App\Http\Controllers\NottedScrabbleController::class, 'action'])->name('scrabble.rooms.action');
 
     // Reels Routes
     Route::get('/reels', [App\Http\Controllers\NottedController::class, 'reels'])->name('reels');
@@ -205,7 +217,14 @@ Route::group(['prefix' => 'panduan', 'as' => 'docs.'], function () {
 });
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
+    $routeName = \App\Support\DashboardRedirector::routeNameForUser(auth()->user());
+
+    if ($routeName) {
+        return redirect()->route($routeName);
+    }
+
+    return redirect()->route('profile.edit')
+        ->with('error', 'Dashboard untuk role aktif belum tersedia. Silakan lengkapi profil atau hubungi admin.');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware(['auth', 'role:Waka Kesiswaan|Super Admin'])->prefix('admin')->name('admin.')->group(function () {
