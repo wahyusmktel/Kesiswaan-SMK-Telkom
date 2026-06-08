@@ -219,6 +219,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('cloud-files')->name('cloud-files.')->group(function () {
         Route::get('/', [\App\Http\Controllers\CloudFileController::class, 'index'])->name('index');
         Route::post('/', [\App\Http\Controllers\CloudFileController::class, 'store'])->name('store');
+        Route::get('/google-drive/connect', [\App\Http\Controllers\CloudGoogleDriveController::class, 'connect'])->name('google-drive.connect');
+        Route::get('/google-drive/callback', [\App\Http\Controllers\CloudGoogleDriveController::class, 'callback'])->name('google-drive.callback');
+        Route::delete('/google-drive/disconnect', [\App\Http\Controllers\CloudGoogleDriveController::class, 'disconnect'])->name('google-drive.disconnect');
+        Route::get('/google-drive/{fileId}/download', [\App\Http\Controllers\CloudGoogleDriveController::class, 'download'])->name('google-drive.download');
+        Route::delete('/google-drive/{fileId}', [\App\Http\Controllers\CloudGoogleDriveController::class, 'destroy'])->name('google-drive.destroy');
         Route::get('/{cloudFile}/download', [\App\Http\Controllers\CloudFileController::class, 'download'])->name('download');
         Route::delete('/{cloudFile}', [\App\Http\Controllers\CloudFileController::class, 'destroy'])->name('destroy');
     });

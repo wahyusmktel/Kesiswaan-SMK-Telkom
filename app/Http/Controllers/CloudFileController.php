@@ -2,41 +2,68 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CloudFile;
+use App\Services\GoogleDriveService;
+use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class CloudFileController extends Controller
 {
-    public function index(\Illuminate\Http\Request $request)
+    public function index(Request $request, GoogleDriveService $drive)
     {
-        $query = \App\Models\CloudFile::where('user_id', \Illuminate\Support\Facades\Auth::id())->latest();
+        $query = CloudFile::where('user_id', Auth::id())->latest();
 
         if ($request->has('search')) {
             $query->where('name', 'like', '%' . $request->search . '%');
         }
 
         $files = $query->paginate(24);
+        $driveConnection = $drive->connectionFor(Auth::user());
+        $driveFiles = [];
+        $driveError = null;
 
-        return view('pages.shared.cloud-files.index', compact('files'));
+        if ($driveConnection) {
+            try {
+                $driveFiles = $drive->listFiles(Auth::user(), $request->search);
+            } catch (Exception $e) {
+                $driveError = $e->getMessage();
+            }
+        }
+
+        return view('pages.shared.cloud-files.index', compact('files', 'driveConnection', 'driveFiles', 'driveError'));
     }
 
-    public function store(\Illuminate\Http\Request $request)
+    public function store(Request $request, GoogleDriveService $drive)
     {
         $request->validate([
             'files.*' => 'required|file|max:51200', // 50MB max per file
+            'storage_target' => 'nullable|in:local,google_drive',
         ]);
 
         if ($request->hasFile('files')) {
             foreach ($request->file('files') as $file) {
+                if ($request->input('storage_target') === 'google_drive') {
+                    try {
+                        $drive->upload(Auth::user(), $file);
+                    } catch (Exception $e) {
+                        return back()->withErrors(['files' => 'Gagal upload ke Google Drive: ' . $e->getMessage()]);
+                    }
+
+                    continue;
+                }
+
                 $originalName = $file->getClientOriginalName();
                 $extension = $file->getClientOriginalExtension();
                 $mimeType = $file->getMimeType();
                 $size = $file->getSize();
 
                 // Safe storage in 'local' disk instead of 'public'
-                $path = $file->store('cloud-files/' . \Illuminate\Support\Facades\Auth::id(), 'local');
+                $path = $file->store('cloud-files/' . Auth::id(), 'local');
 
-                \App\Models\CloudFile::create([
-                    'user_id' => \Illuminate\Support\Facades\Auth::id(),
+                CloudFile::create([
+                    'user_id' => Auth::id(),
                     'name' => $originalName,
                     'file_name' => basename($path),
                     'file_path' => $path,
@@ -47,31 +74,31 @@ class CloudFileController extends Controller
             }
         }
 
-        toast('File berhasil diunggah.', 'success');
+        toast($request->input('storage_target') === 'google_drive' ? 'File berhasil diunggah ke Google Drive.' : 'File berhasil diunggah.', 'success');
         return redirect()->back();
     }
 
-    public function download(\App\Models\CloudFile $cloudFile)
+    public function download(CloudFile $cloudFile)
     {
-        if ($cloudFile->user_id !== \Illuminate\Support\Facades\Auth::id()) {
+        if ($cloudFile->user_id !== Auth::id()) {
             abort(403, 'Unauthorized access to this file.');
         }
 
-        if (!\Illuminate\Support\Facades\Storage::disk('local')->exists($cloudFile->file_path)) {
+        if (!Storage::disk('local')->exists($cloudFile->file_path)) {
             abort(404, 'File not found on the server.');
         }
 
-        return \Illuminate\Support\Facades\Storage::disk('local')->download($cloudFile->file_path, $cloudFile->name);
+        return Storage::disk('local')->download($cloudFile->file_path, $cloudFile->name);
     }
 
-    public function destroy(\App\Models\CloudFile $cloudFile)
+    public function destroy(CloudFile $cloudFile)
     {
-        if ($cloudFile->user_id !== \Illuminate\Support\Facades\Auth::id()) {
+        if ($cloudFile->user_id !== Auth::id()) {
             abort(403, 'Unauthorized action.');
         }
 
-        if (\Illuminate\Support\Facades\Storage::disk('local')->exists($cloudFile->file_path)) {
-            \Illuminate\Support\Facades\Storage::disk('local')->delete($cloudFile->file_path);
+        if (Storage::disk('local')->exists($cloudFile->file_path)) {
+            Storage::disk('local')->delete($cloudFile->file_path);
         }
 
         $cloudFile->delete();
