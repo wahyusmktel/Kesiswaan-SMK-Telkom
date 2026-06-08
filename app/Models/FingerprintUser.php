@@ -16,6 +16,13 @@ class FingerprintUser extends Model
         'role',
         'password',
         'cardno',
+        'machine_registered_at',
+        'last_synced_at',
+    ];
+
+    protected $casts = [
+        'machine_registered_at' => 'datetime',
+        'last_synced_at' => 'datetime',
     ];
 
     public function device(): BelongsTo

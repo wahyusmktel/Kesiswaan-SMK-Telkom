@@ -30,6 +30,8 @@
     <div class="py-6 w-full">
         <div class="w-full px-4 sm:px-6 lg:px-8 space-y-8">
 
+            @include('shared.fingerprint-today-card')
+
             {{-- ── ALERT: UKK Penguji ── --}}
             @if(isset($ukkPenguji) && $ukkPenguji->isNotEmpty())
                 @php $adaBelumSelesai = $ukkPenguji->some(fn($u) => $u->sudah_dinilai < $u->total_siswa); @endphp

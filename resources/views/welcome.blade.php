@@ -1,4 +1,12 @@
 @php
+    $landingTheme = $appSetting?->theme ?? 'default';
+    $landingThemeClass = match($landingTheme) {
+        'light-red' => 'theme-light-red',
+        'tech-red' => 'theme-tech-red',
+        'campus-flow' => 'theme-campus-flow',
+        'telkom-corporate' => 'theme-telkom-corporate',
+        default => '',
+    };
     $hasBirthdays = isset($birthdaySiswa, $birthdayGuru) && ($birthdaySiswa->count() + $birthdayGuru->count()) > 0;
     $bdDuration   = $hasBirthdays ? max(25, ($birthdaySiswa->count() + $birthdayGuru->count()) * 8) : 0;
     $bdSiswaCards = $hasBirthdays ? $birthdaySiswa->map(fn($s) => [
@@ -258,6 +266,624 @@
             color: #FFFFFF !important;
         }
 
+        /* Tech Red Theme Overrides */
+        .theme-tech-red {
+            color: #F8FAFC;
+            background-color: #080B12;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
+                linear-gradient(135deg, rgba(226,31,38,0.22), transparent 34%),
+                linear-gradient(225deg, rgba(14,165,233,0.10), transparent 38%);
+            background-size: 44px 44px, 44px 44px, 100% 100%, 100% 100%;
+        }
+
+        .theme-tech-red .glass {
+            background: rgba(8, 11, 18, 0.76);
+            border: 1px solid rgba(248, 250, 252, 0.10);
+            box-shadow: 0 18px 60px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        }
+
+        .theme-tech-red .glass-card {
+            background: linear-gradient(180deg, rgba(17, 24, 39, 0.82), rgba(8, 11, 18, 0.78));
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+        }
+
+        .theme-tech-red .glass-card:hover {
+            background: linear-gradient(180deg, rgba(30, 41, 59, 0.88), rgba(15, 23, 42, 0.82));
+            border-color: rgba(255, 77, 84, 0.70);
+            box-shadow: 0 24px 80px rgba(226, 31, 38, 0.16);
+        }
+
+        .theme-tech-red .btn-primary {
+            color: #FFFFFF !important;
+            background: linear-gradient(135deg, #FF3340 0%, #E21F26 48%, #8B0F14 100%);
+            box-shadow: 0 18px 38px -18px rgba(255, 51, 64, 0.85);
+        }
+
+        .theme-tech-red .btn-primary:hover {
+            box-shadow: 0 22px 48px -16px rgba(255, 51, 64, 0.95);
+        }
+
+        .theme-tech-red .text-gradient {
+            background: linear-gradient(135deg, #FFFFFF 0%, #E2E8F0 46%, #FF9BA1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .theme-tech-red .text-gradient-red {
+            background: linear-gradient(135deg, #FF9BA1 0%, #FF3340 48%, #F97316 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .theme-tech-red .nav-link {
+            color: #CBD5E1 !important;
+        }
+
+        .theme-tech-red .nav-link:hover {
+            color: #FFFFFF !important;
+        }
+
+        .theme-tech-red .nav-link::after {
+            background: linear-gradient(90deg, #FF3340, #F97316);
+        }
+
+        .theme-tech-red .blob {
+            display: none;
+        }
+
+        .theme-tech-red .bg-slate-900,
+        .theme-tech-red .bg-slate-900\/50 {
+            background-color: rgba(8, 11, 18, 0.82) !important;
+        }
+
+        .theme-tech-red .border-white\/5,
+        .theme-tech-red .border-white\/10 {
+            border-color: rgba(255, 255, 255, 0.10) !important;
+        }
+
+        .theme-tech-red .bg-white\/5 {
+            background-color: rgba(255, 255, 255, 0.06) !important;
+        }
+
+        .theme-tech-red .bisa-section {
+            background-color: #080B12 !important;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(226,31,38,0.11), transparent 42%) !important;
+            background-size: 38px 38px, 38px 38px, 100% 100% !important;
+        }
+
+        .theme-tech-red .bisa-text {
+            color: #FF2530 !important;
+            text-shadow: 0 0 34px rgba(255, 37, 48, 0.35), 0 20px 70px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Campus Flow Theme: editorial layout, brighter and asymmetric */
+        .theme-campus-flow {
+            color: #111827;
+            background-color: #F8FAFC;
+            background-image:
+                radial-gradient(circle at 12% 8%, rgba(226, 31, 38, 0.12), transparent 26rem),
+                radial-gradient(circle at 88% 12%, rgba(6, 182, 212, 0.11), transparent 24rem),
+                linear-gradient(135deg, rgba(15, 23, 42, 0.035) 25%, transparent 25%),
+                linear-gradient(225deg, rgba(15, 23, 42, 0.035) 25%, transparent 25%);
+            background-size: auto, auto, 34px 34px, 34px 34px;
+        }
+
+        .theme-campus-flow .blob {
+            display: none;
+        }
+
+        .theme-campus-flow nav {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+        }
+
+        .theme-campus-flow nav > div {
+            max-width: 82rem !important;
+            border-radius: 999px !important;
+            background: rgba(255, 255, 255, 0.88) !important;
+            border: 1px solid rgba(15, 23, 42, 0.08) !important;
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08) !important;
+        }
+
+        .theme-campus-flow .glass {
+            background: rgba(255, 255, 255, 0.78);
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            box-shadow: 0 18px 55px rgba(15, 23, 42, 0.08);
+        }
+
+        .theme-campus-flow .glass-card {
+            background: #FFFFFF;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+        }
+
+        .theme-campus-flow .glass-card:hover {
+            border-color: rgba(226, 31, 38, 0.42);
+            box-shadow: 0 24px 70px rgba(226, 31, 38, 0.12);
+            transform: translateY(-8px) rotate(-0.5deg);
+        }
+
+        .theme-campus-flow .nav-link {
+            color: #475569 !important;
+        }
+
+        .theme-campus-flow .nav-link:hover {
+            color: #E21F26 !important;
+        }
+
+        .theme-campus-flow .nav-link::after {
+            background-color: #E21F26;
+        }
+
+        .theme-campus-flow .text-gradient {
+            background: linear-gradient(135deg, #0F172A 0%, #334155 58%, #E21F26 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .theme-campus-flow .text-gradient-red {
+            background: linear-gradient(135deg, #E21F26 0%, #F97316 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .theme-campus-flow .btn-primary {
+            color: #FFFFFF !important;
+            background: #111827;
+            box-shadow: 0 20px 45px -20px rgba(17, 24, 39, 0.75);
+        }
+
+        .theme-campus-flow .btn-primary:hover {
+            background: #E21F26;
+            box-shadow: 0 22px 48px -18px rgba(226, 31, 38, 0.70);
+        }
+
+        .theme-campus-flow .text-white:not(.btn-primary:not(.text-white), .btn-primary *, .text-white.btn-primary) {
+            color: #111827 !important;
+        }
+
+        .theme-campus-flow .text-slate-300,
+        .theme-campus-flow .text-slate-400 {
+            color: #475569 !important;
+        }
+
+        .theme-campus-flow .text-slate-500 {
+            color: #64748B !important;
+        }
+
+        .theme-campus-flow .border-white\/5,
+        .theme-campus-flow .border-white\/10 {
+            border-color: rgba(15, 23, 42, 0.08) !important;
+        }
+
+        .theme-campus-flow .bg-white\/5 {
+            background-color: rgba(15, 23, 42, 0.04) !important;
+        }
+
+        .theme-campus-flow .bg-slate-900,
+        .theme-campus-flow .bg-slate-900\/50 {
+            background-color: #FFFFFF !important;
+        }
+
+        .theme-campus-flow section.min-h-screen {
+            min-height: auto !important;
+            padding-top: 9rem !important;
+            padding-bottom: 5rem !important;
+        }
+
+        .theme-campus-flow section.min-h-screen > .w-full.max-w-7xl {
+            margin-bottom: 2rem !important;
+        }
+
+        .theme-campus-flow section.min-h-screen > .w-full.max-w-7xl .glass {
+            border-radius: 1.5rem !important;
+            padding: 1.25rem !important;
+            transform: none !important;
+        }
+
+        .theme-campus-flow section.min-h-screen > .max-w-7xl.grid {
+            grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr) !important;
+            gap: 3rem !important;
+            align-items: stretch !important;
+            background: linear-gradient(135deg, rgba(255,255,255,0.92), rgba(255,255,255,0.72));
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: 2.5rem;
+            padding: clamp(1.5rem, 3vw, 3rem);
+            box-shadow: 0 30px 90px rgba(15, 23, 42, 0.10);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .theme-campus-flow section.min-h-screen > .max-w-7xl.grid::before {
+            content: '';
+            position: absolute;
+            inset: auto -12% -34% 38%;
+            height: 60%;
+            background: linear-gradient(135deg, rgba(226,31,38,0.18), rgba(6,182,212,0.11));
+            transform: rotate(-7deg);
+            border-radius: 4rem;
+            pointer-events: none;
+        }
+
+        .theme-campus-flow section.min-h-screen > .max-w-7xl.grid > div:first-child {
+            position: relative;
+            z-index: 1;
+            text-align: left !important;
+            background: #FFFFFF;
+            border-radius: 2rem;
+            padding: clamp(1.5rem, 4vw, 3rem);
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            box-shadow: 0 20px 55px rgba(15, 23, 42, 0.08);
+        }
+
+        .theme-campus-flow section.min-h-screen h1 {
+            font-size: clamp(3rem, 6vw, 5.8rem) !important;
+            letter-spacing: 0 !important;
+        }
+
+        .theme-campus-flow section.min-h-screen .grid.grid-cols-3 {
+            background: #F8FAFC;
+            border: 1px solid rgba(15, 23, 42, 0.06);
+            border-radius: 1.5rem;
+            padding: 1rem;
+            gap: 1rem !important;
+        }
+
+        .theme-campus-flow section.min-h-screen > .max-w-7xl.grid > div:last-child {
+            display: block !important;
+            align-self: stretch;
+            min-height: 34rem;
+        }
+
+        .theme-campus-flow section.min-h-screen > .max-w-7xl.grid > div:last-child > .animate-float {
+            height: 100%;
+            animation: none !important;
+        }
+
+        .theme-campus-flow section.min-h-screen > .max-w-7xl.grid > div:last-child > .animate-float > .glass {
+            height: 100%;
+            padding: 0 !important;
+            border-radius: 2rem !important;
+            transform: none !important;
+            overflow: hidden;
+        }
+
+        .theme-campus-flow section.min-h-screen > .max-w-7xl.grid > div:last-child .aspect-video {
+            height: 100%;
+            aspect-ratio: auto !important;
+            border-radius: 2rem !important;
+        }
+
+        .theme-campus-flow #features .text-center {
+            text-align: left !important;
+            max-width: 48rem;
+        }
+
+        .theme-campus-flow #features .text-center p {
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        }
+
+        .theme-campus-flow #features .grid {
+            grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+        }
+
+        .theme-campus-flow #features .glass-card {
+            grid-column: span 4 / span 4;
+            border-radius: 1.5rem !important;
+        }
+
+        .theme-campus-flow #features .glass-card:nth-child(1),
+        .theme-campus-flow #features .glass-card:nth-child(4) {
+            grid-column: span 6 / span 6;
+        }
+
+        .theme-campus-flow .bisa-section {
+            background: #111827 !important;
+        }
+
+        .theme-campus-flow .bisa-text {
+            color: #FFFFFF !important;
+            opacity: 0.96;
+            text-shadow: 0 24px 70px rgba(226, 31, 38, 0.25);
+        }
+
+        @media (max-width: 1023px) {
+            .theme-campus-flow section.min-h-screen > .max-w-7xl.grid {
+                grid-template-columns: 1fr !important;
+                padding: 1rem;
+            }
+
+            .theme-campus-flow section.min-h-screen > .max-w-7xl.grid > div:first-child {
+                text-align: center !important;
+            }
+
+            .theme-campus-flow section.min-h-screen > .max-w-7xl.grid > div:last-child {
+                min-height: 22rem;
+            }
+
+            .theme-campus-flow #features .grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            .theme-campus-flow #features .glass-card {
+                grid-column: auto !important;
+            }
+        }
+
+        /* Telkom Corporate Theme: inspired by telkom.co.id visual language */
+        .theme-telkom-corporate {
+            color: #171717;
+            background-color: #FFFFFF;
+            background-image:
+                radial-gradient(circle at 18% 14%, rgba(230, 0, 18, 0.08), transparent 24rem),
+                radial-gradient(circle at 82% 10%, rgba(246, 59, 46, 0.08), transparent 22rem),
+                linear-gradient(180deg, #FFFFFF 0%, #F7F7F8 44%, #FFFFFF 100%);
+        }
+
+        .theme-telkom-corporate .blob {
+            display: none;
+        }
+
+        .theme-telkom-corporate nav {
+            padding: 1rem clamp(1rem, 3vw, 2rem) !important;
+        }
+
+        .theme-telkom-corporate nav > div {
+            max-width: 88rem !important;
+            border-radius: 1.25rem !important;
+            padding: 0.85rem 1.25rem !important;
+            background: rgba(255, 255, 255, 0.96) !important;
+            border: 1px solid rgba(23, 23, 23, 0.08) !important;
+            box-shadow: 0 12px 35px rgba(23, 23, 23, 0.08) !important;
+        }
+
+        .theme-telkom-corporate .glass {
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid rgba(23, 23, 23, 0.08);
+            box-shadow: 0 18px 48px rgba(23, 23, 23, 0.08);
+        }
+
+        .theme-telkom-corporate .glass-card {
+            background: #FFFFFF;
+            border: 1px solid rgba(23, 23, 23, 0.08);
+            box-shadow: 0 18px 45px rgba(23, 23, 23, 0.08);
+        }
+
+        .theme-telkom-corporate .glass-card:hover {
+            border-color: rgba(230, 0, 18, 0.38);
+            transform: translateY(-6px);
+            box-shadow: 0 24px 58px rgba(230, 0, 18, 0.11);
+        }
+
+        .theme-telkom-corporate .nav-link {
+            color: #333333 !important;
+            font-weight: 700;
+        }
+
+        .theme-telkom-corporate .nav-link:hover {
+            color: #E60012 !important;
+        }
+
+        .theme-telkom-corporate .nav-link::after {
+            height: 3px;
+            border-radius: 999px;
+            background-color: #E60012;
+        }
+
+        .theme-telkom-corporate .btn-primary {
+            color: #FFFFFF !important;
+            background: #E60012;
+            border-radius: 999px !important;
+            box-shadow: 0 18px 36px -18px rgba(230, 0, 18, 0.80);
+        }
+
+        .theme-telkom-corporate .btn-primary:hover {
+            background: #C90010;
+            box-shadow: 0 22px 42px -18px rgba(230, 0, 18, 0.95);
+        }
+
+        .theme-telkom-corporate .text-gradient {
+            background: linear-gradient(135deg, #171717 0%, #434343 62%, #E60012 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .theme-telkom-corporate .text-gradient-red {
+            background: linear-gradient(135deg, #E60012 0%, #F63B2E 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .theme-telkom-corporate .text-white:not(.btn-primary:not(.text-white), .btn-primary *, .text-white.btn-primary) {
+            color: #171717 !important;
+        }
+
+        .theme-telkom-corporate .text-slate-300,
+        .theme-telkom-corporate .text-slate-400 {
+            color: #555D68 !important;
+        }
+
+        .theme-telkom-corporate .text-slate-500 {
+            color: #7A828E !important;
+        }
+
+        .theme-telkom-corporate .border-white\/5,
+        .theme-telkom-corporate .border-white\/10 {
+            border-color: rgba(23, 23, 23, 0.08) !important;
+        }
+
+        .theme-telkom-corporate .bg-white\/5 {
+            background-color: rgba(23, 23, 23, 0.035) !important;
+        }
+
+        .theme-telkom-corporate .bg-slate-900,
+        .theme-telkom-corporate .bg-slate-900\/50 {
+            background-color: #F7F7F8 !important;
+        }
+
+        .theme-telkom-corporate section.min-h-screen {
+            min-height: auto !important;
+            padding-top: 8.75rem !important;
+            padding-bottom: 4rem !important;
+        }
+
+        .theme-telkom-corporate section.min-h-screen > .w-full.max-w-7xl {
+            margin-bottom: 1.5rem !important;
+        }
+
+        .theme-telkom-corporate section.min-h-screen > .w-full.max-w-7xl .glass {
+            border-radius: 1.5rem !important;
+            padding: 1.15rem 1.35rem !important;
+        }
+
+        .theme-telkom-corporate section.min-h-screen > .max-w-7xl.grid {
+            max-width: 88rem !important;
+            grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr) !important;
+            gap: 2.25rem !important;
+            align-items: stretch !important;
+            min-height: 39rem;
+        }
+
+        .theme-telkom-corporate section.min-h-screen > .max-w-7xl.grid > div:first-child {
+            text-align: left !important;
+            background: #FFFFFF;
+            border: 1px solid rgba(23, 23, 23, 0.08);
+            border-radius: 2rem;
+            padding: clamp(1.5rem, 3.5vw, 3rem);
+            box-shadow: 0 24px 64px rgba(23, 23, 23, 0.08);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .theme-telkom-corporate section.min-h-screen > .max-w-7xl.grid > div:first-child::before {
+            content: '#ElevatingYourFuture';
+            display: inline-flex;
+            width: fit-content;
+            margin-bottom: 1rem;
+            color: #E60012;
+            font-size: 0.78rem;
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .theme-telkom-corporate section.min-h-screen h1 {
+            font-size: clamp(3.4rem, 7vw, 6.7rem) !important;
+            line-height: 0.92 !important;
+            letter-spacing: 0 !important;
+        }
+
+        .theme-telkom-corporate section.min-h-screen p {
+            max-width: 38rem !important;
+        }
+
+        .theme-telkom-corporate section.min-h-screen .grid.grid-cols-3 {
+            border-top: 0 !important;
+            background: #F7F7F8;
+            border-radius: 1.35rem;
+            padding: 1rem;
+        }
+
+        .theme-telkom-corporate section.min-h-screen > .max-w-7xl.grid > div:last-child {
+            display: block !important;
+            min-height: 39rem;
+        }
+
+        .theme-telkom-corporate section.min-h-screen > .max-w-7xl.grid > div:last-child > .animate-float {
+            height: 100%;
+            animation: none !important;
+        }
+
+        .theme-telkom-corporate section.min-h-screen > .max-w-7xl.grid > div:last-child > .animate-float > .glass {
+            height: 100%;
+            padding: 0 !important;
+            border-radius: 2rem !important;
+            transform: none !important;
+            overflow: hidden;
+        }
+
+        .theme-telkom-corporate section.min-h-screen > .max-w-7xl.grid > div:last-child .aspect-video {
+            height: 100%;
+            aspect-ratio: auto !important;
+            border-radius: 2rem !important;
+        }
+
+        .theme-telkom-corporate section.min-h-screen > .max-w-7xl.grid > div:last-child img {
+            opacity: 0.9 !important;
+            filter: saturate(1.05) contrast(1.02);
+        }
+
+        .theme-telkom-corporate #features {
+            background: #FFFFFF;
+        }
+
+        .theme-telkom-corporate #features .text-center {
+            text-align: left !important;
+            display: grid;
+            grid-template-columns: minmax(0, 0.68fr) minmax(0, 1fr);
+            gap: 2rem;
+            align-items: end;
+        }
+
+        .theme-telkom-corporate #features .text-center p {
+            margin: 0 !important;
+            max-width: 38rem !important;
+        }
+
+        .theme-telkom-corporate #features .grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+            gap: 1.25rem !important;
+        }
+
+        .theme-telkom-corporate #features .glass-card {
+            border-radius: 1.5rem !important;
+            min-height: 20rem;
+        }
+
+        .theme-telkom-corporate #features .glass-card:nth-child(1),
+        .theme-telkom-corporate #features .glass-card:nth-child(2) {
+            grid-column: span 2 / span 2;
+        }
+
+        .theme-telkom-corporate .bisa-section {
+            background: #E60012 !important;
+        }
+
+        .theme-telkom-corporate .bisa-text {
+            color: #FFFFFF !important;
+            opacity: 1;
+            text-shadow: 0 20px 70px rgba(23, 23, 23, 0.16);
+        }
+
+        @media (max-width: 1023px) {
+            .theme-telkom-corporate section.min-h-screen > .max-w-7xl.grid,
+            .theme-telkom-corporate #features .text-center,
+            .theme-telkom-corporate #features .grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            .theme-telkom-corporate section.min-h-screen > .max-w-7xl.grid > div:first-child {
+                text-align: center !important;
+            }
+
+            .theme-telkom-corporate section.min-h-screen > .max-w-7xl.grid > div:last-child {
+                min-height: 22rem;
+            }
+
+            .theme-telkom-corporate #features .glass-card {
+                grid-column: auto !important;
+                min-height: auto;
+            }
+        }
+
         /* Birthday Running Text Banner */
         @keyframes bdScroll {
             0%   { transform: translateX(0); }
@@ -305,7 +931,7 @@
     </style>
 </head>
 
-<body class="antialiased overflow-x-hidden {{ $appSetting?->theme === 'light-red' ? 'theme-light-red' : '' }}"
+<body class="antialiased overflow-x-hidden {{ $landingThemeClass }}"
     x-data="{
         showVideo: false,
         bdVisible: @js($hasBirthdays),

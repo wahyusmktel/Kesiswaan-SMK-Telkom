@@ -181,7 +181,11 @@ Route::get('/', function () {
         ->whereMonth('tanggal_lahir', $today->month)
         ->whereDay('tanggal_lahir', $today->day)
         ->get(['nama']);
-    return view('welcome', compact('birthdaySiswa', 'birthdayGuru'));
+    $landingView = \App\Models\AppSetting::first()?->theme === 'transformasi'
+        ? 'welcome-transformasi'
+        : 'welcome';
+
+    return view($landingView, compact('birthdaySiswa', 'birthdayGuru'));
 })->name('welcome');
 
 // Happiness Meter (Public API)
@@ -666,6 +670,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Grup Route untuk SDM (Approval Stage 3 - Final)
     Route::middleware(['role:KAUR SDM', 'permission:view sdm dashboard'])->prefix('sdm')->name('sdm.')->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\SDM\DashboardController::class, 'index'])->name('dashboard.index');
+        Route::get('/calendar', [\App\Http\Controllers\SDM\WorkCalendarController::class, 'index'])->name('calendar.index');
+        Route::post('/calendar', [\App\Http\Controllers\SDM\WorkCalendarController::class, 'store'])->name('calendar.store');
+        Route::delete('/calendar/{calendar}', [\App\Http\Controllers\SDM\WorkCalendarController::class, 'destroy'])->name('calendar.destroy');
         Route::get('/persetujuan-izin-guru', [\App\Http\Controllers\SDM\PersetujuanIzinGuruController::class, 'index'])->middleware('permission:manage perizinan guru')->name('persetujuan-izin-guru.index');
         Route::patch('/persetujuan-izin-guru/{izin}/approve', [\App\Http\Controllers\SDM\PersetujuanIzinGuruController::class, 'approve'])->middleware('permission:manage perizinan guru')->name('persetujuan-izin-guru.approve');
         Route::patch('/persetujuan-izin-guru/{izin}/reject', [\App\Http\Controllers\SDM\PersetujuanIzinGuruController::class, 'reject'])->middleware('permission:manage perizinan guru')->name('persetujuan-izin-guru.reject');
@@ -796,6 +803,9 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['role:Operator|KAUR SDM'])->group(function () {
         Route::post('/dapodik-guru/import', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'import'])->name('dapodik-guru.import');
         Route::get('/dapodik-guru', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'index'])->name('dapodik-guru.index');
+        Route::get('/dapodik-guru/create', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'create'])->name('dapodik-guru.create');
+        Route::post('/dapodik-guru', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'store'])->name('dapodik-guru.store');
+        Route::patch('/dapodik-guru/{dapodikGuru}/mapping', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'updateMapping'])->name('dapodik-guru.mapping.update');
         Route::get('/dapodik-guru/{dapodikGuru}', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'show'])->name('dapodik-guru.show');
         Route::get('/dapodik-guru/{dapodikGuru}/edit', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'edit'])->name('dapodik-guru.edit');
         Route::put('/dapodik-guru/{dapodikGuru}', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'update'])->name('dapodik-guru.update');
@@ -806,13 +816,32 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [\App\Http\Controllers\FingerprintController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\FingerprintController::class, 'create'])->name('create');
         Route::post('/', [\App\Http\Controllers\FingerprintController::class, 'store'])->name('store');
+        Route::get('/time-settings', [\App\Http\Controllers\FingerprintController::class, 'timeSettings'])->name('time-settings');
+        Route::put('/time-settings', [\App\Http\Controllers\FingerprintController::class, 'updateTimeSettings'])->name('time-settings.update');
+        Route::put('/auto-sync-settings', [\App\Http\Controllers\FingerprintController::class, 'updateAutoSyncSettings'])
+            ->middleware('role:Super Admin|KAUR SDM')
+            ->name('auto-sync-settings.update');
+        Route::put('/security-shift-settings', [\App\Http\Controllers\FingerprintController::class, 'updateSecurityShiftSettings'])->name('security-shift-settings.update');
+        Route::get('/mappings', [\App\Http\Controllers\FingerprintController::class, 'mappings'])->name('mappings');
         Route::get('/logs', [\App\Http\Controllers\FingerprintController::class, 'logs'])->name('logs');
+        Route::get('/monitoring', [\App\Http\Controllers\FingerprintController::class, 'monitoring'])->name('monitoring');
+        Route::get('/monitoring/export', [\App\Http\Controllers\FingerprintController::class, 'exportMonitoring'])->name('monitoring.export');
+        Route::get('/analysis', [\App\Http\Controllers\FingerprintController::class, 'attendanceAnalysis'])->name('analysis');
+        Route::get('/analysis/{user}/pdf', [\App\Http\Controllers\FingerprintController::class, 'attendanceAnalysisPdf'])->name('analysis.pdf');
+        Route::middleware(['role:Super Admin'])->group(function () {
+            Route::get('/manual-attendances', [\App\Http\Controllers\FingerprintController::class, 'manualAttendances'])->name('manual-attendances');
+            Route::post('/manual-attendances', [\App\Http\Controllers\FingerprintController::class, 'storeManualAttendance'])->name('manual-attendances.store');
+            Route::patch('/manual-attendances/{attendance}', [\App\Http\Controllers\FingerprintController::class, 'updateManualAttendance'])->name('manual-attendances.update');
+        });
+        Route::get('/logs/{user}', [\App\Http\Controllers\FingerprintController::class, 'attendanceDetail'])->name('logs.detail');
         Route::get('/{fingerprint}/edit', [\App\Http\Controllers\FingerprintController::class, 'edit'])->name('edit');
         Route::put('/{fingerprint}', [\App\Http\Controllers\FingerprintController::class, 'update'])->name('update');
         Route::delete('/{fingerprint}', [\App\Http\Controllers\FingerprintController::class, 'destroy'])->name('destroy');
+        Route::patch('/mappings/{fingerprintUser}', [\App\Http\Controllers\FingerprintController::class, 'updateMapping'])->name('mappings.update');
         Route::post('/{id}/test-connection', [\App\Http\Controllers\FingerprintController::class, 'testConnection'])->name('test-connection');
         Route::post('/{id}/sync-users', [\App\Http\Controllers\FingerprintController::class, 'syncUsers'])->name('sync-users');
         Route::post('/{id}/sync-attendances', [\App\Http\Controllers\FingerprintController::class, 'syncAttendances'])->name('sync-attendances');
+        Route::get('/sync-progress/{progressId}', [\App\Http\Controllers\FingerprintController::class, 'syncProgress'])->name('sync-progress');
     });
 
     // Monitoring Keterlambatan Shared
@@ -976,6 +1005,10 @@ Route::middleware(['auth', 'role:Super Admin|Waka Kesiswaan|Guru BK|Guru Piket|K
         Route::post('/{id}/pinjam', [SharedAssetController::class, 'requestBorrow'])->name('borrow');
         Route::get('/{id}', [SharedAssetController::class, 'show'])->name('show');
     });
+
+Route::middleware(['auth', 'role:Super Admin|Waka Kesiswaan|Guru BK|Guru Piket|Kurikulum|Wali Kelas|Tata Usaha|Security|KAUR SDM|Operator|Koordinator Prakerin|Guru Kelas'])
+    ->get('/fingerprint-saya', [\App\Http\Controllers\Shared\MyFingerprintAttendanceController::class, 'index'])
+    ->name('fingerprint-saya.index');
 
 // ============================================================
 // TANDA TANGAN DIGITAL (Guru, Waka Kurikulum, Waka Kesiswaan, Kaur SDM)

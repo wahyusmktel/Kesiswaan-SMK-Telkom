@@ -172,11 +172,18 @@
                             <h3 class="font-bold text-gray-900">Daftar Data Dapodik Guru</h3>
                             <p class="text-xs text-gray-400 mt-0.5">Menampilkan {{ $dapodikGurus->count() }} dari {{ $dapodikGurus->total() }} data</p>
                         </div>
-                        <button @click="showImport = true"
-                            class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-xl shadow-sm transition-all">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                            Import Dapodik
-                        </button>
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <a href="{{ route('dapodik-guru.create') }}"
+                                class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-xl shadow-sm transition-all">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                Tambah
+                            </a>
+                            <button @click="showImport = true"
+                                class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-xl shadow-sm transition-all">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                Import Dapodik
+                            </button>
+                        </div>
                     </div>
 
                     <div class="overflow-x-auto">
@@ -251,10 +258,13 @@
                                         <td class="px-6 py-4">
                                             @if($item->status_kepegawaian)
                                                 @php
-                                                    $sc = match(true) {
-                                                        str_contains($item->status_kepegawaian, 'PNS')    => 'bg-blue-50 text-blue-700 border-blue-100',
-                                                        str_contains($item->status_kepegawaian, 'Honor')  => 'bg-amber-50 text-amber-700 border-amber-100',
-                                                        str_contains($item->status_kepegawaian, 'PPPK')   => 'bg-teal-50 text-teal-700 border-teal-100',
+                                                    $sc = match($item->status_kepegawaian) {
+                                                        \App\Support\EmploymentStatus::PERMANENT => 'bg-blue-50 text-blue-700 border-blue-100',
+                                                        \App\Support\EmploymentStatus::FULL_TIME => 'bg-emerald-50 text-emerald-700 border-emerald-100',
+                                                        \App\Support\EmploymentStatus::PART_TIME => 'bg-amber-50 text-amber-700 border-amber-100',
+                                                        \App\Support\EmploymentStatus::SECURITY => 'bg-slate-100 text-slate-700 border-slate-200',
+                                                        \App\Support\EmploymentStatus::CLEANING => 'bg-cyan-50 text-cyan-700 border-cyan-100',
+                                                        \App\Support\EmploymentStatus::ACADEMIC_SUPPORT => 'bg-violet-50 text-violet-700 border-violet-100',
                                                         default => 'bg-gray-50 text-gray-600 border-gray-100',
                                                     };
                                                 @endphp
@@ -264,18 +274,27 @@
                                             @endif
                                         </td>
 
-                                        {{-- Link status --}}
+                                        {{-- Link akun --}}
                                         <td class="px-6 py-4">
+                                            <form method="POST" action="{{ route('dapodik-guru.mapping.update', $item) }}" class="flex min-w-[300px] items-center gap-2">
+                                                @csrf
+                                                @method('PATCH')
+                                                <select name="master_guru_id" class="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+                                                    <option value="">Tidak terhubung</option>
+                                                    @foreach($employees as $employee)
+                                                        <option value="{{ $employee->id }}" {{ (string) $item->master_guru_id === (string) $employee->id ? 'selected' : '' }}>
+                                                            {{ $employee->nama_lengkap }}{{ $employee->kode_guru ? ' - ' . $employee->kode_guru : '' }}{{ $employee->nik ? ' | NIK ' . $employee->nik : '' }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                                <button class="rounded-lg bg-gray-900 px-3 py-2 text-xs font-bold text-white hover:bg-blue-600">
+                                                    Simpan
+                                                </button>
+                                            </form>
                                             @if($item->masterGuru)
-                                                <div class="flex items-center gap-2">
-                                                    <span class="w-2 h-2 rounded-full bg-green-500 shrink-0"></span>
-                                                    <span class="text-xs text-green-700 font-semibold truncate max-w-[120px]">{{ $item->masterGuru->user?->name ?? $item->masterGuru->nama_lengkap }}</span>
-                                                </div>
+                                                <p class="mt-1 text-[11px] font-semibold text-green-600">Terhubung ke {{ $item->masterGuru->user?->name ?? $item->masterGuru->nama_lengkap }}</p>
                                             @else
-                                                <div class="flex items-center gap-2">
-                                                    <span class="w-2 h-2 rounded-full bg-gray-300 shrink-0"></span>
-                                                    <span class="text-xs text-gray-400">Tidak terhubung</span>
-                                                </div>
+                                                <p class="mt-1 text-[11px] font-semibold text-gray-400">Belum terhubung ke data pegawai.</p>
                                             @endif
                                         </td>
 

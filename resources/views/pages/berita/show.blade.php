@@ -1,3 +1,13 @@
+@php
+    $landingTheme = $appSetting?->theme ?? 'default';
+    $landingThemeClass = match($landingTheme) {
+        'light-red' => 'theme-light-red',
+        'tech-red' => 'theme-tech-red',
+        'campus-flow' => 'theme-campus-flow',
+        'telkom-corporate' => 'theme-telkom-corporate',
+        default => '',
+    };
+@endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth">
 
@@ -116,10 +126,112 @@
         .theme-light-red .btn-primary {
             color: #FFFFFF !important;
         }
+
+        .theme-tech-red {
+            color: #F8FAFC;
+            background-color: #080B12;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
+                linear-gradient(135deg, rgba(226,31,38,0.20), transparent 34%);
+            background-size: 44px 44px, 44px 44px, 100% 100%;
+        }
+        .theme-tech-red .glass {
+            background: rgba(8, 11, 18, 0.76);
+            border: 1px solid rgba(248, 250, 252, 0.10);
+            box-shadow: 0 18px 60px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        }
+        .theme-tech-red .btn-primary {
+            color: #FFFFFF !important;
+            background: linear-gradient(135deg, #FF3340 0%, #E21F26 48%, #8B0F14 100%);
+            box-shadow: 0 18px 38px -18px rgba(255, 51, 64, 0.85);
+        }
+        .theme-tech-red .text-gradient {
+            background: linear-gradient(135deg, #FFFFFF 0%, #E2E8F0 46%, #FF9BA1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .theme-tech-red .blob {
+            display: none;
+        }
+        .theme-tech-red .prose-dark {
+            color: #CBD5E1;
+        }
+        .theme-tech-red .prose-dark strong {
+            color: #FFFFFF;
+        }
+
+        .theme-campus-flow {
+            color: #111827;
+            background-color: #F8FAFC;
+            background-image:
+                radial-gradient(circle at 12% 8%, rgba(226,31,38,0.12), transparent 26rem),
+                radial-gradient(circle at 88% 12%, rgba(6,182,212,0.11), transparent 24rem);
+        }
+        .theme-campus-flow .blob {
+            display: none;
+        }
+        .theme-campus-flow .glass {
+            background: rgba(255, 255, 255, 0.88);
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            box-shadow: 0 18px 55px rgba(15, 23, 42, 0.08);
+        }
+        .theme-campus-flow .btn-primary {
+            color: #FFFFFF !important;
+            background: #111827;
+            box-shadow: 0 20px 45px -20px rgba(17, 24, 39, 0.75);
+        }
+        .theme-campus-flow .btn-primary:hover {
+            background: #E21F26;
+        }
+        .theme-campus-flow .text-gradient {
+            background: linear-gradient(135deg, #0F172A 0%, #334155 58%, #E21F26 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .theme-campus-flow .prose-dark {
+            color: #475569;
+        }
+        .theme-campus-flow .prose-dark strong {
+            color: #111827;
+        }
+
+        .theme-telkom-corporate {
+            color: #171717;
+            background-color: #FFFFFF;
+            background-image:
+                radial-gradient(circle at 18% 14%, rgba(230, 0, 18, 0.08), transparent 24rem),
+                linear-gradient(180deg, #FFFFFF 0%, #F7F7F8 44%, #FFFFFF 100%);
+        }
+        .theme-telkom-corporate .blob {
+            display: none;
+        }
+        .theme-telkom-corporate .glass {
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid rgba(23, 23, 23, 0.08);
+            box-shadow: 0 12px 35px rgba(23, 23, 23, 0.08);
+        }
+        .theme-telkom-corporate .btn-primary {
+            color: #FFFFFF !important;
+            background: #E60012;
+            border-radius: 999px !important;
+            box-shadow: 0 18px 36px -18px rgba(230, 0, 18, 0.80);
+        }
+        .theme-telkom-corporate .text-gradient {
+            background: linear-gradient(135deg, #171717 0%, #434343 62%, #E60012 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .theme-telkom-corporate .prose-dark {
+            color: #555D68;
+        }
+        .theme-telkom-corporate .prose-dark strong {
+            color: #171717;
+        }
     </style>
 </head>
 
-<body class="antialiased overflow-x-hidden {{ $appSetting?->theme === 'light-red' ? 'theme-light-red' : '' }}">
+<body class="antialiased overflow-x-hidden {{ $landingThemeClass }}">
     {{-- Premium Tech Preloader --}}
     @include('components.preloader')
 

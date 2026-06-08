@@ -53,10 +53,13 @@
                             @endif
                             @if($dapodikGuru->status_kepegawaian)
                                 @php
-                                    $sc = match(true) {
-                                        str_contains($dapodikGuru->status_kepegawaian, 'PNS')   => 'bg-blue-50 text-blue-700 border-blue-100',
-                                        str_contains($dapodikGuru->status_kepegawaian, 'Honor') => 'bg-amber-50 text-amber-700 border-amber-100',
-                                        str_contains($dapodikGuru->status_kepegawaian, 'PPPK')  => 'bg-teal-50 text-teal-700 border-teal-100',
+                                    $sc = match($dapodikGuru->status_kepegawaian) {
+                                        \App\Support\EmploymentStatus::PERMANENT => 'bg-blue-50 text-blue-700 border-blue-100',
+                                        \App\Support\EmploymentStatus::FULL_TIME => 'bg-emerald-50 text-emerald-700 border-emerald-100',
+                                        \App\Support\EmploymentStatus::PART_TIME => 'bg-amber-50 text-amber-700 border-amber-100',
+                                        \App\Support\EmploymentStatus::SECURITY => 'bg-slate-100 text-slate-700 border-slate-200',
+                                        \App\Support\EmploymentStatus::CLEANING => 'bg-cyan-50 text-cyan-700 border-cyan-100',
+                                        \App\Support\EmploymentStatus::ACADEMIC_SUPPORT => 'bg-violet-50 text-violet-700 border-violet-100',
                                         default => 'bg-gray-50 text-gray-600 border-gray-100',
                                     };
                                 @endphp
