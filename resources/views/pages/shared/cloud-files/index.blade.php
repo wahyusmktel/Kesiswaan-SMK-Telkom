@@ -245,7 +245,16 @@
                                         @endif
                                     </div>
                                     <div class="min-w-0 flex-1">
-                                        <p class="truncate text-sm font-black text-gray-900" title="{{ $driveFile['name'] ?? 'File Drive' }}">{{ $driveFile['name'] ?? 'File Drive' }}</p>
+                                        <div class="flex items-center gap-2">
+                                            <p class="truncate text-sm font-black text-gray-900" title="{{ $driveFile['name'] ?? 'File Drive' }}">{{ $driveFile['name'] ?? 'File Drive' }}</p>
+                                            @if(!empty($driveFile['shared']))
+                                                <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 ring-1 ring-blue-100" title="File dibagikan">
+                                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12s-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316M15 6a3 3 0 106 0 3 3 0 00-6 0zm0 12a3 3 0 106 0 3 3 0 00-6 0z"/>
+                                                    </svg>
+                                                </span>
+                                            @endif
+                                        </div>
                                         <p class="mt-1 text-xs font-semibold text-gray-400">{{ $size }} - {{ !empty($driveFile['modifiedTime']) ? \Carbon\Carbon::parse($driveFile['modifiedTime'])->format('d M Y H:i') : '-' }}</p>
                                     </div>
                                 </div>
@@ -254,6 +263,17 @@
                                         <a href="{{ $driveFile['webViewLink'] }}" target="_blank" class="rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-black text-gray-700 hover:bg-gray-50">Buka</a>
                                     @endif
                                     <a href="{{ route('cloud-files.google-drive.download', $driveFile['id']) }}" class="rounded-xl bg-gray-900 px-3 py-2 text-xs font-black text-white hover:bg-red-600">Download</a>
+                                    <button type="button"
+                                        @click="openShareModal({
+                                            id: @js($driveFile['id']),
+                                            name: @js($driveFile['name'] ?? 'File Drive'),
+                                            link: @js($driveFile['webViewLink'] ?? ''),
+                                            shared: {{ !empty($driveFile['shared']) ? 'true' : 'false' }},
+                                            shareUrl: @js(route('cloud-files.google-drive.share', $driveFile['id']))
+                                        })"
+                                        class="rounded-xl bg-blue-50 px-3 py-2 text-xs font-black text-blue-700 hover:bg-blue-100">
+                                        Berbagi
+                                    </button>
                                     <form method="POST" action="{{ route('cloud-files.google-drive.destroy', $driveFile['id']) }}" onsubmit="return confirm('Hapus file ini dari Google Drive?')">
                                         @csrf
                                         @method('DELETE')
@@ -326,6 +346,70 @@
                 @endif
             </section>
         </div>
+
+        <div x-show="shareModalOpen" x-cloak class="fixed inset-0 z-50 overflow-y-auto bg-gray-900/60 p-4 backdrop-blur-sm">
+            <div class="flex min-h-full items-center justify-center">
+                <div class="w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl">
+                    <div class="border-b border-gray-100 p-6">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="min-w-0">
+                                <h3 class="text-xl font-black text-gray-900">Berbagi File</h3>
+                                <p class="mt-1 truncate text-sm font-semibold text-gray-500" x-text="shareFile.name"></p>
+                            </div>
+                            <button type="button" @click="shareModalOpen = false" :disabled="shareSaving" class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-5 p-6">
+                        <div class="grid grid-cols-1 gap-3">
+                            <label class="rounded-2xl border p-4 cursor-pointer transition" :class="shareMode === 'anyone' ? 'border-blue-300 bg-blue-50' : 'border-gray-200 bg-white'">
+                                <input type="radio" value="anyone" x-model="shareMode" class="sr-only">
+                                <span class="block text-sm font-black text-gray-900">Semua yang punya link bisa melihat</span>
+                                <span class="mt-1 block text-xs text-gray-500">Google Drive membuat link viewer. Cocok untuk dibagikan cepat.</span>
+                            </label>
+                            <label class="rounded-2xl border p-4 cursor-pointer transition" :class="shareMode === 'email' ? 'border-blue-300 bg-blue-50' : 'border-gray-200 bg-white'">
+                                <input type="radio" value="email" x-model="shareMode" class="sr-only">
+                                <span class="block text-sm font-black text-gray-900">Hanya email undangan</span>
+                                <span class="mt-1 block text-xs text-gray-500">Masukkan email penerima. Pisahkan dengan koma, spasi, atau enter.</span>
+                            </label>
+                        </div>
+
+                        <label x-show="shareMode === 'email'" class="block">
+                            <span class="mb-2 block text-xs font-black uppercase tracking-widest text-gray-400">Email Undangan</span>
+                            <textarea x-model="shareEmails" rows="4" class="w-full rounded-2xl border-gray-300 text-sm focus:border-blue-500 focus:ring-blue-500" placeholder="nama@sekolah.sch.id, guru@sekolah.sch.id"></textarea>
+                        </label>
+
+                        <div class="rounded-2xl bg-gray-50 p-4">
+                            <div class="flex items-center justify-between gap-3">
+                                <div class="min-w-0">
+                                    <p class="text-xs font-black uppercase tracking-widest text-gray-400">Link Berbagi</p>
+                                    <p class="mt-1 truncate text-sm font-semibold text-gray-700" x-text="shareLink || 'Link akan tampil setelah seting berbagi disimpan.'"></p>
+                                </div>
+                                <button type="button" @click="copyShareLink()" :disabled="!shareLink" class="shrink-0 rounded-xl bg-gray-900 px-3 py-2 text-xs font-black text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50" x-text="copyLabel"></button>
+                            </div>
+                        </div>
+
+                        <p x-show="shareError" class="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700" x-text="shareError"></p>
+                        <p x-show="shareSuccess" class="rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700" x-text="shareSuccess"></p>
+                    </div>
+
+                    <div class="flex justify-end gap-3 bg-gray-50 p-6">
+                        <button type="button" @click="shareModalOpen = false" :disabled="shareSaving" class="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 disabled:opacity-50">Tutup</button>
+                        <button type="button" @click="saveShareSettings()" :disabled="shareSaving" class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-black text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
+                            <svg x-show="shareSaving" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                            </svg>
+                            <span x-text="shareSaving ? 'Menyimpan...' : 'Simpan Berbagi'"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -351,6 +435,15 @@
                 speedChart: null,
                 speedLabels: [],
                 speedValues: [],
+                shareModalOpen: false,
+                shareFile: {},
+                shareMode: 'anyone',
+                shareEmails: '',
+                shareLink: '',
+                shareSaving: false,
+                shareError: '',
+                shareSuccess: '',
+                copyLabel: 'Copy',
 
                 toggleMaximize() {
                     this.isMaximized = !this.isMaximized;
@@ -639,6 +732,73 @@
                         class: 'text-gray-500',
                         path: 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z',
                     };
+                },
+
+                openShareModal(file) {
+                    this.shareFile = file;
+                    this.shareMode = file.shared ? 'anyone' : 'anyone';
+                    this.shareEmails = '';
+                    this.shareLink = file.link || '';
+                    this.shareSaving = false;
+                    this.shareError = '';
+                    this.shareSuccess = '';
+                    this.copyLabel = 'Copy';
+                    this.shareModalOpen = true;
+                },
+
+                async saveShareSettings() {
+                    if (!this.shareFile.shareUrl || this.shareSaving) return;
+
+                    this.shareSaving = true;
+                    this.shareError = '';
+                    this.shareSuccess = '';
+
+                    try {
+                        const response = await fetch(this.shareFile.shareUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRF-TOKEN': csrfToken,
+                            },
+                            body: JSON.stringify({
+                                share_mode: this.shareMode,
+                                emails: this.shareEmails,
+                            }),
+                        });
+                        const data = await response.json();
+
+                        if (!response.ok) {
+                            throw new Error(data.message || 'Gagal menyimpan seting berbagi.');
+                        }
+
+                        this.shareLink = data.link || this.shareLink;
+                        this.shareSuccess = data.message || 'Seting berbagi berhasil disimpan.';
+                    } catch (error) {
+                        this.shareError = error.message || 'Gagal menyimpan seting berbagi.';
+                    } finally {
+                        this.shareSaving = false;
+                    }
+                },
+
+                async copyShareLink() {
+                    if (!this.shareLink) return;
+
+                    try {
+                        await navigator.clipboard.writeText(this.shareLink);
+                        this.copyLabel = 'Tersalin';
+                    } catch (error) {
+                        const input = document.createElement('input');
+                        input.value = this.shareLink;
+                        document.body.appendChild(input);
+                        input.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(input);
+                        this.copyLabel = 'Tersalin';
+                    }
+
+                    setTimeout(() => this.copyLabel = 'Copy', 1600);
                 },
             };
         }

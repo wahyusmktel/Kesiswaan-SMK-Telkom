@@ -32,7 +32,7 @@ class GoogleDriveService
                 'q' => $query,
                 'pageSize' => 60,
                 'orderBy' => 'modifiedTime desc',
-                'fields' => 'files(id,name,mimeType,size,modifiedTime,webViewLink,iconLink,thumbnailLink)',
+                'fields' => 'files(id,name,mimeType,size,modifiedTime,webViewLink,iconLink,thumbnailLink,shared)',
                 'supportsAllDrives' => 'true',
                 'includeItemsFromAllDrives' => 'true',
             ])
@@ -121,6 +121,30 @@ class GoogleDriveService
             ->throw();
     }
 
+    public function share(User $user, string $fileId, string $mode, array $emails = []): array
+    {
+        $token = $this->accessToken($user);
+
+        if ($mode === 'anyone') {
+            $this->ensureAnyonePermission($token, $fileId);
+        } else {
+            $this->removeAnyonePermissions($token, $fileId);
+
+            foreach ($emails as $email) {
+                $this->createEmailPermission($token, $fileId, $email);
+            }
+        }
+
+        return Http::withToken($token)
+            ->acceptJson()
+            ->get("https://www.googleapis.com/drive/v3/files/{$fileId}", [
+                'fields' => 'id,name,webViewLink,shared',
+                'supportsAllDrives' => 'true',
+            ])
+            ->throw()
+            ->json();
+    }
+
     public function accessToken(User $user): string
     {
         $connection = $this->connectionFor($user);
@@ -172,5 +196,63 @@ class GoogleDriveService
             'application/vnd.openxmlformats-officedocument.presentationml.presentation' => '.pptx',
             default => '.pdf',
         };
+    }
+
+    private function ensureAnyonePermission(string $token, string $fileId): void
+    {
+        $permissions = $this->permissions($token, $fileId);
+        $exists = collect($permissions)->contains(fn ($permission) => ($permission['type'] ?? null) === 'anyone');
+
+        if ($exists) {
+            return;
+        }
+
+        Http::withToken($token)
+            ->acceptJson()
+            ->post("https://www.googleapis.com/drive/v3/files/{$fileId}/permissions", [
+                'type' => 'anyone',
+                'role' => 'reader',
+                'allowFileDiscovery' => false,
+            ])
+            ->throw();
+    }
+
+    private function removeAnyonePermissions(string $token, string $fileId): void
+    {
+        foreach ($this->permissions($token, $fileId) as $permission) {
+            if (($permission['type'] ?? null) !== 'anyone') {
+                continue;
+            }
+
+            Http::withToken($token)
+                ->delete("https://www.googleapis.com/drive/v3/files/{$fileId}/permissions/{$permission['id']}")
+                ->throw();
+        }
+    }
+
+    private function createEmailPermission(string $token, string $fileId, string $email): void
+    {
+        Http::withToken($token)
+            ->acceptJson()
+            ->post("https://www.googleapis.com/drive/v3/files/{$fileId}/permissions?sendNotificationEmail=true", [
+                'type' => 'user',
+                'role' => 'reader',
+                'emailAddress' => $email,
+            ])
+            ->throw();
+    }
+
+    private function permissions(string $token, string $fileId): array
+    {
+        $response = Http::withToken($token)
+            ->acceptJson()
+            ->get("https://www.googleapis.com/drive/v3/files/{$fileId}/permissions", [
+                'fields' => 'permissions(id,type,emailAddress,role)',
+                'supportsAllDrives' => 'true',
+            ])
+            ->throw()
+            ->json();
+
+        return $response['permissions'] ?? [];
     }
 }

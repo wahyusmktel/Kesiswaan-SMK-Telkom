@@ -91,6 +91,41 @@ class CloudGoogleDriveController extends Controller
         return redirect()->route('cloud-files.index');
     }
 
+    public function share(Request $request, string $fileId, GoogleDriveService $drive)
+    {
+        $data = $request->validate([
+            'share_mode' => ['required', 'in:anyone,email'],
+            'emails' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $emails = collect(preg_split('/[\s,;]+/', $data['emails'] ?? '', -1, PREG_SPLIT_NO_EMPTY))
+            ->map(fn ($email) => trim($email))
+            ->filter(fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL))
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($data['share_mode'] === 'email' && empty($emails)) {
+            return response()->json([
+                'message' => 'Isi minimal satu email undangan yang valid.',
+            ], 422);
+        }
+
+        try {
+            $file = $drive->share(Auth::user(), $fileId, $data['share_mode'], $emails);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => 'Gagal mengatur berbagi file: ' . $e->getMessage(),
+            ], 422);
+        }
+
+        return response()->json([
+            'message' => 'Seting berbagi berhasil disimpan.',
+            'link' => $file['webViewLink'] ?? null,
+            'shared' => (bool) ($file['shared'] ?? true),
+        ]);
+    }
+
     private function driveScopes(): array
     {
         return array_values(array_filter(array_map('trim', explode(',', config('services.google.drive_scopes')))));

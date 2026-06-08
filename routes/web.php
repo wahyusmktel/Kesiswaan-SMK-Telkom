@@ -241,6 +241,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/google-drive/connect', [\App\Http\Controllers\CloudGoogleDriveController::class, 'connect'])->name('google-drive.connect');
         Route::get('/google-drive/callback', [\App\Http\Controllers\CloudGoogleDriveController::class, 'callback'])->name('google-drive.callback');
         Route::delete('/google-drive/disconnect', [\App\Http\Controllers\CloudGoogleDriveController::class, 'disconnect'])->name('google-drive.disconnect');
+        Route::post('/google-drive/{fileId}/share', [\App\Http\Controllers\CloudGoogleDriveController::class, 'share'])->name('google-drive.share');
         Route::get('/google-drive/{fileId}/download', [\App\Http\Controllers\CloudGoogleDriveController::class, 'download'])->name('google-drive.download');
         Route::delete('/google-drive/{fileId}', [\App\Http\Controllers\CloudGoogleDriveController::class, 'destroy'])->name('google-drive.destroy');
         Route::get('/{cloudFile}/download', [\App\Http\Controllers\CloudFileController::class, 'download'])->name('download');
