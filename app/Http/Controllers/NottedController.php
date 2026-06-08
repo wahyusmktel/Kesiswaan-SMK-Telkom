@@ -63,6 +63,11 @@ class NottedController extends Controller
         return view('notted.uno');
     }
 
+    public function scrabble()
+    {
+        return view('notted.scrabble');
+    }
+
     /**
      * Typing Test Feature
      */

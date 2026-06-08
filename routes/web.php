@@ -151,6 +151,12 @@ Route::middleware(['auth'])->prefix('notted')->name('notted.')->group(function (
     Route::post('/uno/rooms/{room}/join', [App\Http\Controllers\NottedUnoController::class, 'join'])->name('uno.rooms.join');
     Route::get('/uno/rooms/{room}/state', [App\Http\Controllers\NottedUnoController::class, 'state'])->name('uno.rooms.state');
     Route::post('/uno/rooms/{room}/action', [App\Http\Controllers\NottedUnoController::class, 'action'])->name('uno.rooms.action');
+    Route::get('/scrabble', [App\Http\Controllers\NottedController::class, 'scrabble'])->name('scrabble');
+    Route::get('/scrabble/rooms', [App\Http\Controllers\NottedScrabbleController::class, 'rooms'])->name('scrabble.rooms');
+    Route::post('/scrabble/rooms', [App\Http\Controllers\NottedScrabbleController::class, 'create'])->name('scrabble.rooms.create');
+    Route::post('/scrabble/rooms/{room}/join', [App\Http\Controllers\NottedScrabbleController::class, 'join'])->name('scrabble.rooms.join');
+    Route::get('/scrabble/rooms/{room}/state', [App\Http\Controllers\NottedScrabbleController::class, 'state'])->name('scrabble.rooms.state');
+    Route::post('/scrabble/rooms/{room}/action', [App\Http\Controllers\NottedScrabbleController::class, 'action'])->name('scrabble.rooms.action');
 
     // Reels Routes
     Route::get('/reels', [App\Http\Controllers\NottedController::class, 'reels'])->name('reels');
