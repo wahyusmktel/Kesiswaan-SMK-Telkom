@@ -162,7 +162,7 @@
                     <div class="p-6 flex-1 flex flex-col">
                         <h3 class="text-xl font-bold text-gray-900 mb-2">UNO Stella</h3>
                         <p class="text-gray-500 text-sm leading-relaxed mb-6 flex-1">
-                            Main kartu warna-warni melawan bot, gunakan kartu aksi, tekan UNO, dan unggah gambar sendiri untuk desain kartumu.
+                            Main melawan bot atau akun lain lewat room multiplayer, gunakan kartu aksi, fullscreen, dan unggah gambar untuk skin kartu.
                         </p>
                         <div class="flex items-center justify-between mt-auto">
                             <div class="flex items-center text-xs font-bold text-gray-400">

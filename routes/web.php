@@ -146,6 +146,11 @@ Route::middleware(['auth'])->prefix('notted')->name('notted.')->group(function (
     Route::post('/typing-test', [App\Http\Controllers\NottedController::class, 'storeTypingResult'])->name('typing-test.store');
     Route::get('/snake-ladder', [App\Http\Controllers\NottedController::class, 'snakeLadder'])->name('snake-ladder');
     Route::get('/uno', [App\Http\Controllers\NottedController::class, 'uno'])->name('uno');
+    Route::get('/uno/rooms', [App\Http\Controllers\NottedUnoController::class, 'rooms'])->name('uno.rooms');
+    Route::post('/uno/rooms', [App\Http\Controllers\NottedUnoController::class, 'create'])->name('uno.rooms.create');
+    Route::post('/uno/rooms/{room}/join', [App\Http\Controllers\NottedUnoController::class, 'join'])->name('uno.rooms.join');
+    Route::get('/uno/rooms/{room}/state', [App\Http\Controllers\NottedUnoController::class, 'state'])->name('uno.rooms.state');
+    Route::post('/uno/rooms/{room}/action', [App\Http\Controllers\NottedUnoController::class, 'action'])->name('uno.rooms.action');
 
     // Reels Routes
     Route::get('/reels', [App\Http\Controllers\NottedController::class, 'reels'])->name('reels');

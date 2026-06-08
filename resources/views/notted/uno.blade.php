@@ -51,7 +51,7 @@
         .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, .45); border-radius: 999px; }
     </style>
 
-    <div class="min-h-screen uno-table text-white" x-data="unoGame()" x-init="init()">
+    <div class="min-h-screen uno-table text-white" x-data="unoGame()" x-init="init()" x-ref="unoRoot">
         <header class="sticky top-0 z-40 border-b border-white/10 bg-slate-950/70 backdrop-blur-xl">
             <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
                 <div class="flex items-center gap-3">
@@ -66,30 +66,58 @@
                     </div>
                 </div>
 
-                <div class="hidden items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-slate-300 sm:flex">
-                    <span class="h-2 w-2 rounded-full" :class="currentColorClass()"></span>
-                    <span x-text="'Giliran: ' + players[currentPlayer].name"></span>
+                <div class="flex items-center gap-2">
+                    <div class="hidden items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-slate-300 sm:flex">
+                        <span class="h-2 w-2 rounded-full" :class="currentColorClass()"></span>
+                        <span x-text="'Giliran: ' + currentTurnName()"></span>
+                    </div>
+                    <button type="button" @click="toggleFullscreen()"
+                        class="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10 hover:text-white"
+                        :title="isFullscreen ? 'Keluar fullscreen' : 'Mode fullscreen'">
+                        <svg x-show="!isFullscreen" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4" />
+                        </svg>
+                        <svg x-show="isFullscreen" x-cloak class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 4v4H4M16 4v4h4M8 20v-4H4M16 20v-4h4" />
+                        </svg>
+                    </button>
                 </div>
             </div>
         </header>
 
         <main class="mx-auto grid max-w-7xl gap-5 px-4 py-6 sm:px-6 lg:grid-cols-[1fr_320px] lg:px-8">
             <section class="space-y-5">
+                <div class="flex flex-col gap-3 rounded-[28px] border border-white/10 bg-white/[0.06] p-3 shadow-2xl shadow-black/10 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+                    <div class="inline-flex rounded-2xl border border-white/10 bg-slate-950/45 p-1">
+                        <button type="button" @click="setMode('solo')"
+                            class="rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest transition"
+                            :class="mode === 'solo' ? 'bg-white text-slate-950' : 'text-slate-400 hover:text-white'">
+                            Solo
+                        </button>
+                        <button type="button" @click="setMode('multi')"
+                            class="rounded-xl px-4 py-2 text-xs font-black uppercase tracking-widest transition"
+                            :class="mode === 'multi' ? 'bg-rose-500 text-white' : 'text-slate-400 hover:text-white'">
+                            Multiplayer
+                        </button>
+                    </div>
+                    <p class="text-xs font-semibold text-slate-400" x-text="mode === 'solo' ? 'Main cepat melawan bot.' : 'Buat room dan ajak akun lain join. State sinkron otomatis.'"></p>
+                </div>
+
                 <div class="grid gap-4 md:grid-cols-2">
-                    <template x-for="(bot, index) in botPlayers()" :key="bot.name">
+                    <template x-for="(opponent, index) in opponents()" :key="opponent.name + index">
                         <div class="rounded-3xl border border-white/10 bg-white/[0.06] p-4 shadow-2xl shadow-black/20 backdrop-blur">
                             <div class="mb-4 flex items-center justify-between">
                                 <div>
-                                    <p class="text-sm font-black" x-text="bot.name"></p>
-                                    <p class="text-xs font-semibold text-slate-400" x-text="bot.cards.length + ' kartu tersisa'"></p>
+                                    <p class="text-sm font-black" x-text="opponent.name"></p>
+                                    <p class="text-xs font-semibold text-slate-400" x-text="opponentCardCount(opponent) + ' kartu tersisa'"></p>
                                 </div>
                                 <div class="rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest"
-                                    :class="currentPlayer === bot.id ? 'bg-rose-500 text-white' : 'bg-white/10 text-slate-400'">
-                                    <span x-text="currentPlayer === bot.id ? 'Main' : 'Menunggu'"></span>
+                                    :class="isOpponentTurn(opponent) ? 'bg-rose-500 text-white' : 'bg-white/10 text-slate-400'">
+                                    <span x-text="isOpponentTurn(opponent) ? 'Main' : 'Menunggu'"></span>
                                 </div>
                             </div>
                             <div class="flex min-h-[68px] -space-x-5 overflow-hidden">
-                                <template x-for="i in Math.min(bot.cards.length, 12)" :key="i">
+                                <template x-for="i in Math.min(opponentCardCount(opponent), 12)" :key="i">
                                     <div class="uno-card-small card-back relative flex shrink-0 items-center justify-center border border-white/15">
                                         <div class="absolute inset-0 rounded-[10px]" x-show="cardSkin" :style="skinStyle(.5)"></div>
                                         <span class="relative text-[10px] font-black tracking-tighter text-white">UNO</span>
@@ -104,7 +132,7 @@
                     <div class="absolute inset-x-8 top-1/2 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
                     <div class="relative grid items-center gap-6 md:grid-cols-[1fr_auto_1fr]">
                         <div class="flex flex-col items-center gap-3">
-                            <button type="button" @click="drawCard()" :disabled="!isPlayerTurn() || gameOver"
+                            <button type="button" @click="drawCard()" :disabled="!isPlayerTurn() || isGameOver()"
                                 class="group relative uno-card card-back flex items-center justify-center border border-white/15 transition disabled:cursor-not-allowed disabled:opacity-50 hover:-translate-y-1">
                                 <div class="absolute inset-0 rounded-[18px]" x-show="cardSkin" :style="skinStyle(.65)"></div>
                                 <div class="relative rounded-full border-4 border-white px-3 py-6 text-center">
@@ -112,7 +140,7 @@
                                     <span class="block text-[9px] font-black uppercase tracking-widest text-rose-200">Deck</span>
                                 </div>
                             </button>
-                            <p class="text-xs font-bold text-slate-400" x-text="deck.length + ' kartu di deck'"></p>
+                            <p class="text-xs font-bold text-slate-400" x-text="deckCount() + ' kartu di deck'"></p>
                         </div>
 
                         <div class="flex flex-col items-center gap-3">
@@ -129,11 +157,11 @@
                         </div>
 
                         <div class="flex flex-col items-center gap-3">
-                            <div class="uno-card relative flex items-center justify-center overflow-hidden border-4 border-white/90 p-2" :class="cardClass(topCard)">
-                                <div class="absolute inset-0" x-show="cardSkin && topCard.color !== 'wild'" :style="skinStyle(.18)"></div>
-                                <div class="absolute left-3 top-3 text-lg font-black" x-text="cardLabel(topCard)"></div>
-                                <div class="relative flex h-20 w-20 rotate-[-18deg] items-center justify-center rounded-full bg-white/90 text-3xl font-black text-slate-950 shadow-inner" x-text="cardLabel(topCard)"></div>
-                                <div class="absolute bottom-3 right-3 rotate-180 text-lg font-black" x-text="cardLabel(topCard)"></div>
+                            <div class="uno-card relative flex items-center justify-center overflow-hidden border-4 border-white/90 p-2" :class="cardClass(topCard())">
+                                <div class="absolute inset-0" x-show="cardSkin && topCard().color !== 'wild'" :style="skinStyle(.18)"></div>
+                                <div class="absolute left-3 top-3 text-lg font-black" x-text="cardLabel(topCard())"></div>
+                                <div class="relative flex h-20 w-20 rotate-[-18deg] items-center justify-center rounded-full bg-white/90 text-3xl font-black text-slate-950 shadow-inner" x-text="cardLabel(topCard())"></div>
+                                <div class="absolute bottom-3 right-3 rotate-180 text-lg font-black" x-text="cardLabel(topCard())"></div>
                             </div>
                             <p class="text-xs font-bold text-slate-400">Kartu buangan</p>
                         </div>
@@ -144,28 +172,28 @@
                     <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <h2 class="text-lg font-black">Kartu Kamu</h2>
-                            <p class="text-xs font-semibold text-slate-400" x-text="players[0].cards.length + ' kartu di tangan'"></p>
+                            <p class="text-xs font-semibold text-slate-400" x-text="myCards().length + ' kartu di tangan'"></p>
                         </div>
                         <div class="flex flex-wrap gap-2">
-                            <button type="button" @click="callUno()" :disabled="!isPlayerTurn() || players[0].cards.length !== 2"
+                            <button type="button" @click="callUno()" :disabled="!isPlayerTurn() || myCards().length !== 2"
                                 class="rounded-2xl bg-yellow-400 px-5 py-2 text-xs font-black uppercase tracking-widest text-slate-950 transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-40">
                                 UNO
                             </button>
-                            <button type="button" @click="passTurn()" :disabled="!isPlayerTurn() || !hasDrawnThisTurn || gameOver"
+                            <button type="button" @click="passTurn()" :disabled="!isPlayerTurn() || !turnDrawn() || isGameOver()"
                                 class="rounded-2xl border border-white/10 bg-white/10 px-5 py-2 text-xs font-black uppercase tracking-widest text-white transition hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-40">
                                 Pass
                             </button>
-                            <button type="button" @click="newGame()" class="rounded-2xl bg-rose-600 px-5 py-2 text-xs font-black uppercase tracking-widest text-white transition hover:bg-rose-500">
+                            <button type="button" @click="resetActiveGame()" class="rounded-2xl bg-rose-600 px-5 py-2 text-xs font-black uppercase tracking-widest text-white transition hover:bg-rose-500">
                                 Game Baru
                             </button>
                         </div>
                     </div>
 
                     <div class="scrollbar-thin flex min-h-[166px] gap-3 overflow-x-auto pb-3">
-                        <template x-for="(card, index) in players[0].cards" :key="card.id">
-                            <button type="button" @click="playCard(0, index)" :disabled="!isPlayerTurn() || !canPlay(card) || choosingColor || gameOver"
+                        <template x-for="(card, index) in myCards()" :key="card.id">
+                            <button type="button" @click="playCard(0, index)" :disabled="!isPlayerTurn() || !canPlay(card) || choosingColor || isGameOver()"
                                 class="uno-card player-card relative flex shrink-0 items-center justify-center overflow-hidden border-4 border-white/90 p-2 disabled:pointer-events-none"
-                                :class="[cardClass(card), (!isPlayerTurn() || !canPlay(card) || choosingColor || gameOver) ? 'disabled' : '']"
+                                :class="[cardClass(card), (!isPlayerTurn() || !canPlay(card) || choosingColor || isGameOver()) ? 'disabled' : '']"
                                 :style="'--tilt:' + ((index % 5) - 2) * 2 + 'deg'">
                                 <div class="absolute inset-0" x-show="cardSkin && card.color !== 'wild'" :style="skinStyle(.2)"></div>
                                 <div class="absolute left-3 top-3 text-lg font-black" x-text="cardLabel(card)"></div>
@@ -178,6 +206,61 @@
             </section>
 
             <aside class="space-y-5">
+                <div x-show="mode === 'multi'" x-cloak class="rounded-[28px] border border-rose-300/20 bg-rose-500/10 p-5 shadow-2xl shadow-black/20 backdrop-blur">
+                    <div class="mb-4 flex items-center justify-between gap-3">
+                        <div>
+                            <h3 class="text-sm font-black uppercase tracking-widest text-rose-100">Multiplayer Room</h3>
+                            <p class="text-xs font-semibold text-rose-100/70" x-text="activeRoom ? 'Room #' + activeRoom.code : 'Belum masuk room'"></p>
+                        </div>
+                        <button type="button" @click="loadRooms()" class="rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white transition hover:bg-white/15">
+                            Refresh
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" @click="createRoom()" :disabled="loadingRoom"
+                            class="rounded-2xl bg-white px-4 py-3 text-xs font-black uppercase tracking-widest text-slate-950 transition hover:bg-rose-100 disabled:opacity-50">
+                            Buat Room
+                        </button>
+                        <button type="button" @click="copyRoomCode()" :disabled="!activeRoom"
+                            class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-xs font-black uppercase tracking-widest text-white transition hover:bg-white/15 disabled:opacity-40">
+                            Copy Kode
+                        </button>
+                    </div>
+
+                    <div class="mt-4 rounded-2xl bg-slate-950/45 p-3" x-show="activeRoom">
+                        <p class="text-[10px] font-black uppercase tracking-widest text-slate-500">Pemain</p>
+                        <p class="mt-1 text-sm font-bold text-white" x-text="roomPlayersText()"></p>
+                    </div>
+
+                    <div class="mt-4 space-y-2">
+                        <template x-for="room in rooms" :key="room.id">
+                            <div class="rounded-2xl border border-white/10 bg-slate-950/35 p-3">
+                                <div class="mb-2 flex items-center justify-between gap-2">
+                                    <div>
+                                        <p class="text-sm font-black text-white" x-text="'#' + room.code"></p>
+                                        <p class="text-xs font-semibold text-slate-400" x-text="(room.host?.name || '-') + ' vs ' + (room.guest?.name || 'menunggu')"></p>
+                                    </div>
+                                    <span class="rounded-full px-2 py-1 text-[10px] font-black uppercase"
+                                        :class="room.status === 'waiting' ? 'bg-yellow-400 text-slate-950' : (room.status === 'active' ? 'bg-emerald-500 text-white' : 'bg-white/10 text-slate-300')"
+                                        x-text="room.status"></span>
+                                </div>
+                                <button type="button" @click="joinRoom(room)" x-show="room.can_join"
+                                    class="w-full rounded-xl bg-rose-600 px-3 py-2 text-xs font-black uppercase tracking-widest text-white transition hover:bg-rose-500">
+                                    Join Room
+                                </button>
+                                <button type="button" @click="openRoom(room)" x-show="room.is_mine && !room.can_join"
+                                    class="w-full rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-xs font-black uppercase tracking-widest text-white transition hover:bg-white/15">
+                                    Buka Room
+                                </button>
+                            </div>
+                        </template>
+                        <p x-show="rooms.length === 0" class="rounded-2xl bg-slate-950/35 p-4 text-center text-xs font-semibold text-slate-400">
+                            Belum ada room. Buat room lalu minta teman login dan join.
+                        </p>
+                    </div>
+                </div>
+
                 <div class="rounded-[28px] border border-white/10 bg-white/[0.07] p-5 shadow-2xl shadow-black/20 backdrop-blur">
                     <h3 class="mb-4 text-sm font-black uppercase tracking-widest text-slate-300">Custom Kartu</h3>
                     <label class="group flex cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed border-white/15 bg-slate-950/35 p-5 text-center transition hover:border-rose-300/70 hover:bg-white/10">
@@ -199,11 +282,11 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div class="rounded-2xl bg-slate-950/45 p-4">
                             <p class="text-[10px] font-black uppercase tracking-widest text-slate-500">Arah</p>
-                            <p class="text-lg font-black" x-text="direction === 1 ? 'Searah' : 'Berlawanan'"></p>
+                            <p class="text-lg font-black" x-text="activeDirection() === 1 ? 'Searah' : 'Berlawanan'"></p>
                         </div>
                         <div class="rounded-2xl bg-slate-950/45 p-4">
                             <p class="text-[10px] font-black uppercase tracking-widest text-slate-500">Warna</p>
-                            <p class="text-lg font-black capitalize" x-text="currentColor"></p>
+                            <p class="text-lg font-black capitalize" x-text="activeColor()"></p>
                         </div>
                     </div>
                 </div>
@@ -211,7 +294,7 @@
                 <div class="rounded-[28px] border border-white/10 bg-white/[0.07] p-5 shadow-2xl shadow-black/20 backdrop-blur">
                     <h3 class="mb-4 text-sm font-black uppercase tracking-widest text-slate-300">Log Permainan</h3>
                     <div class="scrollbar-thin max-h-72 space-y-2 overflow-y-auto pr-1">
-                        <template x-for="item in logs" :key="item.id">
+                        <template x-for="item in activeLogs()" :key="item.id">
                             <div class="rounded-2xl bg-slate-950/45 px-3 py-2 text-xs font-semibold text-slate-300" x-text="item.text"></div>
                         </template>
                     </div>
@@ -224,6 +307,7 @@
         function unoGame() {
             return {
                 colors: ['red', 'yellow', 'green', 'blue'],
+                mode: 'solo',
                 deck: [],
                 discard: [],
                 players: [],
@@ -237,10 +321,20 @@
                 gameOver: false,
                 message: 'Mulai',
                 logs: [],
+                rooms: [],
+                activeRoom: null,
+                mpState: null,
+                poller: null,
+                loadingRoom: false,
+                isFullscreen: false,
                 cardSkin: localStorage.getItem('notted_uno_card_skin') || '',
+                csrfToken: document.querySelector('meta[name="csrf-token"]')?.content || '',
 
                 init() {
                     this.newGame();
+                    document.addEventListener('fullscreenchange', () => {
+                        this.isFullscreen = Boolean(document.fullscreenElement);
+                    });
                 },
 
                 newGame() {
@@ -276,6 +370,35 @@
                     this.addLog('Game baru dimulai. Cocokkan warna atau angka.');
                 },
 
+                setMode(mode) {
+                    this.mode = mode;
+                    this.choosingColor = false;
+                    this.pendingWildCard = null;
+
+                    if (mode === 'multi') {
+                        this.loadRooms();
+                        this.startPolling();
+                    } else {
+                        this.stopPolling();
+                        this.activeRoom = null;
+                        this.mpState = null;
+                        this.message = 'Giliran kamu';
+                    }
+                },
+
+                resetActiveGame() {
+                    if (this.mode === 'multi') {
+                        if (this.activeRoom) {
+                            this.sendRoomAction({ action: 'restart' });
+                        } else {
+                            this.createRoom();
+                        }
+                        return;
+                    }
+
+                    this.newGame();
+                },
+
                 buildDeck() {
                     const deck = [];
                     let id = 1;
@@ -306,7 +429,11 @@
                     return list;
                 },
 
-                get topCard() {
+                topCard() {
+                    if (this.mode === 'multi') {
+                        return this.mpState?.top_card || { color: 'red', value: '0', type: 'number' };
+                    }
+
                     return this.discard[this.discard.length - 1] || { color: 'red', value: '0', type: 'number' };
                 },
 
@@ -314,15 +441,93 @@
                     return this.players.filter(player => player.id !== 0);
                 },
 
+                opponents() {
+                    if (this.mode === 'multi') {
+                        return (this.mpState?.players || []).filter(player => !player.is_me);
+                    }
+
+                    return this.botPlayers();
+                },
+
+                opponentCardCount(opponent) {
+                    return this.mode === 'multi' ? opponent.cards_count : opponent.cards.length;
+                },
+
+                isOpponentTurn(opponent) {
+                    return this.mode === 'multi'
+                        ? this.mpState?.current_slot === opponent.slot
+                        : this.currentPlayer === opponent.id;
+                },
+
+                myCards() {
+                    if (this.mode === 'multi') {
+                        return (this.mpState?.players || []).find(player => player.is_me)?.cards || [];
+                    }
+
+                    return this.players[0]?.cards || [];
+                },
+
+                deckCount() {
+                    return this.mode === 'multi' ? (this.mpState?.deck_count || 0) : this.deck.length;
+                },
+
+                currentTurnName() {
+                    if (this.mode === 'multi') {
+                        const player = (this.mpState?.players || []).find(item => item.slot === this.mpState?.current_slot);
+                        return player?.name || 'Menunggu';
+                    }
+
+                    return this.players[this.currentPlayer]?.name || 'Menunggu';
+                },
+
+                activeDirection() {
+                    return this.mode === 'multi' ? (this.mpState?.direction || 1) : this.direction;
+                },
+
+                activeColor() {
+                    return this.mode === 'multi' ? (this.mpState?.current_color || 'red') : this.currentColor;
+                },
+
+                activeLogs() {
+                    return this.mode === 'multi' ? (this.mpState?.logs || []) : this.logs;
+                },
+
+                turnDrawn() {
+                    return this.mode === 'multi' ? Boolean(this.mpState?.turn_drawn) : this.hasDrawnThisTurn;
+                },
+
+                isGameOver() {
+                    return this.mode === 'multi' ? this.mpState?.status === 'finished' : this.gameOver;
+                },
+
                 isPlayerTurn() {
+                    if (this.mode === 'multi') {
+                        return Boolean(this.mpState?.is_my_turn) && this.mpState?.status === 'active';
+                    }
+
                     return this.currentPlayer === 0;
                 },
 
                 canPlay(card) {
-                    return card.color === 'wild' || card.color === this.currentColor || card.value === this.topCard.value;
+                    return card.color === 'wild' || card.color === this.activeColor() || card.value === this.topCard().value;
                 },
 
                 playCard(playerId, cardIndex) {
+                    if (this.mode === 'multi') {
+                        const card = this.myCards()[cardIndex];
+                        if (!card || !this.canPlay(card) || !this.isPlayerTurn()) return;
+
+                        if (card.color === 'wild') {
+                            this.pendingWildCard = { card, cardIndex };
+                            this.choosingColor = true;
+                            this.message = 'Pilih warna';
+                            return;
+                        }
+
+                        this.sendRoomAction({ action: 'play', card_id: card.id });
+                        return;
+                    }
+
                     if (this.gameOver || playerId !== this.currentPlayer) return;
 
                     const player = this.players[playerId];
@@ -363,6 +568,16 @@
                 },
 
                 chooseWildColor(color) {
+                    if (this.mode === 'multi') {
+                        if (!this.pendingWildCard?.card) return;
+
+                        this.choosingColor = false;
+                        const card = this.pendingWildCard.card;
+                        this.pendingWildCard = null;
+                        this.sendRoomAction({ action: 'play', card_id: card.id, color });
+                        return;
+                    }
+
                     if (!this.pendingWildCard) return;
 
                     this.currentColor = color;
@@ -433,6 +648,12 @@
                 },
 
                 drawCard() {
+                    if (this.mode === 'multi') {
+                        if (!this.isPlayerTurn() || this.isGameOver() || this.choosingColor) return;
+                        this.sendRoomAction({ action: 'draw' });
+                        return;
+                    }
+
                     if (!this.isPlayerTurn() || this.gameOver || this.choosingColor) return;
 
                     this.drawToPlayer(0, 1);
@@ -444,6 +665,12 @@
                 },
 
                 passTurn() {
+                    if (this.mode === 'multi') {
+                        if (!this.isPlayerTurn() || !this.turnDrawn() || this.isGameOver()) return;
+                        this.sendRoomAction({ action: 'pass' });
+                        return;
+                    }
+
                     if (!this.isPlayerTurn() || !this.hasDrawnThisTurn || this.gameOver) return;
 
                     this.currentPlayer = this.nextPlayerIndex();
@@ -476,6 +703,13 @@
                 },
 
                 callUno() {
+                    if (this.mode === 'multi') {
+                        if (this.isPlayerTurn() && this.myCards().length === 2) {
+                            this.sendRoomAction({ action: 'uno' });
+                        }
+                        return;
+                    }
+
                     if (this.isPlayerTurn() && this.players[0].cards.length === 2) {
                         this.unoCalled = true;
                         this.addLog('Kamu siap UNO.');
@@ -515,7 +749,151 @@
                 },
 
                 currentColorClass() {
-                    return 'card-' + this.currentColor;
+                    return 'card-' + this.activeColor();
+                },
+
+                async toggleFullscreen() {
+                    try {
+                        if (!document.fullscreenElement) {
+                            await this.$refs.unoRoot.requestFullscreen();
+                        } else {
+                            await document.exitFullscreen();
+                        }
+                    } catch (error) {
+                        this.addLog('Browser tidak mengizinkan fullscreen.');
+                    }
+                },
+
+                async loadRooms() {
+                    if (this.mode !== 'multi') return;
+
+                    try {
+                        const data = await this.requestJson('/notted/uno/rooms');
+                        this.rooms = data.rooms || [];
+                    } catch (error) {
+                        this.addLog(error.message || 'Gagal memuat room.');
+                    }
+                },
+
+                async createRoom() {
+                    this.loadingRoom = true;
+
+                    try {
+                        const data = await this.requestJson('/notted/uno/rooms', { method: 'POST' });
+                        this.applyRoomPayload(data);
+                        await this.loadRooms();
+                        this.startPolling();
+                    } catch (error) {
+                        this.addLog(error.message || 'Gagal membuat room.');
+                    } finally {
+                        this.loadingRoom = false;
+                    }
+                },
+
+                async joinRoom(room) {
+                    try {
+                        const data = await this.requestJson(`/notted/uno/rooms/${room.id}/join`, { method: 'POST' });
+                        this.applyRoomPayload(data);
+                        await this.loadRooms();
+                        this.startPolling();
+                    } catch (error) {
+                        this.addLog(error.message || 'Gagal join room.');
+                    }
+                },
+
+                async openRoom(room) {
+                    this.activeRoom = room;
+                    await this.loadRoomState();
+                    this.startPolling();
+                },
+
+                async loadRoomState() {
+                    if (!this.activeRoom) return;
+
+                    try {
+                        const data = await this.requestJson(`/notted/uno/rooms/${this.activeRoom.id}/state`);
+                        this.applyRoomPayload(data);
+                    } catch (error) {
+                        this.addLog(error.message || 'Gagal sinkron room.');
+                    }
+                },
+
+                async sendRoomAction(payload) {
+                    if (!this.activeRoom) {
+                        this.addLog('Masuk room dulu untuk multiplayer.');
+                        return;
+                    }
+
+                    try {
+                        const data = await this.requestJson(`/notted/uno/rooms/${this.activeRoom.id}/action`, {
+                            method: 'POST',
+                            body: JSON.stringify(payload),
+                        });
+                        this.applyRoomPayload(data);
+                        await this.loadRooms();
+                    } catch (error) {
+                        this.addLog(error.message || 'Aksi tidak bisa diproses.');
+                    }
+                },
+
+                applyRoomPayload(data) {
+                    this.activeRoom = data.room || this.activeRoom;
+                    this.mpState = data.state || this.mpState;
+                    this.message = this.mpState?.message || this.activeRoom?.status || 'Multiplayer';
+                },
+
+                startPolling() {
+                    this.stopPolling();
+                    this.poller = window.setInterval(() => {
+                        if (this.mode === 'multi') {
+                            this.loadRooms();
+                            if (this.activeRoom) this.loadRoomState();
+                        }
+                    }, 2500);
+                },
+
+                stopPolling() {
+                    if (this.poller) {
+                        window.clearInterval(this.poller);
+                        this.poller = null;
+                    }
+                },
+
+                async requestJson(url, options = {}) {
+                    const response = await fetch(url, {
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': this.csrfToken,
+                            ...(options.headers || {}),
+                        },
+                        ...options,
+                    });
+
+                    const data = await response.json().catch(() => ({}));
+
+                    if (!response.ok) {
+                        throw new Error(data.message || 'Request gagal.');
+                    }
+
+                    return data;
+                },
+
+                roomPlayersText() {
+                    if (!this.activeRoom) return '-';
+
+                    return (this.activeRoom.host?.name || '-') + ' vs ' + (this.activeRoom.guest?.name || 'menunggu pemain');
+                },
+
+                async copyRoomCode() {
+                    if (!this.activeRoom) return;
+
+                    try {
+                        await navigator.clipboard.writeText(this.activeRoom.code);
+                        this.addLog('Kode room disalin: ' + this.activeRoom.code);
+                    } catch (error) {
+                        this.addLog('Kode room: ' + this.activeRoom.code);
+                    }
                 },
 
                 uploadSkin(event) {
