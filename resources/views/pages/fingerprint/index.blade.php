@@ -24,6 +24,113 @@
             </div>
         </div>
 
+        @role('Super Admin|KAUR SDM')
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div class="px-6 py-5 border-b border-gray-100 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-red-50 text-red-600">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </span>
+                            <div>
+                                <h3 class="font-black text-gray-900">Tarik Log Otomatis</h3>
+                                <p class="text-sm text-gray-500">Jadwalkan penarikan data mesin setiap hari tanpa menekan tombol manual.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <span class="inline-flex w-fit items-center rounded-full px-4 py-2 text-xs font-black uppercase tracking-widest {{ $autoSyncSetting->is_enabled ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100' : 'bg-gray-100 text-gray-500 ring-1 ring-gray-200' }}">
+                        {{ $autoSyncSetting->is_enabled ? 'Aktif' : 'Nonaktif' }}
+                    </span>
+                </div>
+
+                <form method="POST" action="{{ route('fingerprint.auto-sync-settings.update') }}" class="p-6 grid grid-cols-1 xl:grid-cols-[1.2fr_1fr] gap-6">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="space-y-5">
+                        <label class="flex items-start gap-3 rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                            <input type="checkbox" name="is_enabled" value="1" @checked($autoSyncSetting->is_enabled) class="mt-1 rounded border-gray-300 text-red-600 focus:ring-red-500">
+                            <span>
+                                <span class="block text-sm font-black text-gray-900">Aktifkan penarikan otomatis</span>
+                                <span class="block text-xs text-gray-500 mt-1">Sistem akan mengecek jadwal setiap menit melalui Laravel Scheduler, lalu mengirim job ke queue fingerprint sekali per hari.</span>
+                            </span>
+                        </label>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <label class="block">
+                                <span class="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Jam Penarikan</span>
+                                <input type="time" name="run_time" value="{{ substr((string) $autoSyncSetting->run_time, 0, 5) }}" class="w-full rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500">
+                            </label>
+                            <label class="block">
+                                <span class="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Rentang Data</span>
+                                <select name="range_type" class="w-full rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500">
+                                    <option value="1_day" @selected($autoSyncSetting->range_type === '1_day')>Hari ini</option>
+                                    <option value="2_days" @selected($autoSyncSetting->range_type === '2_days')>2 hari terakhir</option>
+                                    <option value="1_month" @selected($autoSyncSetting->range_type === '1_month')>1 bulan terakhir</option>
+                                    <option value="2_months" @selected($autoSyncSetting->range_type === '2_months')>2 bulan terakhir</option>
+                                    <option value="all" @selected($autoSyncSetting->range_type === 'all')>Semua data</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div>
+                            <div class="flex items-center justify-between gap-3 mb-3">
+                                <span class="block text-xs font-black uppercase tracking-widest text-gray-400">Mesin Yang Ditarik</span>
+                                <span class="text-xs font-semibold text-gray-400">Kosongkan pilihan untuk semua mesin aktif</span>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                @foreach($allDevices as $deviceOption)
+                                    <label class="flex items-center gap-3 rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
+                                        <input type="checkbox" name="device_ids[]" value="{{ $deviceOption->id }}" @checked(in_array($deviceOption->id, $autoSyncSetting->device_ids ?? [])) class="rounded border-gray-300 text-red-600 focus:ring-red-500">
+                                        <span class="min-w-0">
+                                            <span class="block truncate text-sm font-bold text-gray-900">{{ $deviceOption->name }}</span>
+                                            <span class="block text-xs {{ $deviceOption->is_active ? 'text-emerald-600' : 'text-gray-400' }}">{{ $deviceOption->is_active ? 'Aktif' : 'Nonaktif' }} - {{ $deviceOption->ip_address }}</span>
+                                        </span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end">
+                            <button class="inline-flex items-center justify-center rounded-xl bg-red-600 px-5 py-2.5 text-sm font-black text-white hover:bg-red-700">
+                                Simpan Jadwal Otomatis
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl bg-gray-950 p-5 text-white">
+                        <p class="text-xs font-black uppercase tracking-widest text-red-300">Status Terakhir</p>
+                        <p class="mt-2 text-2xl font-black">
+                            {{ $autoSyncSetting->last_dispatched_at ? $autoSyncSetting->last_dispatched_at->format('d M Y H:i') : 'Belum Pernah Jalan' }}
+                        </p>
+                        <p class="mt-2 text-sm text-gray-300">Queue worker `fingerprint` akan memproses job otomatis ini di belakang layar, sama seperti tombol Tarik Log manual.</p>
+
+                        <div class="mt-5 space-y-3">
+                            @forelse(($autoSyncSetting->last_progress_ids ?? []) as $lastProgress)
+                                <div class="rounded-2xl bg-white/10 border border-white/10 p-4">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <p class="font-bold truncate">{{ $lastProgress['device_name'] ?? 'Mesin fingerprint' }}</p>
+                                        <span class="rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest {{ ($lastProgress['status'] ?? '') === 'queued' ? 'bg-emerald-400/15 text-emerald-200' : 'bg-amber-400/15 text-amber-200' }}">
+                                            {{ $lastProgress['status'] ?? '-' }}
+                                        </span>
+                                    </div>
+                                    <p class="mt-1 text-xs text-gray-400">
+                                        {{ $lastProgress['message'] ?? (($lastProgress['range'] ?? '-') . ' - ' . ($lastProgress['progress_id'] ?? '-')) }}
+                                    </p>
+                                </div>
+                            @empty
+                                <div class="rounded-2xl bg-white/10 border border-white/10 p-4 text-sm text-gray-300">
+                                    Belum ada riwayat dispatch otomatis.
+                                </div>
+                            @endforelse
+                        </div>
+                    </div>
+                </form>
+            </div>
+        @endrole
+
         <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>

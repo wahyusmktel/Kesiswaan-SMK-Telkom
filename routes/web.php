@@ -811,6 +811,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/', [\App\Http\Controllers\FingerprintController::class, 'store'])->name('store');
         Route::get('/time-settings', [\App\Http\Controllers\FingerprintController::class, 'timeSettings'])->name('time-settings');
         Route::put('/time-settings', [\App\Http\Controllers\FingerprintController::class, 'updateTimeSettings'])->name('time-settings.update');
+        Route::put('/auto-sync-settings', [\App\Http\Controllers\FingerprintController::class, 'updateAutoSyncSettings'])
+            ->middleware('role:Super Admin|KAUR SDM')
+            ->name('auto-sync-settings.update');
         Route::put('/security-shift-settings', [\App\Http\Controllers\FingerprintController::class, 'updateSecurityShiftSettings'])->name('security-shift-settings.update');
         Route::get('/mappings', [\App\Http\Controllers\FingerprintController::class, 'mappings'])->name('mappings');
         Route::get('/logs', [\App\Http\Controllers\FingerprintController::class, 'logs'])->name('logs');

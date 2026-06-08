@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exports\FingerprintAttendanceMonitoringExport;
 use App\Jobs\SyncFingerprintAttendancesJob;
 use App\Models\FingerprintAttendance;
+use App\Models\FingerprintAutoSyncSetting;
 use App\Models\FingerprintDevice;
 use App\Models\FingerprintAttendanceSetting;
 use App\Models\FingerprintSecurityShift;
@@ -36,8 +37,9 @@ class FingerprintController extends Controller
 
         $fingerprintUsers = $this->fingerprintUserQuery($request)->paginate(20)->withQueryString();
         $allDevices = FingerprintDevice::orderBy('name')->get();
+        $autoSyncSetting = FingerprintAutoSyncSetting::getSetting();
 
-        return view('pages.fingerprint.index', compact('devices', 'fingerprintUsers', 'allDevices'));
+        return view('pages.fingerprint.index', compact('devices', 'fingerprintUsers', 'allDevices', 'autoSyncSetting'));
     }
 
     public function create()
@@ -544,6 +546,26 @@ class FingerprintController extends Controller
         }
 
         return back()->with('success', 'Tarik log berjalan di background. Pastikan queue worker aktif.');
+    }
+
+    public function updateAutoSyncSettings(Request $request)
+    {
+        $data = $request->validate([
+            'is_enabled' => ['nullable', 'boolean'],
+            'run_time' => ['required', 'date_format:H:i'],
+            'range_type' => ['required', 'in:1_day,2_days,1_month,2_months,all'],
+            'device_ids' => ['nullable', 'array'],
+            'device_ids.*' => ['integer', 'exists:fingerprint_devices,id'],
+        ]);
+
+        FingerprintAutoSyncSetting::getSetting()->update([
+            'is_enabled' => $request->boolean('is_enabled'),
+            'run_time' => $data['run_time'] . ':00',
+            'range_type' => $data['range_type'],
+            'device_ids' => array_values(array_filter($data['device_ids'] ?? [])),
+        ]);
+
+        return back()->with('success', 'Seting tarik log otomatis berhasil disimpan.');
     }
 
     public function syncProgress(string $progressId)
