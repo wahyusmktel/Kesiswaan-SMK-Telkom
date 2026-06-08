@@ -48,6 +48,12 @@ class CloudFileController extends Controller
                     try {
                         $drive->upload(Auth::user(), $file);
                     } catch (Exception $e) {
+                        if ($request->expectsJson()) {
+                            return response()->json([
+                                'message' => 'Gagal upload ke Google Drive: ' . $e->getMessage(),
+                            ], 422);
+                        }
+
                         return back()->withErrors(['files' => 'Gagal upload ke Google Drive: ' . $e->getMessage()]);
                     }
 
@@ -75,6 +81,15 @@ class CloudFileController extends Controller
         }
 
         toast($request->input('storage_target') === 'google_drive' ? 'File berhasil diunggah ke Google Drive.' : 'File berhasil diunggah.', 'success');
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => $request->input('storage_target') === 'google_drive'
+                    ? 'File berhasil diunggah ke Google Drive.'
+                    : 'File berhasil diunggah.',
+            ]);
+        }
+
         return redirect()->back();
     }
 
