@@ -165,6 +165,7 @@ class UksMedicalRecordController extends Controller
             'complaint' => ['required', 'string', 'max:255'],
             'symptoms' => ['nullable', 'array'],
             'symptoms.*' => ['nullable', 'string', 'max:80'],
+            'symptom_other' => ['nullable', 'string', 'max:120'],
             'anamnesis' => ['nullable', 'string'],
             'diagnosis' => ['nullable', 'string', 'max:255'],
             'treatment' => ['nullable', 'string'],
@@ -184,6 +185,20 @@ class UksMedicalRecordController extends Controller
         ]);
 
         $data['symptoms'] = array_values(array_filter($data['symptoms'] ?? []));
+        if (!empty($data['symptom_other'])) {
+            $data['symptoms'][] = $data['symptom_other'];
+        }
+        unset($data['symptom_other']);
+
+        if (($data['disposition'] ?? null) !== 'rujukan') {
+            $data['referral_facility_type'] = null;
+            $data['referral_facility_name'] = null;
+            $data['referral_reason'] = null;
+        }
+
+        if (($data['disposition'] ?? null) !== 'pulang') {
+            $data['parent_notification'] = null;
+        }
 
         return $data;
     }

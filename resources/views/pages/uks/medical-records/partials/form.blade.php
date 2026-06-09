@@ -1,16 +1,57 @@
-<div class="max-h-[72vh] overflow-y-auto p-6">
+@php
+    $knownSymptoms = ['Demam','Pusing','Mual','Muntah','Batuk','Pilek','Nyeri perut','Lemas','Sesak','Cedera ringan','Pingsan','Diare'];
+    $symptoms = old('symptoms', $record?->symptoms ?? []);
+    $otherSymptoms = collect($symptoms)->reject(fn ($symptom) => in_array($symptom, $knownSymptoms))->implode(', ');
+    $selectedStudentId = (string) old('master_siswa_id', $record?->master_siswa_id ?? '');
+    $selectedStudent = $students->firstWhere('id', (int) $selectedStudentId);
+    $studentOptions = $students->map(fn ($student) => [
+        'id' => (string) $student->id,
+        'label' => $student->nama_lengkap . ' - ' . $student->nis . ' - ' . ($student->rombels->first()?->kelas?->nama_kelas ?? '-'),
+        'name' => $student->nama_lengkap,
+        'nis' => $student->nis,
+        'class' => $student->rombels->first()?->kelas?->nama_kelas ?? '-',
+    ])->values();
+@endphp
+
+<div class="max-h-[72vh] overflow-y-auto p-6"
+    x-data="{
+        students: @js($studentOptions),
+        selectedStudentId: @js($selectedStudentId),
+        studentSearch: @js($selectedStudent ? ($selectedStudent->nama_lengkap . ' - ' . $selectedStudent->nis . ' - ' . ($selectedStudent->rombels->first()?->kelas?->nama_kelas ?? '-')) : ''),
+        studentOpen: false,
+        disposition: @js(old('disposition', $record?->disposition ?? 'kembali_kelas')),
+        symptomOtherEnabled: @js(filled(old('symptom_other', $otherSymptoms))),
+        symptomOther: @js(old('symptom_other', $otherSymptoms)),
+        get filteredStudents() {
+            const query = this.studentSearch.toLowerCase().trim();
+            if (!query) return this.students.slice(0, 25);
+            return this.students.filter((student) => student.label.toLowerCase().includes(query)).slice(0, 25);
+        },
+        chooseStudent(student) {
+            this.selectedStudentId = student.id;
+            this.studentSearch = student.label;
+            this.studentOpen = false;
+        }
+    }">
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <label class="block lg:col-span-2">
+        <div class="block lg:col-span-2 relative" @click.away="studentOpen = false">
             <span class="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Siswa</span>
-            <select name="master_siswa_id" required class="w-full rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500">
-                <option value="">Pilih siswa</option>
-                @foreach($students as $student)
-                    <option value="{{ $student->id }}" @selected(old('master_siswa_id', $record?->master_siswa_id) == $student->id)>
-                        {{ $student->nama_lengkap }} - {{ $student->nis }} - {{ $student->rombels->first()?->kelas?->nama_kelas ?? '-' }}
-                    </option>
-                @endforeach
-            </select>
-        </label>
+            <input type="hidden" name="master_siswa_id" :value="selectedStudentId" required>
+            <input type="text" x-model="studentSearch" @focus="studentOpen = true" @input="studentOpen = true; selectedStudentId = ''"
+                class="w-full rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500"
+                placeholder="Ketik nama, NIS, atau kelas siswa...">
+            <div x-show="studentOpen" x-cloak class="absolute z-30 mt-2 max-h-64 w-full overflow-y-auto rounded-2xl border border-gray-200 bg-white shadow-xl">
+                <template x-for="student in filteredStudents" :key="student.id">
+                    <button type="button" @click="chooseStudent(student)" class="block w-full px-4 py-3 text-left hover:bg-red-50">
+                        <span class="block text-sm font-black text-gray-900" x-text="student.name"></span>
+                        <span class="block text-xs font-semibold text-gray-400" x-text="student.nis + ' - ' + student.class"></span>
+                    </button>
+                </template>
+                <div x-show="filteredStudents.length === 0" class="px-4 py-4 text-sm font-semibold text-gray-500">
+                    Siswa tidak ditemukan.
+                </div>
+            </div>
+        </div>
         <label class="block">
             <span class="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Waktu Kunjungan</span>
             <input type="datetime-local" name="visited_at" required value="{{ old('visited_at', $record?->visited_at?->format('Y-m-d\\TH:i') ?? now()->format('Y-m-d\\TH:i')) }}" class="w-full rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500">
@@ -41,14 +82,20 @@
         </label>
         <label class="block lg:col-span-3">
             <span class="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Gejala</span>
-            @php $symptoms = old('symptoms', $record?->symptoms ?? []); @endphp
             <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-                @foreach(['Demam','Pusing','Mual','Muntah','Batuk','Pilek','Nyeri perut','Lemas','Sesak','Cedera ringan','Pingsan','Diare'] as $symptom)
+                @foreach($knownSymptoms as $symptom)
                     <label class="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-bold text-gray-700">
                         <input type="checkbox" name="symptoms[]" value="{{ $symptom }}" @checked(in_array($symptom, $symptoms)) class="rounded border-gray-300 text-red-600 focus:ring-red-500">
                         {{ $symptom }}
                     </label>
                 @endforeach
+                <label class="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-bold text-gray-700">
+                    <input type="checkbox" x-model="symptomOtherEnabled" class="rounded border-gray-300 text-red-600 focus:ring-red-500">
+                    Lainnya
+                </label>
+            </div>
+            <div x-show="symptomOtherEnabled" x-cloak class="mt-3">
+                <input name="symptom_other" x-model="symptomOther" :disabled="!symptomOtherEnabled" class="w-full rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500" placeholder="Tulis gejala lainnya">
             </div>
         </label>
         <label class="block lg:col-span-3">
@@ -69,7 +116,7 @@
         </label>
         <label class="block">
             <span class="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Tindak Lanjut</span>
-            <select name="disposition" class="w-full rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500">
+            <select name="disposition" x-model="disposition" class="w-full rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500">
                 @foreach(['kembali_kelas' => 'Kembali kelas', 'istirahat_uks' => 'Istirahat di UKS', 'pulang' => 'Dipulangkan', 'rujukan' => 'Rujukan'] as $key => $label)
                     <option value="{{ $key }}" @selected(old('disposition', $record?->disposition ?? 'kembali_kelas') === $key)>{{ $label }}</option>
                 @endforeach
@@ -83,7 +130,7 @@
             <span class="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Saturasi O2</span>
             <input type="number" name="oxygen_saturation" value="{{ old('oxygen_saturation', $record?->oxygen_saturation) }}" class="w-full rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500" placeholder="98">
         </label>
-        <label class="block">
+        <label x-show="disposition === 'rujukan'" x-cloak class="block">
             <span class="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Jenis Faskes Rujukan</span>
             <select name="referral_facility_type" class="w-full rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500">
                 <option value="">Tidak dirujuk</option>
@@ -92,13 +139,17 @@
                 <option value="Klinik" @selected(old('referral_facility_type', $record?->referral_facility_type) === 'Klinik')>Klinik</option>
             </select>
         </label>
-        <label class="block lg:col-span-2">
+        <label x-show="disposition === 'rujukan'" x-cloak class="block lg:col-span-2">
             <span class="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Nama Faskes Rujukan</span>
             <input name="referral_facility_name" value="{{ old('referral_facility_name', $record?->referral_facility_name) }}" class="w-full rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500" placeholder="Puskesmas / RS tujuan">
         </label>
-        <label class="block lg:col-span-3">
-            <span class="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Alasan Rujukan / Catatan Orang Tua</span>
+        <label x-show="disposition === 'rujukan'" x-cloak class="block lg:col-span-3">
+            <span class="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Alasan Rujukan</span>
             <textarea name="referral_reason" rows="2" class="w-full rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500">{{ old('referral_reason', $record?->referral_reason) }}</textarea>
+        </label>
+        <label x-show="disposition === 'pulang'" x-cloak class="block lg:col-span-3">
+            <span class="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Catatan Orang Tua</span>
+            <textarea name="parent_notification" rows="2" class="w-full rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500" placeholder="Contoh: Orang tua sudah dihubungi dan siswa dijemput.">{{ old('parent_notification', $record?->parent_notification) }}</textarea>
         </label>
         <label class="block lg:col-span-3">
             <span class="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Catatan Tambahan</span>
