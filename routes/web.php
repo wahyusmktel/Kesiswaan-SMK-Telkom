@@ -874,13 +874,13 @@ Route::middleware('auth')->group(function () {
             ->names('records')
             ->except(['create', 'edit'])
             ->middleware('permission:manage uks medical records');
-        Route::get('/tes-mata/{eyeExam}/resume', [\App\Http\Controllers\Uks\UksEyeExamController::class, 'resume'])->middleware('permission:manage uks eye exams')->name('eye-exams.resume');
-        Route::post('/tes-mata/{eyeExam}/sign', [\App\Http\Controllers\Uks\UksEyeExamController::class, 'sign'])->middleware('permission:manage uks eye exams')->name('eye-exams.sign');
+        Route::get('/tes-mata/{eyeExam}/resume', [\App\Http\Controllers\Uks\UksEyeExamController::class, 'resume'])->middleware('permission:manage uks medical records')->name('eye-exams.resume');
+        Route::post('/tes-mata/{eyeExam}/sign', [\App\Http\Controllers\Uks\UksEyeExamController::class, 'sign'])->middleware('permission:manage uks medical records')->name('eye-exams.sign');
         Route::resource('tes-mata', \App\Http\Controllers\Uks\UksEyeExamController::class)
             ->parameters(['tes-mata' => 'eyeExam'])
             ->names('eye-exams')
             ->only(['index', 'store', 'show'])
-            ->middleware('permission:manage uks eye exams');
+            ->middleware('permission:manage uks medical records');
     });
 
     // Monitoring Keterlambatan Shared
