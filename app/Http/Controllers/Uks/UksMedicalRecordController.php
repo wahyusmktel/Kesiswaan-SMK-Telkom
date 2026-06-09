@@ -127,6 +127,48 @@ class UksMedicalRecordController extends Controller
         return $this->documentPdf($record, 'UKS_REFERRAL', 'pdf.uks.referral', 'surat-rujukan-uks-');
     }
 
+    public function convertToReferral(Request $request, UksMedicalRecord $record)
+    {
+        $this->ensureRestingRecord($record);
+
+        $data = $request->validate([
+            'referral_facility_type' => ['required', 'string', 'max:50'],
+            'referral_facility_name' => ['required', 'string', 'max:255'],
+            'referral_reason' => ['required', 'string'],
+        ]);
+
+        $record->update($data + [
+            'disposition' => 'rujukan',
+            'parent_notification' => null,
+        ]);
+
+        $record = $record->refresh();
+        $this->autoSignIfEnabled($record, 'UKS_REFERRAL');
+
+        return $this->documentPdf($record, 'UKS_REFERRAL', 'pdf.uks.referral', 'surat-rujukan-uks-');
+    }
+
+    public function convertToHome(Request $request, UksMedicalRecord $record)
+    {
+        $this->ensureRestingRecord($record);
+
+        $data = $request->validate([
+            'parent_notification' => ['required', 'string'],
+        ]);
+
+        $record->update($data + [
+            'disposition' => 'pulang',
+            'referral_facility_type' => null,
+            'referral_facility_name' => null,
+            'referral_reason' => null,
+        ]);
+
+        $record = $record->refresh();
+        $this->autoSignIfEnabled($record, 'UKS_SICK_NOTE');
+
+        return $this->documentPdf($record, 'UKS_SICK_NOTE', 'pdf.uks.sick-note', 'surat-keterangan-sakit-');
+    }
+
     public function report(Request $request)
     {
         $period = $request->input('period', 'monthly');
@@ -221,6 +263,11 @@ class UksMedicalRecordController extends Controller
         if ($signature?->isReady() && $signature->auto_sign_uks) {
             $this->signRecord($record, $type, Auth::user());
         }
+    }
+
+    private function ensureRestingRecord(UksMedicalRecord $record): void
+    {
+        abort_if($record->disposition !== 'istirahat_uks', 422, 'Tindak lanjut hanya bisa dipilih dari status Istirahat di UKS.');
     }
 
     private function signRecord(UksMedicalRecord $record, string $type, $user): DigitalDocument

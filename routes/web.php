@@ -866,6 +866,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/rekam-medis/laporan', [\App\Http\Controllers\Uks\UksMedicalRecordController::class, 'report'])->middleware('permission:view uks reports')->name('records.report');
         Route::get('/rekam-medis/{record}/surat-sakit', [\App\Http\Controllers\Uks\UksMedicalRecordController::class, 'sickNote'])->middleware('permission:manage uks medical records')->name('records.sick-note');
         Route::get('/rekam-medis/{record}/rujukan', [\App\Http\Controllers\Uks\UksMedicalRecordController::class, 'referral'])->middleware('permission:manage uks medical records')->name('records.referral');
+        Route::post('/rekam-medis/{record}/rujukan', [\App\Http\Controllers\Uks\UksMedicalRecordController::class, 'convertToReferral'])->middleware('permission:manage uks medical records')->name('records.convert-referral');
+        Route::post('/rekam-medis/{record}/dipulangkan', [\App\Http\Controllers\Uks\UksMedicalRecordController::class, 'convertToHome'])->middleware('permission:manage uks medical records')->name('records.convert-home');
         Route::post('/rekam-medis/{record}/sign', [\App\Http\Controllers\Uks\UksMedicalRecordController::class, 'sign'])->middleware('permission:manage uks medical records')->name('records.sign');
         Route::resource('rekam-medis', \App\Http\Controllers\Uks\UksMedicalRecordController::class)
             ->parameters(['rekam-medis' => 'record'])

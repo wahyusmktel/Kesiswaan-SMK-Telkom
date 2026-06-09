@@ -6,7 +6,7 @@
         </div>
     </x-slot>
 
-    <div class="space-y-6" x-data="{ createOpen: false }">
+    <div class="space-y-6" x-data="{ createOpen: false, referralOpen: null, homeOpen: null }">
         @if(session('success'))
             <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-bold text-emerald-700">{{ session('success') }}</div>
         @endif
@@ -91,7 +91,13 @@
                                         <span class="rounded-full px-3 py-1.5 text-xs font-black {{ $record->disposition === 'rujukan' ? 'bg-red-50 text-red-700' : ($record->disposition === 'istirahat_uks' ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700') }}">{{ $record->disposition_label }}</span>
                                     </td>
                                     <td class="px-4 py-4 text-right">
-                                        <a href="{{ route('uks.records.show', $record) }}" class="rounded-xl bg-gray-900 px-3 py-2 text-xs font-black text-white hover:bg-red-600">Detail</a>
+                                        <div class="flex flex-wrap justify-end gap-2">
+                                            @if($record->disposition === 'istirahat_uks')
+                                                <button type="button" @click="referralOpen = {{ $record->id }}" class="rounded-xl bg-red-600 px-3 py-2 text-xs font-black text-white hover:bg-red-700">Rujukan</button>
+                                                <button type="button" @click="homeOpen = {{ $record->id }}" class="rounded-xl bg-amber-500 px-3 py-2 text-xs font-black text-white hover:bg-amber-600">Dipulangkan</button>
+                                            @endif
+                                            <a href="{{ route('uks.records.show', $record) }}" class="rounded-xl bg-gray-900 px-3 py-2 text-xs font-black text-white hover:bg-red-600">Detail</a>
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
@@ -103,6 +109,67 @@
                 @if($records->hasPages())
                     <div class="mt-5">{{ $records->links() }}</div>
                 @endif
+
+                @foreach($records as $record)
+                    @if($record->disposition === 'istirahat_uks')
+                        <div x-show="referralOpen === {{ $record->id }}" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 p-4 backdrop-blur-sm">
+                            <form method="POST" target="_blank" action="{{ route('uks.records.convert-referral', $record) }}" @submit="setTimeout(() => window.location.reload(), 1200)" class="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl">
+                                @csrf
+                                <div class="flex items-start justify-between gap-4">
+                                    <div>
+                                        <h3 class="text-xl font-black text-gray-900">Buat Surat Rujukan</h3>
+                                        <p class="mt-1 text-sm font-semibold text-gray-500">{{ $record->student?->nama_lengkap }} - {{ $record->student?->nis }}</p>
+                                    </div>
+                                    <button type="button" @click="referralOpen = null" class="h-10 w-10 rounded-xl border border-gray-200 text-gray-600">X</button>
+                                </div>
+                                <div class="mt-5 space-y-4">
+                                    <label class="block">
+                                        <span class="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Jenis Faskes Rujukan</span>
+                                        <select name="referral_facility_type" required class="w-full rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500">
+                                            <option value="">Pilih faskes</option>
+                                            <option value="Puskesmas">Puskesmas</option>
+                                            <option value="Rumah Sakit">Rumah Sakit</option>
+                                            <option value="Klinik">Klinik</option>
+                                        </select>
+                                    </label>
+                                    <label class="block">
+                                        <span class="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Nama Faskes Rujukan</span>
+                                        <input name="referral_facility_name" required class="w-full rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500" placeholder="Contoh: Puskesmas Ajibarang">
+                                    </label>
+                                    <label class="block">
+                                        <span class="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Alasan Rujukan</span>
+                                        <textarea name="referral_reason" required rows="4" class="w-full rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500" placeholder="Tuliskan kondisi dan alasan siswa perlu dirujuk."></textarea>
+                                    </label>
+                                </div>
+                                <div class="mt-6 flex justify-end gap-2">
+                                    <button type="button" @click="referralOpen = null" class="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-700">Batal</button>
+                                    <button class="rounded-xl bg-red-600 px-4 py-2 text-sm font-black text-white hover:bg-red-700">Simpan & Cetak Rujukan</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div x-show="homeOpen === {{ $record->id }}" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 p-4 backdrop-blur-sm">
+                            <form method="POST" target="_blank" action="{{ route('uks.records.convert-home', $record) }}" @submit="setTimeout(() => window.location.reload(), 1200)" class="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl">
+                                @csrf
+                                <div class="flex items-start justify-between gap-4">
+                                    <div>
+                                        <h3 class="text-xl font-black text-gray-900">Siswa Dipulangkan</h3>
+                                        <p class="mt-1 text-sm font-semibold text-gray-500">{{ $record->student?->nama_lengkap }} - {{ $record->student?->nis }}</p>
+                                    </div>
+                                    <button type="button" @click="homeOpen = null" class="h-10 w-10 rounded-xl border border-gray-200 text-gray-600">X</button>
+                                </div>
+                                <label class="mt-5 block">
+                                    <span class="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Catatan Orang Tua / Alasan Dipulangkan</span>
+                                    <textarea name="parent_notification" required rows="5" class="w-full rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500" placeholder="Contoh: Orang tua sudah dihubungi dan siswa dijemput karena kondisi perlu istirahat di rumah."></textarea>
+                                </label>
+                                <div class="mt-6 flex justify-end gap-2">
+                                    <button type="button" @click="homeOpen = null" class="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-700">Batal</button>
+                                    <button class="rounded-xl bg-amber-500 px-4 py-2 text-sm font-black text-white hover:bg-amber-600">Simpan & Cetak Surat</button>
+                                </div>
+                            </form>
+                        </div>
+                    @endif
+                @endforeach
             </div>
 
             <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
