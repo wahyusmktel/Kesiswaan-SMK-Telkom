@@ -16,14 +16,15 @@ class RoleSeeder extends Seeder
         // Reset cached roles and permissions
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        Role::create(['name' => 'Super Admin']);
-        Role::create(['name' => 'Kepala Sekolah']);
-        Role::create(['name' => 'Waka Kesiswaan']);
-        Role::create(['name' => 'Guru BK']);
-        Role::create(['name' => 'Wali Kelas']);
-        Role::create(['name' => 'Guru Kelas']);
-        Role::create(['name' => 'Guru Piket']);
-        Role::create(['name' => 'Security']);
-        Role::create(['name' => 'Siswa']);
+        Role::firstOrCreate(['name' => 'Super Admin']);
+        Role::firstOrCreate(['name' => 'Kepala Sekolah']);
+        Role::firstOrCreate(['name' => 'Waka Kesiswaan']);
+        Role::firstOrCreate(['name' => 'Guru BK']);
+        Role::firstOrCreate(['name' => 'Wali Kelas']);
+        Role::firstOrCreate(['name' => 'Guru Kelas']);
+        Role::firstOrCreate(['name' => 'Guru Piket']);
+        Role::firstOrCreate(['name' => 'Security']);
+        Role::firstOrCreate(['name' => 'Siswa']);
+        Role::firstOrCreate(['name' => 'Petugas UKS']);
     }
 }

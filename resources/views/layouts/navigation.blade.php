@@ -2404,6 +2404,38 @@
 @endcan
 
 {{-- ============================================================ --}}
+{{-- ROLE: PETUGAS UKS --}}
+{{-- ============================================================ --}}
+@can('view uks dashboard')
+    @role('Petugas UKS')
+    @if(session('active_role') == 'Petugas UKS')
+        <li>
+            <a href="{{ route('uks.records.index') }}"
+                class="nav-link {{ request()->routeIs('uks.records.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                <div class="nav-icon-container">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-3-3v6m9-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <span class="nav-text">Rekam Medis UKS</span>
+            </a>
+        </li>
+        <li>
+            <a href="{{ route('tanda-tangan.index') }}"
+                class="nav-link {{ request()->routeIs('tanda-tangan.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                <div class="nav-icon-container">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M4 20h4l10.5-10.5a2.5 2.5 0 10-3.536-3.536L4 16.928V20z" />
+                    </svg>
+                </div>
+                <span class="nav-text">Tanda Tangan Digital</span>
+            </a>
+        </li>
+    @endif
+    @endrole
+@endcan
+
+{{-- ============================================================ --}}
 {{-- ROLE: PRAKERIN (Koordinator) --}}
 {{-- ============================================================ --}}
 @can('manage prakerin')

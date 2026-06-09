@@ -262,6 +262,27 @@
                                         </label>
                                     </div>
                                     @endrole
+
+                                    @role('Petugas UKS')
+                                    <div id="auto-uks-wrap" class="flex items-center justify-between p-3 rounded-xl border-2 mb-2 transition-colors
+                                        {{ $signature->auto_sign_uks ? 'bg-indigo-50 border-indigo-200' : 'bg-gray-50 border-gray-200' }}">
+                                        <div>
+                                            <p class="text-xs font-bold text-gray-800">Auto-TTD Dokumen UKS</p>
+                                            <p class="text-[10px] text-gray-500 mt-0.5">Otomatis tandatangani surat sakit dan rujukan UKS</p>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-3">
+                                            <input type="checkbox" name="auto_sign_uks" value="1" id="auto_uks_toggle"
+                                                class="sr-only peer"
+                                                {{ $signature->auto_sign_uks ? 'checked' : '' }}>
+                                            <div class="w-10 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer
+                                                peer-checked:after:translate-x-full peer-checked:after:border-white
+                                                after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+                                                after:bg-white after:border-gray-300 after:border after:rounded-full
+                                                after:h-4 after:w-4 after:transition-all
+                                                peer-checked:bg-indigo-500"></div>
+                                        </label>
+                                    </div>
+                                    @endrole
                                 </div>
                                 @endif
 

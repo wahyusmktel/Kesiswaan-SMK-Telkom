@@ -862,6 +862,18 @@ Route::middleware('auth')->group(function () {
         Route::get('/sync-progress/{progressId}', [\App\Http\Controllers\FingerprintController::class, 'syncProgress'])->name('sync-progress');
     });
 
+    Route::middleware(['role:Petugas UKS', 'permission:view uks dashboard'])->prefix('uks')->name('uks.')->group(function () {
+        Route::get('/rekam-medis/laporan', [\App\Http\Controllers\Uks\UksMedicalRecordController::class, 'report'])->middleware('permission:view uks reports')->name('records.report');
+        Route::get('/rekam-medis/{record}/surat-sakit', [\App\Http\Controllers\Uks\UksMedicalRecordController::class, 'sickNote'])->middleware('permission:manage uks medical records')->name('records.sick-note');
+        Route::get('/rekam-medis/{record}/rujukan', [\App\Http\Controllers\Uks\UksMedicalRecordController::class, 'referral'])->middleware('permission:manage uks medical records')->name('records.referral');
+        Route::post('/rekam-medis/{record}/sign', [\App\Http\Controllers\Uks\UksMedicalRecordController::class, 'sign'])->middleware('permission:manage uks medical records')->name('records.sign');
+        Route::resource('rekam-medis', \App\Http\Controllers\Uks\UksMedicalRecordController::class)
+            ->parameters(['rekam-medis' => 'record'])
+            ->names('records')
+            ->except(['create', 'edit'])
+            ->middleware('permission:manage uks medical records');
+    });
+
     // Monitoring Keterlambatan Shared
     Route::get('/monitoring-keterlambatan', [\App\Http\Controllers\Shared\MonitoringKeterlambatanController::class, 'index'])
         ->name('monitoring-keterlambatan.index');
@@ -1031,7 +1043,7 @@ Route::middleware(['auth', 'role:Super Admin|Waka Kesiswaan|Guru BK|Guru Piket|K
 // ============================================================
 // TANDA TANGAN DIGITAL (Guru, Waka Kurikulum, Waka Kesiswaan, Kaur SDM)
 // ============================================================
-Route::middleware(['auth', 'role:Guru Kelas|Guru Piket|Wali Kelas|Waka Kesiswaan|Kurikulum|KAUR SDM|Kepala Sekolah|Super Admin'])
+Route::middleware(['auth', 'role:Guru Kelas|Guru Piket|Wali Kelas|Waka Kesiswaan|Kurikulum|KAUR SDM|Kepala Sekolah|Super Admin|Petugas UKS'])
     ->prefix('tanda-tangan-digital')
     ->name('tanda-tangan.')
     ->group(function () {

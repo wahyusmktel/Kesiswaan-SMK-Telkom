@@ -26,6 +26,7 @@ class DashboardRedirector
             'Kaprodi' => 'kaprodi.ukk.index',
             'Koordinator Prakerin' => 'prakerin.industri.index',
             'Kepala Sekolah' => 'tanda-tangan.index',
+            'Petugas UKS' => 'uks.records.index',
             default => null,
         };
     }

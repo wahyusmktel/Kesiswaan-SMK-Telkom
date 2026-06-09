@@ -16,6 +16,7 @@ class UserDigitalSignature extends Model
         'auto_sign_perizinan',
         'auto_sign_izin_guru',
         'auto_sign_penilaian_ukk',
+        'auto_sign_uks',
     ];
 
     protected $hidden = ['pin_hash'];
@@ -26,6 +27,7 @@ class UserDigitalSignature extends Model
         'auto_sign_perizinan'      => 'boolean',
         'auto_sign_izin_guru'      => 'boolean',
         'auto_sign_penilaian_ukk'  => 'boolean',
+        'auto_sign_uks'            => 'boolean',
     ];
 
     public function user()

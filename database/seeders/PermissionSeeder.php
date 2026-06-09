@@ -103,6 +103,9 @@ class PermissionSeeder extends Seeder
 
             // Shared Features
             'view coaching analytics',
+            'view uks dashboard',
+            'manage uks medical records',
+            'view uks reports',
 
             // Setting
             'manage settings',
@@ -221,6 +224,15 @@ class PermissionSeeder extends Seeder
                 'manage perizinan guru',
                 'view rekapitulasi sdm',
                 'manage nde referensi',
+            ]);
+        }
+
+        $uksRole = Role::where('name', 'Petugas UKS')->first();
+        if ($uksRole) {
+            $uksRole->syncPermissions([
+                'view uks dashboard',
+                'manage uks medical records',
+                'view uks reports',
             ]);
         }
 

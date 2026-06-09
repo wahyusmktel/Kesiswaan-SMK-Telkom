@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             KurikulumRoleSeeder::class,
             WakaKesiswaanSeeder::class,
             KoordinatorPrakerinRoleSeeder::class,
+            PetugasUksRoleSeeder::class,
 
             JamPelajaranSeeder::class,
         ]);
