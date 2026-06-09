@@ -13,6 +13,7 @@ class PetugasUksRoleSeeder extends Seeder
         $permissions = [
             'view uks dashboard',
             'manage uks medical records',
+            'manage uks eye exams',
             'view uks reports',
         ];
 

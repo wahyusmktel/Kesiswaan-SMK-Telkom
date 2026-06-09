@@ -2421,6 +2421,18 @@
             </a>
         </li>
         <li>
+            <a href="{{ route('uks.eye-exams.index') }}"
+                class="nav-link {{ request()->routeIs('uks.eye-exams.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                <div class="nav-icon-container">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.25 12s3.75-6.75 9.75-6.75S21.75 12 21.75 12s-3.75 6.75-9.75 6.75S2.25 12 2.25 12z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                </div>
+                <span class="nav-text">Tes Kesehatan Mata</span>
+            </a>
+        </li>
+        <li>
             <a href="{{ route('tanda-tangan.index') }}"
                 class="nav-link {{ request()->routeIs('tanda-tangan.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
                 <div class="nav-icon-container">

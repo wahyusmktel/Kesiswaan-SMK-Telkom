@@ -105,6 +105,7 @@ class PermissionSeeder extends Seeder
             'view coaching analytics',
             'view uks dashboard',
             'manage uks medical records',
+            'manage uks eye exams',
             'view uks reports',
 
             // Setting
@@ -232,6 +233,7 @@ class PermissionSeeder extends Seeder
             $uksRole->syncPermissions([
                 'view uks dashboard',
                 'manage uks medical records',
+                'manage uks eye exams',
                 'view uks reports',
             ]);
         }

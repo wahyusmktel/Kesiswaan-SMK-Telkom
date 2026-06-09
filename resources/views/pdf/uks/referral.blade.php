@@ -24,6 +24,7 @@
     <table>
         <tr><td class="label">Nama Siswa</td><td><strong>{{ $record->student->nama_lengkap }}</strong></td></tr>
         <tr><td class="label">NIS / Kelas</td><td>{{ $record->student->nis }} / {{ $record->student->rombels->first()?->kelas?->nama_kelas ?? '-' }}</td></tr>
+        <tr><td class="label">Waktu Kunjungan</td><td>{{ $record->visited_at->translatedFormat('l, d F Y H:i') }}</td></tr>
         <tr><td class="label">Tujuan Rujukan</td><td>{{ $record->referral_facility_type }} {{ $record->referral_facility_name }}</td></tr>
         <tr><td class="label">Keluhan</td><td>{{ $record->complaint }}</td></tr>
         <tr><td class="label">Gejala</td><td>{{ implode(', ', $record->symptoms ?? []) ?: '-' }}</td></tr>

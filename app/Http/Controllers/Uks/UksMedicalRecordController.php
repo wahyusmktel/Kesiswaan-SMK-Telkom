@@ -13,6 +13,7 @@ use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
 use chillerlan\QRCode\Common\EccLevel;
 use chillerlan\QRCode\Output\QRGdImagePNG;
+use Illuminate\Support\Facades\App;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -247,6 +248,9 @@ class UksMedicalRecordController extends Controller
 
     private function documentPdf(UksMedicalRecord $record, string $type, string $view, string $prefix)
     {
+        App::setLocale('id');
+        Carbon::setLocale('id');
+
         $record->load(['student.rombels.kelas', 'handler']);
         $document = $this->digitalDocument($record, $type);
         $qrBase64 = $document ? $this->qrBase64(route('verifikasi.dokumen', $document->token)) : null;
