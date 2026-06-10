@@ -2490,7 +2490,27 @@
                 <a href="{{ route('prakerin.penempatan.index') }}"
                     class="submenu-item {{ request()->routeIs('prakerin.penempatan.*') ? 'submenu-item-active' : '' }}">
                     <span class="submenu-dot"></span>
-                    Penempatan Siswa
+                    Penempatan Lama
+                </a>
+                <a href="{{ route('prakerin.pembimbing.index') }}"
+                    class="submenu-item {{ request()->routeIs('prakerin.pembimbing.*') ? 'submenu-item-active' : '' }}">
+                    <span class="submenu-dot"></span>
+                    Data Pembimbing
+                </a>
+                <a href="{{ route('prakerin.rombel-pkl.index') }}"
+                    class="submenu-item {{ request()->routeIs('prakerin.rombel-pkl.*') ? 'submenu-item-active' : '' }}">
+                    <span class="submenu-dot"></span>
+                    Rombel PKL
+                </a>
+                <a href="{{ route('prakerin.setting.index') }}"
+                    class="submenu-item {{ request()->routeIs('prakerin.setting.*') ? 'submenu-item-active' : '' }}">
+                    <span class="submenu-dot"></span>
+                    Seting Jurnal PKL
+                </a>
+                <a href="{{ route('prakerin.absensi.index') }}"
+                    class="submenu-item {{ request()->routeIs('prakerin.absensi.*') ? 'submenu-item-active' : '' }}">
+                    <span class="submenu-dot"></span>
+                    Rekap Absensi PKL
                 </a>
             </div>
 
@@ -2503,7 +2523,23 @@
                 </a>
                 <a href="{{ route('prakerin.penempatan.index') }}"
                     class="submenu-item {{ request()->routeIs('prakerin.penempatan.*') ? 'submenu-item-active' : '' }}">
-                    Penempatan Siswa
+                    Penempatan Lama
+                </a>
+                <a href="{{ route('prakerin.pembimbing.index') }}"
+                    class="submenu-item {{ request()->routeIs('prakerin.pembimbing.*') ? 'submenu-item-active' : '' }}">
+                    Data Pembimbing
+                </a>
+                <a href="{{ route('prakerin.rombel-pkl.index') }}"
+                    class="submenu-item {{ request()->routeIs('prakerin.rombel-pkl.*') ? 'submenu-item-active' : '' }}">
+                    Rombel PKL
+                </a>
+                <a href="{{ route('prakerin.setting.index') }}"
+                    class="submenu-item {{ request()->routeIs('prakerin.setting.*') ? 'submenu-item-active' : '' }}">
+                    Seting Jurnal PKL
+                </a>
+                <a href="{{ route('prakerin.absensi.index') }}"
+                    class="submenu-item {{ request()->routeIs('prakerin.absensi.*') ? 'submenu-item-active' : '' }}">
+                    Rekap Absensi PKL
                 </a>
             </div>
         </li>

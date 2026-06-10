@@ -458,6 +458,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Route untuk Jurnal Prakerin
         Route::get('/jurnal-prakerin', [JurnalSiswaController::class, 'index'])->name('jurnal-prakerin.index');
         Route::post('/jurnal-prakerin', [JurnalSiswaController::class, 'store'])->name('jurnal-prakerin.store');
+        Route::post('/jurnal-prakerin/check-in', [JurnalSiswaController::class, 'checkIn'])->name('jurnal-prakerin.check-in');
+        Route::post('/jurnal-prakerin/check-out', [JurnalSiswaController::class, 'checkOut'])->name('jurnal-prakerin.check-out');
 
         // Route BK Siswa
         Route::get('/bk', [\App\Http\Controllers\Siswa\BKController::class, 'index'])->name('bk.index');
@@ -766,7 +768,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Grup Route untuk Prakerin
     Route::middleware(['role:Koordinator Prakerin', 'permission:manage prakerin'])->prefix('prakerin')->name('prakerin.')->group(function () {
         Route::resource('industri', IndustriController::class);
-        Route::resource('penempatan', PenempatanController::class);
+        Route::resource('pembimbing', \App\Http\Controllers\Prakerin\PembimbingController::class)->except(['show', 'create', 'edit']);
+        Route::resource('rombel-pkl', \App\Http\Controllers\Prakerin\RombelPklController::class)->except(['show', 'create', 'edit'])->parameters(['rombel-pkl' => 'rombel']);
+        Route::get('rombel-pkl/{rombel}/mapping', [\App\Http\Controllers\Prakerin\RombelPklController::class, 'mapping'])->name('rombel-pkl.mapping');
+        Route::post('rombel-pkl/{rombel}/mapping', [\App\Http\Controllers\Prakerin\RombelPklController::class, 'storeMapping'])->name('rombel-pkl.mapping.store');
+        Route::delete('rombel-pkl/{rombel}/mapping/{penempatan}', [\App\Http\Controllers\Prakerin\RombelPklController::class, 'removeMapping'])->name('rombel-pkl.mapping.destroy');
+        Route::get('setting', [\App\Http\Controllers\Prakerin\SettingController::class, 'index'])->name('setting.index');
+        Route::put('setting', [\App\Http\Controllers\Prakerin\SettingController::class, 'update'])->name('setting.update');
+        Route::get('absensi', [\App\Http\Controllers\Prakerin\AbsensiController::class, 'index'])->name('absensi.index');
+        Route::resource('penempatan', PenempatanController::class)->only(['index', 'create', 'store']);
     });
 
     // Grup Route untuk Guru Pembimbing (bisa diakses Guru Kelas)

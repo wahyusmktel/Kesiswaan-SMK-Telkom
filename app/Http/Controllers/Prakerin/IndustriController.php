@@ -33,8 +33,14 @@ class IndustriController extends Controller
             'telepon' => 'nullable|string|max:20',
             'email_pic' => 'nullable|email|max:255',
             'nama_pic' => 'nullable|string|max:255',
+            'nomor_mou' => 'nullable|string|max:255',
+            'tanggal_mou' => 'nullable|date',
+            'tanggal_akhir_mou' => 'nullable|date|after_or_equal:tanggal_mou',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+            'catatan_mou' => 'nullable|string',
         ]);
-        PrakerinIndustri::create($request->all());
+        PrakerinIndustri::create($request->all() + ['is_mou_active' => $request->boolean('is_mou_active', true)]);
         toast('Data industri berhasil ditambahkan.', 'success');
         return redirect()->route('prakerin.industri.index');
     }
@@ -53,8 +59,14 @@ class IndustriController extends Controller
             'telepon' => 'nullable|string|max:20',
             'email_pic' => 'nullable|email|max:255',
             'nama_pic' => 'nullable|string|max:255',
+            'nomor_mou' => 'nullable|string|max:255',
+            'tanggal_mou' => 'nullable|date',
+            'tanggal_akhir_mou' => 'nullable|date|after_or_equal:tanggal_mou',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+            'catatan_mou' => 'nullable|string',
         ]);
-        $industri->update($request->all());
+        $industri->update($request->all() + ['is_mou_active' => $request->boolean('is_mou_active')]);
         toast('Data industri berhasil diperbarui.', 'success');
         return redirect()->route('prakerin.industri.index');
     }
