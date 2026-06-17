@@ -14,10 +14,10 @@ use App\Http\Controllers\WebAuthn\WebAuthnRegisterController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
-    Route::get('register', [RegisteredUserController::class, 'create'])
+    Route::get('register', fn () => redirect()->away(config('sso.base_url').'/register'))
         ->name('register');
 
-    Route::post('register', [RegisteredUserController::class, 'store']);
+    Route::post('register', fn () => redirect()->away(config('sso.base_url').'/register'));
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');

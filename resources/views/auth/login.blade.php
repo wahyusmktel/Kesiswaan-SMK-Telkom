@@ -431,6 +431,15 @@
                             </svg>
                         </div>
                     </button>
+
+                    <a href="{{ route('auth.sso.redirect') }}"
+                        class="flex items-center justify-center gap-3 w-full py-3 px-4 bg-gray-950 border border-transparent rounded-lg font-bold text-white hover:bg-gray-900 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M12 3 4 7v6c0 4.2 2.8 6.8 8 8 5.2-1.2 8-3.8 8-8V7l-8-4Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                            <path d="m8.5 12 2.2 2.2 4.8-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span>Login SSO STELLA</span>
+                    </a>
                 </form>
 
                 <!-- Divider -->

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Auth\SsoLoginController;
 use App\Http\Controllers\Admin\BeritaController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\IzinController;
@@ -71,6 +72,8 @@ use App\Http\Controllers\Shared\AssetController as SharedAssetController;
 
 Route::get('auth/google', [GoogleController::class, 'redirectToGoogle'])->name('auth.google');
 Route::get('auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
+Route::get('auth/sso/redirect', [SsoLoginController::class, 'redirect'])->name('auth.sso.redirect');
+Route::get('auth/sso/callback', [SsoLoginController::class, 'callback'])->name('auth.sso.callback');
 
 Route::get('/verifikasi/surat/{uuid}', [VerifikasiController::class, 'show'])->name('verifikasi.surat');
 Route::get('/verifikasi/kartu/{nis}', [VerifikasiController::class, 'kartuPelajar'])->name('verifikasi.kartu');
