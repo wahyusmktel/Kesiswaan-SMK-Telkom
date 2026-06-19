@@ -251,7 +251,8 @@ class LessonPlanController extends Controller
                 ]);
             }
         }
-        return $pdf->download('RPP_' . \Str::slug($plan->topic) . '_' . $plan->teach_date->format('Ymd') . '.pdf');
+        $pdf = PDF::loadView('pages.guru-kelas.lesson-plan.pdf', compact('plan'));
+return $pdf->download('RPP_' . \Str::slug($plan->topic) . '_' . $plan->teach_date->format('Ymd') . '.pdf');
     }
 
     public function reflect(Request $request, $id)
