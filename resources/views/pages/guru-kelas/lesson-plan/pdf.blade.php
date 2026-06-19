@@ -203,6 +203,14 @@
             <div class="signature-line"></div>
             <p><strong>{{ $plan->teacher->name ?? 'Guru Pengajar' }}</strong></p>
         </div>
+
+        @if(isset($qr))
+            <div class="signature-box" style="float: right;">
+                <p>Verifikasi QR Code:</p>
+                <img src="data:image/png;base64,{{ $qr }}" alt="QR Code" style="width: 120px; height: 120px;" />
+                <p><small>Scan untuk memverifikasi dokumen</small></p>
+            </div>
+        @endif
     </div>
 
 </body>

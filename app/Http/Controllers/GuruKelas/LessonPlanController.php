@@ -11,8 +11,8 @@ use App\Models\JadwalPelajaran;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Barryvdh\DomPDF\Facade\Pdf;
-
 class LessonPlanController extends Controller
 {
     /**
@@ -251,8 +251,19 @@ class LessonPlanController extends Controller
                 ]);
             }
         }
-        $pdf = PDF::loadView('pages.guru-kelas.lesson-plan.pdf', compact('plan'));
-return $pdf->download('RPP_' . \Str::slug($plan->topic) . '_' . $plan->teach_date->format('Ymd') . '.pdf');
+                // Retrieve (or ensure) the digital document for this RPP
+        $doc = \App\Models\DigitalDocument::where('document_type', 'RPP')
+            ->where('reference_id', $plan->id)
+            ->first();
+        // Generate QR code data URI if document exists
+        $qr = null;
+        if ($doc) {
+            $url = route('verifikasi.dokumen', $doc->token);
+            $qr = base64_encode(QrCode::format('png')->size(150)->generate($url));
+        }
+        // Load PDF view with QR code (if any)
+        $pdf = PDF::loadView('pages.guru-kelas.lesson-plan.pdf', compact('plan', 'qr'));
+        return $pdf->download('RPP_' . \Str::slug($plan->topic) . '_' . $plan->teach_date->format('Ymd') . '.pdf');
     }
 
     public function reflect(Request $request, $id)
