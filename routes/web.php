@@ -37,6 +37,7 @@ use App\Http\Controllers\Security\PendataanTerlambatController;
 use App\Http\Controllers\Piket\VerifikasiTerlambatController;
 use App\Http\Controllers\PublicVerifikasiController;
 use App\Http\Controllers\GuruKelas\VerifikasiTerlambatController as GuruKelasVerifikasiTerlambatController;
+use App\Http\Controllers\GuruKelas\LessonPlanController;
 use App\Http\Controllers\Dispensasi\PengajuanDispensasiController;
 use App\Http\Controllers\Kesiswaan\PersetujuanDispensasiController;
 use App\Http\Controllers\Prakerin\IndustriController;
@@ -623,6 +624,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Grup Route untuk Guru Kelas
     Route::middleware(['role:Guru Kelas'])->prefix('guru-kelas')->name('guru-kelas.')->group(function () {
         Route::get('/dashboard', [GuruKelasDashboardController::class, 'index'])->name('dashboard.index');
+
+        // Route untuk Rencana Pembelajaran Guru
+        Route::prefix('rencana-pembelajaran')->name('lesson-plan.')->group(function () {
+            Route::get('/',              [LessonPlanController::class, 'index'])   ->name('index');
+            Route::get('/buat',          [LessonPlanController::class, 'create'])  ->name('create');
+            Route::post('/',             [LessonPlanController::class, 'store'])   ->name('store');
+            Route::get('/kalender',      [LessonPlanController::class, 'calendar'])->name('calendar');
+            Route::get('/{id}',          [LessonPlanController::class, 'show'])    ->name('show');
+            Route::get('/{id}/edit',     [LessonPlanController::class, 'edit'])    ->name('edit');
+            Route::put('/{id}',          [LessonPlanController::class, 'update'])  ->name('update');
+            Route::delete('/{id}',       [LessonPlanController::class, 'destroy']) ->name('destroy');
+            Route::post('/{id}/refleksi',[LessonPlanController::class, 'reflect']) ->name('reflect');
+            Route::post('/todo/{todoId}/toggle', [LessonPlanController::class, 'toggleTodo'])->name('todo.toggle');
+        });
 
         // Route untuk Persetujuan Izin Meninggalkan Kelas
         Route::get('/persetujuan-izin-keluar', [PersetujuanIzinKeluarController::class, 'index'])->name('persetujuan-izin-keluar.index');
