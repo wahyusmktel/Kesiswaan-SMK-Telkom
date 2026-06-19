@@ -255,12 +255,12 @@ class LessonPlanController extends Controller
         $doc = \App\Models\DigitalDocument::where('document_type', 'RPP')
             ->where('reference_id', $plan->id)
             ->first();
-        // Generate QR code PNG using GD (no Imagick needed)
+        // Generate QR code SVG (no Imagick required)
         $qr = null;
         if ($doc) {
             $url = route('verifikasi.dokumen', $doc->token);
-            QrCode::useGd(); // Ensure GD backend
-            $qr = base64_encode(QrCode::format('png')->size(150)->generate($url));
+            $qrSvg = QrCode::format('svg')->size(150)->generate($url);
+            $qr = base64_encode($qrSvg);
         }
         // Load PDF view with QR code (if any)
         $pdf = PDF::loadView('pages.guru-kelas.lesson-plan.pdf', compact('plan', 'qr'));
