@@ -11,6 +11,7 @@ use App\Models\JadwalPelajaran;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class LessonPlanController extends Controller
 {
@@ -201,6 +202,20 @@ class LessonPlanController extends Controller
                     ->orderBy('teach_date')
                     ->get();
         return view('pages.guru-kelas.lesson-plan.calendar', compact('plans'));
+    }
+
+    public function downloadPdf($id)
+    {
+        $plan = LessonPlan::with(['todos', 'class', 'subject', 'teacher'])
+                    ->where('teacher_id', Auth::id())
+                    ->findOrFail($id);
+
+        if ($plan->completionPercent() < 100) {
+            return back()->with('error', 'Persiapan mengajar belum selesai 100%.');
+        }
+
+        $pdf = Pdf::loadView('pages.guru-kelas.lesson-plan.pdf', compact('plan'))->setPaper('a4', 'portrait');
+        return $pdf->download('RPP_' . \Str::slug($plan->topic) . '_' . $plan->teach_date->format('Ymd') . '.pdf');
     }
 
     public function reflect(Request $request, $id)

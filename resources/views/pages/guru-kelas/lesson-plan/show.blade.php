@@ -11,6 +11,9 @@
                     &larr; Kembali ke Dashboard
                 </a>
                 <div class="flex gap-2">
+                    @if($plan->completionPercent() == 100)
+                        <a href="{{ route('guru-kelas.lesson-plan.pdf', $plan->id) }}" class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition ease-in-out duration-150">Unduh PDF</a>
+                    @endif
                     @if($plan->status != 'done')
                         <a href="{{ route('guru-kelas.lesson-plan.edit', $plan->id) }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">Edit</a>
                     @endif

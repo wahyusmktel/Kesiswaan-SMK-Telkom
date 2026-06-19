@@ -635,6 +635,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/{id}/edit',     [LessonPlanController::class, 'edit'])    ->name('edit');
             Route::put('/{id}',          [LessonPlanController::class, 'update'])  ->name('update');
             Route::delete('/{id}',       [LessonPlanController::class, 'destroy']) ->name('destroy');
+            Route::get('/{id}/pdf',      [LessonPlanController::class, 'downloadPdf'])->name('pdf');
             Route::post('/{id}/refleksi',[LessonPlanController::class, 'reflect']) ->name('reflect');
             Route::post('/todo/{todoId}/toggle', [LessonPlanController::class, 'toggleTodo'])->name('todo.toggle');
         });
