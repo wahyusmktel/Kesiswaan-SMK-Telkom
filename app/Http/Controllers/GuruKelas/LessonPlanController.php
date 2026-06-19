@@ -251,14 +251,15 @@ class LessonPlanController extends Controller
                 ]);
             }
         }
-                // Retrieve (or ensure) the digital document for this RPP
+                        // Retrieve (or ensure) the digital document for this RPP
         $doc = \App\Models\DigitalDocument::where('document_type', 'RPP')
             ->where('reference_id', $plan->id)
             ->first();
-        // Generate QR code data URI if document exists
+        // Generate QR code PNG using GD (no Imagick needed)
         $qr = null;
         if ($doc) {
             $url = route('verifikasi.dokumen', $doc->token);
+            QrCode::useGd(); // Ensure GD backend
             $qr = base64_encode(QrCode::format('png')->size(150)->generate($url));
         }
         // Load PDF view with QR code (if any)
