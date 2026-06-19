@@ -34,6 +34,7 @@ class DigitalSignatureController extends Controller
             'auto_sign_izin_guru'      => 'nullable|boolean',
             'auto_sign_penilaian_ukk'  => 'nullable|boolean',
             'auto_sign_uks'            => 'nullable|boolean',
+            'auto_sign_lesson_plan'    => 'nullable|boolean',
         ]);
 
         $signature = UserDigitalSignature::firstOrNew(['user_id' => Auth::id()]);

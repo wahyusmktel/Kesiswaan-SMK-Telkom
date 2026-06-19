@@ -214,7 +214,43 @@ class LessonPlanController extends Controller
             return back()->with('error', 'Persiapan mengajar belum selesai 100%.');
         }
 
-        $pdf = Pdf::loadView('pages.guru-kelas.lesson-plan.pdf', compact('plan'))->setPaper('a4', 'portrait');
+        // Auto sign RPP if user enabled auto_sign_lesson_plan
+        $signature = \App\Models\UserDigitalSignature::where('user_id', Auth::id())->first();
+        if ($signature && $signature->auto_sign_lesson_plan && $signature->isReady()) {
+            // Create or update digital document for this RPP
+            $hash = \App\Models\DigitalDocument::generateHash(['RPP', (string) $plan->id, $plan->topic]);
+            $hmac = \App\Models\DigitalDocument::generateHmac($hash);
+            $doc = \App\Models\DigitalDocument::where('document_type', 'RPP')
+                ->where('reference_id', $plan->id)
+                ->first();
+
+            if ($doc) {
+                $doc->update([
+                    'document_hash'  => $hash,
+                    'hmac_signature' => $hmac,
+                    'signed_by'      => Auth::id(),
+                    'signer_name'    => Auth::user()->name,
+                    'signer_role'    => Auth::user()->getRoleNames()->first() ?? 'Staff',
+                    'signed_at'      => now(),
+                    'is_valid'       => true,
+                    'revoked_at'     => null,
+                    'revoke_reason'  => null,
+                ]);
+            } else {
+                \App\Models\DigitalDocument::create([
+                    'document_type'  => 'RPP',
+                    'document_title' => 'RPP - ' . $plan->topic,
+                    'reference_id'   => $plan->id,
+                    'document_hash'  => $hash,
+                    'hmac_signature' => $hmac,
+                    'signed_by'      => Auth::id(),
+                    'signer_name'    => Auth::user()->name,
+                    'signer_role'    => Auth::user()->getRoleNames()->first() ?? 'Staff',
+                    'signed_at'      => now(),
+                    'is_valid'       => true,
+                ]);
+            }
+        }
         return $pdf->download('RPP_' . \Str::slug($plan->topic) . '_' . $plan->teach_date->format('Ymd') . '.pdf');
     }
 
