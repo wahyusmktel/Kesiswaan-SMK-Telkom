@@ -285,6 +285,23 @@
                                     @endrole
                                 </div>
                                 @endif
+<div id="auto-lesson-plan-wrap" class="flex items-center justify-between p-3 rounded-xl border-2 mb-2 transition-colors {{ $signature->auto_sign_lesson_plan ? 'bg-indigo-50 border-indigo-200' : 'bg-gray-50 border-gray-200' }}">
+    <div>
+        <p class="text-xs font-bold text-gray-800">Auto-TTD RPP</p>
+        <p class="text-[10px] text-gray-500 mt-0.5">Otomatis tandatangani RPP saat diunduh bila To-Do Persiapan selesai 100%</p>
+    </div>
+    <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-3">
+        <input type="checkbox" name="auto_sign_lesson_plan" value="1" id="auto_lesson_plan_toggle"
+            class="sr-only peer"
+            {{ $signature->auto_sign_lesson_plan ? 'checked' : '' }}>
+        <div class="w-10 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer
+            peer-checked:after:translate-x-full peer-checked:after:border-white
+            after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+            after:bg-white after:border-gray-300 after:border after:rounded-full
+            after:h-4 after:w-4 after:transition-all
+            peer-checked:bg-indigo-500"></div>
+    </label>
+</div>
 
                                 <button type="submit"
                                     class="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition-all shadow-sm hover:shadow-md glow-pulse">
