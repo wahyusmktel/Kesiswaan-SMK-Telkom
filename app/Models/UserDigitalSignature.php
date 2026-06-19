@@ -18,6 +18,7 @@ class UserDigitalSignature extends Model
         'auto_sign_penilaian_ukk',
         'auto_sign_uks',
         'auto_sign_lesson_plan',
+        'auto_sign_assessment_certificate',
     ];
 
     protected $hidden = ['pin_hash'];
@@ -30,6 +31,7 @@ class UserDigitalSignature extends Model
         'auto_sign_penilaian_ukk'  => 'boolean',
         'auto_sign_uks'            => 'boolean',
         'auto_sign_lesson_plan'    => 'boolean',
+        'auto_sign_assessment_certificate' => 'boolean',
     ];
 
     public function user()

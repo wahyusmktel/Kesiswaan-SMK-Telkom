@@ -29,7 +29,7 @@
                         : route('wali-kelas.perizinan.index');
                 @endphp
                 @forelse($notifications as $notification)
-                    <a href="{{ $linkTujuan }}" class="flex items-start px-4 py-3 hover:bg-gray-100">
+                    <a href="{{ route('shared.notifications.read', $notification->id) }}" class="flex items-start px-4 py-3 hover:bg-gray-100">
                         <div class="flex-shrink-0 pt-1">
                             @if ($notification->type == 'App\Notifications\PengajuanIzinMasuk')
                                 <i class="fa-solid fa-file-import text-blue-500"></i>

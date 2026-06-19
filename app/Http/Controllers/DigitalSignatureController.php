@@ -35,6 +35,7 @@ class DigitalSignatureController extends Controller
             'auto_sign_penilaian_ukk'  => 'nullable|boolean',
             'auto_sign_uks'            => 'nullable|boolean',
             'auto_sign_lesson_plan'    => 'nullable|boolean',
+            'auto_sign_assessment_certificate' => 'nullable|boolean',
         ]);
 
         $signature = UserDigitalSignature::firstOrNew(['user_id' => Auth::id()]);
@@ -57,6 +58,7 @@ class DigitalSignatureController extends Controller
         $signature->auto_sign_penilaian_ukk  = $request->boolean('auto_sign_penilaian_ukk');
         $signature->auto_sign_uks            = $request->boolean('auto_sign_uks');
         $signature->auto_sign_lesson_plan    = $request->boolean('auto_sign_lesson_plan');
+        $signature->auto_sign_assessment_certificate = $request->boolean('auto_sign_assessment_certificate');
         $signature->save();
 
         return back()->with('success', 'Tanda tangan digital berhasil diperbarui.');

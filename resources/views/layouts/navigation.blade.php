@@ -2908,6 +2908,65 @@
 @endif
 @endrole
 
+{{-- ============================================================ --}}
+{{-- MENU: PENILAIAN SEMESTER --}}
+{{-- ============================================================ --}}
+@if(in_array(session('active_role'), ['Kepala Sekolah', 'Guru Kelas', 'Siswa', 'Operator', 'Super Admin', 'KAUR SDM']))
+    <div class="section-title">Penilaian</div>
+    <li>
+        <a href="{{ route('penilaian.index') }}"
+            class="nav-link {{ request()->routeIs('penilaian.index', 'penilaian.take') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 8l2 2 4-4" />
+                </svg>
+            </div>
+            <span class="nav-text">Isi Penilaian</span>
+        </a>
+    </li>
+    @if(in_array(session('active_role'), ['Operator', 'Super Admin', 'KAUR SDM']))
+        <li>
+            <a href="{{ route('penilaian.settings') }}"
+                class="nav-link {{ request()->routeIs('penilaian.settings', 'penilaian.periods.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                <div class="nav-icon-container">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <span class="nav-text">Seting Periode</span>
+            </a>
+        </li>
+        <li>
+            <a href="{{ route('penilaian.instruments') }}"
+                class="nav-link {{ request()->routeIs('penilaian.instruments', 'penilaian.questions.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                <div class="nav-icon-container">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5S19.832 5.477 21 6.253v13C19.832 18.477 18.246 18 16.5 18s-3.332.477-4.5 1.253" />
+                    </svg>
+                </div>
+                <span class="nav-text">Instrumen</span>
+            </a>
+        </li>
+        <li>
+            <a href="{{ route('penilaian.report') }}"
+                class="nav-link {{ request()->routeIs('penilaian.report', 'penilaian.certificate') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                <div class="nav-icon-container">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                    </svg>
+                </div>
+                <span class="nav-text">Report</span>
+            </a>
+        </li>
+    @endif
+@endif
+
 {{-- SEPARATOR & PROFILE MENU (Always Visible) --}}
 <li class="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent mx-6 my-4"></li>
 

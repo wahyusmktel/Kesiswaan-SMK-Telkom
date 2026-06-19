@@ -950,6 +950,30 @@ Route::middleware('auth')->group(function () {
         Route::get('/{survey}/export/excel', [\App\Http\Controllers\Survey\SurveyController::class, 'exportExcel'])->name('export.excel');
         Route::get('/{survey}/export/pdf', [\App\Http\Controllers\Survey\SurveyController::class, 'exportPdf'])->name('export.pdf');
     });
+
+    // Penilaian Kinerja / Kuesioner Semester
+    Route::prefix('penilaian')->name('penilaian.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\AssessmentController::class, 'index'])->name('index');
+        Route::get('/isi/{instrument}/{targetType}/{targetId}', [\App\Http\Controllers\AssessmentController::class, 'take'])->name('take');
+        Route::post('/isi/{instrument}/{targetType}/{targetId}', [\App\Http\Controllers\AssessmentController::class, 'submit'])->name('submit');
+
+        Route::middleware('role:Operator|Super Admin|KAUR SDM')->group(function () {
+            Route::get('/settings/periode', [\App\Http\Controllers\AssessmentController::class, 'settings'])->name('settings');
+            Route::post('/settings/periode', [\App\Http\Controllers\AssessmentController::class, 'storePeriod'])->name('periods.store');
+            Route::put('/settings/periode/{period}', [\App\Http\Controllers\AssessmentController::class, 'updatePeriod'])->name('periods.update');
+            Route::post('/settings/periode/{period}/notify', [\App\Http\Controllers\AssessmentController::class, 'notifyPeriod'])->name('periods.notify');
+
+            Route::get('/settings/instrumen', [\App\Http\Controllers\AssessmentController::class, 'instruments'])->name('instruments');
+            Route::post('/settings/instrumen', [\App\Http\Controllers\AssessmentController::class, 'storeInstrument'])->name('instruments.store');
+            Route::post('/settings/instrumen/{instrument}/questions', [\App\Http\Controllers\AssessmentController::class, 'storeQuestion'])->name('questions.store');
+            Route::delete('/settings/questions/{question}', [\App\Http\Controllers\AssessmentController::class, 'deleteQuestion'])->name('questions.destroy');
+            Route::post('/settings/instrumen/{instrument}/import', [\App\Http\Controllers\AssessmentController::class, 'importQuestions'])->name('questions.import');
+
+            Route::get('/report', [\App\Http\Controllers\AssessmentController::class, 'report'])->name('report');
+            Route::get('/report/pdf', [\App\Http\Controllers\AssessmentController::class, 'reportPdf'])->name('report.pdf');
+            Route::get('/sertifikat/{period}/{targetKind}/{targetId}', [\App\Http\Controllers\AssessmentController::class, 'certificate'])->name('certificate');
+        });
+    });
 });
 
 Route::post('/switch-role', [\App\Http\Controllers\RoleSwitchController::class, 'switch'])
