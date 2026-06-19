@@ -56,6 +56,7 @@ class DigitalSignatureController extends Controller
         $signature->auto_sign_izin_guru      = $request->boolean('auto_sign_izin_guru');
         $signature->auto_sign_penilaian_ukk  = $request->boolean('auto_sign_penilaian_ukk');
         $signature->auto_sign_uks            = $request->boolean('auto_sign_uks');
+        $signature->auto_sign_lesson_plan    = $request->boolean('auto_sign_lesson_plan');
         $signature->save();
 
         return back()->with('success', 'Tanda tangan digital berhasil diperbarui.');
