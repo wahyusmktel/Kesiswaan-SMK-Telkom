@@ -5,9 +5,13 @@ namespace App\Http\Controllers\Prakerin;
 use App\Http\Controllers\Controller;
 use App\Models\PrakerinIndustri;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 
 class IndustriController extends Controller
 {
+    private const WILAYAH_API_BASE = 'https://wilayah.id/api';
+
     public function index(Request $request)
     {
         $query = PrakerinIndustri::query();
@@ -92,5 +96,25 @@ class IndustriController extends Controller
         $industri->delete();
         toast('Data industri berhasil dihapus.', 'success');
         return redirect()->route('prakerin.industri.index');
+    }
+
+    public function wilayah(string $level, ?string $code = null)
+    {
+        abort_unless(in_array($level, ['provinces', 'regencies', 'districts', 'villages'], true), 404);
+        abort_if($level !== 'provinces' && blank($code), 404);
+
+        $path = $level === 'provinces'
+            ? '/provinces.json'
+            : "/{$level}/{$code}.json";
+
+        $payload = Cache::remember("wilayah-id:{$level}:{$code}", now()->addDay(), function () use ($path) {
+            return Http::timeout(15)
+                ->acceptJson()
+                ->get(self::WILAYAH_API_BASE . $path)
+                ->throw()
+                ->json();
+        });
+
+        return response()->json($payload);
     }
 }

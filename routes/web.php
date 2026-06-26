@@ -786,6 +786,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Grup Route untuk Prakerin
     Route::middleware(['role:Koordinator Prakerin', 'permission:manage prakerin'])->prefix('prakerin')->name('prakerin.')->group(function () {
+        Route::get('wilayah/{level}/{code?}', [IndustriController::class, 'wilayah'])->where('code', '[0-9.]+')->name('wilayah');
         Route::resource('industri', IndustriController::class);
         Route::resource('pembimbing', \App\Http\Controllers\Prakerin\PembimbingController::class)->except(['show', 'create', 'edit']);
         Route::resource('rombel-pkl', \App\Http\Controllers\Prakerin\RombelPklController::class)->except(['show', 'create', 'edit'])->parameters(['rombel-pkl' => 'rombel']);

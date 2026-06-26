@@ -227,11 +227,9 @@
         </div>
     </div>
 @push('scripts')
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-        crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        const WILAYAH_API_BASE = 'https://wilayah.id/api';
+        const WILAYAH_API_BASE = @js(url('/prakerin/wilayah'));
         const DEFAULT_COORDINATE = [-5.3971, 105.2668];
 
         function normalizeWilayahResponse(payload) {
@@ -243,11 +241,16 @@
         }
 
         async function fetchWilayah(path) {
-            const response = await fetch(`${WILAYAH_API_BASE}${path}`, {
-                headers: { 'Accept': 'application/json' }
-            });
-            if (!response.ok) throw new Error('Gagal memuat data wilayah');
-            return normalizeWilayahResponse(await response.json());
+            try {
+                const response = await fetch(`${WILAYAH_API_BASE}${path}`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (!response.ok) throw new Error('Gagal memuat data wilayah');
+                return normalizeWilayahResponse(await response.json());
+            } catch (error) {
+                console.warn('Gagal memuat data wilayah:', error);
+                return [];
+            }
         }
 
         window.prakerinIndustryForm = function(config) {
@@ -287,7 +290,7 @@
                 },
 
                 async loadProvinces() {
-                    this.provinces = await fetchWilayah('/provinces.json');
+                    this.provinces = await fetchWilayah('/provinces');
                     this.provinceName = this.findName(this.provinces, this.provinceCode, this.provinceName);
                 },
 
@@ -295,7 +298,7 @@
                     if (!this.provinceCode) return;
                     this.loading.regencies = true;
                     try {
-                        this.regencies = await fetchWilayah(`/regencies/${this.provinceCode}.json`);
+                        this.regencies = await fetchWilayah(`/regencies/${this.provinceCode}`);
                         this.regencyName = this.findName(this.regencies, this.regencyCode, this.regencyName);
                     } finally {
                         this.loading.regencies = false;
@@ -306,7 +309,7 @@
                     if (!this.regencyCode) return;
                     this.loading.districts = true;
                     try {
-                        this.districts = await fetchWilayah(`/districts/${this.regencyCode}.json`);
+                        this.districts = await fetchWilayah(`/districts/${this.regencyCode}`);
                         this.districtName = this.findName(this.districts, this.districtCode, this.districtName);
                     } finally {
                         this.loading.districts = false;
@@ -317,7 +320,7 @@
                     if (!this.districtCode) return;
                     this.loading.villages = true;
                     try {
-                        this.villages = await fetchWilayah(`/villages/${this.districtCode}.json`);
+                        this.villages = await fetchWilayah(`/villages/${this.districtCode}`);
                         this.villageName = this.findName(this.villages, this.villageCode, this.villageName);
                     } finally {
                         this.loading.villages = false;
@@ -458,10 +461,7 @@
 @endpush
 
 @push('styles')
-    <link rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIINfQ0K7yQkgI7M0pMdpvsHhh8y+q6Zy0="
-        crossorigin="" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         [x-cloak] { display: none !important; }
         .leaflet-container { font-family: inherit; }
