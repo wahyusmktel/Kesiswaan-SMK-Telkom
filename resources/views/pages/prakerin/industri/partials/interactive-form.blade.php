@@ -162,7 +162,7 @@
 
     <div>
         <x-input-label :for="$prefix . '_catatan_mou'" value="Catatan MOU" />
-        <textarea :id="$prefix . '_catatan_mou'" name="catatan_mou" rows="2"
+        <textarea id="{{ $prefix }}_catatan_mou" name="catatan_mou" rows="2"
             class="mt-1 w-full rounded-xl border-gray-200 text-sm shadow-sm focus:border-red-300 focus:ring focus:ring-red-100">{{ old('catatan_mou', $current->catatan_mou ?? '') }}</textarea>
     </div>
 </div>

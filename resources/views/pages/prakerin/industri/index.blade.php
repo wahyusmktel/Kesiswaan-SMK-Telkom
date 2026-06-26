@@ -226,8 +226,6 @@
             </div>
         </div>
     </div>
-</x-app-layout>
-
 @push('scripts')
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
@@ -252,7 +250,7 @@
             return normalizeWilayahResponse(await response.json());
         }
 
-        function prakerinIndustryForm(config) {
+        window.prakerinIndustryForm = function(config) {
             return {
                 prefix: config.prefix,
                 address: config.initialAddress || '',
@@ -469,3 +467,4 @@
         .leaflet-container { font-family: inherit; }
     </style>
 @endpush
+</x-app-layout>
