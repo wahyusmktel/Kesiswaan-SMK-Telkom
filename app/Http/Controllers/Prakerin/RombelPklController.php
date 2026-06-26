@@ -11,6 +11,7 @@ use App\Models\PrakerinPenempatan;
 use App\Models\PrakerinRombel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class RombelPklController extends Controller
 {
@@ -22,7 +23,7 @@ class RombelPklController extends Controller
             ->paginate(12);
         $industri = PrakerinIndustri::orderBy('nama_industri')->get();
         $internal = PrakerinPembimbing::where('tipe', 'internal')->where('is_active', true)->orderBy('nama')->get();
-        $external = PrakerinPembimbing::where('tipe', 'external')->where('is_active', true)->orderBy('nama')->get();
+        $external = PrakerinPembimbing::with('industri')->where('tipe', 'external')->where('is_active', true)->orderBy('nama')->get();
 
         return view('pages.prakerin.rombel.index', compact('rombels', 'industri', 'internal', 'external'));
     }
@@ -63,7 +64,10 @@ class RombelPklController extends Controller
             ->when($request->filled('kelas_id'), function ($query) use ($request) {
                 $query->whereHas('rombels', fn ($q) => $q->where('kelas_id', $request->kelas_id));
             })
-            ->when($request->filled('search'), fn ($query) => $query->where('nama_lengkap', 'like', '%' . $request->search . '%')->orWhere('nis', 'like', '%' . $request->search . '%'))
+            ->when($request->filled('search'), fn ($query) => $query->where(function ($search) use ($request) {
+                $search->where('nama_lengkap', 'like', '%' . $request->search . '%')
+                    ->orWhere('nis', 'like', '%' . $request->search . '%');
+            }))
             ->orderBy('nama_lengkap')
             ->paginate(20)
             ->withQueryString();
@@ -114,8 +118,17 @@ class RombelPklController extends Controller
         return $request->validate([
             'nama_rombel' => 'required|string|max:255',
             'prakerin_industri_id' => 'required|exists:prakerin_industris,id',
-            'pembimbing_internal_id' => 'required|exists:prakerin_pembimbings,id',
-            'pembimbing_external_id' => 'required|exists:prakerin_pembimbings,id',
+            'pembimbing_internal_id' => [
+                'required',
+                Rule::exists('prakerin_pembimbings', 'id')->where('tipe', 'internal')->where('is_active', true),
+            ],
+            'pembimbing_external_id' => [
+                'required',
+                Rule::exists('prakerin_pembimbings', 'id')
+                    ->where('tipe', 'external')
+                    ->where('is_active', true)
+                    ->where('prakerin_industri_id', $request->input('prakerin_industri_id')),
+            ],
             'tanggal_mulai' => 'required|date',
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
             'status' => 'required|in:draft,aktif,selesai',
