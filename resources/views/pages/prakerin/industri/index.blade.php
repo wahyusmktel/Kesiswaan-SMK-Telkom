@@ -5,8 +5,8 @@
             <p class="text-sm text-gray-500">Kelola data mitra industri untuk kebutuhan prakerin secara cepat dan rapi.</p>
         </div>
     </x-slot>
-    <div class="py-8">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8" x-data="{ createOpen: false }">
+    <div class="py-6">
+        <div class="w-full px-4 sm:px-6 lg:px-8" x-data="{ createOpen: false }">
             <div class="bg-white border border-gray-100 shadow-sm sm:rounded-2xl overflow-hidden">
                 <div class="p-6 sm:p-8">
                     <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
@@ -92,7 +92,10 @@
                                             <p class="text-sm font-semibold text-gray-900">{{ $item->nama_industri }}</p>
                                             <p class="text-xs text-gray-500">{{ $item->alamat ?? 'Alamat belum tersedia' }}</p>
                                         </td>
-                                        <td class="px-6 py-4 text-sm text-gray-700">{{ $item->kota }}</td>
+                                        <td class="px-6 py-4 text-sm text-gray-700">
+                                            <p class="font-medium">{{ $item->kabupaten_name ?: $item->kota }}</p>
+                                            <p class="text-xs text-gray-500">{{ collect([$item->kecamatan_name, $item->desa_name])->filter()->join(', ') }}</p>
+                                        </td>
                                         <td class="px-6 py-4">
                                             <p class="text-sm text-gray-700">{{ $item->nama_pic ?? '-' }}</p>
                                             <p class="text-xs text-gray-500">{{ $item->email_pic ?? '-' }}</p>
@@ -128,7 +131,7 @@
                                                     x-transition:leave-end="opacity-0 scale-95"
                                                     class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 px-4 py-6"
                                                     style="display: none;">
-                                                    <div class="w-full max-w-2xl rounded-2xl bg-white shadow-xl">
+                                                    <div class="max-h-[92vh] w-full max-w-6xl overflow-y-auto rounded-2xl bg-white shadow-xl">
                                                         <div class="flex items-center justify-between border-b border-gray-100 px-6 py-4">
                                                             <div>
                                                                 <h3 class="text-base font-semibold text-gray-900">Edit Industri</h3>
@@ -140,43 +143,10 @@
                                                                 </svg>
                                                             </button>
                                                         </div>
-                                                        <form method="POST" action="{{ route('prakerin.industri.update', $item->id) }}" class="px-6 py-6 space-y-4">
+                                                        <form method="POST" action="{{ route('prakerin.industri.update', $item->id) }}" class="px-6 py-6 space-y-5">
                                                             @csrf
                                                             @method('PUT')
-                                                            <div>
-                                                                <x-input-label for="nama_industri_{{ $item->id }}" value="Nama Industri" />
-                                                                <x-text-input id="nama_industri_{{ $item->id }}" class="block mt-1 w-full"
-                                                                    type="text" name="nama_industri" value="{{ old('nama_industri', $item->nama_industri) }}" required />
-                                                            </div>
-                                                            <div>
-                                                                <x-input-label for="alamat_{{ $item->id }}" value="Alamat Lengkap" />
-                                                                <textarea name="alamat" id="alamat_{{ $item->id }}" rows="3"
-                                                                    class="w-full rounded-xl border-gray-200 shadow-sm focus:border-red-300 focus:ring focus:ring-red-100">{{ old('alamat', $item->alamat) }}</textarea>
-                                                            </div>
-                                                            <div class="grid gap-4 md:grid-cols-2">
-                                                                <div>
-                                                                    <x-input-label for="kota_{{ $item->id }}" value="Kota/Kabupaten" />
-                                                                    <x-text-input id="kota_{{ $item->id }}" class="block mt-1 w-full"
-                                                                        type="text" name="kota" value="{{ old('kota', $item->kota) }}" required />
-                                                                </div>
-                                                                <div>
-                                                                    <x-input-label for="telepon_{{ $item->id }}" value="Telepon" />
-                                                                    <x-text-input id="telepon_{{ $item->id }}" class="block mt-1 w-full"
-                                                                        type="text" name="telepon" value="{{ old('telepon', $item->telepon) }}" />
-                                                                </div>
-                                                            </div>
-                                                            <div class="grid gap-4 md:grid-cols-2">
-                                                                <div>
-                                                                    <x-input-label for="nama_pic_{{ $item->id }}" value="Nama PIC (Person in Charge)" />
-                                                                    <x-text-input id="nama_pic_{{ $item->id }}" class="block mt-1 w-full"
-                                                                        type="text" name="nama_pic" value="{{ old('nama_pic', $item->nama_pic) }}" />
-                                                                </div>
-                                                                <div>
-                                                                    <x-input-label for="email_pic_{{ $item->id }}" value="Email PIC" />
-                                                                    <x-text-input id="email_pic_{{ $item->id }}" class="block mt-1 w-full"
-                                                                        type="email" name="email_pic" value="{{ old('email_pic', $item->email_pic) }}" />
-                                                                </div>
-                                                            </div>
+                                                            @include('pages.prakerin.industri.partials.interactive-form', ['industri' => $item, 'prefix' => 'edit_industri_' . $item->id])
                                                             <div class="flex flex-col gap-2 border-t border-gray-100 pt-4 sm:flex-row sm:justify-end">
                                                                 <button type="button" @click="editOpen = false"
                                                                     class="inline-flex items-center justify-center rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50">
@@ -229,7 +199,7 @@
                 x-transition:leave-end="opacity-0 scale-95"
                 class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 px-4 py-6"
                 style="display: none;">
-                <div class="w-full max-w-2xl rounded-2xl bg-white shadow-xl">
+                <div class="max-h-[92vh] w-full max-w-6xl overflow-y-auto rounded-2xl bg-white shadow-xl">
                     <div class="flex items-center justify-between border-b border-gray-100 px-6 py-4">
                         <div>
                             <h3 class="text-base font-semibold text-gray-900">Tambah Industri</h3>
@@ -241,42 +211,9 @@
                             </svg>
                         </button>
                     </div>
-                    <form method="POST" action="{{ route('prakerin.industri.store') }}" class="px-6 py-6 space-y-4">
+                    <form method="POST" action="{{ route('prakerin.industri.store') }}" class="px-6 py-6 space-y-5">
                         @csrf
-                        <div>
-                            <x-input-label for="nama_industri" value="Nama Industri" />
-                            <x-text-input id="nama_industri" class="block mt-1 w-full"
-                                type="text" name="nama_industri" value="{{ old('nama_industri') }}" required />
-                        </div>
-                        <div>
-                            <x-input-label for="alamat" value="Alamat Lengkap" />
-                            <textarea name="alamat" id="alamat" rows="3"
-                                class="w-full rounded-xl border-gray-200 shadow-sm focus:border-red-300 focus:ring focus:ring-red-100">{{ old('alamat') }}</textarea>
-                        </div>
-                        <div class="grid gap-4 md:grid-cols-2">
-                            <div>
-                                <x-input-label for="kota" value="Kota/Kabupaten" />
-                                <x-text-input id="kota" class="block mt-1 w-full"
-                                    type="text" name="kota" value="{{ old('kota') }}" required />
-                            </div>
-                            <div>
-                                <x-input-label for="telepon" value="Telepon" />
-                                <x-text-input id="telepon" class="block mt-1 w-full"
-                                    type="text" name="telepon" value="{{ old('telepon') }}" />
-                            </div>
-                        </div>
-                        <div class="grid gap-4 md:grid-cols-2">
-                            <div>
-                                <x-input-label for="nama_pic" value="Nama PIC (Person in Charge)" />
-                                <x-text-input id="nama_pic" class="block mt-1 w-full"
-                                    type="text" name="nama_pic" value="{{ old('nama_pic') }}" />
-                            </div>
-                            <div>
-                                <x-input-label for="email_pic" value="Email PIC" />
-                                <x-text-input id="email_pic" class="block mt-1 w-full"
-                                    type="email" name="email_pic" value="{{ old('email_pic') }}" />
-                            </div>
-                        </div>
+                        @include('pages.prakerin.industri.partials.interactive-form', ['prefix' => 'create_industri'])
                         <div class="flex flex-col gap-2 border-t border-gray-100 pt-4 sm:flex-row sm:justify-end">
                             <button type="button" @click="createOpen = false"
                                 class="inline-flex items-center justify-center rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50">
@@ -292,7 +229,210 @@
 </x-app-layout>
 
 @push('scripts')
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
     <script>
+        const WILAYAH_API_BASE = 'https://wilayah.id/api';
+        const DEFAULT_COORDINATE = [-5.3971, 105.2668];
+
+        function normalizeWilayahResponse(payload) {
+            const rows = Array.isArray(payload) ? payload : (payload.data || []);
+            return rows.map((item) => ({
+                code: item.code || item.id || item.kode,
+                name: item.name || item.nama,
+            })).filter((item) => item.code && item.name);
+        }
+
+        async function fetchWilayah(path) {
+            const response = await fetch(`${WILAYAH_API_BASE}${path}`, {
+                headers: { 'Accept': 'application/json' }
+            });
+            if (!response.ok) throw new Error('Gagal memuat data wilayah');
+            return normalizeWilayahResponse(await response.json());
+        }
+
+        function prakerinIndustryForm(config) {
+            return {
+                prefix: config.prefix,
+                address: config.initialAddress || '',
+                searchQuery: '',
+                latitude: config.initialLat || '',
+                longitude: config.initialLng || '',
+                provinceCode: config.provinceCode || '',
+                provinceName: config.provinceName || '',
+                regencyCode: config.regencyCode || '',
+                regencyName: config.regencyName || '',
+                districtCode: config.districtCode || '',
+                districtName: config.districtName || '',
+                villageCode: config.villageCode || '',
+                villageName: config.villageName || '',
+                provinces: [],
+                regencies: [],
+                districts: [],
+                villages: [],
+                loading: {
+                    regencies: false,
+                    districts: false,
+                    villages: false,
+                },
+                map: null,
+                marker: null,
+                resizeObserver: null,
+
+                async init() {
+                    await this.loadProvinces();
+                    if (this.provinceCode) await this.loadRegencies();
+                    if (this.regencyCode) await this.loadDistricts();
+                    if (this.districtCode) await this.loadVillages();
+                    this.$nextTick(() => this.initMap());
+                },
+
+                async loadProvinces() {
+                    this.provinces = await fetchWilayah('/provinces.json');
+                    this.provinceName = this.findName(this.provinces, this.provinceCode, this.provinceName);
+                },
+
+                async loadRegencies() {
+                    if (!this.provinceCode) return;
+                    this.loading.regencies = true;
+                    try {
+                        this.regencies = await fetchWilayah(`/regencies/${this.provinceCode}.json`);
+                        this.regencyName = this.findName(this.regencies, this.regencyCode, this.regencyName);
+                    } finally {
+                        this.loading.regencies = false;
+                    }
+                },
+
+                async loadDistricts() {
+                    if (!this.regencyCode) return;
+                    this.loading.districts = true;
+                    try {
+                        this.districts = await fetchWilayah(`/districts/${this.regencyCode}.json`);
+                        this.districtName = this.findName(this.districts, this.districtCode, this.districtName);
+                    } finally {
+                        this.loading.districts = false;
+                    }
+                },
+
+                async loadVillages() {
+                    if (!this.districtCode) return;
+                    this.loading.villages = true;
+                    try {
+                        this.villages = await fetchWilayah(`/villages/${this.districtCode}.json`);
+                        this.villageName = this.findName(this.villages, this.villageCode, this.villageName);
+                    } finally {
+                        this.loading.villages = false;
+                    }
+                },
+
+                async onProvinceChange() {
+                    this.provinceName = this.findName(this.provinces, this.provinceCode, '');
+                    this.regencyCode = '';
+                    this.regencyName = '';
+                    this.districtCode = '';
+                    this.districtName = '';
+                    this.villageCode = '';
+                    this.villageName = '';
+                    this.regencies = [];
+                    this.districts = [];
+                    this.villages = [];
+                    await this.loadRegencies();
+                },
+
+                async onRegencyChange() {
+                    this.regencyName = this.findName(this.regencies, this.regencyCode, '');
+                    this.districtCode = '';
+                    this.districtName = '';
+                    this.villageCode = '';
+                    this.villageName = '';
+                    this.districts = [];
+                    this.villages = [];
+                    await this.loadDistricts();
+                },
+
+                async onDistrictChange() {
+                    this.districtName = this.findName(this.districts, this.districtCode, '');
+                    this.villageCode = '';
+                    this.villageName = '';
+                    this.villages = [];
+                    await this.loadVillages();
+                },
+
+                onVillageChange() {
+                    this.villageName = this.findName(this.villages, this.villageCode, '');
+                },
+
+                findName(rows, code, fallback) {
+                    return rows.find((row) => row.code === code)?.name || fallback || '';
+                },
+
+                initMap() {
+                    if (this.map || typeof L === 'undefined') return;
+                    const mapElement = document.getElementById(`${this.prefix}_map`);
+                    if (!mapElement) return;
+
+                    const lat = parseFloat(this.latitude) || DEFAULT_COORDINATE[0];
+                    const lng = parseFloat(this.longitude) || DEFAULT_COORDINATE[1];
+
+                    this.map = L.map(mapElement).setView([lat, lng], this.latitude && this.longitude ? 16 : 12);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: '&copy; OpenStreetMap contributors'
+                    }).addTo(this.map);
+
+                    this.marker = L.marker([lat, lng], { draggable: true }).addTo(this.map);
+                    this.marker.on('dragend', () => {
+                        const point = this.marker.getLatLng();
+                        this.setCoordinate(point.lat, point.lng, true);
+                    });
+                    this.map.on('click', (event) => this.setCoordinate(event.latlng.lat, event.latlng.lng, true));
+
+                    this.resizeObserver = new ResizeObserver(() => {
+                        setTimeout(() => this.map.invalidateSize(), 80);
+                    });
+                    this.resizeObserver.observe(mapElement);
+
+                    setTimeout(() => this.map.invalidateSize(), 250);
+                },
+
+                setCoordinate(lat, lng, shouldReverse = false) {
+                    this.latitude = Number(lat).toFixed(7);
+                    this.longitude = Number(lng).toFixed(7);
+                    if (this.marker) this.marker.setLatLng([this.latitude, this.longitude]);
+                    if (this.map) this.map.setView([this.latitude, this.longitude], Math.max(this.map.getZoom(), 16));
+                    if (shouldReverse) this.reverseGeocode();
+                },
+
+                async reverseGeocode() {
+                    if (!this.latitude || !this.longitude) return;
+                    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${this.latitude}&lon=${this.longitude}&accept-language=id`;
+                    const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                    if (!response.ok) return;
+                    const data = await response.json();
+                    if (data.display_name) this.address = data.display_name;
+                },
+
+                async searchLocation() {
+                    const query = this.searchQuery.trim();
+                    if (!query) return;
+                    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&accept-language=id&q=${encodeURIComponent(query)}`;
+                    const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                    if (!response.ok) return;
+                    const data = await response.json();
+                    if (!data.length) return;
+                    this.setCoordinate(data[0].lat, data[0].lon, true);
+                },
+
+                useBrowserLocation() {
+                    if (!navigator.geolocation) return;
+                    navigator.geolocation.getCurrentPosition((position) => {
+                        this.setCoordinate(position.coords.latitude, position.coords.longitude, true);
+                    });
+                },
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.js-delete').forEach(function(form) {
                 form.addEventListener('submit', function(event) {
@@ -320,7 +460,12 @@
 @endpush
 
 @push('styles')
+    <link rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIINfQ0K7yQkgI7M0pMdpvsHhh8y+q6Zy0="
+        crossorigin="" />
     <style>
         [x-cloak] { display: none !important; }
+        .leaflet-container { font-family: inherit; }
     </style>
 @endpush

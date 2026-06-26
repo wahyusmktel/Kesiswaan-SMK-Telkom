@@ -8,7 +8,7 @@
             type="text" name="kota" :value="old('kota', $industri->kota ?? '')" required /></div>
     <div><x-input-label for="telepon" value="Telepon" /><x-text-input id="telepon" class="block mt-1 w-full"
             type="text" name="telepon" :value="old('telepon', $industri->telepon ?? '')" /></div>
-    <div><x-input-label for="nama_pic" value="Nama PIC (Person in Charge)" /><x-text-input id="nama_pic"
+    <div><x-input-label for="nama_pic" value="Nama PIC (PIC Di Industri)" /><x-text-input id="nama_pic"
             class="block mt-1 w-full" type="text" name="nama_pic" :value="old('nama_pic', $industri->nama_pic ?? '')" /></div>
     <div><x-input-label for="email_pic" value="Email PIC" /><x-text-input id="email_pic" class="block mt-1 w-full"
             type="email" name="email_pic" :value="old('email_pic', $industri->email_pic ?? '')" /></div>
