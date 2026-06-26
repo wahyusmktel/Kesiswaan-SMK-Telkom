@@ -26,8 +26,14 @@
                             <tbody class="bg-white divide-y divide-gray-200">
                                 @forelse ($penempatan as $item)
                                     <tr>
-                                        <td class="px-6 py-4">{{ $item->siswa->nama_lengkap }}</td>
-                                        <td class="px-6 py-4">{{ $item->industri->nama_industri }}</td>
+                                        <td class="px-6 py-4">{{ $item->siswa?->nama_lengkap ?? 'Data siswa tidak ditemukan' }}</td>
+                                        <td class="px-6 py-4">
+                                            @if($item->industri)
+                                                {{ $item->industri->nama_industri }}
+                                            @else
+                                                <span class="text-red-600 font-semibold">Data industri tidak ditemukan</span>
+                                            @endif
+                                        </td>
                                         <td class="px-6 py-4">
                                             {{ \Carbon\Carbon::parse($item->tanggal_mulai)->isoFormat('D MMM YY') }} -
                                             {{ \Carbon\Carbon::parse($item->tanggal_selesai)->isoFormat('D MMM YY') }}

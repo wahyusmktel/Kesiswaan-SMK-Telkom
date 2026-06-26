@@ -440,6 +440,13 @@
                     event.preventDefault();
                     const industriName = form.getAttribute('data-industri') || 'data ini';
 
+                    if (typeof Swal === 'undefined') {
+                        if (confirm('Hapus ' + industriName + '? Tindakan ini tidak dapat dibatalkan.')) {
+                            form.submit();
+                        }
+                        return;
+                    }
+
                     Swal.fire({
                         title: 'Hapus Industri?',
                         text: 'Anda akan menghapus ' + industriName + '. Tindakan ini tidak dapat dibatalkan.',
