@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Prakerin;
 
 use App\Http\Controllers\Controller;
 use App\Models\MasterGuru;
+use App\Models\AppSetting;
 use App\Models\PrakerinIndustri;
 use App\Models\PrakerinPembimbing;
 use Illuminate\Http\Request;
@@ -21,8 +22,9 @@ class PembimbingController extends Controller
 
         $guru = MasterGuru::orderBy('nama_lengkap')->get();
         $industri = PrakerinIndustri::orderBy('nama_industri')->get();
+        $schoolName = AppSetting::first()?->school_name ?? config('app.name', 'Sekolah');
 
-        return view('pages.prakerin.pembimbing.index', compact('pembimbings', 'guru', 'industri'));
+        return view('pages.prakerin.pembimbing.index', compact('pembimbings', 'guru', 'industri', 'schoolName'));
     }
 
     public function store(Request $request)
@@ -31,7 +33,10 @@ class PembimbingController extends Controller
 
         if ($data['tipe'] === 'internal' && $request->filled('master_guru_id')) {
             $guru = MasterGuru::find($request->master_guru_id);
-            $data['nama'] = $guru?->nama_lengkap ?? $data['nama'];
+            $data['nama'] = $guru?->nama_lengkap ?? ($data['nama'] ?? 'Pembimbing Internal');
+            $data['prakerin_industri_id'] = null;
+        } else {
+            $data['master_guru_id'] = null;
         }
 
         PrakerinPembimbing::create($data + ['is_active' => $request->boolean('is_active', true)]);
@@ -46,7 +51,10 @@ class PembimbingController extends Controller
 
         if ($data['tipe'] === 'internal' && $request->filled('master_guru_id')) {
             $guru = MasterGuru::find($request->master_guru_id);
-            $data['nama'] = $guru?->nama_lengkap ?? $data['nama'];
+            $data['nama'] = $guru?->nama_lengkap ?? ($data['nama'] ?? 'Pembimbing Internal');
+            $data['prakerin_industri_id'] = null;
+        } else {
+            $data['master_guru_id'] = null;
         }
 
         $pembimbing->update($data + ['is_active' => $request->boolean('is_active')]);
@@ -69,7 +77,7 @@ class PembimbingController extends Controller
             'tipe' => 'required|in:internal,external',
             'master_guru_id' => 'nullable|required_if:tipe,internal|exists:master_gurus,id',
             'prakerin_industri_id' => 'nullable|required_if:tipe,external|exists:prakerin_industris,id',
-            'nama' => 'required|string|max:255',
+            'nama' => 'nullable|required_if:tipe,external|string|max:255',
             'jabatan' => 'nullable|string|max:255',
             'telepon' => 'nullable|string|max:30',
             'email' => 'nullable|email|max:255',
