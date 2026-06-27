@@ -750,10 +750,13 @@
         @endcan
         {{-- Menu Pembimbing Prakerin --}}
         @php
+            $guruPembimbingId = Auth::user()->masterGuru?->id;
             $isPembimbingPrakerin = Auth::user()->masterGuru && (
                 Auth::user()->masterGuru->penempatan()->where('status', 'aktif')->exists()
-                || \App\Models\PrakerinRombel::where('status', 'aktif')
-                    ->whereHas('pembimbingInternal', fn ($q) => $q->where('master_guru_id', Auth::user()->masterGuru->id))
+                || \Illuminate\Support\Facades\DB::table('prakerin_rombels')
+                    ->join('prakerin_pembimbings', 'prakerin_pembimbings.id', '=', 'prakerin_rombels.pembimbing_internal_id')
+                    ->where('prakerin_rombels.status', 'aktif')
+                    ->where('prakerin_pembimbings.master_guru_id', $guruPembimbingId)
                     ->exists()
             );
         @endphp
