@@ -38,6 +38,10 @@
                     <h3 class="text-lg font-bold text-gray-900">Buat Rombel PKL</h3>
                     <p class="text-sm text-gray-500">Pilih industri terlebih dahulu untuk menampilkan pembimbing external yang sesuai.</p>
                 </div>
+                <div class="mb-5 rounded-xl border border-amber-100 bg-amber-50 p-4 text-sm text-amber-900">
+                    <p class="font-semibold">Periode dan waktu absensi kustom</p>
+                    <p class="mt-1">Aktifkan opsi kustom jika rombel ini memiliki jadwal PKL atau jam absensi yang berbeda dari aturan global di halaman Seting Jurnal & Waktu PKL. Jika tidak diaktifkan, siswa otomatis mengikuti aturan global.</p>
+                </div>
                 <form
                     method="POST"
                     action="{{ route('prakerin.rombel-pkl.store') }}"
@@ -45,6 +49,8 @@
                     x-data="rombelPklForm({
                         industryId: '{{ old('prakerin_industri_id') }}',
                         externalId: '{{ old('pembimbing_external_id') }}',
+                        customPeriod: {{ old('gunakan_periode_kustom') ? 'true' : 'false' }},
+                        customAttendance: {{ old('gunakan_waktu_absensi_kustom') ? 'true' : 'false' }},
                     })"
                     x-init="init()"
                 >
@@ -77,14 +83,40 @@
                             <option value="">Pilih industri dahulu</option>
                         </select>
                     </label>
-                    <label class="space-y-1">
-                        <span class="text-sm font-semibold text-gray-700">Tanggal mulai</span>
-                        <input type="date" name="tanggal_mulai" value="{{ old('tanggal_mulai') }}" class="w-full rounded-xl border-gray-200" required>
-                    </label>
-                    <label class="space-y-1">
-                        <span class="text-sm font-semibold text-gray-700">Tanggal selesai</span>
-                        <input type="date" name="tanggal_selesai" value="{{ old('tanggal_selesai') }}" class="w-full rounded-xl border-gray-200" required>
-                    </label>
+                    <div class="lg:col-span-3 rounded-xl border border-gray-100 p-4">
+                        <label class="flex items-start gap-3">
+                            <input type="checkbox" name="gunakan_periode_kustom" value="1" x-model="customPeriod" class="mt-1 rounded border-gray-300 text-red-600 focus:ring-red-500">
+                            <span>
+                                <span class="block font-semibold text-gray-900">Set Periode Pelaksanaan kustom</span>
+                                <span class="block text-sm text-gray-500">Gunakan tanggal khusus untuk rombel ini.</span>
+                            </span>
+                        </label>
+                        <div x-cloak x-show="customPeriod" x-collapse class="mt-4 grid gap-4 sm:grid-cols-2">
+                            <label class="space-y-1">
+                                <span class="text-sm font-semibold text-gray-700">Tanggal mulai</span>
+                                <input type="date" name="tanggal_mulai" value="{{ old('tanggal_mulai') }}" class="w-full rounded-xl border-gray-200" :required="customPeriod">
+                            </label>
+                            <label class="space-y-1">
+                                <span class="text-sm font-semibold text-gray-700">Tanggal selesai</span>
+                                <input type="date" name="tanggal_selesai" value="{{ old('tanggal_selesai') }}" class="w-full rounded-xl border-gray-200" :required="customPeriod">
+                            </label>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-3 rounded-xl border border-gray-100 p-4">
+                        <label class="flex items-start gap-3">
+                            <input type="checkbox" name="gunakan_waktu_absensi_kustom" value="1" x-model="customAttendance" class="mt-1 rounded border-gray-300 text-red-600 focus:ring-red-500">
+                            <span>
+                                <span class="block font-semibold text-gray-900">Set Waktu Absensi kustom</span>
+                                <span class="block text-sm text-gray-500">Gunakan rentang check-in dan check-out khusus untuk rombel ini.</span>
+                            </span>
+                        </label>
+                        <div x-cloak x-show="customAttendance" x-collapse class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                            <label class="space-y-1"><span class="text-sm font-semibold text-gray-700">Check-in mulai</span><input type="time" name="jam_check_in_mulai" value="{{ old('jam_check_in_mulai') }}" class="w-full rounded-xl border-gray-200" :required="customAttendance"></label>
+                            <label class="space-y-1"><span class="text-sm font-semibold text-gray-700">Check-in selesai</span><input type="time" name="jam_check_in_selesai" value="{{ old('jam_check_in_selesai') }}" class="w-full rounded-xl border-gray-200" :required="customAttendance"></label>
+                            <label class="space-y-1"><span class="text-sm font-semibold text-gray-700">Check-out mulai</span><input type="time" name="jam_check_out_mulai" value="{{ old('jam_check_out_mulai') }}" class="w-full rounded-xl border-gray-200" :required="customAttendance"></label>
+                            <label class="space-y-1"><span class="text-sm font-semibold text-gray-700">Check-out selesai</span><input type="time" name="jam_check_out_selesai" value="{{ old('jam_check_out_selesai') }}" class="w-full rounded-xl border-gray-200" :required="customAttendance"></label>
+                        </div>
+                    </div>
                     <label class="space-y-1">
                         <span class="text-sm font-semibold text-gray-700">Status</span>
                         <select name="status" class="js-rombel-select w-full rounded-xl border-gray-200">
@@ -114,7 +146,8 @@
                         <div class="mt-4 text-sm text-gray-600 space-y-1">
                             <p>Internal: <span class="font-medium text-gray-800">{{ $r->pembimbingInternal?->nama ?? '-' }}</span></p>
                             <p>External: <span class="font-medium text-gray-800">{{ $r->pembimbingExternal?->nama ?? '-' }}</span></p>
-                            <p>Periode: {{ $r->tanggal_mulai?->format('d M Y') ?? '-' }} - {{ $r->tanggal_selesai?->format('d M Y') ?? '-' }}</p>
+                            <p>Periode: {{ $r->gunakan_periode_kustom ? (($r->tanggal_mulai?->format('d M Y') ?? '-') . ' - ' . ($r->tanggal_selesai?->format('d M Y') ?? '-')) : 'Mengikuti global' }}</p>
+                            <p>Absensi: {{ $r->gunakan_waktu_absensi_kustom ? 'Kustom' : 'Mengikuti global' }}</p>
                             <p>Anggota: <span class="font-medium text-gray-800">{{ $r->penempatans_count }} siswa</span></p>
                         </div>
                         <div class="mt-5 flex flex-wrap gap-2">
@@ -128,7 +161,7 @@
                         </div>
 
                         <div x-cloak x-show="editOpen" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 p-4">
-                            <div @click.outside="editOpen = false" class="w-full max-w-3xl rounded-2xl bg-white shadow-xl">
+                            <div @click.outside="editOpen = false" class="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white shadow-xl">
                                 <div class="flex items-center justify-between border-b border-gray-100 px-6 py-4">
                                     <div>
                                         <h4 class="font-bold text-gray-900">Edit Rombel PKL</h4>
@@ -143,6 +176,8 @@
                                     x-data="rombelPklForm({
                                         industryId: '{{ old('prakerin_industri_id', $r->prakerin_industri_id) }}',
                                         externalId: '{{ old('pembimbing_external_id', $r->pembimbing_external_id) }}',
+                                        customPeriod: {{ old('gunakan_periode_kustom', $r->gunakan_periode_kustom) ? 'true' : 'false' }},
+                                        customAttendance: {{ old('gunakan_waktu_absensi_kustom', $r->gunakan_waktu_absensi_kustom) ? 'true' : 'false' }},
                                     })"
                                     x-init="init()"
                                 >
@@ -176,14 +211,34 @@
                                             <option value="">Pilih industri dahulu</option>
                                         </select>
                                     </label>
-                                    <label class="space-y-1">
-                                        <span class="text-sm font-semibold text-gray-700">Tanggal mulai</span>
-                                        <input type="date" name="tanggal_mulai" value="{{ old('tanggal_mulai', $r->tanggal_mulai?->format('Y-m-d')) }}" class="w-full rounded-xl border-gray-200" required>
-                                    </label>
-                                    <label class="space-y-1">
-                                        <span class="text-sm font-semibold text-gray-700">Tanggal selesai</span>
-                                        <input type="date" name="tanggal_selesai" value="{{ old('tanggal_selesai', $r->tanggal_selesai?->format('Y-m-d')) }}" class="w-full rounded-xl border-gray-200" required>
-                                    </label>
+                                    <div class="sm:col-span-2 rounded-xl border border-gray-100 p-4">
+                                        <label class="flex items-start gap-3">
+                                            <input type="checkbox" name="gunakan_periode_kustom" value="1" x-model="customPeriod" class="mt-1 rounded border-gray-300 text-red-600 focus:ring-red-500">
+                                            <span><span class="block font-semibold text-gray-900">Set Periode Pelaksanaan kustom</span><span class="block text-sm text-gray-500">Nonaktifkan untuk mengikuti periode global.</span></span>
+                                        </label>
+                                        <div x-cloak x-show="customPeriod" x-collapse class="mt-4 grid gap-4 sm:grid-cols-2">
+                                            <label class="space-y-1">
+                                                <span class="text-sm font-semibold text-gray-700">Tanggal mulai</span>
+                                                <input type="date" name="tanggal_mulai" value="{{ old('tanggal_mulai', $r->tanggal_mulai?->format('Y-m-d')) }}" class="w-full rounded-xl border-gray-200" :required="customPeriod">
+                                            </label>
+                                            <label class="space-y-1">
+                                                <span class="text-sm font-semibold text-gray-700">Tanggal selesai</span>
+                                                <input type="date" name="tanggal_selesai" value="{{ old('tanggal_selesai', $r->tanggal_selesai?->format('Y-m-d')) }}" class="w-full rounded-xl border-gray-200" :required="customPeriod">
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="sm:col-span-2 rounded-xl border border-gray-100 p-4">
+                                        <label class="flex items-start gap-3">
+                                            <input type="checkbox" name="gunakan_waktu_absensi_kustom" value="1" x-model="customAttendance" class="mt-1 rounded border-gray-300 text-red-600 focus:ring-red-500">
+                                            <span><span class="block font-semibold text-gray-900">Set Waktu Absensi kustom</span><span class="block text-sm text-gray-500">Nonaktifkan untuk mengikuti jam global.</span></span>
+                                        </label>
+                                        <div x-cloak x-show="customAttendance" x-collapse class="mt-4 grid gap-4 sm:grid-cols-2">
+                                            <label class="space-y-1"><span class="text-sm font-semibold text-gray-700">Check-in mulai</span><input type="time" name="jam_check_in_mulai" value="{{ old('jam_check_in_mulai', $r->jam_check_in_mulai ? substr((string) $r->jam_check_in_mulai, 0, 5) : '') }}" class="w-full rounded-xl border-gray-200" :required="customAttendance"></label>
+                                            <label class="space-y-1"><span class="text-sm font-semibold text-gray-700">Check-in selesai</span><input type="time" name="jam_check_in_selesai" value="{{ old('jam_check_in_selesai', $r->jam_check_in_selesai ? substr((string) $r->jam_check_in_selesai, 0, 5) : '') }}" class="w-full rounded-xl border-gray-200" :required="customAttendance"></label>
+                                            <label class="space-y-1"><span class="text-sm font-semibold text-gray-700">Check-out mulai</span><input type="time" name="jam_check_out_mulai" value="{{ old('jam_check_out_mulai', $r->jam_check_out_mulai ? substr((string) $r->jam_check_out_mulai, 0, 5) : '') }}" class="w-full rounded-xl border-gray-200" :required="customAttendance"></label>
+                                            <label class="space-y-1"><span class="text-sm font-semibold text-gray-700">Check-out selesai</span><input type="time" name="jam_check_out_selesai" value="{{ old('jam_check_out_selesai', $r->jam_check_out_selesai ? substr((string) $r->jam_check_out_selesai, 0, 5) : '') }}" class="w-full rounded-xl border-gray-200" :required="customAttendance"></label>
+                                        </div>
+                                    </div>
                                     <label class="space-y-1">
                                         <span class="text-sm font-semibold text-gray-700">Status</span>
                                         <select name="status" class="js-rombel-select w-full rounded-xl border-gray-200">
@@ -252,6 +307,8 @@
                 return {
                     industryId: String(config.industryId || ''),
                     externalId: String(config.externalId || ''),
+                    customPeriod: Boolean(config.customPeriod),
+                    customAttendance: Boolean(config.customAttendance),
                     externalSelect: null,
 
                     init() {

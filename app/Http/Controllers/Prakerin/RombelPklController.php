@@ -9,6 +9,7 @@ use App\Models\PrakerinIndustri;
 use App\Models\PrakerinPembimbing;
 use App\Models\PrakerinPenempatan;
 use App\Models\PrakerinRombel;
+use App\Models\PrakerinSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -91,8 +92,8 @@ class RombelPklController extends Controller
                         'prakerin_industri_id' => $rombel->prakerin_industri_id,
                         'master_guru_id' => $rombel->pembimbingInternal?->master_guru_id,
                         'nama_pembimbing_industri' => $rombel->pembimbingExternal?->nama ?? '-',
-                        'tanggal_mulai' => $rombel->tanggal_mulai ?? now()->toDateString(),
-                        'tanggal_selesai' => $rombel->tanggal_selesai ?? now()->addMonths(3)->toDateString(),
+                        'tanggal_mulai' => $this->effectiveTanggalMulai($rombel),
+                        'tanggal_selesai' => $this->effectiveTanggalSelesai($rombel),
                         'status' => 'aktif',
                     ]
                 );
@@ -115,7 +116,7 @@ class RombelPklController extends Controller
 
     private function validated(Request $request): array
     {
-        return $request->validate([
+        $data = $request->validate([
             'nama_rombel' => 'required|string|max:255',
             'prakerin_industri_id' => 'required|exists:prakerin_industris,id',
             'pembimbing_internal_id' => [
@@ -129,9 +130,50 @@ class RombelPklController extends Controller
                     ->where('is_active', true)
                     ->where('prakerin_industri_id', $request->input('prakerin_industri_id')),
             ],
-            'tanggal_mulai' => 'required|date',
-            'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
+            'gunakan_periode_kustom' => 'nullable|boolean',
+            'tanggal_mulai' => 'required_if:gunakan_periode_kustom,1|nullable|date',
+            'tanggal_selesai' => 'required_if:gunakan_periode_kustom,1|nullable|date|after_or_equal:tanggal_mulai',
+            'gunakan_waktu_absensi_kustom' => 'nullable|boolean',
+            'jam_check_in_mulai' => 'required_if:gunakan_waktu_absensi_kustom,1|nullable|date_format:H:i',
+            'jam_check_in_selesai' => 'required_if:gunakan_waktu_absensi_kustom,1|nullable|date_format:H:i',
+            'jam_check_out_mulai' => 'required_if:gunakan_waktu_absensi_kustom,1|nullable|date_format:H:i',
+            'jam_check_out_selesai' => 'required_if:gunakan_waktu_absensi_kustom,1|nullable|date_format:H:i',
             'status' => 'required|in:draft,aktif,selesai',
         ]);
+
+        $data['gunakan_periode_kustom'] = $request->boolean('gunakan_periode_kustom');
+        $data['gunakan_waktu_absensi_kustom'] = $request->boolean('gunakan_waktu_absensi_kustom');
+
+        if (! $data['gunakan_periode_kustom']) {
+            $data['tanggal_mulai'] = null;
+            $data['tanggal_selesai'] = null;
+        }
+
+        if (! $data['gunakan_waktu_absensi_kustom']) {
+            $data['jam_check_in_mulai'] = null;
+            $data['jam_check_in_selesai'] = null;
+            $data['jam_check_out_mulai'] = null;
+            $data['jam_check_out_selesai'] = null;
+        }
+
+        return $data;
+    }
+
+    private function effectiveTanggalMulai(PrakerinRombel $rombel): string
+    {
+        if ($rombel->gunakan_periode_kustom && $rombel->tanggal_mulai) {
+            return $rombel->tanggal_mulai->toDateString();
+        }
+
+        return PrakerinSetting::first()?->tanggal_mulai?->toDateString() ?? now()->toDateString();
+    }
+
+    private function effectiveTanggalSelesai(PrakerinRombel $rombel): string
+    {
+        if ($rombel->gunakan_periode_kustom && $rombel->tanggal_selesai) {
+            return $rombel->tanggal_selesai->toDateString();
+        }
+
+        return PrakerinSetting::first()?->tanggal_selesai?->toDateString() ?? now()->addMonths(3)->toDateString();
     }
 }

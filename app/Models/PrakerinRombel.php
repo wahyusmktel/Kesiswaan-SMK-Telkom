@@ -14,14 +14,22 @@ class PrakerinRombel extends Model
         'prakerin_industri_id',
         'pembimbing_internal_id',
         'pembimbing_external_id',
+        'gunakan_periode_kustom',
         'tanggal_mulai',
         'tanggal_selesai',
+        'gunakan_waktu_absensi_kustom',
+        'jam_check_in_mulai',
+        'jam_check_in_selesai',
+        'jam_check_out_mulai',
+        'jam_check_out_selesai',
         'status',
     ];
 
     protected $casts = [
+        'gunakan_periode_kustom' => 'boolean',
         'tanggal_mulai' => 'date',
         'tanggal_selesai' => 'date',
+        'gunakan_waktu_absensi_kustom' => 'boolean',
     ];
 
     public function industri()
