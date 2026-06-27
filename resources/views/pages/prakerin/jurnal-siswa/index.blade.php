@@ -45,7 +45,7 @@
                 </div>
 
                 <div class="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-                    <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6" x-data="pklAttendance()">
+                    <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6" x-data="pklAttendance()" x-init="init()">
                         <div class="flex items-start justify-between gap-4">
                             <div>
                                 <h3 class="font-bold text-gray-900">Absensi Hari Ini</h3>
@@ -57,11 +57,20 @@
                         </div>
 
                         <div class="mt-5 rounded-xl bg-gray-50 p-4 text-sm text-gray-600">
-                            <p>Aktifkan izin lokasi browser, lalu tekan Ambil Lokasi GPS sebelum check-in atau check-out.</p>
+                            <p>Sistem akan mencoba mengambil lokasi otomatis saat halaman dibuka. Tombol Ambil Lokasi GPS digunakan untuk memastikan ulang keakuratan sebelum check-in atau check-out.</p>
                             <button type="button" @click="detectLocation" class="mt-3 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Ambil Lokasi GPS</button>
                             <p class="mt-3 text-xs text-gray-500" x-text="locationText"></p>
                             <template x-if="latitude && longitude">
-                                <a class="mt-2 inline-block text-xs font-semibold text-blue-600" target="_blank" :href="`https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=18/${latitude}/${longitude}`">Lihat lokasi di OpenStreetMap</a>
+                                <div class="mt-4 overflow-hidden rounded-xl border border-gray-200 bg-white">
+                                    <iframe class="h-64 w-full border-0" :src="mapEmbedUrl" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                                    <div class="flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 px-4 py-3">
+                                        <div class="flex items-center gap-2 text-xs font-semibold text-gray-700">
+                                            <span class="h-3 w-3 rounded-full bg-red-600"></span>
+                                            <span>Legenda: lokasi Anda saat ini</span>
+                                        </div>
+                                        <a class="text-xs font-semibold text-blue-600" target="_blank" :href="osmUrl">Buka di OpenStreetMap</a>
+                                    </div>
+                                </div>
                             </template>
                         </div>
 
@@ -69,6 +78,7 @@
                             <form method="POST" action="{{ route('siswa.jurnal-prakerin.check-in') }}" enctype="multipart/form-data" @submit="syncLocation" class="rounded-xl border border-gray-100 p-4">
                                 @csrf
                                 <h4 class="font-semibold text-gray-900">Check-in</h4>
+                                <p class="mt-1 text-xs text-gray-500">Upload foto kondisi saat ini sebagai bukti hadir di lokasi PKL.</p>
                                 <input type="hidden" name="latitude" x-model="latitude">
                                 <input type="hidden" name="longitude" x-model="longitude">
                                 <input name="photo" type="file" accept="image/*" capture="environment" class="mt-3 w-full text-sm" required>
@@ -78,6 +88,7 @@
                             <form method="POST" action="{{ route('siswa.jurnal-prakerin.check-out') }}" enctype="multipart/form-data" @submit="syncLocation" class="rounded-xl border border-gray-100 p-4">
                                 @csrf
                                 <h4 class="font-semibold text-gray-900">Check-out</h4>
+                                <p class="mt-1 text-xs text-gray-500">Upload foto kondisi saat ini sebagai bukti selesai kegiatan PKL hari ini.</p>
                                 <input type="hidden" name="latitude" x-model="latitude">
                                 <input type="hidden" name="longitude" x-model="longitude">
                                 <input name="photo" type="file" accept="image/*" capture="environment" class="mt-3 w-full text-sm" required>
@@ -93,7 +104,10 @@
                                 <h3 class="font-bold text-gray-900">Riwayat Jurnal</h3>
                                 <p class="text-sm text-gray-500">Jurnal kegiatan terbaru.</p>
                             </div>
-                            <a href="{{ route('siswa.jurnal-prakerin.create') }}" class="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">Tambah Jurnal</a>
+                            <div class="flex flex-wrap gap-2">
+                                <a href="{{ route('siswa.jurnal-prakerin.pdf') }}" class="rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Export PDF</a>
+                                <a href="{{ route('siswa.jurnal-prakerin.create') }}" class="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">Tambah Jurnal</a>
+                            </div>
                         </div>
                         <div class="divide-y divide-gray-100">
                             @forelse($jurnals as $jurnal)
@@ -165,6 +179,22 @@
                 latitude: '',
                 longitude: '',
                 locationText: 'Lokasi belum diambil.',
+                init() {
+                    this.detectLocation();
+                },
+                get osmUrl() {
+                    return this.latitude && this.longitude
+                        ? `https://www.openstreetmap.org/?mlat=${this.latitude}&mlon=${this.longitude}#map=18/${this.latitude}/${this.longitude}`
+                        : '#';
+                },
+                get mapEmbedUrl() {
+                    if (!this.latitude || !this.longitude) return '';
+                    const lat = Number(this.latitude);
+                    const lng = Number(this.longitude);
+                    const delta = 0.003;
+                    const bbox = [lng - delta, lat - delta, lng + delta, lat + delta].join(',');
+                    return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lng}`;
+                },
                 detectLocation() {
                     if (!navigator.geolocation) {
                         this.locationText = 'Browser tidak mendukung GPS.';

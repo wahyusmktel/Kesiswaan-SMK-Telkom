@@ -463,6 +463,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/jurnal-prakerin', [JurnalSiswaController::class, 'index'])->name('jurnal-prakerin.index');
         Route::get('/jurnal-prakerin/tambah', [JurnalSiswaController::class, 'create'])->name('jurnal-prakerin.create');
         Route::post('/jurnal-prakerin', [JurnalSiswaController::class, 'store'])->name('jurnal-prakerin.store');
+        Route::get('/jurnal-prakerin/pdf', [JurnalSiswaController::class, 'jurnalPdf'])->name('jurnal-prakerin.pdf');
         Route::get('/jurnal-prakerin/absensi', [JurnalSiswaController::class, 'absensiHistory'])->name('jurnal-prakerin.absensi');
         Route::get('/jurnal-prakerin/absensi/pdf', [JurnalSiswaController::class, 'absensiPdf'])->name('jurnal-prakerin.absensi.pdf');
         Route::post('/jurnal-prakerin/check-in', [JurnalSiswaController::class, 'checkIn'])->name('jurnal-prakerin.check-in');

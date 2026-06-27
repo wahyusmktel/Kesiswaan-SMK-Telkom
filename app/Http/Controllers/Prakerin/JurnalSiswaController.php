@@ -84,6 +84,21 @@ class JurnalSiswaController extends Controller
         return $pdf->download('rekap-absensi-pkl-' . str($penempatan->siswa?->nis ?? 'siswa')->slug() . '.pdf');
     }
 
+    public function jurnalPdf()
+    {
+        $penempatan = $this->activePenempatan();
+        $jurnals = PrakerinJurnal::where('prakerin_penempatan_id', $penempatan->id)
+            ->orderBy('tanggal')
+            ->get();
+        $setting = PrakerinSetting::first();
+        $effectiveSchedule = $this->effectiveSchedule($penempatan, $setting);
+
+        $pdf = Pdf::loadView('pages.prakerin.jurnal-siswa.jurnal-pdf', compact('penempatan', 'jurnals', 'effectiveSchedule'))
+            ->setPaper('a4', 'portrait');
+
+        return $pdf->download('laporan-jurnal-pkl-' . str($penempatan->siswa?->nis ?? 'siswa')->slug() . '.pdf');
+    }
+
     public function store(Request $request)
     {
         $penempatan = $this->activePenempatan();
