@@ -182,7 +182,7 @@
             }
 
             document.addEventListener('DOMContentLoaded', function () {
-                document.querySelectorAll('.js-absensi-select').forEach((select) => {
+                document.querySelectorAll('select.js-absensi-select').forEach((select) => {
                     if (select.tomselect) return;
                     new TomSelect(select, {
                         create: false,

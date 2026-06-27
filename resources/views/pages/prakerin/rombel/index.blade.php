@@ -237,7 +237,7 @@
             const ROMBEL_EXTERNAL_OPTIONS = @json($externalOptions);
 
             function initRombelSearchSelects(root = document) {
-                root.querySelectorAll('.js-rombel-select').forEach((select) => {
+                root.querySelectorAll('select.js-rombel-select').forEach((select) => {
                     if (select.tomselect) return;
                     new TomSelect(select, {
                         create: false,
@@ -257,7 +257,7 @@
                     init() {
                         this.$nextTick(() => {
                             initRombelSearchSelects(this.$root);
-                            this.externalSelect = new TomSelect(this.$refs.externalSelect, {
+                            this.externalSelect = this.$refs.externalSelect.tomselect || new TomSelect(this.$refs.externalSelect, {
                                 create: false,
                                 allowEmptyOption: true,
                                 dropdownParent: 'body',
