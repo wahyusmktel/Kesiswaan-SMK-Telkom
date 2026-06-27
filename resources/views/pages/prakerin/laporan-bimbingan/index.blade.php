@@ -3,7 +3,10 @@
         <h2 class="font-semibold text-xl text-gray-800">Bimbingan Laporan Prakerin</h2>
     </x-slot>
 
-    @php($isStudent = auth()->user()->masterSiswa !== null)
+    @php
+        $isStudent = auth()->user()->masterSiswa !== null;
+        $fileRouteName = $isStudent ? 'siswa.prakerin-laporan.file' : 'pembimbing-prakerin.laporan.file';
+    @endphp
 
     <div class="py-8" x-data="{ previewOpen: false, previewUrl: '', previewTitle: '' }">
         <div class="w-full px-4 sm:px-6 lg:px-8 space-y-6">
@@ -35,24 +38,25 @@
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-bold uppercase text-gray-500">Laporan</th>
-                                @unless($isStudent)<th class="px-6 py-3 text-left text-xs font-bold uppercase text-gray-500">Siswa</th>@endunless
+                                @if(! $isStudent)
+                                    <th class="px-6 py-3 text-left text-xs font-bold uppercase text-gray-500">Siswa</th>
+                                @endif
                                 <th class="px-6 py-3 text-left text-xs font-bold uppercase text-gray-500">Status</th>
                                 <th class="px-6 py-3 text-left text-xs font-bold uppercase text-gray-500">Catatan</th>
-                                @unless($isStudent)<th class="px-6 py-3 text-right text-xs font-bold uppercase text-gray-500">Review</th>@endunless
+                                @if(! $isStudent)
+                                    <th class="px-6 py-3 text-right text-xs font-bold uppercase text-gray-500">Review</th>
+                                @endif
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
-                            @forelse($laporans as $laporan)
+                            @if($laporans->count())
+                                @foreach($laporans as $laporan)
+                                    @php($fileRoute = $laporan->file_path ? route($fileRouteName, $laporan) : null)
                                 <tr class="align-top">
                                     <td class="px-6 py-4">
                                         <p class="font-semibold text-gray-900">{{ $laporan->judul }}</p>
                                         <p class="text-xs text-gray-500">{{ $laporan->created_at->format('d M Y H:i') }}</p>
                                         @if($laporan->file_path)
-                                            @php
-                                                $fileRoute = $isStudent
-                                                    ? route('siswa.prakerin-laporan.file', $laporan)
-                                                    : route('pembimbing-prakerin.laporan.file', $laporan);
-                                            @endphp
                                             <div class="mt-2 flex flex-wrap gap-2">
                                                 <button
                                                     type="button"
@@ -64,17 +68,17 @@
                                             </div>
                                         @endif
                                     </td>
-                                    @unless($isStudent)
+                                    @if(! $isStudent)
                                         <td class="px-6 py-4 text-sm text-gray-700">
                                             <p class="font-semibold">{{ $laporan->penempatan?->siswa?->nama_lengkap ?? '-' }}</p>
                                             <p class="text-gray-500">{{ $laporan->penempatan?->rombelPkl?->nama_rombel ?? '-' }}</p>
                                         </td>
-                                    @endunless
+                                    @endif
                                     <td class="px-6 py-4">
                                         <span class="rounded-full px-3 py-1 text-xs font-bold uppercase {{ $laporan->status === 'ditinjau' ? 'bg-emerald-100 text-emerald-800' : ($laporan->status === 'revisi' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800') }}">{{ $laporan->status }}</span>
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-600">{{ $laporan->catatan_pembimbing ?? '-' }}</td>
-                                    @unless($isStudent)
+                                    @if(! $isStudent)
                                         <td class="px-6 py-4">
                                             <form method="POST" action="{{ route('pembimbing-prakerin.laporan.update', $laporan) }}" class="space-y-2">
                                                 @csrf
@@ -86,11 +90,12 @@
                                                 </div>
                                             </form>
                                         </td>
-                                    @endunless
+                                    @endif
                                 </tr>
-                            @empty
+                                @endforeach
+                            @else
                                 <tr><td colspan="{{ $isStudent ? 3 : 5 }}" class="px-6 py-10 text-center text-gray-500">Belum ada data bimbingan laporan.</td></tr>
-                            @endforelse
+                            @endif
                         </tbody>
                     </table>
                 </div>
