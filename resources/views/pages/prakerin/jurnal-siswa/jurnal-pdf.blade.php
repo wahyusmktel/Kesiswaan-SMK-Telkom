@@ -62,11 +62,12 @@
         </thead>
         <tbody>
             @forelse($jurnals as $jurnal)
+                @php($statusLabel = $jurnal->status_verifikasi === 'disetujui' ? 'Sudah Ditinjau' : Str::title($jurnal->status_verifikasi))
                 <tr>
                     <td>{{ \Carbon\Carbon::parse($jurnal->tanggal)->format('d M Y') }}</td>
                     <td>{{ $jurnal->kegiatan_dilakukan }}</td>
                     <td>{{ $jurnal->kompetensi_yang_didapat }}</td>
-                    <td class="status">{{ $jurnal->status_verifikasi }}</td>
+                    <td class="status">{{ $statusLabel }}</td>
                     <td>{{ $jurnal->catatan_pembimbing ?? '-' }}</td>
                 </tr>
             @empty

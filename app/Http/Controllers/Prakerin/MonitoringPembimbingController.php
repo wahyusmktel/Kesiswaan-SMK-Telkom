@@ -15,7 +15,12 @@ class MonitoringPembimbingController extends Controller
     public function index()
     {
         $guru = Auth::user()->masterGuru;
-        $siswaBimbingan = PrakerinPenempatan::with(['siswa', 'industri'])
+        $siswaBimbingan = PrakerinPenempatan::with(['siswa', 'industri', 'rombelPkl'])
+            ->withCount([
+                'jurnals',
+                'jurnals as jurnal_menunggu_count' => fn ($q) => $q->where('status_verifikasi', 'menunggu'),
+                'jurnals as jurnal_ditinjau_count' => fn ($q) => $q->where('status_verifikasi', 'disetujui'),
+            ])
             ->where('master_guru_id', $guru?->id)
             ->where('status', 'aktif')
             ->get();
@@ -54,9 +59,11 @@ class MonitoringPembimbingController extends Controller
         $jurnal->update([
             'status_verifikasi' => $request->status_verifikasi,
             'catatan_pembimbing' => $request->catatan_pembimbing,
+            'reviewed_by' => Auth::id(),
+            'reviewed_at' => now(),
         ]);
 
-        toast('Jurnal berhasil divalidasi.', 'success');
+        toast('Jurnal berhasil ditinjau.', 'success');
         return back();
     }
 }

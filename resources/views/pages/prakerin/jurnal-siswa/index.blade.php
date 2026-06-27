@@ -111,10 +111,11 @@
                         </div>
                         <div class="divide-y divide-gray-100">
                             @forelse($jurnals as $jurnal)
+                                @php($statusLabel = $jurnal->status_verifikasi === 'disetujui' ? 'Sudah Ditinjau' : Str::title($jurnal->status_verifikasi))
                                 <div class="p-5">
                                     <div class="flex flex-wrap items-center justify-between gap-3">
                                         <p class="font-bold text-gray-900">{{ \Carbon\Carbon::parse($jurnal->tanggal)->isoFormat('dddd, D MMMM Y') }}</p>
-                                        <span class="text-xs px-2 py-1 rounded-full {{ ['menunggu'=>'bg-yellow-100 text-yellow-800','disetujui'=>'bg-green-100 text-green-800','revisi'=>'bg-red-100 text-red-800'][$jurnal->status_verifikasi] ?? 'bg-gray-100 text-gray-700' }}">{{ Str::title($jurnal->status_verifikasi) }}</span>
+                                        <span class="text-xs px-2 py-1 rounded-full {{ ['menunggu'=>'bg-yellow-100 text-yellow-800','disetujui'=>'bg-emerald-100 text-emerald-800','revisi'=>'bg-red-100 text-red-800'][$jurnal->status_verifikasi] ?? 'bg-gray-100 text-gray-700' }}">{{ $statusLabel }}</span>
                                     </div>
                                     <p class="mt-2 text-sm text-gray-700">{{ $jurnal->kegiatan_dilakukan }}</p>
                                     @if($jurnal->catatan_pembimbing)

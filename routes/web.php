@@ -468,6 +468,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/jurnal-prakerin/absensi/pdf', [JurnalSiswaController::class, 'absensiPdf'])->name('jurnal-prakerin.absensi.pdf');
         Route::post('/jurnal-prakerin/check-in', [JurnalSiswaController::class, 'checkIn'])->name('jurnal-prakerin.check-in');
         Route::post('/jurnal-prakerin/check-out', [JurnalSiswaController::class, 'checkOut'])->name('jurnal-prakerin.check-out');
+        Route::get('/prakerin-konsultasi', [\App\Http\Controllers\Prakerin\KonsultasiController::class, 'index'])->name('prakerin-konsultasi.index');
+        Route::post('/prakerin-konsultasi', [\App\Http\Controllers\Prakerin\KonsultasiController::class, 'store'])->name('prakerin-konsultasi.store');
+        Route::get('/prakerin-laporan', [\App\Http\Controllers\Prakerin\LaporanBimbinganController::class, 'index'])->name('prakerin-laporan.index');
+        Route::post('/prakerin-laporan', [\App\Http\Controllers\Prakerin\LaporanBimbinganController::class, 'store'])->name('prakerin-laporan.store');
 
         // Route BK Siswa
         Route::get('/bk', [\App\Http\Controllers\Siswa\BKController::class, 'index'])->name('bk.index');
@@ -800,14 +804,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('setting', [\App\Http\Controllers\Prakerin\SettingController::class, 'index'])->name('setting.index');
         Route::put('setting', [\App\Http\Controllers\Prakerin\SettingController::class, 'update'])->name('setting.update');
         Route::get('absensi', [\App\Http\Controllers\Prakerin\AbsensiController::class, 'index'])->name('absensi.index');
+        Route::get('jurnal', [\App\Http\Controllers\Prakerin\KoordinatorJurnalController::class, 'index'])->name('jurnal.index');
+        Route::get('jurnal/analisis', [\App\Http\Controllers\Prakerin\KoordinatorJurnalController::class, 'analytics'])->name('jurnal.analytics');
         Route::resource('penempatan', PenempatanController::class)->only(['index', 'create', 'store']);
     });
 
     // Grup Route untuk Guru Pembimbing (bisa diakses Guru Kelas)
-    Route::middleware(['role:Guru Kelas', 'permission:monitor prakerin'])->prefix('pembimbing-prakerin')->name('pembimbing-prakerin.')->group(function () {
+    Route::middleware(['permission:monitor prakerin'])->prefix('pembimbing-prakerin')->name('pembimbing-prakerin.')->group(function () {
         Route::get('/monitoring', [MonitoringPembimbingController::class, 'index'])->name('monitoring.index');
         Route::get('/monitoring/{penempatan}', [MonitoringPembimbingController::class, 'show'])->name('monitoring.show');
         Route::patch('/monitoring/jurnal/{jurnal}', [MonitoringPembimbingController::class, 'updateJurnal'])->name('monitoring.updateJurnal');
+        Route::get('/konsultasi', [\App\Http\Controllers\Prakerin\KonsultasiController::class, 'index'])->name('konsultasi.index');
+        Route::post('/konsultasi', [\App\Http\Controllers\Prakerin\KonsultasiController::class, 'store'])->name('konsultasi.store');
+        Route::get('/laporan', [\App\Http\Controllers\Prakerin\LaporanBimbinganController::class, 'index'])->name('laporan.index');
+        Route::patch('/laporan/{laporan}', [\App\Http\Controllers\Prakerin\LaporanBimbinganController::class, 'update'])->name('laporan.update');
     });
 
     // Grup Route untuk Super Admin
