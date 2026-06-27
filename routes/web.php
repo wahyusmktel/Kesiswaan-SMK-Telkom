@@ -472,6 +472,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/prakerin-konsultasi', [\App\Http\Controllers\Prakerin\KonsultasiController::class, 'store'])->name('prakerin-konsultasi.store');
         Route::get('/prakerin-laporan', [\App\Http\Controllers\Prakerin\LaporanBimbinganController::class, 'index'])->name('prakerin-laporan.index');
         Route::post('/prakerin-laporan', [\App\Http\Controllers\Prakerin\LaporanBimbinganController::class, 'store'])->name('prakerin-laporan.store');
+        Route::get('/prakerin-laporan/{laporan}/file', [\App\Http\Controllers\Prakerin\LaporanBimbinganController::class, 'file'])->name('prakerin-laporan.file');
 
         // Route BK Siswa
         Route::get('/bk', [\App\Http\Controllers\Siswa\BKController::class, 'index'])->name('bk.index');
@@ -810,13 +811,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Grup Route untuk Guru Pembimbing (bisa diakses Guru Kelas)
-    Route::middleware(['permission:monitor prakerin'])->prefix('pembimbing-prakerin')->name('pembimbing-prakerin.')->group(function () {
+    Route::prefix('pembimbing-prakerin')->name('pembimbing-prakerin.')->group(function () {
         Route::get('/monitoring', [MonitoringPembimbingController::class, 'index'])->name('monitoring.index');
         Route::get('/monitoring/{penempatan}', [MonitoringPembimbingController::class, 'show'])->name('monitoring.show');
         Route::patch('/monitoring/jurnal/{jurnal}', [MonitoringPembimbingController::class, 'updateJurnal'])->name('monitoring.updateJurnal');
         Route::get('/konsultasi', [\App\Http\Controllers\Prakerin\KonsultasiController::class, 'index'])->name('konsultasi.index');
         Route::post('/konsultasi', [\App\Http\Controllers\Prakerin\KonsultasiController::class, 'store'])->name('konsultasi.store');
         Route::get('/laporan', [\App\Http\Controllers\Prakerin\LaporanBimbinganController::class, 'index'])->name('laporan.index');
+        Route::get('/laporan/{laporan}/file', [\App\Http\Controllers\Prakerin\LaporanBimbinganController::class, 'file'])->name('laporan.file');
         Route::patch('/laporan/{laporan}', [\App\Http\Controllers\Prakerin\LaporanBimbinganController::class, 'update'])->name('laporan.update');
     });
 

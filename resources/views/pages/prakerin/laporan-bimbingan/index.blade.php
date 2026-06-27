@@ -5,7 +5,7 @@
 
     @php($isStudent = auth()->user()->masterSiswa !== null)
 
-    <div class="py-8">
+    <div class="py-8" x-data="{ previewOpen: false, previewUrl: '', previewTitle: '' }">
         <div class="w-full px-4 sm:px-6 lg:px-8 space-y-6">
             <div class="rounded-2xl border border-purple-100 bg-purple-50 p-5 text-sm text-purple-900">
                 <p class="font-bold">Panduan bimbingan laporan</p>
@@ -48,7 +48,20 @@
                                         <p class="font-semibold text-gray-900">{{ $laporan->judul }}</p>
                                         <p class="text-xs text-gray-500">{{ $laporan->created_at->format('d M Y H:i') }}</p>
                                         @if($laporan->file_path)
-                                            <a href="{{ Storage::url($laporan->file_path) }}" target="_blank" class="mt-2 inline-flex text-xs font-semibold text-blue-600">Unduh file</a>
+                                            @php
+                                                $fileRoute = $isStudent
+                                                    ? route('siswa.prakerin-laporan.file', $laporan)
+                                                    : route('pembimbing-prakerin.laporan.file', $laporan);
+                                            @endphp
+                                            <div class="mt-2 flex flex-wrap gap-2">
+                                                <button
+                                                    type="button"
+                                                    @click="previewOpen = true; previewUrl = '{{ $fileRoute }}?preview=1'; previewTitle = @js($laporan->judul)"
+                                                    class="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100">
+                                                    Preview
+                                                </button>
+                                                <a href="{{ $fileRoute }}" class="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-200">Unduh file</a>
+                                            </div>
                                         @endif
                                     </td>
                                     @unless($isStudent)
@@ -84,6 +97,22 @@
                 @if(method_exists($laporans, 'links'))
                     <div class="border-t border-gray-100 p-6">{{ $laporans->links() }}</div>
                 @endif
+            </div>
+        </div>
+
+        <div x-cloak x-show="previewOpen" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 p-4">
+            <div @click.outside="previewOpen = false; previewUrl = ''" class="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
+                <div class="flex items-center justify-between gap-4 border-b border-gray-100 px-6 py-4">
+                    <div>
+                        <h3 class="font-bold text-gray-900" x-text="previewTitle || 'Preview laporan'"></h3>
+                        <p class="text-sm text-gray-500">PDF akan tampil langsung. File DOC/DOCX dapat tetap diunduh jika browser tidak mendukung preview.</p>
+                    </div>
+                    <button type="button" @click="previewOpen = false; previewUrl = ''" class="rounded-full p-2 text-gray-500 hover:bg-gray-100">x</button>
+                </div>
+                <iframe :src="previewUrl" class="h-[72vh] w-full border-0 bg-gray-50"></iframe>
+                <div class="flex justify-end border-t border-gray-100 bg-gray-50 px-6 py-4">
+                    <a :href="previewUrl.replace('?preview=1', '')" class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-black">Unduh</a>
+                </div>
             </div>
         </div>
     </div>

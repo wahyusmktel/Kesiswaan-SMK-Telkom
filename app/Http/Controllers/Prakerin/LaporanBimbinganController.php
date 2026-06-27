@@ -7,6 +7,7 @@ use App\Models\PrakerinLaporanBimbingan;
 use App\Models\PrakerinPenempatan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class LaporanBimbinganController extends Controller
 {
@@ -78,5 +79,40 @@ class LaporanBimbinganController extends Controller
         toast('Status bimbingan laporan berhasil diperbarui.', 'success');
 
         return back();
+    }
+
+    public function file(Request $request, PrakerinLaporanBimbingan $laporan)
+    {
+        $laporan->load('penempatan');
+        abort_unless($this->canAccess($laporan), 403);
+        abort_if(! $laporan->file_path || ! Storage::exists($laporan->file_path), 404);
+
+        $path = Storage::path($laporan->file_path);
+        $filename = basename($laporan->file_path);
+
+        if ($request->boolean('preview')) {
+            return response()->file($path, [
+                'Content-Type' => Storage::mimeType($laporan->file_path) ?: 'application/octet-stream',
+                'Content-Disposition' => 'inline; filename="' . $filename . '"',
+            ]);
+        }
+
+        return Storage::download($laporan->file_path, $filename);
+    }
+
+    private function canAccess(PrakerinLaporanBimbingan $laporan): bool
+    {
+        $user = Auth::user();
+        $penempatan = $laporan->penempatan;
+
+        if (! $penempatan) {
+            return false;
+        }
+
+        if ($user->masterSiswa && $penempatan->master_siswa_id === $user->masterSiswa->id) {
+            return true;
+        }
+
+        return $user->masterGuru && $penempatan->master_guru_id === $user->masterGuru->id;
     }
 }

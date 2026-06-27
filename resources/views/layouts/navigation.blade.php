@@ -749,8 +749,15 @@
             </li>
         @endcan
         {{-- Menu Pembimbing Prakerin --}}
-        @can('monitor prakerin')
-            @if (Auth::user()->masterGuru?->penempatan()->where('status', 'aktif')->exists())
+        @php
+            $isPembimbingPrakerin = Auth::user()->masterGuru && (
+                Auth::user()->masterGuru->penempatan()->where('status', 'aktif')->exists()
+                || \App\Models\PrakerinRombel::where('status', 'aktif')
+                    ->whereHas('pembimbingInternal', fn ($q) => $q->where('master_guru_id', Auth::user()->masterGuru->id))
+                    ->exists()
+            );
+        @endphp
+            @if ($isPembimbingPrakerin)
                 <li>
                     <a href="{{ route('pembimbing-prakerin.monitoring.index') }}"
                         class="nav-link {{ request()->routeIs("pembimbing-prakerin.monitoring.*") ? "nav-link-active" : "nav-link-inactive" }}">
@@ -782,7 +789,6 @@
                     </a>
                 </li>
             @endif
-        @endcan
 
         @php $isUkkPenguji = \App\Models\UkkUjian::whereHas('penguji', fn($q) => $q->where('user_id', auth()->id()))->exists(); @endphp
         @if($isUkkPenguji)
