@@ -4,13 +4,16 @@
     </x-slot>
 
     @php
-        $externalOptions = $external->map(fn ($p) => [
-            'id' => (string) $p->id,
-            'industry_id' => (string) $p->prakerin_industri_id,
-            'nama' => $p->nama,
-            'industri' => $p->industri?->nama_industri,
-            'telepon' => $p->telepon,
-        ])->values();
+        $externalOptions = $external->map(function ($p) {
+            $name = trim((string) ($p->nama ?: $p->guru?->nama_lengkap ?: 'Pembimbing External #' . $p->id));
+            $phone = trim((string) $p->telepon);
+
+            return [
+                'id' => (string) $p->id,
+                'industry_id' => (string) $p->prakerin_industri_id,
+                'label' => $phone !== '' ? $name . ' - ' . $phone : $name,
+            ];
+        })->values();
     @endphp
 
     <div class="py-8">
@@ -260,11 +263,16 @@
                                 dropdownParent: 'body',
                                 placeholder: 'Pilih pembimbing external...'
                             });
-                            this.$refs.industrySelect.addEventListener('change', (event) => {
-                                this.industryId = String(event.target.value || '');
+                            const updateIndustry = (value) => {
+                                this.industryId = String(value || '');
                                 this.externalId = '';
                                 this.refreshExternalOptions();
-                            });
+                            };
+
+                            this.$refs.industrySelect.addEventListener('change', (event) => updateIndustry(event.target.value));
+                            if (this.$refs.industrySelect.tomselect) {
+                                this.$refs.industrySelect.tomselect.on('change', updateIndustry);
+                            }
                             this.refreshExternalOptions();
                         });
                     },
@@ -272,17 +280,19 @@
                     refreshExternalOptions() {
                         if (!this.externalSelect) return;
 
-                        const rows = ROMBEL_EXTERNAL_OPTIONS.filter((item) => item.industry_id === this.industryId);
-                        const currentValue = rows.some((item) => item.id === this.externalId) ? this.externalId : '';
+                        const rows = ROMBEL_EXTERNAL_OPTIONS.filter((item) => String(item.industry_id || '') === String(this.industryId || ''));
+                        const currentValue = rows.some((item) => String(item.id || '') === String(this.externalId || '')) ? this.externalId : '';
 
                         this.externalSelect.clear(true);
                         this.externalSelect.clearOptions();
                         rows.forEach((item) => {
+                            const value = String(item.id || '');
+                            const text = String(item.label || 'Pembimbing External');
+                            if (!value) return;
+
                             this.externalSelect.addOption({
-                                value: item.id,
-                                text: item.telepon
-                                    ? `${item.nama} - ${item.telepon}`
-                                    : item.nama,
+                                value: value,
+                                text: text,
                             });
                         });
 

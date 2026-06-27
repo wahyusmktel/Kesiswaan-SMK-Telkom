@@ -23,7 +23,7 @@ class RombelPklController extends Controller
             ->paginate(12);
         $industri = PrakerinIndustri::orderBy('nama_industri')->get();
         $internal = PrakerinPembimbing::where('tipe', 'internal')->where('is_active', true)->orderBy('nama')->get();
-        $external = PrakerinPembimbing::with('industri')->where('tipe', 'external')->where('is_active', true)->orderBy('nama')->get();
+        $external = PrakerinPembimbing::with(['industri', 'guru'])->where('tipe', 'external')->where('is_active', true)->orderBy('nama')->get();
 
         return view('pages.prakerin.rombel.index', compact('rombels', 'industri', 'internal', 'external'));
     }
