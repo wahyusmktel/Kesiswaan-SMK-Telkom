@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\HandleActiveRole::class,
         ]);
+        $middleware->redirectGuestsTo(fn () => route('login'));
         // Daftarkan middleware alias di sini
         $middleware->alias([
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,

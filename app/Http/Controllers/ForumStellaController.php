@@ -59,6 +59,10 @@ class ForumStellaController extends Controller
 
     public function enter()
     {
+        if (! Auth::check()) {
+            return redirect()->guest(route('login'));
+        }
+
         return redirect()->route('forum-stella.index');
     }
 
