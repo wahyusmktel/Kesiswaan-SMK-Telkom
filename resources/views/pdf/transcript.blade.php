@@ -119,8 +119,8 @@
             text-align: center;
             font-weight: bold;
             background: #f2f2f2;
-            padding-top: 1.95mm;
-            padding-bottom: 1.95mm;
+            padding-top: 2.5mm;
+            padding-bottom: 2.5mm;
         }
 
         .grade-table .no {
@@ -377,10 +377,10 @@
                 <table class="sign-row">
                     <tr>
                         <td class="sign-left">
-                            @if(!empty($transcriptQrCodes[$student->id]))
+                            @if (!empty($transcriptQrCodes[$student->id]))
                                 <div class="digital-signature-qr">
                                     <img src="{{ $transcriptQrCodes[$student->id] }}" alt="QR Verifikasi Transkrip">
-                                    <span>Scan untuk verifikasi<br>tanda tangan digital</span>
+                                    <span>Scan untuk verifikasi<br>Keabsahan dokumen</span>
                                 </div>
                             @endif
                         </td>
