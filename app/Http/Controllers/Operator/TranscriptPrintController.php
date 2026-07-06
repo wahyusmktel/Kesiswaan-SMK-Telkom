@@ -10,6 +10,7 @@ use App\Models\TranscriptSubject;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -149,7 +150,7 @@ class TranscriptPrintController extends Controller
 
     private function finalStudentsOrder(): Collection
     {
-        return MasterSiswa::select('master_siswa.*')
+        return MasterSiswa::select('master_siswa.id', DB::raw('MIN(rombels.kelas_id) as sort_kelas'), DB::raw('MIN(master_siswa.nama_lengkap) as sort_name'))
             ->join('rombel_siswa', 'master_siswa.id', '=', 'rombel_siswa.master_siswa_id')
             ->join('rombels', 'rombels.id', '=', 'rombel_siswa.rombel_id')
             ->join('kelas', 'kelas.id', '=', 'rombels.kelas_id')
@@ -157,9 +158,9 @@ class TranscriptPrintController extends Controller
                 $query->where('kelas.nama_kelas', 'like', '%XII%')
                     ->orWhere('kelas.nama_kelas', 'like', '%12%');
             })
-            ->orderBy('rombels.kelas_id')
-            ->orderBy('master_siswa.nama_lengkap')
-            ->distinct()
+            ->groupBy('master_siswa.id')
+            ->orderBy('sort_kelas')
+            ->orderBy('sort_name')
             ->get();
     }
 }
