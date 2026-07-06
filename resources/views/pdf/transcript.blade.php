@@ -179,7 +179,7 @@
         }
 
         .signature-space {
-            height: 20mm;
+            height: 19mm;
         }
 
         .digital-signature-qr {
