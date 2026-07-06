@@ -2321,6 +2321,11 @@
                     <span class="submenu-dot"></span>
                     Nilai Transkrip
                 </a>
+                <a href="{{ route('operator.transcript.print.index') }}"
+                    class="submenu-item {{ request()->routeIs('operator.transcript.print.*') ? 'submenu-item-active' : '' }}">
+                    <span class="submenu-dot"></span>
+                    Cetak Transkrip
+                </a>
                 <a href="{{ route('operator.transcript.config.index') }}"
                     class="submenu-item {{ request()->routeIs('operator.transcript.config.*') ? 'submenu-item-active' : '' }}">
                     <span class="submenu-dot"></span>
@@ -2341,6 +2346,10 @@
                 <a href="{{ route('operator.transcript.grades.index') }}"
                     class="submenu-item {{ request()->routeIs('operator.transcript.grades.*') ? 'submenu-item-active' : '' }}">
                     Nilai Transkrip
+                </a>
+                <a href="{{ route('operator.transcript.print.index') }}"
+                    class="submenu-item {{ request()->routeIs('operator.transcript.print.*') ? 'submenu-item-active' : '' }}">
+                    Cetak Transkrip
                 </a>
                 <a href="{{ route('operator.transcript.config.index') }}"
                     class="submenu-item {{ request()->routeIs('operator.transcript.config.*') ? 'submenu-item-active' : '' }}">

@@ -16,6 +16,7 @@ class TranscriptConfig extends Model
         'principal_nip',
         'letterhead',
         'letterhead_path',
+        'watermark_path',
         'number_start',
         'number_end',
         'number_suffix',
@@ -25,6 +26,7 @@ class TranscriptConfig extends Model
         'margin_bottom',
         'margin_left',
         'paper_size',
+        'is_borderless',
     ];
 
     protected $casts = [
@@ -35,6 +37,7 @@ class TranscriptConfig extends Model
         'margin_right' => 'decimal:2',
         'margin_bottom' => 'decimal:2',
         'margin_left' => 'decimal:2',
+        'is_borderless' => 'boolean',
     ];
 
     public function numberPreview(): string

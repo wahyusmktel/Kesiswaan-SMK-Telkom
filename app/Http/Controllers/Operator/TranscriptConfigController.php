@@ -27,6 +27,7 @@ class TranscriptConfigController extends Controller
             'principal_name' => 'nullable|string|max:255',
             'principal_nip' => 'nullable|string|max:100',
             'letterhead_image' => 'nullable|image|max:10240',
+            'watermark_image' => 'nullable|image|max:10240',
             'number_start' => 'nullable|string|max:255',
             'number_end' => 'nullable|string|max:255',
             'number_suffix' => 'nullable|string|max:255',
@@ -36,9 +37,11 @@ class TranscriptConfigController extends Controller
             'margin_bottom' => 'nullable|numeric|min:0|max:100',
             'margin_left' => 'nullable|numeric|min:0|max:100',
             'paper_size' => 'nullable|in:A4,F4,Letter,Legal',
+            'is_borderless' => 'nullable|boolean',
         ]);
 
         $config = TranscriptConfig::firstOrCreate([]);
+        $data['is_borderless'] = $request->boolean('is_borderless');
 
         if ($request->hasFile('letterhead_image')) {
             if ($config->letterhead_path) {
@@ -48,7 +51,15 @@ class TranscriptConfigController extends Controller
             $data['letterhead_path'] = $request->file('letterhead_image')->store('transcripts/letterheads', 'public');
         }
 
-        unset($data['letterhead_image']);
+        if ($request->hasFile('watermark_image')) {
+            if ($config->watermark_path) {
+                Storage::disk('public')->delete($config->watermark_path);
+            }
+
+            $data['watermark_path'] = $request->file('watermark_image')->store('transcripts/watermarks', 'public');
+        }
+
+        unset($data['letterhead_image'], $data['watermark_image']);
 
         $config->update($data);
         toast('Config transkrip berhasil disimpan.', 'success');

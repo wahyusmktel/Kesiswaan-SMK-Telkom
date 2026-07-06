@@ -14,13 +14,19 @@
                 suffix:@js($config->number_suffix ?? '/SMKTEL-LPG/KURL.03/V/2026'),
                 date:@js(optional($config->number_date)->format('Y-m-d') ?? now()->format('Y-m-d')),
                 previewImage:@js($config->letterhead_path ? asset('storage/'.$config->letterhead_path) : null),
+                watermarkPreview:@js($config->watermark_path ? asset('storage/'.$config->watermark_path) : null),
                 dragging:false,
+                watermarkDragging:false,
                 formatDate(v){ if(!v) return ''; const d=new Date(v+'T00:00:00'); return d.toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'}); },
                 get preview(){ return `${this.start || '400.3.11/800.01'} - ${this.end || '400.3.11/800.190'}${this.suffix || ''} ${this.formatDate(this.date)}` },
                 pickFile(){ this.$refs.letterheadInput.click(); },
                 setFile(file){ if(!file) return; const dt = new DataTransfer(); dt.items.add(file); this.$refs.letterheadInput.files = dt.files; this.previewImage = URL.createObjectURL(file); },
                 handleDrop(event){ this.dragging=false; this.setFile(event.dataTransfer.files[0]); },
-                handleChange(event){ this.setFile(event.target.files[0]); }
+                handleChange(event){ this.setFile(event.target.files[0]); },
+                pickWatermark(){ this.$refs.watermarkInput.click(); },
+                setWatermark(file){ if(!file) return; const dt = new DataTransfer(); dt.items.add(file); this.$refs.watermarkInput.files = dt.files; this.watermarkPreview = URL.createObjectURL(file); },
+                handleWatermarkDrop(event){ this.watermarkDragging=false; this.setWatermark(event.dataTransfer.files[0]); },
+                handleWatermarkChange(event){ this.setWatermark(event.target.files[0]); }
             }">
             <form method="POST" action="{{ route('operator.transcript.config.update') }}" enctype="multipart/form-data" class="grid gap-6 xl:grid-cols-[1fr_390px]">
                 @csrf
@@ -69,6 +75,34 @@
                     </div>
 
                     <div class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <h3 class="text-lg font-black text-slate-900">Watermark Transkrip</h3>
+                                <p class="text-sm text-slate-500">Unggah gambar watermark transparan untuk bagian tengah PDF.</p>
+                            </div>
+                            <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600">Max 10 MB</span>
+                        </div>
+                        <input x-ref="watermarkInput" type="file" name="watermark_image" accept="image/*" class="hidden" @change="handleWatermarkChange">
+                        <button type="button" @click="pickWatermark" @dragover.prevent="watermarkDragging=true" @dragleave.prevent="watermarkDragging=false" @drop.prevent="handleWatermarkDrop"
+                            class="mt-5 flex min-h-[190px] w-full flex-col items-center justify-center rounded-[24px] border-2 border-dashed p-5 text-center transition"
+                            :class="watermarkDragging ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-slate-50 hover:border-red-300 hover:bg-red-50/50'">
+                            <template x-if="watermarkPreview">
+                                <div class="w-full">
+                                    <img :src="watermarkPreview" class="mx-auto max-h-36 rounded-2xl border border-slate-200 bg-white object-contain p-3 opacity-70">
+                                    <p class="mt-4 text-sm font-black text-red-600">Ubah Watermark</p>
+                                </div>
+                            </template>
+                            <template x-if="!watermarkPreview">
+                                <div>
+                                    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-2xl font-black text-red-600 shadow-sm">+</div>
+                                    <p class="mt-4 text-sm font-black text-slate-900">Drag and drop watermark di sini</p>
+                                    <p class="text-xs font-semibold text-slate-500">atau klik untuk unggah gambar</p>
+                                </div>
+                            </template>
+                        </button>
+                    </div>
+
+                    <div class="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
                         <h3 class="text-lg font-black text-slate-900">Layout Halaman PDF</h3>
                         <div class="mt-5 grid gap-4 sm:grid-cols-5">
                             <label class="space-y-1"><span class="text-sm font-bold">Atas</span><input type="number" step="0.01" min="0" name="margin_top" value="{{ $config->margin_top ?? 15 }}" class="w-full rounded-2xl border-slate-200"></label>
@@ -77,6 +111,13 @@
                             <label class="space-y-1"><span class="text-sm font-bold">Kiri</span><input type="number" step="0.01" min="0" name="margin_left" value="{{ $config->margin_left ?? 15 }}" class="w-full rounded-2xl border-slate-200"></label>
                             <label class="space-y-1"><span class="text-sm font-bold">Kertas</span><select name="paper_size" class="w-full rounded-2xl border-slate-200">@foreach(['A4','F4','Letter','Legal'] as $size)<option value="{{ $size }}" @selected(($config->paper_size ?? 'A4') === $size)>{{ $size }}</option>@endforeach</select></label>
                         </div>
+                        <label class="mt-5 flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                            <input type="checkbox" name="is_borderless" value="1" class="mt-1 rounded border-slate-300 text-red-600 focus:ring-red-500" @checked($config->is_borderless)>
+                            <span>
+                                <span class="block text-sm font-black text-slate-900">Tanpa margin / borderless</span>
+                                <span class="block text-xs font-semibold text-slate-500">Gunakan untuk printer borderless agar kop dan halaman bisa memenuhi sisi kertas. Jika aktif, margin PDF dibuat 0 mm.</span>
+                            </span>
+                        </label>
                         <p class="mt-3 text-xs font-semibold text-slate-500">Margin memakai satuan milimeter untuk kebutuhan cetak PDF.</p>
                     </div>
                 </div>

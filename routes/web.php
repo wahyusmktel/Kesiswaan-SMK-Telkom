@@ -369,6 +369,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('nilai', [\App\Http\Controllers\Operator\TranscriptGradeController::class, 'index'])->name('grades.index');
             Route::get('nilai-template', [\App\Http\Controllers\Operator\TranscriptGradeController::class, 'template'])->name('grades.template');
             Route::post('nilai-import', [\App\Http\Controllers\Operator\TranscriptGradeController::class, 'import'])->name('grades.import');
+            Route::get('cetak', [\App\Http\Controllers\Operator\TranscriptPrintController::class, 'index'])->name('print.index');
+            Route::get('cetak/siswa/{student}', [\App\Http\Controllers\Operator\TranscriptPrintController::class, 'student'])->name('print.student');
+            Route::get('cetak/kelas', [\App\Http\Controllers\Operator\TranscriptPrintController::class, 'classroom'])->name('print.classroom');
             Route::get('config', [\App\Http\Controllers\Operator\TranscriptConfigController::class, 'index'])->name('config.index');
             Route::put('config', [\App\Http\Controllers\Operator\TranscriptConfigController::class, 'update'])->name('config.update');
         });
