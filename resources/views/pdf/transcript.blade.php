@@ -118,6 +118,9 @@
         .grade-table th {
             text-align: center;
             font-weight: bold;
+            background: #f2f2f2;
+            padding-top: 1.45mm;
+            padding-bottom: 1.45mm;
         }
 
         .grade-table .no {
@@ -133,6 +136,7 @@
         .grade-table .group-row td {
             font-weight: bold;
             background: #f2f2f2;
+            padding-left: 2.8mm;
         }
 
         .grade-table .local-title {
