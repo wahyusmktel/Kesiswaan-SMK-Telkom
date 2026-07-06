@@ -119,8 +119,8 @@
             text-align: center;
             font-weight: bold;
             background: #f2f2f2;
-            padding-top: 2.5mm;
-            padding-bottom: 2.5mm;
+            padding-top: 5.5mm;
+            padding-bottom: 5.5mm;
         }
 
         .grade-table .no {
@@ -282,12 +282,12 @@
                     <tr>
                         <td class="label">Nama Lengkap</td>
                         <td class="colon">:</td>
-                        <td>{{ mb_strtoupper($student->nama_lengkap) }}</td>
+                        <td>{{ \Illuminate\Support\Str::of($student->nama_lengkap)->lower()->title() }}</td>
                     </tr>
                     <tr>
                         <td class="label">Tempat dan Tanggal Lahir</td>
                         <td class="colon">:</td>
-                        <td>{{ mb_strtoupper($tempatLahir . ', ' . $tanggalLahirText) }}</td>
+                        <td>{{ \Illuminate\Support\Str::of($tempatLahir . ', ' . $tanggalLahirText)->lower()->title() }}</td>
                     </tr>
                     <tr>
                         <td class="label">Nomor Induk Siswa Nasional</td>
@@ -302,7 +302,7 @@
                     <tr>
                         <td class="label">Tanggal Kelulusan</td>
                         <td class="colon">:</td>
-                        <td>{{ mb_strtoupper($tanggalKelulusanText) }}</td>
+                        <td>{{ \Illuminate\Support\Str::of($tanggalKelulusanText)->lower()->title() }}</td>
                     </tr>
                     <tr>
                         <td class="label">Program Keahlian</td>
