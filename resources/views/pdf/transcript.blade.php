@@ -152,8 +152,18 @@
 
         .sign-left,
         .sign-right {
-            width: 70%;
+            width: 50%;
             vertical-align: top;
+        }
+
+        .sign-right {
+            text-align: right;
+        }
+
+        .principal-signature {
+            display: inline-block;
+            width: 58mm;
+            text-align: left;
         }
 
         .signature-space {
@@ -341,11 +351,13 @@
                     <tr>
                         <td class="sign-left"></td>
                         <td class="sign-right">
-                            {{ $config->signature_city ?? 'Bandar Lampung' }}, {{ $tanggalTtdText }}<br>
-                            Kepala Sekolah,
-                            <div class="signature-space"></div>
-                            <span class="bold"><u>{{ $config->principal_name ?? '-' }}</u></span><br>
-                            NIP. {{ $config->principal_nip ?? '-' }}
+                            <div class="principal-signature">
+                                {{ $config->signature_city ?? 'Bandar Lampung' }}, {{ $tanggalTtdText }}<br>
+                                Kepala Sekolah,
+                                <div class="signature-space"></div>
+                                <span class="bold"><u>{{ $config->principal_name ?? '-' }}</u></span><br>
+                                NIP. {{ $config->principal_nip ?? '-' }}
+                            </div>
                         </td>
                     </tr>
                 </table>
