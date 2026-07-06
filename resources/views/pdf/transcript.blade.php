@@ -61,11 +61,11 @@
 
         .watermark {
             position: fixed;
-            top: 30%;
+            top: 65%;
             left: 50%;
             width: 140mm;
             transform: translate(-50%, -50%);
-            opacity: .70;
+            opacity: .15;
             z-index: -1;
         }
 
