@@ -81,7 +81,7 @@
         }
 
         .title p {
-            margin: 1px 0 0;
+            margin-top: -10px;
             font-size: 9.4pt;
         }
 
