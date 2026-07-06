@@ -11,15 +11,15 @@
         * { box-sizing: border-box; }
         body {
             margin: 0;
-            font-family: "Times New Roman", Times, serif;
+            font-family: Calibri, "DejaVu Sans", Arial, sans-serif;
             color: #111;
-            font-size: 10.4pt;
-            line-height: 1.18;
+            font-size: 9.3pt;
+            line-height: 1.08;
         }
         .page { position: relative; min-height: 100%; page-break-after: always; overflow: hidden; }
         .page:last-child { page-break-after: auto; }
-        .borderless-inner { padding: {{ $config->is_borderless ? '8mm 13mm 8mm 13mm' : '0' }}; }
-        .letterhead { width: 100%; margin-bottom: 2mm; }
+        .borderless-inner { padding: {{ $config->is_borderless ? '6mm 11mm 6mm 11mm' : '0' }}; }
+        .letterhead { width: 100%; margin-bottom: 1.4mm; }
         .letterhead img { width: 100%; display: block; }
         .fallback-letterhead { text-align: center; border-bottom: 2px solid #111; padding-bottom: 7px; margin-bottom: 2mm; }
         .fallback-letterhead .school { font-size: 15pt; font-weight: bold; text-transform: uppercase; }
@@ -32,24 +32,24 @@
             opacity: .10;
             z-index: -1;
         }
-        .title { text-align: center; margin: 0 0 3mm; }
-        .title h1 { margin: 0; font-size: 13pt; letter-spacing: .5px; }
-        .title p { margin: 2px 0 0; font-size: 10.5pt; }
+        .title { text-align: center; margin: 0 0 2.2mm; }
+        .title h1 { margin: 0; font-size: 12pt; letter-spacing: .5px; }
+        .title p { margin: 1px 0 0; font-size: 9.4pt; }
         table { width: 100%; border-collapse: collapse; }
-        .identity td { padding: .85mm 0; vertical-align: top; }
+        .identity td { padding: .55mm 0; vertical-align: top; }
         .identity .label { width: 57mm; }
         .identity .colon { width: 4mm; }
-        .grade-table { margin-top: 3.5mm; font-size: 9.4pt; }
-        .grade-table th, .grade-table td { border: 1px solid #111; padding: 1.15mm 1.5mm; vertical-align: middle; }
+        .grade-table { margin-top: 2.4mm; font-size: 8.55pt; }
+        .grade-table th, .grade-table td { border: 1px solid #111; padding: .82mm 1.25mm; vertical-align: middle; }
         .grade-table th { text-align: center; font-weight: bold; }
         .grade-table .no { width: 8mm; text-align: center; }
         .grade-table .score { width: 24mm; text-align: center; }
         .grade-table .group-row td { font-weight: bold; background: #f2f2f2; }
         .grade-table .local-title { font-weight: bold; }
         .grade-table .average-row td { font-weight: bold; text-align: center; }
-        .sign-row { width: 100%; margin-top: 7mm; font-size: 10.2pt; }
+        .sign-row { width: 100%; margin-top: 4.5mm; font-size: 9.1pt; }
         .sign-left, .sign-right { width: 50%; vertical-align: top; }
-        .signature-space { height: 23mm; }
+        .signature-space { height: 16mm; }
         .bold { font-weight: bold; }
     </style>
 </head>
@@ -71,6 +71,9 @@
             : $konsentrasi;
         $tempatLahir = $student->dapodik?->tempat_lahir ?? $student->tempat_lahir ?? '-';
         $tanggalLahir = $student->dapodik?->tanggal_lahir ?? $student->tanggal_lahir;
+        $tanggalLahirText = $tanggalLahir ? \Carbon\Carbon::parse($tanggalLahir)->locale('id')->translatedFormat('d F Y') : '-';
+        $tanggalKelulusanText = $config->graduation_date?->locale('id')->translatedFormat('d F Y') ?? '-';
+        $tanggalTtdText = $config->signature_date?->locale('id')->translatedFormat('d F Y') ?? now()->locale('id')->translatedFormat('d F Y');
         $subjectsByGroup = $subjects->groupBy('group');
         $mainGroups = ['umum', 'kejuruan'];
     @endphp
@@ -108,11 +111,11 @@
             <table class="identity">
                 <tr><td class="label">Satuan Pendidikan</td><td class="colon">:</td><td>{{ $config->school_name ?? 'SMK Telkom Lampung' }}</td></tr>
                 <tr><td class="label">Nomor Pokok Sekolah Nasional</td><td class="colon">:</td><td>{{ $config->npsn ?? '-' }}</td></tr>
-                <tr><td class="label">Nama Lengkap</td><td class="colon">:</td><td>{{ ucwords(strtolower($student->nama_lengkap)) }}</td></tr>
-                <tr><td class="label">Tempat dan Tanggal Lahir</td><td class="colon">:</td><td>{{ $tempatLahir }}, {{ $tanggalLahir ? \Carbon\Carbon::parse($tanggalLahir)->locale('id')->translatedFormat('d F Y') : '-' }}</td></tr>
+                <tr><td class="label">Nama Lengkap</td><td class="colon">:</td><td>{{ mb_strtoupper($student->nama_lengkap) }}</td></tr>
+                <tr><td class="label">Tempat dan Tanggal Lahir</td><td class="colon">:</td><td>{{ mb_strtoupper($tempatLahir . ', ' . $tanggalLahirText) }}</td></tr>
                 <tr><td class="label">Nomor Induk Siswa Nasional</td><td class="colon">:</td><td>{{ $student->dapodik?->nisn ?? '-' }}</td></tr>
                 <tr><td class="label">Nomor Ijazah</td><td class="colon">:</td><td>{{ $student->transcriptDiplomaNumber?->diploma_number ?? '-' }}</td></tr>
-                <tr><td class="label">Tanggal Kelulusan</td><td class="colon">:</td><td>{{ $config->graduation_date?->translatedFormat('d F Y') ?? '-' }}</td></tr>
+                <tr><td class="label">Tanggal Kelulusan</td><td class="colon">:</td><td>{{ mb_strtoupper($tanggalKelulusanText) }}</td></tr>
                 <tr><td class="label">Program Keahlian</td><td class="colon">:</td><td>{{ $program }}</td></tr>
                 <tr><td class="label">Konsentrasi Keahlian</td><td class="colon">:</td><td>{{ $konsentrasi }}</td></tr>
             </table>
@@ -171,7 +174,7 @@
                 <tr>
                     <td class="sign-left"></td>
                     <td class="sign-right">
-                        {{ $config->signature_city ?? 'Bandar Lampung' }}, {{ $config->signature_date?->translatedFormat('d F Y') ?? now()->translatedFormat('d F Y') }}<br>
+                        {{ $config->signature_city ?? 'Bandar Lampung' }}, {{ $tanggalTtdText }}<br>
                         Kepala Sekolah,
                         <div class="signature-space"></div>
                         <span class="bold"><u>{{ $config->principal_name ?? '-' }}</u></span><br>
