@@ -157,8 +157,11 @@
         }
 
         .sign-left {
-            text-align: right;
-            padding-right: 8mm;
+            text-align: left;
+            vertical-align: bottom;
+            padding-left: 0;
+            padding-right: 0;
+            padding-bottom: 1mm;
         }
 
         .sign-right {
