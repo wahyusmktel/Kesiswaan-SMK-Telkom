@@ -156,6 +156,11 @@
             vertical-align: top;
         }
 
+        .sign-left {
+            text-align: right;
+            padding-right: 8mm;
+        }
+
         .sign-right {
             text-align: right;
         }
@@ -168,6 +173,21 @@
 
         .signature-space {
             height: 16mm;
+        }
+
+        .digital-signature-qr {
+            display: inline-block;
+            width: 24mm;
+            text-align: center;
+            font-size: 6.4pt;
+            line-height: 1.08;
+        }
+
+        .digital-signature-qr img {
+            display: block;
+            width: 22mm;
+            height: 22mm;
+            margin: 0 auto .8mm;
         }
 
         .bold {
@@ -349,7 +369,14 @@
 
                 <table class="sign-row">
                     <tr>
-                        <td class="sign-left"></td>
+                        <td class="sign-left">
+                            @if(!empty($transcriptQrCodes[$student->id]))
+                                <div class="digital-signature-qr">
+                                    <img src="{{ $transcriptQrCodes[$student->id] }}" alt="QR Verifikasi Transkrip">
+                                    <span>Scan untuk verifikasi<br>tanda tangan digital</span>
+                                </div>
+                            @endif
+                        </td>
                         <td class="sign-right">
                             <div class="principal-signature">
                                 {{ $config->signature_city ?? 'Bandar Lampung' }}, {{ $tanggalTtdText }}<br>

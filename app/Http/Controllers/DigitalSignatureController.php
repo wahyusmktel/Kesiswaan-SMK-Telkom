@@ -7,7 +7,6 @@ use App\Models\UserDigitalSignature;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
 
 class DigitalSignatureController extends Controller
 {
@@ -26,7 +25,6 @@ class DigitalSignatureController extends Controller
     public function setup(Request $request)
     {
         $request->validate([
-            'ttd_image'                => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'pin'                      => 'nullable|digits_between:4,8|confirmed',
             'pin_confirmation'         => 'nullable',
             'auto_sign_izin_keluar'    => 'nullable|boolean',
@@ -36,16 +34,10 @@ class DigitalSignatureController extends Controller
             'auto_sign_uks'            => 'nullable|boolean',
             'auto_sign_lesson_plan'    => 'nullable|boolean',
             'auto_sign_assessment_certificate' => 'nullable|boolean',
+            'auto_sign_transcript'     => 'nullable|boolean',
         ]);
 
         $signature = UserDigitalSignature::firstOrNew(['user_id' => Auth::id()]);
-
-        if ($request->hasFile('ttd_image')) {
-            if ($signature->ttd_image_path) {
-                Storage::disk('public')->delete($signature->ttd_image_path);
-            }
-            $signature->ttd_image_path = $request->file('ttd_image')->store('tanda-tangan', 'public');
-        }
 
         if ($request->filled('pin')) {
             $signature->pin_hash = Hash::make($request->pin);
@@ -59,6 +51,7 @@ class DigitalSignatureController extends Controller
         $signature->auto_sign_uks            = $request->boolean('auto_sign_uks');
         $signature->auto_sign_lesson_plan    = $request->boolean('auto_sign_lesson_plan');
         $signature->auto_sign_assessment_certificate = $request->boolean('auto_sign_assessment_certificate');
+        $signature->auto_sign_transcript     = $request->boolean('auto_sign_transcript');
         $signature->save();
 
         return back()->with('success', 'Tanda tangan digital berhasil diperbarui.');

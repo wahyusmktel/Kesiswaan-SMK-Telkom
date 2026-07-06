@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Operator;
 
 use App\Http\Controllers\Controller;
+use App\Models\DigitalDocument;
 use App\Models\MasterSiswa;
 use App\Models\Rombel;
 use App\Models\TranscriptConfig;
 use App\Models\TranscriptSubject;
+use App\Models\UserDigitalSignature;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -35,12 +37,15 @@ class TranscriptPrintController extends Controller
         $student->load(['dapodik', 'rombels.kelas', 'transcriptDiplomaNumber', 'transcriptGrades.subject']);
         $config = TranscriptConfig::firstOrCreate([]);
         $subjects = $this->subjects()->get();
+        $transcriptNumbers = $this->transcriptNumbers(collect([$student]), $config);
+        $transcriptQrCodes = $this->transcriptQrCodes(collect([$student]), $subjects, $config, $transcriptNumbers);
 
         $pdf = Pdf::loadView('pdf.transcript', [
             'config' => $config,
             'students' => collect([$student]),
             'subjects' => $subjects,
-            'transcriptNumbers' => $this->transcriptNumbers(collect([$student]), $config),
+            'transcriptNumbers' => $transcriptNumbers,
+            'transcriptQrCodes' => $transcriptQrCodes,
             'letterheadDataUri' => $this->dataUri($config->letterhead_path),
             'watermarkDataUri' => $this->dataUri($config->watermark_path),
             'single' => true,
@@ -57,12 +62,15 @@ class TranscriptPrintController extends Controller
         $config = TranscriptConfig::firstOrCreate([]);
         $subjects = $this->subjects()->get();
         $students = $rombel->siswa->sortBy('nama_lengkap')->values();
+        $transcriptNumbers = $this->transcriptNumbers($students, $config);
+        $transcriptQrCodes = $this->transcriptQrCodes($students, $subjects, $config, $transcriptNumbers);
 
         $pdf = Pdf::loadView('pdf.transcript', [
             'config' => $config,
             'students' => $students,
             'subjects' => $subjects,
-            'transcriptNumbers' => $this->transcriptNumbers($students, $config),
+            'transcriptNumbers' => $transcriptNumbers,
+            'transcriptQrCodes' => $transcriptQrCodes,
             'letterheadDataUri' => $this->dataUri($config->letterhead_path),
             'watermarkDataUri' => $this->dataUri($config->watermark_path),
             'single' => false,
@@ -129,6 +137,96 @@ class TranscriptPrintController extends Controller
         }
 
         return $numbers;
+    }
+
+    private function transcriptQrCodes(Collection $students, Collection $subjects, TranscriptConfig $config, array $transcriptNumbers): array
+    {
+        $signature = UserDigitalSignature::where('auto_sign_transcript', true)
+            ->where('is_active', true)
+            ->whereNotNull('pin_hash')
+            ->whereHas('user', fn ($query) => $query->role('Kepala Sekolah'))
+            ->with('user')
+            ->first();
+
+        if (! $signature || ! $signature->user) {
+            return [];
+        }
+
+        $qrCodes = [];
+
+        foreach ($students as $student) {
+            $hashParts = $this->transcriptHashParts($student, $subjects, $config, $transcriptNumbers[$student->id] ?? '-');
+            $hash = DigitalDocument::generateHash($hashParts);
+            $hmac = DigitalDocument::generateHmac($hash);
+
+            $document = DigitalDocument::where('document_type', 'TRANSKRIP_NILAI')
+                ->where('reference_id', $student->id)
+                ->first();
+
+            $signerData = [
+                'document_title' => 'Transkrip Nilai - ' . ($student->nama_lengkap ?? 'Siswa'),
+                'document_hash' => $hash,
+                'hmac_signature' => $hmac,
+                'signed_by' => $signature->user->id,
+                'signer_name' => $config->principal_name ?: $signature->user->name,
+                'signer_nip' => $config->principal_nip,
+                'signer_role' => 'Kepala Sekolah',
+                'signed_at' => now(),
+                'is_valid' => true,
+                'revoked_at' => null,
+                'revoke_reason' => null,
+            ];
+
+            if ($document) {
+                $document->update($signerData);
+                $document = $document->refresh();
+            } else {
+                $document = DigitalDocument::create(array_merge($signerData, [
+                    'document_type' => 'TRANSKRIP_NILAI',
+                    'reference_id' => $student->id,
+                ]));
+            }
+
+            $qrCodes[$student->id] = $this->qrBase64(route('verifikasi.dokumen', $document->token));
+        }
+
+        return $qrCodes;
+    }
+
+    private function transcriptHashParts(MasterSiswa $student, Collection $subjects, TranscriptConfig $config, string $transcriptNumber): array
+    {
+        $gradeMap = $student->transcriptGrades->keyBy('transcript_subject_id');
+        $gradeParts = $subjects
+            ->map(fn ($subject) => $subject->id . ':' . ($gradeMap->get($subject->id)?->score ?? '-'))
+            ->values()
+            ->all();
+
+        return array_merge([
+            'TRANSKRIP_NILAI',
+            (string) $student->id,
+            (string) ($student->nis ?? ''),
+            (string) ($student->dapodik?->nisn ?? ''),
+            (string) $student->nama_lengkap,
+            $transcriptNumber,
+            (string) ($student->transcriptDiplomaNumber?->diploma_number ?? ''),
+            (string) ($config->school_name ?? ''),
+            (string) ($config->npsn ?? ''),
+            (string) ($config->graduation_date?->toDateString() ?? ''),
+            (string) ($config->signature_date?->toDateString() ?? ''),
+        ], $gradeParts);
+    }
+
+    private function qrBase64(string $url): string
+    {
+        $options = new \chillerlan\QRCode\QROptions([
+            'outputInterface' => \chillerlan\QRCode\Output\QRGdImagePNG::class,
+            'scale' => 4,
+            'imageBase64' => true,
+            'quietzoneSize' => 1,
+            'eccLevel' => \chillerlan\QRCode\Common\EccLevel::M,
+        ]);
+
+        return (new \chillerlan\QRCode\QRCode($options))->render($url);
     }
 
     private function parseRunningNumber(string $start): array
