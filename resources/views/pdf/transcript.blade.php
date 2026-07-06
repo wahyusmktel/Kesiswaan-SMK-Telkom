@@ -179,7 +179,7 @@
         }
 
         .signature-space {
-            height: 16mm;
+            height: 20mm;
         }
 
         .digital-signature-qr {
@@ -287,7 +287,8 @@
                     <tr>
                         <td class="label">Tempat dan Tanggal Lahir</td>
                         <td class="colon">:</td>
-                        <td>{{ \Illuminate\Support\Str::of($tempatLahir . ', ' . $tanggalLahirText)->lower()->title() }}</td>
+                        <td>{{ \Illuminate\Support\Str::of($tempatLahir . ', ' . $tanggalLahirText)->lower()->title() }}
+                        </td>
                     </tr>
                     <tr>
                         <td class="label">Nomor Induk Siswa Nasional</td>
