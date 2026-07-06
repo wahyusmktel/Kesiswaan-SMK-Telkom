@@ -28,7 +28,7 @@ class SuperAdminController extends Controller
             'email'          => 'nullable|email|max:255',
             'address'        => 'nullable|string',
             'allow_registration' => 'nullable|boolean',
-            'theme'          => 'nullable|string|in:default,light-red,tech-red,campus-flow,telkom-corporate,transformasi',
+            'theme'          => 'nullable|string|in:default,light-red,tech-red,campus-flow,telkom-corporate,transformasi,ajaran-baru',
             'transformasi_slider_images' => 'nullable|array|max:8',
             'transformasi_slider_images.*' => 'image|mimes:jpeg,png,jpg,webp|max:4096',
             'delete_transformasi_slider_images' => 'nullable|array',

@@ -195,9 +195,11 @@ Route::get('/', function () {
         ->whereMonth('tanggal_lahir', $today->month)
         ->whereDay('tanggal_lahir', $today->day)
         ->get(['nama']);
-    $landingView = \App\Models\AppSetting::first()?->theme === 'transformasi'
-        ? 'welcome-transformasi'
-        : 'welcome';
+    $landingView = match (\App\Models\AppSetting::first()?->theme) {
+        'transformasi' => 'welcome-transformasi',
+        'ajaran-baru' => 'welcome-ajaran-baru',
+        default => 'welcome',
+    };
 
     return view($landingView, compact('birthdaySiswa', 'birthdayGuru'));
 })->name('welcome');

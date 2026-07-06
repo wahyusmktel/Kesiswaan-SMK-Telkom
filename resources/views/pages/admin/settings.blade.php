@@ -165,6 +165,14 @@
                                             <span class="block text-sm text-gray-500">Base baru dengan scroll showcase</span>
                                         </span>
                                     </label>
+
+                                    <label class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none hover:border-gray-300">
+                                        <input type="radio" name="theme" value="ajaran-baru" x-model="selectedTheme" class="mt-0.5 h-4 w-4 text-red-600 border-gray-300 focus:ring-red-500" {{ old('theme', $setting->theme ?? 'default') === 'ajaran-baru' ? 'checked' : '' }}>
+                                        <span class="ml-3 flex flex-col">
+                                            <span class="block text-sm font-medium text-gray-900">Ajaran Baru</span>
+                                            <span class="block text-sm text-gray-500">Hero slider, mood check, dan module scroll</span>
+                                        </span>
+                                    </label>
                                 </div>
                                 @error('theme') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                             </div>
