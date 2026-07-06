@@ -75,7 +75,7 @@
         }
 
         .title h1 {
-            margin-top: -10px;
+            margin-top: -12px;
             font-size: 12pt;
             letter-spacing: .5px;
         }
