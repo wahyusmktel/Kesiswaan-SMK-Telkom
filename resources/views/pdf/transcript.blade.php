@@ -71,11 +71,11 @@
 
         .title {
             text-align: center;
-            margin: 0 0 1.2mm;
+            margin: 0 0 2.2mm;
         }
 
         .title h1 {
-            margin: 0;
+            margin: -10;
             font-size: 12pt;
             letter-spacing: .5px;
         }
