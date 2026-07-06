@@ -63,9 +63,9 @@
             position: fixed;
             top: 42%;
             left: 50%;
-            width: 78mm;
+            width: 180mm;
             transform: translate(-50%, -50%);
-            opacity: .10;
+            opacity: .30;
             z-index: -1;
         }
 
