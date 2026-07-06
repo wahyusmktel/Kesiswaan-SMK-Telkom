@@ -65,7 +65,7 @@
             left: 50%;
             width: 150mm;
             transform: translate(-50%, -50%);
-            opacity: 0.2;
+            opacity: 0.1;
             z-index: -1;
         }
 
