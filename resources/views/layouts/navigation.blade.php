@@ -2276,6 +2276,70 @@
         </li>
         @include('shared.fingerprint-saya-nav-link')
 
+        {{-- Dropdown Transkrip Nilai --}}
+        <li class="submenu-dropdown"
+            x-data="{ 
+                expanded: {{ request()->routeIs(['operator.transcript.*']) ? 'true' : 'false' }},
+                flyoutTop: 0,
+                updateFlyoutPosition() {
+                    const rect = this.$el.querySelector('button').getBoundingClientRect();
+                    this.flyoutTop = rect.top;
+                }
+            }"
+            @mouseenter="updateFlyoutPosition()">
+            <button @click="expanded = !expanded"
+                class="nav-link w-full {{ request()->routeIs(['operator.transcript.*']) ? 'nav-link-active' : 'nav-link-inactive' }}">
+                <div class="flex items-center">
+                    <div class="nav-icon-container">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5S19.832 5.477 21 6.253v13C19.832 18.477 18.246 18 16.5 18s-3.332.477-4.5 1.253" />
+                        </svg>
+                    </div>
+                    <span class="nav-text">Transkrip Nilai</span>
+                </div>
+                <svg :class="expanded ? 'rotate-180' : ''"
+                    class="dropdown-arrow w-4 h-4 transition-transform transform text-white/60" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
+
+            <div x-show="expanded" x-collapse class="submenu-card">
+                <a href="{{ route('operator.transcript.mapel.index') }}"
+                    class="submenu-item {{ request()->routeIs('operator.transcript.mapel.*') ? 'submenu-item-active' : '' }}">
+                    <span class="submenu-dot"></span>
+                    Mapel Transkrip
+                </a>
+                <a href="{{ route('operator.transcript.diploma-numbers.index') }}"
+                    class="submenu-item {{ request()->routeIs('operator.transcript.diploma-numbers.*') ? 'submenu-item-active' : '' }}">
+                    <span class="submenu-dot"></span>
+                    Nomor Ijazah
+                </a>
+                <a href="{{ route('operator.transcript.config.index') }}"
+                    class="submenu-item {{ request()->routeIs('operator.transcript.config.*') ? 'submenu-item-active' : '' }}">
+                    <span class="submenu-dot"></span>
+                    Config Transkrip
+                </a>
+            </div>
+
+            <div class="submenu-flyout" :style="'top: ' + flyoutTop + 'px'">
+                <div class="submenu-flyout-title">Transkrip Nilai</div>
+                <a href="{{ route('operator.transcript.mapel.index') }}"
+                    class="submenu-item {{ request()->routeIs('operator.transcript.mapel.*') ? 'submenu-item-active' : '' }}">
+                    Mapel Transkrip
+                </a>
+                <a href="{{ route('operator.transcript.diploma-numbers.index') }}"
+                    class="submenu-item {{ request()->routeIs('operator.transcript.diploma-numbers.*') ? 'submenu-item-active' : '' }}">
+                    Nomor Ijazah
+                </a>
+                <a href="{{ route('operator.transcript.config.index') }}"
+                    class="submenu-item {{ request()->routeIs('operator.transcript.config.*') ? 'submenu-item-active' : '' }}">
+                    Config Transkrip
+                </a>
+            </div>
+        </li>
+
         {{-- Dropdown Master Data --}}
         @can('view master data')
             <li class="submenu-dropdown"

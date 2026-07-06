@@ -356,6 +356,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::patch('/{submission}/approve', [\App\Http\Controllers\Operator\DapodikGuruSubmissionController::class, 'approve'])->name('approve');
             Route::patch('/{submission}/reject', [\App\Http\Controllers\Operator\DapodikGuruSubmissionController::class, 'reject'])->name('reject');
         });
+
+        Route::prefix('transkrip')->name('transcript.')->group(function () {
+            Route::resource('mapel', \App\Http\Controllers\Operator\TranscriptSubjectController::class)
+                ->parameters(['mapel' => 'subject'])
+                ->except(['show', 'create', 'edit']);
+            Route::get('nomor-ijazah', [\App\Http\Controllers\Operator\TranscriptDiplomaNumberController::class, 'index'])->name('diploma-numbers.index');
+            Route::put('nomor-ijazah/{student}', [\App\Http\Controllers\Operator\TranscriptDiplomaNumberController::class, 'update'])->name('diploma-numbers.update');
+            Route::delete('nomor-ijazah/{student}', [\App\Http\Controllers\Operator\TranscriptDiplomaNumberController::class, 'destroy'])->name('diploma-numbers.destroy');
+            Route::get('nomor-ijazah-template', [\App\Http\Controllers\Operator\TranscriptDiplomaNumberController::class, 'template'])->name('diploma-numbers.template');
+            Route::post('nomor-ijazah-import', [\App\Http\Controllers\Operator\TranscriptDiplomaNumberController::class, 'import'])->name('diploma-numbers.import');
+            Route::get('config', [\App\Http\Controllers\Operator\TranscriptConfigController::class, 'index'])->name('config.index');
+            Route::put('config', [\App\Http\Controllers\Operator\TranscriptConfigController::class, 'update'])->name('config.update');
+        });
     });
 
     // Grup Route untuk Kesiswaan

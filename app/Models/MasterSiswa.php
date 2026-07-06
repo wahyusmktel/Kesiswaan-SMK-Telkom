@@ -54,6 +54,11 @@ class MasterSiswa extends Model
         return $this->hasOne(PrakerinPenempatan::class, 'master_siswa_id');
     }
 
+    public function transcriptDiplomaNumber()
+    {
+        return $this->hasOne(TranscriptDiplomaNumber::class, 'master_siswa_id');
+    }
+
     // Relationships for Poin System
     public function pelanggarans()
     {
