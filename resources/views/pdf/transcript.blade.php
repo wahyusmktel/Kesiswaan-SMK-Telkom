@@ -152,7 +152,7 @@
 
         .sign-left,
         .sign-right {
-            width: 50%;
+            width: 70%;
             vertical-align: top;
         }
 
