@@ -29,8 +29,10 @@ class TranscriptGradeImport implements SkipsEmptyRows, ToCollection, WithCalcula
 
     public function collection(Collection $rows): void
     {
-        if ($this->isOfficialCurriculumFormat($rows)) {
-            $this->importOfficialCurriculumFormat($rows);
+        $officialLayout = $this->officialCurriculumLayout($rows);
+
+        if ($officialLayout) {
+            $this->importOfficialCurriculumFormat($rows, $officialLayout);
             return;
         }
 
@@ -119,20 +121,36 @@ class TranscriptGradeImport implements SkipsEmptyRows, ToCollection, WithCalcula
         return $columns;
     }
 
-    private function isOfficialCurriculumFormat(Collection $rows): bool
+    private function officialCurriculumLayout(Collection $rows): ?array
     {
-        $titleRow = collect($rows->get(3, []));
-        $subjectRow = collect($rows->get(4, []));
-        $firstDataRow = collect($rows->get(5, []));
+        foreach ($rows as $rowIndex => $row) {
+            $row = collect($row);
 
-        return Str::contains(Str::upper((string) ($titleRow[36] ?? '')), 'NILAI TRANSKRIP')
-            && trim((string) ($subjectRow[36] ?? '')) !== ''
-            && trim((string) ($firstDataRow[1] ?? '')) !== '';
+            if (! Str::contains(Str::upper((string) ($row[36] ?? '')), 'NILAI TRANSKRIP')) {
+                continue;
+            }
+
+            $subjectRowIndex = $rowIndex + 1;
+            $subjectRow = collect($rows->get($subjectRowIndex, []));
+
+            if (trim((string) ($subjectRow[36] ?? '')) === '') {
+                continue;
+            }
+
+            return [
+                'title_row_index' => $rowIndex,
+                'subject_row_index' => $subjectRowIndex,
+                'data_start_index' => $subjectRowIndex + 1,
+            ];
+        }
+
+        return null;
     }
 
-    private function importOfficialCurriculumFormat(Collection $rows): void
+    private function importOfficialCurriculumFormat(Collection $rows, array $layout): void
     {
-        $subjectColumns = $this->officialSubjectColumns(collect($rows->get(4, [])));
+        $subjectColumns = $this->officialSubjectColumns(collect($rows->get($layout['subject_row_index'], [])));
+        $beforeScores = $this->scores;
 
         if (empty($subjectColumns)) {
             $this->skipped++;
@@ -140,7 +158,7 @@ class TranscriptGradeImport implements SkipsEmptyRows, ToCollection, WithCalcula
             return;
         }
 
-        foreach ($rows->slice(5) as $rowIndex => $row) {
+        foreach ($rows->slice($layout['data_start_index']) as $rowIndex => $row) {
             $row = collect($row);
             $name = trim((string) ($row[1] ?? ''));
             $nisn = trim((string) ($row[2] ?? ''));
@@ -188,6 +206,10 @@ class TranscriptGradeImport implements SkipsEmptyRows, ToCollection, WithCalcula
                 $this->scores++;
             }
         }
+
+        if ($this->scores === $beforeScores) {
+            $this->messages[] = 'Format Excel resmi terbaca, tetapi belum ada nilai tersimpan. Cek apakah rombel yang dipilih sesuai dengan nama/NISN pada file.';
+        }
     }
 
     private function officialSubjectColumns(Collection $subjectRow): array
@@ -227,15 +249,22 @@ class TranscriptGradeImport implements SkipsEmptyRows, ToCollection, WithCalcula
     private function findStudent(string $name, string $nisn)
     {
         $name = trim($name);
-        $nisn = trim($nisn);
+        $nisn = $this->normalizeIdentifier($nisn);
 
         return $this->students->first(function ($student) use ($name, $nisn) {
-            if ($nisn !== '' && $student->dapodik?->nisn === $nisn) {
+            if ($nisn !== '' && $this->normalizeIdentifier((string) $student->dapodik?->nisn) === $nisn) {
                 return true;
             }
 
             return Str::lower(trim($student->nama_lengkap)) === Str::lower($name);
         });
+    }
+
+    private function normalizeIdentifier(string $value): string
+    {
+        $digits = preg_replace('/\D+/', '', $value) ?? '';
+
+        return ltrim($digits, '0') ?: $digits;
     }
 
     private function normalizeScore(mixed $value): ?string
