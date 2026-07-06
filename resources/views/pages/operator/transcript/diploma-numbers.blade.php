@@ -5,18 +5,49 @@
             <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div><div class="mb-2 inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-black uppercase tracking-widest text-blue-700">Tingkat Akhir</div><h3 class="text-2xl font-black text-slate-900">Daftar Nomor Ijazah</h3></div>
                 <div class="flex flex-col gap-2 sm:flex-row">
-                    <form><input name="search" value="{{ request('search') }}" class="rounded-2xl border-slate-200 text-sm" placeholder="Cari siswa/NIS..."><button class="ml-2 rounded-2xl border border-slate-200 px-4 py-2 text-sm font-bold">Filter</button></form>
-                    <a href="{{ route('operator.transcript.diploma-numbers.template') }}" class="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-2 text-sm font-black text-emerald-700">Template Excel</a>
+                    <form class="flex flex-col gap-2 sm:flex-row">
+                        <select name="rombel_id" class="rounded-2xl border-slate-200 text-sm">
+                            <option value="">Semua Rombel</option>
+                            @foreach($rombels as $rombel)
+                                <option value="{{ $rombel->id }}" @selected(request('rombel_id') == $rombel->id)>{{ $rombel->kelas?->nama_kelas ?? 'Rombel' }} - {{ $rombel->tahun_ajaran }}</option>
+                            @endforeach
+                        </select>
+                        <input name="search" value="{{ request('search') }}" class="rounded-2xl border-slate-200 text-sm" placeholder="Cari siswa/NIS...">
+                        <button class="rounded-2xl border border-slate-200 px-4 py-2 text-sm font-bold">Filter</button>
+                    </form>
+                    <a href="{{ route('operator.transcript.diploma-numbers.template', request()->only('rombel_id')) }}" class="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-2 text-sm font-black text-emerald-700">Template Excel</a>
                     <button @click="importOpen=true" class="rounded-2xl bg-blue-600 px-5 py-2 text-sm font-black text-white">Import Nomor</button>
                 </div>
             </div>
         </div>
         <div class="mt-6 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
             <table class="min-w-full divide-y divide-slate-100"><thead class="bg-slate-50"><tr><th class="px-6 py-4 text-left text-xs font-black uppercase text-slate-500">No</th><th class="px-6 py-4 text-left text-xs font-black uppercase text-slate-500">Siswa</th><th class="px-6 py-4 text-left text-xs font-black uppercase text-slate-500">Kelas</th><th class="px-6 py-4 text-left text-xs font-black uppercase text-slate-500">Nomor Ijazah</th><th class="px-6 py-4 text-right text-xs font-black uppercase text-slate-500">Aksi</th></tr></thead>
-                <tbody class="divide-y divide-slate-100">@forelse($students as $student)<tr><td class="px-6 py-4 text-sm">{{ $loop->iteration + ($students->firstItem() - 1) }}</td><td class="px-6 py-4"><p class="font-bold text-slate-900">{{ $student->nama_lengkap }}</p><p class="text-xs text-slate-500">{{ $student->nis }}</p></td><td class="px-6 py-4 text-sm">{{ $student->rombels->first()?->kelas?->nama_kelas ?? '-' }}</td><td class="px-6 py-4"><form method="POST" action="{{ route('operator.transcript.diploma-numbers.update', $student) }}" class="flex gap-2">@csrf @method('PUT')<input name="diploma_number" value="{{ $student->transcriptDiplomaNumber?->diploma_number }}" class="w-full rounded-xl border-slate-200 text-sm" placeholder="Nomor ijazah"><button class="rounded-xl bg-slate-900 px-3 text-xs font-bold text-white">Simpan</button></form></td><td class="px-6 py-4 text-right"><form method="POST" action="{{ route('operator.transcript.diploma-numbers.destroy', $student) }}">@csrf @method('DELETE')<button class="text-sm font-bold text-red-600">Hapus</button></form></td></tr>@empty<tr><td colspan="5" class="px-6 py-12 text-center text-slate-500">Tidak ada siswa tingkat akhir.</td></tr>@endforelse</tbody></table>
+                <tbody class="divide-y divide-slate-100">@forelse($students as $student)<tr><td class="px-6 py-4 text-sm">{{ $loop->iteration + ($students->firstItem() - 1) }}</td><td class="px-6 py-4"><p class="font-bold text-slate-900">{{ $student->nama_lengkap }}</p><p class="text-xs text-slate-500">{{ $student->nis }}</p></td><td class="px-6 py-4 text-sm">{{ $student->rombels->first()?->kelas?->nama_kelas ?? '-' }}</td><td class="px-6 py-4"><form method="POST" action="{{ route('operator.transcript.diploma-numbers.update', $student) }}" class="js-confirm-form flex gap-2" data-title="Simpan nomor ijazah?" data-text="Nomor ijazah {{ $student->nama_lengkap }} akan diperbarui.">@csrf @method('PUT')<input name="diploma_number" value="{{ $student->transcriptDiplomaNumber?->diploma_number }}" class="w-full rounded-xl border-slate-200 text-sm" placeholder="Nomor ijazah"><button class="rounded-xl bg-slate-900 px-3 text-xs font-bold text-white">Simpan</button></form></td><td class="px-6 py-4 text-right"><form method="POST" action="{{ route('operator.transcript.diploma-numbers.destroy', $student) }}" class="js-confirm-form" data-title="Hapus nomor ijazah?" data-text="Nomor ijazah {{ $student->nama_lengkap }} akan dikosongkan.">@csrf @method('DELETE')<button class="text-sm font-bold text-red-600">Hapus</button></form></td></tr>@empty<tr><td colspan="5" class="px-6 py-12 text-center text-slate-500">Tidak ada siswa tingkat akhir.</td></tr>@endforelse</tbody></table>
             <div class="px-6 py-4">{{ $students->links() }}</div>
         </div>
         <div x-show="importOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4"><div class="w-full max-w-lg rounded-[28px] bg-white p-6 shadow-2xl"><h3 class="text-lg font-black text-slate-900">Import Nomor Ijazah</h3><p class="mt-1 text-sm text-slate-500">Gunakan template Excel. Kolom nama siswa dan kelas dipakai untuk update data.</p><form method="POST" action="{{ route('operator.transcript.diploma-numbers.import') }}" enctype="multipart/form-data" class="mt-5 space-y-4">@csrf<input type="file" name="file_import" accept=".xlsx,.xls,.csv" class="w-full rounded-2xl border border-slate-200 p-3" required><div class="flex justify-end gap-2"><button type="button" @click="importOpen=false" class="rounded-2xl border px-5 py-2 font-bold">Batal</button><button class="rounded-2xl bg-blue-600 px-5 py-2 font-black text-white">Import</button></div></form></div></div>
         @if(session('import_report'))<div x-show="reportOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4"><div class="w-full max-w-lg rounded-[28px] bg-white p-6 shadow-2xl"><h3 class="text-lg font-black text-slate-900">Report Import Berhasil</h3>@php($report=session('import_report'))<div class="mt-4 grid grid-cols-3 gap-3 text-center"><div class="rounded-2xl bg-emerald-50 p-4"><p class="text-2xl font-black text-emerald-700">{{ $report['created'] }}</p><p class="text-xs font-bold text-emerald-700">Ditambahkan</p></div><div class="rounded-2xl bg-blue-50 p-4"><p class="text-2xl font-black text-blue-700">{{ $report['updated'] }}</p><p class="text-xs font-bold text-blue-700">Diupdate</p></div><div class="rounded-2xl bg-amber-50 p-4"><p class="text-2xl font-black text-amber-700">{{ $report['skipped'] }}</p><p class="text-xs font-bold text-amber-700">Dilewati</p></div></div>@if(!empty($report['messages']))<div class="mt-4 rounded-2xl bg-slate-50 p-4 text-xs text-slate-600">@foreach($report['messages'] as $msg)<p>{{ $msg }}</p>@endforeach</div>@endif<button @click="reportOpen=false" class="mt-5 w-full rounded-2xl bg-slate-900 px-5 py-2 font-black text-white">Tutup</button></div></div>@endif
     </div></div>
+    <script>
+        document.querySelectorAll('.js-confirm-form').forEach((form) => {
+            form.addEventListener('submit', function (event) {
+                if (form.dataset.confirmed === '1') return;
+                event.preventDefault();
+                const submit = () => { form.dataset.confirmed = '1'; form.submit(); };
+                if (window.Swal) {
+                    Swal.fire({
+                        title: form.dataset.title || 'Lanjutkan?',
+                        text: form.dataset.text || 'Data akan diproses.',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Ya, lanjutkan',
+                        cancelButtonText: 'Batal',
+                        confirmButtonColor: '#dc2626'
+                    }).then((result) => { if (result.isConfirmed) submit(); });
+                    return;
+                }
+                if (confirm(form.dataset.title || 'Lanjutkan?')) submit();
+            });
+        });
+    </script>
 </x-app-layout>

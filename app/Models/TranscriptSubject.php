@@ -20,4 +20,9 @@ class TranscriptSubject extends Model
             'kejuruan' => 'Kelompok Mata Pelajaran Kejuruan',
         ];
     }
+
+    public function grades()
+    {
+        return $this->hasMany(TranscriptGrade::class);
+    }
 }

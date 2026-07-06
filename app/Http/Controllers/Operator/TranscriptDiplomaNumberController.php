@@ -6,6 +6,7 @@ use App\Exports\TranscriptDiplomaNumberTemplateExport;
 use App\Http\Controllers\Controller;
 use App\Imports\TranscriptDiplomaNumberImport;
 use App\Models\MasterSiswa;
+use App\Models\Rombel;
 use App\Models\TranscriptDiplomaNumber;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
@@ -14,7 +15,11 @@ class TranscriptDiplomaNumberController extends Controller
 {
     public function index(Request $request)
     {
+        $rombels = $this->finalRombels()->get();
         $students = $this->finalStudents()
+            ->when($request->filled('rombel_id'), function ($query) use ($request) {
+                $query->whereHas('rombels', fn ($rombelQuery) => $rombelQuery->where('rombels.id', $request->rombel_id));
+            })
             ->when($request->filled('search'), function ($query) use ($request) {
                 $query->where(function ($searchQuery) use ($request) {
                     $searchQuery->where('nama_lengkap', 'like', '%' . $request->search . '%')
@@ -24,7 +29,7 @@ class TranscriptDiplomaNumberController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        return view('pages.operator.transcript.diploma-numbers', compact('students'));
+        return view('pages.operator.transcript.diploma-numbers', compact('students', 'rombels'));
     }
 
     public function update(Request $request, MasterSiswa $student)
@@ -46,7 +51,11 @@ class TranscriptDiplomaNumberController extends Controller
 
     public function template()
     {
-        $students = $this->finalStudents()->get();
+        $students = $this->finalStudents()
+            ->when(request()->filled('rombel_id'), function ($query) {
+                $query->whereHas('rombels', fn ($rombelQuery) => $rombelQuery->where('rombels.id', request('rombel_id')));
+            })
+            ->get();
 
         return Excel::download(new TranscriptDiplomaNumberTemplateExport($students), 'template_nomor_ijazah_transkrip.xlsx');
     }
@@ -72,5 +81,16 @@ class TranscriptDiplomaNumberController extends Controller
                     ->orWhere('nama_kelas', 'like', '%XII %');
             })
             ->orderBy('nama_lengkap');
+    }
+
+    private function finalRombels()
+    {
+        return Rombel::with('kelas')
+            ->whereHas('kelas', function ($query) {
+                $query->where('nama_kelas', 'like', '%XII%')
+                    ->orWhere('nama_kelas', 'like', '%12%');
+            })
+            ->orderByDesc('tahun_ajaran')
+            ->orderBy('kelas_id');
     }
 }

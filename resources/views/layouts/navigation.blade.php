@@ -2316,6 +2316,11 @@
                     <span class="submenu-dot"></span>
                     Nomor Ijazah
                 </a>
+                <a href="{{ route('operator.transcript.grades.index') }}"
+                    class="submenu-item {{ request()->routeIs('operator.transcript.grades.*') ? 'submenu-item-active' : '' }}">
+                    <span class="submenu-dot"></span>
+                    Nilai Transkrip
+                </a>
                 <a href="{{ route('operator.transcript.config.index') }}"
                     class="submenu-item {{ request()->routeIs('operator.transcript.config.*') ? 'submenu-item-active' : '' }}">
                     <span class="submenu-dot"></span>
@@ -2332,6 +2337,10 @@
                 <a href="{{ route('operator.transcript.diploma-numbers.index') }}"
                     class="submenu-item {{ request()->routeIs('operator.transcript.diploma-numbers.*') ? 'submenu-item-active' : '' }}">
                     Nomor Ijazah
+                </a>
+                <a href="{{ route('operator.transcript.grades.index') }}"
+                    class="submenu-item {{ request()->routeIs('operator.transcript.grades.*') ? 'submenu-item-active' : '' }}">
+                    Nilai Transkrip
                 </a>
                 <a href="{{ route('operator.transcript.config.index') }}"
                     class="submenu-item {{ request()->routeIs('operator.transcript.config.*') ? 'submenu-item-active' : '' }}">

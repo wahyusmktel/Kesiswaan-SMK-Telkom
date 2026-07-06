@@ -366,6 +366,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::delete('nomor-ijazah/{student}', [\App\Http\Controllers\Operator\TranscriptDiplomaNumberController::class, 'destroy'])->name('diploma-numbers.destroy');
             Route::get('nomor-ijazah-template', [\App\Http\Controllers\Operator\TranscriptDiplomaNumberController::class, 'template'])->name('diploma-numbers.template');
             Route::post('nomor-ijazah-import', [\App\Http\Controllers\Operator\TranscriptDiplomaNumberController::class, 'import'])->name('diploma-numbers.import');
+            Route::get('nilai', [\App\Http\Controllers\Operator\TranscriptGradeController::class, 'index'])->name('grades.index');
+            Route::get('nilai-template', [\App\Http\Controllers\Operator\TranscriptGradeController::class, 'template'])->name('grades.template');
+            Route::post('nilai-import', [\App\Http\Controllers\Operator\TranscriptGradeController::class, 'import'])->name('grades.import');
             Route::get('config', [\App\Http\Controllers\Operator\TranscriptConfigController::class, 'index'])->name('config.index');
             Route::put('config', [\App\Http\Controllers\Operator\TranscriptConfigController::class, 'update'])->name('config.update');
         });
