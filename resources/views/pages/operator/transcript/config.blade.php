@@ -18,7 +18,7 @@
                 dragging:false,
                 watermarkDragging:false,
                 formatDate(v){ if(!v) return ''; const d=new Date(v+'T00:00:00'); return d.toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'}); },
-                get preview(){ return `${this.start || '400.3.11/800.01'} - ${this.end || '400.3.11/800.190'}${this.suffix || ''} ${this.formatDate(this.date)}` },
+                get preview(){ return `${this.start || '400.3.11/800.01'}${this.suffix || ''}` },
                 pickFile(){ this.$refs.letterheadInput.click(); },
                 setFile(file){ if(!file) return; const dt = new DataTransfer(); dt.items.add(file); this.$refs.letterheadInput.files = dt.files; this.previewImage = URL.createObjectURL(file); },
                 handleDrop(event){ this.dragging=false; this.setFile(event.dataTransfer.files[0]); },

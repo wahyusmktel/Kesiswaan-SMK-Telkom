@@ -11,6 +11,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class TranscriptPrintController extends Controller
 {
@@ -38,6 +39,7 @@ class TranscriptPrintController extends Controller
             'config' => $config,
             'students' => collect([$student]),
             'subjects' => $subjects,
+            'transcriptNumbers' => $this->transcriptNumbers(collect([$student]), $config),
             'letterheadDataUri' => $this->dataUri($config->letterhead_path),
             'watermarkDataUri' => $this->dataUri($config->watermark_path),
             'single' => true,
@@ -59,6 +61,7 @@ class TranscriptPrintController extends Controller
             'config' => $config,
             'students' => $students,
             'subjects' => $subjects,
+            'transcriptNumbers' => $this->transcriptNumbers($students, $config),
             'letterheadDataUri' => $this->dataUri($config->letterhead_path),
             'watermarkDataUri' => $this->dataUri($config->watermark_path),
             'single' => false,
@@ -106,5 +109,57 @@ class TranscriptPrintController extends Controller
         $mime = mime_content_type($absolutePath) ?: 'image/png';
 
         return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($absolutePath));
+    }
+
+    private function transcriptNumbers(Collection $students, TranscriptConfig $config): array
+    {
+        $start = $config->number_start ?: '400.3.11/800.01';
+        $suffix = $config->number_suffix ?: '/SMKTEL-LPG/KURL.03/V/2026';
+        $parsed = $this->parseRunningNumber($start);
+
+        $orderedIds = $this->finalStudentsOrder()->pluck('id')->values();
+        $targetIds = $students->pluck('id')->all();
+        $numbers = [];
+
+        foreach ($targetIds as $studentId) {
+            $position = $orderedIds->search($studentId);
+            $offset = $position === false ? 0 : $position;
+            $numbers[$studentId] = $parsed['prefix'] . str_pad((string) ($parsed['number'] + $offset), $parsed['width'], '0', STR_PAD_LEFT) . $suffix;
+        }
+
+        return $numbers;
+    }
+
+    private function parseRunningNumber(string $start): array
+    {
+        if (preg_match('/^(.*?)(\d+)$/', $start, $matches)) {
+            return [
+                'prefix' => $matches[1],
+                'number' => (int) $matches[2],
+                'width' => strlen($matches[2]),
+            ];
+        }
+
+        return [
+            'prefix' => Str::finish($start, '.'),
+            'number' => 1,
+            'width' => 2,
+        ];
+    }
+
+    private function finalStudentsOrder(): Collection
+    {
+        return MasterSiswa::select('master_siswa.*')
+            ->join('rombel_siswa', 'master_siswa.id', '=', 'rombel_siswa.master_siswa_id')
+            ->join('rombels', 'rombels.id', '=', 'rombel_siswa.rombel_id')
+            ->join('kelas', 'kelas.id', '=', 'rombels.kelas_id')
+            ->where(function ($query) {
+                $query->where('kelas.nama_kelas', 'like', '%XII%')
+                    ->orWhere('kelas.nama_kelas', 'like', '%12%');
+            })
+            ->orderBy('rombels.kelas_id')
+            ->orderBy('master_siswa.nama_lengkap')
+            ->distinct()
+            ->get();
     }
 }

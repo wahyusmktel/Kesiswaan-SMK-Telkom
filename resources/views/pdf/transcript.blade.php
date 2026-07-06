@@ -8,183 +8,71 @@
             margin: {{ $config->is_borderless ? '0mm' : (($config->margin_top ?? 15) . 'mm ' . ($config->margin_right ?? 15) . 'mm ' . ($config->margin_bottom ?? 15) . 'mm ' . ($config->margin_left ?? 15) . 'mm') }};
         }
 
-        * {
-            box-sizing: border-box;
-        }
-
+        * { box-sizing: border-box; }
         body {
             margin: 0;
             font-family: "Times New Roman", Times, serif;
             color: #111;
             font-size: 10.4pt;
-            line-height: 1.22;
+            line-height: 1.18;
         }
-
-        .page {
-            position: relative;
-            min-height: 100%;
-            page-break-after: always;
-            overflow: hidden;
-        }
-
-        .page:last-child {
-            page-break-after: auto;
-        }
-
-        .borderless-inner {
-            padding: {{ $config->is_borderless ? '8mm 13mm 8mm 13mm' : '0' }};
-        }
-
-        .letterhead {
-            width: 100%;
-            margin-bottom: 5mm;
-        }
-
-        .borderless-letterhead {
-            margin: {{ $config->is_borderless ? '0 0 5mm 0' : '0 0 5mm 0' }};
-        }
-
-        .letterhead img {
-            width: 100%;
-            display: block;
-        }
-
-        .fallback-letterhead {
-            text-align: center;
-            border-bottom: 2px solid #111;
-            padding-bottom: 7px;
-            margin-bottom: 5mm;
-        }
-
-        .fallback-letterhead .school {
-            font-size: 15pt;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-
+        .page { position: relative; min-height: 100%; page-break-after: always; overflow: hidden; }
+        .page:last-child { page-break-after: auto; }
+        .borderless-inner { padding: {{ $config->is_borderless ? '8mm 13mm 8mm 13mm' : '0' }}; }
+        .letterhead { width: 100%; margin-bottom: 2mm; }
+        .letterhead img { width: 100%; display: block; }
+        .fallback-letterhead { text-align: center; border-bottom: 2px solid #111; padding-bottom: 7px; margin-bottom: 2mm; }
+        .fallback-letterhead .school { font-size: 15pt; font-weight: bold; text-transform: uppercase; }
         .watermark {
             position: fixed;
-            top: 39%;
+            top: 42%;
             left: 50%;
-            width: 72mm;
+            width: 78mm;
             transform: translate(-50%, -50%);
             opacity: .10;
             z-index: -1;
         }
-
-        .title {
-            text-align: center;
-            margin-top: 1mm;
-            margin-bottom: 4mm;
-        }
-
-        .title h1 {
-            margin: 0;
-            font-size: 13pt;
-            text-decoration: underline;
-            letter-spacing: .5px;
-        }
-
-        .title p {
-            margin: 2px 0 0;
-            font-size: 10.5pt;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .identity td {
-            padding: 1.1mm 0;
-            vertical-align: top;
-        }
-
-        .identity .label {
-            width: 35mm;
-        }
-
-        .identity .colon {
-            width: 4mm;
-        }
-
-        .grade-table {
-            margin-top: 4mm;
-            font-size: 9.4pt;
-        }
-
-        .grade-table th,
-        .grade-table td {
-            border: 1px solid #111;
-            padding: 1.25mm 1.5mm;
-            vertical-align: middle;
-        }
-
-        .grade-table th {
-            text-align: center;
-            font-weight: bold;
-        }
-
-        .grade-table .no {
-            width: 8mm;
-            text-align: center;
-        }
-
-        .grade-table .score {
-            width: 23mm;
-            text-align: center;
-        }
-
-        .grade-table .group-row td {
-            font-weight: bold;
-            background: #f2f2f2;
-        }
-
-        .summary-table {
-            width: 48%;
-            margin-top: 2mm;
-            margin-left: auto;
-            font-size: 9.4pt;
-        }
-
-        .summary-table td {
-            border: 1px solid #111;
-            padding: 1.2mm 1.5mm;
-        }
-
-        .sign-row {
-            width: 100%;
-            margin-top: 7mm;
-            font-size: 10.2pt;
-        }
-
-        .sign-left,
-        .sign-right {
-            width: 50%;
-            vertical-align: top;
-        }
-
-        .signature-space {
-            height: 23mm;
-        }
-
-        .bold {
-            font-weight: bold;
-        }
+        .title { text-align: center; margin: 0 0 3mm; }
+        .title h1 { margin: 0; font-size: 13pt; letter-spacing: .5px; }
+        .title p { margin: 2px 0 0; font-size: 10.5pt; }
+        table { width: 100%; border-collapse: collapse; }
+        .identity td { padding: .85mm 0; vertical-align: top; }
+        .identity .label { width: 57mm; }
+        .identity .colon { width: 4mm; }
+        .grade-table { margin-top: 3.5mm; font-size: 9.4pt; }
+        .grade-table th, .grade-table td { border: 1px solid #111; padding: 1.15mm 1.5mm; vertical-align: middle; }
+        .grade-table th { text-align: center; font-weight: bold; }
+        .grade-table .no { width: 8mm; text-align: center; }
+        .grade-table .score { width: 24mm; text-align: center; }
+        .grade-table .group-row td { font-weight: bold; background: #f2f2f2; }
+        .grade-table .local-title { font-weight: bold; }
+        .grade-table .average-row td { font-weight: bold; text-align: center; }
+        .sign-row { width: 100%; margin-top: 7mm; font-size: 10.2pt; }
+        .sign-left, .sign-right { width: 50%; vertical-align: top; }
+        .signature-space { height: 23mm; }
+        .bold { font-weight: bold; }
     </style>
 </head>
 <body>
 @php
     $groups = \App\Models\TranscriptSubject::groups();
+    $groupLetters = ['umum' => 'A', 'kejuruan' => 'B'];
 @endphp
 
 @foreach($students as $student)
     @php
         $gradeMap = $student->transcriptGrades->keyBy('transcript_subject_id');
-        $validScores = $subjects->map(fn($subject) => $gradeMap->get($subject->id)?->score)->filter(fn($score) => $score !== null);
-        $totalScore = $validScores->sum(fn($score) => (float) $score);
-        $averageScore = $validScores->count() ? $totalScore / $validScores->count() : null;
-        $kelas = $student->rombels->first()?->kelas?->nama_kelas ?? '-';
+        $validScores = $subjects->map(fn ($subject) => $gradeMap->get($subject->id)?->score)->filter(fn ($score) => $score !== null);
+        $averageScore = $validScores->count() ? $validScores->sum(fn ($score) => (float) $score) / $validScores->count() : null;
+        $kelasModel = $student->rombels->first()?->kelas;
+        $konsentrasi = $kelasModel?->jurusan ?? 'Teknik Komputer dan Jaringan';
+        $program = str($konsentrasi)->lower()->contains(['komputer', 'jaringan', 'tkj'])
+            ? 'Teknik Jaringan Komputer dan Telekomunikasi'
+            : $konsentrasi;
+        $tempatLahir = $student->dapodik?->tempat_lahir ?? $student->tempat_lahir ?? '-';
+        $tanggalLahir = $student->dapodik?->tanggal_lahir ?? $student->tanggal_lahir;
+        $subjectsByGroup = $subjects->groupBy('group');
+        $mainGroups = ['umum', 'kejuruan'];
     @endphp
     <div class="page">
         @if($watermarkDataUri)
@@ -192,7 +80,7 @@
         @endif
 
         @if($config->is_borderless && $letterheadDataUri)
-            <div class="letterhead borderless-letterhead"><img src="{{ $letterheadDataUri }}" alt="Kop Transkrip"></div>
+            <div class="letterhead"><img src="{{ $letterheadDataUri }}" alt="Kop Transkrip"></div>
         @endif
 
         <div class="borderless-inner">
@@ -214,17 +102,19 @@
 
             <div class="title">
                 <h1>TRANSKRIP NILAI</h1>
-                <p>Nomor: {{ $config->numberPreview() }}</p>
+                <p>Nomor : {{ $transcriptNumbers[$student->id] ?? '-' }}</p>
             </div>
 
             <table class="identity">
-                <tr><td colspan="3">Yang bertanda tangan di bawah ini menerangkan bahwa:</td></tr>
-                <tr><td class="label">Nama Peserta Didik</td><td class="colon">:</td><td class="bold">{{ strtoupper($student->nama_lengkap) }}</td></tr>
-                <tr><td class="label">NIS/NISN</td><td class="colon">:</td><td>{{ $student->nis ?? '-' }} / {{ $student->dapodik?->nisn ?? '-' }}</td></tr>
-                <tr><td class="label">Kelas</td><td class="colon">:</td><td>{{ $kelas }}</td></tr>
-                <tr><td class="label">Nomor Ijazah</td><td class="colon">:</td><td>{{ $student->transcriptDiplomaNumber?->diploma_number ?? '-' }}</td></tr>
                 <tr><td class="label">Satuan Pendidikan</td><td class="colon">:</td><td>{{ $config->school_name ?? 'SMK Telkom Lampung' }}</td></tr>
+                <tr><td class="label">Nomor Pokok Sekolah Nasional</td><td class="colon">:</td><td>{{ $config->npsn ?? '-' }}</td></tr>
+                <tr><td class="label">Nama Lengkap</td><td class="colon">:</td><td>{{ ucwords(strtolower($student->nama_lengkap)) }}</td></tr>
+                <tr><td class="label">Tempat dan Tanggal Lahir</td><td class="colon">:</td><td>{{ $tempatLahir }}, {{ $tanggalLahir ? \Carbon\Carbon::parse($tanggalLahir)->locale('id')->translatedFormat('d F Y') : '-' }}</td></tr>
+                <tr><td class="label">Nomor Induk Siswa Nasional</td><td class="colon">:</td><td>{{ $student->dapodik?->nisn ?? '-' }}</td></tr>
+                <tr><td class="label">Nomor Ijazah</td><td class="colon">:</td><td>{{ $student->transcriptDiplomaNumber?->diploma_number ?? '-' }}</td></tr>
                 <tr><td class="label">Tanggal Kelulusan</td><td class="colon">:</td><td>{{ $config->graduation_date?->translatedFormat('d F Y') ?? '-' }}</td></tr>
+                <tr><td class="label">Program Keahlian</td><td class="colon">:</td><td>{{ $program }}</td></tr>
+                <tr><td class="label">Konsentrasi Keahlian</td><td class="colon">:</td><td>{{ $konsentrasi }}</td></tr>
             </table>
 
             <table class="grade-table">
@@ -236,24 +126,45 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @php($counter = 1)
-                    @foreach($subjects->groupBy('group') as $groupKey => $groupSubjects)
-                        <tr class="group-row"><td colspan="3">{{ $groups[$groupKey] ?? $groupKey }}</td></tr>
-                        @foreach($groupSubjects as $subject)
-                            @php($score = $gradeMap->get($subject->id)?->score)
-                            <tr>
-                                <td class="no">{{ $counter++ }}</td>
-                                <td>{{ $subject->name }}</td>
-                                <td class="score">{{ $score !== null ? number_format((float) $score, 2, '.', '') : '-' }}</td>
-                            </tr>
-                        @endforeach
+                    @foreach($mainGroups as $groupKey)
+                        @php
+                            $groupSubjects = $subjectsByGroup->get($groupKey, collect());
+                            $localSubjects = $groupKey === 'umum' ? $subjectsByGroup->get('muatan_lokal', collect()) : collect();
+                            $counter = 1;
+                            $localLetters = range('a', 'z');
+                        @endphp
+                        @if($groupSubjects->isNotEmpty() || $localSubjects->isNotEmpty())
+                            <tr class="group-row"><td colspan="3">{{ $groupLetters[$groupKey] ?? '' }}. {{ $groups[$groupKey] ?? $groupKey }}</td></tr>
+                            @foreach($groupSubjects as $subject)
+                                @php($score = $gradeMap->get($subject->id)?->score)
+                                <tr>
+                                    <td class="no">{{ $counter++ }}</td>
+                                    <td>{{ $subject->name }}</td>
+                                    <td class="score">{{ $score !== null ? number_format((float) $score, 2, '.', '') : '-' }}</td>
+                                </tr>
+                            @endforeach
+                            @if($localSubjects->isNotEmpty())
+                                <tr>
+                                    <td class="no">{{ $counter++ }}</td>
+                                    <td class="local-title">Muatan Lokal</td>
+                                    <td class="score"></td>
+                                </tr>
+                                @foreach($localSubjects as $localIndex => $subject)
+                                    @php($score = $gradeMap->get($subject->id)?->score)
+                                    <tr>
+                                        <td class="no"></td>
+                                        <td>{{ $localLetters[$localIndex] ?? '-' }}. {{ $subject->name }}</td>
+                                        <td class="score">{{ $score !== null ? number_format((float) $score, 2, '.', '') : '-' }}</td>
+                                    </tr>
+                                @endforeach
+                            @endif
+                        @endif
                     @endforeach
+                    <tr class="average-row">
+                        <td colspan="2">Rata-rata</td>
+                        <td>{{ $averageScore !== null ? number_format($averageScore, 2, '.', '') : '-' }}</td>
+                    </tr>
                 </tbody>
-            </table>
-
-            <table class="summary-table">
-                <tr><td class="bold">Jumlah</td><td style="text-align: center;">{{ $validScores->count() ? number_format($totalScore, 2, '.', '') : '-' }}</td></tr>
-                <tr><td class="bold">Rata-rata</td><td style="text-align: center;">{{ $averageScore !== null ? number_format($averageScore, 2, '.', '') : '-' }}</td></tr>
             </table>
 
             <table class="sign-row">

@@ -42,8 +42,6 @@ class TranscriptConfig extends Model
 
     public function numberPreview(): string
     {
-        $date = $this->number_date?->translatedFormat('d F Y') ?? now()->translatedFormat('d F Y');
-
-        return trim(($this->number_start ?? '400.3.11/800.01') . ' - ' . ($this->number_end ?? '400.3.11/800.190') . ($this->number_suffix ?? '') . ' ' . $date);
+        return trim(($this->number_start ?? '400.3.11/800.01') . ($this->number_suffix ?? '/SMKTEL-LPG/KURL.03/V/2026'));
     }
 }
