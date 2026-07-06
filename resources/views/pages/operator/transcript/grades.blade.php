@@ -13,7 +13,7 @@
                     <div>
                         <div class="mb-2 inline-flex rounded-full bg-red-50 px-3 py-1 text-xs font-black uppercase tracking-widest text-red-700">Import Excel</div>
                         <h3 class="text-2xl font-black text-slate-900">Kelola Nilai Transkrip</h3>
-                        <p class="mt-1 max-w-2xl text-sm text-slate-500">Pilih kelas/rombel, unduh format yang sudah berisi siswa dan list mapel aktif, lalu import kembali nilai dengan format desimal.</p>
+                        <p class="mt-1 max-w-2xl text-sm text-slate-500">Pilih kelas/rombel, lalu import file Excel transkrip dari kurikulum. Sistem membaca data mulai baris 6 dan nilai pada kolom AK sampai BA.</p>
                     </div>
                     <div class="flex flex-col gap-2 md:flex-row">
                         <form class="flex flex-col gap-2 md:flex-row">
@@ -78,12 +78,12 @@
                 <div x-show="importOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
                     <div class="w-full max-w-lg rounded-[28px] bg-white p-6 shadow-2xl">
                         <h3 class="text-lg font-black text-slate-900">Import Nilai Transkrip</h3>
-                        <p class="mt-1 text-sm text-slate-500">Rombel: {{ $selectedRombel->kelas?->nama_kelas ?? '-' }}. Nilai lama akan diperbarui jika sudah tersedia.</p>
+                        <p class="mt-1 text-sm text-slate-500">Rombel: {{ $selectedRombel->kelas?->nama_kelas ?? '-' }}. Upload file Excel kurikulum tanpa mengubah formatnya.</p>
                         <form method="POST" action="{{ route('operator.transcript.grades.import') }}" enctype="multipart/form-data" class="mt-5 space-y-4">
                             @csrf
                             <input type="hidden" name="rombel_id" value="{{ $selectedRombel->id }}">
                             <input type="file" name="file_import" accept=".xlsx,.xls,.csv" class="w-full rounded-2xl border border-slate-200 p-3" required>
-                            <div class="rounded-2xl bg-slate-50 p-4 text-xs font-semibold text-slate-600">Contoh nilai: 69.00, 80.87, 80.00. Nilai koma juga diterima dan akan disimpan sebagai desimal dua angka.</div>
+                            <div class="rounded-2xl bg-slate-50 p-4 text-xs font-semibold text-slate-600">Format resmi didukung: nama siswa kolom B, NISN kolom C, data mulai baris 6, nilai transkrip kolom AK sampai BA. Nilai lama akan diperbarui jika sudah tersedia.</div>
                             <div class="flex justify-end gap-2"><button type="button" @click="importOpen=false" class="rounded-2xl border px-5 py-2 font-bold">Batal</button><button class="rounded-2xl bg-red-600 px-5 py-2 font-black text-white">Import</button></div>
                         </form>
                     </div>
