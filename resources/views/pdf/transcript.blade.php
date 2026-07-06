@@ -119,8 +119,8 @@
             text-align: center;
             font-weight: bold;
             background: #f2f2f2;
-            padding-top: 5.5mm;
-            padding-bottom: 5.5mm;
+            padding-top: 4.5mm;
+            padding-bottom: 4.5mm;
         }
 
         .grade-table .no {
