@@ -27,8 +27,9 @@ class ManualDigitalSignatureController extends Controller
             ->where('user_id', Auth::id())
             ->latest()
             ->paginate(10);
+        $previewQrBase64 = $this->qrDataUri(url('/verifikasi/dokumen/preview-manual-signature'));
 
-        return view('pages.tanda-tangan.manual', compact('signature', 'documents'));
+        return view('pages.tanda-tangan.manual', compact('signature', 'documents', 'previewQrBase64'));
     }
 
     public function store(Request $request)
@@ -190,7 +191,7 @@ class ManualDigitalSignatureController extends Controller
 
                 if ($page === $targetPage) {
                     $safeX = min(max($xMm, 0), max($size['width'] - $sizeMm, 0));
-                    $safeY = min(max($yMm - 3, 0), max($size['height'] - $sizeMm, 0));
+                    $safeY = min(max($yMm, 0), max($size['height'] - $sizeMm, 0));
                     $pdf->Image($qrPath, $safeX, $safeY, $sizeMm, $sizeMm, 'PNG');
                 }
             }
@@ -335,5 +336,18 @@ class ManualDigitalSignatureController extends Controller
         file_put_contents($path, $png);
 
         return $path;
+    }
+
+    private function qrDataUri(string $url): string
+    {
+        $options = new QROptions([
+            'outputInterface' => QRGdImagePNG::class,
+            'scale' => 6,
+            'imageBase64' => true,
+            'quietzoneSize' => 1,
+            'eccLevel' => EccLevel::M,
+        ]);
+
+        return (new QRCode($options))->render($url);
     }
 }

@@ -62,21 +62,19 @@
                         </div>
 
                         <div class="space-y-4 rounded-2xl bg-gray-50 p-4">
-                            <div>
-                                <div class="flex items-center justify-between text-xs font-black uppercase tracking-widest text-gray-500">
-                                    <span>Posisi X dari kiri</span><span x-text="x + ' mm'"></span>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-black uppercase tracking-widest text-gray-500 mb-2">X dari kiri</label>
+                                    <input type="number" min="0" max="210" step="1" x-model.number="x" @input="clampPosition()" class="w-full rounded-xl border-gray-200 text-sm">
+                                    <input type="hidden" name="qr_x_mm" :value="x">
                                 </div>
-                                <input type="range" min="0" max="210" step="1" x-model.number="x" class="mt-2 w-full">
-                                <input type="hidden" name="qr_x_mm" :value="x">
-                            </div>
-                            <div>
-                                <div class="flex items-center justify-between text-xs font-black uppercase tracking-widest text-gray-500">
-                                    <span>Posisi Y dari atas</span><span x-text="y + ' mm'"></span>
+                                <div>
+                                    <label class="block text-xs font-black uppercase tracking-widest text-gray-500 mb-2">Y dari atas</label>
+                                    <input type="number" min="0" max="297" step="1" x-model.number="y" @input="clampPosition()" class="w-full rounded-xl border-gray-200 text-sm">
+                                    <input type="hidden" name="qr_y_mm" :value="y">
                                 </div>
-                                <input type="range" min="0" max="297" step="1" x-model.number="y" class="mt-2 w-full">
-                                <input type="hidden" name="qr_y_mm" :value="y">
                             </div>
-                            <p class="text-xs font-semibold text-gray-500">Koordinat memakai satuan milimeter dari pojok kiri atas halaman. Sistem otomatis membatasi QR agar tetap berada di dalam halaman PDF.</p>
+                            <p class="text-xs font-semibold text-gray-500">Geser QR pada lembar preview di kanan. Nilai X/Y akan mengikuti posisi QR dalam milimeter dari pojok kiri atas halaman.</p>
                         </div>
 
                         <div>
@@ -99,12 +97,41 @@
                 <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
                     <div class="mb-3 flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-black text-gray-900">Preview PDF</p>
-                            <p class="text-xs text-gray-500">Preview dari browser. Kotak QR adalah estimasi posisi.</p>
+                            <p class="text-sm font-black text-gray-900">Atur Posisi QR</p>
+                            <p class="text-xs text-gray-500">Geser QR pada lembar kerja. PDF asli tetap tampil di bawah sebagai referensi.</p>
                         </div>
-                        <span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-600" x-text="'Hal. ' + page"></span>
+                        <div class="flex items-center gap-2">
+                            <span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-600" x-text="'Hal. ' + page"></span>
+                            <button type="button" @click="centerQr()" class="rounded-full bg-indigo-50 px-3 py-1 text-xs font-black text-indigo-700 hover:bg-indigo-100">Tengah</button>
+                        </div>
                     </div>
-                    <div class="relative h-[760px] overflow-hidden rounded-xl bg-gray-100">
+                    <div class="grid grid-cols-1 2xl:grid-cols-[minmax(360px,520px)_1fr] gap-4">
+                        <div class="rounded-xl border border-gray-200 bg-slate-100 p-4">
+                            <div x-ref="paper"
+                                class="relative mx-auto aspect-[210/297] max-h-[740px] w-full max-w-[520px] overflow-hidden rounded-sm bg-white shadow-inner"
+                                @pointermove.window="dragQr($event)"
+                                @pointerup.window="stopDrag()"
+                                @pointercancel.window="stopDrag()">
+                                <div class="absolute inset-0 opacity-[0.05]" style="background-image: linear-gradient(#111 1px, transparent 1px), linear-gradient(90deg, #111 1px, transparent 1px); background-size: 20px 20px;"></div>
+                                <div class="absolute left-0 top-0 h-4 w-4 border-l-2 border-t-2 border-gray-500"></div>
+                                <div class="absolute right-0 top-0 h-4 w-4 border-r-2 border-t-2 border-gray-500"></div>
+                                <div class="absolute bottom-0 left-0 h-4 w-4 border-b-2 border-l-2 border-gray-500"></div>
+                                <div class="absolute bottom-0 right-0 h-4 w-4 border-b-2 border-r-2 border-gray-500"></div>
+
+                                <button type="button"
+                                    class="absolute touch-none select-none rounded-md border-2 border-indigo-600 bg-white p-1 shadow-lg cursor-move"
+                                    :style="markerStyle()"
+                                    @pointerdown.prevent="startDrag($event)">
+                                    <img src="{{ $previewQrBase64 }}" alt="Preview QR Digital" class="h-full w-full object-contain">
+                                </button>
+                            </div>
+                            <div class="mt-3 grid grid-cols-3 gap-2 text-center text-xs font-bold text-gray-600">
+                                <div class="rounded-lg bg-white px-2 py-2">X <span x-text="x"></span>mm</div>
+                                <div class="rounded-lg bg-white px-2 py-2">Y <span x-text="y"></span>mm</div>
+                                <div class="rounded-lg bg-white px-2 py-2">QR <span x-text="size"></span>mm</div>
+                            </div>
+                        </div>
+                        <div class="relative h-[740px] overflow-hidden rounded-xl bg-gray-100">
                         <template x-if="pdfUrl">
                             <iframe :src="pdfUrl + '#page=' + page" class="h-full w-full border-0"></iframe>
                         </template>
@@ -113,9 +140,6 @@
                                 Pilih file PDF untuk melihat preview.
                             </div>
                         </template>
-                        <div class="pointer-events-none absolute rounded-lg border-2 border-indigo-600 bg-indigo-600/10"
-                            :style="markerStyle()">
-                            <div class="grid h-full w-full place-items-center text-[10px] font-black text-indigo-700">QR</div>
                         </div>
                     </div>
                 </div>
@@ -182,11 +206,44 @@
                 x: Number(@js(old('qr_x_mm', 15))),
                 y: Number(@js(old('qr_y_mm', 15))),
                 size: Number(@js(old('qr_size_mm', 28))),
+                dragging: false,
+                dragOffsetX: 0,
+                dragOffsetY: 0,
                 loadPdf(event) {
                     const file = event.target.files?.[0];
                     if (!file) return;
                     if (this.pdfUrl) URL.revokeObjectURL(this.pdfUrl);
                     this.pdfUrl = URL.createObjectURL(file);
+                },
+                centerQr() {
+                    this.x = Math.round((210 - this.size) / 2);
+                    this.y = Math.round((297 - this.size) / 2);
+                },
+                clampPosition() {
+                    this.x = Math.round(Math.min(Math.max(Number(this.x) || 0, 0), Math.max(210 - this.size, 0)));
+                    this.y = Math.round(Math.min(Math.max(Number(this.y) || 0, 0), Math.max(297 - this.size, 0)));
+                },
+                startDrag(event) {
+                    const marker = event.currentTarget.getBoundingClientRect();
+                    this.dragging = true;
+                    this.dragOffsetX = event.clientX - marker.left;
+                    this.dragOffsetY = event.clientY - marker.top;
+                    event.currentTarget.setPointerCapture?.(event.pointerId);
+                },
+                dragQr(event) {
+                    if (!this.dragging || !this.$refs.paper) return;
+
+                    const paper = this.$refs.paper.getBoundingClientRect();
+                    const markerWidth = paper.width * (this.size / 210);
+                    const markerHeight = paper.height * (this.size / 297);
+                    const left = Math.min(Math.max(event.clientX - paper.left - this.dragOffsetX, 0), Math.max(paper.width - markerWidth, 0));
+                    const top = Math.min(Math.max(event.clientY - paper.top - this.dragOffsetY, 0), Math.max(paper.height - markerHeight, 0));
+
+                    this.x = Math.round((left / paper.width) * 210);
+                    this.y = Math.round((top / paper.height) * 297);
+                },
+                stopDrag() {
+                    this.dragging = false;
                 },
                 markerStyle() {
                     const scaleX = 100 / 210;
