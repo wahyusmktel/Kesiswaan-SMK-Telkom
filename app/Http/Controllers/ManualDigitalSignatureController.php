@@ -268,6 +268,12 @@ class ManualDigitalSignatureController extends Controller
     private function findExecutable(array $binaries): ?string
     {
         foreach ($binaries as $binary) {
+            foreach ($this->candidateExecutablePaths($binary) as $candidatePath) {
+                if (is_executable($candidatePath)) {
+                    return $candidatePath;
+                }
+            }
+
             $process = Process::fromShellCommandline(PHP_OS_FAMILY === 'Windows' ? 'where ' . escapeshellarg($binary) : 'command -v ' . escapeshellarg($binary));
             $process->setTimeout(5);
             $process->run();
@@ -281,6 +287,20 @@ class ManualDigitalSignatureController extends Controller
         }
 
         return null;
+    }
+
+    private function candidateExecutablePaths(string $binary): array
+    {
+        if (PHP_OS_FAMILY === 'Windows') {
+            return [];
+        }
+
+        return [
+            '/usr/bin/' . $binary,
+            '/usr/local/bin/' . $binary,
+            '/bin/' . $binary,
+            '/snap/bin/' . $binary,
+        ];
     }
 
     private function temporaryQrPath(string $url): string
