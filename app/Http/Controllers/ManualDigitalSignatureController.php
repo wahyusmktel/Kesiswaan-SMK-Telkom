@@ -221,7 +221,13 @@ class ManualDigitalSignatureController extends Controller
     private function normalizePdfForFpdi(string $sourcePath): string
     {
         Storage::makeDirectory('manual-signatures/normalized');
-        $targetPath = storage_path('app/manual-signatures/normalized/' . Str::uuid() . '.pdf');
+        $normalizedDirectory = storage_path('app/manual-signatures/normalized');
+        $targetPath = $normalizedDirectory . '/' . Str::uuid() . '.pdf';
+        $errors = [];
+
+        if (! is_dir($normalizedDirectory) || ! is_writable($normalizedDirectory)) {
+            throw new RuntimeException('Folder normalisasi PDF tidak writable: ' . $normalizedDirectory);
+        }
 
         $qpdf = $this->findExecutable(['qpdf']);
         if ($qpdf) {
@@ -238,6 +244,10 @@ class ManualDigitalSignatureController extends Controller
             if ($process->isSuccessful() && is_file($targetPath) && filesize($targetPath) > 0) {
                 return $targetPath;
             }
+
+            $errors[] = 'qpdf (' . $qpdf . ') gagal: ' . trim($process->getErrorOutput() ?: $process->getOutput() ?: 'output kosong');
+        } else {
+            $errors[] = 'qpdf tidak ditemukan oleh PHP.';
         }
 
         $ghostscript = $this->findExecutable(['gs', 'gswin64c', 'gswin32c']);
@@ -258,11 +268,15 @@ class ManualDigitalSignatureController extends Controller
             if ($process->isSuccessful() && is_file($targetPath) && filesize($targetPath) > 0) {
                 return $targetPath;
             }
+
+            $errors[] = 'ghostscript (' . $ghostscript . ') gagal: ' . trim($process->getErrorOutput() ?: $process->getOutput() ?: 'output kosong');
+        } else {
+            $errors[] = 'ghostscript tidak ditemukan oleh PHP.';
         }
 
         @unlink($targetPath);
 
-        throw new RuntimeException('PDF memakai kompresi modern yang tidak didukung FPDI. Install qpdf atau ghostscript di server agar PDF bisa dinormalisasi otomatis.');
+        throw new RuntimeException('PDF memakai kompresi modern dan normalisasi otomatis gagal. ' . implode(' | ', $errors));
     }
 
     private function findExecutable(array $binaries): ?string
