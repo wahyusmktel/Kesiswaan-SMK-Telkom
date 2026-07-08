@@ -57,8 +57,7 @@ class ManualDigitalSignatureController extends Controller
         $absoluteOriginal = Storage::path($originalPath);
 
         try {
-            $pdfProbe = new Fpdi();
-            $pageCount = $pdfProbe->setSourceFile($absoluteOriginal);
+            $pageCount = $this->readPageCount($absoluteOriginal);
         } catch (Throwable $e) {
             Storage::delete($originalPath);
             report($e);
@@ -112,7 +111,7 @@ class ManualDigitalSignatureController extends Controller
             Storage::delete([$originalPath, $signedPath]);
             $document->delete();
             report($e);
-            return back()->with('error', 'Gagal menempelkan QR ke PDF. Coba gunakan PDF standar yang tidak diproteksi.')->withInput();
+            return back()->with('error', 'Gagal menempelkan QR ke PDF: ' . $e->getMessage())->withInput();
         }
 
         $manual = ManualSignedDocument::create([
@@ -151,31 +150,49 @@ class ManualDigitalSignatureController extends Controller
 
     private function stampPdf(string $sourcePath, string $targetPath, string $verificationUrl, int $targetPage, float $xMm, float $yMm, float $sizeMm): void
     {
-        $pdf = new Fpdi('P', 'mm');
-        $pageCount = $pdf->setSourceFile($sourcePath);
-        $qrPath = $this->temporaryQrPath($verificationUrl);
+        $previousErrorReporting = error_reporting(error_reporting() & ~E_DEPRECATED & ~E_USER_DEPRECATED);
 
-        for ($page = 1; $page <= $pageCount; $page++) {
-            $template = $pdf->importPage($page);
-            $size = $pdf->getTemplateSize($template);
-            $orientation = $size['width'] > $size['height'] ? 'L' : 'P';
+        try {
+            $pdf = new Fpdi('P', 'mm');
+            $pageCount = $pdf->setSourceFile($sourcePath);
+            $qrPath = $this->temporaryQrPath($verificationUrl);
 
-            $pdf->AddPage($orientation, [$size['width'], $size['height']]);
-            $pdf->useTemplate($template, 0, 0, $size['width'], $size['height']);
+            for ($page = 1; $page <= $pageCount; $page++) {
+                $template = $pdf->importPage($page);
+                $size = $pdf->getTemplateSize($template);
+                $orientation = $size['width'] > $size['height'] ? 'L' : 'P';
 
-            if ($page === $targetPage) {
-                $safeX = min(max($xMm, 0), max($size['width'] - $sizeMm, 0));
-                $safeY = min(max($yMm, 0), max($size['height'] - $sizeMm, 0));
-                $pdf->Image($qrPath, $safeX, $safeY, $sizeMm, $sizeMm, 'PNG');
-                $pdf->SetFont('Arial', 'B', 6);
-                $pdf->SetTextColor(20, 20, 20);
-                $pdf->SetXY($safeX, $safeY + $sizeMm + 1);
-                $pdf->MultiCell($sizeMm, 3, 'Verifikasi QR Digital', 0, 'C');
+                $pdf->AddPage($orientation, [$size['width'], $size['height']]);
+                $pdf->useTemplate($template, 0, 0, $size['width'], $size['height']);
+
+                if ($page === $targetPage) {
+                    $safeX = min(max($xMm, 0), max($size['width'] - $sizeMm, 0));
+                    $safeY = min(max($yMm, 0), max($size['height'] - $sizeMm, 0));
+                    $pdf->Image($qrPath, $safeX, $safeY, $sizeMm, $sizeMm, 'PNG');
+                    $pdf->SetFont('Arial', 'B', 6);
+                    $pdf->SetTextColor(20, 20, 20);
+                    $pdf->SetXY($safeX, $safeY + $sizeMm + 1);
+                    $pdf->MultiCell($sizeMm, 3, 'Verifikasi QR Digital', 0, 'C');
+                }
             }
-        }
 
-        $pdf->Output('F', $targetPath);
-        @unlink($qrPath);
+            $pdf->Output('F', $targetPath);
+            @unlink($qrPath);
+        } finally {
+            error_reporting($previousErrorReporting);
+        }
+    }
+
+    private function readPageCount(string $sourcePath): int
+    {
+        $previousErrorReporting = error_reporting(error_reporting() & ~E_DEPRECATED & ~E_USER_DEPRECATED);
+
+        try {
+            $pdfProbe = new Fpdi();
+            return $pdfProbe->setSourceFile($sourcePath);
+        } finally {
+            error_reporting($previousErrorReporting);
+        }
     }
 
     private function temporaryQrPath(string $url): string
