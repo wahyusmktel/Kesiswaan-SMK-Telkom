@@ -29,35 +29,48 @@
             <div class="grid grid-cols-1 xl:grid-cols-[420px_1fr] gap-6" x-data="manualPdfSigner()" x-init="init()">
                 <div class="space-y-6">
                     @if($pendingSteps->isNotEmpty())
-                        <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm space-y-4">
-                            <div>
+                        <div class="rounded-2xl border border-amber-200 bg-white shadow-sm overflow-hidden">
+                            <div class="border-b border-amber-100 bg-amber-50 px-5 py-4">
                                 <h3 class="text-base font-black text-amber-950">Menunggu Tanda Tangan Saya</h3>
                                 <p class="mt-1 text-sm font-semibold text-amber-800">Dokumen berikut sedang berada pada giliran tanda tangan Anda.</p>
                             </div>
-                            @foreach($pendingSteps as $step)
-                                <form action="{{ route('tanda-tangan.manual.continue', $step->manualDocument) }}" method="POST" class="rounded-xl bg-white p-4 space-y-3">
-                                    @csrf
-                                    <div>
-                                        <p class="font-black text-gray-900">{{ $step->manualDocument->title }}</p>
-                                        <p class="text-xs font-semibold text-gray-500">Dari {{ $step->manualDocument->user?->name ?? '-' }} | Giliran ke-{{ $step->sequence }}</p>
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-3">
-                                        <input type="number" name="signed_page" min="1" value="1" required class="rounded-xl border-gray-200 text-sm" placeholder="Halaman">
-                                        <input type="number" name="qr_size_mm" min="18" max="60" step="1" value="28" required class="rounded-xl border-gray-200 text-sm" placeholder="Ukuran QR">
-                                        <input type="number" name="qr_x_mm" min="0" step="1" value="15" required class="rounded-xl border-gray-200 text-sm" placeholder="X mm">
-                                        <input type="number" name="qr_y_mm" min="0" step="1" value="15" required class="rounded-xl border-gray-200 text-sm" placeholder="Y mm">
-                                    </div>
-                                    <input type="password" name="pin" inputmode="numeric" maxlength="8" required class="w-full rounded-xl border-gray-200 text-sm font-mono tracking-widest" placeholder="PIN tanda tangan digital">
-                                    <div class="flex flex-wrap items-center gap-2">
-                                        <a href="{{ route('tanda-tangan.manual.download', $step->manualDocument) }}" target="_blank" class="inline-flex rounded-xl border border-gray-200 px-4 py-2 text-xs font-black text-gray-700 hover:bg-gray-50">
-                                            Lihat PDF
-                                        </a>
-                                        <button class="inline-flex rounded-xl bg-amber-600 px-4 py-2 text-xs font-black text-white hover:bg-amber-700">
-                                            Tanda Tangani & Teruskan
-                                        </button>
-                                    </div>
-                                </form>
-                            @endforeach
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-amber-100">
+                                    <thead class="bg-amber-50/60">
+                                        <tr>
+                                            <th class="px-5 py-3 text-left text-xs font-black uppercase tracking-widest text-amber-700">Dokumen</th>
+                                            <th class="px-5 py-3 text-left text-xs font-black uppercase tracking-widest text-amber-700">Pengirim</th>
+                                            <th class="px-5 py-3 text-left text-xs font-black uppercase tracking-widest text-amber-700">Giliran</th>
+                                            <th class="px-5 py-3 text-right text-xs font-black uppercase tracking-widest text-amber-700">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-amber-100">
+                                        @foreach($pendingSteps as $step)
+                                            <tr>
+                                                <td class="px-5 py-4">
+                                                    <p class="font-bold text-gray-900">{{ $step->manualDocument->title }}</p>
+                                                    <p class="text-xs text-gray-500">{{ $step->manualDocument->original_file_name }}</p>
+                                                </td>
+                                                <td class="px-5 py-4 text-sm font-semibold text-gray-600">{{ $step->manualDocument->user?->name ?? '-' }}</td>
+                                                <td class="px-5 py-4 text-sm font-bold text-amber-700">Ke-{{ $step->sequence }}</td>
+                                                <td class="px-5 py-4 text-right">
+                                                    <button type="button"
+                                                        class="inline-flex rounded-xl bg-amber-600 px-4 py-2 text-xs font-black text-white hover:bg-amber-700"
+                                                        @click="openPendingSignature({
+                                                            action: @js(route('tanda-tangan.manual.continue', $step->manualDocument)),
+                                                            preview: @js(route('tanda-tangan.manual.preview', $step->manualDocument)),
+                                                            title: @js($step->manualDocument->title),
+                                                            pageCount: {{ (int) $step->manualDocument->page_count }}
+                                                        })">
+                                                        Tanda Tangani
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="border-t border-amber-100 px-5 py-3">{{ $pendingSteps->links() }}</div>
                         </div>
                     @endif
 
@@ -178,6 +191,76 @@
                             <div class="rounded-lg bg-gray-50 px-2 py-2">Y <span x-text="y"></span>mm</div>
                             <div class="rounded-lg bg-gray-50 px-2 py-2">QR <span x-text="size"></span>mm</div>
                         </div>
+                    </div>
+                </div>
+
+                <div x-show="pendingModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/70 p-4">
+                    <div class="w-full max-w-6xl max-h-[92vh] overflow-y-auto rounded-2xl bg-white shadow-2xl">
+                        <div class="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white px-6 py-4">
+                            <div>
+                                <h3 class="font-black text-gray-900">Tanda Tangani Dokumen</h3>
+                                <p class="text-sm font-semibold text-gray-500" x-text="pendingTitle"></p>
+                            </div>
+                            <button type="button" @click="closePendingSignature()" class="rounded-xl border border-gray-200 px-3 py-2 text-sm font-black text-gray-600 hover:bg-gray-50">Tutup</button>
+                        </div>
+                        <form :action="pendingAction" method="POST" class="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-5 p-6">
+                            @csrf
+                            <div class="space-y-4">
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-black uppercase tracking-widest text-gray-500 mb-2">Halaman</label>
+                                        <input type="number" name="signed_page" min="1" :max="pendingPageCount || null" x-model.number="pendingPage" @change="renderPendingPage()" required class="w-full rounded-xl border-gray-200 text-sm">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-black uppercase tracking-widest text-gray-500 mb-2">Ukuran</label>
+                                        <input type="number" name="qr_size_mm" min="18" max="60" step="1" x-model.number="pendingSize" @input="clampPendingPosition()" required class="w-full rounded-xl border-gray-200 text-sm">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-black uppercase tracking-widest text-gray-500 mb-2">X dari kiri</label>
+                                        <input type="number" min="0" step="1" x-model.number="pendingX" @input="clampPendingPosition()" class="w-full rounded-xl border-gray-200 text-sm">
+                                        <input type="hidden" name="qr_x_mm" :value="pendingX">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-black uppercase tracking-widest text-gray-500 mb-2">Y dari atas</label>
+                                        <input type="number" min="0" step="1" x-model.number="pendingY" @input="clampPendingPosition()" class="w-full rounded-xl border-gray-200 text-sm">
+                                        <input type="hidden" name="qr_y_mm" :value="pendingY">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-black uppercase tracking-widest text-gray-500 mb-2">PIN Tanda Tangan Digital</label>
+                                    <input type="password" name="pin" inputmode="numeric" maxlength="8" required class="w-full rounded-xl border-gray-200 text-sm font-mono tracking-widest" placeholder="PIN">
+                                </div>
+                                <div class="rounded-xl bg-blue-50 p-4 text-xs font-semibold leading-5 text-blue-900">
+                                    Geser QR langsung di atas preview dokumen. Setelah disimpan, dokumen otomatis diteruskan ke penanda tangan berikutnya jika masih ada antrean.
+                                </div>
+                                <button class="w-full rounded-xl bg-amber-600 px-5 py-3 text-sm font-black text-white hover:bg-amber-700">
+                                    Tanda Tangani & Teruskan
+                                </button>
+                            </div>
+                            <div class="rounded-xl border border-gray-200 bg-slate-100 p-4">
+                                <div x-ref="pendingPreviewWrap" class="relative mx-auto min-h-[620px] overflow-auto rounded-lg bg-slate-200 p-4">
+                                    <div x-show="pendingLoading" class="absolute inset-0 z-20 grid place-items-center bg-white/80 text-sm font-bold text-gray-600">
+                                        Memuat preview PDF...
+                                    </div>
+                                    <div x-ref="pendingPaper"
+                                        class="relative mx-auto overflow-hidden bg-white shadow-lg"
+                                        :style="pendingPaperStyle()"
+                                        @pointermove.window="dragPendingQr($event)"
+                                        @pointerup.window="stopPendingDrag()"
+                                        @pointercancel.window="stopPendingDrag()">
+                                        <canvas x-ref="pendingCanvas" class="block h-full w-full"></canvas>
+                                        <button type="button"
+                                            class="absolute touch-none select-none rounded-md border-2 border-amber-600 bg-white p-1 shadow-lg cursor-move"
+                                            :style="pendingMarkerStyle()"
+                                            @pointerdown.prevent="startPendingDrag($event)">
+                                            <img src="{{ $previewQrBase64 }}" alt="Preview QR Digital" class="h-full w-full object-contain">
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -328,6 +411,7 @@
 
         function manualPdfSigner() {
             let pdfDocument = null;
+            let pendingPdfDocument = null;
 
             return {
                 hasPdf: false,
@@ -344,6 +428,22 @@
                 dragging: false,
                 dragOffsetX: 0,
                 dragOffsetY: 0,
+                pendingModalOpen: false,
+                pendingAction: '',
+                pendingTitle: '',
+                pendingLoading: false,
+                pendingPageCount: 0,
+                pendingPageWidthMm: 210,
+                pendingPageHeightMm: 297,
+                pendingCanvasWidth: 0,
+                pendingCanvasHeight: 0,
+                pendingPage: 1,
+                pendingX: 15,
+                pendingY: 15,
+                pendingSize: 28,
+                pendingDragging: false,
+                pendingDragOffsetX: 0,
+                pendingDragOffsetY: 0,
                 init() {
                     this.$watch('size', () => this.clampPosition());
                     this.$watch('page', () => this.renderPage());
@@ -444,6 +544,108 @@
                     const scaleX = 100 / this.pageWidthMm;
                     const scaleY = 100 / this.pageHeightMm;
                     return `left:${this.x * scaleX}%;top:${this.y * scaleY}%;width:${this.size * scaleX}%;height:${this.size * scaleY}%;`;
+                },
+                async openPendingSignature(payload) {
+                    this.pendingAction = payload.action;
+                    this.pendingTitle = payload.title;
+                    this.pendingPageCount = payload.pageCount || 1;
+                    this.pendingPage = 1;
+                    this.pendingX = 15;
+                    this.pendingY = 15;
+                    this.pendingSize = 28;
+                    this.pendingCanvasWidth = 0;
+                    this.pendingCanvasHeight = 0;
+                    this.pendingModalOpen = true;
+
+                    await new Promise((resolve) => this.$nextTick(resolve));
+                    await this.openPendingPdf(payload.preview);
+                },
+                closePendingSignature() {
+                    this.pendingModalOpen = false;
+                    pendingPdfDocument = null;
+                },
+                async openPendingPdf(url) {
+                    if (!window.pdfjsLib) {
+                        alert('Library preview PDF belum termuat. Coba refresh halaman.');
+                        return;
+                    }
+
+                    this.pendingLoading = true;
+                    try {
+                        pendingPdfDocument = await window.pdfjsLib.getDocument({ url }).promise;
+                        this.pendingPageCount = pendingPdfDocument.numPages;
+                        this.pendingPage = Math.min(Math.max(Number(this.pendingPage) || 1, 1), this.pendingPageCount);
+                        await this.renderPendingPage();
+                    } catch (error) {
+                        console.error(error);
+                        alert('Preview PDF antrean gagal dibaca di browser.');
+                    } finally {
+                        this.pendingLoading = false;
+                    }
+                },
+                async renderPendingPage() {
+                    if (!pendingPdfDocument || !this.$refs.pendingCanvas || !this.$refs.pendingPreviewWrap) return;
+
+                    this.pendingPage = Math.min(Math.max(Number(this.pendingPage) || 1, 1), this.pendingPageCount);
+                    this.pendingLoading = true;
+
+                    try {
+                        const pdfPage = await pendingPdfDocument.getPage(this.pendingPage);
+                        const baseViewport = pdfPage.getViewport({ scale: 1 });
+                        this.pendingPageWidthMm = Number((baseViewport.width * 25.4 / 72).toFixed(2));
+                        this.pendingPageHeightMm = Number((baseViewport.height * 25.4 / 72).toFixed(2));
+
+                        const maxWidth = Math.max(this.$refs.pendingPreviewWrap.clientWidth - 32, 320);
+                        const scale = Math.min(maxWidth / baseViewport.width, 1.75);
+                        const viewport = pdfPage.getViewport({ scale });
+                        const canvas = this.$refs.pendingCanvas;
+                        const context = canvas.getContext('2d');
+
+                        canvas.width = Math.floor(viewport.width);
+                        canvas.height = Math.floor(viewport.height);
+                        this.pendingCanvasWidth = canvas.width;
+                        this.pendingCanvasHeight = canvas.height;
+
+                        await pdfPage.render({ canvasContext: context, viewport }).promise;
+                        this.clampPendingPosition();
+                    } finally {
+                        this.pendingLoading = false;
+                    }
+                },
+                clampPendingPosition() {
+                    this.pendingX = Math.round(Math.min(Math.max(Number(this.pendingX) || 0, 0), Math.max(this.pendingPageWidthMm - this.pendingSize, 0)));
+                    this.pendingY = Math.round(Math.min(Math.max(Number(this.pendingY) || 0, 0), Math.max(this.pendingPageHeightMm - this.pendingSize, 0)));
+                },
+                startPendingDrag(event) {
+                    const marker = event.currentTarget.getBoundingClientRect();
+                    this.pendingDragging = true;
+                    this.pendingDragOffsetX = event.clientX - marker.left;
+                    this.pendingDragOffsetY = event.clientY - marker.top;
+                    event.currentTarget.setPointerCapture?.(event.pointerId);
+                },
+                dragPendingQr(event) {
+                    if (!this.pendingDragging || !this.$refs.pendingPaper) return;
+
+                    const paper = this.$refs.pendingPaper.getBoundingClientRect();
+                    const markerWidth = paper.width * (this.pendingSize / this.pendingPageWidthMm);
+                    const markerHeight = paper.height * (this.pendingSize / this.pendingPageHeightMm);
+                    const left = Math.min(Math.max(event.clientX - paper.left - this.pendingDragOffsetX, 0), Math.max(paper.width - markerWidth, 0));
+                    const top = Math.min(Math.max(event.clientY - paper.top - this.pendingDragOffsetY, 0), Math.max(paper.height - markerHeight, 0));
+
+                    this.pendingX = Math.round((left / paper.width) * this.pendingPageWidthMm);
+                    this.pendingY = Math.round((top / paper.height) * this.pendingPageHeightMm);
+                },
+                stopPendingDrag() {
+                    this.pendingDragging = false;
+                },
+                pendingPaperStyle() {
+                    if (!this.pendingCanvasWidth || !this.pendingCanvasHeight) return 'width:420px;height:594px;';
+                    return `width:${this.pendingCanvasWidth}px;height:${this.pendingCanvasHeight}px;`;
+                },
+                pendingMarkerStyle() {
+                    const scaleX = 100 / this.pendingPageWidthMm;
+                    const scaleY = 100 / this.pendingPageHeightMm;
+                    return `left:${this.pendingX * scaleX}%;top:${this.pendingY * scaleY}%;width:${this.pendingSize * scaleX}%;height:${this.pendingSize * scaleY}%;`;
                 },
             }
         }

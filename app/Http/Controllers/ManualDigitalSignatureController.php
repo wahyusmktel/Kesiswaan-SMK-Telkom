@@ -36,22 +36,11 @@ class ManualDigitalSignatureController extends Controller
             ->where('signer_user_id', Auth::id())
             ->where('status', ManualSignedDocumentStep::STATUS_PENDING)
             ->latest()
-            ->get();
+            ->paginate(5, ['*'], 'pending_page');
         $signerUsers = User::query()
             ->with('roles')
             ->where('id', '!=', Auth::id())
-            ->whereHas('roles', fn ($query) => $query->whereIn('name', [
-                'Guru Kelas',
-                'Guru Piket',
-                'Wali Kelas',
-                'Waka Kesiswaan',
-                'Kurikulum',
-                'KAUR SDM',
-                'Kepala Sekolah',
-                'Super Admin',
-                'Petugas UKS',
-            ]))
-            ->whereHas('digitalSignature', fn ($query) => $query->where('is_active', true)->whereNotNull('pin_hash'))
+            ->whereDoesntHave('roles', fn ($query) => $query->whereIn('name', ['Siswa', 'siswa']))
             ->orderBy('name')
             ->get();
         $previewQrBase64 = $this->qrDataUri(url('/verifikasi/dokumen/preview-manual-signature'));
@@ -298,6 +287,17 @@ class ManualDigitalSignatureController extends Controller
             Str::slug($manualDocument->title) . '-signed.pdf',
             ['Content-Type' => 'application/pdf']
         );
+    }
+
+    public function preview(ManualSignedDocument $manualDocument)
+    {
+        abort_unless($this->canAccessManualDocument($manualDocument), 403);
+        abort_unless(Storage::exists($manualDocument->signed_file_path), 404);
+
+        return response()->file(Storage::path($manualDocument->signed_file_path), [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . Str::slug($manualDocument->title) . '-preview.pdf"',
+        ]);
     }
 
     private function createDigitalDocument(User $user, string $title, string $sourcePath, int $page, float $xMm, float $yMm, float $sizeMm, int $sequence): DigitalDocument
