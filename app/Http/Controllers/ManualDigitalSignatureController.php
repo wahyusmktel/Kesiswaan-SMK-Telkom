@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\DigitalDocument;
 use App\Models\ManualSignedDocument;
+use App\Models\ManualSignedDocumentStep;
+use App\Models\User;
 use App\Models\UserDigitalSignature;
 use chillerlan\QRCode\Common\EccLevel;
 use chillerlan\QRCode\Output\QRGdImagePNG;
@@ -23,13 +25,38 @@ class ManualDigitalSignatureController extends Controller
     public function index()
     {
         $signature = UserDigitalSignature::where('user_id', Auth::id())->first();
-        $documents = ManualSignedDocument::with('digitalDocument')
-            ->where('user_id', Auth::id())
+        $documents = ManualSignedDocument::with(['digitalDocument', 'steps.signer', 'steps.digitalDocument'])
+            ->where(function ($query) {
+                $query->where('user_id', Auth::id())
+                    ->orWhereHas('steps', fn ($step) => $step->where('signer_user_id', Auth::id()));
+            })
             ->latest()
             ->paginate(10);
+        $pendingSteps = ManualSignedDocumentStep::with(['manualDocument.user', 'manualDocument.steps.signer'])
+            ->where('signer_user_id', Auth::id())
+            ->where('status', ManualSignedDocumentStep::STATUS_PENDING)
+            ->latest()
+            ->get();
+        $signerUsers = User::query()
+            ->with('roles')
+            ->where('id', '!=', Auth::id())
+            ->whereHas('roles', fn ($query) => $query->whereIn('name', [
+                'Guru Kelas',
+                'Guru Piket',
+                'Wali Kelas',
+                'Waka Kesiswaan',
+                'Kurikulum',
+                'KAUR SDM',
+                'Kepala Sekolah',
+                'Super Admin',
+                'Petugas UKS',
+            ]))
+            ->whereHas('digitalSignature', fn ($query) => $query->where('is_active', true)->whereNotNull('pin_hash'))
+            ->orderBy('name')
+            ->get();
         $previewQrBase64 = $this->qrDataUri(url('/verifikasi/dokumen/preview-manual-signature'));
 
-        return view('pages.tanda-tangan.manual', compact('signature', 'documents', 'previewQrBase64'));
+        return view('pages.tanda-tangan.manual', compact('signature', 'documents', 'pendingSteps', 'signerUsers', 'previewQrBase64'));
     }
 
     public function store(Request $request)
@@ -42,6 +69,8 @@ class ManualDigitalSignatureController extends Controller
             'qr_x_mm' => 'required|numeric|min:0|max:500',
             'qr_y_mm' => 'required|numeric|min:0|max:500',
             'qr_size_mm' => 'required|numeric|min:18|max:60',
+            'next_signer_ids' => 'nullable|array|max:8',
+            'next_signer_ids.*' => 'integer|exists:users,id',
         ]);
 
         $user = Auth::user();
@@ -87,29 +116,16 @@ class ManualDigitalSignatureController extends Controller
         }
 
         $title = $data['title'] ?: pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
-        $hash = DigitalDocument::generateHash([
-            'MANUAL_PDF',
-            (string) $user->id,
+        $document = $this->createDigitalDocument(
+            $user,
             $title,
-            hash_file('sha256', $absoluteOriginal),
-            (string) $data['signed_page'],
-            (string) $data['qr_x_mm'],
-            (string) $data['qr_y_mm'],
-            (string) $data['qr_size_mm'],
-        ]);
-
-        $document = DigitalDocument::create([
-            'document_type' => 'MANUAL_PDF',
-            'document_title' => $title,
-            'document_hash' => $hash,
-            'hmac_signature' => DigitalDocument::generateHmac($hash),
-            'signed_by' => $user->id,
-            'signer_name' => $user->name,
-            'signer_nip' => $user->masterGuru?->nip ?? null,
-            'signer_role' => $user->getRoleNames()->first() ?? 'Staff',
-            'signed_at' => now(),
-            'is_valid' => true,
-        ]);
+            $absoluteOriginal,
+            (int) $data['signed_page'],
+            (float) $data['qr_x_mm'],
+            (float) $data['qr_y_mm'],
+            (float) $data['qr_size_mm'],
+            1
+        );
 
         $signedPath = 'manual-signatures/signed/' . Str::uuid() . '.pdf';
         Storage::makeDirectory('manual-signatures/signed');
@@ -154,15 +170,127 @@ class ManualDigitalSignatureController extends Controller
         ]);
 
         $document->update(['reference_id' => $manual->id]);
+        $this->createWorkflowSteps($manual, $document, $user, $data);
 
         return redirect()
             ->route('tanda-tangan.manual.index')
             ->with('success', 'Dokumen berhasil ditandatangani dan diarsipkan.');
     }
 
+    public function continueSign(Request $request, ManualSignedDocument $manualDocument)
+    {
+        $data = $request->validate([
+            'pin' => 'required|string',
+            'signed_page' => 'required|integer|min:1',
+            'qr_x_mm' => 'required|numeric|min:0|max:500',
+            'qr_y_mm' => 'required|numeric|min:0|max:500',
+            'qr_size_mm' => 'required|numeric|min:18|max:60',
+        ]);
+
+        $user = Auth::user();
+        $step = ManualSignedDocumentStep::where('manual_signed_document_id', $manualDocument->id)
+            ->where('signer_user_id', $user->id)
+            ->where('status', ManualSignedDocumentStep::STATUS_PENDING)
+            ->firstOrFail();
+        $signature = UserDigitalSignature::where('user_id', $user->id)->first();
+
+        if (! $signature || ! $signature->isReady()) {
+            return back()->with('error', 'Identitas digital belum aktif. Setup PIN tanda tangan digital terlebih dahulu.');
+        }
+
+        if (! $signature->verifyPin($data['pin'])) {
+            return back()->with('error', 'PIN tanda tangan digital salah.');
+        }
+
+        abort_unless(Storage::exists($manualDocument->signed_file_path), 404);
+
+        $sourcePath = Storage::path($manualDocument->signed_file_path);
+        $processableSource = $sourcePath;
+        $temporaryNormalizedPdf = null;
+
+        try {
+            try {
+                $pageCount = $this->readPageCount($processableSource);
+            } catch (Throwable $e) {
+                $temporaryNormalizedPdf = $this->normalizePdfForFpdi($sourcePath);
+                $processableSource = $temporaryNormalizedPdf;
+                $pageCount = $this->readPageCount($processableSource);
+            }
+
+            if ((int) $data['signed_page'] > $pageCount) {
+                return back()->with('error', "Nomor halaman melebihi total halaman PDF ({$pageCount} halaman).");
+            }
+
+            $document = $this->createDigitalDocument(
+                $user,
+                $manualDocument->title,
+                $sourcePath,
+                (int) $data['signed_page'],
+                (float) $data['qr_x_mm'],
+                (float) $data['qr_y_mm'],
+                (float) $data['qr_size_mm'],
+                $step->sequence
+            );
+
+            $signedPath = 'manual-signatures/signed/' . Str::uuid() . '.pdf';
+            Storage::makeDirectory('manual-signatures/signed');
+
+            $this->stampPdf(
+                $processableSource,
+                Storage::path($signedPath),
+                route('verifikasi.dokumen', $document->token),
+                (int) $data['signed_page'],
+                (float) $data['qr_x_mm'],
+                (float) $data['qr_y_mm'],
+                (float) $data['qr_size_mm']
+            );
+
+            $oldSignedPath = $manualDocument->signed_file_path;
+            $manualDocument->update([
+                'digital_document_id' => $document->id,
+                'signed_file_path' => $signedPath,
+                'signed_page' => (int) $data['signed_page'],
+                'qr_x_mm' => (float) $data['qr_x_mm'],
+                'qr_y_mm' => (float) $data['qr_y_mm'],
+                'qr_size_mm' => (float) $data['qr_size_mm'],
+            ]);
+            $document->update(['reference_id' => $manualDocument->id]);
+
+            $step->update([
+                'digital_document_id' => $document->id,
+                'status' => ManualSignedDocumentStep::STATUS_COMPLETED,
+                'signed_page' => (int) $data['signed_page'],
+                'qr_x_mm' => (float) $data['qr_x_mm'],
+                'qr_y_mm' => (float) $data['qr_y_mm'],
+                'qr_size_mm' => (float) $data['qr_size_mm'],
+                'signed_at' => now(),
+            ]);
+
+            $this->activateNextStep($manualDocument, $step->sequence);
+
+            if ($oldSignedPath !== $signedPath) {
+                Storage::delete($oldSignedPath);
+            }
+        } catch (Throwable $e) {
+            if (! empty($signedPath)) {
+                Storage::delete($signedPath);
+            }
+            report($e);
+            return back()->with('error', 'Gagal melanjutkan tanda tangan PDF: ' . $e->getMessage());
+        } finally {
+            if ($temporaryNormalizedPdf) {
+                @unlink($temporaryNormalizedPdf);
+            }
+        }
+
+        return redirect()
+            ->route('tanda-tangan.manual.index')
+            ->with('success', 'Dokumen berhasil ditandatangani dan diteruskan sesuai alur.');
+    }
+
     public function download(ManualSignedDocument $manualDocument)
     {
-        abort_unless($manualDocument->user_id === Auth::id(), 403);
+        abort_unless($this->canAccessManualDocument($manualDocument), 403);
         abort_unless(Storage::exists($manualDocument->signed_file_path), 404);
 
         return Storage::download(
@@ -170,6 +298,89 @@ class ManualDigitalSignatureController extends Controller
             Str::slug($manualDocument->title) . '-signed.pdf',
             ['Content-Type' => 'application/pdf']
         );
+    }
+
+    private function createDigitalDocument(User $user, string $title, string $sourcePath, int $page, float $xMm, float $yMm, float $sizeMm, int $sequence): DigitalDocument
+    {
+        $hash = DigitalDocument::generateHash([
+            'MANUAL_PDF',
+            (string) $user->id,
+            $title,
+            hash_file('sha256', $sourcePath),
+            (string) $page,
+            (string) $xMm,
+            (string) $yMm,
+            (string) $sizeMm,
+            (string) $sequence,
+        ]);
+
+        return DigitalDocument::create([
+            'document_type' => 'MANUAL_PDF',
+            'document_title' => $title,
+            'document_hash' => $hash,
+            'hmac_signature' => DigitalDocument::generateHmac($hash),
+            'signed_by' => $user->id,
+            'signer_name' => $user->name,
+            'signer_nip' => $user->masterGuru?->nip ?? null,
+            'signer_role' => $user->getRoleNames()->first() ?? 'Staff',
+            'signed_at' => now(),
+            'is_valid' => true,
+        ]);
+    }
+
+    private function createWorkflowSteps(ManualSignedDocument $manual, DigitalDocument $document, User $user, array $data): void
+    {
+        ManualSignedDocumentStep::create([
+            'manual_signed_document_id' => $manual->id,
+            'signer_user_id' => $user->id,
+            'digital_document_id' => $document->id,
+            'sequence' => 1,
+            'status' => ManualSignedDocumentStep::STATUS_COMPLETED,
+            'signed_page' => (int) $data['signed_page'],
+            'qr_x_mm' => (float) $data['qr_x_mm'],
+            'qr_y_mm' => (float) $data['qr_y_mm'],
+            'qr_size_mm' => (float) $data['qr_size_mm'],
+            'signed_at' => now(),
+        ]);
+
+        $nextSignerIds = collect($data['next_signer_ids'] ?? [])
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn ($id) => $id > 0 && $id !== $user->id)
+            ->unique()
+            ->values();
+
+        foreach ($nextSignerIds as $index => $signerId) {
+            ManualSignedDocumentStep::create([
+                'manual_signed_document_id' => $manual->id,
+                'signer_user_id' => $signerId,
+                'sequence' => $index + 2,
+                'status' => $index === 0 ? ManualSignedDocumentStep::STATUS_PENDING : ManualSignedDocumentStep::STATUS_WAITING,
+            ]);
+        }
+    }
+
+    private function activateNextStep(ManualSignedDocument $manualDocument, int $completedSequence): void
+    {
+        $nextStep = ManualSignedDocumentStep::where('manual_signed_document_id', $manualDocument->id)
+            ->where('sequence', '>', $completedSequence)
+            ->where('status', ManualSignedDocumentStep::STATUS_WAITING)
+            ->orderBy('sequence')
+            ->first();
+
+        if ($nextStep) {
+            $nextStep->update(['status' => ManualSignedDocumentStep::STATUS_PENDING]);
+        }
+    }
+
+    private function canAccessManualDocument(ManualSignedDocument $manualDocument): bool
+    {
+        if ($manualDocument->user_id === Auth::id()) {
+            return true;
+        }
+
+        return $manualDocument->steps()
+            ->where('signer_user_id', Auth::id())
+            ->exists();
     }
 
     private function stampPdf(string $sourcePath, string $targetPath, string $verificationUrl, int $targetPage, float $xMm, float $yMm, float $sizeMm): void

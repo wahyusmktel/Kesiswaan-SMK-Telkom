@@ -1,3 +1,7 @@
+@push('styles')
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet">
+@endpush
+
 <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -5,20 +9,16 @@
                 <h2 class="font-bold text-xl text-gray-800 leading-tight">Tanda Tangani Dokumen PDF Manual</h2>
                 <p class="text-sm text-gray-500 mt-1">Upload PDF, tentukan posisi QR, lalu arsipkan dokumen bertanda tangan digital.</p>
             </div>
-            <a href="{{ route('tanda-tangan.index') }}" class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50">
-                Kembali
-            </a>
         </div>
     </x-slot>
 
     <div class="py-6 w-full">
         <div class="w-full px-4 sm:px-6 lg:px-8 space-y-6">
-            @if(session('success'))
-                <div class="rounded-2xl border border-green-200 bg-green-50 px-5 py-3 text-sm font-semibold text-green-800">{{ session('success') }}</div>
-            @endif
-            @if(session('error'))
-                <div class="rounded-2xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-800">{{ session('error') }}</div>
-            @endif
+            <div class="flex justify-start">
+                <a href="{{ route('tanda-tangan.index') }}" class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50">
+                    Kembali
+                </a>
+            </div>
 
             @unless($signature && $signature->isReady())
                 <div class="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-semibold text-amber-800">
@@ -28,6 +28,39 @@
 
             <div class="grid grid-cols-1 xl:grid-cols-[420px_1fr] gap-6" x-data="manualPdfSigner()" x-init="init()">
                 <div class="space-y-6">
+                    @if($pendingSteps->isNotEmpty())
+                        <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm space-y-4">
+                            <div>
+                                <h3 class="text-base font-black text-amber-950">Menunggu Tanda Tangan Saya</h3>
+                                <p class="mt-1 text-sm font-semibold text-amber-800">Dokumen berikut sedang berada pada giliran tanda tangan Anda.</p>
+                            </div>
+                            @foreach($pendingSteps as $step)
+                                <form action="{{ route('tanda-tangan.manual.continue', $step->manualDocument) }}" method="POST" class="rounded-xl bg-white p-4 space-y-3">
+                                    @csrf
+                                    <div>
+                                        <p class="font-black text-gray-900">{{ $step->manualDocument->title }}</p>
+                                        <p class="text-xs font-semibold text-gray-500">Dari {{ $step->manualDocument->user?->name ?? '-' }} | Giliran ke-{{ $step->sequence }}</p>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <input type="number" name="signed_page" min="1" value="1" required class="rounded-xl border-gray-200 text-sm" placeholder="Halaman">
+                                        <input type="number" name="qr_size_mm" min="18" max="60" step="1" value="28" required class="rounded-xl border-gray-200 text-sm" placeholder="Ukuran QR">
+                                        <input type="number" name="qr_x_mm" min="0" step="1" value="15" required class="rounded-xl border-gray-200 text-sm" placeholder="X mm">
+                                        <input type="number" name="qr_y_mm" min="0" step="1" value="15" required class="rounded-xl border-gray-200 text-sm" placeholder="Y mm">
+                                    </div>
+                                    <input type="password" name="pin" inputmode="numeric" maxlength="8" required class="w-full rounded-xl border-gray-200 text-sm font-mono tracking-widest" placeholder="PIN tanda tangan digital">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <a href="{{ route('tanda-tangan.manual.download', $step->manualDocument) }}" target="_blank" class="inline-flex rounded-xl border border-gray-200 px-4 py-2 text-xs font-black text-gray-700 hover:bg-gray-50">
+                                            Lihat PDF
+                                        </a>
+                                        <button class="inline-flex rounded-xl bg-amber-600 px-4 py-2 text-xs font-black text-white hover:bg-amber-700">
+                                            Tanda Tangani & Teruskan
+                                        </button>
+                                    </div>
+                                </form>
+                            @endforeach
+                        </div>
+                    @endif
+
                     <form action="{{ route('tanda-tangan.manual.store') }}" method="POST" enctype="multipart/form-data" class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-5">
                         @csrf
                         <div>
@@ -75,6 +108,18 @@
                                 </div>
                             </div>
                             <p class="text-xs font-semibold text-gray-500">Geser QR pada lembar preview di kanan. Nilai X/Y akan mengikuti posisi QR dalam milimeter dari pojok kiri atas halaman.</p>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-xs font-black uppercase tracking-widest text-gray-500">Penanda Tangan Berikutnya</label>
+                            <select name="next_signer_ids[]" multiple class="manual-signer-select w-full rounded-xl border-gray-200 text-sm">
+                                @foreach($signerUsers as $signerUser)
+                                    <option value="{{ $signerUser->id }}">
+                                        {{ $signerUser->name }} - {{ $signerUser->getRoleNames()->join(', ') ?: 'Staff' }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <p class="text-xs font-semibold text-gray-500">Urutan pilihan menjadi alur tanda tangan berikutnya. Contoh: Waka Kurikulum lalu Kepala Sekolah.</p>
                         </div>
 
                         <div>
@@ -147,6 +192,7 @@
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-black uppercase tracking-widest text-gray-400">Dokumen</th>
+                                <th class="px-6 py-3 text-left text-xs font-black uppercase tracking-widest text-gray-400">Status</th>
                                 <th class="px-6 py-3 text-left text-xs font-black uppercase tracking-widest text-gray-400">Posisi</th>
                                 <th class="px-6 py-3 text-left text-xs font-black uppercase tracking-widest text-gray-400">Token</th>
                                 <th class="px-6 py-3 text-right text-xs font-black uppercase tracking-widest text-gray-400">Aksi</th>
@@ -158,6 +204,22 @@
                                     <td class="px-6 py-4">
                                         <p class="font-bold text-gray-900">{{ $document->title }}</p>
                                         <p class="text-xs text-gray-500">{{ $document->original_file_name }} · {{ $document->page_count }} halaman · {{ number_format($document->file_size / 1024 / 1024, 2) }} MB</p>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        @php
+                                            $stepsPayload = $document->steps->map(fn ($step) => [
+                                                'sequence' => $step->sequence,
+                                                'name' => $step->signer?->name ?? '-',
+                                                'role' => $step->signer?->getRoleNames()->join(', ') ?: 'Staff',
+                                                'status' => $step->status,
+                                                'signed_at' => $step->signed_at?->format('d/m/Y H:i'),
+                                            ])->values();
+                                        @endphp
+                                        <button type="button"
+                                            class="inline-flex rounded-full bg-indigo-50 px-3 py-1 text-xs font-black text-indigo-700 hover:bg-indigo-100"
+                                            onclick='showManualSignatureProgress(@json($document->workflow_status_label), @json($stepsPayload))'>
+                                            {{ $document->workflow_status_label }}
+                                        </button>
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-600">
                                         Hal. {{ $document->signed_page }} · X {{ $document->qr_x_mm }}mm · Y {{ $document->qr_y_mm }}mm
@@ -179,7 +241,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="px-6 py-12 text-center text-sm font-semibold text-gray-400">Belum ada dokumen manual yang ditandatangani.</td>
+                                    <td colspan="5" class="px-6 py-12 text-center text-sm font-semibold text-gray-400">Belum ada dokumen manual yang ditandatangani.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -190,8 +252,76 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
     <script src="{{ asset('vendor/pdfjs/pdf.min.js') }}"></script>
     <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.manual-signer-select').forEach((select) => {
+                if (select.tomselect || typeof TomSelect === 'undefined') return;
+
+                new TomSelect(select, {
+                    plugins: ['remove_button'],
+                    persist: false,
+                    create: false,
+                    placeholder: 'Cari dan pilih penanda tangan berikutnya...',
+                    render: {
+                        option(data, escape) {
+                            return `<div class="py-1">${escape(data.text || '')}</div>`;
+                        },
+                        item(data, escape) {
+                            return `<div>${escape(data.text || '')}</div>`;
+                        },
+                    },
+                });
+            });
+
+            @if(session('success'))
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil',
+                    text: @js(session('success')),
+                    confirmButtonColor: '#4f46e5',
+                });
+            @endif
+
+            @if(session('error'))
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal',
+                    text: @js(session('error')),
+                    confirmButtonColor: '#dc2626',
+                });
+            @endif
+        });
+
+        function showManualSignatureProgress(title, steps) {
+            const badge = {
+                completed: 'Selesai',
+                pending: 'Menunggu TTD',
+                waiting: 'Antrean',
+            };
+            const html = (steps && steps.length ? steps : []).map((step) => {
+                const color = step.status === 'completed' ? '#16a34a' : (step.status === 'pending' ? '#d97706' : '#64748b');
+                return `
+                    <div style="display:flex;gap:12px;align-items:flex-start;text-align:left;margin:10px 0;">
+                        <div style="width:28px;height:28px;border-radius:999px;background:${color};color:white;display:grid;place-items:center;font-weight:800;font-size:12px;">${step.sequence}</div>
+                        <div>
+                            <div style="font-weight:800;color:#111827;">${step.name}</div>
+                            <div style="font-size:12px;color:#6b7280;">${step.role}</div>
+                            <div style="font-size:12px;color:${color};font-weight:800;">${badge[step.status] || step.status}${step.signed_at ? ' - ' + step.signed_at : ''}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('') || '<p style="color:#6b7280;">Tidak ada alur lanjutan.</p>';
+
+            Swal.fire({
+                title,
+                html,
+                confirmButtonText: 'Tutup',
+                confirmButtonColor: '#4f46e5',
+            });
+        }
+
         if (window.pdfjsLib) {
             window.pdfjsLib.GlobalWorkerOptions.workerSrc = @js(asset('vendor/pdfjs/pdf.worker.min.js'));
         }

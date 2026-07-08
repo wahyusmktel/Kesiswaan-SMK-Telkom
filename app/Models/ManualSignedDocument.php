@@ -36,4 +36,31 @@ class ManualSignedDocument extends Model
     {
         return $this->belongsTo(DigitalDocument::class);
     }
+
+    public function steps()
+    {
+        return $this->hasMany(ManualSignedDocumentStep::class)->orderBy('sequence');
+    }
+
+    public function pendingStep()
+    {
+        return $this->hasOne(ManualSignedDocumentStep::class)->where('status', ManualSignedDocumentStep::STATUS_PENDING);
+    }
+
+    public function getWorkflowStatusLabelAttribute(): string
+    {
+        if (! $this->relationLoaded('steps') || $this->steps->isEmpty()) {
+            return 'Selesai';
+        }
+
+        $pending = $this->steps->firstWhere('status', ManualSignedDocumentStep::STATUS_PENDING);
+
+        if ($pending) {
+            return 'Menunggu ' . ($pending->signer?->name ?? 'penanda tangan');
+        }
+
+        return $this->steps->contains('status', ManualSignedDocumentStep::STATUS_WAITING)
+            ? 'Dalam antrean'
+            : 'Selesai';
+    }
 }

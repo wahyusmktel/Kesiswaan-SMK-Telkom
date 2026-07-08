@@ -118,6 +118,11 @@ class User extends Authenticatable implements WebAuthnAuthenticatableContract
         return $this->hasOne(MasterGuru::class);
     }
 
+    public function digitalSignature()
+    {
+        return $this->hasOne(UserDigitalSignature::class);
+    }
+
     public function securityShiftAssignment()
     {
         return $this->hasOne(FingerprintSecurityShiftAssignment::class, 'app_user_id');
