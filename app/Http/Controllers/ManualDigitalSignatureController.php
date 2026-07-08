@@ -190,12 +190,8 @@ class ManualDigitalSignatureController extends Controller
 
                 if ($page === $targetPage) {
                     $safeX = min(max($xMm, 0), max($size['width'] - $sizeMm, 0));
-                    $safeY = min(max($yMm, 0), max($size['height'] - $sizeMm, 0));
+                    $safeY = min(max($yMm - 3, 0), max($size['height'] - $sizeMm, 0));
                     $pdf->Image($qrPath, $safeX, $safeY, $sizeMm, $sizeMm, 'PNG');
-                    $pdf->SetFont('Arial', 'B', 6);
-                    $pdf->SetTextColor(20, 20, 20);
-                    $pdf->SetXY($safeX, $safeY + $sizeMm + 1);
-                    $pdf->MultiCell($sizeMm, 3, 'Verifikasi QR Digital', 0, 'C');
                 }
             }
 
