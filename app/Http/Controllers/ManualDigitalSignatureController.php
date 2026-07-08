@@ -13,7 +13,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use RuntimeException;
 use setasign\Fpdi\Fpdi;
+use Symfony\Component\Process\Process;
 use Throwable;
 
 class ManualDigitalSignatureController extends Controller
@@ -55,17 +57,31 @@ class ManualDigitalSignatureController extends Controller
         $uploadedFile = $request->file('pdf_file');
         $originalPath = $uploadedFile->store('manual-signatures/originals');
         $absoluteOriginal = Storage::path($originalPath);
+        $processableOriginal = $absoluteOriginal;
+        $temporaryNormalizedPdf = null;
 
         try {
-            $pageCount = $this->readPageCount($absoluteOriginal);
+            try {
+                $pageCount = $this->readPageCount($processableOriginal);
+            } catch (Throwable $e) {
+                $temporaryNormalizedPdf = $this->normalizePdfForFpdi($absoluteOriginal);
+                $processableOriginal = $temporaryNormalizedPdf;
+                $pageCount = $this->readPageCount($processableOriginal);
+            }
         } catch (Throwable $e) {
             Storage::delete($originalPath);
+            if ($temporaryNormalizedPdf) {
+                @unlink($temporaryNormalizedPdf);
+            }
             report($e);
-            return back()->with('error', 'PDF tidak bisa dibaca. Pastikan file bukan PDF terenkripsi atau rusak.')->withInput();
+            return back()->with('error', 'PDF tidak bisa dibaca: ' . $e->getMessage())->withInput();
         }
 
         if ((int) $data['signed_page'] > $pageCount) {
             Storage::delete($originalPath);
+            if ($temporaryNormalizedPdf) {
+                @unlink($temporaryNormalizedPdf);
+            }
             return back()->with('error', "Nomor halaman melebihi total halaman PDF ({$pageCount} halaman).")->withInput();
         }
 
@@ -99,7 +115,7 @@ class ManualDigitalSignatureController extends Controller
 
         try {
             $this->stampPdf(
-                $absoluteOriginal,
+                $processableOriginal,
                 Storage::path($signedPath),
                 route('verifikasi.dokumen', $document->token),
                 (int) $data['signed_page'],
@@ -109,9 +125,16 @@ class ManualDigitalSignatureController extends Controller
             );
         } catch (Throwable $e) {
             Storage::delete([$originalPath, $signedPath]);
+            if ($temporaryNormalizedPdf) {
+                @unlink($temporaryNormalizedPdf);
+            }
             $document->delete();
             report($e);
             return back()->with('error', 'Gagal menempelkan QR ke PDF: ' . $e->getMessage())->withInput();
+        }
+
+        if ($temporaryNormalizedPdf) {
+            @unlink($temporaryNormalizedPdf);
         }
 
         $manual = ManualSignedDocument::create([
@@ -193,6 +216,71 @@ class ManualDigitalSignatureController extends Controller
         } finally {
             error_reporting($previousErrorReporting);
         }
+    }
+
+    private function normalizePdfForFpdi(string $sourcePath): string
+    {
+        Storage::makeDirectory('manual-signatures/normalized');
+        $targetPath = storage_path('app/manual-signatures/normalized/' . Str::uuid() . '.pdf');
+
+        $qpdf = $this->findExecutable(['qpdf']);
+        if ($qpdf) {
+            $process = new Process([
+                $qpdf,
+                '--object-streams=disable',
+                '--stream-data=uncompress',
+                $sourcePath,
+                $targetPath,
+            ]);
+            $process->setTimeout(120);
+            $process->run();
+
+            if ($process->isSuccessful() && is_file($targetPath) && filesize($targetPath) > 0) {
+                return $targetPath;
+            }
+        }
+
+        $ghostscript = $this->findExecutable(['gs', 'gswin64c', 'gswin32c']);
+        if ($ghostscript) {
+            $process = new Process([
+                $ghostscript,
+                '-q',
+                '-dNOPAUSE',
+                '-dBATCH',
+                '-sDEVICE=pdfwrite',
+                '-dCompatibilityLevel=1.4',
+                '-sOutputFile=' . $targetPath,
+                $sourcePath,
+            ]);
+            $process->setTimeout(180);
+            $process->run();
+
+            if ($process->isSuccessful() && is_file($targetPath) && filesize($targetPath) > 0) {
+                return $targetPath;
+            }
+        }
+
+        @unlink($targetPath);
+
+        throw new RuntimeException('PDF memakai kompresi modern yang tidak didukung FPDI. Install qpdf atau ghostscript di server agar PDF bisa dinormalisasi otomatis.');
+    }
+
+    private function findExecutable(array $binaries): ?string
+    {
+        foreach ($binaries as $binary) {
+            $process = Process::fromShellCommandline(PHP_OS_FAMILY === 'Windows' ? 'where ' . escapeshellarg($binary) : 'command -v ' . escapeshellarg($binary));
+            $process->setTimeout(5);
+            $process->run();
+
+            if ($process->isSuccessful()) {
+                $path = trim(strtok($process->getOutput(), "\r\n"));
+                if ($path !== '') {
+                    return $path;
+                }
+            }
+        }
+
+        return null;
     }
 
     private function temporaryQrPath(string $url): string
