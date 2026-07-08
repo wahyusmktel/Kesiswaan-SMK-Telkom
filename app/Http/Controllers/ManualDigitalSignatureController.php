@@ -224,6 +224,8 @@ class ManualDigitalSignatureController extends Controller
         $normalizedDirectory = storage_path('app/manual-signatures/normalized');
         $targetPath = $normalizedDirectory . '/' . Str::uuid() . '.pdf';
         $errors = [];
+        @chmod(storage_path('app/manual-signatures'), 0775);
+        @chmod($normalizedDirectory, 0775);
 
         if (! is_dir($normalizedDirectory) || ! is_writable($normalizedDirectory)) {
             throw new RuntimeException('Folder normalisasi PDF tidak writable: ' . $normalizedDirectory);
