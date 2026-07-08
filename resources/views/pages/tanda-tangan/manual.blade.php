@@ -28,52 +28,6 @@
 
             <div class="grid grid-cols-1 xl:grid-cols-[420px_1fr] gap-6" x-data="manualPdfSigner()" x-init="init()">
                 <div class="space-y-6">
-                    @if($pendingSteps->isNotEmpty())
-                        <div class="rounded-2xl border border-amber-200 bg-white shadow-sm overflow-hidden">
-                            <div class="border-b border-amber-100 bg-amber-50 px-5 py-4">
-                                <h3 class="text-base font-black text-amber-950">Menunggu Tanda Tangan Saya</h3>
-                                <p class="mt-1 text-sm font-semibold text-amber-800">Dokumen berikut sedang berada pada giliran tanda tangan Anda.</p>
-                            </div>
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full divide-y divide-amber-100">
-                                    <thead class="bg-amber-50/60">
-                                        <tr>
-                                            <th class="px-5 py-3 text-left text-xs font-black uppercase tracking-widest text-amber-700">Dokumen</th>
-                                            <th class="px-5 py-3 text-left text-xs font-black uppercase tracking-widest text-amber-700">Pengirim</th>
-                                            <th class="px-5 py-3 text-left text-xs font-black uppercase tracking-widest text-amber-700">Giliran</th>
-                                            <th class="px-5 py-3 text-right text-xs font-black uppercase tracking-widest text-amber-700">Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-amber-100">
-                                        @foreach($pendingSteps as $step)
-                                            <tr>
-                                                <td class="px-5 py-4">
-                                                    <p class="font-bold text-gray-900">{{ $step->manualDocument->title }}</p>
-                                                    <p class="text-xs text-gray-500">{{ $step->manualDocument->original_file_name }}</p>
-                                                </td>
-                                                <td class="px-5 py-4 text-sm font-semibold text-gray-600">{{ $step->manualDocument->user?->name ?? '-' }}</td>
-                                                <td class="px-5 py-4 text-sm font-bold text-amber-700">Ke-{{ $step->sequence }}</td>
-                                                <td class="px-5 py-4 text-right">
-                                                    <button type="button"
-                                                        class="inline-flex rounded-xl bg-amber-600 px-4 py-2 text-xs font-black text-white hover:bg-amber-700"
-                                                        @click="openPendingSignature({
-                                                            action: @js(route('tanda-tangan.manual.continue', $step->manualDocument)),
-                                                            preview: @js(route('tanda-tangan.manual.preview', $step->manualDocument)),
-                                                            title: @js($step->manualDocument->title),
-                                                            pageCount: {{ (int) $step->manualDocument->page_count }}
-                                                        })">
-                                                        Tanda Tangani
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="border-t border-amber-100 px-5 py-3">{{ $pendingSteps->links() }}</div>
-                        </div>
-                    @endif
-
                     <form action="{{ route('tanda-tangan.manual.store') }}" method="POST" enctype="multipart/form-data" class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-5">
                         @csrf
                         <div>
@@ -152,7 +106,54 @@
                     </div>
                 </div>
 
-                <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                <div class="space-y-6">
+                    @if($pendingSteps->isNotEmpty())
+                        <div class="rounded-2xl border border-amber-200 bg-white shadow-sm overflow-hidden">
+                            <div class="border-b border-amber-100 bg-amber-50 px-5 py-4">
+                                <h3 class="text-base font-black text-amber-950">Menunggu Tanda Tangan Saya</h3>
+                                <p class="mt-1 text-sm font-semibold text-amber-800">Dokumen berikut sedang berada pada giliran tanda tangan Anda.</p>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-amber-100">
+                                    <thead class="bg-amber-50/60">
+                                        <tr>
+                                            <th class="px-5 py-3 text-left text-xs font-black uppercase tracking-widest text-amber-700">Dokumen</th>
+                                            <th class="px-5 py-3 text-left text-xs font-black uppercase tracking-widest text-amber-700">Pengirim</th>
+                                            <th class="px-5 py-3 text-left text-xs font-black uppercase tracking-widest text-amber-700">Giliran</th>
+                                            <th class="px-5 py-3 text-right text-xs font-black uppercase tracking-widest text-amber-700">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-amber-100">
+                                        @foreach($pendingSteps as $step)
+                                            <tr>
+                                                <td class="px-5 py-4">
+                                                    <p class="font-bold text-gray-900">{{ $step->manualDocument->title }}</p>
+                                                    <p class="text-xs text-gray-500">{{ $step->manualDocument->original_file_name }}</p>
+                                                </td>
+                                                <td class="px-5 py-4 text-sm font-semibold text-gray-600">{{ $step->manualDocument->user?->name ?? '-' }}</td>
+                                                <td class="px-5 py-4 text-sm font-bold text-amber-700">Ke-{{ $step->sequence }}</td>
+                                                <td class="px-5 py-4 text-right">
+                                                    <button type="button"
+                                                        class="inline-flex rounded-xl bg-amber-600 px-4 py-2 text-xs font-black text-white hover:bg-amber-700"
+                                                        @click="openPendingSignature({
+                                                            action: @js(route('tanda-tangan.manual.continue', $step->manualDocument)),
+                                                            preview: @js(route('tanda-tangan.manual.preview', $step->manualDocument)),
+                                                            title: @js($step->manualDocument->title),
+                                                            pageCount: {{ (int) $step->manualDocument->page_count }}
+                                                        })">
+                                                        Tanda Tangani
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="border-t border-amber-100 px-5 py-3">{{ $pendingSteps->links() }}</div>
+                        </div>
+                    @endif
+
+                    <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
                     <div class="mb-3 flex items-center justify-between">
                         <div>
                             <p class="text-sm font-black text-gray-900">Atur Posisi QR</p>
@@ -192,6 +193,7 @@
                             <div class="rounded-lg bg-gray-50 px-2 py-2">QR <span x-text="size"></span>mm</div>
                         </div>
                     </div>
+                </div>
                 </div>
 
                 <div x-show="pendingModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/70 p-4">
@@ -342,7 +344,7 @@
             document.querySelectorAll('.manual-signer-select').forEach((select) => {
                 if (select.tomselect || typeof TomSelect === 'undefined') return;
 
-                new TomSelect(select, {
+                const tomSelect = new TomSelect(select, {
                     plugins: ['remove_button'],
                     persist: false,
                     create: false,
@@ -356,6 +358,14 @@
                         },
                     },
                 });
+                tomSelect.blur();
+            });
+
+            requestAnimationFrame(() => {
+                if (document.activeElement && document.activeElement.closest('.ts-wrapper')) {
+                    document.activeElement.blur();
+                }
+                window.scrollTo({ top: 0, left: 0 });
             });
 
             @if(session('success'))
