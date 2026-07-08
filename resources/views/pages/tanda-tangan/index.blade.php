@@ -49,13 +49,22 @@
                     </div>
                     <div class="flex-shrink-0">
                         @if($signature && $signature->isReady())
-                            <span class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-indigo-700 text-sm font-bold shadow">
-                                <span class="relative flex h-2.5 w-2.5">
-                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                            <div class="flex flex-col sm:flex-row gap-2">
+                                <span class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-indigo-700 text-sm font-bold shadow">
+                                    <span class="relative flex h-2.5 w-2.5">
+                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                                    </span>
+                                    Identitas Aktif
                                 </span>
-                                Identitas Aktif
-                            </span>
+                                <a href="{{ route('tanda-tangan.manual.index') }}"
+                                    class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-slate-950 text-white text-sm font-bold shadow hover:bg-slate-800">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h6.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0118 9.414V19a2 2 0 01-2 2z"/>
+                                    </svg>
+                                    TTD Manual PDF
+                                </a>
+                            </div>
                         @else
                             <span class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/20 text-white text-sm font-bold border border-white/30">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

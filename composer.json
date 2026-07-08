@@ -21,6 +21,8 @@
         "picqer/php-barcode-generator": "^3.2",
         "rats/zkteco": "^002.0",
         "realrashid/sweet-alert": "^7.3",
+        "setasign/fpdf": "1.8.6",
+        "setasign/fpdi": "2.6",
         "simplesoftwareio/simple-qrcode": "^4.2",
         "spatie/laravel-permission": "^6.20"
     },

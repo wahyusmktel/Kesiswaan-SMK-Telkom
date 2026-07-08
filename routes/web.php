@@ -1147,6 +1147,9 @@ Route::middleware(['auth', 'role:Guru Kelas|Guru Piket|Wali Kelas|Waka Kesiswaan
     ->group(function () {
         Route::get('/', [\App\Http\Controllers\DigitalSignatureController::class, 'index'])->name('index');
         Route::post('/setup', [\App\Http\Controllers\DigitalSignatureController::class, 'setup'])->name('setup');
+        Route::get('/manual', [\App\Http\Controllers\ManualDigitalSignatureController::class, 'index'])->name('manual.index');
+        Route::post('/manual', [\App\Http\Controllers\ManualDigitalSignatureController::class, 'store'])->name('manual.store');
+        Route::get('/manual/{manualDocument}/download', [\App\Http\Controllers\ManualDigitalSignatureController::class, 'download'])->name('manual.download');
         Route::post('/sign', [\App\Http\Controllers\DigitalSignatureController::class, 'sign'])->name('sign');
         Route::post('/sign-bulk', [\App\Http\Controllers\DigitalSignatureController::class, 'signBulk'])->name('sign-bulk');
         Route::post('/revoke', [\App\Http\Controllers\DigitalSignatureController::class, 'revoke'])->name('revoke');
