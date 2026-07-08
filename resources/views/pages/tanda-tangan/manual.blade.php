@@ -110,10 +110,10 @@
                             <div x-show="isLoading" class="absolute inset-0 z-20 grid place-items-center bg-white/80 text-sm font-bold text-gray-600">
                                 Memuat preview PDF...
                             </div>
-                            <div x-show="!pdfDoc" class="grid min-h-[520px] place-items-center text-center text-sm font-semibold text-gray-400">
+                            <div x-show="!hasPdf" class="grid min-h-[520px] place-items-center text-center text-sm font-semibold text-gray-400">
                                 Pilih file PDF untuk melihat dan mengatur posisi QR.
                             </div>
-                            <div x-show="pdfDoc" x-ref="paper"
+                            <div x-show="hasPdf" x-ref="paper"
                                 class="relative mx-auto overflow-hidden bg-white shadow-lg"
                                 :style="paperStyle()"
                                 @pointermove.window="dragQr($event)"
@@ -197,8 +197,10 @@
         }
 
         function manualPdfSigner() {
+            let pdfDocument = null;
+
             return {
-                pdfDoc: null,
+                hasPdf: false,
                 pageCount: 0,
                 pageWidthMm: 210,
                 pageHeightMm: 297,
@@ -230,27 +232,29 @@
                     this.isLoading = true;
                     try {
                         const data = await file.arrayBuffer();
-                        this.pdfDoc = await window.pdfjsLib.getDocument({ data }).promise;
-                        this.pageCount = this.pdfDoc.numPages;
+                        pdfDocument = await window.pdfjsLib.getDocument({ data }).promise;
+                        this.hasPdf = true;
+                        this.pageCount = pdfDocument.numPages;
                         this.page = Math.min(Math.max(Number(this.page) || 1, 1), this.pageCount);
                         await new Promise((resolve) => this.$nextTick(resolve));
                         await this.renderPage();
                     } catch (error) {
                         console.error(error);
-                        this.pdfDoc = null;
+                        pdfDocument = null;
+                        this.hasPdf = false;
                         alert('Preview PDF gagal dibaca di browser. PDF tetap bisa diproses jika formatnya valid.');
                     } finally {
                         this.isLoading = false;
                     }
                 },
                 async renderPage() {
-                    if (!this.pdfDoc || !this.$refs.canvas || !this.$refs.previewWrap) return;
+                    if (!pdfDocument || !this.$refs.canvas || !this.$refs.previewWrap) return;
 
                     this.page = Math.min(Math.max(Number(this.page) || 1, 1), this.pageCount);
                     this.isLoading = true;
 
                     try {
-                        const pdfPage = await this.pdfDoc.getPage(this.page);
+                        const pdfPage = await pdfDocument.getPage(this.page);
                         const baseViewport = pdfPage.getViewport({ scale: 1 });
                         this.pageWidthMm = Number((baseViewport.width * 25.4 / 72).toFixed(2));
                         this.pageHeightMm = Number((baseViewport.height * 25.4 / 72).toFixed(2));
