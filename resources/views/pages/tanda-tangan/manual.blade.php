@@ -26,7 +26,7 @@
                 </div>
             @endunless
 
-            <div class="grid grid-cols-1 xl:grid-cols-[420px_1fr] gap-6" x-data="manualPdfSigner()">
+            <div class="grid grid-cols-1 xl:grid-cols-[420px_1fr] gap-6" x-data="manualPdfSigner()" x-init="init()">
                 <div class="space-y-6">
                     <form action="{{ route('tanda-tangan.manual.store') }}" method="POST" enctype="multipart/form-data" class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-5">
                         @csrf
@@ -51,12 +51,12 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-black uppercase tracking-widest text-gray-500 mb-2">Halaman QR</label>
-                                <input type="number" name="signed_page" min="1" x-model.number="page" value="{{ old('signed_page', 1) }}" required class="w-full rounded-xl border-gray-200 text-sm">
+                                <input type="number" name="signed_page" min="1" :max="pageCount || null" x-model.number="page" @change="renderPage()" value="{{ old('signed_page', 1) }}" required class="w-full rounded-xl border-gray-200 text-sm">
                                 @error('signed_page') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label class="block text-xs font-black uppercase tracking-widest text-gray-500 mb-2">Ukuran QR (mm)</label>
-                                <input type="number" name="qr_size_mm" min="18" max="60" step="1" x-model.number="size" value="{{ old('qr_size_mm', 28) }}" required class="w-full rounded-xl border-gray-200 text-sm">
+                                <input type="number" name="qr_size_mm" min="18" max="60" step="1" x-model.number="size" @input="clampPosition()" value="{{ old('qr_size_mm', 28) }}" required class="w-full rounded-xl border-gray-200 text-sm">
                                 @error('qr_size_mm') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                             </div>
                         </div>
@@ -90,7 +90,7 @@
 
                     <div class="rounded-2xl border border-blue-100 bg-blue-50 p-5 text-sm text-blue-900">
                         <p class="font-black">Panduan cepat</p>
-                        <p class="mt-1 leading-6">Gunakan preview di kanan untuk melihat dokumen. Atur halaman, posisi X/Y, dan ukuran QR. Setelah diproses, QR akan mengarah ke halaman verifikasi online resmi aplikasi.</p>
+                            <p class="mt-1 leading-6">Upload PDF, tunggu halaman tampil, lalu geser QR langsung di atas preview dokumen. Setelah diproses, QR akan mengarah ke halaman verifikasi online resmi aplikasi.</p>
                     </div>
                 </div>
 
@@ -98,26 +98,28 @@
                     <div class="mb-3 flex items-center justify-between">
                         <div>
                             <p class="text-sm font-black text-gray-900">Atur Posisi QR</p>
-                            <p class="text-xs text-gray-500">Geser QR pada lembar kerja. PDF asli tetap tampil di bawah sebagai referensi.</p>
+                            <p class="text-xs text-gray-500">Geser QR langsung di atas halaman PDF yang dirender.</p>
                         </div>
                         <div class="flex items-center gap-2">
                             <span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-600" x-text="'Hal. ' + page"></span>
                             <button type="button" @click="centerQr()" class="rounded-full bg-indigo-50 px-3 py-1 text-xs font-black text-indigo-700 hover:bg-indigo-100">Tengah</button>
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 2xl:grid-cols-[minmax(360px,520px)_1fr] gap-4">
-                        <div class="rounded-xl border border-gray-200 bg-slate-100 p-4">
-                            <div x-ref="paper"
-                                class="relative mx-auto aspect-[210/297] max-h-[740px] w-full max-w-[520px] overflow-hidden rounded-sm bg-white shadow-inner"
+                    <div class="rounded-xl border border-gray-200 bg-slate-100 p-4">
+                        <div x-ref="previewWrap" class="relative mx-auto min-h-[520px] overflow-auto rounded-lg bg-slate-200 p-4">
+                            <div x-show="isLoading" class="absolute inset-0 z-20 grid place-items-center bg-white/80 text-sm font-bold text-gray-600">
+                                Memuat preview PDF...
+                            </div>
+                            <div x-show="!pdfDoc" class="grid min-h-[520px] place-items-center text-center text-sm font-semibold text-gray-400">
+                                Pilih file PDF untuk melihat dan mengatur posisi QR.
+                            </div>
+                            <div x-show="pdfDoc" x-ref="paper"
+                                class="relative mx-auto overflow-hidden bg-white shadow-lg"
+                                :style="paperStyle()"
                                 @pointermove.window="dragQr($event)"
                                 @pointerup.window="stopDrag()"
                                 @pointercancel.window="stopDrag()">
-                                <div class="absolute inset-0 opacity-[0.05]" style="background-image: linear-gradient(#111 1px, transparent 1px), linear-gradient(90deg, #111 1px, transparent 1px); background-size: 20px 20px;"></div>
-                                <div class="absolute left-0 top-0 h-4 w-4 border-l-2 border-t-2 border-gray-500"></div>
-                                <div class="absolute right-0 top-0 h-4 w-4 border-r-2 border-t-2 border-gray-500"></div>
-                                <div class="absolute bottom-0 left-0 h-4 w-4 border-b-2 border-l-2 border-gray-500"></div>
-                                <div class="absolute bottom-0 right-0 h-4 w-4 border-b-2 border-r-2 border-gray-500"></div>
-
+                                <canvas x-ref="canvas" class="block h-full w-full"></canvas>
                                 <button type="button"
                                     class="absolute touch-none select-none rounded-md border-2 border-indigo-600 bg-white p-1 shadow-lg cursor-move"
                                     :style="markerStyle()"
@@ -125,21 +127,11 @@
                                     <img src="{{ $previewQrBase64 }}" alt="Preview QR Digital" class="h-full w-full object-contain">
                                 </button>
                             </div>
-                            <div class="mt-3 grid grid-cols-3 gap-2 text-center text-xs font-bold text-gray-600">
-                                <div class="rounded-lg bg-white px-2 py-2">X <span x-text="x"></span>mm</div>
-                                <div class="rounded-lg bg-white px-2 py-2">Y <span x-text="y"></span>mm</div>
-                                <div class="rounded-lg bg-white px-2 py-2">QR <span x-text="size"></span>mm</div>
-                            </div>
                         </div>
-                        <div class="relative h-[740px] overflow-hidden rounded-xl bg-gray-100">
-                        <template x-if="pdfUrl">
-                            <iframe :src="pdfUrl + '#page=' + page" class="h-full w-full border-0"></iframe>
-                        </template>
-                        <template x-if="!pdfUrl">
-                            <div class="flex h-full items-center justify-center text-center text-sm font-semibold text-gray-400">
-                                Pilih file PDF untuk melihat preview.
-                            </div>
-                        </template>
+                        <div class="mt-3 grid grid-cols-3 gap-2 text-center text-xs font-bold text-gray-600">
+                            <div class="rounded-lg bg-gray-50 px-2 py-2">X <span x-text="x"></span>mm</div>
+                            <div class="rounded-lg bg-gray-50 px-2 py-2">Y <span x-text="y"></span>mm</div>
+                            <div class="rounded-lg bg-gray-50 px-2 py-2">QR <span x-text="size"></span>mm</div>
                         </div>
                     </div>
                 </div>
@@ -198,10 +190,21 @@
         </div>
     </div>
 
+    <script src="{{ asset('vendor/pdfjs/pdf.min.js') }}"></script>
     <script>
+        if (window.pdfjsLib) {
+            window.pdfjsLib.GlobalWorkerOptions.workerSrc = @js(asset('vendor/pdfjs/pdf.worker.min.js'));
+        }
+
         function manualPdfSigner() {
             return {
-                pdfUrl: null,
+                pdfDoc: null,
+                pageCount: 0,
+                pageWidthMm: 210,
+                pageHeightMm: 297,
+                canvasWidth: 0,
+                canvasHeight: 0,
+                isLoading: false,
                 page: Number(@js(old('signed_page', 1))),
                 x: Number(@js(old('qr_x_mm', 15))),
                 y: Number(@js(old('qr_y_mm', 15))),
@@ -209,19 +212,73 @@
                 dragging: false,
                 dragOffsetX: 0,
                 dragOffsetY: 0,
+                init() {
+                    this.$watch('size', () => this.clampPosition());
+                    this.$watch('page', () => this.renderPage());
+                },
                 loadPdf(event) {
                     const file = event.target.files?.[0];
                     if (!file) return;
-                    if (this.pdfUrl) URL.revokeObjectURL(this.pdfUrl);
-                    this.pdfUrl = URL.createObjectURL(file);
+                    this.openPdf(file);
+                },
+                async openPdf(file) {
+                    if (!window.pdfjsLib) {
+                        alert('Library preview PDF belum termuat. Coba refresh halaman.');
+                        return;
+                    }
+
+                    this.isLoading = true;
+                    try {
+                        const data = await file.arrayBuffer();
+                        this.pdfDoc = await window.pdfjsLib.getDocument({ data }).promise;
+                        this.pageCount = this.pdfDoc.numPages;
+                        this.page = Math.min(Math.max(Number(this.page) || 1, 1), this.pageCount);
+                        await new Promise((resolve) => this.$nextTick(resolve));
+                        await this.renderPage();
+                    } catch (error) {
+                        console.error(error);
+                        this.pdfDoc = null;
+                        alert('Preview PDF gagal dibaca di browser. PDF tetap bisa diproses jika formatnya valid.');
+                    } finally {
+                        this.isLoading = false;
+                    }
+                },
+                async renderPage() {
+                    if (!this.pdfDoc || !this.$refs.canvas || !this.$refs.previewWrap) return;
+
+                    this.page = Math.min(Math.max(Number(this.page) || 1, 1), this.pageCount);
+                    this.isLoading = true;
+
+                    try {
+                        const pdfPage = await this.pdfDoc.getPage(this.page);
+                        const baseViewport = pdfPage.getViewport({ scale: 1 });
+                        this.pageWidthMm = Number((baseViewport.width * 25.4 / 72).toFixed(2));
+                        this.pageHeightMm = Number((baseViewport.height * 25.4 / 72).toFixed(2));
+
+                        const maxWidth = Math.max(this.$refs.previewWrap.clientWidth - 32, 320);
+                        const scale = Math.min(maxWidth / baseViewport.width, 1.75);
+                        const viewport = pdfPage.getViewport({ scale });
+                        const canvas = this.$refs.canvas;
+                        const context = canvas.getContext('2d');
+
+                        canvas.width = Math.floor(viewport.width);
+                        canvas.height = Math.floor(viewport.height);
+                        this.canvasWidth = canvas.width;
+                        this.canvasHeight = canvas.height;
+
+                        await pdfPage.render({ canvasContext: context, viewport }).promise;
+                        this.clampPosition();
+                    } finally {
+                        this.isLoading = false;
+                    }
                 },
                 centerQr() {
-                    this.x = Math.round((210 - this.size) / 2);
-                    this.y = Math.round((297 - this.size) / 2);
+                    this.x = Math.round((this.pageWidthMm - this.size) / 2);
+                    this.y = Math.round((this.pageHeightMm - this.size) / 2);
                 },
                 clampPosition() {
-                    this.x = Math.round(Math.min(Math.max(Number(this.x) || 0, 0), Math.max(210 - this.size, 0)));
-                    this.y = Math.round(Math.min(Math.max(Number(this.y) || 0, 0), Math.max(297 - this.size, 0)));
+                    this.x = Math.round(Math.min(Math.max(Number(this.x) || 0, 0), Math.max(this.pageWidthMm - this.size, 0)));
+                    this.y = Math.round(Math.min(Math.max(Number(this.y) || 0, 0), Math.max(this.pageHeightMm - this.size, 0)));
                 },
                 startDrag(event) {
                     const marker = event.currentTarget.getBoundingClientRect();
@@ -234,20 +291,24 @@
                     if (!this.dragging || !this.$refs.paper) return;
 
                     const paper = this.$refs.paper.getBoundingClientRect();
-                    const markerWidth = paper.width * (this.size / 210);
-                    const markerHeight = paper.height * (this.size / 297);
+                    const markerWidth = paper.width * (this.size / this.pageWidthMm);
+                    const markerHeight = paper.height * (this.size / this.pageHeightMm);
                     const left = Math.min(Math.max(event.clientX - paper.left - this.dragOffsetX, 0), Math.max(paper.width - markerWidth, 0));
                     const top = Math.min(Math.max(event.clientY - paper.top - this.dragOffsetY, 0), Math.max(paper.height - markerHeight, 0));
 
-                    this.x = Math.round((left / paper.width) * 210);
-                    this.y = Math.round((top / paper.height) * 297);
+                    this.x = Math.round((left / paper.width) * this.pageWidthMm);
+                    this.y = Math.round((top / paper.height) * this.pageHeightMm);
                 },
                 stopDrag() {
                     this.dragging = false;
                 },
+                paperStyle() {
+                    if (!this.canvasWidth || !this.canvasHeight) return '';
+                    return `width:${this.canvasWidth}px;height:${this.canvasHeight}px;`;
+                },
                 markerStyle() {
-                    const scaleX = 100 / 210;
-                    const scaleY = 100 / 297;
+                    const scaleX = 100 / this.pageWidthMm;
+                    const scaleY = 100 / this.pageHeightMm;
                     return `left:${this.x * scaleX}%;top:${this.y * scaleY}%;width:${this.size * scaleX}%;height:${this.size * scaleY}%;`;
                 },
             }
