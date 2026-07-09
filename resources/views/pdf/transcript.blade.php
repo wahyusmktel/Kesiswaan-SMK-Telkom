@@ -17,8 +17,8 @@
             margin: 0;
             font-family: Calibri, "DejaVu Sans", Arial, sans-serif;
             color: #111;
-            font-size: 9.3pt;
-            line-height: 1.08;
+            font-size: 8.65pt;
+            line-height: 1.03;
         }
 
         .page {
@@ -71,18 +71,18 @@
 
         .title {
             text-align: center;
-            margin: 0 0 2.2mm;
+            margin: 0 0 1.6mm;
         }
 
         .title h1 {
             margin-top: -12px;
-            font-size: 12pt;
-            letter-spacing: .5px;
+            font-size: 11.2pt;
+            letter-spacing: .35px;
         }
 
         .title p {
             margin-top: -10px;
-            font-size: 9.4pt;
+            font-size: 8.7pt;
         }
 
         table {
@@ -91,7 +91,7 @@
         }
 
         .identity td {
-            padding: .55mm 0;
+            padding: .35mm 0;
             vertical-align: top;
         }
 
@@ -104,14 +104,14 @@
         }
 
         .grade-table {
-            margin-top: 2.4mm;
-            font-size: 8.55pt;
+            margin-top: 1.7mm;
+            font-size: 7.85pt;
         }
 
         .grade-table th,
         .grade-table td {
             border: 1px solid #111;
-            padding: .82mm 1.25mm;
+            padding: .48mm .95mm;
             vertical-align: middle;
         }
 
@@ -119,8 +119,8 @@
             text-align: center;
             font-weight: bold;
             background: #f2f2f2;
-            padding-top: 4.0mm;
-            padding-bottom: 4.0mm;
+            padding-top: 2.4mm;
+            padding-bottom: 2.4mm;
         }
 
         .grade-table .no {
@@ -150,8 +150,8 @@
 
         .sign-row {
             width: 100%;
-            margin-top: 4.5mm;
-            font-size: 9.1pt;
+            margin-top: 2.8mm;
+            font-size: 8.25pt;
         }
 
         .sign-left,
@@ -179,21 +179,21 @@
         }
 
         .signature-space {
-            height: 19mm;
+            height: 13mm;
         }
 
         .digital-signature-qr {
             display: inline-block;
             width: 24mm;
             text-align: center;
-            font-size: 6.4pt;
-            line-height: 1.08;
+            font-size: 5.9pt;
+            line-height: 1.02;
         }
 
         .digital-signature-qr img {
             display: block;
-            width: 22mm;
-            height: 22mm;
+            width: 19mm;
+            height: 19mm;
             margin: 0 auto .8mm;
         }
 
