@@ -7,6 +7,7 @@ use App\Models\DigitalDocument;
 use App\Models\MasterSiswa;
 use App\Models\Rombel;
 use App\Models\TranscriptConfig;
+use App\Models\TranscriptNumber;
 use App\Models\TranscriptSubject;
 use App\Models\UserDigitalSignature;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -125,18 +126,59 @@ class TranscriptPrintController extends Controller
         $start = $config->number_start ?: '400.3.11/800.01';
         $suffix = $config->number_suffix ?: '/SMKTEL-LPG/KURL.03/V/2026';
         $parsed = $this->parseRunningNumber($start);
-
-        $orderedIds = $this->finalStudentsOrder()->pluck('id')->values();
-        $targetIds = $students->pluck('id')->all();
         $numbers = [];
+        $orderedIds = $this->finalStudentsOrder()->pluck('id')->values();
+        $nextNumber = $this->nextAvailableTranscriptSequence($parsed);
 
-        foreach ($targetIds as $studentId) {
-            $position = $orderedIds->search($studentId);
-            $offset = $position === false ? 0 : $position;
-            $numbers[$studentId] = $parsed['prefix'] . str_pad((string) ($parsed['number'] + $offset), $parsed['width'], '0', STR_PAD_LEFT) . $suffix;
-        }
+        DB::transaction(function () use ($students, $parsed, $suffix, $orderedIds, &$nextNumber, &$numbers) {
+            foreach ($students->sortBy(fn ($student) => $orderedIds->search($student->id) === false ? PHP_INT_MAX : $orderedIds->search($student->id)) as $student) {
+                $record = TranscriptNumber::where('master_siswa_id', $student->id)->lockForUpdate()->first();
+
+                if (! $record) {
+                    $number = $this->formatTranscriptNumber($parsed, $nextNumber, $suffix);
+
+                    while (TranscriptNumber::where('number', $number)->exists()) {
+                        $nextNumber++;
+                        $number = $this->formatTranscriptNumber($parsed, $nextNumber, $suffix);
+                    }
+
+                    $record = TranscriptNumber::create([
+                        'master_siswa_id' => $student->id,
+                        'number' => $number,
+                        'locked_at' => now(),
+                    ]);
+
+                    $nextNumber++;
+                }
+
+                $numbers[$student->id] = $record->number;
+            }
+        });
 
         return $numbers;
+    }
+
+    private function nextAvailableTranscriptSequence(array $parsed): int
+    {
+        $max = TranscriptNumber::where('number', 'like', $parsed['prefix'] . '%')
+            ->pluck('number')
+            ->map(fn ($number) => $this->extractTranscriptSequence($number, $parsed))
+            ->filter()
+            ->max();
+
+        return max($parsed['number'], $max ? $max + 1 : $parsed['number']);
+    }
+
+    private function extractTranscriptSequence(string $number, array $parsed): ?int
+    {
+        $pattern = '/^' . preg_quote($parsed['prefix'], '/') . '(\d+)/';
+
+        return preg_match($pattern, $number, $matches) ? (int) $matches[1] : null;
+    }
+
+    private function formatTranscriptNumber(array $parsed, int $number, string $suffix): string
+    {
+        return $parsed['prefix'] . str_pad((string) $number, $parsed['width'], '0', STR_PAD_LEFT) . $suffix;
     }
 
     private function transcriptQrCodes(Collection $students, Collection $subjects, TranscriptConfig $config, array $transcriptNumbers): array

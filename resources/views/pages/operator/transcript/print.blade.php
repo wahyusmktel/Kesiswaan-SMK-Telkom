@@ -13,7 +13,7 @@
                     <div>
                         <div class="mb-2 inline-flex rounded-full bg-red-50 px-3 py-1 text-xs font-black uppercase tracking-widest text-red-700">PDF Transkrip</div>
                         <h3 class="text-2xl font-black text-slate-900">Pilih Kelas Tingkat Akhir</h3>
-                        <p class="mt-1 max-w-2xl text-sm text-slate-500">Setelah kelas dipilih, Anda bisa mencetak satu siswa atau seluruh siswa dalam kelas tersebut.</p>
+                        <p class="mt-1 max-w-2xl text-sm text-slate-500">Setelah kelas dipilih, Anda bisa mencetak satu siswa atau seluruh siswa dalam kelas tersebut. Nomor transkrip dikunci saat cetak pertama agar tidak berubah dan tidak dipakai siswa lain.</p>
                     </div>
                     <form class="flex flex-col gap-2 sm:flex-row">
                         <select name="rombel_id" class="min-w-[280px] rounded-2xl border-slate-200 text-sm" required>
