@@ -150,7 +150,7 @@
 
         .sign-row {
             width: 100%;
-            margin-top: 9mm;
+            margin-top: 13mm;
             font-size: 8.65pt;
         }
 
