@@ -10,6 +10,7 @@ class DapodikSiswa extends Model
 
     protected $fillable = [
         'master_siswa_id',
+        'nama',
         // Data Pribadi
         'nipd', 'nisn', 'nik', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin', 'agama',
         // Alamat

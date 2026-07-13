@@ -964,7 +964,7 @@
     @canany(['manage kelas', 'manage siswa', 'manage rombel'])
         <li class="submenu-dropdown"
             x-data="{ 
-                                                                                                                                                expanded: {{ request()->routeIs(['master-data.kelas.*', 'master-data.siswa.*', 'master-data.rombel.*', 'master-data.alumni.*']) ? 'true' : 'false' }},
+                                                                                                                                                expanded: {{ request()->routeIs(['master-data.kelas.*', 'master-data.siswa.*', 'master-data.rombel.*', 'master-data.alumni.*', 'master-data.student-registration.*']) ? 'true' : 'false' }},
                                                                                                                                                 flyoutTop: 0,
                                                                                                                                                 updateFlyoutPosition() {
                                                                                                                                                     const rect = this.$el.querySelector('button').getBoundingClientRect();
@@ -973,7 +973,7 @@
                                                                                                                                             }"
             @mouseenter="updateFlyoutPosition()">
             <button @click="expanded = !expanded"
-                class="nav-link w-full {{ request()->routeIs(['master-data.kelas.*', 'master-data.siswa.*', 'master-data.rombel.*', 'master-data.alumni.*']) ? 'nav-link-active' : 'nav-link-inactive' }}">
+                class="nav-link w-full {{ request()->routeIs(['master-data.kelas.*', 'master-data.siswa.*', 'master-data.rombel.*', 'master-data.alumni.*', 'master-data.student-registration.*']) ? 'nav-link-active' : 'nav-link-inactive' }}">
                 <div class="flex items-center">
                     <div class="nav-icon-container">
                         <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1006,6 +1006,11 @@
                         Data Siswa
                     </a>
                 @endcan
+                <a href="{{ route('master-data.student-registration.index') }}"
+                    class="submenu-item {{ request()->routeIs('master-data.student-registration.*') ? 'submenu-item-active' : '' }}">
+                    <span class="submenu-dot"></span>
+                    Registrasi Siswa Baru
+                </a>
                 @can('manage rombel')
                     <a href="{{ route('master-data.rombel.index') }}"
                         class="submenu-item {{ request()->routeIs('master-data.rombel.*') ? 'submenu-item-active' : '' }}">
@@ -1035,6 +1040,10 @@
                         Data Siswa
                     </a>
                 @endcan
+                <a href="{{ route('master-data.student-registration.index') }}"
+                    class="submenu-item {{ request()->routeIs('master-data.student-registration.*') ? 'submenu-item-active' : '' }}">
+                    Registrasi Siswa Baru
+                </a>
                 @can('manage rombel')
                     <a href="{{ route('master-data.rombel.index') }}"
                         class="submenu-item {{ request()->routeIs('master-data.rombel.*') ? 'submenu-item-active' : '' }}">
@@ -2371,7 +2380,7 @@
         @can('view master data')
             <li class="submenu-dropdown"
                 x-data="{ 
-                                                                                                                                                                    expanded: {{ request()->routeIs(['master-data.kelas.*', 'master-data.siswa.*', 'master-data.rombel.*', 'master-data.alumni.*']) ? 'true' : 'false' }},
+                                                                                                                                                                    expanded: {{ request()->routeIs(['master-data.kelas.*', 'master-data.siswa.*', 'master-data.rombel.*', 'master-data.alumni.*', 'master-data.student-registration.*']) ? 'true' : 'false' }},
                                                                                                                                                                     flyoutTop: 0,
                                                                                                                                                                     updateFlyoutPosition() {
                                                                                                                                                                         const rect = this.$el.querySelector('button').getBoundingClientRect();
@@ -2380,7 +2389,7 @@
                                                                                                                                                                 }"
                 @mouseenter="updateFlyoutPosition()">
                 <button @click="expanded = !expanded"
-                    class="nav-link w-full {{ request()->routeIs(['master-data.kelas.*', 'master-data.siswa.*', 'master-data.rombel.*', 'master-data.alumni.*']) ? 'nav-link-active' : 'nav-link-inactive' }}">
+                    class="nav-link w-full {{ request()->routeIs(['master-data.kelas.*', 'master-data.siswa.*', 'master-data.rombel.*', 'master-data.alumni.*', 'master-data.student-registration.*']) ? 'nav-link-active' : 'nav-link-inactive' }}">
                     <div class="flex items-center">
                         <div class="nav-icon-container">
                             <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2413,6 +2422,11 @@
                             Data Siswa
                         </a>
                     @endcan
+                    <a href="{{ route('master-data.student-registration.index') }}"
+                        class="submenu-item {{ request()->routeIs('master-data.student-registration.*') ? 'submenu-item-active' : '' }}">
+                        <span class="submenu-dot"></span>
+                        Registrasi Siswa Baru
+                    </a>
                     @can('manage rombel')
                         <a href="{{ route('master-data.rombel.index') }}"
                             class="submenu-item {{ request()->routeIs('master-data.rombel.*') ? 'submenu-item-active' : '' }}">
@@ -2442,6 +2456,10 @@
                             Data Siswa
                         </a>
                     @endcan
+                    <a href="{{ route('master-data.student-registration.index') }}"
+                        class="submenu-item {{ request()->routeIs('master-data.student-registration.*') ? 'submenu-item-active' : '' }}">
+                        Registrasi Siswa Baru
+                    </a>
                     @can('manage rombel')
                         <a href="{{ route('master-data.rombel.index') }}"
                             class="submenu-item {{ request()->routeIs('master-data.rombel.*') ? 'submenu-item-active' : '' }}">

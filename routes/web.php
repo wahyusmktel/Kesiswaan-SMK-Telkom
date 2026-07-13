@@ -12,6 +12,8 @@ use App\Http\Controllers\MasterData\MasterSiswaController;
 use App\Http\Controllers\MasterData\RombelController;
 use App\Http\Controllers\MasterData\AlumniController;
 use App\Http\Controllers\MasterData\ClassPromotionController;
+use App\Http\Controllers\MasterData\StudentRegistrationController;
+use App\Http\Controllers\PublicStudentRegistrationController;
 use App\Http\Controllers\Kesiswaan\MonitoringIzinController;
 use App\Http\Controllers\Kesiswaan\DashboardController;
 use App\Http\Controllers\Kesiswaan\AnalisaKeterlambatanController;
@@ -80,6 +82,15 @@ Route::get('auth/sso/callback', [SsoLoginController::class, 'callback'])->name('
 
 Route::get('/verifikasi/surat/{uuid}', [VerifikasiController::class, 'show'])->name('verifikasi.surat');
 Route::get('/verifikasi/kartu/{nis}', [VerifikasiController::class, 'kartuPelajar'])->name('verifikasi.kartu');
+
+Route::get('/registrasi-siswa-baru', [PublicStudentRegistrationController::class, 'create'])
+    ->name('student-registration.create');
+Route::post('/registrasi-siswa-baru', [PublicStudentRegistrationController::class, 'store'])
+    ->middleware('throttle:10,1')
+    ->name('student-registration.store');
+Route::get('/registrasi-siswa-baru/status/{token}', [PublicStudentRegistrationController::class, 'status'])
+    ->middleware('throttle:30,1')
+    ->name('student-registration.status');
 
 // Legal Pages
 Route::get('/privacy', function () {
@@ -340,6 +351,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('alumni', [AlumniController::class, 'index'])->name('alumni.index');
             Route::put('alumni/{alumnus}', [AlumniController::class, 'update'])->name('alumni.update');
             Route::patch('alumni/{alumnus}/reactivate', [AlumniController::class, 'reactivate'])->name('alumni.reactivate');
+
+            Route::get('registrasi-siswa-baru', [StudentRegistrationController::class, 'index'])->name('student-registration.index');
+            Route::post('registrasi-siswa-baru', [StudentRegistrationController::class, 'store'])->name('student-registration.store');
+            Route::patch('registrasi-siswa-baru/{registration}/approve', [StudentRegistrationController::class, 'approve'])->name('student-registration.approve');
+            Route::patch('registrasi-siswa-baru/{registration}/reject', [StudentRegistrationController::class, 'reject'])->name('student-registration.reject');
+            Route::get('registrasi-siswa-baru/dapodik/search', [StudentRegistrationController::class, 'searchDapodik'])->name('student-registration.dapodik.search');
+            Route::post('registrasi-siswa-baru/{registration}/map', [StudentRegistrationController::class, 'map'])->name('student-registration.map');
         });
 
         // Route Tahun Pelajaran

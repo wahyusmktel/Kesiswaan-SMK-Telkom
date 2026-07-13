@@ -82,6 +82,9 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-semibold text-gray-900">{{ $item->nama_lengkap }}</div>
+                                        @if (!$item->is_data_verified)
+                                            <span class="mt-1 inline-flex rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-700">Data Sementara</span>
+                                        @endif
                                         <div class="text-xs text-gray-500">
                                             {{ \Carbon\Carbon::parse($item->tanggal_lahir)->translatedFormat('d F Y') }}
                                         </div>

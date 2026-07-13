@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\DapodikSiswa;
 use App\Models\DapodikSyncHistory;
 use App\Models\MasterSiswa;
+use App\Models\StudentRegistration;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -23,6 +24,7 @@ class DapodikManagementController extends Controller
             ->when($search, function ($query) use ($search) {
                 $query->where('nipd', 'like', "%{$search}%")
                     ->orWhere('nisn', 'like', "%{$search}%")
+                    ->orWhere('nama', 'like', "%{$search}%")
                     ->orWhereHas('masterSiswa', function ($q) use ($search) {
                         $q->where('nama_lengkap', 'like', "%{$search}%")
                             ->orWhere('nis', 'like', "%{$search}%");
@@ -85,32 +87,23 @@ class DapodikManagementController extends Controller
                         throw new \Exception('Nama tidak boleh kosong');
                     }
                     
-                    // Find master_siswa by NIS (NIPD in Dapodik)
+                    // Hubungkan hanya jika NIPD sudah dikenal. Data baru ditahan sebagai
+                    // data Dapodik belum terhubung agar dapat dipetakan ke siswa sementara.
                     $masterSiswa = MasterSiswa::where('nis', $row['nipd'])->first();
-                    
-                    if (!$masterSiswa) {
-                        // Create new master_siswa
-                        $masterSiswa = MasterSiswa::create([
-                            'nis' => $row['nipd'],
-                            'nama_lengkap' => $row['nama'] ?? '',
-                            'jenis_kelamin' => $row['jk'] ?? 'L',
-                            'tempat_lahir' => $row['tempat_lahir'] ?? null,
-                            'tanggal_lahir' => $this->parseDate($row['tanggal_lahir'] ?? null),
-                            'alamat' => $row['alamat'] ?? null,
-                        ]);
-                        $inserted++;
+
+                    $dapodik = DapodikSiswa::where('nipd', $row['nipd'])->first() ?? new DapodikSiswa();
+                    $isNewDapodik = !$dapodik->exists;
+                    $dapodik->fill($this->mapRowToDapodik($row) + ['nama' => $row['nama']]);
+                    $dapodik->master_siswa_id = $masterSiswa?->id;
+                    $dapodik->save();
+
+                    if ($masterSiswa) {
+                        $masterSiswa->update(['last_synced_at' => now()]);
                     }
-                    
-                    // Update or create Dapodik data
-                    DapodikSiswa::updateOrCreate(
-                        ['master_siswa_id' => $masterSiswa->id],
-                        $this->mapRowToDapodik($row)
-                    );
-                    
-                    // Update last_synced_at
-                    $masterSiswa->update(['last_synced_at' => now()]);
-                    
-                    if (!$inserted || $masterSiswa->wasRecentlyCreated === false) {
+
+                    if ($isNewDapodik) {
+                        $inserted++;
+                    } else {
                         $updated++;
                     }
                     
@@ -187,6 +180,7 @@ class DapodikManagementController extends Controller
             $inserted = 0;
             $updated = 0;
             $failed = 0;
+            $awaitingMapping = 0;
             
             DB::beginTransaction();
             
@@ -201,11 +195,13 @@ class DapodikManagementController extends Controller
                     if ($masterSiswa) {
                         // Update existing master_siswa with dapodik data
                         $masterSiswa->update([
-                            'nama_lengkap' => $dapodik->masterSiswa->nama_lengkap ?? $masterSiswa->nama_lengkap,
+                            'nama_lengkap' => $dapodik->nama ?? $masterSiswa->nama_lengkap,
                             'jenis_kelamin' => $dapodik->jenis_kelamin ?? $masterSiswa->jenis_kelamin,
                             'tempat_lahir' => $dapodik->tempat_lahir ?? $masterSiswa->tempat_lahir,
                             'tanggal_lahir' => $dapodik->tanggal_lahir ?? $masterSiswa->tanggal_lahir,
                             'alamat' => $dapodik->alamat ?? $masterSiswa->alamat,
+                            'data_source' => 'dapodik',
+                            'is_data_verified' => true,
                             'last_synced_at' => now(),
                         ]);
 
@@ -223,14 +219,32 @@ class DapodikManagementController extends Controller
                         
                         $updated++;
                     } else {
+                        $hasProvisionalCandidate = StudentRegistration::where('status', 'approved')
+                            ->where(function ($query) use ($dapodik) {
+                                if ($dapodik->nisn) {
+                                    $query->where('nisn', $dapodik->nisn);
+                                } else {
+                                    $query->where('nama_lengkap', $dapodik->nama)
+                                        ->whereDate('tanggal_lahir', $dapodik->tanggal_lahir);
+                                }
+                            })
+                            ->exists();
+
+                        if ($hasProvisionalCandidate) {
+                            $awaitingMapping++;
+                            continue;
+                        }
+
                         // Create new master_siswa from dapodik data
                         $newMasterSiswa = MasterSiswa::create([
                             'nis' => $dapodik->nipd,
-                            'nama_lengkap' => $dapodik->masterSiswa->nama_lengkap ?? 'Nama Belum Diisi',
+                            'nama_lengkap' => $dapodik->nama ?? 'Nama Belum Diisi',
                             'jenis_kelamin' => $dapodik->jenis_kelamin ?? 'L',
                             'tempat_lahir' => $dapodik->tempat_lahir,
                             'tanggal_lahir' => $dapodik->tanggal_lahir,
                             'alamat' => $dapodik->alamat,
+                            'data_source' => 'dapodik',
+                            'is_data_verified' => true,
                             'last_synced_at' => now(),
                         ]);
                         
@@ -251,13 +265,13 @@ class DapodikManagementController extends Controller
                 'inserted_count' => $inserted,
                 'updated_count' => $updated,
                 'failed_count' => $failed,
-                'notes' => 'Sinkronisasi manual',
+                'notes' => "Sinkronisasi manual; {$awaitingMapping} menunggu pemetaan registrasi sementara",
             ]);
             
             DB::commit();
             
             return redirect()->back()
-                ->with('success', "Sinkronisasi berhasil! {$inserted} data baru, {$updated} data diperbarui, {$failed} gagal.");
+                ->with('success', "Sinkronisasi berhasil! {$inserted} data baru, {$updated} data diperbarui, {$awaitingMapping} menunggu pemetaan, {$failed} gagal.");
                 
         } catch (\Exception $e) {
             DB::rollBack();

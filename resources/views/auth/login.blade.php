@@ -517,6 +517,10 @@
                         Daftar sekarang
                     </a>
                 </p>
+                <a href="{{ route('student-registration.create') }}"
+                    class="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-bold text-red-700 transition-colors hover:bg-red-100">
+                    Registrasi Siswa Baru
+                </a>
             </div>
 
             <!-- Mobile Logo -->

@@ -20,6 +20,8 @@ class MasterSiswa extends Model
         'user_id',
         'last_synced_at',
         'status',
+        'data_source',
+        'is_data_verified',
         'graduated_at',
         'graduation_tahun_pelajaran_id',
         'graduation_notes',
@@ -29,6 +31,7 @@ class MasterSiswa extends Model
         'tanggal_lahir' => 'date',
         'last_synced_at' => 'datetime',
         'graduated_at' => 'date',
+        'is_data_verified' => 'boolean',
     ];
 
     // Relasi dari MasterSiswa ke akun loginnya
@@ -45,6 +48,11 @@ class MasterSiswa extends Model
     public function graduationTahunPelajaran()
     {
         return $this->belongsTo(TahunPelajaran::class, 'graduation_tahun_pelajaran_id');
+    }
+
+    public function studentRegistration()
+    {
+        return $this->hasOne(StudentRegistration::class);
     }
 
     public function scopeActive($query)

@@ -165,7 +165,7 @@
                                         <tr class="bg-white hover:bg-gray-50">
                                             <td class="px-6 py-4 font-mono text-gray-900">{{ $item->nipd ?? '-' }}</td>
                                             <td class="px-6 py-4">
-                                                <div class="font-medium text-gray-900">{{ $item->masterSiswa?->nama_lengkap ?? '-' }}</div>
+                                                <div class="font-medium text-gray-900">{{ $item->masterSiswa?->nama_lengkap ?? $item->nama ?? '-' }}</div>
                                                 <div class="text-xs text-gray-500">{{ $item->agama ?? '' }}</div>
                                             </td>
                                             <td class="px-6 py-4 text-gray-600">{{ $item->nisn ?? '-' }}</td>
