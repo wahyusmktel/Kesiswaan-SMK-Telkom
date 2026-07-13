@@ -38,7 +38,7 @@ class DapodikManagementController extends Controller
         
         $stats = [
             'total_dapodik' => DapodikSiswa::count(),
-            'total_siswa' => MasterSiswa::count(),
+            'total_siswa' => MasterSiswa::active()->count(),
             'synced_today' => DapodikSyncHistory::whereDate('created_at', today())->count(),
         ];
         

@@ -149,6 +149,7 @@ class RombelController extends Controller
         $currentTahunId = $rombel->tahun_pelajaran_id;
 
         $siswaTersedia = MasterSiswa::with('dapodik')
+            ->active()
             ->whereNotIn('id', function ($query) use ($currentTahunId) {
                 $query->select('master_siswa_id')
                     ->from('rombel_siswa')
@@ -174,7 +175,14 @@ class RombelController extends Controller
     {
         $request->validate([
             'siswa_ids' => 'required|array',
-            'siswa_ids.*' => 'exists:master_siswa,id',
+            'siswa_ids.*' => [
+                'exists:master_siswa,id',
+                function ($attribute, $value, $fail) {
+                    if (!MasterSiswa::active()->whereKey($value)->exists()) {
+                        $fail('Siswa alumni tidak dapat dimasukkan ke rombel aktif.');
+                    }
+                },
+            ],
         ]);
 
         try {

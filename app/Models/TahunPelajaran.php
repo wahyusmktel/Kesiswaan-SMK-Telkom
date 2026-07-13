@@ -17,4 +17,9 @@ class TahunPelajaran extends Model
     protected $casts = [
         'is_active' => 'boolean',
     ];
+
+    public function graduatedStudents()
+    {
+        return $this->hasMany(MasterSiswa::class, 'graduation_tahun_pelajaran_id');
+    }
 }

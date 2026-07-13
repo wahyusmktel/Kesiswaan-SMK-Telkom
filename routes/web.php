@@ -10,6 +10,8 @@ use App\Http\Controllers\WaliKelas\PerizinanController as WaliKelasPerizinanCont
 use App\Http\Controllers\KelasController;
 use App\Http\Controllers\MasterData\MasterSiswaController;
 use App\Http\Controllers\MasterData\RombelController;
+use App\Http\Controllers\MasterData\AlumniController;
+use App\Http\Controllers\MasterData\ClassPromotionController;
 use App\Http\Controllers\Kesiswaan\MonitoringIzinController;
 use App\Http\Controllers\Kesiswaan\DashboardController;
 use App\Http\Controllers\Kesiswaan\AnalisaKeterlambatanController;
@@ -329,8 +331,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::post('rombel/{rombel}/add-siswa', [RombelController::class, 'addSiswa'])->name('rombel.add-siswa');
         Route::delete('rombel/{rombel}/remove-siswa/{siswa}', [RombelController::class, 'removeSiswa'])->name('rombel.remove-siswa');
+        Route::get('rombel-kenaikan-kelas', [ClassPromotionController::class, 'index'])->name('rombel.promotion.index');
+        Route::post('rombel-kenaikan-kelas', [ClassPromotionController::class, 'store'])->name('rombel.promotion.store');
         Route::resource('rombel', RombelController::class)->middleware('permission:manage rombel');
         Route::post('/siswa/import', [MasterSiswaController::class, 'import'])->name('siswa.import');
+
+        Route::middleware('role:Waka Kesiswaan|Operator')->group(function () {
+            Route::get('alumni', [AlumniController::class, 'index'])->name('alumni.index');
+            Route::put('alumni/{alumnus}', [AlumniController::class, 'update'])->name('alumni.update');
+            Route::patch('alumni/{alumnus}/reactivate', [AlumniController::class, 'reactivate'])->name('alumni.reactivate');
+        });
 
         // Route Tahun Pelajaran
         Route::resource('tahun-pelajaran', TahunPelajaranController::class)->middleware('permission:manage tahun pelajaran')->except(['create', 'edit', 'show']);

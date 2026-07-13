@@ -8,15 +8,24 @@
 
             <div class="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
 
-                <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                <div class="px-6 py-4 border-b border-gray-100 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center bg-gray-50/50">
                     <h3 class="font-bold text-gray-700">Daftar Rombongan Belajar</h3>
-                    <button @click="$dispatch('open-rombel-modal')"
-                        class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-500 focus:outline-none shadow-sm transition ease-in-out duration-150 gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                        Tambah Rombel
-                    </button>
+                    <div class="flex flex-wrap gap-2">
+                        <a href="{{ route('master-data.rombel.promotion.index') }}"
+                            class="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-bold uppercase text-blue-700 hover:bg-blue-100">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                            </svg>
+                            Kenaikan Kelas
+                        </a>
+                        <button @click="$dispatch('open-rombel-modal')"
+                            class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-500 focus:outline-none shadow-sm transition ease-in-out duration-150 gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Tambah Rombel
+                        </button>
+                    </div>
                 </div>
 
                 <div class="overflow-x-auto">

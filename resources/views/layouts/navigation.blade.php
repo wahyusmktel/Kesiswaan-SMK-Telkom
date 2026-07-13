@@ -964,7 +964,7 @@
     @canany(['manage kelas', 'manage siswa', 'manage rombel'])
         <li class="submenu-dropdown"
             x-data="{ 
-                                                                                                                                                expanded: {{ request()->routeIs(['master-data.kelas.*', 'master-data.siswa.*', 'master-data.rombel.*']) ? 'true' : 'false' }},
+                                                                                                                                                expanded: {{ request()->routeIs(['master-data.kelas.*', 'master-data.siswa.*', 'master-data.rombel.*', 'master-data.alumni.*']) ? 'true' : 'false' }},
                                                                                                                                                 flyoutTop: 0,
                                                                                                                                                 updateFlyoutPosition() {
                                                                                                                                                     const rect = this.$el.querySelector('button').getBoundingClientRect();
@@ -973,7 +973,7 @@
                                                                                                                                             }"
             @mouseenter="updateFlyoutPosition()">
             <button @click="expanded = !expanded"
-                class="nav-link w-full {{ request()->routeIs(['master-data.kelas.*', 'master-data.siswa.*', 'master-data.rombel.*']) ? 'nav-link-active' : 'nav-link-inactive' }}">
+                class="nav-link w-full {{ request()->routeIs(['master-data.kelas.*', 'master-data.siswa.*', 'master-data.rombel.*', 'master-data.alumni.*']) ? 'nav-link-active' : 'nav-link-inactive' }}">
                 <div class="flex items-center">
                     <div class="nav-icon-container">
                         <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1013,6 +1013,11 @@
                         Data Rombel
                     </a>
                 @endcan
+                <a href="{{ route('master-data.alumni.index') }}"
+                    class="submenu-item {{ request()->routeIs('master-data.alumni.*') ? 'submenu-item-active' : '' }}">
+                    <span class="submenu-dot"></span>
+                    Data Alumni
+                </a>
             </div>
 
             <!-- Flyout Submenu (Collapsed Sidebar) -->
@@ -1036,6 +1041,10 @@
                         Data Rombel
                     </a>
                 @endcan
+                <a href="{{ route('master-data.alumni.index') }}"
+                    class="submenu-item {{ request()->routeIs('master-data.alumni.*') ? 'submenu-item-active' : '' }}">
+                    Data Alumni
+                </a>
             </div>
         </li>
     @endcanany
@@ -2362,7 +2371,7 @@
         @can('view master data')
             <li class="submenu-dropdown"
                 x-data="{ 
-                                                                                                                                                                    expanded: {{ request()->routeIs(['master-data.kelas.*', 'master-data.siswa.*', 'master-data.rombel.*']) ? 'true' : 'false' }},
+                                                                                                                                                                    expanded: {{ request()->routeIs(['master-data.kelas.*', 'master-data.siswa.*', 'master-data.rombel.*', 'master-data.alumni.*']) ? 'true' : 'false' }},
                                                                                                                                                                     flyoutTop: 0,
                                                                                                                                                                     updateFlyoutPosition() {
                                                                                                                                                                         const rect = this.$el.querySelector('button').getBoundingClientRect();
@@ -2371,7 +2380,7 @@
                                                                                                                                                                 }"
                 @mouseenter="updateFlyoutPosition()">
                 <button @click="expanded = !expanded"
-                    class="nav-link w-full {{ request()->routeIs(['master-data.kelas.*', 'master-data.siswa.*', 'master-data.rombel.*']) ? 'nav-link-active' : 'nav-link-inactive' }}">
+                    class="nav-link w-full {{ request()->routeIs(['master-data.kelas.*', 'master-data.siswa.*', 'master-data.rombel.*', 'master-data.alumni.*']) ? 'nav-link-active' : 'nav-link-inactive' }}">
                     <div class="flex items-center">
                         <div class="nav-icon-container">
                             <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2411,6 +2420,11 @@
                             Data Rombel
                         </a>
                     @endcan
+                    <a href="{{ route('master-data.alumni.index') }}"
+                        class="submenu-item {{ request()->routeIs('master-data.alumni.*') ? 'submenu-item-active' : '' }}">
+                        <span class="submenu-dot"></span>
+                        Data Alumni
+                    </a>
                 </div>
 
                 <!-- Flyout Submenu -->
@@ -2434,6 +2448,10 @@
                             Data Rombel
                         </a>
                     @endcan
+                    <a href="{{ route('master-data.alumni.index') }}"
+                        class="submenu-item {{ request()->routeIs('master-data.alumni.*') ? 'submenu-item-active' : '' }}">
+                        Data Alumni
+                    </a>
                 </div>
             </li>
         @endcan

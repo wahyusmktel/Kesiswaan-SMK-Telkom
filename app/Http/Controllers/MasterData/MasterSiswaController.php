@@ -17,11 +17,14 @@ class MasterSiswaController extends Controller
 {
     public function index(Request $request)
     {
-        $query = MasterSiswa::with('user'); // Eager load relasi user
+        $query = MasterSiswa::with('user')->active(); // Alumni dikelola pada halaman terpisah
 
         if ($request->filled('search')) {
-            $query->where('nama_lengkap', 'like', '%' . $request->search . '%')
-                ->orWhere('nis', 'like', '%' . $request->search . '%');
+            $search = trim((string) $request->search);
+            $query->where(function ($studentQuery) use ($search) {
+                $studentQuery->where('nama_lengkap', 'like', '%' . $search . '%')
+                    ->orWhere('nis', 'like', '%' . $search . '%');
+            });
         }
 
         $siswa = $query->latest()->paginate(10);
@@ -208,7 +211,7 @@ class MasterSiswaController extends Controller
         ini_set('memory_limit', '-1');
 
         // Cek siswa yang belum punya user_id
-        $totalSiswa = MasterSiswa::whereNull('user_id')->count();
+        $totalSiswa = MasterSiswa::active()->whereNull('user_id')->count();
 
         if ($totalSiswa == 0) {
             toast('Semua siswa sudah memiliki akun.', 'info');
@@ -222,7 +225,7 @@ class MasterSiswaController extends Controller
         DB::beginTransaction();
         try {
             // Proses per 100 data agar hemat memori (Chunking)
-            MasterSiswa::whereNull('user_id')->chunk(100, function ($siswaCollection) use ($roleSiswa, $passwordDefault, &$berhasil) {
+            MasterSiswa::active()->whereNull('user_id')->chunk(100, function ($siswaCollection) use ($roleSiswa, $passwordDefault, &$berhasil) {
                 foreach ($siswaCollection as $siswa) {
                     $email = $siswa->nis . '@smktelkom-lpg.sch.id';
 
