@@ -54,6 +54,7 @@ use App\Http\Controllers\PengaduanController;
 use App\Http\Controllers\Admin\SuperAdminController;
 use App\Http\Controllers\Admin\PermissionManagementController;
 use App\Http\Controllers\Admin\SystemUpdateController;
+use App\Http\Controllers\Admin\LandingPopupController;
 use App\Http\Controllers\SDM\NdeReferensiController;
 use App\Http\Controllers\Shared\NotaDinasController;
 use App\Http\Controllers\MasterData\DapodikSiswaController;
@@ -874,6 +875,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\Admin\SuperAdminDashboardController::class, 'index'])->name('dashboard.index');
         Route::get('/settings', [SuperAdminController::class, 'settings'])->name('settings');
         Route::post('/settings', [SuperAdminController::class, 'updateSettings'])->name('settings.update');
+        Route::get('/landing-popup', [LandingPopupController::class, 'edit'])->name('landing-popup.edit');
+        Route::put('/landing-popup', [LandingPopupController::class, 'update'])->name('landing-popup.update');
 
         // Permission Management
         Route::get('/permissions', [PermissionManagementController::class, 'index'])->name('permissions.index');

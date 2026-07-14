@@ -299,6 +299,18 @@
             </a>
         </li>
     @endcan
+    <li>
+        <a href="{{ route('super-admin.landing-popup.edit') }}"
+            class="nav-link {{ request()->routeIs('super-admin.landing-popup.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M7 8h10M7 12h6m-8 8l-2 1 1-4.5A9 9 0 1121 12a9 9 0 01-9 9c-2.1 0-4.04-.72-5.58-1.93L5 20z" />
+                </svg>
+            </div>
+            <span class="nav-text">Popup Halaman Utama</span>
+        </a>
+    </li>
     @can('manage permissions')
         <li>
             <a href="{{ route('super-admin.permissions.index') }}"

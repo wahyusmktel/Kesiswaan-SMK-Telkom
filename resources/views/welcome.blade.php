@@ -1093,6 +1093,9 @@
     </div>
     @endif
 
+    @if(($appSetting?->landing_popup_enabled ?? true) && ($appSetting?->landing_popup_type ?? 'registration') === 'registration')
+        @include('partials.landing-registration-popup')
+    @elseif($appSetting?->landing_popup_enabled ?? true)
     {{-- Welcome Mood Popup --}}
     <div x-data="moodPopup()" x-init="init()" x-cloak>
         {{-- Backdrop --}}
@@ -1163,6 +1166,7 @@
             </div>
         </div>
     </div>
+    @endif
 
     <!-- Blobs -->
     <div class="blob top-[-100px] left-[-100px]"></div>
@@ -1942,6 +1946,56 @@
                 }
             }
         }
+        function landingAnnouncementPopup(frequency, version) {
+            return {
+                showPopup: false,
+                storageKey: 'sisfo_landing_popup_' + version,
+                frequency,
+
+                init() {
+                    if (this.hasBeenSeen()) return;
+
+                    setTimeout(() => {
+                        this.showPopup = true;
+                    }, 2800);
+                },
+
+                hasBeenSeen() {
+                    if (this.frequency === 'always') return false;
+
+                    try {
+                        if (this.frequency === 'session') {
+                            return sessionStorage.getItem(this.storageKey) === 'seen';
+                        }
+
+                        return localStorage.getItem(this.storageKey) === new Date().toISOString().split('T')[0];
+                    } catch (error) {
+                        return false;
+                    }
+                },
+
+                markSeen() {
+                    if (this.frequency === 'always') return;
+
+                    try {
+                        if (this.frequency === 'session') {
+                            sessionStorage.setItem(this.storageKey, 'seen');
+                            return;
+                        }
+
+                        localStorage.setItem(this.storageKey, new Date().toISOString().split('T')[0]);
+                    } catch (error) {
+                        // Storage can be unavailable in strict privacy mode.
+                    }
+                },
+
+                closePopup() {
+                    this.markSeen();
+                    this.showPopup = false;
+                }
+            };
+        }
+
         // Mood Welcome Popup Component
         function moodPopup() {
             return {
