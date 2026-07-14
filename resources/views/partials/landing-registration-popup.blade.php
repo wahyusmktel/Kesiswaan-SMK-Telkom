@@ -1,7 +1,7 @@
 @php
-    $popupTitle = $appSetting?->landing_popup_title ?: 'Selamat Datang, Calon Siswa Baru!';
+    $popupTitle = $appSetting?->landing_popup_title ?: 'Selamat Datang, Siswa Baru!';
     $popupDescription = $appSetting?->landing_popup_description
-        ?: 'Registrasikan data calon siswa baru melalui layanan SISFO SMK Telkom Lampung. Prosesnya cepat, aman, dan dapat dipantau secara daring.';
+        ?: 'Registrasikan data siswa baru melalui layanan SISFO SMK Telkom Lampung. Prosesnya cepat, aman, dan dapat dipantau secara daring.';
     $popupCtaText = $appSetting?->landing_popup_cta_text ?: 'Registrasi Sekarang';
     $popupCtaUrl = $appSetting?->landing_popup_cta_url ?: '/registrasi-siswa-baru';
     $popupFrequency = $appSetting?->landing_popup_frequency ?: 'daily';
@@ -46,8 +46,8 @@
                     </svg>
                 </div>
 
-                <p class="mt-6 text-xs font-black uppercase tracking-widest text-red-400">Penerimaan Siswa Baru</p>
-                <h3 id="registration-popup-title" class="mt-2 font-outfit text-2xl font-black text-white sm:text-3xl">
+                <p class="mt-6 text-xs font-black uppercase tracking-widest text-red-400">Registrasi Sisfo Siswa Baru</p>
+                <h3 style="color: white;" id="registration-popup-title" class="mt-2 font-outfit text-2xl font-black text-white sm:text-3xl">
                     {{ $popupTitle }}
                 </h3>
                 <p class="mx-auto mt-3 max-w-md text-sm font-medium leading-6 text-slate-400">
