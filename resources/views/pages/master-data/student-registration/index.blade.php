@@ -92,12 +92,12 @@
                     <label><span class="mb-1 block text-sm font-semibold">Tempat lahir</span><input name="tempat_lahir" class="w-full rounded-lg border-gray-300"></label>
                     <label><span class="mb-1 block text-sm font-semibold">Tanggal lahir *</span><input type="date" name="tanggal_lahir" required class="w-full rounded-lg border-gray-300"></label>
                     <label><span class="mb-1 block text-sm font-semibold">Jenis kelamin *</span><select name="jenis_kelamin" required class="w-full rounded-lg border-gray-300"><option value="L">Laki-laki</option><option value="P">Perempuan</option></select></label>
-                    <label><span class="mb-1 block text-sm font-semibold">Nomor HP *</span><input name="nomor_hp" required class="w-full rounded-lg border-gray-300"></label>
+                    <label><span class="mb-1 block text-sm font-semibold">Nomor HP *</span><input type="number" name="nomor_hp" inputmode="numeric" required class="w-full rounded-lg border-gray-300"></label>
                     <label><span class="mb-1 block text-sm font-semibold">Email</span><input type="email" name="email" class="w-full rounded-lg border-gray-300"></label>
                     <label class="md:col-span-2"><span class="mb-1 block text-sm font-semibold">Alamat *</span><textarea name="alamat" required rows="2" class="w-full rounded-lg border-gray-300"></textarea></label>
                     <label class="md:col-span-2"><span class="mb-1 block text-sm font-semibold">Sekolah asal</span><input name="sekolah_asal" class="w-full rounded-lg border-gray-300"></label>
                     <label><span class="mb-1 block text-sm font-semibold">Nama orang tua/wali</span><input name="nama_orang_tua" class="w-full rounded-lg border-gray-300"></label>
-                    <label><span class="mb-1 block text-sm font-semibold">HP orang tua/wali</span><input name="nomor_hp_orang_tua" class="w-full rounded-lg border-gray-300"></label>
+                    <label><span class="mb-1 block text-sm font-semibold">HP orang tua/wali</span><input type="number" name="nomor_hp_orang_tua" inputmode="numeric" class="w-full rounded-lg border-gray-300"></label>
                 </div>
                 <div class="flex justify-end gap-2 border-t bg-gray-50 px-6 py-4"><button type="button" @click="open = false" class="rounded-lg border px-4 py-2 text-sm font-bold">Batal</button><button class="rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white">Simpan Siswa Sementara</button></div>
             </form>

@@ -220,11 +220,11 @@ class StudentRegistrationController extends Controller
             'tanggal_lahir' => 'required|date|before:today',
             'jenis_kelamin' => 'required|in:L,P',
             'alamat' => 'required|string|max:1000',
-            'nomor_hp' => 'required|string|max:25',
+            'nomor_hp' => ['required', 'regex:/^[0-9]{9,15}$/'],
             'email' => 'nullable|email|max:255',
             'sekolah_asal' => 'nullable|string|max:255',
             'nama_orang_tua' => 'nullable|string|max:255',
-            'nomor_hp_orang_tua' => 'nullable|string|max:25',
+            'nomor_hp_orang_tua' => ['nullable', 'regex:/^[0-9]{9,15}$/'],
         ];
     }
 

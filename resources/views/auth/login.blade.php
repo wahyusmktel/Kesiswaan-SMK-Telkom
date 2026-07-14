@@ -432,6 +432,7 @@
                         </div>
                     </button>
 
+                    {{-- Login SSO STELLA dinonaktifkan sementara.
                     <a href="{{ route('auth.sso.redirect') }}"
                         class="flex items-center justify-center gap-3 w-full py-3 px-4 bg-gray-950 border border-transparent rounded-lg font-bold text-white hover:bg-gray-900 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
                         <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -440,6 +441,7 @@
                         </svg>
                         <span>Login SSO STELLA</span>
                     </a>
+                    --}}
                 </form>
 
                 <!-- Divider -->
@@ -449,6 +451,7 @@
                     <div class="flex-1 h-px bg-gray-300"></div>
                 </div>
 
+                {{-- Login fingerprint dinonaktifkan sementara.
                 <!-- Fingerprint Login Button -->
                 <button type="button" id="btn-fingerprint" style="display: none;"
                     class="flex items-center justify-center gap-3 w-full py-3 px-4 bg-emerald-600 border border-transparent rounded-lg font-bold text-white hover:bg-emerald-700 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 mb-3">
@@ -458,6 +461,7 @@
                     </svg>
                     <span>Masuk dengan Fingerprint</span>
                 </button>
+                --}}
 
                 @if (session('error'))
                     <div class="error-message mb-4 bg-red-50 border border-red-200 p-3 rounded-lg">
@@ -509,6 +513,7 @@
                     <span>Masuk dengan Face ID</span>
                 </button>
 
+                {{-- Pendaftaran akun umum dinonaktifkan sementara.
                 <!-- Register Link -->
                 <p class="text-center text-gray-600">
                     Belum punya akun?
@@ -517,6 +522,7 @@
                         Daftar sekarang
                     </a>
                 </p>
+                --}}
                 <a href="{{ route('student-registration.create') }}"
                     class="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-bold text-red-700 transition-colors hover:bg-red-100">
                     Registrasi Siswa Baru
@@ -889,6 +895,7 @@
             modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
         })();
     </script>
+    {{-- Skrip login fingerprint dinonaktifkan sementara.
     <script src="{{ asset('vendor/webauthn/webauthn.js') }}?v={{ filemtime(public_path('vendor/webauthn/webauthn.js')) }}"></script>
     <script>
         // WebAuthn Fingerprint Login
@@ -950,6 +957,7 @@
             });
         })();
     </script>
+    --}}
 </body>
 
 </html>

@@ -14,7 +14,7 @@ class PublicStudentRegistrationController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate($this->rules());
+        $validated = $request->validate($this->rules(), $this->messages(), $this->attributes());
         unset($validated['website'], $validated['consent']);
 
         $duplicate = StudentRegistration::whereIn('status', ['pending', 'approved'])
@@ -60,11 +60,46 @@ class PublicStudentRegistrationController extends Controller
             'tanggal_lahir' => 'required|date|before:today',
             'jenis_kelamin' => 'required|in:L,P',
             'alamat' => 'required|string|max:1000',
-            'nomor_hp' => 'required|string|max:25',
+            'nomor_hp' => ['required', 'regex:/^[0-9]{9,15}$/'],
             'email' => 'nullable|email|max:255',
             'sekolah_asal' => 'nullable|string|max:255',
             'nama_orang_tua' => 'nullable|string|max:255',
-            'nomor_hp_orang_tua' => 'nullable|string|max:25',
+            'nomor_hp_orang_tua' => ['nullable', 'regex:/^[0-9]{9,15}$/'],
+        ];
+    }
+
+    private function messages(): array
+    {
+        return [
+            'required' => ':attribute wajib diisi.',
+            'accepted' => 'Pernyataan persetujuan harus dicentang.',
+            'digits' => ':attribute harus terdiri dari :digits angka.',
+            'email' => 'Format :attribute belum benar. Contoh: nama@email.com.',
+            'date' => ':attribute belum berupa tanggal yang valid.',
+            'before' => ':attribute harus sebelum hari ini.',
+            'in' => 'Pilihan :attribute tidak valid.',
+            'max.string' => ':attribute maksimal :max karakter.',
+            'nomor_hp.regex' => 'Nomor HP siswa harus terdiri dari 9 sampai 15 angka tanpa spasi atau tanda baca.',
+            'nomor_hp_orang_tua.regex' => 'Nomor HP orang tua/wali harus terdiri dari 9 sampai 15 angka tanpa spasi atau tanda baca.',
+            'website.max' => 'Formulir tidak dapat diproses. Silakan muat ulang halaman.',
+        ];
+    }
+
+    private function attributes(): array
+    {
+        return [
+            'nama_lengkap' => 'Nama lengkap',
+            'nisn' => 'NISN',
+            'nik' => 'NIK',
+            'tempat_lahir' => 'Tempat lahir',
+            'tanggal_lahir' => 'Tanggal lahir',
+            'jenis_kelamin' => 'Jenis kelamin',
+            'alamat' => 'Alamat lengkap',
+            'nomor_hp' => 'Nomor HP siswa',
+            'email' => 'Email',
+            'sekolah_asal' => 'Sekolah asal',
+            'nama_orang_tua' => 'Nama orang tua/wali',
+            'nomor_hp_orang_tua' => 'Nomor HP orang tua/wali',
         ];
     }
 }
