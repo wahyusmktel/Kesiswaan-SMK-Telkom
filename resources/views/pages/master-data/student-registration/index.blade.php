@@ -131,133 +131,6 @@
         </div></div>
     </div>
 
-    @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-
-        // Fungsi untuk modal detail biodata
-        function biodataDetailModal() {
-            return {
-                open: false,
-                student: { id: null, name: '', data: null },
-                loading: false,
-                rejectReason: '',
-                openModal(data) {
-                    this.student = {
-                        id: data.id,
-                        name: data.name,
-                        data: null
-                    };
-                    this.open = true;
-                    this.loading = true;
-                    this.loadBiodata(data.id);
-                },
-                async loadBiodata(id) {
-                    try {
-                        const url = `/master-data/student-registration/${id}/biodata`;
-                        const response = await fetch(url, {
-                            headers: { 'Accept': 'application/json' }
-                        });
-                        if (response.ok) {
-                            const data = await response.json();
-                            this.student.data = data;
-                            // Tambahkan URL untuk action
-                            if (this.student.data) {
-                                this.student.data.approve_url = `/master-data/student-registration/${id}/approve`;
-                                this.student.data.reject_url = `/master-data/student-registration/${id}/reject`;
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Error loading biodata:', error);
-                    } finally {
-                        this.loading = false;
-                    }
-                },
-                confirmApprove() {
-                    Swal.fire({
-                        title: 'Setujui pendaftaran?',
-                        text: 'Data siswa sementara akan dibuat menjadi data master.',
-                        icon: 'question',
-                        showCancelButton: true,
-                        confirmButtonText: 'Ya, setujui',
-                        cancelButtonText: 'Batal',
-                        confirmButtonColor: '#10b981',
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            this.submitApprove();
-                        }
-                    });
-                },
-                submitApprove() {
-                    const form = document.querySelector('.approve-form');
-                    if (form) {
-                        form.submit();
-                    } else {
-                        // Fallback jika form tidak ditemukan
-                        window.location.href = this.student.data.approve_url;
-                    }
-                },
-                showRejectDialog() {
-                    Swal.fire({
-                        title: 'Alasan Penolakan',
-                        input: 'textarea',
-                        inputLabel: 'Tuliskan alasan penolakan atau data yang perlu diperbaiki',
-                        inputPlaceholder: 'Contoh: Data NISN tidak valid, alamat tidak lengkap, dll.',
-                        inputAttributes: {
-                            'aria-label': 'Alasan penolakan'
-                        },
-                        showCancelButton: true,
-                        confirmButtonText: 'Konfirmasi Penolakan',
-                        cancelButtonText: 'Batal',
-                        confirmButtonColor: '#ef4444',
-                        preConfirm: (value) => {
-                            if (!value || value.trim() === '') {
-                                Swal.showValidationMessage('Alasan penolakan wajib diisi');
-                                return false;
-                            }
-                            return value;
-                        }
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            this.rejectReason = result.value;
-                            this.submitReject();
-                        }
-                    });
-                },
-                submitReject() {
-                    const form = document.querySelector('.reject-form');
-                    if (form) {
-                        const notesInput = form.querySelector('[name="notes"]');
-                        if (notesInput) {
-                            notesInput.value = this.rejectReason;
-                        }
-                        form.submit();
-                    } else {
-                        // Fallback jika form tidak ditemukan
-                        fetch(this.student.data.reject_url, {
-                            method: 'PATCH',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                                'Accept': 'application/json'
-                            },
-                            body: JSON.stringify({ notes: this.rejectReason })
-                        }).then(response => {
-                            if (response.ok) {
-                                location.reload();
-                            }
-                        });
-                    }
-                }
-            };
-        }
-    <script>
-        function confirmApprove(button) { Swal.fire({title:'Setujui pendaftaran?',text:'Data siswa sementara akan dibuat.',icon:'question',showCancelButton:true,confirmButtonText:'Ya, setujui'}).then(r => { if(r.isConfirmed) button.closest('form').submit(); }); }
-        function confirmReject(button) { Swal.fire({title:'Alasan penolakan',input:'textarea',inputPlaceholder:'Tuliskan data yang perlu diperbaiki',showCancelButton:true,confirmButtonColor:'#dc2626',confirmButtonText:'Tolak pendaftaran',preConfirm:value => { if(!value) Swal.showValidationMessage('Alasan wajib diisi'); return value; }}).then(r => { if(r.isConfirmed){ const form=button.closest('form'); form.querySelector('[name=notes]').value=r.value; form.submit(); }}); }
-        function dapodikMapping() { return { open:false, student:{}, query:'', results:[], selected:null, loading:false, openModal(data){ this.student=data; this.query=data.nisn || data.name; this.selected=null; this.open=true; this.search(); }, async search(){ this.loading=true; try { const url = @js(route('master-data.student-registration.dapodik.search')); const response=await fetch(`${url}?q=${encodeURIComponent(this.query)}`, {headers:{'Accept':'application/json'}}); this.results=await response.json(); } finally { this.loading=false; } } }; }
-    </script>
-    
-
     {{-- MODAL DETAIL BIODATA SISWA BARU --}}
     <div x-data="biodataDetailModal()" @open-biodata-detail.window="openModal($event.detail)" x-show="open" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
         <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" @click="open = false"></div>
@@ -472,6 +345,133 @@
             </div>
         </div>
     </div>
+    @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+
+
+        // Fungsi untuk modal detail biodata
+        function biodataDetailModal() {
+            return {
+                open: false,
+                student: { id: null, name: '', data: null },
+                loading: false,
+                rejectReason: '',
+                openModal(data) {
+                    this.student = {
+                        id: data.id,
+                        name: data.name,
+                        data: null
+                    };
+                    this.open = true;
+                    this.loading = true;
+                    this.loadBiodata(data.id);
+                },
+                async loadBiodata(id) {
+                    try {
+                        const url = `/master-data/student-registration/${id}/biodata`;
+                        const response = await fetch(url, {
+                            headers: { 'Accept': 'application/json' }
+                        });
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.student.data = data;
+                            // Tambahkan URL untuk action
+                            if (this.student.data) {
+                                this.student.data.approve_url = `/master-data/student-registration/${id}/approve`;
+                                this.student.data.reject_url = `/master-data/student-registration/${id}/reject`;
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error loading biodata:', error);
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+                confirmApprove() {
+                    Swal.fire({
+                        title: 'Setujui pendaftaran?',
+                        text: 'Data siswa sementara akan dibuat menjadi data master.',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Ya, setujui',
+                        cancelButtonText: 'Batal',
+                        confirmButtonColor: '#10b981',
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            this.submitApprove();
+                        }
+                    });
+                },
+                submitApprove() {
+                    const form = document.querySelector('.approve-form');
+                    if (form) {
+                        form.submit();
+                    } else {
+                        // Fallback jika form tidak ditemukan
+                        window.location.href = this.student.data.approve_url;
+                    }
+                },
+                showRejectDialog() {
+                    Swal.fire({
+                        title: 'Alasan Penolakan',
+                        input: 'textarea',
+                        inputLabel: 'Tuliskan alasan penolakan atau data yang perlu diperbaiki',
+                        inputPlaceholder: 'Contoh: Data NISN tidak valid, alamat tidak lengkap, dll.',
+                        inputAttributes: {
+                            'aria-label': 'Alasan penolakan'
+                        },
+                        showCancelButton: true,
+                        confirmButtonText: 'Konfirmasi Penolakan',
+                        cancelButtonText: 'Batal',
+                        confirmButtonColor: '#ef4444',
+                        preConfirm: (value) => {
+                            if (!value || value.trim() === '') {
+                                Swal.showValidationMessage('Alasan penolakan wajib diisi');
+                                return false;
+                            }
+                            return value;
+                        }
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            this.rejectReason = result.value;
+                            this.submitReject();
+                        }
+                    });
+                },
+                submitReject() {
+                    const form = document.querySelector('.reject-form');
+                    if (form) {
+                        const notesInput = form.querySelector('[name="notes"]');
+                        if (notesInput) {
+                            notesInput.value = this.rejectReason;
+                        }
+                        form.submit();
+                    } else {
+                        // Fallback jika form tidak ditemukan
+                        fetch(this.student.data.reject_url, {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({ notes: this.rejectReason })
+                        }).then(response => {
+                            if (response.ok) {
+                                location.reload();
+                            }
+                        });
+                    }
+                }
+            };
+        }
+        function confirmApprove(button) { Swal.fire({title:'Setujui pendaftaran?',text:'Data siswa sementara akan dibuat.',icon:'question',showCancelButton:true,confirmButtonText:'Ya, setujui'}).then(r => { if(r.isConfirmed) button.closest('form').submit(); }); }
+        function confirmReject(button) { Swal.fire({title:'Alasan penolakan',input:'textarea',inputPlaceholder:'Tuliskan data yang perlu diperbaiki',showCancelButton:true,confirmButtonColor:'#dc2626',confirmButtonText:'Tolak pendaftaran',preConfirm:value => { if(!value) Swal.showValidationMessage('Alasan wajib diisi'); return value; }}).then(r => { if(r.isConfirmed){ const form=button.closest('form'); form.querySelector('[name=notes]').value=r.value; form.submit(); }}); }
+        function dapodikMapping() { return { open:false, student:{}, query:'', results:[], selected:null, loading:false, openModal(data){ this.student=data; this.query=data.nisn || data.name; this.selected=null; this.open=true; this.search(); }, async search(){ this.loading=true; try { const url = @js(route('master-data.student-registration.dapodik.search')); const response=await fetch(`${url}?q=${encodeURIComponent(this.query)}`, {headers:{'Accept':'application/json'}}); this.results=await response.json(); } finally { this.loading=false; } } }; }
+    </script>
+    
+
 @endpush
 </x-app-layout>
 
