@@ -444,21 +444,19 @@
                 <col style="width:66%">
             </colgroup>
             <tr>
-                <td class="section-label">IDENTIFIKASI</td>
+                <td class="section-label" rowspan="3">IDENTIFIKASI</td>
                 <td class="subsection-label">Identifikasi Peserta Didik</td>
                 <td class="content-cell">
                     @include('pdf.partials.teaching-module-list', ['items' => $content['identification']['students']])
                 </td>
             </tr>
             <tr>
-                <td class="section-label section-continuation">IDENTIFIKASI</td>
                 <td class="subsection-label">Identifikasi Materi Pembelajaran</td>
                 <td class="content-cell">
                     @include('pdf.partials.teaching-module-list', ['items' => $content['identification']['materials']])
                 </td>
             </tr>
             <tr>
-                <td class="section-label section-continuation">IDENTIFIKASI</td>
                 <td class="subsection-label">Dimensi Profil Lulusan</td>
                 <td class="content-cell">
                     <div>Pilihlah dimensi profil lulusan yang akan dicapai dalam pembelajaran:</div>
@@ -497,7 +495,9 @@
             @endphp
             @foreach($designRows as $designIndex => [$label, $key])
                 <tr>
-                    <td class="section-label {{ $designIndex > 0 ? 'section-continuation' : '' }}">DESAIN PEMBELAJARAN</td>
+                    @if($designIndex === 0)
+                        <td class="section-label" rowspan="7">DESAIN PEMBELAJARAN</td>
+                    @endif
                     <td class="subsection-label">{{ $label }}</td>
                     <td class="content-cell">
                         @include('pdf.partials.teaching-module-list', ['items' => $content['design'][$key]])
@@ -609,7 +609,9 @@
         @endphp
         @foreach($assessmentRows as $assessmentIndex => [$label, $key])
             <tr>
-                <td class="section-label {{ $assessmentIndex > 0 ? 'section-continuation' : '' }}">ASESMEN PEMBELAJARAN</td>
+                @if($assessmentIndex === 0)
+                    <td class="section-label" rowspan="4">ASESMEN PEMBELAJARAN</td>
+                @endif
                 <td class="subsection-label">{{ $label }}</td>
                 <td class="content-cell">
                     @include('pdf.partials.teaching-module-list', ['items' => $content['assessment'][$key]])
