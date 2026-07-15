@@ -5,10 +5,7 @@
                 <h2 class="text-xl font-bold text-gray-900">Registrasi Siswa Baru</h2>
                 <p class="text-sm text-gray-500">Verifikasi pendaftaran cepat dan cocokkan dengan data resmi Dapodik.</p>
             </div>
-            <div class="flex gap-2">
-                <a href="{{ route('student-registration.create') }}" target="_blank" class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50">Buka Form Publik</a>
-                <button @click="$dispatch('open-student-registration')" class="rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-500">Tambah Langsung</button>
-            </div>
+            
         </div>
     </x-slot>
 
@@ -22,9 +19,26 @@
                 <div class="rounded-lg border border-amber-200 bg-amber-50 p-4"><p class="text-xs font-bold uppercase text-amber-700">Menunggu Verifikasi</p><p class="mt-1 text-2xl font-black text-amber-900">{{ $counts['pending'] ?? 0 }}</p></div>
                 <div class="rounded-lg border border-blue-200 bg-blue-50 p-4"><p class="text-xs font-bold uppercase text-blue-700">Menunggu Pemetaan</p><p class="mt-1 text-2xl font-black text-blue-900">{{ $counts['approved'] ?? 0 }}</p></div>
                 <div class="rounded-lg border border-gray-200 bg-white p-4"><p class="text-xs font-bold uppercase text-gray-500">Dapodik Belum Terhubung</p><p class="mt-1 text-2xl font-black text-gray-900">{{ $unmappedDapodikCount }}</p></div>
-            </div>
+                            </div>
 
-            <div class="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm leading-6 text-blue-900">
+                <div class="rounded-lg border border-gray-200 bg-white p-6 mt-6">
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900">Aksi Cepat</h3>
+                            <p class="text-sm text-gray-500">Kelola registrasi siswa baru dengan mudah</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <a href="{{ route('student-registration.create') }}" target="_blank" class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50">Buka Form Publik</a>
+                            <button @click="$dispatch('open-student-registration')" class="rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-500">Tambah Langsung</button>
+                        </div>
+                    </div>
+                    <div class="mt-4 text-sm text-gray-600">
+                        <p>• <strong>Buka Form Publik</strong>: Link formulir pendaftaran publik untuk siswa baru</p>
+                        <p class="mt-1">• <strong>Tambah Langsung</strong>: Tambahkan data siswa baru secara manual di sistem</p>
+                    </div>
+                </div>
+
+                <div class="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm leading-6 text-blue-900">
                 Setelah import Dapodik, lakukan pemetaan siswa sementara pada halaman ini <strong>sebelum</strong> menekan Sinkronisasi ke Master Siswa. Sistem akan menahan data yang memiliki calon pasangan agar tidak dibuat menjadi siswa duplikat.
             </div>
 
@@ -126,3 +140,4 @@
     </script>
     @endpush
 </x-app-layout>
+
