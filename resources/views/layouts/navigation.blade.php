@@ -693,6 +693,18 @@
             </a>
         </li>
         <li>
+            <a href="{{ route('guru-kelas.teaching-module.index') }}"
+                class="nav-link {{ request()->routeIs('guru-kelas.teaching-module.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                <div class="nav-icon-container">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l3.414 3.414A1 1 0 0117 7.414V19a2 2 0 01-2 2z" />
+                    </svg>
+                </div>
+                <span class="nav-text">Perangkat Pembelajaran</span>
+            </a>
+        </li>
+        <li>
             <a href="{{ route('guru.jadwal-saya') }}"
                 class="nav-link {{ request()->routeIs("guru.jadwal-saya") ? "nav-link-active" : "nav-link-inactive" }}">
                 <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -42,6 +42,7 @@ use App\Http\Controllers\Piket\VerifikasiTerlambatController;
 use App\Http\Controllers\PublicVerifikasiController;
 use App\Http\Controllers\GuruKelas\VerifikasiTerlambatController as GuruKelasVerifikasiTerlambatController;
 use App\Http\Controllers\GuruKelas\LessonPlanController;
+use App\Http\Controllers\GuruKelas\TeachingModuleController;
 use App\Http\Controllers\Dispensasi\PengajuanDispensasiController;
 use App\Http\Controllers\Kesiswaan\PersetujuanDispensasiController;
 use App\Http\Controllers\Prakerin\IndustriController;
@@ -695,6 +696,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/{id}/pdf',      [LessonPlanController::class, 'downloadPdf'])->name('pdf');
             Route::post('/{id}/refleksi',[LessonPlanController::class, 'reflect']) ->name('reflect');
             Route::post('/todo/{todoId}/toggle', [LessonPlanController::class, 'toggleTodo'])->name('todo.toggle');
+        });
+
+        // Perangkat Pembelajaran dan Modul Ajar
+        Route::prefix('perangkat-pembelajaran')->name('teaching-module.')->group(function () {
+            Route::get('/', [TeachingModuleController::class, 'index'])->name('index');
+            Route::get('/buat', [TeachingModuleController::class, 'create'])->name('create');
+            Route::post('/', [TeachingModuleController::class, 'store'])->name('store');
+            Route::get('/{teachingModule}/isi', [TeachingModuleController::class, 'editContent'])->name('content.edit');
+            Route::put('/{teachingModule}/isi', [TeachingModuleController::class, 'updateContent'])->name('content.update');
+            Route::get('/{teachingModule}/edit', [TeachingModuleController::class, 'editMetadata'])->name('edit');
+            Route::get('/{teachingModule}/pdf', [TeachingModuleController::class, 'previewPdf'])->name('pdf.preview');
+            Route::get('/{teachingModule}/unduh', [TeachingModuleController::class, 'downloadPdf'])->name('pdf.download');
+            Route::put('/{teachingModule}', [TeachingModuleController::class, 'updateMetadata'])->name('update');
+            Route::delete('/{teachingModule}', [TeachingModuleController::class, 'destroy'])->name('destroy');
         });
 
         // Route untuk Persetujuan Izin Meninggalkan Kelas

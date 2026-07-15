@@ -15,9 +15,20 @@ return new class extends Migration
             });
         }
 
-        DB::table('ujian_semester_mapels')
-            ->join('mata_pelajarans', 'ujian_semester_mapels.mata_pelajaran_id', '=', 'mata_pelajarans.id')
-            ->update(['ujian_semester_mapels.nama_mapel' => DB::raw('mata_pelajarans.nama_mapel')]);
+        if (DB::getDriverName() === 'sqlite') {
+            DB::statement(<<<'SQL'
+                UPDATE ujian_semester_mapels
+                SET nama_mapel = (
+                    SELECT mata_pelajarans.nama_mapel
+                    FROM mata_pelajarans
+                    WHERE mata_pelajarans.id = ujian_semester_mapels.mata_pelajaran_id
+                )
+            SQL);
+        } else {
+            DB::table('ujian_semester_mapels')
+                ->join('mata_pelajarans', 'ujian_semester_mapels.mata_pelajaran_id', '=', 'mata_pelajarans.id')
+                ->update(['ujian_semester_mapels.nama_mapel' => DB::raw('mata_pelajarans.nama_mapel')]);
+        }
 
         try {
             Schema::table('ujian_semester_mapels', function (Blueprint $table) {
@@ -46,15 +57,35 @@ return new class extends Migration
             });
         }
 
-        DB::table('nilai_ujian_semesters')
-            ->join('ujian_semester_mapels', function ($join) {
-                $join->on('nilai_ujian_semesters.ujian_semester_id', '=', 'ujian_semester_mapels.ujian_semester_id')
-                    ->on('nilai_ujian_semesters.mata_pelajaran_id', '=', 'ujian_semester_mapels.mata_pelajaran_id');
-            })
-            ->update([
-                'nilai_ujian_semesters.ujian_semester_mapel_id' => DB::raw('ujian_semester_mapels.id'),
-                'nilai_ujian_semesters.nama_mapel' => DB::raw('ujian_semester_mapels.nama_mapel'),
-            ]);
+        if (DB::getDriverName() === 'sqlite') {
+            DB::statement(<<<'SQL'
+                UPDATE nilai_ujian_semesters
+                SET ujian_semester_mapel_id = (
+                        SELECT ujian_semester_mapels.id
+                        FROM ujian_semester_mapels
+                        WHERE ujian_semester_mapels.ujian_semester_id = nilai_ujian_semesters.ujian_semester_id
+                          AND ujian_semester_mapels.mata_pelajaran_id = nilai_ujian_semesters.mata_pelajaran_id
+                        LIMIT 1
+                    ),
+                    nama_mapel = (
+                        SELECT ujian_semester_mapels.nama_mapel
+                        FROM ujian_semester_mapels
+                        WHERE ujian_semester_mapels.ujian_semester_id = nilai_ujian_semesters.ujian_semester_id
+                          AND ujian_semester_mapels.mata_pelajaran_id = nilai_ujian_semesters.mata_pelajaran_id
+                        LIMIT 1
+                    )
+            SQL);
+        } else {
+            DB::table('nilai_ujian_semesters')
+                ->join('ujian_semester_mapels', function ($join) {
+                    $join->on('nilai_ujian_semesters.ujian_semester_id', '=', 'ujian_semester_mapels.ujian_semester_id')
+                        ->on('nilai_ujian_semesters.mata_pelajaran_id', '=', 'ujian_semester_mapels.mata_pelajaran_id');
+                })
+                ->update([
+                    'nilai_ujian_semesters.ujian_semester_mapel_id' => DB::raw('ujian_semester_mapels.id'),
+                    'nilai_ujian_semesters.nama_mapel' => DB::raw('ujian_semester_mapels.nama_mapel'),
+                ]);
+        }
 
         Schema::table('nilai_ujian_semesters', function (Blueprint $table) {
             $table->dropForeign(['mata_pelajaran_id']);
