@@ -187,6 +187,11 @@ class StudentRegistrationController extends Controller
         return back()->with('success', 'Pemetaan berhasil. Identitas sementara telah diperbarui menggunakan data resmi Dapodik.');
     }
 
+    public function biodata(StudentRegistration $registration)
+    {
+        return response()->json($registration);
+    }
+
     private function approveRegistration(StudentRegistration $registration, int $reviewerId): void
     {
         $temporaryNis = 'TMP-' . str_replace('REG-', '', $registration->registration_number);

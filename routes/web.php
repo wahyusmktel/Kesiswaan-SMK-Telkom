@@ -360,6 +360,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::patch('registrasi-siswa-baru/{registration}/reject', [StudentRegistrationController::class, 'reject'])->name('student-registration.reject');
             Route::get('registrasi-siswa-baru/dapodik/search', [StudentRegistrationController::class, 'searchDapodik'])->name('student-registration.dapodik.search');
             Route::post('registrasi-siswa-baru/{registration}/map', [StudentRegistrationController::class, 'map'])->name('student-registration.map');
+            Route::get('registrasi-siswa-baru/{registration}/biodata', [StudentRegistrationController::class, 'biodata'])->name('student-registration.biodata');
         });
 
         // Route Tahun Pelajaran

@@ -194,8 +194,8 @@
                                         </p>
                                     </div>
                                     <div>
-                                        <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Agama</label>
-                                        <p class="mt-1 text-lg font-medium text-gray-900" x-text="student.data.agama || '-'"></p>
+                                        <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">NIK</label>
+                                        <p class="mt-1 font-mono text-lg font-medium text-gray-900" x-text="student.data.nik || '-'"></p>
                                     </div>
                                     <div>
                                         <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Nomor Registrasi</label>
@@ -370,7 +370,7 @@
                 },
                 async loadBiodata(id) {
                     try {
-                        const url = `/master-data/student-registration/${id}/biodata`;
+                        const url = `/master-data/registrasi-siswa-baru/${id}/biodata`;
                         const response = await fetch(url, {
                             headers: { 'Accept': 'application/json' }
                         });
@@ -379,8 +379,8 @@
                             this.student.data = data;
                             // Tambahkan URL untuk action
                             if (this.student.data) {
-                                this.student.data.approve_url = `/master-data/student-registration/${id}/approve`;
-                                this.student.data.reject_url = `/master-data/student-registration/${id}/reject`;
+                                this.student.data.approve_url = `/master-data/registrasi-siswa-baru/${id}/approve`;
+                                this.student.data.reject_url = `/master-data/registrasi-siswa-baru/${id}/reject`;
                             }
                         }
                     } catch (error) {
