@@ -118,27 +118,51 @@
                                         <svg class="w-3.5 h-3.5" :class="msg.role === 'user' ? 'text-red-200' : 'text-purple-500'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                                         <span class="text-[10px] font-bold uppercase tracking-wider" :class="msg.role === 'user' ? 'text-red-200' : 'text-purple-500'">Generate Gambar</span>
                                     </div>
-                                    <p class="text-sm leading-relaxed whitespace-pre-wrap" x-text="msg.content"></p>
+                                    <p x-show="msg.role === 'user'" class="text-sm leading-relaxed whitespace-pre-wrap" x-text="msg.content"></p>
+                                    <div x-show="msg.role === 'assistant'"
+                                        class="stella-markdown"
+                                        :class="msg.is_typing ? 'stella-typing-caret' : ''"
+                                        x-html="renderMarkdown(msg.display_content ?? msg.content)">
+                                    </div>
                                     <template x-if="msg.image_path">
                                         <div class="mt-3">
                                             <img :src="msg.image_path.startsWith('http') ? msg.image_path : '/storage/' + msg.image_path" alt="Generated image" class="rounded-xl max-w-full shadow-md cursor-pointer hover:opacity-90 transition-opacity" @click="window.open(msg.image_path.startsWith('http') ? msg.image_path : '/storage/' + msg.image_path, '_blank')">
                                         </div>
                                     </template>
-                                    <p class="text-[10px] mt-1 opacity-60" x-text="new Date(msg.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'})"></p>
+                                    <div class="mt-2 flex items-center gap-3"
+                                        :class="msg.role === 'user' ? 'justify-end' : 'justify-between'">
+                                        <p class="text-[10px] opacity-60" x-text="new Date(msg.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'})"></p>
+                                        <button x-show="msg.role === 'assistant' && !msg.is_typing"
+                                            type="button"
+                                            @click="copyMessage(msg)"
+                                            class="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-[10px] font-semibold text-gray-500 transition-colors hover:bg-white hover:text-gray-800"
+                                            :title="msg.copied ? 'Tersalin' : 'Salin jawaban'">
+                                            <svg x-show="!msg.copied" class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V5a2 2 0 012-2h7a2 2 0 012 2v10a2 2 0 01-2 2h-2M6 7h7a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V9a2 2 0 012-2z"/>
+                                            </svg>
+                                            <svg x-show="msg.copied" class="h-3.5 w-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                            </svg>
+                                            <span x-text="msg.copied ? 'Tersalin' : 'Salin'"></span>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </template>
 
                         <!-- Loading -->
-                        <div x-show="loading" class="flex justify-start">
-                            <div class="bg-gray-100 rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
-                                <div class="flex items-center gap-2">
+                        <div x-show="loading && !typingResponse" class="flex justify-start">
+                            <div class="min-w-52 rounded-2xl rounded-bl-md bg-gray-100 px-4 py-3 shadow-sm">
+                                <div class="flex items-center gap-3">
                                     <div class="flex gap-1">
                                         <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0ms"></div>
                                         <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
                                         <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
                                     </div>
-                                    <span class="text-xs text-gray-500 font-medium" x-text="isImageMode ? 'Membuat gambar...' : 'Stella sedang mengetik...'"></span>
+                                    <div>
+                                        <p class="text-xs font-semibold text-gray-600" x-text="loadingStatus"></p>
+                                        <p class="mt-0.5 text-[10px] text-gray-400">Stella sedang menyiapkan hasil terbaik</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -189,6 +213,9 @@
                 messages: [],
                 messageInput: '',
                 loading: false,
+                typingResponse: false,
+                loadingStatus: 'Memahami pertanyaan...',
+                loadingTimer: null,
                 isImageMode: false,
                 imageEnabled: @json($imageEnabled),
                 availableModels: @json($availableModels),
@@ -206,6 +233,33 @@
                         const el = this.$refs.chatMessages;
                         if (el) el.scrollTop = el.scrollHeight;
                     });
+                },
+
+                renderMarkdown(content) {
+                    return window.renderStellaMarkdown
+                        ? window.renderStellaMarkdown(content || '')
+                        : String(content || '');
+                },
+
+                startLoadingAnimation(type) {
+                    const statuses = type === 'image_request'
+                        ? ['Memahami deskripsi gambar...', 'Menyusun komposisi...', 'Merender gambar...']
+                        : ['Memahami pertanyaan...', 'Menyiapkan jawaban...', 'Merapikan hasil...'];
+
+                    let index = 0;
+                    this.stopLoadingAnimation();
+                    this.loadingStatus = statuses[index];
+                    this.loadingTimer = window.setInterval(() => {
+                        index = (index + 1) % statuses.length;
+                        this.loadingStatus = statuses[index];
+                    }, 1800);
+                },
+
+                stopLoadingAnimation() {
+                    if (this.loadingTimer) {
+                        window.clearInterval(this.loadingTimer);
+                        this.loadingTimer = null;
+                    }
                 },
 
                 async newConversation() {
@@ -248,7 +302,13 @@
                             throw new Error('Gagal memuat percakapan.');
                         }
 
-                        this.messages = await res.json();
+                        const messages = await res.json();
+                        this.messages = messages.map(message => ({
+                            ...message,
+                            display_content: message.content,
+                            is_typing: false,
+                            copied: false,
+                        }));
                         this.scrollToBottom();
                     } catch (e) {
                         this.showError('Riwayat percakapan tidak dapat dimuat.');
@@ -325,6 +385,7 @@
 
                     this.messageInput = '';
                     this.loading = true;
+                    this.startLoadingAnimation(type);
                     this.scrollToBottom();
 
                     try {
@@ -344,14 +405,17 @@
 
                         const data = await res.json();
                         if (data.message) {
-                            this.messages.push(typeof data.message === 'string' ? {
+                            const assistantMessage = typeof data.message === 'string' ? {
                                 id: 'err-' + Date.now(),
                                 role: 'assistant',
                                 content: data.message,
                                 type: 'text',
                                 image_path: null,
                                 created_at: new Date().toISOString(),
-                            } : data.message);
+                            } : data.message;
+
+                            this.stopLoadingAnimation();
+                            await this.appendAssistantWithTyping(assistantMessage);
 
                             // Update conversation title
                             const conv = this.conversations.find(c => c.id === this.activeConversation);
@@ -364,8 +428,68 @@
                     } catch (e) {
                         this.showError('Maaf, terjadi kesalahan koneksi.');
                     } finally {
+                        this.stopLoadingAnimation();
+                        this.typingResponse = false;
                         this.loading = false;
                         this.scrollToBottom();
+                    }
+                },
+
+                async appendAssistantWithTyping(message) {
+                    const content = String(message.content || '');
+                    const shouldAnimate = message.type !== 'image_request' && !message.image_path && content.length > 0;
+                    const renderedMessage = {
+                        ...message,
+                        display_content: shouldAnimate ? '' : content,
+                        is_typing: shouldAnimate,
+                        copied: false,
+                    };
+
+                    this.messages.push(renderedMessage);
+                    this.typingResponse = shouldAnimate;
+                    this.scrollToBottom();
+
+                    if (!shouldAnimate) return;
+
+                    const messageIndex = this.messages.length - 1;
+                    const chunkSize = Math.max(1, Math.ceil(content.length / 220));
+
+                    for (let index = chunkSize; index < content.length; index += chunkSize) {
+                        this.messages[messageIndex].display_content = content.slice(0, index);
+                        if (index % (chunkSize * 8) === 0) this.scrollToBottom();
+                        await new Promise(resolve => window.setTimeout(resolve, 16));
+                    }
+
+                    this.messages[messageIndex].display_content = content;
+                    this.messages[messageIndex].is_typing = false;
+                    this.typingResponse = false;
+                    this.scrollToBottom();
+                },
+
+                async copyMessage(message) {
+                    const text = String(message.content || '');
+                    if (!text) return;
+
+                    try {
+                        if (navigator.clipboard && window.isSecureContext) {
+                            await navigator.clipboard.writeText(text);
+                        } else {
+                            const textarea = document.createElement('textarea');
+                            textarea.value = text;
+                            textarea.style.position = 'fixed';
+                            textarea.style.opacity = '0';
+                            document.body.appendChild(textarea);
+                            textarea.select();
+                            document.execCommand('copy');
+                            textarea.remove();
+                        }
+
+                        message.copied = true;
+                        window.setTimeout(() => {
+                            message.copied = false;
+                        }, 1800);
+                    } catch (error) {
+                        this.showError('Jawaban belum dapat disalin. Silakan coba kembali.');
                     }
                 },
 
@@ -399,8 +523,11 @@
                         id: 'err-' + Date.now(),
                         role: 'assistant',
                         content: message,
+                        display_content: message,
                         type: 'text',
                         image_path: null,
+                        is_typing: false,
+                        copied: false,
                         created_at: new Date().toISOString(),
                     });
                     this.scrollToBottom();

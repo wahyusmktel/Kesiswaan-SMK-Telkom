@@ -1,3 +1,116 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+    .stella-markdown {
+        @apply break-words text-sm leading-6;
+    }
+
+    .stella-markdown > :first-child {
+        margin-top: 0;
+    }
+
+    .stella-markdown > :last-child {
+        margin-bottom: 0;
+    }
+
+    .stella-markdown p {
+        @apply my-2;
+    }
+
+    .stella-markdown h1,
+    .stella-markdown h2,
+    .stella-markdown h3,
+    .stella-markdown h4 {
+        @apply mb-2 mt-5 font-bold leading-tight text-gray-950;
+    }
+
+    .stella-markdown h1 {
+        @apply text-lg;
+    }
+
+    .stella-markdown h2 {
+        @apply text-base;
+    }
+
+    .stella-markdown h3,
+    .stella-markdown h4 {
+        @apply text-sm;
+    }
+
+    .stella-markdown strong {
+        @apply font-bold text-gray-950;
+    }
+
+    .stella-markdown ul {
+        @apply my-2 list-disc pl-5;
+    }
+
+    .stella-markdown ol {
+        @apply my-2 list-decimal pl-5;
+    }
+
+    .stella-markdown li {
+        @apply my-1 pl-1;
+    }
+
+    .stella-markdown blockquote {
+        @apply my-3 border-l-4 border-red-300 bg-white/70 py-2 pl-3 pr-2 text-gray-600;
+    }
+
+    .stella-markdown a {
+        @apply font-semibold text-red-600 underline decoration-red-300 underline-offset-2;
+    }
+
+    .stella-markdown :not(pre) > code {
+        @apply rounded bg-gray-200 px-1.5 py-0.5 font-mono text-[0.8rem] text-red-700;
+    }
+
+    .stella-markdown pre {
+        @apply my-3 max-w-full overflow-x-auto rounded-lg bg-gray-950 p-4 text-gray-100 shadow-inner;
+    }
+
+    .stella-markdown pre code {
+        @apply whitespace-pre font-mono text-xs leading-5 text-inherit;
+    }
+
+    .stella-markdown table {
+        @apply my-3 w-full border-collapse overflow-hidden rounded-lg bg-white text-left text-xs;
+    }
+
+    .stella-markdown th {
+        @apply border border-gray-300 bg-gray-200 px-3 py-2 font-bold text-gray-900;
+    }
+
+    .stella-markdown td {
+        @apply border border-gray-300 px-3 py-2 align-top;
+    }
+
+    .stella-markdown hr {
+        @apply my-4 border-gray-300;
+    }
+
+    .stella-typing-caret::after {
+        content: '';
+        display: inline-block;
+        width: 2px;
+        height: 1em;
+        margin-left: 3px;
+        vertical-align: -0.12em;
+        background: currentColor;
+        animation: stella-caret 0.8s steps(1) infinite;
+    }
+}
+
+@keyframes stella-caret {
+    0%,
+    45% {
+        opacity: 1;
+    }
+
+    46%,
+    100% {
+        opacity: 0;
+    }
+}

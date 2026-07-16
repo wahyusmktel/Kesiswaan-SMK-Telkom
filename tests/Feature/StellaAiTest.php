@@ -359,7 +359,10 @@ class StellaAiTest extends TestCase
             ->get(route('stella-ai.index'))
             ->assertOk()
             ->assertSee('Halo! Saya Stella AI')
-            ->assertSee('Mode Gambar');
+            ->assertSee('Mode Gambar')
+            ->assertSee('Salin jawaban')
+            ->assertSee('appendAssistantWithTyping')
+            ->assertSee('renderMarkdown');
 
         $this->actingAs($admin)
             ->withSession(['active_role' => 'Super Admin'])
