@@ -24,11 +24,22 @@ class AppSetting extends Model
         'landing_popup_cta_text',
         'landing_popup_cta_url',
         'landing_popup_frequency',
+        'stella_ai_base_url',
+        'stella_ai_api_key',
+        'stella_ai_chat_model',
+        'stella_ai_image_model',
+        'stella_ai_enabled',
     ];
 
     protected $casts = [
         'allow_registration' => 'boolean',
         'transformasi_slider_images' => 'array',
         'landing_popup_enabled' => 'boolean',
+        'stella_ai_enabled' => 'boolean',
+        'stella_ai_api_key' => 'encrypted',
+    ];
+
+    protected $hidden = [
+        'stella_ai_api_key',
     ];
 }

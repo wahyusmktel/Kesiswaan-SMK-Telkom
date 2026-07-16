@@ -909,7 +909,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Manajemen Berita
         Route::resource('berita', BeritaController::class)->except(['show']);
+
+        // Stella AI Settings
+        Route::get('/stella-ai-settings', [\App\Http\Controllers\StellaAiController::class, 'aiSettings'])->name('stella-ai.settings');
+        Route::post('/stella-ai-settings', [\App\Http\Controllers\StellaAiController::class, 'updateAiSettings'])->name('stella-ai.settings.update');
+        Route::post('/stella-ai-test', [\App\Http\Controllers\StellaAiController::class, 'testConnection'])->name('stella-ai.test');
     });
+});
+
+// =========================================================
+// STELLA AI (Semua Role)
+// =========================================================
+Route::middleware('auth')->prefix('stella-ai')->name('stella-ai.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\StellaAiController::class, 'index'])->name('index');
+    Route::post('/conversations', [\App\Http\Controllers\StellaAiController::class, 'createConversation'])->name('conversations.create');
+    Route::get('/conversations/{conversationId}/messages', [\App\Http\Controllers\StellaAiController::class, 'getMessages'])->name('conversations.messages');
+    Route::post('/send', [\App\Http\Controllers\StellaAiController::class, 'sendMessage'])->name('send');
+    Route::delete('/conversations/{conversationId}', [\App\Http\Controllers\StellaAiController::class, 'deleteConversation'])->name('conversations.delete');
 });
 
 Route::middleware('auth')->group(function () {

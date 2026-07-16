@@ -300,6 +300,17 @@
         </li>
     @endcan
     <li>
+        <a href="{{ route('super-admin.stella-ai.settings') }}"
+            class="nav-link {{ request()->routeIs('super-admin.stella-ai.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg></div>
+            <span class="nav-text">Stella AI Settings</span>
+            <span class="nav-badge bg-purple-100 text-purple-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">AI</span>
+        </a>
+    </li>
+    <li>
         <a href="{{ route('super-admin.landing-popup.edit') }}"
             class="nav-link {{ request()->routeIs('super-admin.landing-popup.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
             <div class="nav-icon-container">
@@ -2771,6 +2782,30 @@
 {{-- ============================================================ --}}
 {{-- MENU UMUM --}}
 {{-- ============================================================ --}}
+{{-- ============================================================ --}}
+{{-- MENU: STELLA AI (Semua Role) --}}
+{{-- ============================================================ --}}
+@php
+    $aiEnabled = ($appSetting?->stella_ai_enabled ?? false)
+        && filled($appSetting?->stella_ai_base_url)
+        && filled($appSetting?->stella_ai_api_key)
+        && filled($appSetting?->stella_ai_chat_model);
+@endphp
+@if($aiEnabled)
+<div class="section-title">Stella AI</div>
+<li>
+    <a href="{{ route('stella-ai.index') }}"
+        class="nav-link {{ request()->routeIs('stella-ai.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+        <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg></div>
+        <span class="nav-text">Stella AI</span>
+        <span class="nav-badge bg-gradient-to-r from-purple-600 to-red-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">AI</span>
+    </a>
+</li>
+@endif
+
 <div class="section-title">Layanan Umum</div>
 <li>
     <a href="{{ route('cloud-files.index') }}"
