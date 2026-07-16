@@ -914,6 +914,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/stella-ai-settings', [\App\Http\Controllers\StellaAiController::class, 'aiSettings'])->name('stella-ai.settings');
         Route::post('/stella-ai-settings', [\App\Http\Controllers\StellaAiController::class, 'updateAiSettings'])->name('stella-ai.settings.update');
         Route::post('/stella-ai-test', [\App\Http\Controllers\StellaAiController::class, 'testConnection'])->name('stella-ai.test');
+        Route::post('/stella-ai-image-test', [\App\Http\Controllers\StellaAiController::class, 'testImageConnection'])->name('stella-ai.image.test');
         Route::post('/stella-ai-models', [\App\Http\Controllers\StellaAiController::class, 'discoverModels'])->name('stella-ai.models');
     });
 });

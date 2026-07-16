@@ -327,6 +327,8 @@ class StellaAiTest extends TestCase
                     'wr/grok-4.5',
                 ], JSON_THROW_ON_ERROR),
                 'stella_ai_image_model' => 'new-image-model',
+                'stella_ai_image_endpoint' => 'https://image.example/v1/images/generations',
+                'stella_ai_image_api_key' => '',
                 'stella_ai_enabled' => '1',
             ])
             ->assertRedirect();
@@ -338,6 +340,7 @@ class StellaAiTest extends TestCase
             ['new-chat-model', 'wr/grok-4.5'],
             $setting->stella_ai_models
         );
+        $this->assertSame('image-secret-key', $setting->stella_ai_image_api_key);
         $this->assertNotSame(
             $originalKey,
             (string) $setting->getRawOriginal('stella_ai_api_key')
@@ -364,7 +367,42 @@ class StellaAiTest extends TestCase
             ->assertOk()
             ->assertSee('Aktif dan siap')
             ->assertDontSee('secret-api-key')
+            ->assertDontSee('image-secret-key')
             ->assertDontSee('\x27');
+    }
+
+    public function test_super_admin_can_test_separate_image_provider(): void
+    {
+        Http::fake([
+            'https://image.example/v1/images/generations' => Http::response([
+                'data' => [
+                    ['url' => 'https://cdn.example/test-image.png'],
+                ],
+            ]),
+        ]);
+
+        $role = Role::findOrCreate('Super Admin', 'web');
+        $admin = User::factory()->create(['email_verified_at' => now()]);
+        $admin->assignRole($role);
+        $this->enabledSetting();
+
+        $this->actingAs($admin)
+            ->withSession(['active_role' => 'Super Admin'])
+            ->postJson(route('super-admin.stella-ai.image.test'), [
+                'stella_ai_image_endpoint' => 'https://image.example/v1/images/generations',
+                'stella_ai_image_api_key' => 'image-secret-key',
+                'stella_ai_image_model' => 'image-model',
+            ])
+            ->assertOk()
+            ->assertJson([
+                'success' => true,
+                'message' => 'Endpoint dan model gambar berhasil diuji.',
+            ]);
+
+        Http::assertSent(function ($request) {
+            return $request->url() === 'https://image.example/v1/images/generations'
+                && $request['model'] === 'image-model';
+        });
     }
 
     private function enabledSetting(): AppSetting
@@ -379,6 +417,8 @@ class StellaAiTest extends TestCase
                 'wr/grok-4.5',
             ],
             'stella_ai_image_model' => 'image-model',
+            'stella_ai_image_endpoint' => 'https://ai.example/v1/images/generations',
+            'stella_ai_image_api_key' => 'image-secret-key',
             'stella_ai_enabled' => true,
         ]);
     }

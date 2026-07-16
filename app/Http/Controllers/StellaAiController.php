@@ -25,7 +25,7 @@ class StellaAiController extends Controller
 
         return view('pages.stella-ai.index', [
             'conversations' => $conversations,
-            'imageEnabled' => filled($setting->stella_ai_image_model),
+            'imageEnabled' => $this->imageSettingIsReady($setting),
             'availableModels' => $this->availableModels($setting),
             'defaultModel' => $setting->stella_ai_chat_model,
         ]);
@@ -104,9 +104,9 @@ class StellaAiController extends Controller
         $messageType = $request->input('type', 'text');
         $isImageRequest = $messageType === 'image_request';
 
-        if ($isImageRequest && !$setting->stella_ai_image_model) {
+        if ($isImageRequest && !$this->imageSettingIsReady($setting)) {
             return response()->json([
-                'message' => 'Fitur pembuatan gambar belum dikonfigurasi oleh administrator.',
+                'message' => 'Provider gambar belum dikonfigurasi oleh administrator.',
             ], 422);
         }
 
@@ -145,7 +145,9 @@ class StellaAiController extends Controller
             $errorMessage = StellaAiMessage::create([
                 'conversation_id' => $conversation->id,
                 'role' => 'assistant',
-                'content' => 'Maaf, Stella AI belum dapat memproses permintaan ini. Silakan coba kembali.',
+                'content' => $isImageRequest
+                    ? 'Generate gambar gagal. Periksa endpoint, API key, model gambar, serta kredit provider pada konfigurasi Stella AI.'
+                    : 'Maaf, Stella AI belum dapat memproses permintaan ini. Silakan coba kembali.',
                 'type' => 'text',
             ]);
 
@@ -238,19 +240,26 @@ class StellaAiController extends Controller
     {
         $imageModel = $setting->stella_ai_image_model;
 
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $setting->stella_ai_api_key,
-            'Content-Type' => 'application/json',
-        ])->timeout(120)->post(rtrim($setting->stella_ai_base_url, '/') . '/images/generations', [
-            'model' => $imageModel,
-            'prompt' => $prompt,
-            'n' => 1,
-            'size' => '1024x1024',
-            'response_format' => 'b64_json',
-        ]);
+        $response = $this->aiClient($setting->stella_ai_image_api_key)
+            ->timeout(180)
+            ->post($setting->stella_ai_image_endpoint, [
+                'model' => $imageModel,
+                'prompt' => $prompt,
+                'n' => 1,
+            ]);
 
         if ($response->failed()) {
-            throw new \RuntimeException('Image API returned HTTP '.$response->status().'.');
+            Log::warning('Stella AI provider rejected image request.', [
+                'user_id' => Auth::id(),
+                'provider_host' => parse_url($setting->stella_ai_image_endpoint, PHP_URL_HOST),
+                'model' => $imageModel,
+                'status' => $response->status(),
+                'response' => Str::limit($response->body(), 2000),
+            ]);
+
+            throw new \RuntimeException(
+                'Image API returned HTTP '.$response->status().': '.$this->providerErrorMessage($response)
+            );
         }
 
         $data = $response->json();
@@ -258,8 +267,12 @@ class StellaAiController extends Controller
         $imagePath = null;
         $content = 'Gambar berhasil dibuat.';
 
-        if (isset($data['data'][0]['b64_json'])) {
-            $imageData = base64_decode($data['data'][0]['b64_json'], true);
+        $base64Image = data_get($data, 'data.0.b64_json')
+            ?: data_get($data, 'data.0.b64_ephemeral');
+        $remoteUrl = data_get($data, 'data.0.url');
+
+        if (is_string($base64Image) && $base64Image !== '') {
+            $imageData = base64_decode($base64Image, true);
             if ($imageData === false) {
                 throw new \RuntimeException('Image API returned invalid base64 data.');
             }
@@ -267,9 +280,16 @@ class StellaAiController extends Controller
             $filename = 'stella-ai/' . Str::uuid() . '.png';
             Storage::disk('public')->put($filename, $imageData);
             $imagePath = $filename;
-        } elseif (isset($data['data'][0]['url'])) {
-            $imagePath = $data['data'][0]['url'];
+        } elseif (is_string($remoteUrl) && filter_var($remoteUrl, FILTER_VALIDATE_URL)) {
+            $imagePath = $remoteUrl;
         } else {
+            Log::warning('Stella AI image provider returned an unsupported response.', [
+                'user_id' => Auth::id(),
+                'provider_host' => parse_url($setting->stella_ai_image_endpoint, PHP_URL_HOST),
+                'model' => $imageModel,
+                'response_keys' => is_array($data) ? array_keys($data) : [],
+            ]);
+
             throw new \RuntimeException('Image API returned no image.');
         }
 
@@ -315,6 +335,8 @@ class StellaAiController extends Controller
             'stella_ai_chat_model' => 'nullable|required_if:stella_ai_enabled,1|string|max:255',
             'stella_ai_models_json' => 'nullable|string|max:20000',
             'stella_ai_image_model' => 'nullable|string|max:255',
+            'stella_ai_image_endpoint' => 'nullable|url|max:500',
+            'stella_ai_image_api_key' => 'nullable|string|max:500',
             'stella_ai_enabled' => 'nullable|boolean',
         ]);
 
@@ -340,11 +362,16 @@ class StellaAiController extends Controller
             'stella_ai_chat_model' => $defaultModel ?: null,
             'stella_ai_models' => array_values(array_unique($models)),
             'stella_ai_image_model' => $request->input('stella_ai_image_model'),
+            'stella_ai_image_endpoint' => $request->input('stella_ai_image_endpoint'),
             'stella_ai_enabled' => $request->has('stella_ai_enabled'),
         ];
 
         if ($request->filled('stella_ai_api_key')) {
             $settings['stella_ai_api_key'] = $request->input('stella_ai_api_key');
+        }
+
+        if ($request->filled('stella_ai_image_api_key')) {
+            $settings['stella_ai_image_api_key'] = $request->input('stella_ai_image_api_key');
         }
 
         $setting->fill($settings);
@@ -497,6 +524,76 @@ class StellaAiController extends Controller
         }
     }
 
+    public function testImageConnection(Request $request)
+    {
+        $setting = AppSetting::first();
+        $validated = $request->validate([
+            'stella_ai_image_endpoint' => 'nullable|url|max:500',
+            'stella_ai_image_api_key' => 'nullable|string|max:500',
+            'stella_ai_image_model' => 'nullable|string|max:255',
+        ]);
+
+        $endpoint = $validated['stella_ai_image_endpoint'] ?? $setting?->stella_ai_image_endpoint;
+        $apiKey = $validated['stella_ai_image_api_key'] ?? $setting?->stella_ai_image_api_key;
+        $model = $validated['stella_ai_image_model'] ?? $setting?->stella_ai_image_model;
+
+        if (!$endpoint || !$apiKey || !$model) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Endpoint, API Key, dan Model Gambar harus diisi terlebih dahulu.',
+            ]);
+        }
+
+        try {
+            $response = $this->aiClient($apiKey)
+                ->timeout(180)
+                ->post($endpoint, [
+                    'model' => $model,
+                    'prompt' => 'A simple red circle on a clean white background.',
+                    'n' => 1,
+                ]);
+
+            if ($response->failed()) {
+                Log::warning('Stella AI image connection test was rejected.', [
+                    'user_id' => Auth::id(),
+                    'provider_host' => parse_url($endpoint, PHP_URL_HOST),
+                    'model' => $model,
+                    'status' => $response->status(),
+                    'response' => Str::limit($response->body(), 2000),
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Provider gambar menolak request (HTTP '.$response->status().'): '
+                        .$this->providerErrorMessage($response),
+                ]);
+            }
+
+            $hasImage = filled(data_get($response->json(), 'data.0.url'))
+                || filled(data_get($response->json(), 'data.0.b64_json'))
+                || filled(data_get($response->json(), 'data.0.b64_ephemeral'));
+
+            return response()->json([
+                'success' => $hasImage,
+                'message' => $hasImage
+                    ? 'Endpoint dan model gambar berhasil diuji.'
+                    : 'Provider merespons, tetapi hasil gambar tidak ditemukan dalam format yang didukung.',
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Stella AI image connection test failed.', [
+                'user_id' => Auth::id(),
+                'provider_host' => parse_url($endpoint, PHP_URL_HOST),
+                'model' => $model,
+                'exception' => $e,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Koneksi ke provider gambar gagal. Periksa endpoint dan koneksi server.',
+            ]);
+        }
+    }
+
     private function enabledSetting(): AppSetting
     {
         $setting = AppSetting::first();
@@ -517,6 +614,15 @@ class StellaAiController extends Controller
             && $setting->stella_ai_base_url
             && $setting->stella_ai_api_key
             && $setting->stella_ai_chat_model
+        );
+    }
+
+    private function imageSettingIsReady(?AppSetting $setting): bool
+    {
+        return (bool) (
+            $setting?->stella_ai_image_model
+            && $setting->stella_ai_image_endpoint
+            && $setting->stella_ai_image_api_key
         );
     }
 

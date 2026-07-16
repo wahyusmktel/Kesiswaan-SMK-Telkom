@@ -71,8 +71,7 @@
                         @enderror
                     </div>
 
-                    <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
-                        <div>
+                    <div>
                             <label for="stella_ai_chat_model" class="block text-sm font-semibold text-gray-700">Model Chat Default</label>
                             <select name="stella_ai_chat_model" id="stella_ai_chat_model"
                                 x-ref="chatModel"
@@ -86,18 +85,6 @@
                             @error('stella_ai_chat_model')
                                 <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                             @enderror
-                        </div>
-
-                        <div>
-                            <label for="stella_ai_image_model" class="block text-sm font-semibold text-gray-700">Model Gambar</label>
-                            <input type="text" name="stella_ai_image_model" id="stella_ai_image_model"
-                                value="{{ old('stella_ai_image_model', $setting->stella_ai_image_model) }}"
-                                placeholder="dall-e-3"
-                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
-                            @error('stella_ai_image_model')
-                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
                     </div>
 
                     <div class="border-t border-gray-100 pt-5">
@@ -160,6 +147,73 @@
                     </div>
 
                     <div class="border-t border-gray-100 pt-5">
+                        <div>
+                            <h4 class="text-sm font-bold text-gray-800">Provider Generate Gambar</h4>
+                            <p class="mt-1 text-xs text-gray-500">Provider chat dan provider gambar dapat berbeda. WaveRouter digunakan untuk chat, sedangkan gambar memerlukan endpoint model image-generation.</p>
+                        </div>
+
+                        <div class="mt-4 space-y-4 rounded-lg border border-purple-100 bg-purple-50/40 p-4">
+                            <div>
+                                <label for="stella_ai_image_endpoint" class="block text-sm font-semibold text-gray-700">URL Endpoint Gambar Lengkap</label>
+                                <input type="url" name="stella_ai_image_endpoint" id="stella_ai_image_endpoint"
+                                    x-ref="imageEndpoint"
+                                    value="{{ old('stella_ai_image_endpoint', $setting->stella_ai_image_endpoint) }}"
+                                    placeholder="https://api.imagerouter.io/v1/openai/images/generations"
+                                    class="mt-1 block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-purple-500 focus:ring-purple-500">
+                                <p class="mt-1 text-[10px] text-gray-500">Masukkan URL lengkap sampai <span class="font-mono">/images/generations</span>.</p>
+                                @error('stella_ai_image_endpoint')
+                                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <div>
+                                    <label for="stella_ai_image_api_key" class="block text-sm font-semibold text-gray-700">API Key Gambar</label>
+                                    <input type="password" name="stella_ai_image_api_key" id="stella_ai_image_api_key"
+                                        x-ref="imageApiKey"
+                                        value=""
+                                        autocomplete="new-password"
+                                        placeholder="{{ $setting->stella_ai_image_api_key ? 'Tersimpan - kosongkan jika tidak mengganti' : 'Masukkan API key provider gambar' }}"
+                                        class="mt-1 block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-purple-500 focus:ring-purple-500">
+                                    @error('stella_ai_image_api_key')
+                                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div>
+                                    <label for="stella_ai_image_model" class="block text-sm font-semibold text-gray-700">Model Gambar</label>
+                                    <input type="text" name="stella_ai_image_model" id="stella_ai_image_model"
+                                        x-ref="imageModel"
+                                        value="{{ old('stella_ai_image_model', $setting->stella_ai_image_model) }}"
+                                        placeholder="Contoh: openai/gpt-image-1"
+                                        class="mt-1 block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-purple-500 focus:ring-purple-500">
+                                    @error('stella_ai_image_model')
+                                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div>
+                                <button type="button" @click="testImageConnection()" :disabled="testingImage"
+                                    class="inline-flex items-center gap-2 rounded-lg bg-purple-100 px-4 py-2 text-xs font-bold text-purple-700 hover:bg-purple-200 disabled:cursor-wait disabled:opacity-60">
+                                    <svg x-show="testingImage" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Z"></path>
+                                    </svg>
+                                    <span x-text="testingImage ? 'Menguji model gambar...' : 'Tes Model Gambar'"></span>
+                                </button>
+                                <p class="mt-1 text-[10px] text-gray-500">Tes ini membuat satu gambar sederhana dan dapat memakai kredit provider.</p>
+                            </div>
+
+                            <div x-cloak x-show="imageTestResult" x-transition
+                                :class="imageTestResult?.success ? 'border-green-200 bg-green-50 text-green-700' : 'border-red-200 bg-red-50 text-red-700'"
+                                class="rounded-lg border px-4 py-3 text-xs font-medium"
+                                x-text="imageTestResult?.message">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-gray-100 pt-5">
                         <label class="inline-flex cursor-pointer items-center">
                             <input type="checkbox" name="stella_ai_enabled" value="1" class="peer sr-only"
                                 {{ old('stella_ai_enabled', $setting->stella_ai_enabled) ? 'checked' : '' }}>
@@ -210,6 +264,8 @@
                     showApiKey: false,
                     testing: false,
                     testResult: null,
+                    testingImage: false,
+                    imageTestResult: null,
                     discovering: false,
                     discoverResult: null,
                     models: [...new Set((initialModels || []).filter(Boolean))],
@@ -306,6 +362,36 @@
                             };
                         } finally {
                             this.testing = false;
+                        }
+                    },
+
+                    async testImageConnection() {
+                        this.testingImage = true;
+                        this.imageTestResult = null;
+
+                        try {
+                            const response = await fetch("{{ route('super-admin.stella-ai.image.test') }}", {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                    'Accept': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    stella_ai_image_endpoint: this.$refs.imageEndpoint.value,
+                                    stella_ai_image_api_key: this.$refs.imageApiKey.value,
+                                    stella_ai_image_model: this.$refs.imageModel.value,
+                                }),
+                            });
+
+                            this.imageTestResult = await response.json();
+                        } catch (error) {
+                            this.imageTestResult = {
+                                success: false,
+                                message: 'Gagal menghubungi server aplikasi.',
+                            };
+                        } finally {
+                            this.testingImage = false;
                         }
                     },
                 };

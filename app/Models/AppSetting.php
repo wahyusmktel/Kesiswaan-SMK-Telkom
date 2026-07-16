@@ -29,6 +29,8 @@ class AppSetting extends Model
         'stella_ai_chat_model',
         'stella_ai_models',
         'stella_ai_image_model',
+        'stella_ai_image_endpoint',
+        'stella_ai_image_api_key',
         'stella_ai_enabled',
     ];
 
@@ -39,9 +41,11 @@ class AppSetting extends Model
         'stella_ai_enabled' => 'boolean',
         'stella_ai_api_key' => 'encrypted',
         'stella_ai_models' => 'array',
+        'stella_ai_image_api_key' => 'encrypted',
     ];
 
     protected $hidden = [
         'stella_ai_api_key',
+        'stella_ai_image_api_key',
     ];
 }
