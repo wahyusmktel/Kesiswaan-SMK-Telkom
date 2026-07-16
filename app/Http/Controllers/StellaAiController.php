@@ -147,22 +147,42 @@ class StellaAiController extends Controller
             'content' => 'Kamu adalah Stella AI, asisten cerdas di lingkungan SMK Telkom. Kamu ramah, membantu, dan menjawab dalam Bahasa Indonesia. Kamu bisa membantu dengan pertanyaan akademik, tugas sekolah, dan hal umum lainnya.',
         ]);
 
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $setting->stella_ai_api_key,
-            'Content-Type' => 'application/json',
-        ])->timeout(60)->post(rtrim($setting->stella_ai_base_url, '/') . '/chat/completions', [
-            'model' => $setting->stella_ai_chat_model,
-            'messages' => $history,
-            'max_tokens' => 2048,
-            'temperature' => 0.7,
-        ]);
+        $response = $this->aiClient($setting->stella_ai_api_key)
+            ->timeout(120)
+            ->post(rtrim($setting->stella_ai_base_url, '/') . '/chat/completions', [
+                'model' => $setting->stella_ai_chat_model,
+                'messages' => $history,
+                'stream' => false,
+            ]);
 
         if ($response->failed()) {
-            throw new \RuntimeException('Chat API returned HTTP '.$response->status().'.');
+            Log::warning('Stella AI provider rejected chat request.', [
+                'user_id' => Auth::id(),
+                'provider_host' => parse_url($setting->stella_ai_base_url, PHP_URL_HOST),
+                'model' => $setting->stella_ai_chat_model,
+                'status' => $response->status(),
+                'response' => Str::limit($response->body(), 2000),
+            ]);
+
+            throw new \RuntimeException(
+                'Chat API returned HTTP '.$response->status().': '.$this->providerErrorMessage($response)
+            );
         }
 
         $data = $response->json();
-        $assistantContent = $data['choices'][0]['message']['content'] ?? 'Maaf, tidak ada respon.';
+        $assistantContent = data_get($data, 'choices.0.message.content')
+            ?: data_get($data, 'choices.0.message.reasoning_content');
+
+        if (!is_string($assistantContent) || trim($assistantContent) === '') {
+            Log::warning('Stella AI provider returned an unsupported response.', [
+                'user_id' => Auth::id(),
+                'provider_host' => parse_url($setting->stella_ai_base_url, PHP_URL_HOST),
+                'model' => $setting->stella_ai_chat_model,
+                'response_keys' => is_array($data) ? array_keys($data) : [],
+            ]);
+
+            throw new \RuntimeException('Chat API returned no readable assistant content.');
+        }
 
         $assistantMessage = StellaAiMessage::create([
             'conversation_id' => $conversation->id,
@@ -295,26 +315,64 @@ class StellaAiController extends Controller
         $validated = $request->validate([
             'stella_ai_base_url' => 'nullable|url|max:500',
             'stella_ai_api_key' => 'nullable|string|max:500',
+            'stella_ai_chat_model' => 'nullable|string|max:255',
         ]);
 
         $baseUrl = $validated['stella_ai_base_url'] ?? $setting?->stella_ai_base_url;
         $apiKey = $validated['stella_ai_api_key'] ?? $setting?->stella_ai_api_key;
+        $chatModel = $validated['stella_ai_chat_model'] ?? $setting?->stella_ai_chat_model;
 
-        if (!$baseUrl || !$apiKey) {
-            return response()->json(['success' => false, 'message' => 'Base URL dan API Key harus diisi terlebih dahulu.']);
+        if (!$baseUrl || !$apiKey || !$chatModel) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Base URL, API Key, dan Model Chat harus diisi terlebih dahulu.',
+            ]);
         }
 
         try {
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $apiKey,
-                'Content-Type' => 'application/json',
-            ])->timeout(15)->get(rtrim($baseUrl, '/') . '/models');
+            $response = $this->aiClient($apiKey)
+                ->timeout(60)
+                ->post(rtrim($baseUrl, '/') . '/chat/completions', [
+                    'model' => $chatModel,
+                    'messages' => [
+                        [
+                            'role' => 'user',
+                            'content' => 'Balas tepat dengan kata: TERHUBUNG',
+                        ],
+                    ],
+                    'stream' => false,
+                ]);
 
             if ($response->successful()) {
-                return response()->json(['success' => true, 'message' => 'Koneksi berhasil!', 'models' => $response->json()]);
+                $content = data_get($response->json(), 'choices.0.message.content')
+                    ?: data_get($response->json(), 'choices.0.message.reasoning_content');
+
+                if (!is_string($content) || trim($content) === '') {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Provider merespons, tetapi format jawaban model tidak dikenali.',
+                    ]);
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Koneksi dan model berhasil diuji.',
+                ]);
             }
 
-            return response()->json(['success' => false, 'message' => 'Gagal: ' . $response->status()]);
+            Log::warning('Stella AI connection test was rejected by provider.', [
+                'user_id' => Auth::id(),
+                'provider_host' => parse_url($baseUrl, PHP_URL_HOST),
+                'model' => $chatModel,
+                'status' => $response->status(),
+                'response' => Str::limit($response->body(), 2000),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Provider menolak request (HTTP '.$response->status().'): '
+                    .$this->providerErrorMessage($response),
+            ]);
         } catch (\Throwable $e) {
             Log::warning('Stella AI connection test failed.', [
                 'user_id' => Auth::id(),
@@ -349,5 +407,25 @@ class StellaAiController extends Controller
             && $setting->stella_ai_api_key
             && $setting->stella_ai_chat_model
         );
+    }
+
+    private function aiClient(string $apiKey)
+    {
+        return Http::acceptJson()
+            ->asJson()
+            ->withToken($apiKey);
+    }
+
+    private function providerErrorMessage($response): string
+    {
+        $message = data_get($response->json(), 'error.message')
+            ?? data_get($response->json(), 'message')
+            ?? data_get($response->json(), 'detail');
+
+        if (!is_string($message) || trim($message) === '') {
+            return 'Tidak ada detail error dari provider.';
+        }
+
+        return Str::limit(strip_tags($message), 300);
     }
 }

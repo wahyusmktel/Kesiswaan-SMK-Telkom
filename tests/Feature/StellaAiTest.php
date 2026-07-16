@@ -147,6 +147,73 @@ class StellaAiTest extends TestCase
         Storage::disk('public')->assertExists($imagePath);
     }
 
+    public function test_glm_reasoning_content_is_accepted_when_content_is_empty(): void
+    {
+        Http::fake([
+            'https://ai.example/v1/chat/completions' => Http::response([
+                'choices' => [
+                    [
+                        'message' => [
+                            'content' => null,
+                            'reasoning_content' => 'Jawaban dari reasoning GLM',
+                        ],
+                    ],
+                ],
+            ]),
+        ]);
+
+        $user = User::factory()->create();
+        $this->enabledSetting();
+        $conversation = StellaAiConversation::create([
+            'user_id' => $user->id,
+            'title' => 'Percakapan GLM',
+        ]);
+
+        $this->actingAs($user)
+            ->postJson(route('stella-ai.send'), [
+                'conversation_id' => $conversation->id,
+                'message' => 'Halo',
+                'type' => 'text',
+            ])
+            ->assertOk()
+            ->assertJsonPath('message.content', 'Jawaban dari reasoning GLM');
+    }
+
+    public function test_connection_uses_real_chat_completion_endpoint(): void
+    {
+        Http::fake([
+            'https://waverouter.web.id/v1/chat/completions' => Http::response([
+                'choices' => [
+                    ['message' => ['content' => 'TERHUBUNG']],
+                ],
+            ]),
+        ]);
+
+        $role = Role::findOrCreate('Super Admin', 'web');
+        $admin = User::factory()->create(['email_verified_at' => now()]);
+        $admin->assignRole($role);
+        $this->enabledSetting();
+
+        $this->actingAs($admin)
+            ->withSession(['active_role' => 'Super Admin'])
+            ->postJson(route('super-admin.stella-ai.test'), [
+                'stella_ai_base_url' => 'https://waverouter.web.id/v1',
+                'stella_ai_api_key' => 'wave-secret',
+                'stella_ai_chat_model' => 'glm-5.2',
+            ])
+            ->assertOk()
+            ->assertJson([
+                'success' => true,
+                'message' => 'Koneksi dan model berhasil diuji.',
+            ]);
+
+        Http::assertSent(function ($request) {
+            return $request->url() === 'https://waverouter.web.id/v1/chat/completions'
+                && $request['model'] === 'glm-5.2'
+                && $request['stream'] === false;
+        });
+    }
+
     public function test_super_admin_can_update_settings_without_erasing_saved_api_key(): void
     {
         $role = Role::findOrCreate('Super Admin', 'web');

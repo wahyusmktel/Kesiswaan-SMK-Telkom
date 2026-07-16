@@ -70,6 +70,7 @@
                         <div>
                             <label for="stella_ai_chat_model" class="block text-sm font-semibold text-gray-700">Model Chat</label>
                             <input type="text" name="stella_ai_chat_model" id="stella_ai_chat_model"
+                                x-ref="chatModel"
                                 value="{{ old('stella_ai_chat_model', $setting->stella_ai_chat_model) }}"
                                 placeholder="gpt-4o-mini"
                                 class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
@@ -157,6 +158,7 @@
                                 body: JSON.stringify({
                                     stella_ai_base_url: this.$refs.baseUrl.value,
                                     stella_ai_api_key: this.$refs.apiKey.value,
+                                    stella_ai_chat_model: this.$refs.chatModel.value,
                                 }),
                             });
 
