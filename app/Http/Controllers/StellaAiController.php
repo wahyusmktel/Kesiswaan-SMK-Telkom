@@ -26,21 +26,29 @@ class StellaAiController extends Controller
         return view('pages.stella-ai.index', [
             'conversations' => $conversations,
             'imageEnabled' => filled($setting->stella_ai_image_model),
+            'availableModels' => $this->availableModels($setting),
+            'defaultModel' => $setting->stella_ai_chat_model,
         ]);
     }
 
     public function createConversation(Request $request)
     {
-        $this->enabledSetting();
+        $setting = $this->enabledSetting();
+        $validated = $request->validate([
+            'model' => 'nullable|string|max:255',
+        ]);
+        $model = $this->resolveAllowedModel($setting, $validated['model'] ?? null);
 
         $conversation = StellaAiConversation::create([
             'user_id' => Auth::id(),
             'title' => 'Percakapan Baru',
+            'model' => $model,
         ]);
 
         return response()->json([
             'id' => $conversation->id,
             'title' => $conversation->title,
+            'model' => $conversation->model,
         ]);
     }
 
@@ -56,6 +64,25 @@ class StellaAiController extends Controller
         return response()->json($messages);
     }
 
+    public function updateConversationModel(Request $request, $conversationId)
+    {
+        $setting = $this->enabledSetting();
+        $validated = $request->validate([
+            'model' => 'required|string|max:255',
+        ]);
+
+        $conversation = StellaAiConversation::where('user_id', Auth::id())
+            ->findOrFail($conversationId);
+        $model = $this->resolveAllowedModel($setting, $validated['model']);
+
+        $conversation->update(['model' => $model]);
+
+        return response()->json([
+            'success' => true,
+            'model' => $model,
+        ]);
+    }
+
     public function sendMessage(Request $request)
     {
         $request->validate([
@@ -68,6 +95,11 @@ class StellaAiController extends Controller
             ->findOrFail($request->conversation_id);
 
         $setting = $this->enabledSetting();
+        $model = $this->resolveAllowedModel($setting, $conversation->model);
+
+        if ($conversation->model !== $model) {
+            $conversation->update(['model' => $model]);
+        }
 
         $messageType = $request->input('type', 'text');
         $isImageRequest = $messageType === 'image_request';
@@ -98,7 +130,7 @@ class StellaAiController extends Controller
             if ($isImageRequest) {
                 $response = $this->generateImage($setting, $conversation, $request->message);
             } else {
-                $response = $this->chatCompletion($setting, $conversation);
+                $response = $this->chatCompletion($setting, $conversation, $model);
             }
 
             return response()->json($response);
@@ -124,7 +156,11 @@ class StellaAiController extends Controller
         }
     }
 
-    private function chatCompletion(AppSetting $setting, StellaAiConversation $conversation): array
+    private function chatCompletion(
+        AppSetting $setting,
+        StellaAiConversation $conversation,
+        string $model
+    ): array
     {
         $history = $conversation->messages()
             ->where('type', '!=', 'image_response')
@@ -150,7 +186,7 @@ class StellaAiController extends Controller
         $response = $this->aiClient($setting->stella_ai_api_key)
             ->timeout(120)
             ->post(rtrim($setting->stella_ai_base_url, '/') . '/chat/completions', [
-                'model' => $setting->stella_ai_chat_model,
+                'model' => $model,
                 'messages' => $history,
                 'stream' => false,
             ]);
@@ -159,7 +195,7 @@ class StellaAiController extends Controller
             Log::warning('Stella AI provider rejected chat request.', [
                 'user_id' => Auth::id(),
                 'provider_host' => parse_url($setting->stella_ai_base_url, PHP_URL_HOST),
-                'model' => $setting->stella_ai_chat_model,
+                'model' => $model,
                 'status' => $response->status(),
                 'response' => Str::limit($response->body(), 2000),
             ]);
@@ -177,7 +213,7 @@ class StellaAiController extends Controller
             Log::warning('Stella AI provider returned an unsupported response.', [
                 'user_id' => Auth::id(),
                 'provider_host' => parse_url($setting->stella_ai_base_url, PHP_URL_HOST),
-                'model' => $setting->stella_ai_chat_model,
+                'model' => $model,
                 'response_keys' => is_array($data) ? array_keys($data) : [],
             ]);
 
@@ -267,6 +303,7 @@ class StellaAiController extends Controller
         return view('pages.admin.stella-ai-settings', [
             'setting' => $setting,
             'isReady' => $this->settingIsReady($setting),
+            'availableModels' => $this->availableModels($setting),
         ]);
     }
 
@@ -276,6 +313,7 @@ class StellaAiController extends Controller
             'stella_ai_base_url' => 'nullable|required_if:stella_ai_enabled,1|url|max:500',
             'stella_ai_api_key' => 'nullable|string|max:500',
             'stella_ai_chat_model' => 'nullable|required_if:stella_ai_enabled,1|string|max:255',
+            'stella_ai_models_json' => 'nullable|string|max:20000',
             'stella_ai_image_model' => 'nullable|string|max:255',
             'stella_ai_enabled' => 'nullable|boolean',
         ]);
@@ -290,9 +328,17 @@ class StellaAiController extends Controller
             ]);
         }
 
+        $models = $this->decodeModels($request->input('stella_ai_models_json'));
+        $defaultModel = trim((string) $request->input('stella_ai_chat_model'));
+
+        if ($defaultModel !== '' && !in_array($defaultModel, $models, true)) {
+            $models[] = $defaultModel;
+        }
+
         $settings = [
             'stella_ai_base_url' => $request->input('stella_ai_base_url'),
-            'stella_ai_chat_model' => $request->input('stella_ai_chat_model'),
+            'stella_ai_chat_model' => $defaultModel ?: null,
+            'stella_ai_models' => array_values(array_unique($models)),
             'stella_ai_image_model' => $request->input('stella_ai_image_model'),
             'stella_ai_enabled' => $request->has('stella_ai_enabled'),
         ];
@@ -386,6 +432,71 @@ class StellaAiController extends Controller
         }
     }
 
+    public function discoverModels(Request $request)
+    {
+        $setting = AppSetting::first();
+        $validated = $request->validate([
+            'stella_ai_base_url' => 'nullable|url|max:500',
+            'stella_ai_api_key' => 'nullable|string|max:500',
+        ]);
+
+        $baseUrl = $validated['stella_ai_base_url'] ?? $setting?->stella_ai_base_url;
+        $apiKey = $validated['stella_ai_api_key'] ?? $setting?->stella_ai_api_key;
+
+        if (!$baseUrl || !$apiKey) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Base URL dan API Key harus diisi terlebih dahulu.',
+            ], 422);
+        }
+
+        try {
+            $response = $this->aiClient($apiKey)
+                ->timeout(30)
+                ->get(rtrim($baseUrl, '/') . '/models');
+
+            if ($response->failed()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Provider tidak menyediakan daftar model (HTTP '.$response->status().'). Gunakan input manual.',
+                ]);
+            }
+
+            $models = collect(data_get($response->json(), 'data', []))
+                ->map(fn ($model) => is_array($model) ? ($model['id'] ?? null) : null)
+                ->filter(fn ($model) => is_string($model) && trim($model) !== '')
+                ->map(fn ($model) => trim($model))
+                ->unique()
+                ->sort()
+                ->values()
+                ->all();
+
+            if ($models === []) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Provider merespons, tetapi daftar model tidak ditemukan. Gunakan input manual.',
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => count($models).' model ditemukan.',
+                'models' => $models,
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Stella AI model discovery failed.', [
+                'user_id' => Auth::id(),
+                'provider_host' => parse_url($baseUrl, PHP_URL_HOST),
+                'exception' => $e,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Daftar model tidak dapat diambil. Gunakan input manual dari tombol Copy di provider.',
+            ]);
+        }
+    }
+
     private function enabledSetting(): AppSetting
     {
         $setting = AppSetting::first();
@@ -407,6 +518,55 @@ class StellaAiController extends Controller
             && $setting->stella_ai_api_key
             && $setting->stella_ai_chat_model
         );
+    }
+
+    private function availableModels(AppSetting $setting): array
+    {
+        $models = collect($setting->stella_ai_models ?? [])
+            ->filter(fn ($model) => is_string($model) && trim($model) !== '')
+            ->map(fn ($model) => trim($model))
+            ->push($setting->stella_ai_chat_model)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        return $models;
+    }
+
+    private function resolveAllowedModel(AppSetting $setting, ?string $requestedModel): string
+    {
+        $models = $this->availableModels($setting);
+        $requestedModel = trim((string) $requestedModel);
+
+        if ($requestedModel !== '' && in_array($requestedModel, $models, true)) {
+            return $requestedModel;
+        }
+
+        return $setting->stella_ai_chat_model;
+    }
+
+    private function decodeModels(?string $json): array
+    {
+        if (!$json) {
+            return [];
+        }
+
+        $decoded = json_decode($json, true);
+
+        if (!is_array($decoded)) {
+            throw ValidationException::withMessages([
+                'stella_ai_models_json' => 'Daftar model tidak valid.',
+            ]);
+        }
+
+        return collect($decoded)
+            ->filter(fn ($model) => is_string($model) && trim($model) !== '')
+            ->map(fn ($model) => trim($model))
+            ->unique()
+            ->take(200)
+            ->values()
+            ->all();
     }
 
     private function aiClient(string $apiKey)

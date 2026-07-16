@@ -12,8 +12,13 @@
     <div class="w-full py-6">
         <div class="mx-auto max-w-4xl space-y-6 px-4 sm:px-6 lg:px-8">
             <form action="{{ route('super-admin.stella-ai.settings.update') }}" method="POST"
-                x-data="stellaAiSettings()" class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+                x-data="stellaAiSettings(
+                    @js($availableModels),
+                    @js(old('stella_ai_chat_model', $setting->stella_ai_chat_model))
+                )"
+                class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
                 @csrf
+                <input type="hidden" name="stella_ai_models_json" :value="JSON.stringify(models)">
 
                 <div class="flex flex-col gap-3 border-b border-gray-100 bg-gray-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
@@ -68,12 +73,16 @@
 
                     <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
                         <div>
-                            <label for="stella_ai_chat_model" class="block text-sm font-semibold text-gray-700">Model Chat</label>
-                            <input type="text" name="stella_ai_chat_model" id="stella_ai_chat_model"
+                            <label for="stella_ai_chat_model" class="block text-sm font-semibold text-gray-700">Model Chat Default</label>
+                            <select name="stella_ai_chat_model" id="stella_ai_chat_model"
                                 x-ref="chatModel"
-                                value="{{ old('stella_ai_chat_model', $setting->stella_ai_chat_model) }}"
-                                placeholder="gpt-4o-mini"
+                                x-model="defaultModel"
                                 class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
+                                <option value="">Pilih model default</option>
+                                <template x-for="model in models" :key="model">
+                                    <option :value="model" x-text="model"></option>
+                                </template>
+                            </select>
                             @error('stella_ai_chat_model')
                                 <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                             @enderror
@@ -89,6 +98,65 @@
                                 <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
+                    </div>
+
+                    <div class="border-t border-gray-100 pt-5">
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                                <h4 class="text-sm font-bold text-gray-800">Katalog Model Chat</h4>
+                                <p class="mt-1 text-xs text-gray-500">Tambahkan ID model persis seperti hasil tombol Copy di WaveRouter, misalnya <span class="font-mono">wr/grok-4.5</span>.</p>
+                            </div>
+                            <button type="button" @click="discoverModels()" :disabled="discovering"
+                                class="inline-flex w-fit items-center gap-2 rounded-lg bg-cyan-50 px-3 py-2 text-xs font-bold text-cyan-700 transition-colors hover:bg-cyan-100 disabled:cursor-wait disabled:opacity-60">
+                                <svg x-show="!discovering" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h16M4 17h10" />
+                                </svg>
+                                <svg x-show="discovering" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Z"></path>
+                                </svg>
+                                <span x-text="discovering ? 'Mengambil model...' : 'Ambil dari Provider'"></span>
+                            </button>
+                        </div>
+
+                        <div class="mt-4 flex gap-2">
+                            <input type="text" x-model="newModel" @keydown.enter.prevent="addModel()"
+                                placeholder="Contoh: wr/deepseek-v4-flash"
+                                class="min-w-0 flex-1 rounded-lg border-gray-300 text-sm shadow-sm focus:border-red-500 focus:ring-red-500">
+                            <button type="button" @click="addModel()"
+                                class="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-gray-900 text-white transition-colors hover:bg-gray-700"
+                                title="Tambah model">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div class="mt-3 max-h-64 space-y-2 overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-2">
+                            <template x-for="model in models" :key="model">
+                                <div class="flex items-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-2">
+                                    <span class="min-w-0 flex-1 truncate font-mono text-xs text-gray-700" x-text="model"></span>
+                                    <span x-show="model === defaultModel" class="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">Default</span>
+                                    <button type="button" @click="removeModel(model)"
+                                        class="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                                        title="Hapus model">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 6 12 12M18 6 6 18" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </template>
+                            <p x-show="models.length === 0" class="px-3 py-5 text-center text-xs text-gray-500">Belum ada model chat.</p>
+                        </div>
+
+                        <div x-cloak x-show="discoverResult" x-transition
+                            :class="discoverResult?.success ? 'border-green-200 bg-green-50 text-green-700' : 'border-amber-200 bg-amber-50 text-amber-700'"
+                            class="mt-3 rounded-lg border px-4 py-3 text-xs font-medium"
+                            x-text="discoverResult?.message">
+                        </div>
+                        @error('stella_ai_models_json')
+                            <p class="mt-2 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div class="border-t border-gray-100 pt-5">
@@ -137,11 +205,76 @@
 
     @push('scripts')
         <script>
-            function stellaAiSettings() {
+            function stellaAiSettings(initialModels, initialDefaultModel) {
                 return {
                     showApiKey: false,
                     testing: false,
                     testResult: null,
+                    discovering: false,
+                    discoverResult: null,
+                    models: [...new Set((initialModels || []).filter(Boolean))],
+                    defaultModel: initialDefaultModel || '',
+                    newModel: '',
+
+                    addModel() {
+                        const model = this.newModel.trim();
+                        if (!model) return;
+
+                        if (!this.models.includes(model)) {
+                            this.models.push(model);
+                            this.models.sort((a, b) => a.localeCompare(b));
+                        }
+
+                        if (!this.defaultModel) {
+                            this.defaultModel = model;
+                        }
+
+                        this.newModel = '';
+                    },
+
+                    removeModel(model) {
+                        this.models = this.models.filter(item => item !== model);
+                        if (this.defaultModel === model) {
+                            this.defaultModel = this.models[0] || '';
+                        }
+                    },
+
+                    async discoverModels() {
+                        this.discovering = true;
+                        this.discoverResult = null;
+
+                        try {
+                            const response = await fetch("{{ route('super-admin.stella-ai.models') }}", {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                    'Accept': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    stella_ai_base_url: this.$refs.baseUrl.value,
+                                    stella_ai_api_key: this.$refs.apiKey.value,
+                                }),
+                            });
+                            const data = await response.json();
+
+                            if (data.success && Array.isArray(data.models)) {
+                                this.models = [...new Set([...this.models, ...data.models])].sort((a, b) => a.localeCompare(b));
+                                if (!this.defaultModel) {
+                                    this.defaultModel = this.models[0] || '';
+                                }
+                            }
+
+                            this.discoverResult = data;
+                        } catch (error) {
+                            this.discoverResult = {
+                                success: false,
+                                message: 'Daftar model tidak dapat diambil. Tambahkan ID model secara manual.',
+                            };
+                        } finally {
+                            this.discovering = false;
+                        }
+                    },
 
                     async testConnection() {
                         this.testing = true;
@@ -158,7 +291,7 @@
                                 body: JSON.stringify({
                                     stella_ai_base_url: this.$refs.baseUrl.value,
                                     stella_ai_api_key: this.$refs.apiKey.value,
-                                    stella_ai_chat_model: this.$refs.chatModel.value,
+                                    stella_ai_chat_model: this.defaultModel,
                                 }),
                             });
 

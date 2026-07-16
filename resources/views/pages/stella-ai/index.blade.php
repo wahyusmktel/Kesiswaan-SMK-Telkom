@@ -28,6 +28,8 @@
                                 <button type="button" @click="selectConversation(conv.id)"
                                     class="min-w-0 flex-1 px-3 py-2.5 text-left">
                                     <span class="block truncate" x-text="conv.title"></span>
+                                    <span class="mt-0.5 block truncate font-mono text-[10px] font-normal opacity-60"
+                                        x-text="conv.model || defaultModel"></span>
                                 </button>
                                 <button type="button" @click="deleteConversation(conv.id)"
                                     class="mr-2 rounded-md p-1 text-gray-400 opacity-100 transition-colors hover:bg-white hover:text-red-500 md:opacity-0 md:group-hover:opacity-100"
@@ -60,6 +62,29 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                             </svg>
                         </button>
+                    </div>
+
+                    <div class="flex flex-col gap-2 border-b border-gray-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-gray-700">Model AI</p>
+                            <p class="text-[10px] text-gray-400">Model disimpan untuk setiap percakapan.</p>
+                        </div>
+                        <div class="relative w-full sm:w-72">
+                            <input type="text" list="stella-ai-model-options"
+                                x-model="selectedModel"
+                                @change="changeModel()"
+                                :disabled="loading"
+                                placeholder="Cari atau pilih model"
+                                class="block w-full rounded-lg border-gray-300 py-2 pl-3 pr-9 font-mono text-xs shadow-sm focus:border-red-500 focus:ring-red-500 disabled:bg-gray-100">
+                            <svg class="pointer-events-none absolute right-3 top-2.5 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m8 9 4-4 4 4m0 6-4 4-4-4" />
+                            </svg>
+                            <datalist id="stella-ai-model-options">
+                                @foreach($availableModels as $model)
+                                    <option value="{{ $model }}"></option>
+                                @endforeach
+                            </datalist>
+                        </div>
                     </div>
 
                     <!-- Chat Messages -->
@@ -166,6 +191,9 @@
                 loading: false,
                 isImageMode: false,
                 imageEnabled: @json($imageEnabled),
+                availableModels: @json($availableModels),
+                defaultModel: @json($defaultModel),
+                selectedModel: @json($defaultModel),
 
                 init() {
                     if (this.conversations.length > 0) {
@@ -188,7 +216,10 @@
                                 'Content-Type': 'application/json',
                                 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
                                 'Accept': 'application/json',
-                            }
+                            },
+                            body: JSON.stringify({
+                                model: this.validSelectedModel(),
+                            }),
                         });
                         if (!res.ok) {
                             throw new Error('Gagal membuat percakapan.');
@@ -206,6 +237,8 @@
 
                 async selectConversation(id) {
                     this.activeConversation = id;
+                    const conversation = this.conversations.find(item => item.id === id);
+                    this.selectedModel = conversation?.model || this.defaultModel;
                     this.messages = [];
                     try {
                         const res = await fetch(`/stella-ai/conversations/${id}/messages`, {
@@ -219,6 +252,42 @@
                         this.scrollToBottom();
                     } catch (e) {
                         this.showError('Riwayat percakapan tidak dapat dimuat.');
+                    }
+                },
+
+                validSelectedModel() {
+                    return this.availableModels.includes(this.selectedModel)
+                        ? this.selectedModel
+                        : this.defaultModel;
+                },
+
+                async changeModel() {
+                    const model = this.validSelectedModel();
+                    this.selectedModel = model;
+
+                    if (!this.activeConversation) return;
+
+                    try {
+                        const response = await fetch(`/stella-ai/conversations/${this.activeConversation}/model`, {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                                'Accept': 'application/json',
+                            },
+                            body: JSON.stringify({ model }),
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Gagal mengganti model.');
+                        }
+
+                        const conversation = this.conversations.find(item => item.id === this.activeConversation);
+                        if (conversation) {
+                            conversation.model = model;
+                        }
+                    } catch (error) {
+                        this.showError('Model percakapan tidak dapat diubah.');
                     }
                 },
 

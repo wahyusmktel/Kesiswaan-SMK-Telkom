@@ -12,7 +12,7 @@ class StellaAiConversation extends Model
 {
     protected $table = 'stella_ai_conversations';
 
-    protected $fillable = ['user_id', 'title'];
+    protected $fillable = ['user_id', 'title', 'model'];
 
     public function user(): BelongsTo
     {

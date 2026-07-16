@@ -914,6 +914,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/stella-ai-settings', [\App\Http\Controllers\StellaAiController::class, 'aiSettings'])->name('stella-ai.settings');
         Route::post('/stella-ai-settings', [\App\Http\Controllers\StellaAiController::class, 'updateAiSettings'])->name('stella-ai.settings.update');
         Route::post('/stella-ai-test', [\App\Http\Controllers\StellaAiController::class, 'testConnection'])->name('stella-ai.test');
+        Route::post('/stella-ai-models', [\App\Http\Controllers\StellaAiController::class, 'discoverModels'])->name('stella-ai.models');
     });
 });
 
@@ -924,6 +925,7 @@ Route::middleware('auth')->prefix('stella-ai')->name('stella-ai.')->group(functi
     Route::get('/', [\App\Http\Controllers\StellaAiController::class, 'index'])->name('index');
     Route::post('/conversations', [\App\Http\Controllers\StellaAiController::class, 'createConversation'])->name('conversations.create');
     Route::get('/conversations/{conversationId}/messages', [\App\Http\Controllers\StellaAiController::class, 'getMessages'])->name('conversations.messages');
+    Route::patch('/conversations/{conversationId}/model', [\App\Http\Controllers\StellaAiController::class, 'updateConversationModel'])->name('conversations.model');
     Route::post('/send', [\App\Http\Controllers\StellaAiController::class, 'sendMessage'])->name('send');
     Route::delete('/conversations/{conversationId}', [\App\Http\Controllers\StellaAiController::class, 'deleteConversation'])->name('conversations.delete');
 });

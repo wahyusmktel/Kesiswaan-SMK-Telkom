@@ -92,6 +92,66 @@ class StellaAiTest extends TestCase
         $this->assertSame('Apa itu cloud computing?', $conversation->fresh()->title);
     }
 
+    public function test_selected_conversation_model_is_sent_to_provider(): void
+    {
+        Http::fake([
+            'https://ai.example/v1/chat/completions' => Http::response([
+                'choices' => [
+                    ['message' => ['content' => 'Jawaban model pilihan']],
+                ],
+            ]),
+        ]);
+
+        $user = User::factory()->create();
+        $this->enabledSetting();
+
+        $conversationResponse = $this->actingAs($user)
+            ->postJson(route('stella-ai.conversations.create'), [
+                'model' => 'wr/deepseek-v4-flash',
+            ])
+            ->assertOk()
+            ->assertJsonPath('model', 'wr/deepseek-v4-flash');
+
+        $this->actingAs($user)
+            ->postJson(route('stella-ai.send'), [
+                'conversation_id' => $conversationResponse->json('id'),
+                'message' => 'Jelaskan routing.',
+                'type' => 'text',
+            ])
+            ->assertOk();
+
+        Http::assertSent(function ($request) {
+            return $request->url() === 'https://ai.example/v1/chat/completions'
+                && $request['model'] === 'wr/deepseek-v4-flash';
+        });
+    }
+
+    public function test_user_can_change_model_only_on_their_own_conversation(): void
+    {
+        $owner = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $this->enabledSetting();
+
+        $conversation = StellaAiConversation::create([
+            'user_id' => $owner->id,
+            'title' => 'Percakapan model',
+            'model' => 'chat-model',
+        ]);
+
+        $this->actingAs($owner)
+            ->patchJson(route('stella-ai.conversations.model', $conversation->id), [
+                'model' => 'wr/grok-4.5',
+            ])
+            ->assertOk()
+            ->assertJsonPath('model', 'wr/grok-4.5');
+
+        $this->actingAs($otherUser)
+            ->patchJson(route('stella-ai.conversations.model', $conversation->id), [
+                'model' => 'wr/deepseek-v4-flash',
+            ])
+            ->assertNotFound();
+    }
+
     public function test_generated_image_is_attached_to_the_requested_conversation(): void
     {
         Storage::fake('public');
@@ -214,6 +274,39 @@ class StellaAiTest extends TestCase
         });
     }
 
+    public function test_super_admin_can_discover_models_from_openai_compatible_endpoint(): void
+    {
+        Http::fake([
+            'https://waverouter.web.id/v1/models' => Http::response([
+                'data' => [
+                    ['id' => 'wr/grok-4.5'],
+                    ['id' => 'wr/deepseek-v4-flash'],
+                    ['id' => 'wr/grok-4.5'],
+                ],
+            ]),
+        ]);
+
+        $role = Role::findOrCreate('Super Admin', 'web');
+        $admin = User::factory()->create(['email_verified_at' => now()]);
+        $admin->assignRole($role);
+        $this->enabledSetting();
+
+        $this->actingAs($admin)
+            ->withSession(['active_role' => 'Super Admin'])
+            ->postJson(route('super-admin.stella-ai.models'), [
+                'stella_ai_base_url' => 'https://waverouter.web.id/v1',
+                'stella_ai_api_key' => 'wave-secret',
+            ])
+            ->assertOk()
+            ->assertJson([
+                'success' => true,
+                'models' => [
+                    'wr/deepseek-v4-flash',
+                    'wr/grok-4.5',
+                ],
+            ]);
+    }
+
     public function test_super_admin_can_update_settings_without_erasing_saved_api_key(): void
     {
         $role = Role::findOrCreate('Super Admin', 'web');
@@ -229,6 +322,10 @@ class StellaAiTest extends TestCase
                 'stella_ai_base_url' => 'https://new-ai.example/v1',
                 'stella_ai_api_key' => '',
                 'stella_ai_chat_model' => 'new-chat-model',
+                'stella_ai_models_json' => json_encode([
+                    'new-chat-model',
+                    'wr/grok-4.5',
+                ], JSON_THROW_ON_ERROR),
                 'stella_ai_image_model' => 'new-image-model',
                 'stella_ai_enabled' => '1',
             ])
@@ -237,6 +334,10 @@ class StellaAiTest extends TestCase
         $setting->refresh();
         $this->assertSame($originalKey, $setting->stella_ai_api_key);
         $this->assertSame('https://new-ai.example/v1', $setting->stella_ai_base_url);
+        $this->assertSame(
+            ['new-chat-model', 'wr/grok-4.5'],
+            $setting->stella_ai_models
+        );
         $this->assertNotSame(
             $originalKey,
             (string) $setting->getRawOriginal('stella_ai_api_key')
@@ -272,6 +373,11 @@ class StellaAiTest extends TestCase
             'stella_ai_base_url' => 'https://ai.example/v1',
             'stella_ai_api_key' => 'secret-api-key',
             'stella_ai_chat_model' => 'chat-model',
+            'stella_ai_models' => [
+                'chat-model',
+                'wr/deepseek-v4-flash',
+                'wr/grok-4.5',
+            ],
             'stella_ai_image_model' => 'image-model',
             'stella_ai_enabled' => true,
         ]);
