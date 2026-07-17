@@ -13,7 +13,21 @@ use JsonException;
 
 class TeachingModuleAiGenerator
 {
-    public function generate(TeachingModule $module, string $topic, array $currentContent): array
+    private const SECTIONS = [
+        'identification' => 'identification',
+        'design' => 'design',
+        'experience' => 'experiences',
+        'assessment' => 'assessment',
+        'supporting' => 'supporting',
+        'attachments' => 'attachments',
+    ];
+
+    public function generateSection(
+        TeachingModule $module,
+        string $topic,
+        string $section,
+        array $currentContent
+    ): array
     {
         $setting = AppSetting::first();
 
@@ -24,31 +38,53 @@ class TeachingModuleAiGenerator
         $module->loadMissing('teacher.masterGuru');
         $context = $this->schemaContext($module);
         $template = TeachingModuleSchema::defaults($context);
+        $schemaKey = self::SECTIONS[$section] ?? null;
+
+        if ($schemaKey === null) {
+            throw new TeachingModuleAiException('Bagian modul yang diminta tidak valid.', 422);
+        }
+
+        $payload = [
+            'model' => $setting->stella_ai_chat_model,
+            'messages' => [
+                [
+                    'role' => 'system',
+                    'content' => $this->systemPrompt(),
+                ],
+                [
+                    'role' => 'user',
+                    'content' => $this->userPrompt(
+                        $module,
+                        $topic,
+                        $section,
+                        [$schemaKey => $template[$schemaKey]]
+                    ),
+                ],
+            ],
+            'stream' => false,
+            'max_tokens' => $section === 'experience' ? 6000 : 3500,
+        ];
 
         try {
             $response = Http::acceptJson()
                 ->asJson()
                 ->withToken($setting->stella_ai_api_key)
                 ->timeout(180)
-                ->post(rtrim($setting->stella_ai_base_url, '/').'/chat/completions', [
-                    'model' => $setting->stella_ai_chat_model,
-                    'messages' => [
-                        [
-                            'role' => 'system',
-                            'content' => $this->systemPrompt(),
-                        ],
-                        [
-                            'role' => 'user',
-                            'content' => $this->userPrompt($module, $topic, $template),
-                        ],
-                    ],
-                    'stream' => false,
-                    'max_tokens' => 12000,
-                ]);
+                ->post(rtrim($setting->stella_ai_base_url, '/').'/chat/completions', $payload);
+
+            if ($response->status() === 400 && str_contains(Str::lower($response->body()), 'max_tokens')) {
+                unset($payload['max_tokens']);
+                $response = Http::acceptJson()
+                    ->asJson()
+                    ->withToken($setting->stella_ai_api_key)
+                    ->timeout(180)
+                    ->post(rtrim($setting->stella_ai_base_url, '/').'/chat/completions', $payload);
+            }
         } catch (\Throwable $exception) {
             Log::warning('Stella AI teaching module provider connection failed.', [
                 'user_id' => $module->teacher_id,
                 'teaching_module_id' => $module->id,
+                'section' => $section,
                 'provider_host' => parse_url($setting->stella_ai_base_url, PHP_URL_HOST),
                 'exception' => $exception,
             ]);
@@ -61,16 +97,20 @@ class TeachingModuleAiGenerator
         }
 
         if ($response->failed()) {
+            $providerMessage = $this->providerErrorMessage($response->json());
             Log::warning('Stella AI teaching module generation was rejected.', [
                 'user_id' => $module->teacher_id,
                 'teaching_module_id' => $module->id,
+                'section' => $section,
                 'provider_host' => parse_url($setting->stella_ai_base_url, PHP_URL_HOST),
                 'model' => $setting->stella_ai_chat_model,
                 'status' => $response->status(),
                 'response' => Str::limit($response->body(), 1500),
             ]);
 
-            throw new TeachingModuleAiException('Provider Stella AI menolak permintaan pembuatan modul. Silakan coba kembali.');
+            throw new TeachingModuleAiException(
+                'Provider Stella AI menolak permintaan (HTTP '.$response->status().'): '.$providerMessage
+            );
         }
 
         $responseData = $response->json();
@@ -91,14 +131,21 @@ class TeachingModuleAiGenerator
             $generated = $generated['content'];
         }
 
-        $normalized = TeachingModuleSchema::sanitize($generated, $context);
+        $generatedSection = $generated[$schemaKey] ?? $generated;
+        if (! is_array($generatedSection)) {
+            throw new TeachingModuleAiException('Struktur bagian hasil Stella AI tidak sesuai format modul ajar.');
+        }
+
+        $merged = TeachingModuleSchema::normalize($currentContent, $context);
+        $merged[$schemaKey] = $generatedSection;
+        $normalized = TeachingModuleSchema::sanitize($merged, $context);
         $normalized['approval'] = $this->trustedApproval(
             $normalized['approval'],
-            TeachingModuleSchema::normalize($currentContent, $context)['approval'],
+            $merged['approval'],
             $context
         );
 
-        $this->ensureComplete($normalized);
+        $this->ensureSectionComplete($normalized, $section);
 
         return $normalized;
     }
@@ -133,7 +180,12 @@ Kamu adalah Stella AI, ahli penyusunan modul ajar pembelajaran mendalam SMK Indo
 PROMPT;
     }
 
-    private function userPrompt(TeachingModule $module, string $topic, array $template): string
+    private function userPrompt(
+        TeachingModule $module,
+        string $topic,
+        string $section,
+        array $template
+    ): string
     {
         $metadata = [
             'topik_utama' => $topic,
@@ -150,16 +202,22 @@ PROMPT;
             'tahun_pelajaran' => $module->tahun_pelajaran,
         ];
 
-        return 'Buat isi modul ajar yang lengkap berdasarkan metadata berikut:'."\n"
+        $sectionInstructions = match ($section) {
+            'identification' => 'Isi identifikasi peserta didik, identifikasi materi, dan pilih 3-5 dimensi profil lulusan yang paling relevan. selected wajib boolean dan dimensi terpilih wajib memiliki note.',
+            'design' => 'Isi capaian, tujuan, topik, praktik pedagogis, mitra, lingkungan belajar, dan pemanfaatan digital secara saling selaras.',
+            'experience' => 'Buat pengalaman belajar lengkap dan realistis terhadap alokasi waktu. Setiap pertemuan wajib memiliki pembukaan, fase inti, aktivitas guru, aktivitas peserta didik, output, dan penutup.',
+            'assessment' => 'Isi asesmen awal, proses, akhir, serta kriteria penilaian yang terukur dan selaras dengan tujuan pembelajaran.',
+            'supporting' => 'Isi pertanyaan pemantik, diferensiasi, pengayaan, dan remedial yang operasional.',
+            'attachments' => 'Isi deskripsi bahan ajar, lembar kerja, dan lampiran instrumen asesmen yang siap disiapkan guru.',
+        };
+
+        return 'Buat bagian '.$section.' untuk modul ajar berdasarkan metadata berikut:'."\n"
             .json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)."\n\n"
             .'Ketentuan isi:'."\n"
-            .'- Isi setiap daftar dengan 2-5 butir yang spesifik dan siap digunakan.'."\n"
-            .'- Pilih 3-5 dimensi profil lulusan yang paling relevan; selected harus boolean dan dimensi terpilih wajib memiliki note.'."\n"
-            .'- Buat pengalaman belajar lengkap dengan pembukaan, fase inti, aktivitas guru, aktivitas peserta didik, output, dan penutup.'."\n"
-            .'- Gunakan jumlah pertemuan yang realistis terhadap alokasi waktu dan beri allocation pada setiap pertemuan.'."\n"
-            .'- Lengkapi asesmen awal, proses, akhir, kriteria, pertanyaan pemantik, diferensiasi, pengayaan, remedial, dan deskripsi lampiran.'."\n"
-            .'- Pada approval, jangan mengarang nama atau NIP; biarkan nilai identitas pada template apa adanya.'."\n\n"
-            .'Kembalikan objek dengan struktur persis seperti template berikut dan ganti seluruh isi akademiknya:'."\n"
+            .'- '.$sectionInstructions."\n"
+            .'- Isi setiap daftar dengan 2-4 butir yang spesifik, ringkas, dan siap digunakan.'."\n"
+            .'- Jangan menambah atau menghapus key pada template.'."\n\n"
+            .'Kembalikan objek JSON dengan struktur persis seperti template berikut:'."\n"
             .json_encode($template, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
@@ -188,6 +246,19 @@ PROMPT;
         return $decoded;
     }
 
+    private function providerErrorMessage(mixed $response): string
+    {
+        $message = data_get($response, 'error.message')
+            ?? data_get($response, 'message')
+            ?? data_get($response, 'detail');
+
+        if (! is_string($message) || trim($message) === '') {
+            return 'tidak ada detail error dari provider.';
+        }
+
+        return Str::limit(strip_tags(trim($message)), 300);
+    }
+
     private function trustedApproval(array $generated, array $current, array $context): array
     {
         foreach (['location', 'date', 'validator_title', 'validator_name', 'validator_nip', 'teacher_title', 'teacher_name', 'teacher_nip'] as $key) {
@@ -202,39 +273,53 @@ PROMPT;
         return $generated;
     }
 
-    private function ensureComplete(array $content): void
+    private function ensureSectionComplete(array $content, string $section): void
     {
-        $requiredLists = [
-            'identification.students',
-            'identification.materials',
-            'design.learning_outcomes',
-            'design.learning_objectives',
-            'design.learning_topics',
-            'design.pedagogical_practices',
-            'design.learning_partners',
-            'design.learning_environment',
-            'design.digital_use',
-            'assessment.initial',
-            'assessment.process',
-            'assessment.final',
-            'assessment.criteria',
-            'supporting.trigger_questions',
-            'supporting.differentiation',
-            'supporting.enrichment',
-            'supporting.remedial',
-            'attachments.teaching_materials',
-            'attachments.worksheets',
-            'attachments.assessments',
+        $requiredBySection = [
+            'identification' => [
+                'identification.students',
+                'identification.materials',
+            ],
+            'design' => [
+                'design.learning_outcomes',
+                'design.learning_objectives',
+                'design.learning_topics',
+                'design.pedagogical_practices',
+                'design.learning_partners',
+                'design.learning_environment',
+                'design.digital_use',
+            ],
+            'assessment' => [
+                'assessment.initial',
+                'assessment.process',
+                'assessment.final',
+                'assessment.criteria',
+            ],
+            'supporting' => [
+                'supporting.trigger_questions',
+                'supporting.differentiation',
+                'supporting.enrichment',
+                'supporting.remedial',
+            ],
+            'attachments' => [
+                'attachments.teaching_materials',
+                'attachments.worksheets',
+                'attachments.assessments',
+            ],
         ];
 
-        foreach ($requiredLists as $path) {
-            if (! $this->hasText(data_get($content, $path))) {
-                throw new TeachingModuleAiException('Hasil Stella AI belum lengkap pada seluruh bagian. Silakan hasilkan ulang.');
+        if ($section === 'experience') {
+            if (! $this->hasLearningActivities(data_get($content, 'experiences'))) {
+                throw new TeachingModuleAiException('Hasil Stella AI belum memiliki pengalaman belajar yang lengkap.');
             }
+
+            return;
         }
 
-        if (! $this->hasLearningActivities(data_get($content, 'experiences'))) {
-            throw new TeachingModuleAiException('Hasil Stella AI belum memiliki pengalaman belajar yang lengkap.');
+        foreach ($requiredBySection[$section] ?? [] as $path) {
+            if (! $this->hasText(data_get($content, $path))) {
+                throw new TeachingModuleAiException('Hasil Stella AI belum lengkap pada bagian ini. Proses akan dicoba kembali saat Anda menekan tombol hasilkan.');
+            }
         }
     }
 

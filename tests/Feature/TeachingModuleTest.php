@@ -106,12 +106,13 @@ class TeachingModuleTest extends TestCase
         $this->asTeacher()
             ->postJson(route('guru-kelas.teaching-module.content.ai-generate', $module), [
                 'topic' => 'Topik milik guru lain',
+                'section' => 'identification',
                 'current_content' => $module->content,
             ])
             ->assertNotFound();
     }
 
-    public function test_teacher_can_generate_all_module_sections_with_stella_ai(): void
+    public function test_teacher_can_generate_a_module_section_with_stella_ai(): void
     {
         $module = $this->createModule($this->teacher);
         $generated = $this->completeGeneratedContent();
@@ -134,11 +135,11 @@ class TeachingModuleTest extends TestCase
         $this->asTeacher()
             ->postJson(route('guru-kelas.teaching-module.content.ai-generate', $module), [
                 'topic' => 'Implementasi layanan cloud untuk server sekolah',
+                'section' => 'identification',
                 'current_content' => $module->content,
             ])
             ->assertOk()
             ->assertJsonPath('content.identification.students.0', 'Peserta didik memahami jaringan dasar.')
-            ->assertJsonPath('content.design.learning_objectives.0', 'Peserta didik mampu merancang layanan cloud sederhana.')
             ->assertJsonPath('content.approval.teacher_name', 'Guru Penguji');
 
         Http::assertSent(function ($request) {

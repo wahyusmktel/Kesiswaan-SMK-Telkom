@@ -149,16 +149,21 @@
                             </div>
 
                             <div x-show="aiGenerating" x-cloak class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-4">
-                                <div class="flex items-center gap-3">
+                                <div class="flex items-start gap-3">
                                     <svg class="h-5 w-5 animate-spin text-violet-600" viewBox="0 0 24 24" fill="none">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
                                     </svg>
                                     <div>
-                                        <p class="text-sm font-bold text-gray-800">Stella sedang menyusun modul...</p>
-                                        <p class="mt-0.5 text-xs text-gray-500">Proses dapat memerlukan waktu hingga beberapa menit.</p>
+                                        <p class="text-sm font-bold text-gray-800" x-text="aiProgressLabel"></p>
+                                        <p class="mt-0.5 text-xs text-gray-500">Setiap bagian dibuat terpisah agar hasil lebih stabil dan lengkap.</p>
                                     </div>
                                 </div>
+                                <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-gray-200">
+                                    <div class="h-full rounded-full bg-violet-600 transition-all duration-500"
+                                        :style="`width: ${aiProgress}%`"></div>
+                                </div>
+                                <p class="mt-2 text-right text-[11px] font-bold text-violet-700" x-text="aiProgress + '%'"></p>
                             </div>
                         </div>
 
@@ -605,6 +610,16 @@
                     aiTopic: defaultTopic || '',
                     aiGenerating: false,
                     aiError: '',
+                    aiProgress: 0,
+                    aiProgressLabel: '',
+                    aiSections: [
+                        { key: 'identification', label: 'Menyusun identifikasi peserta didik dan materi' },
+                        { key: 'design', label: 'Merancang desain pembelajaran' },
+                        { key: 'experience', label: 'Menyusun pengalaman belajar' },
+                        { key: 'assessment', label: 'Menyiapkan asesmen pembelajaran' },
+                        { key: 'supporting', label: 'Menyusun kegiatan pendukung' },
+                        { key: 'attachments', label: 'Menyiapkan lampiran modul' },
+                    ],
                     active: 'identification',
                     openMeeting: 0,
                     dirty: false,
@@ -693,30 +708,21 @@
 
                         this.aiGenerating = true;
                         this.aiError = '';
+                        this.aiProgress = 0;
 
                         try {
-                            const response = await fetch(this.aiGenerateUrl, {
-                                method: 'POST',
-                                headers: {
-                                    'Accept': 'application/json',
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
-                                },
-                                body: JSON.stringify({
-                                    topic,
-                                    current_content: this.content,
-                                }),
-                            });
-                            const data = await response.json().catch(() => ({}));
+                            let generatedContent = JSON.parse(JSON.stringify(this.content));
 
-                            if (!response.ok || !data.content) {
-                                const validationMessage = data.errors
-                                    ? Object.values(data.errors).flat()[0]
-                                    : null;
-                                throw new Error(validationMessage || data.message || 'Stella AI belum dapat menghasilkan modul.');
+                            for (let index = 0; index < this.aiSections.length; index++) {
+                                const section = this.aiSections[index];
+                                this.aiProgressLabel = section.label + '...';
+
+                                const data = await this.requestAiSection(topic, section.key, generatedContent);
+                                generatedContent = data.content;
+                                this.aiProgress = Math.round(((index + 1) / this.aiSections.length) * 100);
                             }
 
-                            this.content = JSON.parse(JSON.stringify(data.content));
+                            this.content = JSON.parse(JSON.stringify(generatedContent));
                             this.$refs.contentInput.value = JSON.stringify(this.content);
                             this.dirty = true;
                             this.active = 'identification';
@@ -738,6 +744,45 @@
                         } finally {
                             this.aiGenerating = false;
                         }
+                    },
+
+                    async requestAiSection(topic, section, currentContent) {
+                        let lastError = null;
+
+                        for (let attempt = 0; attempt < 2; attempt++) {
+                            try {
+                                const response = await fetch(this.aiGenerateUrl, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Accept': 'application/json',
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                                    },
+                                    body: JSON.stringify({
+                                        topic,
+                                        section,
+                                        current_content: currentContent,
+                                    }),
+                                });
+                                const data = await response.json().catch(() => ({}));
+
+                                if (!response.ok || !data.content) {
+                                    const validationMessage = data.errors
+                                        ? Object.values(data.errors).flat()[0]
+                                        : null;
+                                    throw new Error(validationMessage || data.message || 'Stella AI belum dapat menghasilkan bagian modul.');
+                                }
+
+                                return data;
+                            } catch (error) {
+                                lastError = error;
+                                if (attempt === 0) {
+                                    await new Promise(resolve => setTimeout(resolve, 1200));
+                                }
+                            }
+                        }
+
+                        throw lastError || new Error('Stella AI belum dapat menghasilkan bagian modul.');
                     },
 
                     removeItem(items, index) {

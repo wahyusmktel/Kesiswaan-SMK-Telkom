@@ -195,24 +195,28 @@ class TeachingModuleController extends Controller
 
         $validated = $request->validate([
             'topic' => ['required', 'string', 'min:3', 'max:255'],
+            'section' => ['required', 'string', 'in:identification,design,experience,assessment,supporting,attachments'],
             'current_content' => ['required', 'array'],
         ]);
 
         try {
-            $content = $generator->generate(
+            $content = $generator->generateSection(
                 $teachingModule,
                 trim($validated['topic']),
+                $validated['section'],
                 $validated['current_content']
             );
 
             return response()->json([
-                'message' => 'Seluruh bagian modul ajar berhasil dibuat oleh Stella AI.',
+                'message' => 'Bagian modul berhasil dibuat oleh Stella AI.',
+                'section' => $validated['section'],
                 'content' => $content,
             ]);
         } catch (TeachingModuleAiException $exception) {
             Log::error('Teaching module AI generation failed.', [
                 'user_id' => Auth::id(),
                 'teaching_module_id' => $teachingModule->id,
+                'section' => $validated['section'],
                 'exception' => $exception,
             ]);
 
@@ -223,6 +227,7 @@ class TeachingModuleController extends Controller
             Log::error('Teaching module AI generation encountered an unexpected error.', [
                 'user_id' => Auth::id(),
                 'teaching_module_id' => $teachingModule->id,
+                'section' => $validated['section'],
                 'exception' => $exception,
             ]);
 
