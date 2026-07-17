@@ -2,12 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Models\AppSetting;
 use App\Models\MataPelajaran;
 use App\Models\TahunPelajaran;
 use App\Models\TeachingModule;
 use App\Models\User;
 use App\Support\TeachingModuleSchema;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -100,6 +102,50 @@ class TeachingModuleTest extends TestCase
         $this->asTeacher()
             ->get(route('guru-kelas.teaching-module.pdf.preview', $module))
             ->assertNotFound();
+
+        $this->asTeacher()
+            ->postJson(route('guru-kelas.teaching-module.content.ai-generate', $module), [
+                'topic' => 'Topik milik guru lain',
+                'current_content' => $module->content,
+            ])
+            ->assertNotFound();
+    }
+
+    public function test_teacher_can_generate_all_module_sections_with_stella_ai(): void
+    {
+        $module = $this->createModule($this->teacher);
+        $generated = $this->completeGeneratedContent();
+
+        Http::fake([
+            'https://ai.example/v1/chat/completions' => Http::response([
+                'choices' => [
+                    ['message' => ['content' => json_encode($generated, JSON_THROW_ON_ERROR)]],
+                ],
+            ]),
+        ]);
+
+        AppSetting::create([
+            'stella_ai_base_url' => 'https://ai.example/v1',
+            'stella_ai_api_key' => 'secret-api-key',
+            'stella_ai_chat_model' => 'chat-model',
+            'stella_ai_enabled' => true,
+        ]);
+
+        $this->asTeacher()
+            ->postJson(route('guru-kelas.teaching-module.content.ai-generate', $module), [
+                'topic' => 'Implementasi layanan cloud untuk server sekolah',
+                'current_content' => $module->content,
+            ])
+            ->assertOk()
+            ->assertJsonPath('content.identification.students.0', 'Peserta didik memahami jaringan dasar.')
+            ->assertJsonPath('content.design.learning_objectives.0', 'Peserta didik mampu merancang layanan cloud sederhana.')
+            ->assertJsonPath('content.approval.teacher_name', 'Guru Penguji');
+
+        Http::assertSent(function ($request) {
+            return $request->url() === 'https://ai.example/v1/chat/completions'
+                && $request['model'] === 'chat-model'
+                && str_contains($request['messages'][1]['content'], 'Implementasi layanan cloud untuk server sekolah');
+        });
     }
 
     public function test_pdf_preview_is_rendered_for_the_owner(): void
@@ -166,5 +212,51 @@ class TeachingModuleTest extends TestCase
             'content_version' => TeachingModuleSchema::VERSION,
             'status' => 'draft',
         ]);
+    }
+
+    private function completeGeneratedContent(): array
+    {
+        $content = TeachingModuleSchema::defaults([
+            'allocation' => '4 JP',
+            'teacher_name' => 'Nama Fiktif dari AI',
+        ]);
+        $content['identification']['students'] = ['Peserta didik memahami jaringan dasar.'];
+        $content['identification']['materials'] = ['Konsep dan implementasi layanan cloud.'];
+        $content['identification']['graduate_profile'][1]['selected'] = true;
+        $content['identification']['graduate_profile'][1]['note'] = 'Mengembangkan solusi cloud yang kreatif.';
+        $content['design'] = [
+            'learning_outcomes' => ['Peserta didik mampu memahami arsitektur layanan cloud.'],
+            'learning_objectives' => ['Peserta didik mampu merancang layanan cloud sederhana.'],
+            'learning_topics' => ['Arsitektur dan implementasi cloud.'],
+            'pedagogical_practices' => ['Pembelajaran berbasis proyek.'],
+            'learning_partners' => ['Praktisi infrastruktur TI.'],
+            'learning_environment' => ['Laboratorium komputer dan lingkungan cloud virtual.'],
+            'digital_use' => ['Dashboard penyedia layanan cloud.'],
+        ];
+        $content['experiences'][0]['title'] = 'Merancang layanan cloud sekolah';
+        $content['experiences'][0]['opening'] = ['Guru melakukan apersepsi dan asesmen diagnostik.'];
+        $content['experiences'][0]['core_phases'][0]['teacher_activities'] = ['Guru menyajikan masalah kebutuhan server sekolah.'];
+        $content['experiences'][0]['core_phases'][0]['student_activities'] = ['Peserta didik menganalisis kebutuhan layanan.'];
+        $content['experiences'][0]['core_phases'][0]['outputs'] = ['Dokumen analisis kebutuhan cloud.'];
+        $content['experiences'][0]['closing'] = ['Guru memandu refleksi dan menyampaikan tindak lanjut.'];
+        $content['assessment'] = [
+            'initial' => ['Kuis diagnostik konsep jaringan.'],
+            'process' => ['Observasi proses perancangan.'],
+            'final' => ['Presentasi rancangan layanan cloud.'],
+            'criteria' => ['Ketepatan arsitektur, keamanan, dan presentasi.'],
+        ];
+        $content['supporting'] = [
+            'trigger_questions' => ['Bagaimana sekolah menyediakan server yang mudah dikembangkan?'],
+            'differentiation' => ['Dukungan langkah kerja bertingkat sesuai kesiapan peserta didik.'],
+            'enrichment' => ['Membandingkan dua penyedia layanan cloud.'],
+            'remedial' => ['Mengulang simulasi dengan panduan terstruktur.'],
+        ];
+        $content['attachments'] = [
+            'teaching_materials' => ['Ringkasan arsitektur layanan cloud.'],
+            'worksheets' => ['LKPD analisis kebutuhan layanan cloud.'],
+            'assessments' => ['Rubrik penilaian rancangan dan presentasi.'],
+        ];
+
+        return $content;
     }
 }

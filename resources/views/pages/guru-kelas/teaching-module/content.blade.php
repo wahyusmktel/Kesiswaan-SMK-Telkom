@@ -7,7 +7,12 @@
     </x-slot>
 
     <div id="module-editor-top" class="w-full bg-white"
-        x-data="teachingModuleEditor({{ Js::from($content) }}, {{ Js::from($module->alokasi_waktu) }})"
+        x-data="teachingModuleEditor(
+            {{ Js::from($content) }},
+            {{ Js::from($module->alokasi_waktu) }},
+            {{ Js::from(route('guru-kelas.teaching-module.content.ai-generate', $module)) }},
+            {{ Js::from($module->lingkup_materi ?: $module->nama_modul) }}
+        )"
         x-init="init()">
         <form method="POST" action="{{ route('guru-kelas.teaching-module.content.update', $module) }}"
             @submit="prepareSubmit()">
@@ -48,6 +53,13 @@
                                     :style="`width: ${completionPercent}%`"></div>
                             </div>
                         </div>
+                        <button type="button" @click="openAiGenerator()"
+                            class="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-violet-200 bg-violet-50 px-3 text-xs font-black text-violet-700 transition hover:border-violet-300 hover:bg-violet-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4m10-2v4m-2-2h4M7 15v6m-3-3h6m7.5-7.5L19 12l-7 7-4-4 7-7 2.5 2.5z" />
+                            </svg>
+                            Hasilkan dengan AI
+                        </button>
                         <a href="{{ route('guru-kelas.teaching-module.pdf.preview', $module) }}" target="_blank"
                             class="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-3 text-xs font-bold text-gray-700 transition hover:bg-gray-50">
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -66,6 +78,102 @@
                             </svg>
                             Simpan Lengkap
                         </button>
+                    </div>
+                </div>
+            </div>
+
+            <div x-show="aiModalOpen" x-cloak @keydown.escape.window="closeAiGenerator()"
+                class="fixed inset-0 z-[80] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="ai-generator-title">
+                <div class="flex min-h-full items-center justify-center p-4 sm:p-6">
+                    <div x-show="aiModalOpen" x-transition.opacity class="fixed inset-0 bg-gray-950/70 backdrop-blur-sm"
+                        @click="closeAiGenerator()"></div>
+
+                    <div x-show="aiModalOpen"
+                        x-transition:enter="transition ease-out duration-300"
+                        x-transition:enter-start="opacity-0 translate-y-5 scale-95"
+                        x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                        x-transition:leave="transition ease-in duration-200"
+                        x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                        x-transition:leave-end="opacity-0 translate-y-5 scale-95"
+                        class="relative w-full max-w-xl overflow-hidden rounded-lg bg-white shadow-2xl">
+                        <div class="h-1.5 bg-gradient-to-r from-violet-600 via-fuchsia-500 to-red-500"></div>
+
+                        <div class="flex items-start justify-between border-b border-gray-100 px-6 py-5">
+                            <div class="flex min-w-0 gap-4">
+                                <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-700">
+                                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 3v4M3 5h4m10-2v4m-2-2h4M7 15v6m-3-3h6m7.5-7.5L19 12l-7 7-4-4 7-7 2.5 2.5z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-[11px] font-black uppercase tracking-widest text-violet-600">Stella AI</p>
+                                    <h2 id="ai-generator-title" class="mt-1 text-xl font-black text-gray-950">Buat Modul Ajar Otomatis</h2>
+                                    <p class="mt-1 text-sm leading-5 text-gray-500">Stella akan menyusun seluruh bagian berdasarkan metadata modul dan topik Anda.</p>
+                                </div>
+                            </div>
+                            <button type="button" @click="closeAiGenerator()" :disabled="aiGenerating"
+                                class="ml-3 flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
+                                aria-label="Tutup modal">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                        </div>
+
+                        <div class="space-y-5 px-6 py-6">
+                            <div>
+                                <label for="ai-topic" class="text-sm font-bold text-gray-800">Nama topik pembelajaran</label>
+                                <textarea id="ai-topic" x-ref="aiTopicInput" x-model="aiTopic" rows="3" maxlength="255"
+                                    :disabled="aiGenerating"
+                                    placeholder="Contoh: Konfigurasi VLAN dan inter-VLAN routing pada jaringan sekolah"
+                                    class="mt-2 block w-full resize-none rounded-md border-gray-300 text-sm leading-6 shadow-sm focus:border-violet-500 focus:ring-violet-500 disabled:bg-gray-50"></textarea>
+                                <div class="mt-2 flex items-center justify-between gap-3">
+                                    <p class="text-xs text-gray-500">Topik yang spesifik menghasilkan modul yang lebih relevan.</p>
+                                    <span class="text-[11px] font-bold text-gray-400" x-text="aiTopic.length + '/255'"></span>
+                                </div>
+                            </div>
+
+                            <div class="rounded-lg border border-violet-100 bg-violet-50 p-4">
+                                <p class="text-xs font-black uppercase tracking-wider text-violet-700">Bagian yang akan dibuat</p>
+                                <div class="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs font-semibold text-gray-700 sm:grid-cols-3">
+                                    <span>Identifikasi</span>
+                                    <span>Desain pembelajaran</span>
+                                    <span>Pengalaman belajar</span>
+                                    <span>Asesmen</span>
+                                    <span>Pendukung</span>
+                                    <span>Lampiran</span>
+                                </div>
+                            </div>
+
+                            <div x-show="aiError" x-cloak class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+                                <p class="font-bold">Modul belum berhasil dibuat</p>
+                                <p class="mt-1 text-xs leading-5" x-text="aiError"></p>
+                            </div>
+
+                            <div x-show="aiGenerating" x-cloak class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-4">
+                                <div class="flex items-center gap-3">
+                                    <svg class="h-5 w-5 animate-spin text-violet-600" viewBox="0 0 24 24" fill="none">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                    </svg>
+                                    <div>
+                                        <p class="text-sm font-bold text-gray-800">Stella sedang menyusun modul...</p>
+                                        <p class="mt-0.5 text-xs text-gray-500">Proses dapat memerlukan waktu hingga beberapa menit.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col-reverse gap-3 border-t border-gray-100 bg-gray-50 px-6 py-4 sm:flex-row sm:justify-end">
+                            <button type="button" @click="closeAiGenerator()" :disabled="aiGenerating"
+                                class="h-10 rounded-md border border-gray-300 bg-white px-4 text-xs font-bold text-gray-700 transition hover:bg-gray-50 disabled:opacity-40">
+                                Batal
+                            </button>
+                            <button type="button" @click="generateWithAi()" :disabled="aiGenerating || aiTopic.trim().length < 3"
+                                class="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-violet-600 px-5 text-xs font-black text-white shadow-sm transition hover:bg-violet-700 focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                                <svg x-show="!aiGenerating" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4m10-2v4m-2-2h4M7 15v6m-3-3h6m7.5-7.5L19 12l-7 7-4-4 7-7 2.5 2.5z" /></svg>
+                                <svg x-show="aiGenerating" x-cloak class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+                                <span x-text="aiGenerating ? 'Sedang menghasilkan...' : 'Hasilkan dengan AI'"></span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -488,10 +596,15 @@
 
     @push('scripts')
         <script>
-            window.teachingModuleEditor = function (initialContent, defaultAllocation) {
+            window.teachingModuleEditor = function (initialContent, defaultAllocation, aiGenerateUrl, defaultTopic) {
                 return {
                     content: JSON.parse(JSON.stringify(initialContent)),
                     defaultAllocation,
+                    aiGenerateUrl,
+                    aiModalOpen: false,
+                    aiTopic: defaultTopic || '',
+                    aiGenerating: false,
+                    aiError: '',
                     active: 'identification',
                     openMeeting: 0,
                     dirty: false,
@@ -544,6 +657,87 @@
 
                     nextTab() {
                         if (this.activeIndex < this.tabs.length - 1) this.goTo(this.tabs[this.activeIndex + 1].key);
+                    },
+
+                    openAiGenerator() {
+                        this.aiError = '';
+                        this.aiModalOpen = true;
+                        this.$nextTick(() => this.$refs.aiTopicInput?.focus());
+                    },
+
+                    closeAiGenerator() {
+                        if (this.aiGenerating) return;
+                        this.aiModalOpen = false;
+                        this.aiError = '';
+                    },
+
+                    async generateWithAi() {
+                        const topic = this.aiTopic.trim();
+                        if (topic.length < 3 || this.aiGenerating) return;
+
+                        if (this.completionPercent > 0 || this.dirty) {
+                            const confirmed = window.Swal
+                                ? (await Swal.fire({
+                                    title: 'Ganti isi modul saat ini?',
+                                    text: 'Hasil Stella AI akan menggantikan seluruh isi form. Perubahan tetap dapat ditinjau sebelum disimpan.',
+                                    icon: 'warning',
+                                    showCancelButton: true,
+                                    confirmButtonColor: '#7c3aed',
+                                    confirmButtonText: 'Ya, hasilkan ulang',
+                                    cancelButtonText: 'Batal',
+                                })).isConfirmed
+                                : window.confirm('Hasil Stella AI akan menggantikan seluruh isi form. Lanjutkan?');
+
+                            if (!confirmed) return;
+                        }
+
+                        this.aiGenerating = true;
+                        this.aiError = '';
+
+                        try {
+                            const response = await fetch(this.aiGenerateUrl, {
+                                method: 'POST',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                                },
+                                body: JSON.stringify({
+                                    topic,
+                                    current_content: this.content,
+                                }),
+                            });
+                            const data = await response.json().catch(() => ({}));
+
+                            if (!response.ok || !data.content) {
+                                const validationMessage = data.errors
+                                    ? Object.values(data.errors).flat()[0]
+                                    : null;
+                                throw new Error(validationMessage || data.message || 'Stella AI belum dapat menghasilkan modul.');
+                            }
+
+                            this.content = JSON.parse(JSON.stringify(data.content));
+                            this.$refs.contentInput.value = JSON.stringify(this.content);
+                            this.dirty = true;
+                            this.active = 'identification';
+                            this.openMeeting = 0;
+                            this.aiModalOpen = false;
+
+                            if (window.Swal) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Modul berhasil dibuat',
+                                    text: 'Seluruh bagian telah diisi oleh Stella AI. Silakan tinjau lalu simpan modul.',
+                                    confirmButtonColor: '#7c3aed',
+                                });
+                            }
+
+                            document.getElementById('module-editor-top')?.scrollIntoView({ behavior: 'smooth' });
+                        } catch (error) {
+                            this.aiError = error.message || 'Terjadi kesalahan saat menghubungi Stella AI.';
+                        } finally {
+                            this.aiGenerating = false;
+                        }
                     },
 
                     removeItem(items, index) {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\GuruKelas;
 
+use App\Exceptions\TeachingModuleAiException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TeachingModuleContentRequest;
 use App\Http\Requests\TeachingModuleMetadataRequest;
@@ -12,10 +13,12 @@ use App\Models\MataPelajaran;
 use App\Models\TahunPelajaran;
 use App\Models\TeachingModule;
 use App\Support\TeachingModuleSchema;
+use App\Services\TeachingModuleAiGenerator;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class TeachingModuleController extends Controller
@@ -181,6 +184,52 @@ class TeachingModuleController extends Controller
         return redirect()
             ->route('guru-kelas.teaching-module.content.edit', $teachingModule)
             ->with('success', $message);
+    }
+
+    public function generateContent(
+        Request $request,
+        TeachingModule $teachingModule,
+        TeachingModuleAiGenerator $generator
+    ) {
+        $this->ensureOwned($teachingModule);
+
+        $validated = $request->validate([
+            'topic' => ['required', 'string', 'min:3', 'max:255'],
+            'current_content' => ['required', 'array'],
+        ]);
+
+        try {
+            $content = $generator->generate(
+                $teachingModule,
+                trim($validated['topic']),
+                $validated['current_content']
+            );
+
+            return response()->json([
+                'message' => 'Seluruh bagian modul ajar berhasil dibuat oleh Stella AI.',
+                'content' => $content,
+            ]);
+        } catch (TeachingModuleAiException $exception) {
+            Log::error('Teaching module AI generation failed.', [
+                'user_id' => Auth::id(),
+                'teaching_module_id' => $teachingModule->id,
+                'exception' => $exception,
+            ]);
+
+            return response()->json([
+                'message' => $exception->getMessage(),
+            ], $exception->httpStatus);
+        } catch (\Throwable $exception) {
+            Log::error('Teaching module AI generation encountered an unexpected error.', [
+                'user_id' => Auth::id(),
+                'teaching_module_id' => $teachingModule->id,
+                'exception' => $exception,
+            ]);
+
+            return response()->json([
+                'message' => 'Terjadi gangguan saat menyusun modul. Silakan coba kembali atau hubungi administrator.',
+            ], 500);
+        }
     }
 
     public function destroy(TeachingModule $teachingModule)

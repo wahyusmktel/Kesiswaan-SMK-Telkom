@@ -706,6 +706,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/', [TeachingModuleController::class, 'store'])->name('store');
             Route::get('/{teachingModule}/isi', [TeachingModuleController::class, 'editContent'])->name('content.edit');
             Route::put('/{teachingModule}/isi', [TeachingModuleController::class, 'updateContent'])->name('content.update');
+            Route::post('/{teachingModule}/hasilkan-dengan-ai', [TeachingModuleController::class, 'generateContent'])->name('content.ai-generate');
             Route::get('/{teachingModule}/edit', [TeachingModuleController::class, 'editMetadata'])->name('edit');
             Route::get('/{teachingModule}/pdf', [TeachingModuleController::class, 'previewPdf'])->name('pdf.preview');
             Route::get('/{teachingModule}/unduh', [TeachingModuleController::class, 'downloadPdf'])->name('pdf.download');
