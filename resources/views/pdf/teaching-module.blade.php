@@ -156,8 +156,17 @@
             word-break: normal;
         }
 
+        .section-start {
+            border-bottom-color: #c00000 !important;
+        }
+
         .section-continuation {
             border-top-color: #c00000 !important;
+            border-bottom-color: #c00000 !important;
+        }
+
+        .section-end {
+            border-bottom-color: #111111 !important;
         }
 
         .subsection-label {
@@ -444,20 +453,22 @@
                 <col style="width:66%">
             </colgroup>
             <tr>
-                <td class="section-label" rowspan="3">IDENTIFIKASI</td>
-                <td class="subsection-label">Identifikasi Peserta Didik</td>
+                <td class="section-label section-start">IDENTIFIKASI</td>
+                <td class="subsection-label">01. Identifikasi Peserta Didik</td>
                 <td class="content-cell">
                     @include('pdf.partials.teaching-module-list', ['items' => $content['identification']['students']])
                 </td>
             </tr>
             <tr>
-                <td class="subsection-label">Identifikasi Materi Pembelajaran</td>
+                <td class="section-label section-continuation"></td>
+                <td class="subsection-label">02. Identifikasi Materi Pembelajaran</td>
                 <td class="content-cell">
                     @include('pdf.partials.teaching-module-list', ['items' => $content['identification']['materials']])
                 </td>
             </tr>
             <tr>
-                <td class="subsection-label">Dimensi Profil Lulusan</td>
+                <td class="section-label section-continuation section-end"></td>
+                <td class="subsection-label">03. Dimensi Profil Lulusan</td>
                 <td class="content-cell">
                     <div>Pilihlah dimensi profil lulusan yang akan dicapai dalam pembelajaran:</div>
                     @php
@@ -495,10 +506,10 @@
             @endphp
             @foreach($designRows as $designIndex => [$label, $key])
                 <tr>
-                    @if($designIndex === 0)
-                        <td class="section-label" rowspan="7">DESAIN PEMBELAJARAN</td>
-                    @endif
-                    <td class="subsection-label">{{ $label }}</td>
+                    <td class="section-label {{ $designIndex === 0 ? 'section-start' : 'section-continuation' }} {{ $designIndex === count($designRows) - 1 ? 'section-end' : '' }}">
+                        {{ $designIndex === 0 ? 'DESAIN PEMBELAJARAN' : '' }}
+                    </td>
+                    <td class="subsection-label">{{ str_pad($designIndex + 1, 2, '0', STR_PAD_LEFT) }}. {{ $label }}</td>
                     <td class="content-cell">
                         @include('pdf.partials.teaching-module-list', ['items' => $content['design'][$key]])
                     </td>
@@ -609,9 +620,9 @@
         @endphp
         @foreach($assessmentRows as $assessmentIndex => [$label, $key])
             <tr>
-                @if($assessmentIndex === 0)
-                    <td class="section-label" rowspan="4">ASESMEN PEMBELAJARAN</td>
-                @endif
+                <td class="section-label {{ $assessmentIndex === 0 ? 'section-start' : 'section-continuation' }} {{ $assessmentIndex === count($assessmentRows) - 1 ? 'section-end' : '' }}">
+                    {{ $assessmentIndex === 0 ? 'ASESMEN PEMBELAJARAN' : '' }}
+                </td>
                 <td class="subsection-label">{{ $label }}</td>
                 <td class="content-cell">
                     @include('pdf.partials.teaching-module-list', ['items' => $content['assessment'][$key]])
