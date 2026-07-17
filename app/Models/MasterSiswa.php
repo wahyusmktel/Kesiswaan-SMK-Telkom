@@ -152,6 +152,11 @@ class MasterSiswa extends Model
         return $this->hasMany(DapodikSubmission::class, 'master_siswa_id');
     }
 
+    public function masterBook()
+    {
+        return $this->hasOne(StudentMasterBook::class, 'master_siswa_id');
+    }
+
     // Point Calculation Methods
     public function getTotalViolationPoints()
     {

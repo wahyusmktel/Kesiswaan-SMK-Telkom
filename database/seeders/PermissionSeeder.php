@@ -64,6 +64,7 @@ class PermissionSeeder extends Seeder
             'view wali kelas dashboard',
             'manage perizinan wali kelas',
             'manage mentoring wali kelas',
+            'manage buku induk',
 
             // Operator Features
             'view operator dashboard',
@@ -133,6 +134,7 @@ class PermissionSeeder extends Seeder
                 'view wali kelas dashboard',
                 'manage perizinan wali kelas',
                 'manage mentoring wali kelas',
+                'manage buku induk',
                 'view coaching analytics',
                 'view monitoring keterlambatan',
             ]);

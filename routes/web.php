@@ -69,6 +69,7 @@ use App\Http\Controllers\Siswa\PengumumanKelulusanController as SiswaPengumumanK
 use App\Http\Controllers\Security\GateTerminalController;
 use App\Http\Controllers\Auth\SecurityLoginController;
 use App\Http\Controllers\WaliKelas\WaliKelasMentoringController;
+use App\Http\Controllers\WaliKelas\StudentMasterBookController;
 use App\Http\Controllers\BK\BKPembinaanTerlambatController;
 use App\Http\Controllers\Shared\CoachingAnalyticsController;
 use App\Http\Controllers\Admin\AssetSyncController;
@@ -315,6 +316,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Grup Route untuk Wali Kelas
     Route::middleware(['role:Wali Kelas', 'permission:view wali kelas dashboard'])->prefix('wali-kelas')->name('wali-kelas.')->group(function () {
         Route::get('/dashboard', [WaliKelasDashboardController::class, 'index'])->name('dashboard.index');
+        Route::middleware('permission:manage buku induk')->prefix('buku-induk')->name('buku-induk.')->group(function () {
+            Route::get('/', [StudentMasterBookController::class, 'index'])->name('index');
+            Route::get('/kelas/{rombel}/cetak', [StudentMasterBookController::class, 'printClass'])->name('print-class');
+            Route::get('/{student}/edit', [StudentMasterBookController::class, 'edit'])->name('edit');
+            Route::put('/{student}', [StudentMasterBookController::class, 'update'])->name('update');
+            Route::post('/{student}/semester', [StudentMasterBookController::class, 'storePeriod'])->name('periods.store');
+            Route::delete('/{student}/semester/{period}', [StudentMasterBookController::class, 'destroyPeriod'])->name('periods.destroy');
+            Route::post('/{student}/lampiran', [StudentMasterBookController::class, 'storeAttachment'])->name('attachments.store');
+            Route::get('/{student}/lampiran/{attachment}', [StudentMasterBookController::class, 'downloadAttachment'])->name('attachments.download');
+            Route::delete('/{student}/lampiran/{attachment}', [StudentMasterBookController::class, 'destroyAttachment'])->name('attachments.destroy');
+            Route::get('/{student}/cetak', [StudentMasterBookController::class, 'printStudent'])->name('print-student');
+        });
         Route::get('/perizinan', [WaliKelasPerizinanController::class, 'index'])->middleware('permission:manage perizinan wali kelas')->name('perizinan.index');
         Route::patch('/perizinan/{perizinan}/approve', [WaliKelasPerizinanController::class, 'approve'])->middleware('permission:manage perizinan wali kelas')->name('perizinan.approve');
         Route::patch('/perizinan/{perizinan}/reject', [WaliKelasPerizinanController::class, 'reject'])->middleware('permission:manage perizinan wali kelas')->name('perizinan.reject');
