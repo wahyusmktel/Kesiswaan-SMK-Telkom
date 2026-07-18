@@ -1,15 +1,8 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
-                <h2 class="text-xl font-black text-gray-900">Manajemen OKR Sekolah</h2>
-                <p class="mt-1 text-sm text-gray-500">Target sekolah, rencana unit, dan evaluasi capaian dalam satu ruang kerja.</p>
-            </div>
-            <a href="{{ route('okr.report', ['period' => $period, 'unit_id' => $selectedUnit?->id]) }}"
-                class="inline-flex items-center gap-2 rounded-md bg-gray-900 px-4 py-2.5 text-sm font-bold text-white hover:bg-gray-800">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                PDF Unit
-            </a>
+        <div>
+            <h2 class="text-xl font-black text-gray-900">Manajemen OKR Sekolah</h2>
+            <p class="mt-1 text-sm text-gray-500">Target sekolah, rencana unit, dan evaluasi capaian dalam satu ruang kerja.</p>
         </div>
     </x-slot>
 
@@ -57,7 +50,7 @@
             </section>
 
             <section class="border-y border-gray-200 bg-white px-5 py-4">
-                <form method="GET" class="grid gap-3 md:grid-cols-[minmax(220px,1fr)_minmax(220px,1fr)_auto_auto] md:items-end">
+                <form method="GET" class="grid gap-3 md:grid-cols-[minmax(220px,1fr)_minmax(220px,1fr)_auto_auto_auto] md:items-end">
                     <label class="block">
                         <span class="mb-1.5 block text-[11px] font-black uppercase text-gray-500">Periode / Arsip</span>
                         <select name="period_id" class="w-full rounded-md border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
@@ -79,6 +72,11 @@
                         </select>
                     </label>
                     <button class="inline-flex h-[42px] items-center justify-center rounded-md bg-indigo-600 px-4 text-sm font-bold text-white hover:bg-indigo-500">Tampilkan</button>
+                    <a href="{{ route('okr.report', ['period' => $period, 'unit_id' => $selectedUnit?->id]) }}"
+                        class="inline-flex h-[42px] items-center justify-center gap-2 rounded-md bg-gray-900 px-4 text-sm font-bold text-white hover:bg-gray-800">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        PDF Unit
+                    </a>
                     <a href="{{ route('okr.report', $period) }}" class="inline-flex h-[42px] items-center justify-center rounded-md border border-gray-300 bg-white px-4 text-sm font-bold text-gray-700 hover:bg-gray-50">PDF Global</a>
                 </form>
             </section>
