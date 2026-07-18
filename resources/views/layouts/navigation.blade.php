@@ -2797,6 +2797,26 @@
 {{-- ============================================================ --}}
 {{-- MENU UMUM --}}
 {{-- ============================================================ --}}
+@php
+    $activeNavigationRole = session('active_role') ?: auth()->user()?->getRoleNames()->first();
+@endphp
+@if(!in_array(\Illuminate\Support\Str::lower((string) $activeNavigationRole), ['siswa', 'student'], true))
+<div class="section-title">Kinerja Sekolah</div>
+<li>
+    <a href="{{ route('okr.index') }}"
+        class="nav-link {{ request()->routeIs('okr.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+        <div class="nav-icon-container">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 17v-6m4 6V7m4 10v-3M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+        </div>
+        <span class="nav-text">Manajemen OKR</span>
+        <span class="nav-badge bg-emerald-100 text-emerald-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">NEW</span>
+    </a>
+</li>
+@endif
+
 {{-- ============================================================ --}}
 {{-- MENU: STELLA AI (Semua Role) --}}
 {{-- ============================================================ --}}

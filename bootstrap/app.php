@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            'non.student' => \App\Http\Middleware\EnsureNonStudentRole::class,
         ]);
         $middleware->trustProxies(at: '*');
     })

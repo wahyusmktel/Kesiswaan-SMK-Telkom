@@ -1219,6 +1219,27 @@ Route::middleware(['auth', 'role:Super Admin|Waka Kesiswaan|Guru BK|Guru Piket|K
     ->name('fingerprint-saya.index');
 
 // ============================================================
+// MANAJEMEN OKR SEKOLAH (semua role kecuali siswa)
+// ============================================================
+Route::middleware(['auth', 'non.student'])->prefix('okr-sekolah')->name('okr.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\OkrController::class, 'index'])->name('index');
+    Route::post('/periods', [\App\Http\Controllers\OkrController::class, 'storePeriod'])->name('periods.store');
+    Route::patch('/periods/{period}', [\App\Http\Controllers\OkrController::class, 'updatePeriod'])->name('periods.update');
+    Route::post('/objectives', [\App\Http\Controllers\OkrController::class, 'storeObjective'])->name('objectives.store');
+    Route::patch('/objectives/{objective}', [\App\Http\Controllers\OkrController::class, 'updateObjective'])->name('objectives.update');
+    Route::delete('/objectives/{objective}', [\App\Http\Controllers\OkrController::class, 'destroyObjective'])->name('objectives.destroy');
+    Route::post('/key-results', [\App\Http\Controllers\OkrController::class, 'storeKeyResult'])->name('key-results.store');
+    Route::patch('/key-results/{keyResult}', [\App\Http\Controllers\OkrController::class, 'updateKeyResult'])->name('key-results.update');
+    Route::delete('/key-results/{keyResult}', [\App\Http\Controllers\OkrController::class, 'destroyKeyResult'])->name('key-results.destroy');
+    Route::post('/plans', [\App\Http\Controllers\OkrController::class, 'storePlan'])->name('plans.store');
+    Route::patch('/plans/{plan}', [\App\Http\Controllers\OkrController::class, 'updatePlan'])->name('plans.update');
+    Route::delete('/plans/{plan}', [\App\Http\Controllers\OkrController::class, 'destroyPlan'])->name('plans.destroy');
+    Route::post('/plans/{plan}/progress', [\App\Http\Controllers\OkrController::class, 'updateProgress'])->name('plans.progress');
+    Route::post('/ai/suggest', [\App\Http\Controllers\OkrController::class, 'aiSuggest'])->name('ai.suggest');
+    Route::get('/periods/{period}/report', [\App\Http\Controllers\OkrController::class, 'report'])->name('report');
+});
+
+// ============================================================
 // TANDA TANGAN DIGITAL (Guru, Waka Kurikulum, Waka Kesiswaan, Kaur SDM)
 // ============================================================
 Route::middleware(['auth', 'role:Guru Kelas|Guru Piket|Wali Kelas|Waka Kesiswaan|Kurikulum|KAUR SDM|Kepala Sekolah|Super Admin|Petugas UKS'])
