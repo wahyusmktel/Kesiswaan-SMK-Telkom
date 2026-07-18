@@ -1,244 +1,151 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme.dart';
+import '../../data/models/app_user.dart';
+import '../../data/services/auth_service.dart';
+import 'login_screen.dart';
+
 class ProfileScreen extends StatefulWidget {
+  const ProfileScreen({required this.user, super.key});
+
+  final AppUser user;
+
   @override
-  _ProfileScreenState createState() => _ProfileScreenState();
+  State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  // Controller untuk input (Contoh untuk update data)
-  final TextEditingController _nameController = TextEditingController(
-    text: "Budi Santoso",
-  );
-  final TextEditingController _phoneController = TextEditingController(
-    text: "081234567890",
-  );
-  final TextEditingController _addressController = TextEditingController(
-    text: "Jl. Teuku Umar No. 1, Lampung",
-  );
+  bool _loggingOut = false;
+
+  Future<void> _logout() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Keluar dari aplikasi?'),
+        content: const Text(
+          'Anda perlu masuk kembali untuk menggunakan layanan Security.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Keluar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _loggingOut = true);
+    await AuthService.instance.logout();
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
+      (_) => false,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF8F9FA),
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          "Profil Siswa",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 25.0),
-          child: Column(
-            children: [
-              SizedBox(height: 20),
-
-              // 1. Foto Profil dengan Tombol Edit
-              Center(
-                child: Stack(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 5),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 20,
-                            offset: Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: CircleAvatar(
-                        radius: 60,
-                        backgroundColor: Color(0xFFFDEEEE),
-                        child: Icon(
-                          Icons.person,
-                          size: 70,
-                          color: Color(0xFFC62828),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: Container(
-                        padding: EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Color(0xFFC62828),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
-                        ),
-                        child: Icon(
-                          Icons.camera_alt,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+      appBar: AppBar(title: const Text('Profil Petugas')),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          const SizedBox(height: 8),
+          CircleAvatar(
+            radius: 42,
+            backgroundColor: const Color(0xFFFFEBEC),
+            child: Text(
+              widget.user.name.isEmpty
+                  ? '?'
+                  : widget.user.name[0].toUpperCase(),
+              style: const TextStyle(
+                color: AppTheme.red,
+                fontSize: 32,
+                fontWeight: FontWeight.w900,
               ),
-              SizedBox(height: 30),
-
-              // 2. Data Akademik (Read Only Card)
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.02),
-                      blurRadius: 10,
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    _buildReadOnlyData("NISN", "0012345678"),
-                    Divider(height: 30),
-                    _buildReadOnlyData(
-                      "Program Keahlian",
-                      "Teknik Komputer Jaringan",
-                    ),
-                    Divider(height: 30),
-                    _buildReadOnlyData("Status", "Siswa Aktif"),
-                  ],
-                ),
-              ),
-              SizedBox(height: 25),
-
-              // 3. Form Update Data (Editable)
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  "Data Pribadi",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-              SizedBox(height: 15),
-              _buildEditableField(
-                "Nama Lengkap",
-                _nameController,
-                Icons.person_outline,
-              ),
-              SizedBox(height: 15),
-              _buildEditableField(
-                "Nomor WhatsApp",
-                _phoneController,
-                Icons.phone_android,
-              ),
-              SizedBox(height: 15),
-              _buildEditableField(
-                "Alamat",
-                _addressController,
-                Icons.location_on_outlined,
-                maxLines: 3,
-              ),
-
-              SizedBox(height: 40),
-
-              // 4. Tombol Simpan
-              Container(
-                width: double.infinity,
-                height: 55,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(15),
-                  gradient: LinearGradient(
-                    colors: [Color(0xFFC62828), Color(0xFFE53935)],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color(0xFFC62828).withOpacity(0.3),
-                      blurRadius: 15,
-                      offset: Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Logika simpan data di sini
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Profil berhasil diperbarui!")),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
-                  child: Text(
-                    "SIMPAN PERUBAHAN",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(height: 40),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // Widget Helper untuk Data Akademik
-  Widget _buildReadOnlyData(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: TextStyle(color: Colors.grey[600])),
-        Text(
-          value,
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
-        ),
-      ],
-    );
-  }
-
-  // Widget Helper untuk Input Update
-  Widget _buildEditableField(
-    String label,
-    TextEditingController controller,
-    IconData icon, {
-    int maxLines = 1,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: TextStyle(fontSize: 14, color: Colors.grey[700])),
-        SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(15),
-            border: Border.all(color: Colors.grey.withOpacity(0.1)),
-          ),
-          child: TextField(
-            controller: controller,
-            maxLines: maxLines,
-            decoration: InputDecoration(
-              prefixIcon: Icon(icon, color: Color(0xFFC62828)),
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.all(15),
             ),
           ),
-        ),
-      ],
+          const SizedBox(height: 16),
+          Text(
+            widget.user.name,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            widget.user.email,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Color(0xFF64748B)),
+          ),
+          const SizedBox(height: 24),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Column(
+              children: [
+                _ProfileItem(
+                  icon: Icons.badge_outlined,
+                  label: 'Role aktif',
+                  value: widget.user.primaryRole,
+                ),
+                const Divider(height: 1),
+                const _ProfileItem(
+                  icon: Icons.security_outlined,
+                  label: 'Akses aplikasi',
+                  value: 'Operasional Security',
+                ),
+                const Divider(height: 1),
+                const _ProfileItem(
+                  icon: Icons.lock_outline,
+                  label: 'Penyimpanan sesi',
+                  value: 'Terenkripsi di perangkat',
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 28),
+          OutlinedButton.icon(
+            onPressed: _loggingOut ? null : _logout,
+            icon: _loggingOut
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.logout_rounded),
+            label: Text(_loggingOut ? 'Mengakhiri sesi...' : 'Keluar'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileItem extends StatelessWidget {
+  const _ProfileItem({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon, color: AppTheme.red),
+      title: Text(label),
+      subtitle: Text(value),
     );
   }
 }

@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
-import 'presentation/screens/splash_screen.dart'; // Import file yang baru dibuat
+import 'package:intl/date_symbol_data_local.dart';
 
-void main() {
-  runApp(const MyApp());
+import 'core/theme/app_theme.dart';
+import 'presentation/screens/splash_screen.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('id_ID');
+  runApp(const SisfoMobileApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class SisfoMobileApp extends StatelessWidget {
+  const SisfoMobileApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'SIM SMK Telkom Lampung',
-      theme: ThemeData(
-        primarySwatch: Colors.red,
-        fontFamily: 'Poppins', // Opsional: Jika Anda menggunakan font custom
-      ),
-      home: SplashScreen(), // Set halaman awal ke SplashScreen
+      title: 'SISFO SMK Telkom Lampung',
+      theme: AppTheme.light,
+      home: const SplashScreen(),
     );
   }
 }

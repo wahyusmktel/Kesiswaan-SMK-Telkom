@@ -1,104 +1,96 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
+
+import '../../core/theme/app_theme.dart';
+import '../../data/services/auth_service.dart';
+import 'home_screen.dart';
 import 'login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
   @override
-  _SplashScreenState createState() => _SplashScreenState();
+  State<SplashScreen> createState() => _SplashScreenState();
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  double _opacity = 0.0;
-
   @override
   void initState() {
     super.initState();
-    // Memulai animasi setelah delay singkat
-    Timer(Duration(milliseconds: 500), () {
-      setState(() {
-        _opacity = 1.0;
-      });
-    });
+    _restoreSession();
+  }
 
-    // Pindah ke halaman Login/Home setelah 3 detik
-    Timer(Duration(seconds: 4), () {
-      // Navigasi ke halaman berikutnya (Ganti ke route tujuan Anda)
-      // Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginScreen()));
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => LoginScreen()),
+  Future<void> _restoreSession() async {
+    await Future<void>.delayed(const Duration(milliseconds: 900));
+    try {
+      final user = await AuthService.instance.restoreSession();
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute<void>(
+          builder: (_) => user == null
+              ? const LoginScreen()
+              : SecurityHomeScreen(user: user),
+        ),
       );
-    });
+    } catch (_) {
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        // Gradasi modern standar industri (Soft Gradient)
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFFFFFFF), // Putih Bersih
-              Color(0xFFFDEEEE), // Merah sangat muda (Soft Pinkish)
-              Color(0xFFF8D7D7), // Soft Red Mist
-            ],
-          ),
-        ),
-        child: AnimatedOpacity(
-          duration: Duration(seconds: 2),
-          opacity: _opacity,
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Efek Soft UI pada Container Logo
+              const Spacer(),
               Container(
-                padding: EdgeInsets.all(20),
+                width: 112,
+                height: 112,
+                padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.8),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 20,
-                      spreadRadius: 5,
-                    ),
-                  ],
+                  color: const Color(0xFFFFF1F2),
+                  borderRadius: BorderRadius.circular(24),
                 ),
-                child: Image.asset(
-                  'assets/images/logo_telkom.png', // Pastikan path benar
-                  height: 120,
-                ),
+                child: Image.asset('assets/images/logo_telkom.png'),
               ),
-              SizedBox(height: 24),
-              // Teks dengan gaya Modern & Minimalis
-              Text(
-                "SMK TELKOM",
+              const SizedBox(height: 24),
+              const Text(
+                'SISFO MOBILE',
                 style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 2,
-                  color: Color(0xFFC62828), // Red Telkom
+                  color: AppTheme.ink,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.2,
                 ),
               ),
-              Text(
-                "LAMPUNG",
+              const SizedBox(height: 6),
+              const Text(
+                'SMK Telkom Lampung',
                 style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w300,
-                  letterSpacing: 8,
-                  color: Colors.grey[700],
+                  color: Color(0xFF64748B),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              SizedBox(height: 50),
-              // Loading Indicator yang halus
-              CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFC62828)),
+              const Spacer(),
+              const SizedBox(
+                width: 26,
+                height: 26,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: AppTheme.red,
+                ),
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'Menyiapkan ruang kerja Anda',
+                style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
               ),
             ],
           ),

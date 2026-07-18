@@ -1,30 +1,43 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
+import 'package:aplikasi_mobile/core/theme/app_theme.dart';
+import 'package:aplikasi_mobile/data/models/app_user.dart';
+import 'package:aplikasi_mobile/data/models/student.dart';
+import 'package:aplikasi_mobile/presentation/screens/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:aplikasi_mobile/main.dart';
-
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('login menampilkan form akun SISFO', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(theme: AppTheme.light, home: const LoginScreen()),
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    expect(find.text('Masuk ke SISFO'), findsOneWidget);
+    expect(find.text('Email sekolah'), findsOneWidget);
+    expect(find.text('Password'), findsOneWidget);
+    expect(find.text('Masuk'), findsOneWidget);
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+  test('role Security dikenali tanpa bergantung kapitalisasi', () {
+    const user = AppUser(
+      id: 1,
+      name: 'Petugas',
+      email: 'security@example.test',
+      roles: ['security'],
+    );
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(user.isSecurity, isTrue);
+  });
+
+  test('model siswa membaca status keterlambatan hari ini', () {
+    final student = Student.fromJson({
+      'id': 10,
+      'nis': '12345',
+      'name': 'Andi',
+      'class_name': 'X TKJ 1',
+      'already_late_today': true,
+    });
+
+    expect(student.name, 'Andi');
+    expect(student.alreadyLateToday, isTrue);
   });
 }

@@ -5,7 +5,9 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Aplikasi Mobile</string>
+	<string>SISFO Mobile</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Kamera digunakan untuk memindai QR identitas siswa saat pendataan keterlambatan.</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

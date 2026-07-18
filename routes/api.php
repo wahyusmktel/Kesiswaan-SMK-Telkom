@@ -1,14 +1,14 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BKController;
+use App\Http\Controllers\Api\DigitalSignatureApiController;
+use App\Http\Controllers\Api\ExitPermitController;
+use App\Http\Controllers\Api\GeneralController;
+use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\SecurityController;
 use App\Http\Controllers\Api\SiswaController;
 use App\Http\Controllers\Api\TeacherController;
-use App\Http\Controllers\Api\GeneralController;
-use App\Http\Controllers\Api\ExitPermitController;
-use App\Http\Controllers\Api\BKController;
-use App\Http\Controllers\Api\ProfileController;
-use App\Http\Controllers\Api\DigitalSignatureApiController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AuthController::class, 'login']);
@@ -17,6 +17,14 @@ Route::get('/general/master-data', [GeneralController::class, 'getMasterData']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    Route::prefix('security')->group(function () {
+        Route::get('/dashboard', [SecurityController::class, 'dashboard']);
+        Route::get('/students/search', [SecurityController::class, 'searchStudents']);
+        Route::post('/students/scan', [SecurityController::class, 'scanStudent']);
+        Route::post('/lateness', [SecurityController::class, 'storeLateness']);
+        Route::get('/lateness/today', [SecurityController::class, 'todayHistory']);
+    });
 
     // Profile Routes
     Route::prefix('profile')->group(function () {
@@ -31,11 +39,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/stats', [SiswaController::class, 'getStats']);
         Route::get('/riwayat', [SiswaController::class, 'getRiwayat']);
         Route::post('/izin', [SiswaController::class, 'requestIzin']);
-        
+
         // Izin Meninggalkan Kelas (Siswa)
         Route::get('/exit-permits', [ExitPermitController::class, 'getMyHistory']);
         Route::post('/exit-permits', [ExitPermitController::class, 'request']);
-        
+
         // BK (Siswa)
         Route::get('/bk/history', [BKController::class, 'getHistory']);
     });
@@ -45,7 +53,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/pending-approvals', [TeacherController::class, 'getPendingApprovals']);
         Route::post('/approve/{id}', [TeacherController::class, 'approveIzin']);
         Route::get('/history', [TeacherController::class, 'getHistory']);
-        
+
         // Izin Meninggalkan Kelas (Guru)
         Route::get('/exit-permits/pending', [ExitPermitController::class, 'getPendingForTeacher']);
         Route::post('/exit-permits/approve/{id}', [ExitPermitController::class, 'approveByTeacher']);

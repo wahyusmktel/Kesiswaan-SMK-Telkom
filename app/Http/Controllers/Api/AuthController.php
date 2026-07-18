@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
@@ -24,7 +23,7 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (! $user || ! Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
                 'email' => ['Kredensial yang diberikan salah.'],
             ]);
@@ -32,6 +31,7 @@ class AuthController extends Controller
 
         $deviceName = $request->device_name ?? 'mobile_app';
         $token = $user->createToken($deviceName)->plainTextToken;
+        $roles = $user->getRoleNames()->values();
 
         return response()->json([
             'success' => true,
@@ -42,7 +42,9 @@ class AuthController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'role' => $user->getRoleNames()->first(),
+                    'role' => $roles->first(),
+                    'roles' => $roles,
+                    'avatar' => $user->avatar,
                 ],
             ],
         ]);
@@ -54,13 +56,17 @@ class AuthController extends Controller
     public function me(Request $request)
     {
         $user = $request->user();
+        $roles = $user->getRoleNames()->values();
+
         return response()->json([
             'success' => true,
             'data' => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'role' => $user->getRoleNames()->first(),
+                'role' => $roles->first(),
+                'roles' => $roles,
+                'avatar' => $user->avatar,
                 'siswa_data' => $user->masterSiswa ? [
                     'nis' => $user->masterSiswa->nis,
                     'kelas' => $user->masterSiswa->kelas,
