@@ -28,12 +28,14 @@
                             <p class="text-sm text-gray-500">Kelola registrasi siswa baru dengan mudah</p>
                         </div>
                         <div class="flex gap-2">
+                            <a href="{{ route('master-data.student-registration.school-origins') }}" class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50">Kelola Sekolah Asal</a>
                             <a href="{{ route('student-registration.create') }}" target="_blank" class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50">Buka Form Publik</a>
                             <button @click="$dispatch('open-student-registration')" class="rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-500">Tambah Langsung</button>
                         </div>
                     </div>
                     <div class="mt-4 text-sm text-gray-600">
-                        <p>• <strong>Buka Form Publik</strong>: Link formulir pendaftaran publik untuk siswa baru</p>
+                        <p>• <strong>Kelola Sekolah Asal</strong>: Kelola dan normalisasikan data sekolah asal pendaftar</p>
+                        <p class="mt-1">• <strong>Buka Form Publik</strong>: Link formulir pendaftaran publik untuk siswa baru</p>
                         <p class="mt-1">• <strong>Tambah Langsung</strong>: Tambahkan data siswa baru secara manual di sistem</p>
                     </div>
                 </div>

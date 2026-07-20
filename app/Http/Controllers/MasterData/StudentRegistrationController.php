@@ -246,4 +246,119 @@ class StudentRegistrationController extends Controller
             })
             ->exists();
     }
+
+
+    public function schoolOrigins(\Illuminate\Http\Request $request)
+    {
+        $registrations = \App\Models\StudentRegistration::whereNotNull('sekolah_asal')
+            ->where('sekolah_asal', '!=', '')
+            ->get();
+
+        $groups = [];
+
+        foreach ($registrations as $reg) {
+            $originalName = trim($reg->sekolah_asal);
+            $normalizedKey = $this->getNormalizedKey($originalName);
+            if ($normalizedKey === '') {
+                continue;
+            }
+
+            $matchedIndex = null;
+            foreach ($groups as $idx => $group) {
+                $groupKey = $group['normalized_key'];
+
+                if ($groupKey === $normalizedKey) {
+                    $matchedIndex = $idx;
+                    break;
+                }
+
+                $len1 = strlen($groupKey);
+                $len2 = strlen($normalizedKey);
+
+                if (abs($len1 - $len2) <= 3) {
+                    $distance = levenshtein($groupKey, $normalizedKey);
+                    $threshold = min($len1, $len2) >= 8 ? 2 : 1;
+
+                    $prefix1 = substr($groupKey, 0, 3);
+                    $prefix2 = substr($normalizedKey, 0, 3);
+
+                    if ($prefix1 === $prefix2 && $distance <= $threshold) {
+                        $matchedIndex = $idx;
+                        break;
+                    }
+                }
+            }
+
+            if ($matchedIndex !== null) {
+                $groups[$matchedIndex]['registrations'][] = $reg;
+                if (!in_array($originalName, $groups[$matchedIndex]['variations'], true)) {
+                    $groups[$matchedIndex]['variations'][] = $originalName;
+                }
+                $groups[$matchedIndex]['name_counts'][$originalName] = ($groups[$matchedIndex]['name_counts'][$originalName] ?? 0) + 1;
+            } else {
+                $groups[] = [
+                    'normalized_key' => $normalizedKey,
+                    'name_counts' => [$originalName => 1],
+                    'variations' => [$originalName],
+                    'registrations' => [$reg]
+                ];
+            }
+        }
+
+        foreach ($groups as &$group) {
+            arsort($group['name_counts']);
+            $group['canonical_name'] = key($group['name_counts']);
+            $group['total_registrations'] = count($group['registrations']);
+        }
+        unset($group);
+
+        usort($groups, function ($a, $b) {
+            return strcmp($a['canonical_name'], $b['canonical_name']);
+        });
+
+        $search = trim((string) $request->get('search'));
+        if ($search !== '') {
+            $searchLower = strtolower($search);
+            $groups = array_filter($groups, function ($group) use ($searchLower) {
+                if (str_contains(strtolower($group['canonical_name']), $searchLower)) {
+                    return true;
+                }
+                foreach ($group['variations'] as $v) {
+                    if (str_contains(strtolower($v), $searchLower)) {
+                        return true;
+                    }
+                }
+                return false;
+            });
+        }
+
+        return view('pages.master-data.student-registration.school-origins', compact('groups', 'search'));
+    }
+
+    public function updateSchoolOrigin(\Illuminate\Http\Request $request)
+    {
+        $validated = $request->validate([
+            'original_names' => 'required|array',
+            'original_names.*' => 'required|string',
+            'standardized_name' => 'required|string|max:255',
+        ]);
+
+        $originalNames = $validated['original_names'];
+        $standardizedName = trim($validated['standardized_name']);
+
+        $updatedCount = \App\Models\StudentRegistration::whereIn('sekolah_asal', $originalNames)
+            ->update(['sekolah_asal' => $standardizedName]);
+
+        return back()->with('success', 'Berhasil memperbarui ' . $updatedCount . ' data sekolah asal menjadi \'' . $standardizedName . '\'.');
+    }
+
+    private function getNormalizedKey(string $name): string
+    {
+        $key = strtolower(trim($name));
+        $key = str_replace(['negeri', 'negri'], 'n', $key);
+        $key = str_replace(['.', ',', '-', '_', '/', '\\', '(', ')'], ' ', $key);
+        $key = preg_replace('/[^a-z0-9]/', '', $key);
+        return $key;
+    }
 }
+

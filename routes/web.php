@@ -368,6 +368,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::patch('alumni/{alumnus}/reactivate', [AlumniController::class, 'reactivate'])->name('alumni.reactivate');
 
             Route::get('registrasi-siswa-baru', [StudentRegistrationController::class, 'index'])->name('student-registration.index');
+            Route::get('registrasi-siswa-baru/sekolah-asal', [StudentRegistrationController::class, 'schoolOrigins'])->name('student-registration.school-origins');
+            Route::post('registrasi-siswa-baru/sekolah-asal/update', [StudentRegistrationController::class, 'updateSchoolOrigin'])->name('student-registration.update-school-origins');
             Route::post('registrasi-siswa-baru', [StudentRegistrationController::class, 'store'])->name('student-registration.store');
             Route::patch('registrasi-siswa-baru/{registration}/approve', [StudentRegistrationController::class, 'approve'])->name('student-registration.approve');
             Route::patch('registrasi-siswa-baru/{registration}/reject', [StudentRegistrationController::class, 'reject'])->name('student-registration.reject');
