@@ -573,7 +573,7 @@
                 <!-- Simulated Interactive QR Box -->
                 <div class="bg-slate-50 rounded-2xl p-6 border-2 border-dashed border-emerald-300 flex flex-col items-center justify-center space-y-4">
                     <div class="bg-white p-4 rounded-xl shadow-md border border-slate-200 relative">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=SMK_TELKOM_WA_PAIRING_SESSION" alt="WhatsApp QR Code" class="w-48 h-48 rounded-lg">
+                        <img :src="activeDeviceForQr && activeDeviceForQr.qr_code_data ? 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(activeDeviceForQr.qr_code_data) : 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=SMK_TELKOM_WA_PAIRING_SESSION'" alt="WhatsApp QR Code" class="w-48 h-48 rounded-lg">
                         <div class="absolute inset-0 bg-emerald-500/5 rounded-lg pointer-events-none"></div>
                     </div>
 
@@ -793,10 +793,15 @@
                 this.activeDeviceForQr = device;
                 this.qrModalOpen = true;
                 try {
-                    await fetch(`/super-admin/whatsapp-gateway/device/${device.id}/qr`, {
+                    const res = await fetch(`/super-admin/whatsapp-gateway/device/${device.id}/qr`, {
                         method: 'POST',
                         headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
                     });
+                    const data = await res.json();
+                    if (data.success) {
+                        this.activeDeviceForQr = data.device;
+                        this.refreshDevicesData();
+                    }
                 } catch (e) {}
             },
 

@@ -84,6 +84,31 @@ class PerizinanController extends Controller
             // Kirim notifikasi ke siswa
             $perizinan->user->notify(new IzinDisetujuiNotification($perizinan));
 
+            // Kirim notifikasi WhatsApp ke siswa/orang tua
+            try {
+                $siswa = $perizinan->user->masterSiswa;
+                if ($siswa) {
+                    $phone = $siswa->dapodik?->hp ?? $siswa->dapodik?->telepon ?? $perizinan->user->phone ?? null;
+                    if ($phone) {
+                        $rombelName = $siswa->rombels->first()->nama_rombel ?? 'Kelas';
+                        $whatsappService = new \App\Services\WhatsappService();
+                        $whatsappService->sendTemplateNotification(
+                            $phone,
+                            'perizinan_disetujui',
+                            [
+                                'nama_siswa' => $perizinan->user->name,
+                                'kelas' => $rombelName,
+                                'tanggal' => \Carbon\Carbon::parse($perizinan->tanggal_izin)->isoFormat('D MMMM YYYY'),
+                                'alasan' => $perizinan->alasan,
+                            ],
+                            $perizinan->user->name
+                        );
+                    }
+                }
+            } catch (\Exception $waEx) {
+                Log::error('Gagal mengirim WhatsApp perizinan: ' . $waEx->getMessage());
+            }
+
             // Auto-sign TTD Wali Kelas jika diaktifkan
             $sig = \App\Models\UserDigitalSignature::where('user_id', $wali->id)->first();
             if ($sig && $sig->isReady() && $sig->auto_sign_perizinan) {

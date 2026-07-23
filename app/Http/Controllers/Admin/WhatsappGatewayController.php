@@ -205,47 +205,29 @@ class WhatsappGatewayController extends Controller
             'message' => 'required|string|max:1000',
         ]);
 
-        $device = null;
-        if ($request->whatsapp_device_id) {
-            $device = WhatsappDevice::find($request->whatsapp_device_id);
-        } else {
-            $device = WhatsappDevice::where('is_default', true)->first() ?? WhatsappDevice::first();
-        }
+        $service = new \App\Services\WhatsappService();
+        $result = $service->sendMessage(
+            $request->recipient,
+            $request->message,
+            'test',
+            $request->whatsapp_device_id ? (int) $request->whatsapp_device_id : null
+        );
 
-        if (!$device) {
+        if ($result['success']) {
+            if (isset($result['log'])) {
+                $result['log']->update(['recipient_name' => 'Tujuan Uji Coba']);
+            }
             return response()->json([
-                'success' => false,
-                'message' => 'Belum ada perangkat WhatsApp yang terdaftar. Tambahkan perangkat terlebih dahulu.'
-            ], 422);
+                'success' => true,
+                'message' => 'Pesan uji coba WhatsApp berhasil dikirim ke ' . $request->recipient . '!',
+                'log' => $result['log']->load('device'),
+            ]);
         }
-
-        $formattedRecipient = preg_replace('/[^0-9]/', '', $request->recipient);
-        if (str_starts_with($formattedRecipient, '0')) {
-            $formattedRecipient = '62' . substr($formattedRecipient, 1);
-        }
-
-        $status = $device->status === 'connected' ? 'sent' : 'sent';
-        $log = WhatsappLog::create([
-            'whatsapp_device_id' => $device->id,
-            'recipient' => $formattedRecipient,
-            'recipient_name' => 'Tujuan Uji Coba',
-            'message' => $request->message,
-            'type' => 'test',
-            'status' => $status,
-            'sent_at' => now(),
-            'response_data' => [
-                'provider' => $device->provider,
-                'session' => $device->session_id,
-                'response_code' => 200,
-                'response_body' => ['status' => true, 'message' => 'Pesanan berhasil dikirim ke gateway'],
-            ]
-        ]);
 
         return response()->json([
-            'success' => true,
-            'message' => 'Pesan uji coba WhatsApp berhasil dikirim ke ' . $formattedRecipient . '!',
-            'log' => $log->load('device'),
-        ]);
+            'success' => false,
+            'message' => $result['message'],
+        ], 422);
     }
 
     public function getLogs(Request $request)
@@ -279,18 +261,30 @@ class WhatsappGatewayController extends Controller
 
     public function resendLog(WhatsappLog $log)
     {
-        $log->update([
-            'status' => 'sent',
-            'sent_at' => now(),
-            'error_message' => null,
-            'response_data' => array_merge((array) $log->response_data, ['retried_at' => now()->toIso8601String()])
-        ]);
+        $service = new \App\Services\WhatsappService();
+        $result = $service->sendMessage(
+            $log->recipient,
+            $log->message,
+            $log->type,
+            $log->whatsapp_device_id
+        );
+
+        if ($result['success']) {
+            if (isset($result['log'])) {
+                $result['log']->update(['recipient_name' => $log->recipient_name]);
+            }
+            $log->delete();
+            return response()->json([
+                'success' => true,
+                'message' => 'Pesan WhatsApp berhasil dikirim ulang.',
+                'log' => $result['log']->load('device')
+            ]);
+        }
 
         return response()->json([
-            'success' => true,
-            'message' => 'Pesan WhatsApp berhasil dikirim ulang.',
-            'log' => $log->load('device')
-        ]);
+            'success' => false,
+            'message' => $result['message'],
+        ], 422);
     }
 
     public function clearLogs()

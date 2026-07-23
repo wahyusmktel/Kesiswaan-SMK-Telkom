@@ -107,6 +107,8 @@ class PenangananTerlambatController extends Controller
                 'pelapor_id' => Auth::id(),
             ]);
 
+            $this->kirimNotifikasi($keterlambatan);
+
             toast('Data keterlambatan berhasil dicatat.', 'success');
             return redirect()->route('piket.penanganan-terlambat.index')
                 ->with('print_url', route('piket.penanganan-terlambat.print', $keterlambatan->id));
@@ -147,6 +149,40 @@ class PenangananTerlambatController extends Controller
         $guruBKs = User::role('Guru BK')->get();
         foreach ($guruBKs as $bk) {
             // $bk->notify(new SiswaTerlambatNotification($keterlambatan));
+        }
+
+        // KIRIM NOTIFIKASI WHATSAPP KE ORANG TUA / SISWA
+        try {
+            $siswa = $keterlambatan->siswa;
+            if ($siswa) {
+                $phone = $siswa->dapodik?->hp ?? $siswa->dapodik?->telepon ?? $siswa->user?->phone ?? null;
+                if ($phone) {
+                    $rombelName = $siswa->rombels->first()->nama_rombel ?? 'Kelas';
+                    $now = \Carbon\Carbon::parse($keterlambatan->waktu_dicatat_security);
+                    
+                    // Hitung durasi keterlambatan (fallback ke 15 menit jika tidak ada jadwal)
+                    $durasi = 15;
+                    if ($keterlambatan->jadwalPelajaran) {
+                        $mulai = \Carbon\Carbon::parse($keterlambatan->jadwalPelajaran->jam_mulai);
+                        $durasi = max(1, $now->diffInMinutes($mulai));
+                    }
+
+                    $whatsappService = new \App\Services\WhatsappService();
+                    $whatsappService->sendTemplateNotification(
+                        $phone,
+                        'fingerprint_terlambat',
+                        [
+                            'nama_siswa' => $siswa->nama_lengkap,
+                            'kelas' => $rombelName,
+                            'jam_tap' => $now->format('H:i') . ' WIB',
+                            'durasi_keterlambatan' => $durasi,
+                        ],
+                        $siswa->nama_lengkap
+                    );
+                }
+            }
+        } catch (\Exception $waEx) {
+            Log::error('Gagal mengirim notifikasi WhatsApp Keterlambatan: ' . $waEx->getMessage());
         }
     }
 
