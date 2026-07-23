@@ -132,6 +132,7 @@
                                                     id: '{{ $user->id }}',
                                                     name: '{{ addslashes($user->name) }}',
                                                     email: '{{ $user->email }}',
+                                                    phone_number: @js($user->phone_number),
                                                     roles: {{ json_encode($user->getRoleNames()) }},
                                                     updateUrl: '{{ route('users.update', $user->id) }}'
                                                 })"
@@ -248,6 +249,14 @@
                         </div>
 
                         <div>
+                            <label class="block text-sm font-medium text-gray-700">Nomor HP / WhatsApp</label>
+                            <input type="tel" name="phone_number" x-model="form.phone_number"
+                                inputmode="tel" autocomplete="tel" placeholder="Contoh: 081234567890"
+                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm">
+                            <p class="mt-1 text-xs text-gray-500">Digunakan untuk notifikasi resmi, termasuk rekap absensi fingerprint.</p>
+                        </div>
+
+                        <div>
                             <label class="block text-sm font-medium text-gray-700">Password</label>
                             <input type="password" name="password" id="password"
                                 class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm"
@@ -345,6 +354,7 @@
                     form: {
                         name: '',
                         email: '',
+                        phone_number: '',
                     },
                     tomSelect: null,
 
@@ -364,6 +374,7 @@
                         this.form = {
                             name: '',
                             email: '',
+                            phone_number: '',
                         };
 
                         // Reset TomSelect
@@ -382,6 +393,7 @@
                         this.form = {
                             name: user.name,
                             email: user.email,
+                            phone_number: user.phone_number || '',
                         };
 
                         // Set nilai role ke TomSelect

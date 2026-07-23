@@ -24,6 +24,15 @@
 </div>
 
 <div class="mt-4">
+    <x-input-label for="phone_number" :value="__('Nomor HP / WhatsApp')" />
+    <x-text-input id="phone_number" class="block mt-1 w-full" type="tel" name="phone_number"
+        inputmode="tel" autocomplete="tel" placeholder="Contoh: 081234567890"
+        :value="old('phone_number', $user->phone_number ?? '')" />
+    <p class="mt-1 text-xs text-gray-500">Digunakan untuk notifikasi resmi, termasuk rekap absensi fingerprint.</p>
+    <x-input-error :messages="$errors->get('phone_number')" class="mt-2" />
+</div>
+
+<div class="mt-4">
     <x-input-label for="password" :value="__('Password')" />
     <x-text-input id="password" class="block mt-1 w-full" type="password" name="password" />
     @if(isset($user))

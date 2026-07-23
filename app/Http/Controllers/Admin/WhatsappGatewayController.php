@@ -409,6 +409,12 @@ class WhatsappGatewayController extends Controller
                 'template_text' => "Info Presensi Fingerprint:\n*Siswa:* {nama_siswa} ({kelas})\n*Waktu Tap:* {jam_tap}\n*Keterangan:* Terlambat ({durasi_keterlambatan} menit)\n\nMohon hadir lebih awal pada hari berikutnya untuk menghindari akumulasi poin pelanggaran.",
                 'variables' => ['nama_siswa', 'kelas', 'jam_tap', 'durasi_keterlambatan'],
             ],
+            'fingerprint_rekap_harian' => [
+                'title' => 'Rekap Absensi Fingerprint Harian Pegawai',
+                'category' => 'presensi',
+                'template_text' => "*REKAP ABSENSI FINGERPRINT HARIAN*\n\nYth. Bapak/Ibu *{nama_pegawai}*,\n\nBerikut kami sampaikan rekap absensi fingerprint Anda:\n- Tanggal: {tanggal}\n- Jam masuk: {jam_masuk}\n- Jam pulang: {jam_pulang}\n- Jumlah scan: {total_scan}\n- Status: *{status_kehadiran}*\n- Catatan: {catatan}\n- Durasi terlambat: {durasi_terlambat}\n\nData ini tercatat otomatis setelah sinkronisasi mesin fingerprint. Apabila terdapat ketidaksesuaian, silakan menghubungi KAUR SDM.\n\nTerima kasih atas kedisiplinan dan kontribusi Bapak/Ibu.\n_\"Kedisiplinan yang dijaga hari ini membangun kualitas kerja yang lebih baik esok hari.\"_\n\n_Sistem Informasi SMK Telkom Lampung_",
+                'variables' => ['nama_pegawai', 'tanggal', 'jam_masuk', 'jam_pulang', 'total_scan', 'status_kehadiran', 'catatan', 'durasi_terlambat'],
+            ],
             'panggilan_siswa' => [
                 'title' => 'Notifikasi Panggilan Orang Tua (BK/Kesiswaan)',
                 'category' => 'kedisiplinan',

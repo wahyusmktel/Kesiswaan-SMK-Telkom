@@ -13,8 +13,15 @@ class WhatsappService
     /**
      * Send a WhatsApp message using the active or specified device.
      */
-    public function sendMessage(string $recipient, string $message, string $type = 'general', ?int $deviceId = null): array
-    {
+    public function sendMessage(
+        string $recipient,
+        string $message,
+        string $type = 'general',
+        ?int $deviceId = null,
+        ?int $recipientUserId = null,
+        ?string $eventKey = null,
+        ?string $notificationDate = null,
+    ): array {
         // 1. Get the device
         $device = null;
         if ($deviceId) {
@@ -40,10 +47,13 @@ class WhatsappService
         // 3. Create initial log
         $log = WhatsappLog::create([
             'whatsapp_device_id' => $device->id,
+            'recipient_user_id' => $recipientUserId,
             'recipient' => $formattedRecipient,
             'recipient_name' => null,
             'message' => $message,
             'type' => $type,
+            'event_key' => $eventKey,
+            'notification_date' => $notificationDate,
             'status' => 'pending',
         ]);
 
@@ -210,8 +220,15 @@ class WhatsappService
     /**
      * Send a template-based notification.
      */
-    public function sendTemplateNotification(string $recipient, string $eventKey, array $data, ?string $recipientName = null): array
-    {
+    public function sendTemplateNotification(
+        string $recipient,
+        string $eventKey,
+        array $data,
+        ?string $recipientName = null,
+        ?string $logType = null,
+        ?int $recipientUserId = null,
+        ?string $notificationDate = null,
+    ): array {
         $template = WhatsappTemplate::where('event_key', $eventKey)->first();
         if (! $template || ! $template->is_enabled) {
             return [
@@ -225,7 +242,15 @@ class WhatsappService
             $message = str_replace('{'.$key.'}', $val, $message);
         }
 
-        $result = $this->sendMessage($recipient, $message, $template->category);
+        $result = $this->sendMessage(
+            $recipient,
+            $message,
+            $logType ?: $template->category,
+            null,
+            $recipientUserId,
+            $eventKey,
+            $notificationDate,
+        );
         if ($result['success'] && $recipientName && isset($result['log'])) {
             $result['log']->update(['recipient_name' => $recipientName]);
         }

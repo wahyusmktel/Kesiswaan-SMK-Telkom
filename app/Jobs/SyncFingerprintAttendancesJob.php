@@ -21,6 +21,7 @@ class SyncFingerprintAttendancesJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $timeout = 600;
+
     public int $tries = 1;
 
     public function __construct(
@@ -46,13 +47,14 @@ class SyncFingerprintAttendancesJob implements ShouldQueue
         $zk = new ZKTeco($device->ip_address, (int) $device->port);
 
         try {
-            if (!$zk->connect()) {
+            if (! $zk->connect()) {
                 $this->progress([
                     'status' => 'failed',
                     'percent' => 100,
                     'message' => "Mesin {$device->name} tidak bisa dikoneksikan.",
                     'character' => 'Koneksi ditolak mesin',
                 ]);
+
                 return;
             }
 
@@ -81,6 +83,7 @@ class SyncFingerprintAttendancesJob implements ShouldQueue
                     'message' => 'Belum ada user mesin yang dimapping ke pegawai.',
                     'character' => 'Mapping pegawai diperlukan',
                 ]);
+
                 return;
             }
 
@@ -95,21 +98,24 @@ class SyncFingerprintAttendancesJob implements ShouldQueue
                 $fingerprintUserId = trim((string) ($row['id'] ?? ''));
                 $timestamp = $this->parseTimestamp($row['timestamp'] ?? null);
 
-                if ($fingerprintUserId === '' || !$timestamp) {
+                if ($fingerprintUserId === '' || ! $timestamp) {
                     $skipped++;
                     $this->tick($seen, $total, $processed, $created, $updated, $skipped);
+
                     continue;
                 }
 
                 if (($dateFrom && $timestamp->lt($dateFrom)) || ($dateTo && $timestamp->gt($dateTo))) {
                     $this->tick($seen, $total, $processed, $created, $updated, $skipped);
+
                     continue;
                 }
 
                 $fingerprintUser = $mappedUsers->get($fingerprintUserId);
-                if (!$fingerprintUser) {
+                if (! $fingerprintUser) {
                     $skipped++;
                     $this->tick($seen, $total, $processed, $created, $updated, $skipped);
+
                     continue;
                 }
 
@@ -139,6 +145,10 @@ class SyncFingerprintAttendancesJob implements ShouldQueue
 
             $zk->disconnect();
 
+            if ($this->rangeIncludesToday($dateFrom, $dateTo)) {
+                SendFingerprintDailyRecapsJob::dispatch();
+            }
+
             $this->progress([
                 'status' => 'finished',
                 'percent' => 100,
@@ -165,7 +175,7 @@ class SyncFingerprintAttendancesJob implements ShouldQueue
             $this->progress([
                 'status' => 'failed',
                 'percent' => 100,
-                'message' => 'Gagal tarik log absensi: ' . $e->getMessage(),
+                'message' => 'Gagal tarik log absensi: '.$e->getMessage(),
                 'character' => 'Proses berhenti',
             ]);
         }
@@ -176,7 +186,7 @@ class SyncFingerprintAttendancesJob implements ShouldQueue
         $this->progress([
             'status' => 'failed',
             'percent' => 100,
-            'message' => 'Job tarik log gagal: ' . $e->getMessage(),
+            'message' => 'Job tarik log gagal: '.$e->getMessage(),
             'character' => 'Worker menghentikan proses',
         ]);
     }
@@ -236,7 +246,7 @@ class SyncFingerprintAttendancesJob implements ShouldQueue
 
     private function parseTimestamp($value): ?Carbon
     {
-        if (!$value) {
+        if (! $value) {
             return null;
         }
 
@@ -245,5 +255,13 @@ class SyncFingerprintAttendancesJob implements ShouldQueue
         } catch (Throwable) {
             return null;
         }
+    }
+
+    private function rangeIncludesToday(?Carbon $dateFrom, ?Carbon $dateTo): bool
+    {
+        $today = today();
+
+        return (! $dateFrom || $dateFrom->lte($today->copy()->endOfDay()))
+            && (! $dateTo || $dateTo->gte($today->copy()->startOfDay()));
     }
 }

@@ -5,16 +5,16 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Notifications\Notifiable;
-use Spatie\Permission\Traits\HasRoles;
-use Laragear\WebAuthn\WebAuthnAuthentication;
 use Laragear\WebAuthn\Contracts\WebAuthnAuthenticatable as WebAuthnAuthenticatableContract;
+use Laragear\WebAuthn\WebAuthnAuthentication;
+use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements WebAuthnAuthenticatableContract
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable, HasRoles, WebAuthnAuthentication;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable, WebAuthnAuthentication;
 
     /**
      * The attributes that are mass assignable.
@@ -24,6 +24,7 @@ class User extends Authenticatable implements WebAuthnAuthenticatableContract
     protected $fillable = [
         'name',
         'email',
+        'phone_number',
         'password',
         'google_id',
         'avatar',
@@ -71,6 +72,7 @@ class User extends Authenticatable implements WebAuthnAuthenticatableContract
     {
         return $this->hasOne(MasterSiswa::class);
     }
+
     // Relasi dari User (Wali Kelas) ke rombel yang diampunya
     public function rombels()
     {

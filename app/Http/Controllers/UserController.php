@@ -28,7 +28,8 @@ class UserController extends Controller
                 $search = $request->search;
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%");
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('phone_number', 'like', "%{$search}%");
                 });
             }
 
@@ -47,8 +48,9 @@ class UserController extends Controller
 
             return view('pages.users.index', compact('users', 'roles'));
         } catch (\Exception $e) {
-            Log::error('Error fetching users: ' . $e->getMessage());
+            Log::error('Error fetching users: '.$e->getMessage());
             toast('Gagal memuat data pengguna.', 'error');
+
             return redirect()->back();
         }
     }
@@ -58,10 +60,12 @@ class UserController extends Controller
     {
         try {
             $roles = Role::pluck('name', 'name');
+
             return view('pages.users.create', compact('roles'));
         } catch (\Exception $e) {
-            Log::error('Error showing create user form: ' . $e->getMessage());
+            Log::error('Error showing create user form: '.$e->getMessage());
             toast('Gagal menampilkan form tambah pengguna.', 'error');
+
             return redirect()->route('users.index');
         }
     }
@@ -72,6 +76,7 @@ class UserController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
+            'phone_number' => ['nullable', 'string', 'max:25', 'regex:/^(?:\+?62|0)[0-9\s\-]{8,20}$/'],
             'password' => 'required|string|min:8|confirmed',
             'roles' => 'required|array',
             'roles.*' => 'exists:roles,name',
@@ -79,6 +84,7 @@ class UserController extends Controller
 
         if ($validator->fails()) {
             toast($validator->errors()->first(), 'error');
+
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
@@ -87,6 +93,7 @@ class UserController extends Controller
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
+                'phone_number' => $this->normalizePhoneNumber($request->phone_number),
                 'password' => Hash::make($request->password),
             ]);
 
@@ -95,11 +102,13 @@ class UserController extends Controller
 
             DB::commit();
             toast('Pengguna berhasil ditambahkan!', 'success');
+
             return redirect()->route('users.index');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error storing user: ' . $e->getMessage());
+            Log::error('Error storing user: '.$e->getMessage());
             toast('Terjadi kesalahan saat menyimpan data.', 'error');
+
             return redirect()->back()->withInput();
         }
     }
@@ -109,10 +118,12 @@ class UserController extends Controller
     {
         try {
             $roles = Role::pluck('name', 'name');
+
             return view('pages.users.edit', compact('user', 'roles'));
         } catch (\Exception $e) {
-            Log::error('Error showing edit user form: ' . $e->getMessage());
+            Log::error('Error showing edit user form: '.$e->getMessage());
             toast('Gagal menampilkan form edit pengguna.', 'error');
+
             return redirect()->route('users.index');
         }
     }
@@ -122,7 +133,8 @@ class UserController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
+            'email' => 'required|email|unique:users,email,'.$user->id,
+            'phone_number' => ['nullable', 'string', 'max:25', 'regex:/^(?:\+?62|0)[0-9\s\-]{8,20}$/'],
             'password' => 'nullable|string|min:8|confirmed',
             'roles' => 'required|array',
             'roles.*' => 'exists:roles,name',
@@ -130,6 +142,7 @@ class UserController extends Controller
 
         if ($validator->fails()) {
             toast($validator->errors()->first(), 'error');
+
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
@@ -138,6 +151,7 @@ class UserController extends Controller
             $user->update([
                 'name' => $request->name,
                 'email' => $request->email,
+                'phone_number' => $this->normalizePhoneNumber($request->phone_number),
             ]);
 
             if ($request->filled('password')) {
@@ -148,11 +162,13 @@ class UserController extends Controller
 
             DB::commit();
             toast('Pengguna berhasil diperbarui!', 'success');
+
             return redirect()->route('users.index');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error updating user: ' . $e->getMessage());
+            Log::error('Error updating user: '.$e->getMessage());
             toast('Terjadi kesalahan saat memperbarui data.', 'error');
+
             return redirect()->back()->withInput();
         }
     }
@@ -163,18 +179,30 @@ class UserController extends Controller
         // Hati-hati: jangan biarkan user menghapus dirinya sendiri
         if (auth()->id() == $user->id) {
             toast('Anda tidak bisa menghapus akun Anda sendiri.', 'error');
+
             return redirect()->route('users.index');
         }
 
         try {
             $user->delete();
             toast('Pengguna berhasil dihapus!', 'success');
+
             return redirect()->route('users.index');
         } catch (\Exception $e) {
-            Log::error('Error deleting user: ' . $e->getMessage());
+            Log::error('Error deleting user: '.$e->getMessage());
             toast('Gagal menghapus pengguna.', 'error');
+
             return redirect()->route('users.index');
         }
+    }
+
+    private function normalizePhoneNumber(?string $phoneNumber): ?string
+    {
+        if (! filled($phoneNumber)) {
+            return null;
+        }
+
+        return preg_replace('/[\s\-]/', '', $phoneNumber);
     }
 
     // Export data pengguna ke Excel
@@ -183,16 +211,17 @@ class UserController extends Controller
         try {
             $role = $request->get('role');
             $filename = $role
-                ? 'Daftar_Pengguna_' . str_replace(' ', '_', $role) . '_' . date('Ymd_His') . '.xlsx'
-                : 'Daftar_Semua_Pengguna_' . date('Ymd_His') . '.xlsx';
+                ? 'Daftar_Pengguna_'.str_replace(' ', '_', $role).'_'.date('Ymd_His').'.xlsx'
+                : 'Daftar_Semua_Pengguna_'.date('Ymd_His').'.xlsx';
 
             return \Maatwebsite\Excel\Facades\Excel::download(
                 new \App\Exports\UsersExport($role),
                 $filename
             );
         } catch (\Exception $e) {
-            Log::error('Error exporting users to Excel: ' . $e->getMessage());
+            Log::error('Error exporting users to Excel: '.$e->getMessage());
             toast('Gagal mengekspor data ke Excel.', 'error');
+
             return redirect()->back();
         }
     }
@@ -221,15 +250,15 @@ class UserController extends Controller
             $pdf->setPaper('A4', 'portrait');
 
             $filename = $role
-                ? 'Daftar_Pengguna_' . str_replace(' ', '_', $role) . '_' . date('Ymd_His') . '.pdf'
-                : 'Daftar_Semua_Pengguna_' . date('Ymd_His') . '.pdf';
+                ? 'Daftar_Pengguna_'.str_replace(' ', '_', $role).'_'.date('Ymd_His').'.pdf'
+                : 'Daftar_Semua_Pengguna_'.date('Ymd_His').'.pdf';
 
             return $pdf->download($filename);
         } catch (\Exception $e) {
-            Log::error('Error exporting users to PDF: ' . $e->getMessage());
+            Log::error('Error exporting users to PDF: '.$e->getMessage());
             toast('Gagal mengekspor data ke PDF.', 'error');
+
             return redirect()->back();
         }
     }
 }
-
