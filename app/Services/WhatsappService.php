@@ -24,17 +24,17 @@ class WhatsappService
                 ?? WhatsappDevice::where('is_active', true)->first();
         }
 
-        if (!$device) {
+        if (! $device) {
             return [
                 'success' => false,
-                'message' => 'Tidak ada perangkat WhatsApp aktif yang terdaftar.'
+                'message' => 'Tidak ada perangkat WhatsApp aktif yang terdaftar.',
             ];
         }
 
         // 2. Format phone number: remove non-numeric, convert leading 0 to 62
         $formattedRecipient = preg_replace('/[^0-9]/', '', $recipient);
         if (str_starts_with($formattedRecipient, '0')) {
-            $formattedRecipient = '62' . substr($formattedRecipient, 1);
+            $formattedRecipient = '62'.substr($formattedRecipient, 1);
         }
 
         // 3. Create initial log
@@ -50,17 +50,18 @@ class WhatsappService
         // 4. Send request based on provider
         try {
             $response = $this->dispatchToProvider($device, $formattedRecipient, $message);
-            
+
             if ($response['success']) {
                 $log->update([
                     'status' => 'sent',
                     'sent_at' => now(),
                     'response_data' => $response['data'],
                 ]);
+
                 return [
                     'success' => true,
                     'message' => 'Pesan berhasil dikirim.',
-                    'log' => $log
+                    'log' => $log,
                 ];
             } else {
                 $log->update([
@@ -68,22 +69,24 @@ class WhatsappService
                     'error_message' => $response['error'],
                     'response_data' => $response['data'] ?? null,
                 ]);
+
                 return [
                     'success' => false,
-                    'message' => 'Gagal mengirim pesan: ' . $response['error'],
-                    'log' => $log
+                    'message' => 'Gagal mengirim pesan: '.$response['error'],
+                    'log' => $log,
                 ];
             }
         } catch (\Exception $e) {
-            Log::error('WhatsApp send error: ' . $e->getMessage());
+            Log::error('WhatsApp send error: '.$e->getMessage());
             $log->update([
                 'status' => 'failed',
                 'error_message' => $e->getMessage(),
             ]);
+
             return [
                 'success' => false,
                 'message' => 'Terjadi kesalahan sistem saat mengirim pesan.',
-                'log' => $log
+                'log' => $log,
             ];
         }
     }
@@ -97,14 +100,15 @@ class WhatsappService
         $apiKey = $device->api_key;
         $serverUrl = $device->server_url;
 
-        // For demo/unconfigured API keys, we simulate connection to avoid actual errors
-        if (empty($apiKey) || $apiKey === 'DEMO_API_KEY_SMK_TELKOM_2026') {
+        // Provider berbayar lama tetap dapat menggunakan mode demo.
+        if ($provider !== 'node_baileys'
+            && (empty($apiKey) || $apiKey === 'DEMO_API_KEY_SMK_TELKOM_2026')) {
             return [
                 'success' => true,
                 'data' => [
                     'simulation' => true,
-                    'message' => 'Simulasi pengiriman berhasil (Demo API Key).'
-                ]
+                    'message' => 'Simulasi pengiriman berhasil (Demo API Key).',
+                ],
             ];
         }
 
@@ -112,60 +116,69 @@ class WhatsappService
             case 'fonnte':
                 $url = $serverUrl ?: 'https://api.fonnte.com/send';
                 $response = Http::withHeaders([
-                    'Authorization' => $apiKey
+                    'Authorization' => $apiKey,
                 ])->asForm()->post($url, [
                     'target' => $recipient,
                     'message' => $message,
-                    'countryCode' => '62'
+                    'countryCode' => '62',
                 ]);
-                
+
                 $body = $response->json();
                 if ($response->successful() && ($body['status'] ?? false)) {
                     return ['success' => true, 'data' => $body];
                 }
+
                 return [
                     'success' => false,
-                    'error' => $body['reason'] ?? 'HTTP Error ' . $response->status(),
-                    'data' => $body
+                    'error' => $body['reason'] ?? 'HTTP Error '.$response->status(),
+                    'data' => $body,
                 ];
 
             case 'wablas':
-                $url = rtrim($serverUrl ?: 'https://api.wablas.com', '/') . '/api/send-message';
+                $url = rtrim($serverUrl ?: 'https://api.wablas.com', '/').'/api/send-message';
                 $response = Http::withHeaders([
-                    'Authorization' => $apiKey
+                    'Authorization' => $apiKey,
                 ])->asForm()->post($url, [
                     'phone' => $recipient,
-                    'message' => $message
+                    'message' => $message,
                 ]);
 
                 $body = $response->json();
                 if ($response->successful() && (($body['status'] ?? false) || ($body['status'] ?? '') === 'pending')) {
                     return ['success' => true, 'data' => $body];
                 }
+
                 return [
                     'success' => false,
-                    'error' => $body['message'] ?? 'HTTP Error ' . $response->status(),
-                    'data' => $body
+                    'error' => $body['message'] ?? 'HTTP Error '.$response->status(),
+                    'data' => $body,
                 ];
 
             case 'node_baileys':
-                $url = $serverUrl ?: 'http://localhost:8000/api/send';
-                $response = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $apiKey
-                ])->post($url, [
+                $configuredUrl = $serverUrl ?: config('services.whatsapp_gateway.base_url');
+                $url = str_ends_with(rtrim($configuredUrl, '/'), '/api/send')
+                    ? $configuredUrl
+                    : rtrim($configuredUrl, '/').'/api/send';
+                $nodeApiKey = $apiKey ?: config('services.whatsapp_gateway.api_key');
+                $client = Http::acceptJson()->timeout(30);
+                if (filled($nodeApiKey)) {
+                    $client = $client->withToken($nodeApiKey);
+                }
+                $response = $client->post($url, [
                     'session' => $device->session_id,
                     'to' => $recipient,
-                    'message' => $message
+                    'message' => $message,
                 ]);
 
                 $body = $response->json();
                 if ($response->successful() && ($body['success'] ?? ($body['status'] ?? false))) {
                     return ['success' => true, 'data' => $body];
                 }
+
                 return [
                     'success' => false,
-                    'error' => $body['message'] ?? 'HTTP Error ' . $response->status(),
-                    'data' => $body
+                    'error' => $body['message'] ?? 'HTTP Error '.$response->status(),
+                    'data' => $body,
                 ];
 
             case 'custom_http':
@@ -174,21 +187,22 @@ class WhatsappService
                     return ['success' => false, 'error' => 'Server URL tidak dikonfigurasi untuk Custom HTTP.'];
                 }
                 $response = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $apiKey
+                    'Authorization' => 'Bearer '.$apiKey,
                 ])->post($serverUrl, [
                     'to' => $recipient,
                     'message' => $message,
-                    'session' => $device->session_id
+                    'session' => $device->session_id,
                 ]);
 
                 $body = $response->json();
                 if ($response->successful()) {
                     return ['success' => true, 'data' => $body];
                 }
+
                 return [
                     'success' => false,
-                    'error' => 'HTTP Error ' . $response->status(),
-                    'data' => $body
+                    'error' => 'HTTP Error '.$response->status(),
+                    'data' => $body,
                 ];
         }
     }
@@ -199,16 +213,16 @@ class WhatsappService
     public function sendTemplateNotification(string $recipient, string $eventKey, array $data, ?string $recipientName = null): array
     {
         $template = WhatsappTemplate::where('event_key', $eventKey)->first();
-        if (!$template || !$template->is_enabled) {
+        if (! $template || ! $template->is_enabled) {
             return [
                 'success' => false,
-                'message' => "Template untuk event '{$eventKey}' tidak ditemukan atau dinonaktifkan."
+                'message' => "Template untuk event '{$eventKey}' tidak ditemukan atau dinonaktifkan.",
             ];
         }
 
         $message = $template->template_text;
         foreach ($data as $key => $val) {
-            $message = str_replace('{' . $key . '}', $val, $message);
+            $message = str_replace('{'.$key.'}', $val, $message);
         }
 
         $result = $this->sendMessage($recipient, $message, $template->category);

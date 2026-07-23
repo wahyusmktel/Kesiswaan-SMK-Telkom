@@ -2,28 +2,51 @@
 
 namespace Tests\Feature;
 
+use App\Models\DapodikSiswa;
+use App\Models\MasterSiswa;
+use App\Models\Perizinan;
+use App\Models\Rombel;
 use App\Models\User;
 use App\Models\WhatsappDevice;
 use App\Models\WhatsappLog;
 use App\Models\WhatsappTemplate;
-use App\Models\Rombel;
-use App\Models\MasterSiswa;
-use App\Models\DapodikSiswa;
-use App\Models\Perizinan;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Spatie\Permission\Models\Role;
+use Illuminate\Support\Facades\Http;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class WhatsappGatewayTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Http::fake([
+            '127.0.0.1:3001/api/connect' => Http::response([
+                'success' => true,
+                'status' => 'connecting',
+            ]),
+            '127.0.0.1:3001/api/status*' => Http::response([
+                'success' => true,
+                'status' => 'connected',
+            ]),
+            '127.0.0.1:3001/*' => Http::response([
+                'success' => true,
+                'message' => 'Faked Response',
+            ]),
+            'api.fonnte.com/*' => Http::response(['status' => true, 'reason' => 'Faked Response'], 200),
+            'api.wablas.com/*' => Http::response(['status' => true, 'message' => 'Faked Response'], 200),
+        ]);
+    }
+
     private function userWithRole(string $roleName): User
     {
         $role = Role::findOrCreate($roleName, 'web');
         $user = User::factory()->create(['email_verified_at' => now()]);
         $user->assignRole($role);
+
         return $user;
     }
 
@@ -68,7 +91,7 @@ class WhatsappGatewayTest extends TestCase
                 'connected_devices',
                 'total_sent_today',
                 'success_rate',
-            ]
+            ],
         ]);
     }
 
@@ -133,7 +156,8 @@ class WhatsappGatewayTest extends TestCase
         $device = WhatsappDevice::create([
             'name' => 'Device QR',
             'session_id' => 'wa_sess_qr',
-            'provider' => 'fonnte',
+            'provider' => 'node_baileys',
+            'server_url' => 'http://127.0.0.1:3001',
         ]);
 
         $response = $this->actingAs($user)
@@ -144,7 +168,6 @@ class WhatsappGatewayTest extends TestCase
         $response->assertJson([
             'success' => true,
         ]);
-        $this->assertNotNull(WhatsappDevice::find($device->id)->qr_code_data);
     }
 
     public function test_can_connect_device()
@@ -153,7 +176,8 @@ class WhatsappGatewayTest extends TestCase
         $device = WhatsappDevice::create([
             'name' => 'Device Conn',
             'session_id' => 'wa_sess_conn',
-            'provider' => 'fonnte',
+            'provider' => 'node_baileys',
+            'server_url' => 'http://127.0.0.1:3001',
             'status' => 'disconnected',
         ]);
 
@@ -223,7 +247,7 @@ class WhatsappGatewayTest extends TestCase
             'success',
             'logs' => [
                 'data',
-            ]
+            ],
         ]);
     }
 
@@ -262,8 +286,8 @@ class WhatsappGatewayTest extends TestCase
                         'title' => 'Title Alpha',
                         'is_enabled' => true,
                         'template_text' => 'New alpha text',
-                    ]
-                ]
+                    ],
+                ],
             ]);
 
         $response->assertStatus(200);
@@ -274,6 +298,26 @@ class WhatsappGatewayTest extends TestCase
         ]);
     }
 
+    public function test_webhook_can_update_device_status()
+    {
+        $device = WhatsappDevice::create([
+            'name' => 'Device Webhook',
+            'session_id' => 'wa_sess_webhook',
+            'provider' => 'node_baileys',
+            'status' => 'disconnected',
+        ]);
+
+        $response = $this->postJson(route('whatsapp.webhook', 'wa_sess_webhook'), [
+            'status' => 'connected',
+            'phone_number' => '+628999999',
+            'qr_code_data' => null,
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertEquals('connected', WhatsappDevice::find($device->id)->status);
+        $this->assertEquals('+628999999', WhatsappDevice::find($device->id)->phone_number);
+    }
+
     public function test_perizinan_approval_sends_whatsapp_notification()
     {
         $this->app->make(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
@@ -281,44 +325,44 @@ class WhatsappGatewayTest extends TestCase
         $role = Role::findOrCreate('Wali Kelas', 'web');
         $permission = Permission::findOrCreate('manage perizinan wali kelas', 'web');
         $permissionDashboard = Permission::findOrCreate('view wali kelas dashboard', 'web');
-        
+
         $role->givePermissionTo($permission);
         $role->givePermissionTo($permissionDashboard);
-        
+
         $wali = User::factory()->create(['email_verified_at' => now()]);
         $wali->assignRole($role);
         $wali->givePermissionTo($permission);
         $wali->givePermissionTo($permissionDashboard);
 
         $siswaUser = User::factory()->create();
-        
+
         $siswa = MasterSiswa::create([
             'nis' => '12345',
             'nama_lengkap' => 'Ahmad Siswa',
             'jenis_kelamin' => 'L',
             'user_id' => $siswaUser->id,
         ]);
-        
+
         $tahun = \App\Models\TahunPelajaran::create([
             'tahun' => '2026/2027',
             'semester' => 'Ganjil',
             'is_active' => true,
         ]);
-        
+
         $kelas = \App\Models\Kelas::create([
             'nama_kelas' => 'XI RPL 1',
             'jurusan' => 'Rekayasa Perangkat Lunak',
         ]);
-        
+
         $rombel = Rombel::create([
             'tahun_ajaran' => '2026/2027',
             'kelas_id' => $kelas->id,
             'tahun_pelajaran_id' => $tahun->id,
             'wali_kelas_id' => $wali->id,
         ]);
-        
+
         $siswa->rombels()->attach($rombel);
-        
+
         DapodikSiswa::create([
             'master_siswa_id' => $siswa->id,
             'nama' => 'Ahmad Siswa',
@@ -355,7 +399,7 @@ class WhatsappGatewayTest extends TestCase
             ->patch(route('wali-kelas.perizinan.approve', $perizinan));
 
         $response->assertRedirect();
-        
+
         $this->assertDatabaseHas('whatsapp_logs', [
             'whatsapp_device_id' => $device->id,
             'recipient' => '6281234567890',

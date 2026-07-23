@@ -531,14 +531,16 @@
 
                     <div>
                         <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Server URL (Opsional):</label>
-                        <input type="url" x-model="deviceForm.server_url" placeholder="https://api.fonnte.com/send"
+                        <input type="url" x-model="deviceForm.server_url" placeholder="Node lokal: http://127.0.0.1:3001"
                             class="w-full rounded-xl border-slate-300 text-sm focus:ring-emerald-500 focus:border-emerald-500">
+                        <p class="mt-1 text-[11px] text-slate-400">Untuk Node.js Baileys di server yang sama, gunakan http://127.0.0.1:3001.</p>
                     </div>
 
                     <div>
                         <label class="block text-xs font-bold uppercase text-slate-600 mb-1">API Key / Token:</label>
                         <input type="password" x-model="deviceForm.api_key" placeholder="Masukkan API Key / Token Provider"
                             class="w-full rounded-xl border-slate-300 text-sm focus:ring-emerald-500 focus:border-emerald-500">
+                        <p class="mt-1 text-[11px] text-slate-400">Untuk Node.js lokal, biarkan kosong agar memakai WHATSAPP_GATEWAY_API_KEY dari server.</p>
                     </div>
 
                     <div class="flex items-center space-x-2 pt-2">
@@ -558,9 +560,9 @@
     <!-- MODAL: QR CODE SCANNER -->
     <div x-show="qrModalOpen" x-cloak class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
         <div class="flex items-center justify-center min-h-screen px-4 text-center">
-            <div class="fixed inset-0 bg-slate-900/80 backdrop-blur-md" @click="qrModalOpen = false"></div>
+            <div class="fixed inset-0 bg-slate-900/80 backdrop-blur-md" @click="closeQrModal()"></div>
             <div class="inline-block bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl z-10 space-y-6 relative border border-slate-100">
-                <button @click="qrModalOpen = false" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <button @click="closeQrModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
 
@@ -570,10 +572,17 @@
                     <p class="text-xs text-slate-500">Buka aplikasi WhatsApp pada HP Anda > Perangkat Tertaut > Tautkan Perangkat lalu scan QR Code di bawah ini.</p>
                 </div>
 
-                <!-- Simulated Interactive QR Box -->
+                <!-- QR pairing dari engine lokal -->
                 <div class="bg-slate-50 rounded-2xl p-6 border-2 border-dashed border-emerald-300 flex flex-col items-center justify-center space-y-4">
                     <div class="bg-white p-4 rounded-xl shadow-md border border-slate-200 relative">
-                        <img :src="activeDeviceForQr && activeDeviceForQr.qr_code_data ? 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(activeDeviceForQr.qr_code_data) : 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=SMK_TELKOM_WA_PAIRING_SESSION'" alt="WhatsApp QR Code" class="w-48 h-48 rounded-lg">
+                        <template x-if="activeDeviceForQr && activeDeviceForQr.qr_code_data">
+                            <img :src="activeDeviceForQr.qr_code_data" alt="QR Code penautan WhatsApp" class="w-48 h-48 rounded-lg">
+                        </template>
+                        <template x-if="!activeDeviceForQr || !activeDeviceForQr.qr_code_data">
+                            <div class="w-48 h-48 rounded-lg bg-slate-100 flex items-center justify-center text-center p-5 text-xs font-semibold text-slate-500">
+                                QR sedang disiapkan oleh WhatsApp Engine.
+                            </div>
+                        </template>
                         <div class="absolute inset-0 bg-emerald-500/5 rounded-lg pointer-events-none"></div>
                     </div>
 
@@ -584,12 +593,12 @@
                 </div>
 
                 <div class="space-y-2">
-                    <button @click="simulateConnectActiveDevice()"
+                    <button @click="checkActiveDeviceConnection()"
                         class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/30 transition-all flex items-center justify-center space-x-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <span>Simulasi Berhasil Scan & Connect</span>
+                        <span>Periksa Status Koneksi</span>
                     </button>
-                    <button @click="qrModalOpen = false" class="w-full py-2 text-xs text-slate-400 hover:text-slate-600">Tutup</button>
+                    <button @click="closeQrModal()" class="w-full py-2 text-xs text-slate-400 hover:text-slate-600">Tutup</button>
                 </div>
             </div>
         </div>
@@ -620,8 +629,8 @@
                 id: null,
                 name: '',
                 phone_number: '',
-                provider: 'fonnte',
-                server_url: '',
+                provider: 'node_baileys',
+                server_url: 'http://127.0.0.1:3001',
                 api_key: '',
                 is_default: false,
             },
@@ -631,6 +640,7 @@
                 recipient: '',
                 message: 'Halo! Ini adalah pesan uji coba dari WhatsApp Gateway SMK Telkom Lampung.',
             },
+            qrPollTimer: null,
 
             logFilter: {
                 search: '',
@@ -718,8 +728,8 @@
                     id: null,
                     name: '',
                     phone_number: '',
-                    provider: 'fonnte',
-                    server_url: 'https://api.fonnte.com/send',
+                    provider: 'node_baileys',
+                    server_url: 'http://127.0.0.1:3001',
                     api_key: '',
                     is_default: this.devices.length === 0,
                 };
@@ -790,6 +800,10 @@
             },
 
             async openQrModal(device) {
+                if (this.qrPollTimer) {
+                    clearInterval(this.qrPollTimer);
+                    this.qrPollTimer = null;
+                }
                 this.activeDeviceForQr = device;
                 this.qrModalOpen = true;
                 try {
@@ -800,12 +814,17 @@
                     const data = await res.json();
                     if (data.success) {
                         this.activeDeviceForQr = data.device;
-                        this.refreshDevicesData();
+                        await this.refreshQrDevice();
+                        this.qrPollTimer = setInterval(() => this.refreshQrDevice(), 2000);
+                    } else {
+                        this.showToast(data.message || 'Gagal memulai WhatsApp engine.', 'error');
                     }
-                } catch (e) {}
+                } catch (e) {
+                    this.showToast('WhatsApp engine tidak dapat dihubungi.', 'error');
+                }
             },
 
-            async simulateConnectActiveDevice() {
+            async checkActiveDeviceConnection() {
                 if (!this.activeDeviceForQr) return;
                 try {
                     const res = await fetch(`/super-admin/whatsapp-gateway/device/${this.activeDeviceForQr.id}/connect`, {
@@ -815,11 +834,38 @@
                     const data = await res.json();
                     if (data.success) {
                         this.showToast(data.message);
-                        this.qrModalOpen = false;
+                        this.closeQrModal();
                         this.refreshDevicesData();
+                    } else {
+                        this.showToast(data.message, 'error');
                     }
                 } catch (e) {
-                    this.showToast('Gagal menghubungkan sesi.', 'error');
+                    this.showToast('Gagal memeriksa status sesi.', 'error');
+                }
+            },
+
+            async refreshQrDevice() {
+                if (!this.activeDeviceForQr || !this.qrModalOpen) return;
+                try {
+                    const res = await fetch("{{ route('super-admin.whatsapp-gateway.devices-data') }}");
+                    const data = await res.json();
+                    const current = data.devices?.find(device => device.id === this.activeDeviceForQr.id);
+                    if (!current) return;
+                    this.activeDeviceForQr = current;
+                    this.devices = data.devices;
+                    this.stats = data.stats;
+                    if (current.status === 'connected') {
+                        this.showToast('Perangkat WhatsApp berhasil terhubung.');
+                        this.closeQrModal();
+                    }
+                } catch (e) {}
+            },
+
+            closeQrModal() {
+                this.qrModalOpen = false;
+                if (this.qrPollTimer) {
+                    clearInterval(this.qrPollTimer);
+                    this.qrPollTimer = null;
                 }
             },
 

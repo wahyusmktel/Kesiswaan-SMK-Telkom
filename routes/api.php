@@ -69,3 +69,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Tanda Tangan Digital — diakses SARPRA untuk impor gambar TTD
     Route::get('/signature/my-image', [DigitalSignatureApiController::class, 'myImage']);
 });
+
+
+// Webhook WhatsApp Gateway
+Route::post('/whatsapp/webhook/{sessionId}', [\App\Http\Controllers\Admin\WhatsappGatewayController::class, 'handleWebhook'])->name('whatsapp.webhook');

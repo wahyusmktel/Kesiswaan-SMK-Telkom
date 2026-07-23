@@ -42,4 +42,9 @@ return [
         'drive_scopes' => env('GOOGLE_DRIVE_SCOPES', 'https://www.googleapis.com/auth/drive.file'),
     ],
 
+    'whatsapp_gateway' => [
+        'base_url' => env('WHATSAPP_GATEWAY_URL', 'http://127.0.0.1:3001'),
+        'api_key' => env('WHATSAPP_GATEWAY_API_KEY'),
+    ],
+
 ];

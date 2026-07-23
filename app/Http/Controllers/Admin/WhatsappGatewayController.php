@@ -7,6 +7,8 @@ use App\Models\WhatsappDevice;
 use App\Models\WhatsappLog;
 use App\Models\WhatsappTemplate;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class WhatsappGatewayController extends Controller
@@ -55,7 +57,7 @@ class WhatsappGatewayController extends Controller
                 'connected_devices' => $devices->where('status', 'connected')->count(),
                 'total_sent_today' => $totalSentToday,
                 'success_rate' => $successRate,
-            ]
+            ],
         ]);
     }
 
@@ -70,9 +72,9 @@ class WhatsappGatewayController extends Controller
             'is_default' => 'nullable|boolean',
         ]);
 
-        $sessionId = 'wa_sess_' . Str::lower(Str::random(8));
+        $sessionId = 'wa_sess_'.Str::lower(Str::random(8));
 
-        if (!empty($validated['is_default'])) {
+        if (! empty($validated['is_default'])) {
             WhatsappDevice::query()->update(['is_default' => false]);
         }
 
@@ -87,8 +89,8 @@ class WhatsappGatewayController extends Controller
             'api_key' => $validated['api_key'] ?? null,
             'status' => 'disconnected',
             'is_active' => true,
-            'is_default' => $isFirstDevice || !empty($validated['is_default']),
-            'webhook_url' => url('/api/whatsapp/webhook/' . $sessionId),
+            'is_default' => $isFirstDevice || ! empty($validated['is_default']),
+            'webhook_url' => url('/api/whatsapp/webhook/'.$sessionId),
         ]);
 
         return response()->json([
@@ -110,7 +112,7 @@ class WhatsappGatewayController extends Controller
             'is_default' => 'nullable|boolean',
         ]);
 
-        if (!empty($validated['is_default']) && !$device->is_default) {
+        if (! empty($validated['is_default']) && ! $device->is_default) {
             WhatsappDevice::where('id', '!=', $device->id)->update(['is_default' => false]);
         }
 
@@ -144,47 +146,98 @@ class WhatsappGatewayController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Perangkat WhatsApp berhasil dihapus.'
+            'message' => 'Perangkat WhatsApp berhasil dihapus.',
         ]);
     }
 
     public function generateQrCode(WhatsappDevice $device)
     {
-        // Generate simulated SVG QR code / base64 string for scanning demo
-        $timestamp = time();
-        $dummyQrPayload = "2@" . Str::random(24) . "," . $device->session_id . "," . $timestamp;
+        if ($device->provider !== 'node_baileys') {
+            return response()->json([
+                'success' => false,
+                'message' => 'QR pairing hanya tersedia untuk provider Node.js Baileys.',
+            ], 422);
+        }
 
-        $device->update([
-            'status' => 'qr_ready',
-            'qr_code_data' => $dummyQrPayload,
-        ]);
+        try {
+            $response = $this->nodeClient($device)
+                ->post($this->nodeEndpoint($device, '/api/connect'), [
+                    'session' => $device->session_id,
+                ])
+                ->throw();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'QR Code WhatsApp berhasil dibuat. Silakan scan dengan WhatsApp pada ponsel Anda.',
-            'qr_code' => $dummyQrPayload,
-            'device' => $device,
-        ]);
+            $device->update([
+                'status' => $response->json('status', 'connecting'),
+                'qr_code_data' => null,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Memulai inisialisasi sesi WhatsApp. Silakan tunggu QR Code...',
+                'device' => $device->fresh(),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal terhubung ke WhatsApp server engine: '.$e->getMessage(),
+            ], 500);
+        }
     }
 
     public function connect(WhatsappDevice $device)
     {
+        if ($device->provider !== 'node_baileys') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pemeriksaan status hanya tersedia untuk provider Node.js Baileys.',
+            ], 422);
+        }
+
+        try {
+            $response = $this->nodeClient($device)
+                ->get($this->nodeEndpoint($device, '/api/status'), [
+                    'session' => $device->session_id,
+                ])
+                ->throw();
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'WhatsApp engine tidak dapat dihubungi: '.$e->getMessage(),
+            ], 503);
+        }
+
+        $status = $response->json('status', 'disconnected');
         $device->update([
-            'status' => 'connected',
-            'qr_code_data' => null,
-            'last_connected_at' => now(),
-            'phone_number' => $device->phone_number ?: ('+62 812-' . rand(1000, 9999) . '-' . rand(1000, 9999)),
+            'status' => $status,
+            'qr_code_data' => $response->json('qr_code_data'),
+            'last_connected_at' => $status === 'connected'
+                ? ($device->last_connected_at ?: now())
+                : $device->last_connected_at,
         ]);
 
         return response()->json([
-            'success' => true,
-            'message' => 'Perangkat WhatsApp "' . $device->name . '" berhasil terhubung (Connected)!',
-            'device' => $device,
+            'success' => $status === 'connected',
+            'message' => $status === 'connected'
+                ? 'Perangkat WhatsApp "'.$device->name.'" sudah terhubung.'
+                : 'Perangkat belum terhubung. Scan QR dan tunggu proses sinkronisasi selesai.',
+            'device' => $device->fresh(),
         ]);
     }
 
     public function disconnect(WhatsappDevice $device)
     {
+        try {
+            if ($device->provider === 'node_baileys') {
+                $this->nodeClient($device)
+                    ->post($this->nodeEndpoint($device, '/api/disconnect'), [
+                        'session' => $device->session_id,
+                    ])
+                    ->throw();
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to disconnect on node server: '.$e->getMessage());
+        }
+
         $device->update([
             'status' => 'disconnected',
             'qr_code_data' => null,
@@ -192,7 +245,7 @@ class WhatsappGatewayController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Perangkat WhatsApp "' . $device->name . '" diputuskan koneksinya.',
+            'message' => 'Perangkat WhatsApp "'.$device->name.'" diputuskan koneksinya.',
             'device' => $device,
         ]);
     }
@@ -205,7 +258,7 @@ class WhatsappGatewayController extends Controller
             'message' => 'required|string|max:1000',
         ]);
 
-        $service = new \App\Services\WhatsappService();
+        $service = new \App\Services\WhatsappService;
         $result = $service->sendMessage(
             $request->recipient,
             $request->message,
@@ -217,9 +270,10 @@ class WhatsappGatewayController extends Controller
             if (isset($result['log'])) {
                 $result['log']->update(['recipient_name' => 'Tujuan Uji Coba']);
             }
+
             return response()->json([
                 'success' => true,
-                'message' => 'Pesan uji coba WhatsApp berhasil dikirim ke ' . $request->recipient . '!',
+                'message' => 'Pesan uji coba WhatsApp berhasil dikirim ke '.$request->recipient.'!',
                 'log' => $result['log']->load('device'),
             ]);
         }
@@ -246,8 +300,8 @@ class WhatsappGatewayController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('recipient', 'like', "%{$search}%")
-                  ->orWhere('recipient_name', 'like', "%{$search}%")
-                  ->orWhere('message', 'like', "%{$search}%");
+                    ->orWhere('recipient_name', 'like', "%{$search}%")
+                    ->orWhere('message', 'like', "%{$search}%");
             });
         }
 
@@ -255,13 +309,13 @@ class WhatsappGatewayController extends Controller
 
         return response()->json([
             'success' => true,
-            'logs' => $logs
+            'logs' => $logs,
         ]);
     }
 
     public function resendLog(WhatsappLog $log)
     {
-        $service = new \App\Services\WhatsappService();
+        $service = new \App\Services\WhatsappService;
         $result = $service->sendMessage(
             $log->recipient,
             $log->message,
@@ -274,10 +328,11 @@ class WhatsappGatewayController extends Controller
                 $result['log']->update(['recipient_name' => $log->recipient_name]);
             }
             $log->delete();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Pesan WhatsApp berhasil dikirim ulang.',
-                'log' => $result['log']->load('device')
+                'log' => $result['log']->load('device'),
             ]);
         }
 
@@ -293,7 +348,7 @@ class WhatsappGatewayController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Seluruh log pesan WhatsApp telah dibersihkan.'
+            'message' => 'Seluruh log pesan WhatsApp telah dibersihkan.',
         ]);
     }
 
@@ -306,7 +361,7 @@ class WhatsappGatewayController extends Controller
                 ['event_key' => $key],
                 [
                     'title' => $data['title'] ?? Str::headline($key),
-                    'is_enabled' => !empty($data['is_enabled']),
+                    'is_enabled' => ! empty($data['is_enabled']),
                     'template_text' => $data['template_text'] ?? '',
                 ]
             );
@@ -314,7 +369,7 @@ class WhatsappGatewayController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Template notifikasi WhatsApp Bot berhasil disimpan!'
+            'message' => 'Template notifikasi WhatsApp Bot berhasil disimpan!',
         ]);
     }
 
@@ -323,15 +378,14 @@ class WhatsappGatewayController extends Controller
         if (WhatsappDevice::count() === 0) {
             WhatsappDevice::create([
                 'name' => 'Gateway Utama SMK Telkom',
-                'phone_number' => '+62 821-7788-9900',
+                'phone_number' => null,
                 'session_id' => 'wa_sess_main_bot',
-                'provider' => 'fonnte',
-                'server_url' => 'https://api.fonnte.com/send',
-                'api_key' => 'DEMO_API_KEY_SMK_TELKOM_2026',
-                'status' => 'connected',
+                'provider' => 'node_baileys',
+                'server_url' => config('services.whatsapp_gateway.base_url'),
+                'api_key' => config('services.whatsapp_gateway.api_key'),
+                'status' => 'disconnected',
                 'is_active' => true,
                 'is_default' => true,
-                'last_connected_at' => now(),
                 'webhook_url' => url('/api/whatsapp/webhook/wa_sess_main_bot'),
             ]);
         }
@@ -375,5 +429,67 @@ class WhatsappGatewayController extends Controller
                 ]
             );
         }
+    }
+
+    public function handleWebhook(Request $request, $sessionId)
+    {
+        $expectedKey = (string) config('services.whatsapp_gateway.api_key');
+        if ($expectedKey !== '' && ! hash_equals($expectedKey, (string) $request->bearerToken())) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized webhook.',
+            ], 401);
+        }
+
+        Log::info("WhatsApp webhook received for session: {$sessionId}", $request->all());
+
+        $device = WhatsappDevice::where('session_id', $sessionId)->first();
+        if (! $device) {
+            return response()->json(['success' => false, 'message' => 'Device not found.'], 404);
+        }
+
+        $status = $request->input('status');
+        $qrCodeData = $request->input('qr_code_data');
+        $phoneNumber = $request->input('phone_number');
+
+        $updateData = [];
+        if ($status) {
+            $updateData['status'] = $status;
+        }
+        if ($request->has('qr_code_data')) {
+            $updateData['qr_code_data'] = $qrCodeData;
+        }
+        if ($phoneNumber) {
+            $updateData['phone_number'] = $phoneNumber;
+            $updateData['last_connected_at'] = now();
+        }
+
+        $device->update($updateData);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Status updated successfully.',
+            'device' => $device,
+        ]);
+    }
+
+    private function nodeEndpoint(WhatsappDevice $device, string $path): string
+    {
+        $configuredUrl = $device->server_url ?: config('services.whatsapp_gateway.base_url');
+        $baseUrl = preg_replace(
+            '#/api/(?:send|connect|disconnect|status)/?$#',
+            '',
+            rtrim((string) $configuredUrl, '/')
+        );
+
+        return $baseUrl.'/'.ltrim($path, '/');
+    }
+
+    private function nodeClient(WhatsappDevice $device)
+    {
+        $apiKey = $device->api_key ?: config('services.whatsapp_gateway.api_key');
+        $client = Http::acceptJson()->timeout(15);
+
+        return filled($apiKey) ? $client->withToken($apiKey) : $client;
     }
 }
