@@ -1,8 +1,4 @@
-@extends('layouts.app')
-
-@section('title', 'WhatsApp Gateway & Bot Notification')
-
-@section('content')
+<x-app-layout>
 <div x-data="whatsappGatewayApp()" x-init="initData()" class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
 
     <!-- Toast Notification -->
@@ -946,4 +942,4 @@
     }
 </script>
 @endpush
-@endsection
+</x-app-layout>
