@@ -580,7 +580,7 @@
                         </template>
                         <template x-if="!activeDeviceForQr || !activeDeviceForQr.qr_code_data">
                             <div class="w-48 h-48 rounded-lg bg-slate-100 flex items-center justify-center text-center p-5 text-xs font-semibold text-slate-500">
-                                QR sedang disiapkan oleh WhatsApp Engine.
+                                <span x-text="activeDeviceForQr?.settings?.last_error || 'QR sedang disiapkan oleh WhatsApp Engine.'"></span>
                             </div>
                         </template>
                         <div class="absolute inset-0 bg-emerald-500/5 rounded-lg pointer-events-none"></div>

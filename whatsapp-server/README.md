@@ -89,3 +89,19 @@ pm2 save
 
 Jangan menghapus `sessions-auth` saat deploy. Menghapus direktori tersebut
 mengharuskan perangkat melakukan scan QR ulang.
+
+## QR tidak muncul dan log menunjukkan kode 405
+
+Versi engine saat ini mengambil versi WhatsApp Web terbaru saat membuka socket.
+Jika sesi pairing lama sudah rusak, hentikan engine lalu hapus hanya direktori
+sesi yang gagal:
+
+```bash
+pm2 stop sisfo-whatsapp-gateway
+rm -rf sessions-auth/ID_SESI_YANG_GAGAL
+pm2 start sisfo-whatsapp-gateway
+pm2 logs sisfo-whatsapp-gateway --lines 100
+```
+
+Jangan menghapus direktori sesi lain yang masih berstatus terhubung. Setelah
+engine hidup, klik **Hubungkan QR** kembali dari panel.

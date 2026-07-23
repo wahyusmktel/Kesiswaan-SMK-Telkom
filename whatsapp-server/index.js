@@ -8,6 +8,8 @@ const {
     default: makeWASocket,
     useMultiFileAuthState,
     DisconnectReason,
+    fetchLatestBaileysVersion,
+    Browsers,
     delay,
 } = require('@whiskeysockets/baileys');
 
@@ -23,6 +25,8 @@ const logger = pino({ level: process.env.LOG_LEVEL || 'info' });
 const activeSessions = new Map();
 const sessionQrs = new Map();
 const connectingSessions = new Map();
+const reconnectAttempts = new Map();
+const fallbackWaVersion = [2, 3000, 1032141294];
 
 app.use(express.json({ limit: '1mb' }));
 
@@ -81,6 +85,23 @@ async function notifyLaravel(sessionId, payload) {
     }
 }
 
+async function resolveWaVersion() {
+    try {
+        const result = await fetchLatestBaileysVersion();
+        logger.info(
+            { version: result.version.join('.'), isLatest: result.isLatest },
+            'Menggunakan versi WhatsApp Web terbaru',
+        );
+        return result.version;
+    } catch (error) {
+        logger.warn(
+            { error: error.message, version: fallbackWaVersion.join('.') },
+            'Gagal mengambil versi WhatsApp Web, menggunakan fallback',
+        );
+        return fallbackWaVersion;
+    }
+}
+
 async function createSession(sessionId) {
     sessionId = sanitizeSessionId(sessionId);
 
@@ -94,12 +115,17 @@ async function createSession(sessionId) {
     const connecting = (async () => {
         const authPath = getAuthPath(sessionId);
         const { state, saveCreds } = await useMultiFileAuthState(authPath);
+        const version = await resolveWaVersion();
         const socket = makeWASocket({
+            version,
             auth: state,
+            browser: Browsers.ubuntu('Chrome'),
             printQRInTerminal: false,
             logger: pino({ level: 'silent' }),
             markOnlineOnConnect: false,
             syncFullHistory: false,
+            qrTimeout: 60000,
+            connectTimeoutMs: 60000,
         });
 
         activeSessions.set(sessionId, socket);
@@ -108,6 +134,7 @@ async function createSession(sessionId) {
             const { connection, lastDisconnect, qr } = update;
 
             if (qr) {
+                reconnectAttempts.delete(sessionId);
                 const qrDataUrl = await QRCode.toDataURL(qr, {
                     width: 320,
                     margin: 2,
@@ -121,6 +148,7 @@ async function createSession(sessionId) {
             }
 
             if (connection === 'open') {
+                reconnectAttempts.delete(sessionId);
                 sessionQrs.delete(sessionId);
                 const jid = socket.user?.id || '';
                 const phoneNumber = jid.split(':')[0].split('@')[0] || null;
@@ -138,13 +166,33 @@ async function createSession(sessionId) {
 
                 const code = extractDisconnectCode(lastDisconnect?.error);
                 const loggedOut = code === DisconnectReason.loggedOut;
-                logger.warn({ sessionId, code, loggedOut }, 'Koneksi WhatsApp tertutup');
+                const attempts = (reconnectAttempts.get(sessionId) || 0) + 1;
+                reconnectAttempts.set(sessionId, attempts);
+                logger.warn(
+                    { sessionId, code, loggedOut, attempts },
+                    'Koneksi WhatsApp tertutup',
+                );
 
                 if (loggedOut) {
+                    reconnectAttempts.delete(sessionId);
                     fs.rmSync(authPath, { recursive: true, force: true });
                     await notifyLaravel(sessionId, {
                         status: 'disconnected',
                         qr_code_data: null,
+                        error_message: 'Sesi keluar dari WhatsApp. Hubungkan ulang perangkat.',
+                    });
+                    return;
+                }
+
+                if (code === 405 && attempts >= 3) {
+                    reconnectAttempts.delete(sessionId);
+                    if (!state.creds.registered) {
+                        fs.rmSync(authPath, { recursive: true, force: true });
+                    }
+                    await notifyLaravel(sessionId, {
+                        status: 'disconnected',
+                        qr_code_data: null,
+                        error_message: 'WhatsApp menolak proses pairing (kode 405). Perbarui engine lalu coba hubungkan ulang.',
                     });
                     return;
                 }
@@ -181,6 +229,7 @@ app.get('/health', (req, res) => {
 app.post('/api/connect', async (req, res) => {
     try {
         const session = sanitizeSessionId(req.body.session);
+        reconnectAttempts.delete(session);
         await createSession(session);
         return res.json({
             success: true,

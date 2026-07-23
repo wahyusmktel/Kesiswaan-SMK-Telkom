@@ -451,6 +451,7 @@ class WhatsappGatewayController extends Controller
         $status = $request->input('status');
         $qrCodeData = $request->input('qr_code_data');
         $phoneNumber = $request->input('phone_number');
+        $errorMessage = $request->input('error_message');
 
         $updateData = [];
         if ($status) {
@@ -462,6 +463,15 @@ class WhatsappGatewayController extends Controller
         if ($phoneNumber) {
             $updateData['phone_number'] = $phoneNumber;
             $updateData['last_connected_at'] = now();
+        }
+        if ($request->has('error_message')) {
+            $settings = $device->settings ?? [];
+            $settings['last_error'] = $errorMessage;
+            $updateData['settings'] = $settings;
+        } elseif ($status === 'connected' || $status === 'qr_ready') {
+            $settings = $device->settings ?? [];
+            unset($settings['last_error']);
+            $updateData['settings'] = $settings;
         }
 
         $device->update($updateData);
