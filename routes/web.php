@@ -800,6 +800,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\SDM\DashboardController::class, 'index'])->name('dashboard.index');
         Route::get('/calendar', [\App\Http\Controllers\SDM\WorkCalendarController::class, 'index'])->name('calendar.index');
         Route::post('/calendar', [\App\Http\Controllers\SDM\WorkCalendarController::class, 'store'])->name('calendar.store');
+        Route::post('/calendar/import', [\App\Http\Controllers\SDM\WorkCalendarController::class, 'import'])->name('calendar.import');
+        Route::put('/calendar/{calendar}', [\App\Http\Controllers\SDM\WorkCalendarController::class, 'update'])->name('calendar.update');
         Route::delete('/calendar/{calendar}', [\App\Http\Controllers\SDM\WorkCalendarController::class, 'destroy'])->name('calendar.destroy');
         Route::get('/persetujuan-izin-guru', [\App\Http\Controllers\SDM\PersetujuanIzinGuruController::class, 'index'])->middleware('permission:manage perizinan guru')->name('persetujuan-izin-guru.index');
         Route::patch('/persetujuan-izin-guru/{izin}/approve', [\App\Http\Controllers\SDM\PersetujuanIzinGuruController::class, 'approve'])->middleware('permission:manage perizinan guru')->name('persetujuan-izin-guru.approve');
