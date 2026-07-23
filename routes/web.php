@@ -932,6 +932,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/stella-ai-test', [\App\Http\Controllers\StellaAiController::class, 'testConnection'])->name('stella-ai.test');
         Route::post('/stella-ai-image-test', [\App\Http\Controllers\StellaAiController::class, 'testImageConnection'])->name('stella-ai.image.test');
         Route::post('/stella-ai-models', [\App\Http\Controllers\StellaAiController::class, 'discoverModels'])->name('stella-ai.models');
+
+        // WhatsApp Gateway Management
+        Route::get('/whatsapp-gateway', [\App\Http\Controllers\Admin\WhatsappGatewayController::class, 'index'])->name('whatsapp-gateway.index');
+        Route::get('/whatsapp-gateway/devices-data', [\App\Http\Controllers\Admin\WhatsappGatewayController::class, 'getDevicesData'])->name('whatsapp-gateway.devices-data');
+        Route::post('/whatsapp-gateway/device', [\App\Http\Controllers\Admin\WhatsappGatewayController::class, 'storeDevice'])->name('whatsapp-gateway.device.store');
+        Route::put('/whatsapp-gateway/device/{device}', [\App\Http\Controllers\Admin\WhatsappGatewayController::class, 'updateDevice'])->name('whatsapp-gateway.device.update');
+        Route::delete('/whatsapp-gateway/device/{device}', [\App\Http\Controllers\Admin\WhatsappGatewayController::class, 'destroyDevice'])->name('whatsapp-gateway.device.destroy');
+        Route::post('/whatsapp-gateway/device/{device}/qr', [\App\Http\Controllers\Admin\WhatsappGatewayController::class, 'generateQrCode'])->name('whatsapp-gateway.device.qr');
+        Route::post('/whatsapp-gateway/device/{device}/connect', [\App\Http\Controllers\Admin\WhatsappGatewayController::class, 'connect'])->name('whatsapp-gateway.device.connect');
+        Route::post('/whatsapp-gateway/device/{device}/disconnect', [\App\Http\Controllers\Admin\WhatsappGatewayController::class, 'disconnect'])->name('whatsapp-gateway.device.disconnect');
+        Route::post('/whatsapp-gateway/send-test', [\App\Http\Controllers\Admin\WhatsappGatewayController::class, 'sendTestMessage'])->name('whatsapp-gateway.send-test');
+        Route::get('/whatsapp-gateway/logs', [\App\Http\Controllers\Admin\WhatsappGatewayController::class, 'getLogs'])->name('whatsapp-gateway.logs');
+        Route::post('/whatsapp-gateway/logs/{log}/resend', [\App\Http\Controllers\Admin\WhatsappGatewayController::class, 'resendLog'])->name('whatsapp-gateway.logs.resend');
+        Route::delete('/whatsapp-gateway/logs/clear', [\App\Http\Controllers\Admin\WhatsappGatewayController::class, 'clearLogs'])->name('whatsapp-gateway.logs.clear');
+        Route::post('/whatsapp-gateway/templates', [\App\Http\Controllers\Admin\WhatsappGatewayController::class, 'saveTemplates'])->name('whatsapp-gateway.templates.save');
     });
 });
 

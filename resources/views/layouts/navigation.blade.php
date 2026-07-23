@@ -364,6 +364,19 @@
     </li>
 
     @if(session('active_role') == 'Super Admin')
+    <li>
+        <a href="{{ route('super-admin.whatsapp-gateway.index') }}" title="WhatsApp Gateway"
+            class="nav-link {{ request()->routeIs('super-admin.whatsapp-gateway.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+            </div>
+            <span class="nav-text">WhatsApp Gateway</span>
+            <span class="nav-badge bg-emerald-500/20 text-emerald-300 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">BOT</span>
+        </a>
+    </li>
     @include('shared.fingerprint-saya-nav-link')
     <li class="submenu-dropdown" x-data="{ expanded: {{ request()->routeIs('fingerprint.*') ? 'true' : 'false' }}, flyoutTop:0, updateFlyoutPosition(){ const r=this.$el.querySelector('button').getBoundingClientRect(); this.flyoutTop=r.top; } }" @mouseenter="updateFlyoutPosition()">
         <button @click="expanded = !expanded"
