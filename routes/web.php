@@ -43,6 +43,7 @@ use App\Http\Controllers\PublicVerifikasiController;
 use App\Http\Controllers\GuruKelas\VerifikasiTerlambatController as GuruKelasVerifikasiTerlambatController;
 use App\Http\Controllers\GuruKelas\LessonPlanController;
 use App\Http\Controllers\GuruKelas\TeachingModuleController;
+use App\Http\Controllers\GuruKelas\EffectiveWeekAnalysisController;
 use App\Http\Controllers\Dispensasi\PengajuanDispensasiController;
 use App\Http\Controllers\Kesiswaan\PersetujuanDispensasiController;
 use App\Http\Controllers\Prakerin\IndustriController;
@@ -717,6 +718,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Perangkat Pembelajaran dan Modul Ajar
         Route::prefix('perangkat-pembelajaran')->name('teaching-module.')->group(function () {
             Route::get('/', [TeachingModuleController::class, 'index'])->name('index');
+            Route::get('/analisis-pekan-efektif', [EffectiveWeekAnalysisController::class, 'index'])->name('effective-week.index');
+            Route::get('/analisis-pekan-efektif/pdf', [EffectiveWeekAnalysisController::class, 'pdf'])->name('effective-week.pdf');
             Route::get('/buat', [TeachingModuleController::class, 'create'])->name('create');
             Route::post('/', [TeachingModuleController::class, 'store'])->name('store');
             Route::get('/{teachingModule}/isi', [TeachingModuleController::class, 'editContent'])->name('content.edit');

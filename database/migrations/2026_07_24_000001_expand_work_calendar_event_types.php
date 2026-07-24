@@ -21,6 +21,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        DB::table('work_calendar_events')
+            ->whereNotIn('type', ['holiday', 'collective_leave'])
+            ->update(['type' => 'holiday']);
+
         Schema::table('work_calendar_events', function (Blueprint $table) {
             $table->dropIndex(['is_non_working']);
             $table->dropColumn('is_non_working');

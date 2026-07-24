@@ -731,17 +731,47 @@
                 <span class="nav-text">Rencana Mengajar</span>
             </a>
         </li>
-        <li>
-            <a href="{{ route('guru-kelas.teaching-module.index') }}"
-                class="nav-link {{ request()->routeIs('guru-kelas.teaching-module.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
-                <div class="nav-icon-container">
-                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l3.414 3.414A1 1 0 0117 7.414V19a2 2 0 01-2 2z" />
-                    </svg>
+        <li class="submenu-dropdown"
+            x-data="{ expanded: {{ request()->routeIs('guru-kelas.teaching-module.*') ? 'true' : 'false' }}, flyoutTop: 0, updateFlyoutPosition() { const r = this.$el.querySelector('button').getBoundingClientRect(); this.flyoutTop = r.top; } }"
+            @mouseenter="updateFlyoutPosition()">
+            <button @click="expanded = !expanded"
+                class="nav-link w-full {{ request()->routeIs('guru-kelas.teaching-module.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                <div class="flex items-center">
+                    <div class="nav-icon-container">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l3.414 3.414A1 1 0 0117 7.414V19a2 2 0 01-2 2z" />
+                        </svg>
+                    </div>
+                    <span class="nav-text">Perangkat Pembelajaran</span>
                 </div>
-                <span class="nav-text">Perangkat Pembelajaran</span>
-            </a>
+                <svg :class="expanded ? 'rotate-180' : ''"
+                    class="dropdown-arrow h-4 w-4 text-white/60 transition-transform" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
+            <div x-show="expanded" x-collapse class="submenu-card">
+                <a href="{{ route('guru-kelas.teaching-module.index') }}"
+                    class="submenu-item {{ request()->routeIs('guru-kelas.teaching-module.index', 'guru-kelas.teaching-module.create', 'guru-kelas.teaching-module.edit', 'guru-kelas.teaching-module.content.*', 'guru-kelas.teaching-module.pdf.*') ? 'submenu-item-active' : '' }}">
+                    <span class="submenu-dot"></span>Modul Ajar
+                </a>
+                <a href="{{ route('guru-kelas.teaching-module.effective-week.index') }}"
+                    class="submenu-item {{ request()->routeIs('guru-kelas.teaching-module.effective-week.*') ? 'submenu-item-active' : '' }}">
+                    <span class="submenu-dot"></span>Analisis Pekan Efektif
+                </a>
+            </div>
+            <div class="submenu-flyout" :style="'top: ' + flyoutTop + 'px'">
+                <div class="submenu-flyout-title">Perangkat Pembelajaran</div>
+                <a href="{{ route('guru-kelas.teaching-module.index') }}"
+                    class="submenu-item {{ request()->routeIs('guru-kelas.teaching-module.index', 'guru-kelas.teaching-module.create', 'guru-kelas.teaching-module.edit', 'guru-kelas.teaching-module.content.*', 'guru-kelas.teaching-module.pdf.*') ? 'submenu-item-active' : '' }}">
+                    Modul Ajar
+                </a>
+                <a href="{{ route('guru-kelas.teaching-module.effective-week.index') }}"
+                    class="submenu-item {{ request()->routeIs('guru-kelas.teaching-module.effective-week.*') ? 'submenu-item-active' : '' }}">
+                    Analisis Pekan Efektif
+                </a>
+            </div>
         </li>
         <li>
             <a href="{{ route('guru.jadwal-saya') }}"
