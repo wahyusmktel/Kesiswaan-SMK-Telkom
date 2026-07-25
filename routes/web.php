@@ -78,6 +78,7 @@ use App\Http\Controllers\Shared\AbsensiSayaController;
 use App\Http\Controllers\SDM\AbsensiSettingController;
 use App\Http\Controllers\SDM\AbsensiMonitoringController;
 use App\Http\Controllers\Shared\AssetController as SharedAssetController;
+use App\Http\Controllers\Erapor\LandingController as EraporLandingController;
 
 Route::get('auth/google', [GoogleController::class, 'redirectToGoogle'])->name('auth.google');
 Route::get('auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
@@ -188,7 +189,7 @@ Route::middleware(['auth'])->prefix('notted')->name('notted.')->group(function (
     Route::get('/millionaire', [App\Http\Controllers\MillionaireGameController::class, 'index'])->name('millionaire.index');
     Route::get('/millionaire/play/{set}', [App\Http\Controllers\MillionaireGameController::class, 'play'])->name('millionaire.play');
     Route::get('/millionaire/questions/{set}', [App\Http\Controllers\MillionaireGameController::class, 'getQuestions'])->name('millionaire.questions');
-    
+
     // Management (Guru Kelas only)
     Route::middleware(['role:Guru Kelas'])->prefix('millionaire/manage')->name('millionaire.manage.')->group(function () {
         Route::get('/', [App\Http\Controllers\MillionaireGameController::class, 'manage'])->name('index');
@@ -254,6 +255,10 @@ Route::middleware(['auth', 'role:Waka Kesiswaan|Super Admin'])->prefix('admin')-
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // ... route dashboard dan profile dari Breeze
+
+    Route::get('/e-rapor', EraporLandingController::class)
+        ->middleware('permission:view erapor')
+        ->name('erapor.index');
 
     // Penyimpanan Cloud (Semua Role)
     Route::prefix('cloud-files')->name('cloud-files.')->group(function () {
@@ -1165,7 +1170,7 @@ Route::middleware(['auth'])->prefix('pesan-makanan')->name('food-order.')->group
 Route::middleware(['auth', 'role:Kantin', 'permission:view kantin dashboard'])->prefix('kantin')->name('kantin.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Kantin\DashboardController::class, 'index'])->name('dashboard.index');
     Route::resource('menu', \App\Http\Controllers\KantinMenuController::class)->except(['show']);
-    
+
     // Kantin Settings
     Route::get('/settings', [\App\Http\Controllers\KantinProfileController::class, 'edit'])->name('settings.index');
     Route::patch('/settings', [\App\Http\Controllers\KantinProfileController::class, 'update'])->name('settings.update');
@@ -1174,7 +1179,7 @@ Route::middleware(['auth', 'role:Kantin', 'permission:view kantin dashboard'])->
     Route::get('/orders', [\App\Http\Controllers\KantinOrderController::class, 'index'])->name('orders.index');
     Route::patch('/orders/{order}/status', [\App\Http\Controllers\KantinOrderController::class, 'updateStatus'])->name('orders.update-status');
     Route::get('/orders/{order}/receipt', [\App\Http\Controllers\KantinOrderController::class, 'printReceipt'])->name('orders.receipt');
-    
+
     // API for notification
     Route::get('/api/orders/pending-count', [\App\Http\Controllers\KantinOrderController::class, 'pendingCount'])->name('api.orders.pending-count');
 });

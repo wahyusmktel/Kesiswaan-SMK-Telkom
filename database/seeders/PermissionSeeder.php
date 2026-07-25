@@ -83,6 +83,9 @@ class PermissionSeeder extends Seeder
             'manage distribusi mapel',
             'view analisa kurikulum',
 
+            // e-Rapor
+            'view erapor',
+
             // Security Features
             'view security dashboard',
             'manage verifikasi izin',
@@ -137,6 +140,7 @@ class PermissionSeeder extends Seeder
                 'manage buku induk',
                 'view coaching analytics',
                 'view monitoring keterlambatan',
+                'view erapor',
             ]);
         }
 
@@ -178,6 +182,7 @@ class PermissionSeeder extends Seeder
                 'manage perizinan siswa',
                 'manage dispensasi',
                 'view monitoring keterlambatan',
+                'view erapor',
             ]);
         }
 
@@ -192,6 +197,7 @@ class PermissionSeeder extends Seeder
                 'manage monitoring absensi guru',
                 'manage distribusi mapel',
                 'view analisa kurikulum',
+                'view erapor',
             ]);
         }
 
@@ -216,6 +222,7 @@ class PermissionSeeder extends Seeder
                 'manage kelas',
                 'manage siswa',
                 'manage rombel',
+                'view erapor',
             ]);
         }
 
@@ -274,7 +281,13 @@ class PermissionSeeder extends Seeder
                 'manage penanganan terlambat',
                 'view coaching analytics',
                 'view monitoring keterlambatan',
+                'view erapor',
             ]);
+        }
+
+        $kepalaSekolahRole = Role::where('name', 'Kepala Sekolah')->first();
+        if ($kepalaSekolahRole) {
+            $kepalaSekolahRole->givePermissionTo('view erapor');
         }
     }
 }
