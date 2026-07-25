@@ -45,7 +45,7 @@ class EraporLandingTest extends TestCase
             ->assertSee('Belum ada tahun pelajaran/semester yang ditandai aktif.');
     }
 
-    public function test_ready_dataset_counts_multiple_schedule_slots_as_one_assignment(): void
+    public function test_schedule_readiness_counts_multiple_slots_as_one_assignment(): void
     {
         $user = $this->authorizedUser();
         $teacherUser = User::factory()->create();
@@ -105,7 +105,7 @@ class EraporLandingTest extends TestCase
 
         $readiness = app(EraporReadinessService::class)->inspect();
 
-        $this->assertSame('ready', $readiness['overall_status']);
+        $this->assertSame('warning', $readiness['overall_status']);
         $this->assertSame(1, $readiness['stats']['assignments']);
         $this->assertSame(1, $readiness['stats']['students']);
         $this->assertSame(1, $readiness['stats']['rombels']);
@@ -113,7 +113,7 @@ class EraporLandingTest extends TestCase
         $this->actingAs($user)
             ->get(route('erapor.index'))
             ->assertOk()
-            ->assertSee('100%')
+            ->assertSee('Perlu perhatian')
             ->assertSee('1 penugasan unik ditemukan');
     }
 

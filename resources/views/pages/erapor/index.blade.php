@@ -53,7 +53,7 @@
                     <div>
                         <div class="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-wider">
                             <span class="h-2 w-2 rounded-full bg-white"></span>
-                            Fase 0 · Pemeriksaan Readiness
+                            Fase 1 · Fondasi Referensi
                         </div>
                         <h3 class="max-w-2xl text-3xl font-black tracking-tight sm:text-4xl">
                             Satu data sekolah, satu alur rapor.
@@ -71,6 +71,14 @@
                             <span class="rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-sm font-bold">
                                 {{ $issues_count }} item perlu ditindaklanjuti
                             </span>
+                            @can('configure erapor')
+                                <a href="{{ route('erapor.references.index') }}" class="rounded-xl border border-white/30 bg-white/15 px-4 py-2 text-sm font-bold text-white hover:bg-white/25">
+                                    Kelola referensi
+                                </a>
+                                <a href="{{ route('erapor.assignments.index') }}" class="rounded-xl border border-white/30 bg-white/15 px-4 py-2 text-sm font-bold text-white hover:bg-white/25">
+                                    Kelola penugasan
+                                </a>
+                            @endcan
                         </div>
                     </div>
 
@@ -198,18 +206,18 @@
                         </div>
                         <ol class="mt-6 space-y-4">
                             @foreach ([
-                                ['label' => 'Readiness data induk', 'state' => 'active'],
-                                ['label' => 'Referensi kurikulum', 'state' => 'next'],
-                                ['label' => 'Penugasan e-Rapor', 'state' => 'next'],
+                                ['label' => 'Readiness data induk', 'state' => 'done'],
+                                ['label' => 'Referensi kurikulum', 'state' => 'active'],
+                                ['label' => 'Penugasan e-Rapor', 'state' => 'active'],
                                 ['label' => 'Input dan kalkulasi nilai', 'state' => 'later'],
                                 ['label' => 'Validasi dan penerbitan', 'state' => 'later'],
                             ] as $index => $phase)
                                 <li class="flex items-center gap-3">
                                     <span class="flex h-7 w-7 flex-none items-center justify-center rounded-full text-xs font-black
-                                        {{ $phase['state'] === 'active' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-400' }}">
+                                        {{ $phase['state'] === 'active' ? 'bg-red-600 text-white' : ($phase['state'] === 'done' ? 'bg-emerald-500 text-white' : 'bg-gray-100 text-gray-400') }}">
                                         {{ $index + 1 }}
                                     </span>
-                                    <span class="text-sm font-bold {{ $phase['state'] === 'active' ? 'text-gray-900' : 'text-gray-400' }}">
+                                    <span class="text-sm font-bold {{ in_array($phase['state'], ['active', 'done']) ? 'text-gray-900' : 'text-gray-400' }}">
                                         {{ $phase['label'] }}
                                     </span>
                                 </li>
@@ -226,8 +234,8 @@
                             <div>
                                 <h4 class="text-sm font-black text-blue-900">Belum mengambil data Dapodik</h4>
                                 <p class="mt-1 text-xs font-medium leading-relaxed text-blue-700">
-                                    Seluruh angka pada halaman ini berasal dari database SISFO. Referensi kurikulum akan
-                                    diimpor secara terpisah dan berversi pada tahap berikutnya.
+                                    Seluruh data induk berasal dari database SISFO. JSON e-Rapor hanya menjadi referensi
+                                    kurikulum berversi dan tidak membuat salinan guru atau siswa.
                                 </p>
                             </div>
                         </div>

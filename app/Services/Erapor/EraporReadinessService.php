@@ -3,6 +3,9 @@
 namespace App\Services\Erapor;
 
 use App\Models\AppSetting;
+use App\Models\Erapor\EraporReferenceImport;
+use App\Models\Erapor\EraporSubjectMapping;
+use App\Models\Erapor\EraporTeachingAssignment;
 use App\Models\JadwalPelajaran;
 use App\Models\MasterGuru;
 use App\Models\MasterSiswa;
@@ -25,6 +28,7 @@ class EraporReadinessService
 
         $checks->push($this->activePeriodCheck($activePeriods));
         $checks->push($this->schoolIdentityCheck());
+        $checks->push($this->referenceFoundationCheck());
 
         $stats = [
             'teachers' => MasterGuru::count(),
@@ -119,6 +123,15 @@ class EraporReadinessService
                 ->whereIn('id', $scheduledTeacherIds)
                 ->whereNull('user_id')
                 ->count();
+        $mappedSubjectCount = $assignments->pluck('mata_pelajaran_id')
+            ->unique()
+            ->intersect(EraporSubjectMapping::query()->pluck('mata_pelajaran_id'))
+            ->count();
+        $unmappedSubjectCount = max(0, $scheduledSubjectCount - $mappedSubjectCount);
+        $persistentAssignmentCount = EraporTeachingAssignment::query()
+            ->where('tahun_pelajaran_id', $period->id)
+            ->where('is_active', true)
+            ->count();
 
         $checks = collect([
             $this->check(
@@ -152,7 +165,7 @@ class EraporReadinessService
             ),
             $this->check(
                 'teaching_assignments',
-                'Penugasan pembelajaran',
+                'Sumber jadwal penugasan',
                 $assignmentCount === 0 ? 'blocked' : ($unscheduledRombelCount > 0 ? 'warning' : 'ready'),
                 $assignmentCount === 0
                     ? 'Belum ada pasangan unik guru–mapel–rombel dari jadwal periode aktif.'
@@ -161,6 +174,32 @@ class EraporReadinessService
                 'kurikulum.jadwal-pelajaran.index',
                 'manage jadwal pelajaran',
                 ['Kurikulum'],
+            ),
+            $this->check(
+                'erapor_subject_mappings',
+                'Pemetaan mata pelajaran',
+                $scheduledSubjectCount > 0 && $unmappedSubjectCount === 0 ? 'ready' : 'warning',
+                $scheduledSubjectCount === 0
+                    ? 'Pemetaan belum dapat diperiksa karena belum ada mata pelajaran terjadwal.'
+                    : ($unmappedSubjectCount > 0
+                        ? "{$unmappedSubjectCount} dari {$scheduledSubjectCount} mata pelajaran terjadwal belum dipetakan ke referensi e-Rapor."
+                        : "Seluruh {$scheduledSubjectCount} mata pelajaran terjadwal telah dipetakan."),
+                $mappedSubjectCount,
+                'erapor.references.index',
+                'configure erapor',
+            ),
+            $this->check(
+                'erapor_persistent_assignments',
+                'Penugasan e-Rapor permanen',
+                $assignmentCount > 0 && $persistentAssignmentCount === $assignmentCount ? 'ready' : 'warning',
+                $assignmentCount === 0
+                    ? 'Penugasan permanen menunggu jadwal periode aktif.'
+                    : ($persistentAssignmentCount === $assignmentCount
+                        ? "{$persistentAssignmentCount} penugasan permanen sinkron dengan jadwal."
+                        : "{$persistentAssignmentCount} dari {$assignmentCount} penugasan sudah disinkronkan; jalankan sinkronisasi penugasan."),
+                $persistentAssignmentCount,
+                'erapor.assignments.index',
+                'configure erapor',
             ),
             $this->check(
                 'teacher_accounts',
@@ -237,6 +276,33 @@ class EraporReadinessService
                 ? 'Identitas dasar sekolah telah tersedia.'
                 : 'Data belum lengkap: '.$missing->implode(', ').'.',
             $missing->count(),
+        );
+    }
+
+    private function referenceFoundationCheck(): array
+    {
+        $requiredDatasets = collect([
+            'mata_pelajaran',
+            'kurikulum',
+            'mata_pelajaran_kurikulum',
+        ]);
+        $importedDatasets = EraporReferenceImport::query()
+            ->where('status', 'completed')
+            ->whereIn('dataset', $requiredDatasets)
+            ->distinct()
+            ->pluck('dataset');
+        $missing = $requiredDatasets->diff($importedDatasets);
+
+        return $this->check(
+            'erapor_references',
+            'Referensi kurikulum e-Rapor',
+            $missing->isEmpty() ? 'ready' : 'warning',
+            $missing->isEmpty()
+                ? 'Dataset mata pelajaran, kurikulum, dan relasinya telah diimpor serta tercatat berversi.'
+                : 'Dataset referensi belum lengkap: '.$missing->map(fn ($dataset) => str_replace('_', ' ', $dataset))->implode(', ').'.',
+            $importedDatasets->count(),
+            'erapor.references.index',
+            'configure erapor',
         );
     }
 

@@ -85,6 +85,7 @@ class PermissionSeeder extends Seeder
 
             // e-Rapor
             'view erapor',
+            'configure erapor',
 
             // Security Features
             'view security dashboard',
@@ -198,6 +199,7 @@ class PermissionSeeder extends Seeder
                 'manage distribusi mapel',
                 'view analisa kurikulum',
                 'view erapor',
+                'configure erapor',
             ]);
         }
 
@@ -223,6 +225,7 @@ class PermissionSeeder extends Seeder
                 'manage siswa',
                 'manage rombel',
                 'view erapor',
+                'configure erapor',
             ]);
         }
 
@@ -282,6 +285,7 @@ class PermissionSeeder extends Seeder
                 'view coaching analytics',
                 'view monitoring keterlambatan',
                 'view erapor',
+                'configure erapor',
             ]);
         }
 

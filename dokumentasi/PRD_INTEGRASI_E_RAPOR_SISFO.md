@@ -3,6 +3,14 @@
 Status: Draft awal v0.1  
 Basis analisis: e-Rapor SMK `8.0.3` (versi database `6.0.6`) dan kondisi SISFO per 25 Juli 2026.
 
+## Status Implementasi
+
+- [x] Fase 0: landing page, permission lihat, dan pemeriksaan kesiapan data SISFO.
+- [x] Fondasi referensi: manifest versi/checksum, import JSON idempoten, katalog kurikulum/mapel, dan relasi kurikulum-mapel.
+- [x] Fondasi akademik: pemetaan mapel SISFO dan penugasan permanen guru-mapel-rombel yang disinkronkan dari jadwal.
+- [ ] Konfigurasi kurikulum aktif per periode dan penyelesaian pemetaan mapel operasional.
+- [ ] Rencana asesmen, input nilai, kalkulasi, validasi, dan penerbitan rapor.
+
 ## 1. Executive Summary
 
 ### Problem Statement

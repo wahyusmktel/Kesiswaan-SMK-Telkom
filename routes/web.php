@@ -79,6 +79,8 @@ use App\Http\Controllers\SDM\AbsensiSettingController;
 use App\Http\Controllers\SDM\AbsensiMonitoringController;
 use App\Http\Controllers\Shared\AssetController as SharedAssetController;
 use App\Http\Controllers\Erapor\LandingController as EraporLandingController;
+use App\Http\Controllers\Erapor\ReferenceController as EraporReferenceController;
+use App\Http\Controllers\Erapor\AssignmentController as EraporAssignmentController;
 
 Route::get('auth/google', [GoogleController::class, 'redirectToGoogle'])->name('auth.google');
 Route::get('auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
@@ -259,6 +261,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/e-rapor', EraporLandingController::class)
         ->middleware('permission:view erapor')
         ->name('erapor.index');
+
+    Route::middleware('permission:configure erapor')
+        ->prefix('e-rapor')
+        ->name('erapor.')
+        ->group(function () {
+            Route::get('/referensi', [EraporReferenceController::class, 'index'])
+                ->name('references.index');
+            Route::post('/referensi/pemetaan', [EraporReferenceController::class, 'storeMapping'])
+                ->name('mappings.store');
+            Route::delete('/referensi/pemetaan/{mapping}', [EraporReferenceController::class, 'destroyMapping'])
+                ->name('mappings.destroy');
+            Route::get('/penugasan', [EraporAssignmentController::class, 'index'])
+                ->name('assignments.index');
+            Route::post('/penugasan/sinkronisasi', [EraporAssignmentController::class, 'sync'])
+                ->name('assignments.sync');
+            Route::patch('/penugasan/{assignment}', [EraporAssignmentController::class, 'update'])
+                ->name('assignments.update');
+        });
 
     // Penyimpanan Cloud (Semua Role)
     Route::prefix('cloud-files')->name('cloud-files.')->group(function () {

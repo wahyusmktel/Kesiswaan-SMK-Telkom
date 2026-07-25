@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Erapor\EraporSubjectMapping;
+use App\Models\Erapor\EraporTeachingAssignment;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -24,5 +26,15 @@ class MataPelajaran extends Model
     public function jadwalPelajaran()
     {
         return $this->hasMany(JadwalPelajaran::class);
+    }
+
+    public function eraporMapping()
+    {
+        return $this->hasOne(EraporSubjectMapping::class);
+    }
+
+    public function eraporAssignments()
+    {
+        return $this->hasMany(EraporTeachingAssignment::class);
     }
 }
