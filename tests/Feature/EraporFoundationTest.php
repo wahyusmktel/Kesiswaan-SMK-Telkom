@@ -116,11 +116,28 @@ class EraporFoundationTest extends TestCase
             'kode_mapel' => 'MTK-2',
             'nama_mapel' => 'Matematika',
         ]);
+        $otherClass = Kelas::create(['nama_kelas' => 'XI TJKT 1', 'jurusan' => 'TJKT']);
+        MataPelajaran::create([
+            'kode_mapel' => 'FIS',
+            'nama_mapel' => 'Fisika Terapan',
+            'kelas_id' => $otherClass->id,
+        ]);
 
         $this->actingAs($user)
-            ->get(route('erapor.references.index'))
+            ->getJson(route('erapor.references.subject-options', ['q' => 'Mate']))
             ->assertOk()
-            ->assertSee('Referensi & Pemetaan e-Rapor', false);
+            ->assertJsonPath('data.0.id', (string) $reference->id)
+            ->assertJsonPath('data.0.label', 'Matematika [101]');
+
+        $this->actingAs($user)
+            ->get(route('erapor.references.index', [
+                'tingkat' => 'X',
+                'kelas_id' => $subject->kelas_id,
+            ]))
+            ->assertOk()
+            ->assertSee('Referensi & Pemetaan e-Rapor', false)
+            ->assertSee('Matematika')
+            ->assertDontSee('Fisika Terapan');
         $this->actingAs($user)
             ->get(route('erapor.assignments.index'))
             ->assertOk()
@@ -140,6 +157,22 @@ class EraporFoundationTest extends TestCase
             'mata_pelajaran_id' => $subject->id,
             'erapor_subject_mapping_id' => $mapping->id,
         ]);
+
+        $this->actingAs($user)
+            ->get(route('erapor.references.index', [
+                'kelas_id' => $subject->kelas_id,
+                'status_pemetaan' => 'mapped',
+            ]))
+            ->assertOk()
+            ->assertSee('Matematika');
+
+        $this->actingAs($user)
+            ->get(route('erapor.references.index', [
+                'kelas_id' => $subject->kelas_id,
+                'status_pemetaan' => 'unmapped',
+            ]))
+            ->assertOk()
+            ->assertDontSee('Matematika');
     }
 
     private function referenceFixture(): string

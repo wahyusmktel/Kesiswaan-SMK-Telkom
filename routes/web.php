@@ -268,6 +268,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->group(function () {
             Route::get('/referensi', [EraporReferenceController::class, 'index'])
                 ->name('references.index');
+            Route::get('/referensi/mapel-options', [EraporReferenceController::class, 'subjectOptions'])
+                ->name('references.subject-options');
             Route::post('/referensi/pemetaan', [EraporReferenceController::class, 'storeMapping'])
                 ->name('mappings.store');
             Route::delete('/referensi/pemetaan/{mapping}', [EraporReferenceController::class, 'destroyMapping'])

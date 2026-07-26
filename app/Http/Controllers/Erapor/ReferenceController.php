@@ -8,7 +8,9 @@ use App\Models\Erapor\EraporReferenceImport;
 use App\Models\Erapor\EraporRefSubject;
 use App\Models\Erapor\EraporSubjectMapping;
 use App\Models\Erapor\EraporTeachingAssignment;
+use App\Models\Kelas;
 use App\Models\MataPelajaran;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,11 +21,22 @@ class ReferenceController extends Controller
     public function index(Request $request): View
     {
         $localSearch = trim((string) $request->query('search'));
-        $referenceSearch = trim((string) $request->query('reference_search'));
+        $classId = $request->integer('kelas_id') ?: null;
+        $level = strtoupper(trim((string) $request->query('tingkat')));
+        $level = in_array($level, ['X', 'XI', 'XII'], true) ? $level : null;
+        $mappingStatus = trim((string) $request->query('status_pemetaan'));
+        $mappingStatus = in_array($mappingStatus, ['mapped', 'unmapped'], true) ? $mappingStatus : null;
 
         $subjects = MataPelajaran::query()
             ->with(['kelas', 'eraporMapping.referenceSubject'])
             ->withCount('jadwalPelajaran')
+            ->when($classId, fn ($query) => $query->where('kelas_id', $classId))
+            ->when($level, fn ($query) => $query->whereHas(
+                'kelas',
+                fn ($query) => $query->where('nama_kelas', 'like', $level.' %')
+            ))
+            ->when($mappingStatus === 'mapped', fn ($query) => $query->whereHas('eraporMapping'))
+            ->when($mappingStatus === 'unmapped', fn ($query) => $query->whereDoesntHave('eraporMapping'))
             ->when($localSearch, fn ($query) => $query->where(function ($query) use ($localSearch) {
                 $query->where('nama_mapel', 'like', "%{$localSearch}%")
                     ->orWhere('kode_mapel', 'like', "%{$localSearch}%");
@@ -32,28 +45,8 @@ class ReferenceController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        $referenceSubjects = EraporRefSubject::query()
-            ->where('is_active', true)
-            ->when($referenceSearch, fn ($query) => $query->where('name', 'like', "%{$referenceSearch}%"))
-            ->orderBy('name')
-            ->limit(250)
-            ->get(['id', 'external_id', 'name']);
-
-        $mappedReferenceSubjects = EraporRefSubject::query()
-            ->whereIn('id', $subjects->getCollection()
-                ->pluck('eraporMapping.erapor_ref_subject_id')
-                ->filter())
-            ->get(['id', 'external_id', 'name']);
-
-        $referenceSubjects = $referenceSubjects
-            ->merge($mappedReferenceSubjects)
-            ->unique('id')
-            ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
-            ->values();
-
         return view('pages.erapor.references', [
             'subjects' => $subjects,
-            'referenceSubjects' => $referenceSubjects,
             'imports' => EraporReferenceImport::query()
                 ->with('importer:id,name')
                 ->latest()
@@ -66,7 +59,42 @@ class ReferenceController extends Controller
                 'local_subjects' => MataPelajaran::query()->count(),
                 'mapped_subjects' => EraporSubjectMapping::query()->count(),
             ],
-            'referenceSearch' => $referenceSearch,
+            'classes' => Kelas::query()->orderBy('nama_kelas')->get(['id', 'nama_kelas']),
+            'selectedClassId' => $classId,
+            'selectedLevel' => $level,
+            'selectedMappingStatus' => $mappingStatus,
+        ]);
+    }
+
+    public function subjectOptions(Request $request): JsonResponse
+    {
+        $search = trim((string) $request->query('q'));
+        $selectedId = $request->integer('selected_id') ?: null;
+
+        $options = EraporRefSubject::query()
+            ->where('is_active', true)
+            ->when($search, fn ($query) => $query->where(function ($query) use ($search) {
+                $query->where('name', 'like', "%{$search}%")
+                    ->orWhere('external_id', 'like', "%{$search}%");
+            }))
+            ->orderBy('name')
+            ->limit(30)
+            ->get(['id', 'external_id', 'name']);
+
+        if ($selectedId && ! $options->contains('id', $selectedId)) {
+            $selected = EraporRefSubject::query()
+                ->find($selectedId, ['id', 'external_id', 'name']);
+
+            if ($selected) {
+                $options->prepend($selected);
+            }
+        }
+
+        return response()->json([
+            'data' => $options->map(fn (EraporRefSubject $subject) => [
+                'id' => (string) $subject->id,
+                'label' => "{$subject->name} [{$subject->external_id}]",
+            ])->values(),
         ]);
     }
 
