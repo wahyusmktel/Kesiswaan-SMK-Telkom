@@ -139,9 +139,20 @@ class EraporFoundationTest extends TestCase
             ->assertSee('Matematika')
             ->assertDontSee('Fisika Terapan');
         $this->actingAs($user)
-            ->get(route('erapor.assignments.index'))
+            ->get(route('erapor.assignments.index', [
+                'kelas_id' => $subject->kelas_id,
+                'guru_id' => $teacher->id,
+            ]))
             ->assertOk()
-            ->assertSee('Penugasan e-Rapor');
+            ->assertSee('Penugasan e-Rapor')
+            ->assertSee('Matematika');
+        $this->actingAs($user)
+            ->get(route('erapor.assignments.index', [
+                'kelas_id' => $subject->kelas_id,
+                'guru_id' => $teacher->id + 9999,
+            ]))
+            ->assertOk()
+            ->assertDontSee('Matematika');
 
         $this->actingAs($user)
             ->post(route('erapor.mappings.store'), [

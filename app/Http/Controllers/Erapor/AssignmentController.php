@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Erapor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Erapor\EraporTeachingAssignment;
+use App\Models\Kelas;
+use App\Models\MasterGuru;
 use App\Models\TahunPelajaran;
 use App\Services\Erapor\EraporAssignmentSyncService;
 use Illuminate\Http\RedirectResponse;
@@ -16,6 +18,8 @@ class AssignmentController extends Controller
     {
         $period = TahunPelajaran::query()->where('is_active', true)->first();
         $search = trim((string) $request->query('search'));
+        $classId = $request->integer('kelas_id') ?: null;
+        $teacherId = $request->integer('guru_id') ?: null;
 
         $assignments = EraporTeachingAssignment::query()
             ->with([
@@ -28,6 +32,11 @@ class AssignmentController extends Controller
             ->when($period, fn ($query) => $query->where('tahun_pelajaran_id', $period->id))
             ->when($request->boolean('inactive'), fn ($query) => $query->where('is_active', false),
                 fn ($query) => $query->where('is_active', true))
+            ->when($classId, fn ($query) => $query->whereHas(
+                'rombel',
+                fn ($query) => $query->where('kelas_id', $classId)
+            ))
+            ->when($teacherId, fn ($query) => $query->where('master_guru_id', $teacherId))
             ->when($search, fn ($query) => $query->where(function ($query) use ($search) {
                 $query->whereHas('subject', fn ($query) => $query->where('nama_mapel', 'like', "%{$search}%"))
                     ->orWhereHas('teacher', fn ($query) => $query->where('nama_lengkap', 'like', "%{$search}%"))
@@ -40,6 +49,27 @@ class AssignmentController extends Controller
         return view('pages.erapor.assignments', [
             'period' => $period,
             'assignments' => $assignments,
+            'classes' => Kelas::query()
+                ->when($period, fn ($query) => $query->whereIn(
+                    'id',
+                    EraporTeachingAssignment::query()
+                        ->join('rombels', 'rombels.id', '=', 'erapor_teaching_assignments.rombel_id')
+                        ->where('erapor_teaching_assignments.tahun_pelajaran_id', $period->id)
+                        ->select('rombels.kelas_id')
+                ))
+                ->orderBy('nama_kelas')
+                ->get(['id', 'nama_kelas']),
+            'teachers' => MasterGuru::query()
+                ->when($period, fn ($query) => $query->whereIn(
+                    'id',
+                    EraporTeachingAssignment::query()
+                        ->where('tahun_pelajaran_id', $period->id)
+                        ->select('master_guru_id')
+                ))
+                ->orderBy('nama_lengkap')
+                ->get(['id', 'nama_lengkap']),
+            'selectedClassId' => $classId,
+            'selectedTeacherId' => $teacherId,
             'stats' => $period ? [
                 'active' => EraporTeachingAssignment::query()
                     ->where('tahun_pelajaran_id', $period->id)->where('is_active', true)->count(),
