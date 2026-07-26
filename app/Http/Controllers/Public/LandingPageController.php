@@ -154,6 +154,7 @@ class LandingPageController extends Controller
             ],
             'assets' => [
                 'modules' => asset('images/landing-vue/integrated-modules.png'),
+                'serviceModules' => asset('images/landing-vue/service-modules-atlas.webp'),
             ],
         ];
 

@@ -162,6 +162,16 @@ function closeMobileMenu() {
     mobileMenuOpen.value = false;
 }
 
+function moduleIllustrationStyle(index) {
+    const column = (index % 3) * 50;
+    const row = Math.floor(index / 3) * 50;
+
+    return {
+        backgroundImage: `url("${props.payload.assets.serviceModules}")`,
+        backgroundPosition: `${column}% ${row}%`,
+    };
+}
+
 function initializeWorldCanvas() {
     const canvas = worldCanvas.value;
     if (!canvas) return;
@@ -412,12 +422,14 @@ onBeforeUnmount(() => {
 
                     <div class="module-track-viewport">
                         <div ref="moduleTrack" class="module-track" :style="{ transform: `translate3d(${-moduleOffset}px, 0, 0)` }">
-                            <article v-for="module in modules" :key="module.number" class="module-card">
-                                <div class="module-card-top">
-                                    <span>{{ module.number }}</span>
-                                    <component :is="module.icon" :size="26" />
+                            <article v-for="(module, index) in modules" :key="module.number" class="module-card">
+                                <div class="module-card-media" :style="moduleIllustrationStyle(index)" role="img" :aria-label="`Ilustrasi ${module.title}`">
+                                    <div class="module-card-top">
+                                        <span>{{ module.number }}</span>
+                                        <component :is="module.icon" :size="24" />
+                                    </div>
                                 </div>
-                                <div>
+                                <div class="module-card-copy">
                                     <h3>{{ module.title }}</h3>
                                     <p>{{ module.description }}</p>
                                 </div>

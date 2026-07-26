@@ -693,42 +693,73 @@ button {
 }
 
 .module-card {
-    background: rgba(255, 255, 255, .9);
+    background: #fff;
     border: 1px solid rgba(17, 19, 24, .12);
     border-radius: 8px;
     display: flex;
     flex: 0 0 380px;
     flex-direction: column;
-    height: 360px;
-    justify-content: space-between;
-    padding: 26px;
+    height: 430px;
+    overflow: hidden;
     position: relative;
-    transition: background .3s ease, color .3s ease, transform .3s ease;
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
+    transition: border-color .3s ease, box-shadow .3s ease, transform .3s ease;
 }
 
 .module-card:hover {
-    background: var(--ink);
-    color: white;
+    border-color: rgba(220, 38, 38, .55);
+    box-shadow: 0 22px 44px rgba(17, 19, 24, .12);
     transform: translateY(-8px);
+}
+
+.module-card-media {
+    background-color: #f5f5f4;
+    background-repeat: no-repeat;
+    background-size: 300% 300%;
+    border-bottom: 1px solid rgba(17, 19, 24, .08);
+    flex: 0 0 205px;
+    overflow: hidden;
+    position: relative;
 }
 
 .module-card-top {
     align-items: center;
     display: flex;
     justify-content: space-between;
+    left: 18px;
+    position: absolute;
+    right: 18px;
+    top: 18px;
 }
 
 .module-card-top span {
+    align-items: center;
+    background: rgba(255, 255, 255, .94);
+    border: 1px solid rgba(17, 19, 24, .08);
+    border-radius: 999px;
     color: var(--red);
+    display: inline-flex;
     font-size: 11px;
     font-weight: 800;
+    height: 34px;
+    justify-content: center;
+    width: 42px;
+}
+
+.module-card-top svg {
+    background: rgba(255, 255, 255, .94);
+    border: 1px solid rgba(17, 19, 24, .08);
+    border-radius: 50%;
+    box-sizing: content-box;
+    padding: 8px;
+}
+
+.module-card-copy {
+    padding: 22px 24px 24px;
 }
 
 .module-card h3 {
     font-family: 'Manrope', sans-serif;
-    font-size: 27px;
+    font-size: 24px;
     margin: 0;
 }
 
@@ -737,10 +768,6 @@ button {
     font-size: 14px;
     line-height: 1.75;
     margin: 16px 0 0;
-}
-
-.module-card:hover p {
-    color: rgba(255, 255, 255, .65);
 }
 
 .module-arrow {
