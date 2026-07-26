@@ -41,4 +41,9 @@ class EraporRefCurriculum extends Model
             'is_active',
         ])->withTimestamps();
     }
+
+    public function rombelAssignments()
+    {
+        return $this->hasMany(EraporRombelCurriculum::class, 'erapor_ref_curriculum_id');
+    }
 }

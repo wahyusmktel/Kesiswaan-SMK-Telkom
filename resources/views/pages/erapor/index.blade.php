@@ -72,6 +72,9 @@
                                 {{ $issues_count }} item perlu ditindaklanjuti
                             </span>
                             @can('configure erapor')
+                                <a href="{{ route('erapor.configuration.index') }}" class="rounded-xl border border-white/30 bg-white/15 px-4 py-2 text-sm font-bold text-white hover:bg-white/25">
+                                    Konfigurasi periode
+                                </a>
                                 <a href="{{ route('erapor.references.index') }}" class="rounded-xl border border-white/30 bg-white/15 px-4 py-2 text-sm font-bold text-white hover:bg-white/25">
                                     Kelola referensi
                                 </a>
@@ -209,6 +212,7 @@
                                 ['label' => 'Readiness data induk', 'state' => 'done'],
                                 ['label' => 'Referensi kurikulum', 'state' => 'active'],
                                 ['label' => 'Penugasan e-Rapor', 'state' => 'active'],
+                                ['label' => 'Konfigurasi periode', 'state' => 'active'],
                                 ['label' => 'Input dan kalkulasi nilai', 'state' => 'later'],
                                 ['label' => 'Validasi dan penerbitan', 'state' => 'later'],
                             ] as $index => $phase)

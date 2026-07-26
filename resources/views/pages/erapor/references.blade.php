@@ -17,6 +17,10 @@
                     class="inline-flex items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800">
                     Penugasan
                 </a>
+                <a href="{{ route('erapor.configuration.index') }}"
+                    class="inline-flex items-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-600 shadow-sm transition hover:border-red-200 hover:bg-red-50 hover:text-red-700">
+                    Konfigurasi
+                </a>
             </nav>
 
             @if (session('success'))

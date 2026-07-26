@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Erapor\EraporPeriodSetting;
 use Illuminate\Database\Eloquent\Model;
 
 class TahunPelajaran extends Model
@@ -21,5 +22,10 @@ class TahunPelajaran extends Model
     public function graduatedStudents()
     {
         return $this->hasMany(MasterSiswa::class, 'graduation_tahun_pelajaran_id');
+    }
+
+    public function eraporSetting()
+    {
+        return $this->hasOne(EraporPeriodSetting::class, 'tahun_pelajaran_id');
     }
 }

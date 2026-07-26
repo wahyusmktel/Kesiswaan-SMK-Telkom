@@ -17,6 +17,10 @@ use Illuminate\Support\Facades\DB;
 
 class EraporReadinessService
 {
+    public function __construct(
+        private readonly EraporPeriodConfigurationService $periodConfiguration,
+    ) {}
+
     public function inspect(): array
     {
         $activePeriods = TahunPelajaran::query()
@@ -132,6 +136,8 @@ class EraporReadinessService
             ->where('tahun_pelajaran_id', $period->id)
             ->where('is_active', true)
             ->count();
+        $periodConfiguration = $this->periodConfiguration->readiness($period);
+        $periodSetting = $period->eraporSetting;
 
         $checks = collect([
             $this->check(
@@ -199,6 +205,19 @@ class EraporReadinessService
                         : "{$persistentAssignmentCount} dari {$assignmentCount} penugasan sudah disinkronkan; jalankan sinkronisasi penugasan."),
                 $persistentAssignmentCount,
                 'erapor.assignments.index',
+                'configure erapor',
+            ),
+            $this->check(
+                'erapor_period_configuration',
+                'Konfigurasi periode e-Rapor',
+                $periodSetting && $periodConfiguration['unconfigured_rombels'] === 0 ? 'ready' : 'warning',
+                ! $periodSetting
+                    ? 'Periode e-Rapor belum dikonfigurasi dan kurikulum per rombel belum ditetapkan.'
+                    : ($periodConfiguration['unconfigured_rombels'] > 0
+                        ? "{$periodConfiguration['unconfigured_rombels']} rombel belum memiliki kurikulum e-Rapor."
+                        : "Kurikulum seluruh {$periodConfiguration['rombels']} rombel telah ditetapkan; status workflow {$periodSetting->workflow_status}."),
+                $periodConfiguration['configured_rombels'],
+                'erapor.configuration.index',
                 'configure erapor',
             ),
             $this->check(

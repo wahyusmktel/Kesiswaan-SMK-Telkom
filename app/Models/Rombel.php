@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Erapor\EraporRombelCurriculum;
 use Illuminate\Database\Eloquent\Model;
 
 class Rombel extends Model
@@ -14,16 +15,19 @@ class Rombel extends Model
     {
         return $this->belongsTo(Kelas::class);
     }
+
     // Relasi dari Rombel ke user wali kelasnya
     public function waliKelas()
     {
         return $this->belongsTo(User::class, 'wali_kelas_id');
     }
+
     // Relasi dari Rombel ke banyak siswa (many-to-many)
     public function siswa()
     {
         return $this->belongsToMany(MasterSiswa::class, 'rombel_siswa');
     }
+
     public function jadwalPelajaran()
     {
         return $this->hasMany(JadwalPelajaran::class);
@@ -32,5 +36,10 @@ class Rombel extends Model
     public function tahunPelajaran()
     {
         return $this->belongsTo(TahunPelajaran::class, 'tahun_pelajaran_id');
+    }
+
+    public function eraporCurriculum()
+    {
+        return $this->hasOne(EraporRombelCurriculum::class);
     }
 }

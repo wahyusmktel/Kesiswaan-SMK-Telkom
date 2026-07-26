@@ -17,6 +17,10 @@
                     class="inline-flex items-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-600 shadow-sm transition hover:border-red-200 hover:bg-red-50 hover:text-red-700">
                     Referensi
                 </a>
+                <a href="{{ route('erapor.configuration.index') }}"
+                    class="inline-flex items-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-600 shadow-sm transition hover:border-red-200 hover:bg-red-50 hover:text-red-700">
+                    Konfigurasi
+                </a>
                 <form method="POST" action="{{ route('erapor.assignments.sync') }}">
                     @csrf
                     <button class="rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50" @disabled(!$period)>

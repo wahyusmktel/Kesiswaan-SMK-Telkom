@@ -87,4 +87,6 @@ window.eraporReferenceCombobox = (config) => ({
     },
 });
 
+window.eraporCurriculumCombobox = window.eraporReferenceCombobox;
+
 Alpine.start();

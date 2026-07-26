@@ -81,6 +81,7 @@ use App\Http\Controllers\Shared\AssetController as SharedAssetController;
 use App\Http\Controllers\Erapor\LandingController as EraporLandingController;
 use App\Http\Controllers\Erapor\ReferenceController as EraporReferenceController;
 use App\Http\Controllers\Erapor\AssignmentController as EraporAssignmentController;
+use App\Http\Controllers\Erapor\ConfigurationController as EraporConfigurationController;
 
 Route::get('auth/google', [GoogleController::class, 'redirectToGoogle'])->name('auth.google');
 Route::get('auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
@@ -266,6 +267,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->prefix('e-rapor')
         ->name('erapor.')
         ->group(function () {
+            Route::get('/konfigurasi', [EraporConfigurationController::class, 'index'])
+                ->name('configuration.index');
+            Route::patch('/konfigurasi/periode', [EraporConfigurationController::class, 'updatePeriod'])
+                ->name('configuration.period.update');
+            Route::get('/konfigurasi/kurikulum-options', [EraporConfigurationController::class, 'curriculumOptions'])
+                ->name('configuration.curriculum-options');
+            Route::post('/konfigurasi/kurikulum-rombel', [EraporConfigurationController::class, 'storeRombelCurriculum'])
+                ->name('configuration.rombel-curricula.store');
+            Route::delete('/konfigurasi/kurikulum-rombel/{rombelCurriculum}', [EraporConfigurationController::class, 'destroyRombelCurriculum'])
+                ->name('configuration.rombel-curricula.destroy');
             Route::get('/referensi', [EraporReferenceController::class, 'index'])
                 ->name('references.index');
             Route::get('/referensi/mapel-options', [EraporReferenceController::class, 'subjectOptions'])
