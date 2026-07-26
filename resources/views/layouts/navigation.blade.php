@@ -338,6 +338,19 @@
             <span class="nav-text">Popup Halaman Utama</span>
         </a>
     </li>
+    <li>
+        <a href="{{ route('super-admin.landing-page.index') }}"
+            class="nav-link {{ request()->routeIs('super-admin.landing-page.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 5.25A2.25 2.25 0 015.25 3h13.5A2.25 2.25 0 0121 5.25v13.5A2.25 2.25 0 0118.75 21H5.25A2.25 2.25 0 013 18.75V5.25zM3 9h18M8 21V9" />
+                </svg>
+            </div>
+            <span class="nav-text">Kelola Landing Page</span>
+            <span class="nav-badge ml-auto rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-black text-red-700">VUE</span>
+        </a>
+    </li>
     @can('manage permissions')
         <li>
             <a href="{{ route('super-admin.permissions.index') }}"

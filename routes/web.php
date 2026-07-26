@@ -205,25 +205,7 @@ Route::middleware(['auth'])->prefix('notted')->name('notted.')->group(function (
     });
 });
 
-Route::get('/', function () {
-    $today = now();
-    $birthdaySiswa = \App\Models\MasterSiswa::with(['rombels.kelas'])
-        ->whereNotNull('tanggal_lahir')
-        ->whereMonth('tanggal_lahir', $today->month)
-        ->whereDay('tanggal_lahir', $today->day)
-        ->get(['id', 'nama_lengkap', 'nis', 'tanggal_lahir', 'jenis_kelamin', 'tempat_lahir']);
-    $birthdayGuru = \App\Models\DapodikGuru::whereNotNull('tanggal_lahir')
-        ->whereMonth('tanggal_lahir', $today->month)
-        ->whereDay('tanggal_lahir', $today->day)
-        ->get(['nama']);
-    $landingView = match (\App\Models\AppSetting::first()?->theme) {
-        'transformasi' => 'welcome-transformasi',
-        'ajaran-baru' => 'welcome-ajaran-baru',
-        default => 'welcome',
-    };
-
-    return view($landingView, compact('birthdaySiswa', 'birthdayGuru'));
-})->name('welcome');
+Route::get('/', [\App\Http\Controllers\Public\LandingPageController::class, 'index'])->name('welcome');
 
 // Happiness Meter (Public API)
 Route::prefix('api/happiness')->name('happiness.')->group(function () {
@@ -954,6 +936,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/settings', [SuperAdminController::class, 'updateSettings'])->name('settings.update');
         Route::get('/landing-popup', [LandingPopupController::class, 'edit'])->name('landing-popup.edit');
         Route::put('/landing-popup', [LandingPopupController::class, 'update'])->name('landing-popup.update');
+        Route::get('/landing-page', [\App\Http\Controllers\Admin\LandingPageManagementController::class, 'index'])->name('landing-page.index');
+        Route::post('/landing-page/slides', [\App\Http\Controllers\Admin\LandingPageManagementController::class, 'storeSlide'])->name('landing-page.slides.store');
+        Route::put('/landing-page/slides/{slide}', [\App\Http\Controllers\Admin\LandingPageManagementController::class, 'updateSlide'])->name('landing-page.slides.update');
+        Route::delete('/landing-page/slides/{slide}', [\App\Http\Controllers\Admin\LandingPageManagementController::class, 'destroySlide'])->name('landing-page.slides.destroy');
+        Route::post('/landing-page/tickers', [\App\Http\Controllers\Admin\LandingPageManagementController::class, 'storeTicker'])->name('landing-page.tickers.store');
+        Route::put('/landing-page/tickers/{ticker}', [\App\Http\Controllers\Admin\LandingPageManagementController::class, 'updateTicker'])->name('landing-page.tickers.update');
+        Route::delete('/landing-page/tickers/{ticker}', [\App\Http\Controllers\Admin\LandingPageManagementController::class, 'destroyTicker'])->name('landing-page.tickers.destroy');
 
         // Permission Management
         Route::get('/permissions', [PermissionManagementController::class, 'index'])->name('permissions.index');
