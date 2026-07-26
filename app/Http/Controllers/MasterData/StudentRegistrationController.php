@@ -3,13 +3,17 @@
 namespace App\Http\Controllers\MasterData;
 
 use App\Http\Controllers\Controller;
+use App\Models\AppSetting;
 use App\Models\DapodikSiswa;
 use App\Models\MasterSiswa;
 use App\Models\StudentRegistration;
+use App\Models\StudentRegistrationApprovalPact;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class StudentRegistrationController extends Controller
 {
@@ -34,12 +38,14 @@ class StudentRegistrationController extends Controller
 
         $counts = StudentRegistration::selectRaw('status, COUNT(*) as total')->groupBy('status')->pluck('total', 'status');
         $unmappedDapodikCount = DapodikSiswa::whereNull('master_siswa_id')->count();
+        $integrityStatements = StudentRegistrationApprovalPact::STATEMENTS;
 
         return view('pages.master-data.student-registration.index', compact(
             'registrations',
             'counts',
             'status',
-            'unmappedDapodikCount'
+            'unmappedDapodikCount',
+            'integrityStatements'
         ));
     }
 
@@ -79,6 +85,104 @@ class StudentRegistrationController extends Controller
         });
 
         return back()->with('success', 'Pendaftaran disetujui. Data siswa sementara telah dibuat.');
+    }
+
+    public function bulkApprove(Request $request)
+    {
+        $statementRules = collect(StudentRegistrationApprovalPact::STATEMENTS)
+            ->mapWithKeys(fn (string $statement, string $key) => ["statements.{$key}" => ['required', 'accepted']])
+            ->all();
+
+        $validated = $request->validate([
+            'registration_ids' => ['required', 'array', 'min:1', 'max:100'],
+            'registration_ids.*' => ['required', 'integer', 'distinct', 'exists:student_registrations,id'],
+            'statements' => ['required', 'array'],
+            ...$statementRules,
+        ], [
+            'registration_ids.required' => 'Pilih minimal satu calon siswa yang akan disetujui.',
+            'registration_ids.min' => 'Pilih minimal satu calon siswa yang akan disetujui.',
+            'registration_ids.max' => 'Persetujuan massal dibatasi maksimal 100 calon siswa sekali proses.',
+            'registration_ids.*.distinct' => 'Daftar calon siswa memuat data yang sama lebih dari satu kali.',
+            'registration_ids.*.exists' => 'Salah satu data calon siswa tidak ditemukan.',
+            'statements.required' => 'Seluruh pernyataan pakta integritas wajib disetujui.',
+            'statements.*.required' => 'Setiap pernyataan pakta integritas wajib dicentang.',
+            'statements.*.accepted' => 'Setiap pernyataan pakta integritas wajib dicentang.',
+        ]);
+
+        $pact = DB::transaction(function () use ($validated, $request) {
+            $registrationIds = collect($validated['registration_ids'])
+                ->map(fn ($id) => (int) $id)
+                ->unique()
+                ->values();
+
+            $registrations = StudentRegistration::query()
+                ->whereIn('id', $registrationIds)
+                ->lockForUpdate()
+                ->get()
+                ->sortBy(fn (StudentRegistration $registration) => $registrationIds->search($registration->id))
+                ->values();
+
+            if ($registrations->count() !== $registrationIds->count()) {
+                throw ValidationException::withMessages([
+                    'registration_ids' => 'Sebagian data calon siswa tidak ditemukan. Muat ulang halaman dan ulangi pilihan.',
+                ]);
+            }
+
+            $alreadyProcessed = $registrations->firstWhere('status', '!=', 'pending');
+            if ($alreadyProcessed) {
+                throw ValidationException::withMessages([
+                    'registration_ids' => "Pendaftaran {$alreadyProcessed->registration_number} sudah diproses oleh pengguna lain. Muat ulang halaman.",
+                ]);
+            }
+
+            $studentSnapshots = $registrations->map(fn (StudentRegistration $registration) => [
+                'registration_id' => $registration->id,
+                'registration_number' => $registration->registration_number,
+                'nama_lengkap' => $registration->nama_lengkap,
+                'nisn' => $registration->nisn,
+                'nik' => $registration->nik,
+                'jenis_kelamin' => $registration->jenis_kelamin,
+                'tempat_lahir' => $registration->tempat_lahir,
+                'tanggal_lahir' => $registration->tanggal_lahir?->format('Y-m-d'),
+                'sekolah_asal' => $registration->sekolah_asal,
+            ])->all();
+
+            foreach ($registrations as $registration) {
+                $this->approveRegistration($registration, $request->user()->id);
+            }
+
+            return StudentRegistrationApprovalPact::create([
+                'approver_user_id' => $request->user()->id,
+                'approver_name' => $request->user()->name,
+                'approver_email' => $request->user()->email,
+                'registration_ids' => $registrationIds->all(),
+                'student_snapshots' => $studentSnapshots,
+                'statements' => array_values(StudentRegistrationApprovalPact::STATEMENTS),
+                'approved_count' => $registrations->count(),
+                'signed_at' => now(),
+            ]);
+        });
+
+        return redirect()
+            ->route('master-data.student-registration.index', ['status' => 'pending'])
+            ->with('success', "{$pact->approved_count} pendaftaran berhasil disetujui. Pakta integritas sedang diunduh.")
+            ->with('pact_download_url', route('master-data.student-registration.pacts.download', $pact));
+    }
+
+    public function downloadApprovalPact(StudentRegistrationApprovalPact $pact)
+    {
+        $pact->load('approver');
+        $settings = AppSetting::first();
+
+        $pdf = Pdf::loadView('pdf.student-registration-approval-pact', compact('pact', 'settings'))
+            ->setPaper('a4', 'portrait');
+
+        $filename = 'Pakta_Integritas_Persetujuan_Siswa_'
+            .$pact->signed_at->format('Ymd_His')
+            .'_'.substr($pact->uuid, 0, 8)
+            .'.pdf';
+
+        return $pdf->download($filename);
     }
 
     public function reject(Request $request, StudentRegistration $registration)
@@ -126,7 +230,7 @@ class StudentRegistrationController extends Controller
             ],
         ]);
 
-        if ($registration->status !== 'approved' || !$registration->master_siswa_id) {
+        if ($registration->status !== 'approved' || ! $registration->master_siswa_id) {
             return back()->with('error', 'Hanya siswa sementara yang sudah disetujui yang dapat dipetakan.');
         }
 
@@ -139,7 +243,7 @@ class StudentRegistrationController extends Controller
                 if ($dapodik->master_siswa_id) {
                     throw new \RuntimeException('Data Dapodik sudah dipetakan oleh pengguna lain.');
                 }
-                if (!$dapodik->nipd) {
+                if (! $dapodik->nipd) {
                     throw new \RuntimeException('Data Dapodik belum memiliki NIPD resmi.');
                 }
                 if (MasterSiswa::where('nis', $dapodik->nipd)->where('id', '!=', $student->id)->exists()) {
@@ -168,8 +272,8 @@ class StudentRegistrationController extends Controller
 
                 if ($student->user) {
                     $updates = ['name' => $student->nama_lengkap];
-                    $officialEmail = $student->nis . '@smktelkom-lpg.sch.id';
-                    if (!\App\Models\User::where('email', $officialEmail)->where('id', '!=', $student->user->id)->exists()) {
+                    $officialEmail = $student->nis.'@smktelkom-lpg.sch.id';
+                    if (! \App\Models\User::where('email', $officialEmail)->where('id', '!=', $student->user->id)->exists()) {
                         $updates['email'] = $officialEmail;
                     }
                     $student->user->update($updates);
@@ -194,7 +298,7 @@ class StudentRegistrationController extends Controller
 
     private function approveRegistration(StudentRegistration $registration, int $reviewerId): void
     {
-        $temporaryNis = 'TMP-' . str_replace('REG-', '', $registration->registration_number);
+        $temporaryNis = 'TMP-'.str_replace('REG-', '', $registration->registration_number);
         $student = MasterSiswa::create([
             'nis' => $temporaryNis,
             'nama_lengkap' => $registration->nama_lengkap,
@@ -237,7 +341,7 @@ class StudentRegistrationController extends Controller
     {
         return StudentRegistration::whereIn('status', ['pending', 'approved'])
             ->where(function ($query) use ($data) {
-                if (!empty($data['nisn'])) {
+                if (! empty($data['nisn'])) {
                     $query->where('nisn', $data['nisn']);
                 } else {
                     $query->where('nama_lengkap', $data['nama_lengkap'])
@@ -246,7 +350,6 @@ class StudentRegistrationController extends Controller
             })
             ->exists();
     }
-
 
     public function schoolOrigins(\Illuminate\Http\Request $request)
     {
@@ -291,7 +394,7 @@ class StudentRegistrationController extends Controller
 
             if ($matchedIndex !== null) {
                 $groups[$matchedIndex]['registrations'][] = $reg;
-                if (!in_array($originalName, $groups[$matchedIndex]['variations'], true)) {
+                if (! in_array($originalName, $groups[$matchedIndex]['variations'], true)) {
                     $groups[$matchedIndex]['variations'][] = $originalName;
                 }
                 $groups[$matchedIndex]['name_counts'][$originalName] = ($groups[$matchedIndex]['name_counts'][$originalName] ?? 0) + 1;
@@ -300,7 +403,7 @@ class StudentRegistrationController extends Controller
                     'normalized_key' => $normalizedKey,
                     'name_counts' => [$originalName => 1],
                     'variations' => [$originalName],
-                    'registrations' => [$reg]
+                    'registrations' => [$reg],
                 ];
             }
         }
@@ -328,6 +431,7 @@ class StudentRegistrationController extends Controller
                         return true;
                     }
                 }
+
                 return false;
             });
         }
@@ -349,7 +453,7 @@ class StudentRegistrationController extends Controller
         $updatedCount = \App\Models\StudentRegistration::whereIn('sekolah_asal', $originalNames)
             ->update(['sekolah_asal' => $standardizedName]);
 
-        return back()->with('success', 'Berhasil memperbarui ' . $updatedCount . ' data sekolah asal menjadi \'' . $standardizedName . '\'.');
+        return back()->with('success', 'Berhasil memperbarui '.$updatedCount.' data sekolah asal menjadi \''.$standardizedName.'\'.');
     }
 
     private function getNormalizedKey(string $name): string
@@ -358,7 +462,7 @@ class StudentRegistrationController extends Controller
         $key = str_replace(['negeri', 'negri'], 'n', $key);
         $key = str_replace(['.', ',', '-', '_', '/', '\\', '(', ')'], ' ', $key);
         $key = preg_replace('/[^a-z0-9]/', '', $key);
+
         return $key;
     }
 }
-

@@ -410,6 +410,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('registrasi-siswa-baru/sekolah-asal', [StudentRegistrationController::class, 'schoolOrigins'])->name('student-registration.school-origins');
             Route::post('registrasi-siswa-baru/sekolah-asal/update', [StudentRegistrationController::class, 'updateSchoolOrigin'])->name('student-registration.update-school-origins');
             Route::post('registrasi-siswa-baru', [StudentRegistrationController::class, 'store'])->name('student-registration.store');
+            Route::post('registrasi-siswa-baru/approve-massal', [StudentRegistrationController::class, 'bulkApprove'])->name('student-registration.bulk-approve');
+            Route::get('registrasi-siswa-baru/pakta-integritas/{pact}', [StudentRegistrationController::class, 'downloadApprovalPact'])->name('student-registration.pacts.download');
             Route::patch('registrasi-siswa-baru/{registration}/approve', [StudentRegistrationController::class, 'approve'])->name('student-registration.approve');
             Route::patch('registrasi-siswa-baru/{registration}/reject', [StudentRegistrationController::class, 'reject'])->name('student-registration.reject');
             Route::get('registrasi-siswa-baru/dapodik/search', [StudentRegistrationController::class, 'searchDapodik'])->name('student-registration.dapodik.search');

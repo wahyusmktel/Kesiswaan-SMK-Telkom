@@ -750,9 +750,9 @@
         <li class="submenu-dropdown"
             x-data="{ expanded: {{ request()->routeIs('guru-kelas.teaching-module.*') ? 'true' : 'false' }}, flyoutTop: 0, updateFlyoutPosition() { const r = this.$el.querySelector('button').getBoundingClientRect(); this.flyoutTop = r.top; } }"
             @mouseenter="updateFlyoutPosition()">
-            <button @click="expanded = !expanded"
-                class="nav-link w-full {{ request()->routeIs('guru-kelas.teaching-module.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
-                <div class="flex items-center">
+            <button type="button" @click="expanded = !expanded"
+                class="nav-link w-full justify-between text-left {{ request()->routeIs('guru-kelas.teaching-module.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                <div class="flex min-w-0 items-center">
                     <div class="nav-icon-container">
                         <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

@@ -34,9 +34,9 @@
                         </div>
                     </div>
                     <div class="mt-4 text-sm text-gray-600">
-                        <p>• <strong>Kelola Sekolah Asal</strong>: Kelola dan normalisasikan data sekolah asal pendaftar</p>
-                        <p class="mt-1">• <strong>Buka Form Publik</strong>: Link formulir pendaftaran publik untuk siswa baru</p>
-                        <p class="mt-1">• <strong>Tambah Langsung</strong>: Tambahkan data siswa baru secara manual di sistem</p>
+                        <p>â€¢ <strong>Kelola Sekolah Asal</strong>: Kelola dan normalisasikan data sekolah asal pendaftar</p>
+                        <p class="mt-1">â€¢ <strong>Buka Form Publik</strong>: Link formulir pendaftaran publik untuk siswa baru</p>
+                        <p class="mt-1">â€¢ <strong>Tambah Langsung</strong>: Tambahkan data siswa baru secara manual di sistem</p>
                     </div>
                 </div>
 
@@ -44,7 +44,9 @@
                 Setelah import Dapodik, lakukan pemetaan siswa sementara pada halaman ini <strong>sebelum</strong> menekan Sinkronisasi ke Master Siswa. Sistem akan menahan data yang memiliki calon pasangan agar tidak dibuat menjadi siswa duplikat.
             </div>
 
-            <section class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+            <section
+                x-data="bulkStudentApproval({{ Illuminate\Support\Js::from($registrations->map(fn ($registration) => ['id' => $registration->id, 'name' => $registration->nama_lengkap])->values()) }}, {{ count($integrityStatements) }})"
+                class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
                 <div class="border-b border-gray-200 bg-gray-50 px-5 pt-4">
                     <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                         <nav class="flex gap-1 overflow-x-auto">
@@ -52,20 +54,53 @@
                                 <a href="{{ route('master-data.student-registration.index', ['status' => $key]) }}" class="whitespace-nowrap border-b-2 px-4 py-3 text-sm font-bold {{ $status === $key ? 'border-red-600 text-red-700' : 'border-transparent text-gray-500 hover:text-gray-800' }}">{{ $label }} <span class="ml-1 rounded-full bg-gray-200 px-2 py-0.5 text-xs text-gray-700">{{ $counts[$key] ?? 0 }}</span></a>
                             @endforeach
                         </nav>
-                        <form method="GET" class="mb-3 flex gap-2">
-                            <input type="hidden" name="status" value="{{ $status }}">
-                            <input type="search" name="search" value="{{ request('search') }}" placeholder="Cari nama, NISN, nomor registrasi" class="w-72 rounded-lg border-gray-300 text-sm focus:border-red-500 focus:ring-red-500">
-                            <button class="rounded-lg bg-gray-900 px-4 text-sm font-bold text-white">Cari</button>
-                        </form>
+                        <div class="mb-3 flex flex-col gap-2 sm:flex-row">
+                            @if ($status === 'pending')
+                                <button type="button" @click="openPact()" :disabled="selected.length === 0"
+                                    class="inline-flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-bold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-gray-300">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                    </svg>
+                                    <span>Setujui Massal (<span x-text="selected.length">0</span>)</span>
+                                </button>
+                            @endif
+                            <form method="GET" class="flex gap-2">
+                                <input type="hidden" name="status" value="{{ $status }}">
+                                <input type="search" name="search" value="{{ request('search') }}" placeholder="Cari nama, NISN, nomor registrasi" class="w-72 rounded-lg border-gray-300 text-sm focus:border-red-500 focus:ring-red-500">
+                                <button class="rounded-lg bg-gray-900 px-4 text-sm font-bold text-white">Cari</button>
+                            </form>
+                        </div>
                     </div>
                 </div>
 
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm">
-                        <thead class="border-b border-gray-200 bg-gray-50 text-xs uppercase text-gray-600"><tr><th class="px-6 py-4">Registrasi</th><th class="px-6 py-4">Identitas</th><th class="px-6 py-4">Kontak</th><th class="px-6 py-4">Sumber / Status</th><th class="px-6 py-4 text-right">Aksi</th></tr></thead>
+                        <thead class="border-b border-gray-200 bg-gray-50 text-xs uppercase text-gray-600">
+                            <tr>
+                                @if ($status === 'pending')
+                                    <th class="w-12 px-4 py-4 text-center">
+                                        <input type="checkbox" :checked="allSelected" @change="toggleAll($event.target.checked)"
+                                            class="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                                            aria-label="Pilih semua data pada halaman ini">
+                                    </th>
+                                @endif
+                                <th class="px-6 py-4">Registrasi</th>
+                                <th class="px-6 py-4">Identitas</th>
+                                <th class="px-6 py-4">Kontak</th>
+                                <th class="px-6 py-4">Sumber / Status</th>
+                                <th class="px-6 py-4 text-right">Aksi</th>
+                            </tr>
+                        </thead>
                         <tbody class="divide-y divide-gray-100">
                             @forelse ($registrations as $item)
                                 <tr class="align-top hover:bg-gray-50">
+                                    @if ($status === 'pending')
+                                        <td class="px-4 py-4 text-center">
+                                            <input type="checkbox" value="{{ $item->id }}" x-model="selected"
+                                                class="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                                                aria-label="Pilih {{ $item->nama_lengkap }}">
+                                        </td>
+                                    @endif
                                     <td class="px-6 py-4"><div class="font-mono text-xs font-bold text-gray-900">{{ $item->registration_number }}</div><div class="mt-1 text-xs text-gray-500">{{ $item->created_at->translatedFormat('d M Y H:i') }}</div></td>
                                     <td class="px-6 py-4"><div class="font-bold text-gray-900">{{ $item->nama_lengkap }}</div><div class="mt-1 text-xs text-gray-500">NISN {{ $item->nisn ?: '-' }} Â· {{ $item->tempat_lahir ?: '-' }}, {{ $item->tanggal_lahir->format('d-m-Y') }}</div><div class="text-xs text-gray-500">{{ $item->sekolah_asal ?: 'Sekolah asal belum diisi' }}</div></td>
                                     <td class="px-6 py-4"><div class="text-gray-700">{{ $item->nomor_hp }}</div><div class="text-xs text-gray-500">{{ $item->email ?: '-' }}</div></td>
@@ -87,12 +122,77 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="5" class="px-6 py-14 text-center text-gray-500">Tidak ada data pada status ini.</td></tr>
+                                <tr><td colspan="{{ $status === 'pending' ? 6 : 5 }}" class="px-6 py-14 text-center text-gray-500">Tidak ada data pada status ini.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
                 <div class="border-t border-gray-200 px-6 py-3">{{ $registrations->withQueryString()->links() }}</div>
+
+                <div x-show="pactOpen" x-cloak class="fixed inset-0 z-50 overflow-y-auto" @keydown.escape.window="pactOpen = false">
+                    <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" @click="pactOpen = false"></div>
+                    <div class="flex min-h-full items-center justify-center p-4">
+                        <div class="relative w-full max-w-2xl overflow-hidden rounded-lg bg-white shadow-xl" @click.stop>
+                            <div class="flex items-start justify-between border-b border-gray-200 px-6 py-5">
+                                <div>
+                                    <h3 class="text-lg font-bold text-gray-900">Pakta Integritas Persetujuan Massal</h3>
+                                    <p class="mt-1 text-sm text-gray-500">
+                                        Periksa dan setujui setiap pernyataan untuk <strong x-text="selected.length"></strong> calon siswa.
+                                    </p>
+                                </div>
+                                <button type="button" @click="pactOpen = false" class="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700" aria-label="Tutup">
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <form method="POST" action="{{ route('master-data.student-registration.bulk-approve') }}">
+                                @csrf
+                                <template x-for="registrationId in selected" :key="registrationId">
+                                    <input type="hidden" name="registration_ids[]" :value="registrationId">
+                                </template>
+
+                                <div class="max-h-[65vh] overflow-y-auto p-6">
+                                    <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+                                        Persetujuan akan membuat data siswa sementara. Data tersebut tetap harus dicocokkan dengan data resmi Dapodik ketika tersedia.
+                                    </div>
+
+                                    <div class="mt-5 space-y-3">
+                                        @foreach ($integrityStatements as $key => $statement)
+                                            <label class="flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 p-4 transition hover:border-green-300 hover:bg-green-50/40">
+                                                <input type="checkbox" name="statements[{{ $key }}]" value="1"
+                                                    @change="toggleStatement('{{ $key }}', $event.target.checked)" required
+                                                    class="mt-0.5 rounded border-gray-300 text-green-600 focus:ring-green-500">
+                                                <span class="text-sm leading-6 text-gray-700">{{ $statement }}</span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+
+                                    <div class="mt-5 rounded-lg bg-gray-50 p-4">
+                                        <p class="text-xs font-bold uppercase text-gray-500">Data terpilih</p>
+                                        <div class="mt-2 flex flex-wrap gap-2">
+                                            <template x-for="student in selectedStudents" :key="student.id">
+                                                <span class="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-semibold text-gray-700" x-text="student.name"></span>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-col-reverse gap-2 border-t border-gray-200 bg-gray-50 px-6 py-4 sm:flex-row sm:justify-end">
+                                    <button type="button" @click="pactOpen = false" class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-100">Batal</button>
+                                    <button type="submit" :disabled="!allStatementsChecked || selected.length === 0"
+                                        class="inline-flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-bold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-gray-300">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 16.5V9.75m0 0 3 3m-3-3-3 3M6.75 19.5h10.5A2.25 2.25 0 0 0 19.5 17.25V6.75A2.25 2.25 0 0 0 17.25 4.5H6.75A2.25 2.25 0 0 0 4.5 6.75v10.5A2.25 2.25 0 0 0 6.75 19.5Z" />
+                                        </svg>
+                                        Setujui dan Unduh Pakta
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             </section>
         </div>
     </div>
@@ -351,7 +451,46 @@
     @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-
+        function bulkStudentApproval(students, statementCount) {
+            return {
+                students,
+                selected: [],
+                checkedStatements: [],
+                pactOpen: false,
+                get allSelected() {
+                    return this.students.length > 0 && this.selected.length === this.students.length;
+                },
+                get selectedStudents() {
+                    return this.students.filter(student => this.selected.includes(String(student.id)));
+                },
+                get allStatementsChecked() {
+                    return this.checkedStatements.length === statementCount;
+                },
+                toggleAll(checked) {
+                    this.selected = checked ? this.students.map(student => String(student.id)) : [];
+                },
+                toggleStatement(key, checked) {
+                    if (checked && !this.checkedStatements.includes(key)) {
+                        this.checkedStatements.push(key);
+                    }
+                    if (!checked) {
+                        this.checkedStatements = this.checkedStatements.filter(statement => statement !== key);
+                    }
+                },
+                openPact() {
+                    if (this.selected.length === 0) {
+                        return;
+                    }
+                    this.checkedStatements = [];
+                    this.pactOpen = true;
+                    this.$nextTick(() => {
+                        this.$root.querySelectorAll('input[name^="statements["]').forEach(input => {
+                            input.checked = false;
+                        });
+                    });
+                },
+            };
+        }
 
         // Fungsi untuk modal detail biodata
         function biodataDetailModal() {
@@ -472,6 +611,17 @@
         function confirmApprove(button) { Swal.fire({title:'Setujui pendaftaran?',text:'Data siswa sementara akan dibuat.',icon:'question',showCancelButton:true,confirmButtonText:'Ya, setujui'}).then(r => { if(r.isConfirmed) button.closest('form').submit(); }); }
         function confirmReject(button) { Swal.fire({title:'Alasan penolakan',input:'textarea',inputPlaceholder:'Tuliskan data yang perlu diperbaiki',showCancelButton:true,confirmButtonColor:'#dc2626',confirmButtonText:'Tolak pendaftaran',preConfirm:value => { if(!value) Swal.showValidationMessage('Alasan wajib diisi'); return value; }}).then(r => { if(r.isConfirmed){ const form=button.closest('form'); form.querySelector('[name=notes]').value=r.value; form.submit(); }}); }
         function dapodikMapping() { return { open:false, student:{}, query:'', results:[], selected:null, loading:false, openModal(data){ this.student=data; this.query=data.nisn || data.name; this.selected=null; this.open=true; this.search(); }, async search(){ this.loading=true; try { const url = @js(route('master-data.student-registration.dapodik.search')); const response=await fetch(`${url}?q=${encodeURIComponent(this.query)}`, {headers:{'Accept':'application/json'}}); this.results=await response.json(); } finally { this.loading=false; } } }; }
+
+        @if (session('pact_download_url'))
+            document.addEventListener('DOMContentLoaded', () => {
+                const downloadFrame = document.createElement('iframe');
+                downloadFrame.className = 'hidden';
+                downloadFrame.src = @js(session('pact_download_url'));
+                downloadFrame.title = 'Unduh pakta integritas';
+                document.body.appendChild(downloadFrame);
+                window.setTimeout(() => downloadFrame.remove(), 30000);
+            });
+        @endif
     </script>
     
 
