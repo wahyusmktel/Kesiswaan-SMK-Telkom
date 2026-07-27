@@ -958,6 +958,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/asset-sync', [AssetSyncController::class, 'sync'])->name('asset-sync.process');
 
         // Manajemen Berita
+        Route::post('/berita/generate-ai', [BeritaController::class, 'generateWithAi'])->name('berita.generate-ai');
         Route::resource('berita', BeritaController::class)->except(['show']);
 
         // Stella AI Settings

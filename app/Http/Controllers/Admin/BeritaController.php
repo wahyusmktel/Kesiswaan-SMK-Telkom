@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exceptions\NewsArticleAiException;
 use App\Http\Controllers\Controller;
+use App\Models\AppSetting;
 use App\Models\Berita;
+use App\Services\NewsArticleAiGenerator;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class BeritaController extends Controller
 {
@@ -19,7 +23,7 @@ class BeritaController extends Controller
         $query = Berita::with('author')->latest();
 
         if ($request->filled('search')) {
-            $query->where('judul', 'like', '%' . $request->search . '%');
+            $query->where('judul', 'like', '%'.$request->search.'%');
         }
 
         if ($request->filled('kategori')) {
@@ -40,7 +44,55 @@ class BeritaController extends Controller
      */
     public function create()
     {
-        return view('pages.admin.berita.create');
+        $setting = AppSetting::first();
+        $aiReady = (bool) (
+            $setting?->stella_ai_enabled
+            && $setting->stella_ai_base_url
+            && $setting->stella_ai_api_key
+            && $setting->stella_ai_chat_model
+        );
+
+        return view('pages.admin.berita.create', compact('aiReady'));
+    }
+
+    public function generateWithAi(Request $request, NewsArticleAiGenerator $generator)
+    {
+        $validated = $request->validate([
+            'kategori' => 'required|in:Akademik,Kesiswaan,Kegiatan,Prestasi,Pengumuman,Lainnya',
+            'use_ai_recommendation' => 'required|boolean',
+            'paragraph_count' => [
+                'nullable',
+                Rule::requiredIf(! $request->boolean('use_ai_recommendation')),
+                'integer',
+                'min:2',
+                'max:12',
+            ],
+            'sentences_per_paragraph' => [
+                'nullable',
+                Rule::requiredIf(! $request->boolean('use_ai_recommendation')),
+                'integer',
+                'min:2',
+                'max:8',
+            ],
+        ]);
+
+        try {
+            $article = $generator->generate(
+                $validated['kategori'],
+                (bool) $validated['use_ai_recommendation'],
+                isset($validated['paragraph_count']) ? (int) $validated['paragraph_count'] : null,
+                isset($validated['sentences_per_paragraph']) ? (int) $validated['sentences_per_paragraph'] : null,
+            );
+        } catch (NewsArticleAiException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage(),
+            ], $exception->getCode() >= 400 ? $exception->getCode() : 502);
+        }
+
+        return response()->json([
+            'message' => 'Draf artikel berhasil dibuat oleh Stella AI.',
+            'article' => $article,
+        ]);
     }
 
     /**
@@ -59,7 +111,7 @@ class BeritaController extends Controller
 
         $data = $request->except('gambar');
         $data['user_id'] = Auth::id();
-        $data['slug'] = Str::slug($request->judul) . '-' . Str::random(5);
+        $data['slug'] = Str::slug($request->judul).'-'.Str::random(5);
 
         if ($request->hasFile('gambar')) {
             $data['gambar'] = $request->file('gambar')->store('berita', 'public');
@@ -72,6 +124,7 @@ class BeritaController extends Controller
         Berita::create($data);
 
         toast('Berita berhasil ditambahkan!', 'success');
+
         return redirect()->route('super-admin.berita.index');
     }
 
@@ -108,7 +161,7 @@ class BeritaController extends Controller
         }
 
         // Set published_at if status changed to published
-        if ($request->status === 'published' && !$berita->published_at) {
+        if ($request->status === 'published' && ! $berita->published_at) {
             $data['published_at'] = now();
         } elseif ($request->status === 'draft') {
             $data['published_at'] = null;
@@ -117,6 +170,7 @@ class BeritaController extends Controller
         $berita->update($data);
 
         toast('Berita berhasil diperbarui!', 'success');
+
         return redirect()->route('super-admin.berita.index');
     }
 
@@ -132,6 +186,7 @@ class BeritaController extends Controller
         $berita->delete();
 
         toast('Berita berhasil dihapus!', 'success');
+
         return redirect()->route('super-admin.berita.index');
     }
 
