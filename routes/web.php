@@ -959,7 +959,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Manajemen Berita
         Route::post('/berita/generate-ai', [BeritaController::class, 'generateWithAi'])->name('berita.generate-ai');
-        Route::resource('berita', BeritaController::class)->except(['show']);
+        Route::resource('berita', BeritaController::class)
+            ->parameters(['berita' => 'berita'])
+            ->except(['show']);
 
         // Stella AI Settings
         Route::get('/stella-ai-settings', [\App\Http\Controllers\StellaAiController::class, 'aiSettings'])->name('stella-ai.settings');

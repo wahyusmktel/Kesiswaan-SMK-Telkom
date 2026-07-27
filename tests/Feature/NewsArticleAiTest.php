@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\AppSetting;
+use App\Models\Berita;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -81,6 +82,31 @@ class NewsArticleAiTest extends TestCase
             ->assertOk()
             ->assertSee('Hasilkan Artikel dengan Stella AI')
             ->assertSee('Belum dikonfigurasi');
+    }
+
+    public function test_edit_page_uses_the_berita_resource_parameter(): void
+    {
+        $user = $this->superAdmin();
+        $berita = Berita::create([
+            'judul' => 'Berita Pengujian',
+            'ringkasan' => 'Ringkasan berita pengujian.',
+            'konten' => 'Konten berita pengujian.',
+            'kategori' => 'Akademik',
+            'status' => 'draft',
+            'user_id' => $user->id,
+        ]);
+
+        $this->assertSame(
+            url('/super-admin/berita/'.$berita->id),
+            route('super-admin.berita.update', $berita)
+        );
+
+        $this->actingAs($user)
+            ->withSession(['active_role' => 'Super Admin'])
+            ->get(route('super-admin.berita.edit', $berita))
+            ->assertOk()
+            ->assertSee('Edit Berita')
+            ->assertSee('Berita Pengujian');
     }
 
     private function configureAi(): void
