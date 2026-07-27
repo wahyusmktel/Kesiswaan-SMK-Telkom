@@ -58,6 +58,37 @@
                         placeholder="Ringkasan singkat berita (opsional)...">{{ old('ringkasan', $berita->ringkasan) }}</textarea>
                 </div>
 
+                <section class="border-t border-gray-100 pt-6 space-y-5">
+                    <div>
+                        <h3 class="text-sm font-black text-gray-900">Optimasi SEO</h3>
+                        <p class="text-xs text-gray-500 mt-1">Metadata untuk mesin pencari dan tampilan saat tautan dibagikan.</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Judul SEO</label>
+                        <input type="text" name="seo_title" value="{{ old('seo_title', $berita->seo_title) }}" maxlength="255"
+                            class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                        @error('seo_title')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Deskripsi SEO</label>
+                        <textarea name="seo_description" rows="3" maxlength="320"
+                            class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none">{{ old('seo_description', $berita->seo_description) }}</textarea>
+                        @error('seo_description')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Fokus Keyword</label>
+                            <input type="text" name="focus_keyword" value="{{ old('focus_keyword', $berita->focus_keyword) }}" maxlength="255"
+                                class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Keyword Pendukung</label>
+                            <input type="text" name="seo_keywords" value="{{ old('seo_keywords', $berita->seo_keywords) }}" maxlength="2000"
+                                class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                        </div>
+                    </div>
+                </section>
+
                 <div>
                     <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Gambar Cover</label>
                     <div x-data="{ preview: '{{ $berita->gambar ? Storage::url($berita->gambar) : '' }}' }" class="space-y-3">
@@ -83,7 +114,7 @@
                     <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Konten Berita <span class="text-red-500">*</span></label>
                     <textarea name="konten" rows="12" required
                         class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                        placeholder="Tulis konten berita di sini...">{{ old('konten', $berita->konten) }}</textarea>
+                        placeholder="Tulis dengan Markdown. Gunakan ```php, ```python, atau nama bahasa lain untuk snippet kode.">{{ old('konten', $berita->konten) }}</textarea>
                     @error('konten')
                         <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                     @enderror

@@ -61,7 +61,7 @@
                             </div>
                             <div>
                                 <h3 id="stella-news-generator-title" class="text-sm font-black text-gray-900">Hasilkan Artikel dengan Stella AI</h3>
-                                <p class="text-xs leading-5 text-gray-500 mt-1">Draf akan mengisi judul, ringkasan, dan konten berdasarkan kategori terpilih.</p>
+                                <p class="text-xs leading-5 text-gray-500 mt-1">Berikan topik atau instruksi, lalu Stella menyusun artikel, struktur kode, dan metadata SEO.</p>
                             </div>
                         </div>
                         <span
@@ -74,6 +74,25 @@
                     </div>
 
                     <div class="mt-5 border-t border-red-100 pt-5 space-y-4">
+                        <div>
+                            <label for="ai_instructions" class="block text-xs font-bold text-gray-700 mb-2">Instruksi Artikel</label>
+                            <textarea id="ai_instructions" x-model="instructions" rows="4" maxlength="3000"
+                                class="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                                placeholder="Contoh: Buat tutorial Laravel tentang validasi formulir registrasi siswa. Jelaskan langkah, contoh controller, Blade, dan pengujian secara praktis."></textarea>
+                            <div class="flex justify-between gap-4 mt-1">
+                                <p class="text-[11px] text-gray-500">Sertakan tujuan pembaca, topik, sudut pembahasan, atau fakta yang wajib digunakan.</p>
+                                <span class="text-[11px] text-gray-400" x-text="`${instructions.length}/3000`"></span>
+                            </div>
+                        </div>
+
+                        <label class="flex items-start gap-3 cursor-pointer">
+                            <input type="checkbox" x-model="includeCodeSnippets" class="mt-0.5 rounded border-gray-300 text-red-600 focus:ring-red-500">
+                            <span>
+                                <span class="block text-sm font-bold text-gray-800">Sertakan snippet kode</span>
+                                <span class="block text-xs text-gray-500 mt-0.5">Stella menambahkan blok kode dengan label bahasa yang dapat dideteksi dan disalin pada halaman publik.</span>
+                            </span>
+                        </label>
+
                         <label class="flex items-start gap-3 cursor-pointer">
                             <input type="checkbox" x-model="recommended" class="mt-0.5 rounded border-gray-300 text-red-600 focus:ring-red-500">
                             <span>
@@ -140,6 +159,41 @@
                     @enderror
                 </div>
 
+                <section class="border-t border-gray-100 pt-6 space-y-5" aria-labelledby="seo-fields-title">
+                    <div>
+                        <h3 id="seo-fields-title" class="text-sm font-black text-gray-900">Optimasi SEO</h3>
+                        <p class="text-xs text-gray-500 mt-1">Metadata dapat dibuat otomatis oleh Stella AI dan tetap dapat disunting sebelum publikasi.</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Judul SEO</label>
+                        <input type="text" name="seo_title" x-ref="seoTitle" value="{{ old('seo_title') }}" maxlength="255"
+                            class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                            placeholder="Judul yang jelas untuk hasil pencarian">
+                        @error('seo_title')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Deskripsi SEO</label>
+                        <textarea name="seo_description" x-ref="seoDescription" rows="3" maxlength="320"
+                            class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none"
+                            placeholder="Ringkasan informatif yang menjelaskan manfaat artikel">{{ old('seo_description') }}</textarea>
+                        @error('seo_description')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Fokus Keyword</label>
+                            <input type="text" name="focus_keyword" x-ref="focusKeyword" value="{{ old('focus_keyword') }}" maxlength="255"
+                                class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                                placeholder="tutorial validasi Laravel">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Keyword Pendukung</label>
+                            <input type="text" name="seo_keywords" x-ref="seoKeywords" value="{{ old('seo_keywords') }}" maxlength="2000"
+                                class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                                placeholder="Laravel, validasi form, tutorial PHP">
+                        </div>
+                    </div>
+                </section>
+
                 <div>
                     <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Gambar Cover</label>
                     <div x-data="{ preview: null }" class="space-y-3">
@@ -170,7 +224,7 @@
                     <label class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Konten Berita <span class="text-red-500">*</span></label>
                     <textarea name="konten" x-ref="content" rows="12" required
                         class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-red-500 focus:border-red-500 placeholder-gray-400"
-                        placeholder="Tulis konten berita di sini...">{{ old('konten') }}</textarea>
+                        placeholder="Tulis dengan Markdown. Gunakan ```php, ```python, atau nama bahasa lain untuk snippet kode.">{{ old('konten') }}</textarea>
                     @error('konten')
                         <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                     @enderror
@@ -199,6 +253,8 @@
                 recommended: true,
                 paragraphCount: 4,
                 sentencesPerParagraph: 3,
+                instructions: '',
+                includeCodeSnippets: false,
                 lastResult: '',
 
                 async generate() {
@@ -242,6 +298,8 @@
                                 use_ai_recommendation: this.recommended,
                                 paragraph_count: this.recommended ? null : this.paragraphCount,
                                 sentences_per_paragraph: this.recommended ? null : this.sentencesPerParagraph,
+                                instructions: this.instructions.trim() || null,
+                                include_code_snippets: this.includeCodeSnippets,
                             }),
                         });
                         const data = await response.json();
@@ -256,7 +314,11 @@
                         this.$refs.title.value = data.article.title;
                         this.$refs.summary.value = data.article.summary;
                         this.$refs.content.value = data.article.content;
-                        ['title', 'summary', 'content'].forEach((field) => {
+                        this.$refs.seoTitle.value = data.article.seo_title || '';
+                        this.$refs.seoDescription.value = data.article.seo_description || '';
+                        this.$refs.focusKeyword.value = data.article.focus_keyword || '';
+                        this.$refs.seoKeywords.value = data.article.seo_keywords || '';
+                        ['title', 'summary', 'content', 'seoTitle', 'seoDescription', 'focusKeyword', 'seoKeywords'].forEach((field) => {
                             this.$refs[field].dispatchEvent(new Event('input', { bubbles: true }));
                         });
 

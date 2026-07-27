@@ -6,9 +6,11 @@ use App\Exceptions\NewsArticleAiException;
 use App\Http\Controllers\Controller;
 use App\Models\AppSetting;
 use App\Models\Berita;
+use App\Models\BeritaComment;
 use App\Services\NewsArticleAiGenerator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -35,8 +37,9 @@ class BeritaController extends Controller
         }
 
         $beritas = $query->paginate(10);
+        $pendingCommentCount = BeritaComment::where('status', 'pending')->count();
 
-        return view('pages.admin.berita.index', compact('beritas'));
+        return view('pages.admin.berita.index', compact('beritas', 'pendingCommentCount'));
     }
 
     /**
@@ -74,6 +77,8 @@ class BeritaController extends Controller
                 'min:2',
                 'max:8',
             ],
+            'instructions' => 'nullable|string|max:3000',
+            'include_code_snippets' => 'required|boolean',
         ]);
 
         try {
@@ -82,6 +87,8 @@ class BeritaController extends Controller
                 (bool) $validated['use_ai_recommendation'],
                 isset($validated['paragraph_count']) ? (int) $validated['paragraph_count'] : null,
                 isset($validated['sentences_per_paragraph']) ? (int) $validated['sentences_per_paragraph'] : null,
+                $validated['instructions'] ?? null,
+                (bool) $validated['include_code_snippets'],
             );
         } catch (NewsArticleAiException $exception) {
             return response()->json([
@@ -103,6 +110,10 @@ class BeritaController extends Controller
         $request->validate([
             'judul' => 'required|string|max:255',
             'ringkasan' => 'nullable|string|max:500',
+            'seo_title' => 'nullable|string|max:255',
+            'seo_description' => 'nullable|string|max:320',
+            'focus_keyword' => 'nullable|string|max:255',
+            'seo_keywords' => 'nullable|string|max:2000',
             'konten' => 'required|string',
             'gambar' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
             'kategori' => 'required|in:Akademik,Kesiswaan,Kegiatan,Prestasi,Pengumuman,Lainnya',
@@ -144,6 +155,10 @@ class BeritaController extends Controller
         $request->validate([
             'judul' => 'required|string|max:255',
             'ringkasan' => 'nullable|string|max:500',
+            'seo_title' => 'nullable|string|max:255',
+            'seo_description' => 'nullable|string|max:320',
+            'focus_keyword' => 'nullable|string|max:255',
+            'seo_keywords' => 'nullable|string|max:2000',
             'konten' => 'required|string',
             'gambar' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
             'kategori' => 'required|in:Akademik,Kesiswaan,Kegiatan,Prestasi,Pengumuman,Lainnya',
@@ -195,10 +210,10 @@ class BeritaController extends Controller
      */
     public function show($slug)
     {
-        $berita = Berita::with('author')
+        $setting = AppSetting::first();
+        $berita = Berita::published()
+            ->with('author')
             ->where('slug', $slug)
-            ->where('status', 'published')
-            ->whereNotNull('published_at')
             ->firstOrFail();
 
         $relatedNews = Berita::published()
@@ -208,7 +223,18 @@ class BeritaController extends Controller
             ->take(3)
             ->get();
 
-        return view('pages.berita.show', compact('berita', 'relatedNews'));
+        $comments = $berita->comments()
+            ->approved()
+            ->whereNull('parent_id')
+            ->with('approvedReplies')
+            ->oldest()
+            ->get();
+        $captcha = $this->createCommentCaptcha($berita, request());
+        $view = $setting?->theme === 'stella-vue'
+            ? 'pages.berita.show-vue'
+            : 'pages.berita.show';
+
+        return view($view, compact('berita', 'relatedNews', 'comments', 'captcha', 'setting'));
     }
 
     /**
@@ -233,5 +259,27 @@ class BeritaController extends Controller
                 'url' => route('berita.show', $b->slug),
             ];
         }));
+    }
+
+    private function createCommentCaptcha(Berita $berita, Request $request): array
+    {
+        $left = random_int(2, 9);
+        $right = random_int(1, 9);
+        $token = (string) Str::uuid();
+        $challenges = collect($request->session()->get('news_comment_captchas', []))
+            ->filter(fn ($challenge) => (int) ($challenge['expires_at'] ?? 0) >= now()->timestamp)
+            ->take(4)
+            ->all();
+        $challenges[$token] = [
+            'berita_id' => $berita->id,
+            'answer_hash' => Hash::make((string) ($left + $right)),
+            'expires_at' => now()->addMinutes(20)->timestamp,
+        ];
+        $request->session()->put('news_comment_captchas', $challenges);
+
+        return [
+            'token' => $token,
+            'question' => "{$left} + {$right} =",
+        ];
     }
 }

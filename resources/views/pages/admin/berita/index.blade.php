@@ -20,13 +20,26 @@
                 <h3 class="text-xl font-bold text-gray-900">Daftar Berita</h3>
                 <p class="text-sm text-gray-500">Total {{ $beritas->total() }} berita</p>
             </div>
-            <a href="{{ route('super-admin.berita.create') }}"
-                class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-red-600/20 hover:shadow-red-600/40 hover:scale-[1.02] transition-all">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
-                Tambah Berita
-            </a>
+            <div class="flex flex-col sm:flex-row gap-2">
+                <a href="{{ route('super-admin.berita-comments.index') }}"
+                    class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-700 font-bold text-sm rounded-xl hover:border-red-200 hover:text-red-600 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a10.4 10.4 0 01-4.4-.96L3 20l1.35-3.6A7.7 7.7 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8Z" />
+                    </svg>
+                    Moderasi Komentar
+                    @if ($pendingCommentCount > 0)
+                        <span class="min-w-5 h-5 px-1.5 rounded-full bg-red-600 text-white text-[10px] flex items-center justify-center">{{ $pendingCommentCount }}</span>
+                    @endif
+                </a>
+                <a href="{{ route('super-admin.berita.create') }}"
+                    class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-red-600/20 hover:shadow-red-600/40 hover:scale-[1.02] transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Tambah Berita
+                </a>
+            </div>
         </div>
 
         {{-- Filters --}}

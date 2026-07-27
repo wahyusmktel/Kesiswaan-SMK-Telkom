@@ -15,7 +15,9 @@ class NewsArticleAiGenerator
         string $category,
         bool $useAiRecommendation,
         ?int $paragraphCount = null,
-        ?int $sentencesPerParagraph = null
+        ?int $sentencesPerParagraph = null,
+        ?string $instructions = null,
+        bool $includeCodeSnippets = false,
     ): array {
         $setting = AppSetting::first();
         if (! $this->isReady($setting)) {
@@ -27,7 +29,7 @@ class NewsArticleAiGenerator
             'messages' => [
                 [
                     'role' => 'system',
-                    'content' => 'Kamu adalah Stella AI, redaktur berita resmi sekolah Indonesia. Gunakan Bahasa Indonesia baku, hangat, informatif, dan mudah dipahami. Jangan mengarang nama orang, tanggal, angka prestasi, kutipan, atau fakta spesifik yang tidak diberikan. Jika detail faktual tidak tersedia, tulis artikel institusional yang tetap relevan tanpa klaim palsu. Jawaban wajib hanya JSON valid tanpa markdown.',
+                    'content' => 'Kamu adalah Stella AI, redaktur dan editor SEO situs sekolah Indonesia. Tulis konten orisinal, mengutamakan manfaat pembaca, akurat, dan mudah dipahami. Jangan mengarang nama, tanggal, angka prestasi, kutipan, atau fakta spesifik yang tidak diberikan. Gunakan Markdown pada isi artikel. Setiap blok kode wajib memakai fenced code block dengan nama bahasa yang tepat, misalnya ```php atau ```python. Jawaban wajib hanya JSON valid tanpa pembungkus markdown.',
                 ],
                 [
                     'role' => 'user',
@@ -36,7 +38,9 @@ class NewsArticleAiGenerator
                         $category,
                         $useAiRecommendation,
                         $paragraphCount,
-                        $sentencesPerParagraph
+                        $sentencesPerParagraph,
+                        $instructions,
+                        $includeCodeSnippets,
                     ),
                 ],
             ],
@@ -83,6 +87,18 @@ class NewsArticleAiGenerator
         $title = trim(strip_tags((string) ($decoded['title'] ?? '')));
         $summary = trim(strip_tags((string) ($decoded['summary'] ?? '')));
         $content = $this->normalizeContent((string) ($decoded['content'] ?? ''));
+        $seoTitle = trim(strip_tags((string) ($decoded['seo_title'] ?? $title)));
+        $seoDescription = trim(strip_tags((string) ($decoded['seo_description'] ?? $summary)));
+        $focusKeyword = trim(strip_tags((string) ($decoded['focus_keyword'] ?? '')));
+        $seoKeywords = $decoded['seo_keywords'] ?? [];
+        if (is_array($seoKeywords)) {
+            $seoKeywords = implode(', ', array_filter(array_map(
+                fn ($keyword) => trim(strip_tags((string) $keyword)),
+                $seoKeywords
+            )));
+        } else {
+            $seoKeywords = trim(strip_tags((string) $seoKeywords));
+        }
 
         if ($title === '' || $content === '') {
             throw new NewsArticleAiException('Struktur artikel Stella AI belum lengkap. Silakan hasilkan ulang.', 502);
@@ -94,6 +110,10 @@ class NewsArticleAiGenerator
             'title' => Str::limit($title, 255, ''),
             'summary' => Str::limit($summary, 500, ''),
             'content' => $content,
+            'seo_title' => Str::limit($seoTitle, 255, ''),
+            'seo_description' => Str::limit($seoDescription, 320, ''),
+            'focus_keyword' => Str::limit($focusKeyword, 255, ''),
+            'seo_keywords' => Str::limit($seoKeywords, 2000, ''),
             'paragraph_count' => count($paragraphs),
             'sentence_count' => $this->countSentences($content),
             'recommended_by_ai' => $useAiRecommendation,
@@ -114,17 +134,28 @@ class NewsArticleAiGenerator
         string $category,
         bool $useAiRecommendation,
         ?int $paragraphCount,
-        ?int $sentencesPerParagraph
+        ?int $sentencesPerParagraph,
+        ?string $instructions,
+        bool $includeCodeSnippets,
     ): string {
         $lengthInstruction = $useAiRecommendation
             ? 'Tentukan panjang terbaik berdasarkan kategori. Gunakan 3-7 paragraf dan 2-5 kalimat per paragraf.'
             : "Buat tepat {$paragraphCount} paragraf dengan sekitar {$sentencesPerParagraph} kalimat pada setiap paragraf.";
 
-        return "Buat satu draf artikel berita untuk situs resmi {$schoolName}.\n"
+        $topicInstruction = filled($instructions)
+            ? "Instruksi redaksi pengguna:\n".trim($instructions)
+            : 'Tentukan topik yang relevan dengan kategori tanpa membuat klaim faktual yang tidak diberikan.';
+        $codeInstruction = $includeCodeSnippets
+            ? 'Sertakan contoh kode yang relevan dan siap dipelajari. Gunakan fenced code block Markdown dengan nama bahasa pada setiap blok, lalu jelaskan cara kerjanya dan praktik aman yang perlu diperhatikan.'
+            : 'Jangan memaksakan contoh kode kecuali diminta secara eksplisit dalam instruksi redaksi.';
+
+        return "Buat satu draf artikel untuk situs resmi {$schoolName}.\n"
             ."Kategori: {$category}.\n"
+            ."{$topicInstruction}\n"
             ."{$lengthInstruction}\n"
-            ."Buat judul yang menarik namun tidak sensasional. Ringkasan maksimal 2 kalimat. Konten berupa teks polos dengan pemisah dua baris baru antarparagraf. Jangan gunakan markdown, heading, bullet, salam pembuka, atau penutup redaksional.\n\n"
-            .'Kembalikan format persis: {"title":"","summary":"","content":"","paragraph_count":4,"sentences_per_paragraph":3}.';
+            ."{$codeInstruction}\n"
+            ."Optimalkan secara wajar untuk pencarian: judul deskriptif dan tidak sensasional, satu fokus keyword yang sesuai niat pembaca, struktur heading H2/H3 yang jelas, pembuka langsung menjawab kebutuhan, serta keyword yang digunakan alami tanpa pengulangan berlebihan. Ringkasan maksimal 2 kalimat. Konten harus orisinal, bermanfaat, dan memakai Markdown. Jangan menambahkan salam atau penutup redaksional.\n\n"
+            .'Kembalikan format persis: {"title":"","summary":"","content":"","seo_title":"","seo_description":"","focus_keyword":"","seo_keywords":["",""],"paragraph_count":4,"sentences_per_paragraph":3}.';
     }
 
     private function decodeJson(string $content): array
@@ -153,9 +184,9 @@ class NewsArticleAiGenerator
 
     private function normalizeContent(string $content): string
     {
-        $plain = strip_tags($content);
+        $plain = str_replace("\0", '', $content);
         $plain = preg_replace("/[ \t]+\n/", "\n", $plain) ?? $plain;
-        $plain = preg_replace('/\R{3,}/', "\n\n", $plain) ?? $plain;
+        $plain = preg_replace('/\R{4,}/', "\n\n\n", $plain) ?? $plain;
 
         return trim($plain);
     }

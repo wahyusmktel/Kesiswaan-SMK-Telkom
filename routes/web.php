@@ -962,6 +962,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('berita', BeritaController::class)
             ->parameters(['berita' => 'berita'])
             ->except(['show']);
+        Route::get('/berita-comments', [\App\Http\Controllers\Admin\BeritaCommentController::class, 'index'])->name('berita-comments.index');
+        Route::patch('/berita-comments/{comment}/moderate', [\App\Http\Controllers\Admin\BeritaCommentController::class, 'moderate'])->name('berita-comments.moderate');
+        Route::delete('/berita-comments/{comment}', [\App\Http\Controllers\Admin\BeritaCommentController::class, 'destroy'])->name('berita-comments.destroy');
 
         // Stella AI Settings
         Route::get('/stella-ai-settings', [\App\Http\Controllers\StellaAiController::class, 'aiSettings'])->name('stella-ai.settings');
@@ -1329,6 +1332,9 @@ Route::get('/verifikasi-iq/{code}', [\App\Http\Controllers\IqVerificationControl
 // ============================================================
 // PUBLIC BERITA DETAIL PAGE
 // ============================================================
+Route::post('/berita/{berita:slug}/komentar', [\App\Http\Controllers\Public\BeritaCommentController::class, 'store'])
+    ->middleware('throttle:10,1')
+    ->name('berita.comments.store');
 Route::get('/berita/{slug}', [BeritaController::class, 'show'])->name('berita.show');
 
 // ============================================================

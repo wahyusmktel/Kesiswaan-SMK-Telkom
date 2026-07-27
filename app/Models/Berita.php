@@ -14,6 +14,10 @@ class Berita extends Model
         'judul',
         'slug',
         'ringkasan',
+        'seo_title',
+        'seo_description',
+        'focus_keyword',
+        'seo_keywords',
         'konten',
         'gambar',
         'kategori',
@@ -35,7 +39,7 @@ class Berita extends Model
 
         static::creating(function ($berita) {
             if (empty($berita->slug)) {
-                $berita->slug = Str::slug($berita->judul) . '-' . Str::random(5);
+                $berita->slug = Str::slug($berita->judul).'-'.Str::random(5);
             }
         });
     }
@@ -48,14 +52,19 @@ class Berita extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    public function comments()
+    {
+        return $this->hasMany(BeritaComment::class);
+    }
+
     /**
      * Scope: hanya berita yang sudah dipublikasikan.
      */
     public function scopePublished($query)
     {
         return $query->where('status', 'published')
-                     ->whereNotNull('published_at')
-                     ->where('published_at', '<=', now());
+            ->whereNotNull('published_at')
+            ->where('published_at', '<=', now());
     }
 
     /**
@@ -66,6 +75,7 @@ class Berita extends Model
         if ($this->gambar) {
             return \Storage::url($this->gambar);
         }
+
         return null;
     }
 }
