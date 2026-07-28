@@ -136,6 +136,10 @@ class NewsArticleAiTest extends TestCase
             ->assertSee('<script type="application/ld+json">', false)
             ->assertSee('rel="canonical"', false)
             ->assertSee('data-article-content', false)
+            ->assertSee('data-article-reader', false)
+            ->assertSee('data-reader-volume', false)
+            ->assertSee('data-reader-rate', false)
+            ->assertSee('Baca Artikel')
             ->assertSee('Berita Laravel Terkait')
             ->assertSee('Kirim untuk Moderasi');
     }

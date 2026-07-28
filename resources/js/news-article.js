@@ -173,10 +173,221 @@ const initializeReplies = () => {
     });
 };
 
+const initializeArticleReader = () => {
+    const root = document.querySelector('[data-article-reader]');
+    if (!root) return;
+
+    const synth = window.speechSynthesis;
+    const SpeechUtterance = window.SpeechSynthesisUtterance;
+    const toggle = root.querySelector('[data-reader-toggle]');
+    const controls = root.querySelector('[data-reader-controls]');
+    const stopButton = root.querySelector('[data-reader-stop]');
+    const status = root.querySelector('[data-reader-status]');
+    const progress = root.querySelector('[data-reader-progress]');
+    const progressLabel = root.querySelector('[data-reader-progress-label]');
+    const volume = root.querySelector('[data-reader-volume]');
+    const volumeOutput = root.querySelector('[data-reader-volume-output]');
+    const rate = root.querySelector('[data-reader-rate]');
+    const rateOutput = root.querySelector('[data-reader-rate-output]');
+    const toggleLabel = root.querySelector('[data-reader-toggle-label]');
+    const playIcon = root.querySelector('[data-reader-play-icon]');
+    const pauseIcon = root.querySelector('[data-reader-pause-icon]');
+
+    if (!synth || !SpeechUtterance) {
+        root.classList.add('is-unsupported');
+        controls.hidden = false;
+        toggle.disabled = true;
+        status.textContent = 'Browser ini belum mendukung pembaca suara.';
+        return;
+    }
+
+    const article = document.querySelector('[data-article-content]');
+    const sourceParts = [
+        document.querySelector('.article-head h1')?.textContent,
+        document.querySelector('.article-summary')?.textContent,
+        ...Array.from(article?.querySelectorAll('h2, h3, h4, p, li') || [])
+            .filter((element) => !element.closest('[data-code-editor]'))
+            .map((element) => element.textContent),
+    ].map((text) => text?.replace(/\s+/g, ' ').trim()).filter(Boolean);
+
+    const sentences = sourceParts.flatMap((text) => {
+        if (window.Intl?.Segmenter) {
+            const segmenter = new Intl.Segmenter('id', { granularity: 'sentence' });
+            return Array.from(segmenter.segment(text), ({ segment }) => segment.trim()).filter(Boolean);
+        }
+
+        return text.match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map((sentence) => sentence.trim()) || [text];
+    });
+
+    let currentIndex = 0;
+    let speaking = false;
+    let paused = false;
+    let session = 0;
+    let settingsDirty = false;
+    let ownsSpeech = false;
+    let restartTimer = null;
+
+    const selectVoice = () => {
+        const voices = synth.getVoices();
+        return voices.find((voice) => voice.lang.toLowerCase() === 'id-id')
+            || voices.find((voice) => voice.lang.toLowerCase().startsWith('id'))
+            || voices.find((voice) => voice.default)
+            || null;
+    };
+
+    const updateProgress = (completed = false) => {
+        const percentage = completed
+            ? 100
+            : Math.round((currentIndex / Math.max(sentences.length, 1)) * 100);
+        progress.value = percentage;
+        progress.textContent = `${percentage}%`;
+        progressLabel.textContent = `${percentage}%`;
+    };
+
+    const updateUi = () => {
+        controls.hidden = false;
+        toggle.setAttribute('aria-expanded', 'true');
+        stopButton.disabled = !speaking && !paused;
+        playIcon.hidden = speaking && !paused;
+        pauseIcon.hidden = !speaking || paused;
+
+        if (speaking && !paused) {
+            toggleLabel.textContent = 'Jeda';
+            status.textContent = `Membaca bagian ${Math.min(currentIndex + 1, sentences.length)} dari ${sentences.length}`;
+        } else if (paused) {
+            toggleLabel.textContent = 'Lanjutkan';
+            status.textContent = 'Pembacaan dijeda';
+        } else {
+            toggleLabel.textContent = currentIndex > 0 ? 'Baca Ulang' : 'Baca Artikel';
+        }
+    };
+
+    const reset = (message = 'Pembacaan dihentikan') => {
+        session += 1;
+        window.clearTimeout(restartTimer);
+        restartTimer = null;
+        if (ownsSpeech) synth.cancel();
+        ownsSpeech = false;
+        speaking = false;
+        paused = false;
+        settingsDirty = false;
+        currentIndex = 0;
+        status.textContent = message;
+        updateProgress();
+        updateUi();
+    };
+
+    const speakCurrent = () => {
+        if (currentIndex >= sentences.length) {
+            ownsSpeech = false;
+            speaking = false;
+            paused = false;
+            status.textContent = 'Artikel selesai dibacakan';
+            updateProgress(true);
+            updateUi();
+            return;
+        }
+
+        const activeSession = session;
+        const utterance = new SpeechUtterance(sentences[currentIndex]);
+        utterance.lang = 'id-ID';
+        utterance.volume = Number(volume.value);
+        utterance.rate = Number(rate.value);
+        const voice = selectVoice();
+        if (voice) utterance.voice = voice;
+
+        utterance.onend = () => {
+            if (activeSession !== session) return;
+            currentIndex += 1;
+            updateProgress();
+            speakCurrent();
+        };
+        utterance.onerror = (event) => {
+            if (activeSession !== session || ['canceled', 'interrupted'].includes(event.error)) return;
+            ownsSpeech = false;
+            speaking = false;
+            paused = false;
+            status.textContent = 'Pembacaan gagal dimulai pada perangkat ini';
+            updateUi();
+        };
+
+        ownsSpeech = true;
+        speaking = true;
+        paused = false;
+        settingsDirty = false;
+        synth.speak(utterance);
+        updateUi();
+    };
+
+    const restartCurrentSentence = () => {
+        if (!speaking && !paused) return;
+        session += 1;
+        synth.cancel();
+        speaking = true;
+        paused = false;
+        window.clearTimeout(restartTimer);
+        restartTimer = window.setTimeout(() => {
+            restartTimer = null;
+            speakCurrent();
+        }, 100);
+    };
+
+    toggle.addEventListener('click', () => {
+        if (!sentences.length) {
+            controls.hidden = false;
+            status.textContent = 'Isi artikel belum tersedia untuk dibacakan';
+            return;
+        }
+
+        if (paused) {
+            if (settingsDirty) {
+                restartCurrentSentence();
+            } else {
+                synth.resume();
+                speaking = true;
+                paused = false;
+                updateUi();
+            }
+            return;
+        }
+
+        if (speaking) {
+            synth.pause();
+            speaking = false;
+            paused = true;
+            updateUi();
+            return;
+        }
+
+        if (currentIndex >= sentences.length) currentIndex = 0;
+        speakCurrent();
+    });
+
+    stopButton.addEventListener('click', () => reset());
+
+    const updateSettings = () => {
+        volumeOutput.textContent = `${Math.round(Number(volume.value) * 100)}%`;
+        rateOutput.textContent = `${Number(rate.value).toFixed(1).replace('.0', '')}x`;
+        if (paused) {
+            settingsDirty = true;
+        } else if (speaking) {
+            restartCurrentSentence();
+        }
+    };
+
+    volume.addEventListener('input', updateSettings);
+    rate.addEventListener('input', updateSettings);
+    window.addEventListener('beforeunload', () => {
+        window.clearTimeout(restartTimer);
+        if (ownsSpeech) synth.cancel();
+    });
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     renderArticle();
     initializeNavigation();
     initializeReplies();
+    initializeArticleReader();
 
     document.addEventListener('click', (event) => {
         const copyButton = event.target.closest('[data-copy-code]');

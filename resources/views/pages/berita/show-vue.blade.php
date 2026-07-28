@@ -108,6 +108,34 @@
                     <span>{{ $berita->published_at?->translatedFormat('d F Y') }}</span>
                     <span>{{ $readingMinutes }} menit baca</span>
                 </div>
+                <div class="article-reader" data-article-reader>
+                    <button class="article-reader__toggle" type="button" data-reader-toggle aria-expanded="false">
+                        <svg data-reader-play-icon viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7V5Z"/></svg>
+                        <svg data-reader-pause-icon viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M8 5v14M16 5v14"/></svg>
+                        <span data-reader-toggle-label>Baca Artikel</span>
+                    </button>
+                    <div class="article-reader__controls" data-reader-controls hidden>
+                        <div class="article-reader__status-row">
+                            <span class="article-reader__status" data-reader-status aria-live="polite">Siap membacakan artikel</span>
+                            <span class="article-reader__progress-label" data-reader-progress-label>0%</span>
+                        </div>
+                        <progress class="article-reader__progress" data-reader-progress value="0" max="100">0%</progress>
+                        <div class="article-reader__settings">
+                            <label>
+                                <span>Volume <output data-reader-volume-output>100%</output></span>
+                                <input type="range" data-reader-volume min="0" max="1" step="0.1" value="1">
+                            </label>
+                            <label>
+                                <span>Kecepatan <output data-reader-rate-output>1x</output></span>
+                                <input type="range" data-reader-rate min="0.5" max="2" step="0.1" value="1">
+                            </label>
+                            <button class="article-reader__stop" type="button" data-reader-stop disabled>
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10H7z"/></svg>
+                                Berhenti
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
