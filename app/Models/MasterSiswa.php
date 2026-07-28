@@ -106,6 +106,11 @@ class MasterSiswa extends Model
         return $this->hasOne(TranscriptNumber::class, 'master_siswa_id');
     }
 
+    public function transcriptReprintCorrections()
+    {
+        return $this->hasMany(TranscriptReprintCorrection::class, 'master_siswa_id');
+    }
+
     // Relationships for Poin System
     public function pelanggarans()
     {

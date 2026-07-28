@@ -9,6 +9,7 @@ use App\Models\Rombel;
 use App\Models\TahunPelajaran;
 use App\Models\TranscriptConfig;
 use App\Models\TranscriptNumber;
+use App\Models\TranscriptReprintCorrection;
 use App\Models\TranscriptSubject;
 use App\Models\UserDigitalSignature;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -42,6 +43,14 @@ class TranscriptPrintController extends Controller
 
         if ($selectedRombel) {
             $selectedRombel->load(['kelas', 'tahunPelajaran', 'siswa.dapodik', 'siswa.transcriptDiplomaNumber', 'siswa.transcriptNumber']);
+
+            if ($mode === 'alumni') {
+                $selectedRombel->load([
+                    'siswa.transcriptReprintCorrections' => fn ($query) => $query
+                        ->where('rombel_id', $selectedRombel->id)
+                        ->with(['updater', 'histories.changer']),
+                ]);
+            }
         }
 
         $students = $selectedRombel
@@ -60,7 +69,7 @@ class TranscriptPrintController extends Controller
 
     public function student(Request $request, MasterSiswa $student)
     {
-        $student->load(['dapodik', 'rombels.kelas', 'transcriptDiplomaNumber', 'transcriptGrades.subject']);
+        $student->load(['dapodik', 'rombels.kelas', 'rombels.tahunPelajaran', 'transcriptDiplomaNumber', 'transcriptGrades.subject']);
         $printRombel = $request->filled('rombel_id')
             ? $student->rombels->firstWhere('id', $request->integer('rombel_id'))
             : null;
@@ -69,8 +78,16 @@ class TranscriptPrintController extends Controller
 
         $config = TranscriptConfig::firstOrCreate([]);
         $subjects = $this->subjects()->get();
+        $reprintCorrections = $this->reprintCorrections(collect([$student]), $printRombel);
         $transcriptNumbers = $this->transcriptNumbers(collect([$student]), $config);
-        $transcriptQrCodes = $this->transcriptQrCodes(collect([$student]), $subjects, $config, $transcriptNumbers);
+        $transcriptQrCodes = $this->transcriptQrCodes(
+            collect([$student]),
+            $subjects,
+            $config,
+            $transcriptNumbers,
+            $reprintCorrections
+        );
+        $displayName = $reprintCorrections->get($student->id)?->corrected_name ?? $student->nama_lengkap;
 
         $pdf = Pdf::loadView('pdf.transcript', [
             'config' => $config,
@@ -81,10 +98,11 @@ class TranscriptPrintController extends Controller
             'letterheadDataUri' => $this->dataUri($config->letterhead_path),
             'watermarkDataUri' => $this->dataUri($config->watermark_path),
             'printRombel' => $printRombel,
+            'reprintCorrections' => $reprintCorrections,
             'single' => true,
         ])->setPaper($this->paper($config), 'portrait');
 
-        return $pdf->stream('Transkrip_'.str($student->nama_lengkap)->slug('_').'.pdf');
+        return $pdf->stream('Transkrip_'.str($displayName)->slug('_').'.pdf');
     }
 
     public function classroom(Request $request)
@@ -93,7 +111,7 @@ class TranscriptPrintController extends Controller
             'rombel_id' => 'required|exists:rombels,id',
             'graduation_period_id' => 'nullable|exists:tahun_pelajaran,id',
         ]);
-        $rombel = Rombel::with(['kelas', 'siswa.dapodik', 'siswa.rombels.kelas', 'siswa.transcriptDiplomaNumber', 'siswa.transcriptGrades.subject'])
+        $rombel = Rombel::with(['kelas', 'tahunPelajaran', 'siswa.dapodik', 'siswa.rombels.kelas', 'siswa.transcriptDiplomaNumber', 'siswa.transcriptGrades.subject'])
             ->findOrFail($data['rombel_id']);
 
         abort_if(
@@ -104,8 +122,15 @@ class TranscriptPrintController extends Controller
         $config = TranscriptConfig::firstOrCreate([]);
         $subjects = $this->subjects()->get();
         $students = $rombel->siswa->sortBy('nama_lengkap')->values();
+        $reprintCorrections = $this->reprintCorrections($students, $rombel);
         $transcriptNumbers = $this->transcriptNumbers($students, $config);
-        $transcriptQrCodes = $this->transcriptQrCodes($students, $subjects, $config, $transcriptNumbers);
+        $transcriptQrCodes = $this->transcriptQrCodes(
+            $students,
+            $subjects,
+            $config,
+            $transcriptNumbers,
+            $reprintCorrections
+        );
 
         $pdf = Pdf::loadView('pdf.transcript', [
             'config' => $config,
@@ -116,6 +141,7 @@ class TranscriptPrintController extends Controller
             'letterheadDataUri' => $this->dataUri($config->letterhead_path),
             'watermarkDataUri' => $this->dataUri($config->watermark_path),
             'printRombel' => $rombel,
+            'reprintCorrections' => $reprintCorrections,
             'single' => false,
         ])->setPaper($this->paper($config), 'portrait');
 
@@ -237,8 +263,13 @@ class TranscriptPrintController extends Controller
         return $parsed['prefix'].str_pad((string) $number, $parsed['width'], '0', STR_PAD_LEFT).$suffix;
     }
 
-    private function transcriptQrCodes(Collection $students, Collection $subjects, TranscriptConfig $config, array $transcriptNumbers): array
-    {
+    private function transcriptQrCodes(
+        Collection $students,
+        Collection $subjects,
+        TranscriptConfig $config,
+        array $transcriptNumbers,
+        Collection $reprintCorrections
+    ): array {
         $signature = UserDigitalSignature::where('auto_sign_transcript', true)
             ->where('is_active', true)
             ->whereNotNull('pin_hash')
@@ -253,7 +284,14 @@ class TranscriptPrintController extends Controller
         $qrCodes = [];
 
         foreach ($students as $student) {
-            $hashParts = $this->transcriptHashParts($student, $subjects, $config, $transcriptNumbers[$student->id] ?? '-');
+            $correction = $reprintCorrections->get($student->id);
+            $hashParts = $this->transcriptHashParts(
+                $student,
+                $subjects,
+                $config,
+                $transcriptNumbers[$student->id] ?? '-',
+                $correction
+            );
             $hash = DigitalDocument::generateHash($hashParts);
             $hmac = DigitalDocument::generateHmac($hash);
 
@@ -262,7 +300,7 @@ class TranscriptPrintController extends Controller
                 ->first();
 
             $signerData = [
-                'document_title' => 'Transkrip Nilai - '.($student->nama_lengkap ?? 'Siswa'),
+                'document_title' => 'Transkrip Nilai - '.($correction?->corrected_name ?? $student->nama_lengkap ?? 'Siswa'),
                 'document_hash' => $hash,
                 'hmac_signature' => $hmac,
                 'signed_by' => $signature->user->id,
@@ -291,27 +329,51 @@ class TranscriptPrintController extends Controller
         return $qrCodes;
     }
 
-    private function transcriptHashParts(MasterSiswa $student, Collection $subjects, TranscriptConfig $config, string $transcriptNumber): array
-    {
+    private function transcriptHashParts(
+        MasterSiswa $student,
+        Collection $subjects,
+        TranscriptConfig $config,
+        string $transcriptNumber,
+        ?TranscriptReprintCorrection $correction = null
+    ): array {
         $gradeMap = $student->transcriptGrades->keyBy('transcript_subject_id');
         $gradeParts = $subjects
             ->map(fn ($subject) => $subject->id.':'.($gradeMap->get($subject->id)?->score ?? '-'))
             ->values()
             ->all();
 
-        return array_merge([
+        $identityParts = [
             'TRANSKRIP_NILAI',
             (string) $student->id,
             (string) ($student->nis ?? ''),
             (string) ($student->dapodik?->nisn ?? ''),
-            (string) $student->nama_lengkap,
+            (string) ($correction?->corrected_name ?? $student->nama_lengkap),
             $transcriptNumber,
             (string) ($student->transcriptDiplomaNumber?->diploma_number ?? ''),
             (string) ($config->school_name ?? ''),
             (string) ($config->npsn ?? ''),
             (string) ($config->graduation_date?->toDateString() ?? ''),
             (string) ($config->signature_date?->toDateString() ?? ''),
-        ], $gradeParts);
+        ];
+
+        if ($correction) {
+            $identityParts[] = (string) $correction->corrected_birth_place;
+            $identityParts[] = (string) $correction->corrected_birth_date?->toDateString();
+        }
+
+        return array_merge($identityParts, $gradeParts);
+    }
+
+    private function reprintCorrections(Collection $students, ?Rombel $rombel): Collection
+    {
+        if (! $rombel || $rombel->tahunPelajaran?->is_active) {
+            return collect();
+        }
+
+        return TranscriptReprintCorrection::where('rombel_id', $rombel->id)
+            ->whereIn('master_siswa_id', $students->pluck('id'))
+            ->get()
+            ->keyBy('master_siswa_id');
     }
 
     private function qrBase64(string $url): string

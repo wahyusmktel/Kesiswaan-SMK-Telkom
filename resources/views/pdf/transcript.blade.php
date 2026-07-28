@@ -225,8 +225,14 @@
                 ->contains(['komputer', 'jaringan', 'tkj'])
                 ? 'Teknik Jaringan Komputer dan Telekomunikasi'
                 : $konsentrasi;
-            $tempatLahir = $student->dapodik?->tempat_lahir ?? ($student->tempat_lahir ?? '-');
-            $tanggalLahir = $student->dapodik?->tanggal_lahir ?? $student->tanggal_lahir;
+            $identityCorrection = $reprintCorrections->get($student->id);
+            $displayName = $identityCorrection?->corrected_name ?? $student->nama_lengkap;
+            $tempatLahir = $identityCorrection?->corrected_birth_place
+                ?? $student->dapodik?->tempat_lahir
+                ?? ($student->tempat_lahir ?? '-');
+            $tanggalLahir = $identityCorrection?->corrected_birth_date
+                ?? $student->dapodik?->tanggal_lahir
+                ?? $student->tanggal_lahir;
             $tanggalLahirText = $tanggalLahir
                 ? \Carbon\Carbon::parse($tanggalLahir)->locale('id')->translatedFormat('d F Y')
                 : '-';
@@ -282,7 +288,7 @@
                     <tr>
                         <td class="label">Nama Lengkap</td>
                         <td class="colon">:</td>
-                        <td>{{ \Illuminate\Support\Str::of($student->nama_lengkap)->lower()->title() }}</td>
+                        <td>{{ \Illuminate\Support\Str::of($displayName)->lower()->title() }}</td>
                     </tr>
                     <tr>
                         <td class="label">Tempat dan Tanggal Lahir</td>
