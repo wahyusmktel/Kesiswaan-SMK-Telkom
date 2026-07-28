@@ -186,4 +186,18 @@ class User extends Authenticatable implements WebAuthnAuthenticatableContract
     {
         return $this->hasOne(KantinProfile::class);
     }
+
+    public function cctvCameras()
+    {
+        return $this->belongsToMany(CctvCamera::class, 'cctv_camera_user')->withTimestamps();
+    }
+
+    public function canViewCctv(CctvCamera $camera): bool
+    {
+        if ($this->hasRole('Super Admin')) {
+            return true;
+        }
+
+        return $this->cctvCameras()->whereKey($camera->getKey())->exists();
+    }
 }

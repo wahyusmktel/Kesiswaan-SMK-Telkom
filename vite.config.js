@@ -12,6 +12,7 @@ export default defineConfig({
                 'resources/js/app.js',
                 'resources/js/landing/main.js',
                 'resources/js/news-article.js',
+                'resources/js/cctv-live.js',
             ],
             refresh: true,
         }),

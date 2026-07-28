@@ -9,10 +9,14 @@ use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\SecurityController;
 use App\Http\Controllers\Api\SiswaController;
 use App\Http\Controllers\Api\TeacherController;
+use App\Http\Controllers\Api\CctvGatewayAuthController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/general/master-data', [GeneralController::class, 'getMasterData']);
+Route::post('/cctv/gateway/auth', CctvGatewayAuthController::class)
+    ->middleware('throttle:300,1')
+    ->name('api.cctv.gateway.auth');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);

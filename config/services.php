@@ -47,4 +47,14 @@ return [
         'api_key' => env('WHATSAPP_GATEWAY_API_KEY'),
     ],
 
+    'cctv' => [
+        'mediamtx_api_url' => env('CCTV_MEDIAMTX_API_URL', 'http://127.0.0.1:9997'),
+        'mediamtx_api_user' => env('CCTV_MEDIAMTX_API_USER'),
+        'mediamtx_api_password' => env('CCTV_MEDIAMTX_API_PASSWORD'),
+        'hls_base_url' => env('CCTV_HLS_BASE_URL', 'http://127.0.0.1:8888'),
+        'gateway_auth_key' => env('CCTV_GATEWAY_AUTH_KEY'),
+        'playback_token_secret' => env('CCTV_PLAYBACK_TOKEN_SECRET', env('APP_KEY')),
+        'playback_token_ttl' => env('CCTV_PLAYBACK_TOKEN_TTL', 900),
+    ],
+
 ];

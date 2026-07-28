@@ -4,6 +4,8 @@ use App\Jobs\SyncFingerprintAttendancesJob;
 use App\Models\FingerprintAutoSyncSetting;
 use App\Models\FingerprintDevice;
 use App\Models\FingerprintUser;
+use App\Models\CctvCamera;
+use App\Services\MediaMtxService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -111,3 +113,29 @@ Artisan::command('fingerprint:auto-sync', function () {
 })->purpose('Dispatch scheduled fingerprint attendance sync jobs');
 
 Schedule::command('fingerprint:auto-sync')->everyMinute()->withoutOverlapping();
+
+Artisan::command('cctv:sync', function (MediaMtxService $mediaMtx) {
+    $success = 0;
+    $failed = 0;
+
+    CctvCamera::active()->each(function (CctvCamera $camera) use ($mediaMtx, &$success, &$failed) {
+        try {
+            $mediaMtx->sync($camera);
+            $success++;
+        } catch (Throwable $exception) {
+            $camera->forceFill([
+                'last_sync_status' => 'failed',
+                'last_sync_message' => 'Gateway tidak dapat menerapkan konfigurasi.',
+                'last_synced_at' => now(),
+            ])->save();
+            report($exception);
+            $failed++;
+        }
+    });
+
+    $this->line("Sinkronisasi CCTV selesai: {$success} berhasil, {$failed} gagal.");
+
+    return $failed > 0 ? 1 : 0;
+})->purpose('Synchronize active CCTV paths to MediaMTX');
+
+Schedule::command('cctv:sync')->everyFiveMinutes()->withoutOverlapping();

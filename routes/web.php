@@ -988,8 +988,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/whatsapp-gateway/logs/{log}/resend', [\App\Http\Controllers\Admin\WhatsappGatewayController::class, 'resendLog'])->name('whatsapp-gateway.logs.resend');
         Route::delete('/whatsapp-gateway/logs/clear', [\App\Http\Controllers\Admin\WhatsappGatewayController::class, 'clearLogs'])->name('whatsapp-gateway.logs.clear');
         Route::post('/whatsapp-gateway/templates', [\App\Http\Controllers\Admin\WhatsappGatewayController::class, 'saveTemplates'])->name('whatsapp-gateway.templates.save');
+
+        // CCTV internal sekolah
+        Route::get('/cctv', [\App\Http\Controllers\Admin\CctvCameraController::class, 'index'])->name('cctv.index');
+        Route::post('/cctv', [\App\Http\Controllers\Admin\CctvCameraController::class, 'store'])->name('cctv.store');
+        Route::put('/cctv/{camera}', [\App\Http\Controllers\Admin\CctvCameraController::class, 'update'])->name('cctv.update');
+        Route::delete('/cctv/{camera}', [\App\Http\Controllers\Admin\CctvCameraController::class, 'destroy'])->name('cctv.destroy');
+        Route::post('/cctv/{camera}/sync', [\App\Http\Controllers\Admin\CctvCameraController::class, 'sync'])->name('cctv.sync');
+        Route::post('/cctv-sync-all', [\App\Http\Controllers\Admin\CctvCameraController::class, 'syncAll'])->name('cctv.sync-all');
     });
 });
+
+Route::middleware(['auth', 'verified', 'non.student'])
+    ->prefix('cctv-live')
+    ->name('cctv-live.')
+    ->group(function () {
+        Route::get('/', [\App\Http\Controllers\CctvLiveController::class, 'index'])->name('index');
+        Route::post('/{camera}/token', [\App\Http\Controllers\CctvLiveController::class, 'token'])
+            ->middleware('throttle:30,1')
+            ->name('token');
+    });
 
 // =========================================================
 // STELLA AI (Semua Role)

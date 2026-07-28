@@ -407,6 +407,19 @@
 
     @if(session('active_role') == 'Super Admin')
     <li>
+        <a href="{{ route('super-admin.cctv.index') }}" title="Manajemen CCTV"
+            class="nav-link {{ request()->routeIs('super-admin.cctv.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 10l4.5-2.5v9L15 14m-9 4h7a2 2 0 002-2V8a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+            </div>
+            <span class="nav-text">Manajemen CCTV</span>
+            <span class="nav-badge ml-auto rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-black text-red-700">LIVE</span>
+        </a>
+    </li>
+    <li>
         <a href="{{ route('super-admin.whatsapp-gateway.index') }}" title="WhatsApp Gateway"
             class="nav-link {{ request()->routeIs('super-admin.whatsapp-gateway.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
             <div class="nav-icon-container">
@@ -2884,6 +2897,12 @@
 {{-- ============================================================ --}}
 @php
     $activeNavigationRole = session('active_role') ?: auth()->user()?->getRoleNames()->first();
+    $canViewCctv = false;
+    if (!in_array(\Illuminate\Support\Str::lower((string) $activeNavigationRole), ['siswa', 'student'], true)
+        && \Illuminate\Support\Facades\Schema::hasTable('cctv_cameras')) {
+        $canViewCctv = auth()->user()?->hasRole('Super Admin')
+            || auth()->user()?->cctvCameras()->where('is_active', true)->exists();
+    }
 @endphp
 @if(!in_array(\Illuminate\Support\Str::lower((string) $activeNavigationRole), ['siswa', 'student'], true))
 <div class="section-title">Kinerja Sekolah</div>
@@ -2898,6 +2917,23 @@
         </div>
         <span class="nav-text">Manajemen OKR</span>
         <span class="nav-badge bg-emerald-100 text-emerald-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">NEW</span>
+    </a>
+</li>
+@endif
+
+@if($canViewCctv)
+<div class="section-title">Keamanan Sekolah</div>
+<li>
+    <a href="{{ route('cctv-live.index') }}"
+        class="nav-link {{ request()->routeIs('cctv-live.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+        <div class="nav-icon-container">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 10l4.5-2.5v9L15 14m-9 4h7a2 2 0 002-2V8a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+        </div>
+        <span class="nav-text">CCTV Live</span>
+        <span class="nav-badge ml-auto rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-black text-emerald-700">LIVE</span>
     </a>
 </li>
 @endif
