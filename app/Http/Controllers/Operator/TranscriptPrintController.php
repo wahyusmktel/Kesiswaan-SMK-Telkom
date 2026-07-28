@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\DigitalDocument;
 use App\Models\MasterSiswa;
 use App\Models\Rombel;
+use App\Models\TahunPelajaran;
 use App\Models\TranscriptConfig;
 use App\Models\TranscriptNumber;
 use App\Models\TranscriptSubject;
@@ -21,21 +22,51 @@ class TranscriptPrintController extends Controller
 {
     public function index(Request $request)
     {
-        $rombels = $this->finalRombels()->get();
-        $selectedRombel = $request->filled('rombel_id')
-            ? Rombel::with(['kelas', 'siswa.dapodik', 'siswa.transcriptDiplomaNumber'])->find($request->rombel_id)
+        $mode = $request->string('mode')->toString() === 'alumni' ? 'alumni' : 'active';
+        $graduationPeriods = $this->graduationPeriods();
+        $selectedGraduationPeriod = $mode === 'alumni'
+            ? $graduationPeriods->firstWhere('id', $request->integer('graduation_period_id')) ?? $graduationPeriods->first()
             : null;
+
+        $rombels = $this->finalRombels()
+            ->when(
+                $mode === 'alumni',
+                fn ($query) => $query->where('tahun_pelajaran_id', $selectedGraduationPeriod?->id ?? 0),
+                fn ($query) => $query->whereHas('tahunPelajaran', fn ($period) => $period->where('is_active', true))
+            )
+            ->get();
+
+        $selectedRombel = $request->filled('rombel_id')
+            ? $rombels->firstWhere('id', $request->integer('rombel_id'))
+            : null;
+
+        if ($selectedRombel) {
+            $selectedRombel->load(['kelas', 'tahunPelajaran', 'siswa.dapodik', 'siswa.transcriptDiplomaNumber', 'siswa.transcriptNumber']);
+        }
 
         $students = $selectedRombel
             ? $selectedRombel->siswa->sortBy('nama_lengkap')->values()
             : collect();
 
-        return view('pages.operator.transcript.print', compact('rombels', 'selectedRombel', 'students'));
+        return view('pages.operator.transcript.print', compact(
+            'mode',
+            'graduationPeriods',
+            'selectedGraduationPeriod',
+            'rombels',
+            'selectedRombel',
+            'students'
+        ));
     }
 
     public function student(Request $request, MasterSiswa $student)
     {
         $student->load(['dapodik', 'rombels.kelas', 'transcriptDiplomaNumber', 'transcriptGrades.subject']);
+        $printRombel = $request->filled('rombel_id')
+            ? $student->rombels->firstWhere('id', $request->integer('rombel_id'))
+            : null;
+
+        abort_if($request->filled('rombel_id') && ! $printRombel, 404);
+
         $config = TranscriptConfig::firstOrCreate([]);
         $subjects = $this->subjects()->get();
         $transcriptNumbers = $this->transcriptNumbers(collect([$student]), $config);
@@ -49,17 +80,27 @@ class TranscriptPrintController extends Controller
             'transcriptQrCodes' => $transcriptQrCodes,
             'letterheadDataUri' => $this->dataUri($config->letterhead_path),
             'watermarkDataUri' => $this->dataUri($config->watermark_path),
+            'printRombel' => $printRombel,
             'single' => true,
         ])->setPaper($this->paper($config), 'portrait');
 
-        return $pdf->stream('Transkrip_' . str($student->nama_lengkap)->slug('_') . '.pdf');
+        return $pdf->stream('Transkrip_'.str($student->nama_lengkap)->slug('_').'.pdf');
     }
 
     public function classroom(Request $request)
     {
-        $data = $request->validate(['rombel_id' => 'required|exists:rombels,id']);
+        $data = $request->validate([
+            'rombel_id' => 'required|exists:rombels,id',
+            'graduation_period_id' => 'nullable|exists:tahun_pelajaran,id',
+        ]);
         $rombel = Rombel::with(['kelas', 'siswa.dapodik', 'siswa.rombels.kelas', 'siswa.transcriptDiplomaNumber', 'siswa.transcriptGrades.subject'])
             ->findOrFail($data['rombel_id']);
+
+        abort_if(
+            isset($data['graduation_period_id']) && $rombel->tahun_pelajaran_id !== (int) $data['graduation_period_id'],
+            404
+        );
+
         $config = TranscriptConfig::firstOrCreate([]);
         $subjects = $this->subjects()->get();
         $students = $rombel->siswa->sortBy('nama_lengkap')->values();
@@ -74,21 +115,36 @@ class TranscriptPrintController extends Controller
             'transcriptQrCodes' => $transcriptQrCodes,
             'letterheadDataUri' => $this->dataUri($config->letterhead_path),
             'watermarkDataUri' => $this->dataUri($config->watermark_path),
+            'printRombel' => $rombel,
             'single' => false,
         ])->setPaper($this->paper($config), 'portrait');
 
-        return $pdf->stream('Transkrip_' . str($rombel->kelas?->nama_kelas ?? 'kelas')->slug('_') . '.pdf');
+        return $pdf->stream('Transkrip_'.str($rombel->kelas?->nama_kelas ?? 'kelas')->slug('_').'.pdf');
     }
 
     private function finalRombels()
     {
-        return Rombel::with('kelas')
+        return Rombel::with(['kelas', 'tahunPelajaran'])
             ->whereHas('kelas', function ($query) {
                 $query->where('nama_kelas', 'like', '%XII%')
                     ->orWhere('nama_kelas', 'like', '%12%');
             })
             ->orderByDesc('tahun_ajaran')
             ->orderBy('kelas_id');
+    }
+
+    private function graduationPeriods(): Collection
+    {
+        $periodIds = $this->finalRombels()
+            ->whereHas('tahunPelajaran', fn ($query) => $query
+                ->where('semester', 'Genap')
+                ->where('is_active', false))
+            ->pluck('tahun_pelajaran_id')
+            ->unique();
+
+        return TahunPelajaran::whereIn('id', $periodIds)
+            ->orderByDesc('tahun')
+            ->get();
     }
 
     private function subjects()
@@ -118,7 +174,7 @@ class TranscriptPrintController extends Controller
         $absolutePath = Storage::disk('public')->path($path);
         $mime = mime_content_type($absolutePath) ?: 'image/png';
 
-        return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($absolutePath));
+        return 'data:'.$mime.';base64,'.base64_encode(file_get_contents($absolutePath));
     }
 
     private function transcriptNumbers(Collection $students, TranscriptConfig $config): array
@@ -160,7 +216,7 @@ class TranscriptPrintController extends Controller
 
     private function nextAvailableTranscriptSequence(array $parsed): int
     {
-        $max = TranscriptNumber::where('number', 'like', $parsed['prefix'] . '%')
+        $max = TranscriptNumber::where('number', 'like', $parsed['prefix'].'%')
             ->pluck('number')
             ->map(fn ($number) => $this->extractTranscriptSequence($number, $parsed))
             ->filter()
@@ -171,14 +227,14 @@ class TranscriptPrintController extends Controller
 
     private function extractTranscriptSequence(string $number, array $parsed): ?int
     {
-        $pattern = '/^' . preg_quote($parsed['prefix'], '/') . '(\d+)/';
+        $pattern = '/^'.preg_quote($parsed['prefix'], '/').'(\d+)/';
 
         return preg_match($pattern, $number, $matches) ? (int) $matches[1] : null;
     }
 
     private function formatTranscriptNumber(array $parsed, int $number, string $suffix): string
     {
-        return $parsed['prefix'] . str_pad((string) $number, $parsed['width'], '0', STR_PAD_LEFT) . $suffix;
+        return $parsed['prefix'].str_pad((string) $number, $parsed['width'], '0', STR_PAD_LEFT).$suffix;
     }
 
     private function transcriptQrCodes(Collection $students, Collection $subjects, TranscriptConfig $config, array $transcriptNumbers): array
@@ -206,7 +262,7 @@ class TranscriptPrintController extends Controller
                 ->first();
 
             $signerData = [
-                'document_title' => 'Transkrip Nilai - ' . ($student->nama_lengkap ?? 'Siswa'),
+                'document_title' => 'Transkrip Nilai - '.($student->nama_lengkap ?? 'Siswa'),
                 'document_hash' => $hash,
                 'hmac_signature' => $hmac,
                 'signed_by' => $signature->user->id,
@@ -239,7 +295,7 @@ class TranscriptPrintController extends Controller
     {
         $gradeMap = $student->transcriptGrades->keyBy('transcript_subject_id');
         $gradeParts = $subjects
-            ->map(fn ($subject) => $subject->id . ':' . ($gradeMap->get($subject->id)?->score ?? '-'))
+            ->map(fn ($subject) => $subject->id.':'.($gradeMap->get($subject->id)?->score ?? '-'))
             ->values()
             ->all();
 

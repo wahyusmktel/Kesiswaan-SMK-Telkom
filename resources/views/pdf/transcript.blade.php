@@ -218,7 +218,7 @@
             $averageScore = $validScores->count()
                 ? $validScores->sum(fn($score) => (float) $score) / $validScores->count()
                 : null;
-            $kelasModel = $student->rombels->first()?->kelas;
+            $kelasModel = $printRombel?->kelas ?? $student->rombels->first()?->kelas;
             $konsentrasi = $kelasModel?->jurusan ?? 'Teknik Komputer dan Jaringan';
             $program = str($konsentrasi)
                 ->lower()
