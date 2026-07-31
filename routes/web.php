@@ -88,6 +88,16 @@ Route::get('auth/google/callback', [GoogleController::class, 'handleGoogleCallba
 Route::get('auth/sso/redirect', [SsoLoginController::class, 'redirect'])->name('auth.sso.redirect');
 Route::get('auth/sso/callback', [SsoLoginController::class, 'callback'])->name('auth.sso.callback');
 
+Route::domain(config('sso.domain'))->group(function () {
+    Route::get('/masuk', [\App\Http\Controllers\Auth\SsoProviderLoginController::class, 'create'])->name('sso.login');
+    Route::post('/masuk', [\App\Http\Controllers\Auth\SsoProviderLoginController::class, 'store'])
+        ->middleware('throttle:10,1')
+        ->name('sso.login.store');
+    Route::get('/auth/google', [\App\Http\Controllers\Auth\SsoProviderLoginController::class, 'redirectToGoogle'])->name('sso.google.redirect');
+    Route::get('/auth/google/callback', [\App\Http\Controllers\Auth\SsoProviderLoginController::class, 'handleGoogleCallback'])->name('sso.google.callback');
+    Route::post('/keluar', [\App\Http\Controllers\Auth\SsoProviderLoginController::class, 'destroy'])->name('sso.logout');
+});
+
 Route::get('/verifikasi/surat/{uuid}', [VerifikasiController::class, 'show'])->name('verifikasi.surat');
 Route::get('/verifikasi/kartu/{nis}', [VerifikasiController::class, 'kartuPelajar'])->name('verifikasi.kartu');
 
@@ -932,6 +942,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Grup Route untuk Super Admin
     Route::middleware(['role:Super Admin'])->prefix('super-admin')->name('super-admin.')->group(function () {
+        Route::get('/aplikasi-sso', [\App\Http\Controllers\Admin\SsoApplicationController::class, 'index'])->name('sso-applications.index');
+        Route::post('/aplikasi-sso', [\App\Http\Controllers\Admin\SsoApplicationController::class, 'store'])->name('sso-applications.store');
+        Route::put('/aplikasi-sso/{ssoApplication}', [\App\Http\Controllers\Admin\SsoApplicationController::class, 'update'])->name('sso-applications.update');
+        Route::patch('/aplikasi-sso/{ssoApplication}/status', [\App\Http\Controllers\Admin\SsoApplicationController::class, 'toggle'])->name('sso-applications.toggle');
+        Route::post('/aplikasi-sso/{ssoApplication}/secret', [\App\Http\Controllers\Admin\SsoApplicationController::class, 'regenerateSecret'])->name('sso-applications.secret');
+        Route::delete('/aplikasi-sso/{ssoApplication}', [\App\Http\Controllers\Admin\SsoApplicationController::class, 'destroy'])->name('sso-applications.destroy');
         Route::get('/dashboard', [\App\Http\Controllers\Admin\SuperAdminDashboardController::class, 'index'])->name('dashboard.index');
         Route::get('/settings', [SuperAdminController::class, 'settings'])->name('settings');
         Route::post('/settings', [SuperAdminController::class, 'updateSettings'])->name('settings.update');

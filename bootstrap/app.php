@@ -18,7 +18,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\HandleActiveRole::class,
         ]);
-        $middleware->redirectGuestsTo(fn () => route('login'));
+        $middleware->append(\App\Http\Middleware\EnsureSsoDomain::class);
+        $middleware->redirectGuestsTo(function (Request $request) {
+            if ($request->routeIs('passport.*') || strcasecmp($request->getHost(), (string) config('sso.domain')) === 0) {
+                return route('sso.login');
+            }
+
+            return route('login');
+        });
         // Daftarkan middleware alias di sini
         $middleware->alias([
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,

@@ -14,6 +14,7 @@
         "chillerlan/php-qrcode": "^6.0",
         "laragear/webauthn": "4.1",
         "laravel/framework": "^12.0",
+        "laravel/passport": "^13.7",
         "laravel/sanctum": "^4.0",
         "laravel/socialite": "^5.24",
         "laravel/tinker": "^2.10.1",
@@ -82,6 +83,9 @@
         "optimize-autoloader": true,
         "preferred-install": "dist",
         "sort-packages": true,
+        "platform": {
+            "php": "8.2.0"
+        },
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "php-http/discovery": true

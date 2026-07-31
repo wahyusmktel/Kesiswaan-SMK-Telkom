@@ -407,6 +407,18 @@
 
     @if(session('active_role') == 'Super Admin')
     <li>
+        <a href="{{ route('super-admin.sso-applications.index') }}" title="Aplikasi SSO SISFO"
+            class="nav-link {{ request()->routeIs('super-admin.sso-applications.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 13a5 5 0 007.07 0l2-2a5 5 0 00-7.07-7.07l-1.15 1.15M14 11a5 5 0 00-7.07 0l-2 2A5 5 0 0012 20.07l1.15-1.15" />
+                </svg>
+            </div>
+            <span class="nav-text">Aplikasi SSO</span>
+            <span class="nav-badge ml-auto rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-black text-blue-700">OAUTH</span>
+        </a>
+    </li>
+    <li>
         <a href="{{ route('super-admin.cctv.index') }}" title="Manajemen CCTV"
             class="nav-link {{ request()->routeIs('super-admin.cctv.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
             <div class="nav-icon-container">

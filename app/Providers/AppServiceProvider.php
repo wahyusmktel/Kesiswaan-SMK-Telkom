@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\URL;
+use Laravel\Passport\Passport;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -20,6 +21,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Passport::authorizationView('auth.sso.authorize');
+        Passport::tokensCan([
+            'profile:read' => 'Membaca identitas dasar, email, foto profil, dan peran akun SISFO.',
+        ]);
+        Passport::setDefaultScope(['profile:read']);
+        Passport::tokensExpireIn(now()->addHour());
+        Passport::refreshTokensExpireIn(now()->addDays(30));
+
         if (config('app.env') !== 'local') {
             URL::forceScheme('https');
         }
