@@ -35,10 +35,11 @@ Kunci `storage/oauth-private.key` wajib hanya dapat dibaca user web server. Jang
 Jangan menjalankan `passport:keys --force` pada deployment rutin karena rotasi kunci akan membuat seluruh access token yang masih aktif tidak dapat diverifikasi.
 
 ```bash
-sudo chown www-data:www-data storage/oauth-private.key storage/oauth-public.key
-sudo chmod 600 storage/oauth-private.key
-sudo chmod 644 storage/oauth-public.key
+sudo chown wahyurah55:www-data storage/oauth-private.key storage/oauth-public.key
+sudo chmod 640 storage/oauth-private.key storage/oauth-public.key
 ```
+
+Permission `640` diterima oleh OAuth server serta memungkinkan user deployment sebagai pemilik dan PHP-FPM melalui grup `www-data` membaca kedua kunci. Hindari `644` karena versi `league/oauth2-server` yang digunakan akan memperingatkan bahwa permission tersebut tidak aman dan Laravel dapat mengubah peringatan itu menjadi exception.
 
 Tambahkan ke `.env` produksi:
 
@@ -80,10 +81,13 @@ server {
 
     location ~ \.php$ {
         include snippets/fastcgi-php.conf;
+        fastcgi_param HTTP_AUTHORIZATION $http_authorization;
         fastcgi_pass unix:/run/php/php8.3-fpm.sock;
     }
 }
 ```
+
+`HTTP_AUTHORIZATION` wajib diteruskan ke PHP-FPM agar access token Bearer dapat dibaca oleh Passport pada endpoint `/api/sso/user`.
 
 Validasi lalu reload:
 
