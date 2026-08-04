@@ -580,6 +580,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Route Sertifikat Siswa
         Route::resource('certificates', \App\Http\Controllers\SiswaCertificateController::class)->except(['show']);
 
+        // Route Pameran Karya & Keahlian Siswa (Showcase)
+        Route::prefix('showcase')->name('showcase.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\SiswaShowcaseController::class, 'index'])->name('index');
+            
+            // Skills
+            Route::get('/skill/create', [\App\Http\Controllers\SiswaShowcaseController::class, 'createSkill'])->name('skill.create');
+            Route::post('/skill', [\App\Http\Controllers\SiswaShowcaseController::class, 'storeSkill'])->name('skill.store');
+            Route::get('/skill/{skill}/edit', [\App\Http\Controllers\SiswaShowcaseController::class, 'editSkill'])->name('skill.edit');
+            Route::put('/skill/{skill}', [\App\Http\Controllers\SiswaShowcaseController::class, 'updateSkill'])->name('skill.update');
+            Route::delete('/skill/{skill}', [\App\Http\Controllers\SiswaShowcaseController::class, 'destroySkill'])->name('skill.destroy');
+            
+            // Projects
+            Route::get('/project/create', [\App\Http\Controllers\SiswaShowcaseController::class, 'createProject'])->name('project.create');
+            Route::post('/project', [\App\Http\Controllers\SiswaShowcaseController::class, 'storeProject'])->name('project.store');
+            Route::get('/project/{project}/edit', [\App\Http\Controllers\SiswaShowcaseController::class, 'editProject'])->name('project.edit');
+            Route::put('/project/{project}', [\App\Http\Controllers\SiswaShowcaseController::class, 'updateProject'])->name('project.update');
+            Route::delete('/project/{project}', [\App\Http\Controllers\SiswaShowcaseController::class, 'destroyProject'])->name('project.destroy');
+        });
+
         // Chat
         Route::get('/chat', [\App\Http\Controllers\BK\ChatController::class, 'index'])->name('chat.index');
         Route::get('/chat/start/{guru}', [\App\Http\Controllers\BK\ChatController::class, 'startChat'])->name('chat.start');
