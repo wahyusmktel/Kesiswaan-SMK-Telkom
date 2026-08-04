@@ -146,6 +146,7 @@ class LandingPageController extends Controller
                 'digireligi' => route('digireligi'),
                 'gallery' => route('gallery-photo.index'),
                 'forum' => route('forum-stella.index'),
+                'showcase' => route('public.showcase.index'),
                 'login' => route('login'),
                 'dashboard' => url('/dashboard'),
                 'privacy' => route('privacy'),
