@@ -19,7 +19,7 @@ class PublicShowcaseController extends Controller
             $q->orderBy('percentage', 'desc');
         }, 'siswaProjects' => function($q) {
             $q->latest();
-        }, 'masterSiswa.jurusan']);
+        }, 'masterSiswa.rombels.kelas']);
 
         if ($search) {
             $studentsQuery->where(function($q) use ($search) {
@@ -36,11 +36,14 @@ class PublicShowcaseController extends Controller
         if ($request->wantsJson()) {
             // Format the items slightly to make them easier for Vue to consume
             $formattedStudents = $students->through(function($student) {
+                $latestRombel = $student->masterSiswa?->rombels->last();
+                $jurusan = $latestRombel?->kelas?->jurusan ?? 'Siswa SMK Telkom';
+                
                 return [
                     'id' => $student->id,
                     'name' => $student->name,
                     'avatar' => $student->avatar ? \Storage::url($student->avatar) : null,
-                    'jurusan' => $student->masterSiswa?->jurusan?->nama_jurusan ?? 'Siswa SMK Telkom',
+                    'jurusan' => $jurusan,
                     'skills' => $student->siswaSkills->take(3)->map(fn($s) => ['name' => $s->name, 'percentage' => $s->percentage]),
                     'skills_count' => $student->siswaSkills->count(),
                     'projects_count' => $student->siswaProjects->count(),
@@ -74,7 +77,7 @@ class PublicShowcaseController extends Controller
             $q->orderBy('percentage', 'desc');
         }, 'siswaProjects' => function($q) {
             $q->latest();
-        }])->findOrFail($id);
+        }, 'masterSiswa.rombels.kelas'])->findOrFail($id);
 
         return view('public.showcase.show', compact('student'));
     }

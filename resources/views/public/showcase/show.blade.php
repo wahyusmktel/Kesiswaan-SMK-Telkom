@@ -38,11 +38,11 @@
                         </div>
                         
                         <h2 class="text-2xl font-black text-gray-900 mb-1 leading-tight">{{ $student->name }}</h2>
-                        @if($student->masterSiswa && $student->masterSiswa->jurusan)
-                            <p class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-6">{{ $student->masterSiswa->jurusan->nama_jurusan }}</p>
-                        @else
-                            <p class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-6">Siswa SMK Telkom</p>
-                        @endif
+                        @php
+                            $latestRombel = $student->masterSiswa?->rombels->last();
+                            $jurusan = $latestRombel?->kelas?->jurusan ?? 'Siswa SMK Telkom';
+                        @endphp
+                        <p class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-6">{{ $jurusan }}</p>
                         
                         <div class="flex gap-4 border-t border-gray-100 pt-6">
                             <div class="flex-1">
