@@ -11,14 +11,15 @@ class PublicShowcaseController extends Controller
     {
         $search = $request->input('search');
 
-        // Retrieve users who have either skills or projects
         $studentsQuery = User::whereHas('roles', function($q) {
             $q->whereIn('name', ['Siswa', 'siswa']);
         })->where(function($q) {
             $q->has('siswaSkills')->orHas('siswaProjects');
         })->with(['siswaSkills' => function($q) {
             $q->orderBy('percentage', 'desc');
-        }, 'siswaProjects']);
+        }, 'siswaProjects' => function($q) {
+            $q->latest();
+        }, 'masterSiswa.jurusan']);
 
         if ($search) {
             $studentsQuery->where(function($q) use ($search) {
@@ -30,8 +31,39 @@ class PublicShowcaseController extends Controller
         }
 
         $students = $studentsQuery->paginate(12)->withQueryString();
+        
+        // Return JSON for Vue API calls
+        if ($request->wantsJson()) {
+            // Format the items slightly to make them easier for Vue to consume
+            $formattedStudents = $students->through(function($student) {
+                return [
+                    'id' => $student->id,
+                    'name' => $student->name,
+                    'avatar' => $student->avatar ? \Storage::url($student->avatar) : null,
+                    'jurusan' => $student->masterSiswa?->jurusan?->nama_jurusan ?? 'Siswa SMK Telkom',
+                    'skills' => $student->siswaSkills->take(3)->map(fn($s) => ['name' => $s->name, 'percentage' => $s->percentage]),
+                    'skills_count' => $student->siswaSkills->count(),
+                    'projects_count' => $student->siswaProjects->count(),
+                    'url' => route('public.showcase.show', $student->id)
+                ];
+            });
+            return response()->json([
+                'data' => $formattedStudents->items(),
+                'links' => $formattedStudents->linkCollection(),
+                'current_page' => $formattedStudents->currentPage(),
+                'last_page' => $formattedStudents->lastPage(),
+            ]);
+        }
 
-        return view('public.showcase.index', compact('students', 'search'));
+        // Generate the payload for initial render
+        $payload = [
+            'routes' => [
+                'home' => url('/'),
+                'api_search' => route('public.showcase.index'),
+            ]
+        ];
+
+        return view('public.showcase.index', compact('payload'));
     }
 
     public function show($id)

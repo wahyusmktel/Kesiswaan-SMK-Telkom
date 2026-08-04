@@ -11,6 +11,7 @@ export default defineConfig({
                 'resources/css/authentication.css',
                 'resources/js/app.js',
                 'resources/js/landing/main.js',
+                'resources/js/showcase/main.js',
                 'resources/js/news-article.js',
                 'resources/js/cctv-live.js',
             ],
