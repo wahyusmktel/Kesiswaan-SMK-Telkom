@@ -217,6 +217,11 @@ Route::middleware(['auth'])->prefix('notted')->name('notted.')->group(function (
 
 Route::get('/', [\App\Http\Controllers\Public\LandingPageController::class, 'index'])->name('welcome');
 
+// Public Student Showcase Directory
+Route::prefix('showcase')->name('public.showcase.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\PublicShowcaseController::class, 'index'])->name('index');
+    Route::get('/{id}', [\App\Http\Controllers\PublicShowcaseController::class, 'show'])->name('show');
+});
 // Happiness Meter (Public API)
 Route::prefix('api/happiness')->name('happiness.')->group(function () {
     Route::post('/check', [App\Http\Controllers\HappinessMetricController::class, 'checkStatus'])->name('check');

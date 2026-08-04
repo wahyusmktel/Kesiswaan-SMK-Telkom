@@ -147,6 +147,16 @@ class User extends Authenticatable implements WebAuthnAuthenticatableContract
         return $this->hasMany(NotaDinas::class, 'user_id');
     }
 
+    public function siswaSkills()
+    {
+        return $this->hasMany(SiswaSkill::class);
+    }
+
+    public function siswaProjects()
+    {
+        return $this->hasMany(SiswaProject::class);
+    }
+
     public function sendPasswordResetNotification($token)
     {
         $this->notify(new \App\Notifications\CustomResetPasswordNotification($token));
