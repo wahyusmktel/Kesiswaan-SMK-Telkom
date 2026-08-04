@@ -577,6 +577,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/bk', [\App\Http\Controllers\Siswa\BKController::class, 'index'])->name('bk.index');
         Route::post('/bk/jadwal', [\App\Http\Controllers\Siswa\BKController::class, 'storeJadwal'])->name('bk.jadwal.store');
 
+        // Route Sertifikat Siswa
+        Route::resource('certificates', \App\Http\Controllers\SiswaCertificateController::class)->except(['show']);
+
         // Chat
         Route::get('/chat', [\App\Http\Controllers\BK\ChatController::class, 'index'])->name('chat.index');
         Route::get('/chat/start/{guru}', [\App\Http\Controllers\BK\ChatController::class, 'startChat'])->name('chat.start');
