@@ -99,6 +99,7 @@ const navItems = computed(() => [
     { label: 'DigiReligi', href: props.payload.routes.digireligi },
     { label: 'Gallery Photo', href: props.payload.routes.gallery },
     { label: 'Forum Stella', href: props.payload.routes.forum },
+    { label: 'Showcase Siswa', href: props.payload.routes.showcase },
 ]);
 
 const currentSlide = ref(0);
