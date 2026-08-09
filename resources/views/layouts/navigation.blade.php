@@ -338,6 +338,20 @@
             <span class="nav-text">Popup Halaman Utama</span>
         </a>
     </li>
+    @if(session('active_role') == 'Super Admin')
+    <li>
+        <a href="{{ route('super-admin.spmb-fees.index') }}" title="Kelola Pembiayaan SPMB"
+            class="nav-link {{ request()->routeIs('super-admin.spmb-fees.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m3-9.5c-.7-.9-1.7-1.5-3-1.5-1.7 0-3 1-3 2.3 0 1.5 1.3 2.1 3 2.7s3 1.2 3 2.7c0 1.3-1.3 2.3-3 2.3-1.3 0-2.5-.6-3.2-1.6M4 4h16v16H4z" />
+                </svg>
+            </div>
+            <span class="nav-text">Pembiayaan SPMB</span>
+            <span class="nav-badge ml-auto rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-black text-emerald-700">API</span>
+        </a>
+    </li>
+    @endif
     <li>
         <a href="{{ route('super-admin.landing-page.index') }}"
             class="nav-link {{ request()->routeIs('super-admin.landing-page.*') ? 'nav-link-active' : 'nav-link-inactive' }}">

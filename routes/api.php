@@ -11,10 +11,14 @@ use App\Http\Controllers\Api\SiswaController;
 use App\Http\Controllers\Api\TeacherController;
 use App\Http\Controllers\Api\CctvGatewayAuthController;
 use App\Http\Controllers\Api\SsoUserInfoController;
+use App\Http\Controllers\Api\SpmbFeeApiController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/general/master-data', [GeneralController::class, 'getMasterData']);
+Route::get('/spmb/fees', SpmbFeeApiController::class)
+    ->middleware('throttle:120,1')
+    ->name('api.spmb.fees');
 Route::post('/cctv/gateway/auth', CctvGatewayAuthController::class)
     ->middleware('throttle:300,1')
     ->name('api.cctv.gateway.auth');

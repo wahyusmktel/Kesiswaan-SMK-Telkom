@@ -953,6 +953,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/settings', [SuperAdminController::class, 'updateSettings'])->name('settings.update');
         Route::get('/landing-popup', [LandingPopupController::class, 'edit'])->name('landing-popup.edit');
         Route::put('/landing-popup', [LandingPopupController::class, 'update'])->name('landing-popup.update');
+        Route::get('/spmb/biaya', [\App\Http\Controllers\Admin\SpmbFeeController::class, 'index'])->name('spmb-fees.index');
+        Route::put('/spmb/biaya/pengaturan', [\App\Http\Controllers\Admin\SpmbFeeController::class, 'updateSettings'])->name('spmb-fees.settings.update');
+        Route::post('/spmb/biaya', [\App\Http\Controllers\Admin\SpmbFeeController::class, 'store'])->name('spmb-fees.store');
+        Route::put('/spmb/biaya/{spmbFee}', [\App\Http\Controllers\Admin\SpmbFeeController::class, 'update'])->name('spmb-fees.update');
+        Route::delete('/spmb/biaya/{spmbFee}', [\App\Http\Controllers\Admin\SpmbFeeController::class, 'destroy'])->name('spmb-fees.destroy');
         Route::get('/landing-page', [\App\Http\Controllers\Admin\LandingPageManagementController::class, 'index'])->name('landing-page.index');
         Route::post('/landing-page/slides', [\App\Http\Controllers\Admin\LandingPageManagementController::class, 'storeSlide'])->name('landing-page.slides.store');
         Route::put('/landing-page/slides/{slide}', [\App\Http\Controllers\Admin\LandingPageManagementController::class, 'updateSlide'])->name('landing-page.slides.update');

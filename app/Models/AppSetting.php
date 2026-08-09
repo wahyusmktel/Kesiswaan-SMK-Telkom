@@ -15,6 +15,7 @@ class AppSetting extends Model
         'email',
         'address',
         'allow_registration',
+        'spmb_academic_year',
         'theme',
         'transformasi_slider_images',
         'landing_popup_enabled',
