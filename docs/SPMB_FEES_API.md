@@ -33,7 +33,7 @@ Menu **Pembiayaan SPMB** tersedia pada navigasi role aktif Super Admin. Migratio
 Isi `.env` proyek landing page:
 
 ```env
-PUBLIC_SISFO_FEES_API_URL=https://sisfo.smktelkom-lpg.sch.id/api/spmb/fees
+PUBLIC_SISFO_FEES_API_URL=https://sisfo.smktelkom-lpg.id/api/spmb/fees
 ```
 
 Jalankan `npm run build`, lalu unggah ulang isi folder `dist`. Landing page mengambil data terbaru saat halaman dibuka dan mempertahankan data cadangan jika API tidak dapat dihubungi.
