@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Symfony\Component\Process\Process;
 use Throwable;
+use ZipArchive;
 
 class TranscriptPrintController extends Controller
 {
@@ -170,6 +171,105 @@ class TranscriptPrintController extends Controller
             'Transkrip_'.str($rombel->kelas?->nama_kelas ?? 'kelas')->slug('_').'.pdf',
             $config
         );
+    }
+
+    public function classroomZip(Request $request)
+    {
+        $data = $request->validate([
+            'rombel_id' => 'required|exists:rombels,id',
+            'graduation_period_id' => 'nullable|exists:tahun_pelajaran,id',
+        ]);
+        $rombel = Rombel::with(['kelas', 'tahunPelajaran', 'siswa.dapodik', 'siswa.rombels.kelas', 'siswa.transcriptDiplomaNumber', 'siswa.transcriptGrades.subject'])
+            ->findOrFail($data['rombel_id']);
+
+        abort_if(
+            isset($data['graduation_period_id']) && $rombel->tahun_pelajaran_id !== (int) $data['graduation_period_id'],
+            404
+        );
+        abort_if($rombel->siswa->isEmpty(), 422, 'Rombel belum memiliki siswa untuk dicetak.');
+        abort_unless(class_exists(ZipArchive::class), 500, 'Ekstensi PHP ZIP belum tersedia pada server.');
+
+        $config = TranscriptConfig::firstOrCreate([]);
+        $subjects = $this->subjects()->get();
+        $students = $rombel->siswa->sortBy('nama_lengkap')->values();
+        $reprintCorrections = $this->reprintCorrections($students, $rombel);
+        $transcriptNumbers = $this->transcriptNumbers($students, $config);
+        $transcriptQrCodes = $this->transcriptQrCodes(
+            $students,
+            $subjects,
+            $config,
+            $transcriptNumbers,
+            $reprintCorrections
+        );
+        $grayscale = $config->manual_signature_enabled && $config->scan_color_mode === 'grayscale';
+        $viewData = [
+            'config' => $config,
+            'subjects' => $subjects,
+            'transcriptNumbers' => $transcriptNumbers,
+            'transcriptQrCodes' => $transcriptQrCodes,
+            'letterheadDataUri' => $this->dataUri($config->letterhead_path, $grayscale),
+            'watermarkDataUri' => $this->dataUri($config->watermark_path, $grayscale),
+            'manualSignatureDataUri' => $config->manual_signature_enabled
+                ? $this->dataUri($config->manual_signature_path, $grayscale)
+                : null,
+            'scanTextureDataUri' => $config->manual_signature_enabled ? $this->scanTextureDataUri() : null,
+            'printRombel' => $rombel,
+            'reprintCorrections' => $reprintCorrections,
+            'single' => true,
+        ];
+
+        $directory = storage_path('app/private/transcript-zips');
+        File::ensureDirectoryExists($directory);
+        $archivePath = $directory.DIRECTORY_SEPARATOR.Str::uuid().'.zip';
+        $archive = new ZipArchive;
+
+        abort_unless($archive->open($archivePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true, 500, 'Arsip ZIP tidak dapat dibuat.');
+
+        try {
+            foreach ($students as $student) {
+                $pdf = Pdf::loadView('pdf.transcript', [
+                    ...$viewData,
+                    'students' => collect([$student]),
+                ])->setPaper($this->paper($config), 'portrait');
+                $contents = $pdf->output();
+
+                if ($config->manual_signature_enabled) {
+                    $contents = $this->rasterizeAsScan($contents, $grayscale);
+                }
+
+                $archive->addFromString(
+                    $this->zipEntryFilename($student, $reprintCorrections),
+                    $contents
+                );
+            }
+
+            if (! $archive->close()) {
+                throw new \RuntimeException('Arsip ZIP gagal diselesaikan.');
+            }
+        } catch (Throwable $exception) {
+            $archive->close();
+            File::delete($archivePath);
+
+            throw $exception;
+        }
+
+        $className = str($rombel->kelas?->nama_kelas ?? 'kelas')->slug('_');
+
+        return response()->download(
+            $archivePath,
+            'Transkrip_'.$className.'.zip',
+            ['Content-Type' => 'application/zip']
+        )->deleteFileAfterSend(true);
+    }
+
+    private function zipEntryFilename(MasterSiswa $student, Collection $reprintCorrections): string
+    {
+        $nisn = preg_replace('/\D+/', '', (string) ($student->dapodik?->nisn ?? '')) ?: 'NISN-TIDAK-TERSEDIA';
+        $name = $reprintCorrections->get($student->id)?->corrected_name ?? $student->nama_lengkap;
+        $name = preg_replace('/[\\\\\/:*?"<>|]+/u', ' ', (string) $name);
+        $name = preg_replace('/\s+/u', ' ', trim($name)) ?: 'Nama Siswa';
+
+        return $nisn.'_'.$name.'.pdf';
     }
 
     private function finalRombels()
