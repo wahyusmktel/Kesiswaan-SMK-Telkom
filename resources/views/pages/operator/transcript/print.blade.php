@@ -20,6 +20,15 @@
 
     <div class="py-8">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            @if($transcriptConfig->manual_signature_enabled)
+                <div class="mb-5 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900">
+                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-600 font-black text-white">✓</div>
+                    <div>
+                        <p class="text-sm font-black">Mode arsip scan bertanda tangan aktif</p>
+                        <p class="mt-1 text-xs font-semibold leading-relaxed text-emerald-700">PDF akan ditempeli hasil scan tanda tangan kepala sekolah dan diraster dalam mode {{ $transcriptConfig->scan_color_mode === 'grayscale' ? 'hitam putih' : 'berwarna' }}. Posisi gambar mengikuti pengaturan Config Transkrip.</p>
+                    </div>
+                </div>
+            @endif
             @if(session('success'))
                 <div class="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">
                     {{ session('success') }}

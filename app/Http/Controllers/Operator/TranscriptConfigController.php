@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\TranscriptConfig;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class TranscriptConfigController extends Controller
 {
@@ -38,10 +40,34 @@ class TranscriptConfigController extends Controller
             'margin_left' => 'nullable|numeric|min:0|max:100',
             'paper_size' => 'nullable|in:A4,F4,Letter,Legal',
             'is_borderless' => 'nullable|boolean',
+            'manual_signature_enabled' => 'nullable|boolean',
+            'manual_signature_image' => [
+                Rule::requiredIf(fn () => $request->boolean('manual_signature_enabled')
+                    && ! TranscriptConfig::query()->value('manual_signature_path')),
+                'nullable',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:15360',
+            ],
+            'manual_signature_x' => 'nullable|numeric|min:0|max:90',
+            'manual_signature_y' => 'nullable|numeric|min:0|max:92',
+            'manual_signature_width' => 'nullable|numeric|min:15|max:70',
+            'scan_color_mode' => 'required|in:color,grayscale',
         ]);
 
-        $config = TranscriptConfig::firstOrCreate([]);
         $data['is_borderless'] = $request->boolean('is_borderless');
+        $data['manual_signature_enabled'] = $request->boolean('manual_signature_enabled');
+
+        if (
+            (float) ($data['manual_signature_x'] ?? 54)
+            + (float) ($data['manual_signature_width'] ?? 43) > 100
+        ) {
+            throw ValidationException::withMessages([
+                'manual_signature_width' => 'Posisi dan lebar gambar melewati sisi kanan halaman. Geser gambar ke kiri atau perkecil ukurannya.',
+            ]);
+        }
+
+        $config = TranscriptConfig::firstOrCreate([]);
 
         if ($request->hasFile('letterhead_image')) {
             if ($config->letterhead_path) {
@@ -59,7 +85,16 @@ class TranscriptConfigController extends Controller
             $data['watermark_path'] = $request->file('watermark_image')->store('transcripts/watermarks', 'public');
         }
 
-        unset($data['letterhead_image'], $data['watermark_image']);
+        if ($request->hasFile('manual_signature_image')) {
+            if ($config->manual_signature_path) {
+                Storage::disk('public')->delete($config->manual_signature_path);
+            }
+
+            $data['manual_signature_path'] = $request->file('manual_signature_image')
+                ->store('transcripts/manual-signatures', 'public');
+        }
+
+        unset($data['letterhead_image'], $data['watermark_image'], $data['manual_signature_image']);
 
         $config->update($data);
         toast('Config transkrip berhasil disimpan.', 'success');

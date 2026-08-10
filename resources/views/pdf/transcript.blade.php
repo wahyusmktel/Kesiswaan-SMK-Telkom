@@ -23,9 +23,33 @@
 
         .page {
             position: relative;
+            height: 100%;
             min-height: 100%;
             page-break-after: always;
             overflow: hidden;
+        }
+
+        .scan-page {
+            background: #fafaf7;
+        }
+
+        .scan-texture {
+            position: absolute;
+            z-index: 50;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: .42;
+        }
+
+        .manual-signature-scan {
+            position: absolute;
+            z-index: 20;
+            left: {{ (float) ($config->manual_signature_x ?? 54) }}%;
+            top: {{ (float) ($config->manual_signature_y ?? 74) }}%;
+            width: {{ (float) ($config->manual_signature_width ?? 43) }}%;
+            height: auto;
         }
 
         .page:last-child {
@@ -243,7 +267,14 @@
             $subjectsByGroup = $subjects->groupBy('group');
             $mainGroups = ['umum', 'kejuruan'];
         @endphp
-        <div class="page">
+        <div class="page {{ $config->manual_signature_enabled ? 'scan-page' : '' }}">
+            @if ($config->manual_signature_enabled && $manualSignatureDataUri)
+                <img src="{{ $manualSignatureDataUri }}" class="manual-signature-scan" alt="Tanda tangan dan stempel kepala sekolah">
+            @endif
+
+            @if ($config->manual_signature_enabled && $scanTextureDataUri)
+                <img src="{{ $scanTextureDataUri }}" class="scan-texture" alt="">
+            @endif
             @if ($watermarkDataUri)
                 <img src="{{ $watermarkDataUri }}" class="watermark" alt="">
             @endif
@@ -392,13 +423,15 @@
                             @endif
                         </td>
                         <td class="sign-right">
-                            <div class="principal-signature">
-                                {{ $config->signature_city ?? 'Bandar Lampung' }}, {{ $tanggalTtdText }}<br>
-                                Kepala Sekolah,
-                                <div class="signature-space"></div>
-                                <span class="bold"><u>{{ $config->principal_name ?? '-' }}</u></span><br>
-                                NIP. {{ $config->principal_nip ?? '-' }}
-                            </div>
+                            @unless ($config->manual_signature_enabled && $manualSignatureDataUri)
+                                <div class="principal-signature">
+                                    {{ $config->signature_city ?? 'Bandar Lampung' }}, {{ $tanggalTtdText }}<br>
+                                    Kepala Sekolah,
+                                    <div class="signature-space"></div>
+                                    <span class="bold"><u>{{ $config->principal_name ?? '-' }}</u></span><br>
+                                    NIP. {{ $config->principal_nip ?? '-' }}
+                                </div>
+                            @endunless
                         </td>
                     </tr>
                 </table>

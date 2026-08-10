@@ -16,8 +16,12 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Symfony\Component\Process\Process;
+use Throwable;
 
 class TranscriptPrintController extends Controller
 {
@@ -56,6 +60,7 @@ class TranscriptPrintController extends Controller
         $students = $selectedRombel
             ? $selectedRombel->siswa->sortBy('nama_lengkap')->values()
             : collect();
+        $transcriptConfig = TranscriptConfig::firstOrCreate([]);
 
         return view('pages.operator.transcript.print', compact(
             'mode',
@@ -63,7 +68,8 @@ class TranscriptPrintController extends Controller
             'selectedGraduationPeriod',
             'rombels',
             'selectedRombel',
-            'students'
+            'students',
+            'transcriptConfig'
         ));
     }
 
@@ -89,20 +95,29 @@ class TranscriptPrintController extends Controller
         );
         $displayName = $reprintCorrections->get($student->id)?->corrected_name ?? $student->nama_lengkap;
 
+        $grayscale = $config->manual_signature_enabled && $config->scan_color_mode === 'grayscale';
         $pdf = Pdf::loadView('pdf.transcript', [
             'config' => $config,
             'students' => collect([$student]),
             'subjects' => $subjects,
             'transcriptNumbers' => $transcriptNumbers,
             'transcriptQrCodes' => $transcriptQrCodes,
-            'letterheadDataUri' => $this->dataUri($config->letterhead_path),
-            'watermarkDataUri' => $this->dataUri($config->watermark_path),
+            'letterheadDataUri' => $this->dataUri($config->letterhead_path, $grayscale),
+            'watermarkDataUri' => $this->dataUri($config->watermark_path, $grayscale),
+            'manualSignatureDataUri' => $config->manual_signature_enabled
+                ? $this->dataUri($config->manual_signature_path, $grayscale)
+                : null,
+            'scanTextureDataUri' => $config->manual_signature_enabled ? $this->scanTextureDataUri() : null,
             'printRombel' => $printRombel,
             'reprintCorrections' => $reprintCorrections,
             'single' => true,
         ])->setPaper($this->paper($config), 'portrait');
 
-        return $pdf->stream('Transkrip_'.str($displayName)->slug('_').'.pdf');
+        return $this->streamPdf(
+            $pdf,
+            'Transkrip_'.str($displayName)->slug('_').'.pdf',
+            $config
+        );
     }
 
     public function classroom(Request $request)
@@ -132,20 +147,29 @@ class TranscriptPrintController extends Controller
             $reprintCorrections
         );
 
+        $grayscale = $config->manual_signature_enabled && $config->scan_color_mode === 'grayscale';
         $pdf = Pdf::loadView('pdf.transcript', [
             'config' => $config,
             'students' => $students,
             'subjects' => $subjects,
             'transcriptNumbers' => $transcriptNumbers,
             'transcriptQrCodes' => $transcriptQrCodes,
-            'letterheadDataUri' => $this->dataUri($config->letterhead_path),
-            'watermarkDataUri' => $this->dataUri($config->watermark_path),
+            'letterheadDataUri' => $this->dataUri($config->letterhead_path, $grayscale),
+            'watermarkDataUri' => $this->dataUri($config->watermark_path, $grayscale),
+            'manualSignatureDataUri' => $config->manual_signature_enabled
+                ? $this->dataUri($config->manual_signature_path, $grayscale)
+                : null,
+            'scanTextureDataUri' => $config->manual_signature_enabled ? $this->scanTextureDataUri() : null,
             'printRombel' => $rombel,
             'reprintCorrections' => $reprintCorrections,
             'single' => false,
         ])->setPaper($this->paper($config), 'portrait');
 
-        return $pdf->stream('Transkrip_'.str($rombel->kelas?->nama_kelas ?? 'kelas')->slug('_').'.pdf');
+        return $this->streamPdf(
+            $pdf,
+            'Transkrip_'.str($rombel->kelas?->nama_kelas ?? 'kelas')->slug('_').'.pdf',
+            $config
+        );
     }
 
     private function finalRombels()
@@ -191,16 +215,168 @@ class TranscriptPrintController extends Controller
         };
     }
 
-    private function dataUri(?string $path): ?string
+    private function dataUri(?string $path, bool $grayscale = false): ?string
     {
         if (! $path || ! Storage::disk('public')->exists($path)) {
             return null;
         }
 
         $absolutePath = Storage::disk('public')->path($path);
+        $contents = file_get_contents($absolutePath);
+
+        if (! is_string($contents)) {
+            return null;
+        }
+
+        if ($grayscale && function_exists('imagecreatefromstring')) {
+            $image = @imagecreatefromstring($contents);
+
+            if ($image !== false) {
+                imagefilter($image, IMG_FILTER_GRAYSCALE);
+                imagefilter($image, IMG_FILTER_CONTRAST, -7);
+                imagefilter($image, IMG_FILTER_BRIGHTNESS, 4);
+                ob_start();
+                imagepng($image, null, 7);
+                $converted = ob_get_clean();
+                imagedestroy($image);
+
+                if (is_string($converted)) {
+                    return 'data:image/png;base64,'.base64_encode($converted);
+                }
+            }
+        }
+
         $mime = mime_content_type($absolutePath) ?: 'image/png';
 
-        return 'data:'.$mime.';base64,'.base64_encode(file_get_contents($absolutePath));
+        return 'data:'.$mime.';base64,'.base64_encode($contents);
+    }
+
+    private function scanTextureDataUri(): ?string
+    {
+        if (! function_exists('imagecreatetruecolor')) {
+            return null;
+        }
+
+        $width = 700;
+        $height = 1000;
+        $image = imagecreatetruecolor($width, $height);
+        imagealphablending($image, false);
+        imagesavealpha($image, true);
+        imagefill($image, 0, 0, imagecolorallocatealpha($image, 255, 255, 255, 127));
+        $dust = imagecolorallocatealpha($image, 80, 80, 78, 111);
+        $streak = imagecolorallocatealpha($image, 105, 105, 100, 119);
+
+        for ($index = 0; $index < 1450; $index++) {
+            $x = ($index * 197 + 31) % $width;
+            $y = ($index * 389 + 73) % $height;
+            imagesetpixel($image, $x, $y, $dust);
+        }
+
+        for ($index = 1; $index <= 8; $index++) {
+            $x = (int) (($width / 9) * $index);
+            imageline($image, $x, 0, $x + ($index % 2), $height, $streak);
+        }
+
+        ob_start();
+        imagepng($image, null, 8);
+        $contents = ob_get_clean();
+        imagedestroy($image);
+
+        return is_string($contents) ? 'data:image/png;base64,'.base64_encode($contents) : null;
+    }
+
+    private function streamPdf($pdf, string $filename, TranscriptConfig $config)
+    {
+        if (! $config->manual_signature_enabled) {
+            return $pdf->stream($filename);
+        }
+
+        $contents = $this->rasterizeAsScan(
+            $pdf->output(),
+            $config->scan_color_mode === 'grayscale'
+        );
+
+        return response($contents, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
+            'Content-Length' => (string) strlen($contents),
+        ]);
+    }
+
+    private function rasterizeAsScan(string $contents, bool $grayscale): string
+    {
+        $binary = $this->ghostscriptBinary();
+
+        if (! $binary) {
+            Log::warning('Ghostscript tidak tersedia; efek scan transkrip memakai fallback visual DomPDF.');
+
+            return $contents;
+        }
+
+        $directory = storage_path('app/private/transcript-scan');
+        File::ensureDirectoryExists($directory);
+        $token = (string) Str::uuid();
+        $inputPath = $directory.DIRECTORY_SEPARATOR.$token.'-source.pdf';
+        $outputPath = $directory.DIRECTORY_SEPARATOR.$token.'-scan.pdf';
+        file_put_contents($inputPath, $contents);
+
+        try {
+            $process = new Process([
+                $binary,
+                '-dSAFER',
+                '-dBATCH',
+                '-dNOPAUSE',
+                '-dQUIET',
+                '-dAutoRotatePages=/None',
+                '-dCompatibilityLevel=1.4',
+                '-sDEVICE='.($grayscale ? 'pdfimage8' : 'pdfimage24'),
+                '-r200',
+                '-dJPEGQ=88',
+                '-sOutputFile='.$outputPath,
+                $inputPath,
+            ]);
+            $process->setTimeout(120);
+            $process->run();
+
+            if ($process->isSuccessful() && is_file($outputPath) && filesize($outputPath) > 0) {
+                return (string) file_get_contents($outputPath);
+            }
+
+            Log::warning('Rasterisasi scan transkrip gagal; memakai PDF fallback.', [
+                'error' => trim($process->getErrorOutput() ?: $process->getOutput()),
+            ]);
+        } catch (Throwable $exception) {
+            Log::warning('Rasterisasi scan transkrip mengalami exception; memakai PDF fallback.', [
+                'error' => $exception->getMessage(),
+            ]);
+        } finally {
+            File::delete([$inputPath, $outputPath]);
+        }
+
+        return $contents;
+    }
+
+    private function ghostscriptBinary(): ?string
+    {
+        $candidates = PHP_OS_FAMILY === 'Windows'
+            ? ['gswin64c.exe', 'gswin32c.exe', 'gs.exe']
+            : ['/usr/bin/gs', '/usr/local/bin/gs', 'gs'];
+
+        foreach ($candidates as $candidate) {
+            try {
+                $process = new Process([$candidate, '--version']);
+                $process->setTimeout(5);
+                $process->run();
+
+                if ($process->isSuccessful()) {
+                    return $candidate;
+                }
+            } catch (Throwable) {
+                // Try the next known executable path.
+            }
+        }
+
+        return null;
     }
 
     private function transcriptNumbers(Collection $students, TranscriptConfig $config): array

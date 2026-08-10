@@ -27,6 +27,12 @@ class TranscriptConfig extends Model
         'margin_left',
         'paper_size',
         'is_borderless',
+        'manual_signature_enabled',
+        'manual_signature_path',
+        'manual_signature_x',
+        'manual_signature_y',
+        'manual_signature_width',
+        'scan_color_mode',
     ];
 
     protected $casts = [
@@ -38,10 +44,14 @@ class TranscriptConfig extends Model
         'margin_bottom' => 'decimal:2',
         'margin_left' => 'decimal:2',
         'is_borderless' => 'boolean',
+        'manual_signature_enabled' => 'boolean',
+        'manual_signature_x' => 'decimal:2',
+        'manual_signature_y' => 'decimal:2',
+        'manual_signature_width' => 'decimal:2',
     ];
 
     public function numberPreview(): string
     {
-        return trim(($this->number_start ?? '400.3.11/800.01') . ($this->number_suffix ?? '/SMKTEL-LPG/KURL.03/V/2026'));
+        return trim(($this->number_start ?? '400.3.11/800.01').($this->number_suffix ?? '/SMKTEL-LPG/KURL.03/V/2026'));
     }
 }
