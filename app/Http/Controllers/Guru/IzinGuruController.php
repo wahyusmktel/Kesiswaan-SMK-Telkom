@@ -50,6 +50,7 @@ class IzinGuruController extends Controller
 
         $schedules = JadwalPelajaran::with(['rombel.kelas', 'mataPelajaran'])
             ->where('master_guru_id', $guru->id)
+            ->inActiveAcademicPeriod()
             ->where('hari', $hari)
             ->orderBy('jam_ke')
             ->get();
@@ -60,7 +61,11 @@ class IzinGuruController extends Controller
     public function getLmsResources(JadwalPelajaran $schedule)
     {
         $guru = Auth::user()->masterGuru;
-        if (!$guru || $schedule->master_guru_id !== $guru->id) {
+        if (
+            ! $guru
+            || $schedule->master_guru_id !== $guru->id
+            || ! $schedule->rombel()->whereHas('tahunPelajaran', fn ($period) => $period->where('is_active', true))->exists()
+        ) {
             return response()->json([], 403);
         }
 
@@ -116,6 +121,7 @@ class IzinGuruController extends Controller
         $endTime = $endDate->format('H:i:s');
 
         $availableSchedules = JadwalPelajaran::where('master_guru_id', $guru->id)
+            ->inActiveAcademicPeriod()
             ->where('hari', $hari)
             ->where(function($q) use ($startTime, $endTime) {
                 $q->where('jam_mulai', '<', $endTime)
@@ -123,8 +129,12 @@ class IzinGuruController extends Controller
             })
             ->get();
 
+        $selectedJadwalIds = array_map('intval', $request->input('jadwal_ids', []));
+        if ($availableSchedules->whereIn('id', $selectedJadwalIds)->count() !== count(array_unique($selectedJadwalIds))) {
+            return redirect()->back()->withInput()->with('error', 'Pilihan jam pelajaran tidak sesuai dengan jadwal aktif Anda. Silakan muat ulang halaman dan pilih jadwal kembali.');
+        }
+
         if ($availableSchedules->isNotEmpty()) {
-            $selectedJadwalIds = $request->input('jadwal_ids', []);
             if (count($selectedJadwalIds) === 0) {
                 return redirect()->back()->withInput()->with('error', 'Sistem mendeteksi Anda memiliki jam mengajar pada waktu tersebut. Silakan pilih jam pelajaran yang Anda tinggalkan.');
             }

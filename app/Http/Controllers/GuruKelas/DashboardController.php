@@ -88,6 +88,7 @@ class DashboardController extends Controller
 
         // 2. Data untuk Widget Kelas & Siswa yang Diajar
         $rombelIds = JadwalPelajaran::where('master_guru_id', $masterGuru->id)
+            ->inActiveAcademicPeriod()
             ->distinct()
             ->pluck('rombel_id');
 
@@ -99,6 +100,7 @@ class DashboardController extends Controller
         // 3. Data untuk Widget Jadwal Mengajar Hari Ini
         $jadwalHariIni = JadwalPelajaran::with(['rombel.kelas', 'mataPelajaran'])
             ->where('master_guru_id', $masterGuru->id)
+            ->inActiveAcademicPeriod()
             ->where('hari', $namaHariIni)
             ->orderBy('jam_mulai')
             ->get();

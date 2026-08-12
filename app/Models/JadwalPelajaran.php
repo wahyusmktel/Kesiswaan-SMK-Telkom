@@ -23,6 +23,14 @@ class JadwalPelajaran extends Model
     {
         return $this->belongsTo(MasterGuru::class, 'master_guru_id');
     }
+    public function scopeInActiveAcademicPeriod($query)
+    {
+        return $query->whereHas(
+            'rombel.tahunPelajaran',
+            fn ($academicPeriod) => $academicPeriod->where('is_active', true)
+        );
+    }
+
     public function izins()
     {
         return $this->belongsToMany(GuruIzin::class, 'guru_izin_jadwal')

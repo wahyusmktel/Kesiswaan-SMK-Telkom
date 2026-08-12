@@ -1303,6 +1303,7 @@ class FingerprintController extends Controller
         }
 
         $schedule = JadwalPelajaran::where('master_guru_id', $masterGuruId)
+            ->inActiveAcademicPeriod()
             ->where('hari', $dayName)
             ->selectRaw('MIN(jam_mulai) as starts_at, MAX(jam_selesai) as ends_at, COUNT(*) as total')
             ->first();
