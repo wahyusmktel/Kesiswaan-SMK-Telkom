@@ -1116,6 +1116,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/monitoring/export', [\App\Http\Controllers\FingerprintController::class, 'exportMonitoring'])->name('monitoring.export');
         Route::get('/analysis', [\App\Http\Controllers\FingerprintController::class, 'attendanceAnalysis'])->name('analysis');
         Route::get('/analysis/{user}/pdf', [\App\Http\Controllers\FingerprintController::class, 'attendanceAnalysisPdf'])->name('analysis.pdf');
+        Route::middleware('role:Super Admin|KAUR SDM')->prefix('reports')->name('reports.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\FingerprintAttendanceReportController::class, 'index'])->name('index');
+            Route::get('/monthly', [\App\Http\Controllers\FingerprintAttendanceReportController::class, 'monthly'])->name('monthly');
+            Route::get('/daily', [\App\Http\Controllers\FingerprintAttendanceReportController::class, 'daily'])->name('daily');
+        });
         Route::middleware(['role:Super Admin'])->group(function () {
             Route::get('/manual-attendances', [\App\Http\Controllers\FingerprintController::class, 'manualAttendances'])->name('manual-attendances');
             Route::post('/manual-attendances', [\App\Http\Controllers\FingerprintController::class, 'storeManualAttendance'])->name('manual-attendances.store');
