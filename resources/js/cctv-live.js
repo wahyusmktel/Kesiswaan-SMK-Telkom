@@ -13,6 +13,7 @@ if (root && dataElement) {
     let hls = null;
     let bearerToken = '';
     let refreshTimer = null;
+    let networkRecoveryAttempts = 0;
 
     const setStatus = (label, state = 'idle') => {
         status.textContent = label;
@@ -86,6 +87,7 @@ if (root && dataElement) {
         root.querySelector('[data-player-description]').textContent = camera.description || 'Tidak ada keterangan tambahan.';
         setStatus('Menghubungkan', 'loading');
         showOverlay('Menghubungkan ke kamera...');
+        networkRecoveryAttempts = 0;
 
         try {
             const issued = await requestToken(camera);
@@ -109,7 +111,14 @@ if (root && dataElement) {
                 hls.on(Hls.Events.ERROR, (_event, error) => {
                     if (!error.fatal) return;
                     if (error.type === Hls.ErrorTypes.NETWORK_ERROR) {
-                        hls.startLoad();
+                        if (networkRecoveryAttempts < 2) {
+                            networkRecoveryAttempts += 1;
+                            window.setTimeout(() => hls?.startLoad(), networkRecoveryAttempts * 1000);
+                            return;
+                        }
+
+                        setStatus('Gateway tidak tersedia', 'error');
+                        showOverlay('Gateway CCTV tidak dapat dijangkau. Periksa Cloudflare Tunnel dan konfigurasi CORS MediaMTX.');
                         return;
                     }
                     if (error.type === Hls.ErrorTypes.MEDIA_ERROR) {
@@ -129,6 +138,7 @@ if (root && dataElement) {
     };
 
     video.addEventListener('playing', () => {
+        networkRecoveryAttempts = 0;
         setStatus('Live', 'live');
         showOverlay('', false);
     });

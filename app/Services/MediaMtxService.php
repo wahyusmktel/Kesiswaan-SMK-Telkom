@@ -9,6 +9,8 @@ use RuntimeException;
 
 class MediaMtxService
 {
+    private bool $globalConfigurationSynced = false;
+
     public function health(): array
     {
         try {
@@ -27,6 +29,8 @@ class MediaMtxService
 
     public function sync(CctvCamera $camera): void
     {
+        $this->syncGlobalConfiguration();
+
         $path = rawurlencode($camera->stream_path);
         $payload = [
             'source' => $camera->rtsp_url,
@@ -50,6 +54,35 @@ class MediaMtxService
             'last_sync_message' => 'Konfigurasi tersinkronisasi.',
             'last_synced_at' => now(),
         ])->save();
+    }
+
+    /**
+     * Keep MediaMTX's HLS CORS allow-list aligned with the SISFO deployment.
+     * Authorization headers used by hls.js trigger an OPTIONS preflight, so
+     * this must be configured on MediaMTX, not only on Laravel.
+     */
+    public function syncGlobalConfiguration(): void
+    {
+        if ($this->globalConfigurationSynced) {
+            return;
+        }
+
+        $origins = config('services.cctv.hls_allowed_origins', []);
+        $origins = array_values(array_filter(array_map('trim', is_array($origins) ? $origins : [])));
+
+        if ($origins === []) {
+            throw new RuntimeException('Origin HLS CCTV belum dikonfigurasi.');
+        }
+
+        $response = $this->client()->patch('/v3/config/global/patch', [
+            'hlsAllowOrigins' => $origins,
+        ]);
+
+        if (! $response->successful()) {
+            throw new RuntimeException('MediaMTX menolak konfigurasi CORS HLS (HTTP '.$response->status().').');
+        }
+
+        $this->globalConfigurationSynced = true;
     }
 
     public function remove(CctvCamera $camera): void

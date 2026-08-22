@@ -22,6 +22,7 @@ class CctvManagementTest extends TestCase
         config([
             'services.cctv.mediamtx_api_url' => 'http://mediamtx.test',
             'services.cctv.hls_base_url' => 'https://media.example.test',
+            'services.cctv.hls_allowed_origins' => ['https://sisfo.example.test'],
             'services.cctv.gateway_auth_key' => 'gateway-test-secret',
             'services.cctv.playback_token_secret' => 'playback-test-secret',
             'services.cctv.playback_token_ttl' => 900,
@@ -29,6 +30,7 @@ class CctvManagementTest extends TestCase
 
         Http::fake([
             'http://mediamtx.test/v3/info' => Http::response(['version' => 'test']),
+            'http://mediamtx.test/v3/config/global/patch' => Http::response([], 200),
             'http://mediamtx.test/v3/config/paths/get/*' => Http::response([], 404),
             'http://mediamtx.test/v3/config/paths/add/*' => Http::response([], 200),
             'http://mediamtx.test/v3/config/paths/patch/*' => Http::response([], 200),
@@ -61,6 +63,9 @@ class CctvManagementTest extends TestCase
             'viewer:secret',
             (string) DB::table('cctv_cameras')->where('id', $camera->id)->value('rtsp_url')
         );
+
+        Http::assertSent(fn ($request) => $request->url() === 'http://mediamtx.test/v3/config/global/patch'
+            && $request['hlsAllowOrigins'] === ['https://sisfo.example.test']);
 
         $this->actingAs($admin)
             ->withSession(['active_role' => 'Super Admin'])

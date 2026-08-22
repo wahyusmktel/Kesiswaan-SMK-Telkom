@@ -140,7 +140,8 @@ Tambahkan ke `.env` produksi:
 CCTV_MEDIAMTX_API_URL=http://127.0.0.1:9997
 CCTV_MEDIAMTX_API_USER=
 CCTV_MEDIAMTX_API_PASSWORD=
-CCTV_HLS_BASE_URL=https://cctv-media.smktelkom-lpg.id
+CCTV_HLS_BASE_URL=https://cctv-stream.smktelkom-lpg.id
+CCTV_HLS_ALLOWED_ORIGINS=https://sisfo.smktelkom-lpg.id
 CCTV_GATEWAY_AUTH_KEY=SECRET_PERTAMA
 CCTV_PLAYBACK_TOKEN_SECRET=SECRET_KEDUA
 CCTV_PLAYBACK_TOKEN_TTL=900
@@ -210,10 +211,30 @@ sudo journalctl -u mediamtx -n 200 --no-pager
 php artisan cctv:sync
 curl http://127.0.0.1:9997/v3/config/paths/list
 ffprobe -rtsp_transport tcp "rtsp://USER:PASSWORD@IP-KAMERA:554/PATH"
+curl -i -X OPTIONS \
+  -H 'Origin: https://sisfo.smktelkom-lpg.id' \
+  -H 'Access-Control-Request-Method: GET' \
+  -H 'Access-Control-Request-Headers: authorization' \
+  https://cctv-stream.smktelkom-lpg.id/NAMA-PATH/index.m3u8
 ```
 
 Penyebab umum adalah URL RTSP salah, server tidak satu rute dengan VLAN kamera, codec
 H.265, keyframe terlalu jarang, atau endpoint HLS diblokir firewall/CORS.
+
+Respons Cloudflare `530` dengan body `error code: 1033` berarti tunnel tidak sedang
+terhubung, bukan kesalahan CORS aplikasi. Pulihkan servicenya lalu sinkronkan ulang:
+
+```bash
+sudo systemctl restart cloudflared mediamtx
+sudo systemctl status cloudflared mediamtx --no-pager
+cloudflared tunnel info NAMA-ATAU-ID-TUNNEL
+php artisan optimize:clear
+php artisan cctv:sync
+```
+
+Perintah `cctv:sync` juga menyelaraskan `hlsAllowOrigins` MediaMTX dari
+`CCTV_HLS_ALLOWED_ORIGINS`. Respons preflight yang sehat harus berstatus 2xx dan
+memuat `Access-Control-Allow-Origin: https://sisfo.smktelkom-lpg.id`.
 
 ## Referensi
 
