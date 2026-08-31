@@ -43,6 +43,31 @@ class AssetReportingTest extends TestCase
         $this->assertSame('super-admin.asset-report-qrs.index', DashboardRedirector::routeNameForRole('KAUR SARPRA'));
     }
 
+    public function test_super_admin_can_provision_kaur_sarpra_role_from_the_web(): void
+    {
+        $admin = $this->userWithRole('Super Admin');
+
+        $this->assertDatabaseMissing('roles', ['name' => 'KAUR SARPRA', 'guard_name' => 'web']);
+
+        $this->actingAs($admin)->withSession(['active_role' => 'Super Admin'])
+            ->post(route('super-admin.roles.kaur-sarpra.provision'))
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('roles', ['name' => 'KAUR SARPRA', 'guard_name' => 'web']);
+    }
+
+    public function test_non_super_admin_cannot_provision_kaur_sarpra_role_from_the_web(): void
+    {
+        $teacher = $this->userWithRole('Guru Kelas');
+
+        $this->actingAs($teacher)->withSession(['active_role' => 'Guru Kelas'])
+            ->post(route('super-admin.roles.kaur-sarpra.provision'))
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('roles', ['name' => 'KAUR SARPRA', 'guard_name' => 'web']);
+    }
+
     public function test_public_can_open_qr_page_and_submit_asset_report(): void
     {
         Storage::fake('local');

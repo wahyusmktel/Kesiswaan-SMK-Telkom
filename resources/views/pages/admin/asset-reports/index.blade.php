@@ -39,6 +39,22 @@
         </section>
 
         @if($section === 'qrs')
+            @role('Super Admin')
+                <section class="flex flex-col gap-4 rounded-2xl border border-violet-200 bg-violet-50 p-5 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-xs font-black uppercase tracking-wider text-violet-600">Persiapan Role</p>
+                        <h2 class="mt-1 font-black text-slate-900">Aktifkan role KAUR SARPRA tanpa akses terminal</h2>
+                        <p class="mt-1 text-sm text-slate-600">Aman dijalankan berulang kali. Tombol ini hanya membuat atau menyinkronkan role KAUR SARPRA.</p>
+                    </div>
+                    <form method="POST" action="{{ route('super-admin.roles.kaur-sarpra.provision') }}" onsubmit="return confirm('Siapkan role KAUR SARPRA sekarang?')" class="shrink-0">
+                        @csrf
+                        <button class="h-11 rounded-xl bg-violet-600 px-5 text-sm font-black text-white shadow-sm hover:bg-violet-500">Siapkan Role KAUR SARPRA</button>
+                    </form>
+                </section>
+            @endrole
+        @endif
+
+        @if($section === 'qrs')
             <section class="grid gap-5 xl:grid-cols-[1fr_1.6fr]">
                 <div class="space-y-5">
                     <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">

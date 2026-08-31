@@ -979,6 +979,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\Admin\SuperAdminDashboardController::class, 'index'])->name('dashboard.index');
         Route::get('/settings', [SuperAdminController::class, 'settings'])->name('settings');
         Route::post('/settings', [SuperAdminController::class, 'updateSettings'])->name('settings.update');
+        Route::post('/roles/kaur-sarpra/provision', \App\Http\Controllers\Admin\KaurSarpraRoleProvisioningController::class)
+            ->name('roles.kaur-sarpra.provision');
         Route::get('/landing-popup', [LandingPopupController::class, 'edit'])->name('landing-popup.edit');
         Route::put('/landing-popup', [LandingPopupController::class, 'update'])->name('landing-popup.update');
         Route::get('/spmb/biaya', [\App\Http\Controllers\Admin\SpmbFeeController::class, 'index'])->name('spmb-fees.index');
