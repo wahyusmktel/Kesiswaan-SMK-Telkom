@@ -119,7 +119,10 @@ class AssetReportingTest extends TestCase
 
         $this->actingAs($kaurSarpra)->withSession(['active_role' => 'KAUR SARPRA'])
             ->get(route('super-admin.asset-report-qrs.index'))
-            ->assertOk()->assertSee('QR Laporan Aset')->assertSee('Gedung 1');
+            ->assertOk()
+            ->assertSee('QR Laporan Aset')
+            ->assertSee('Gedung 1')
+            ->assertSee('data-kaur-sarpra-navigation', false);
 
         $this->actingAs($kaurSarpra)->withSession(['active_role' => 'KAUR SARPRA'])
             ->get(route('super-admin.asset-reports.index'))
