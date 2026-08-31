@@ -1045,6 +1045,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/cctv/{camera}', [\App\Http\Controllers\Admin\CctvCameraController::class, 'destroy'])->name('cctv.destroy');
         Route::post('/cctv/{camera}/sync', [\App\Http\Controllers\Admin\CctvCameraController::class, 'sync'])->name('cctv.sync');
         Route::post('/cctv-sync-all', [\App\Http\Controllers\Admin\CctvCameraController::class, 'syncAll'])->name('cctv.sync-all');
+
+        // QR laporan aset dan pengelolaan laporan fasilitas
+        Route::get('/qr-laporan-aset', [\App\Http\Controllers\Admin\AssetReportManagementController::class, 'index'])->name('asset-report-qrs.index');
+        Route::get('/laporan-aset', [\App\Http\Controllers\Admin\AssetReportManagementController::class, 'index'])->name('asset-reports.index');
+        Route::post('/gedung-laporan-aset', [\App\Http\Controllers\Admin\AssetReportManagementController::class, 'storeBuilding'])->name('asset-report-buildings.store');
+        Route::put('/gedung-laporan-aset/{building}', [\App\Http\Controllers\Admin\AssetReportManagementController::class, 'updateBuilding'])->name('asset-report-buildings.update');
+        Route::delete('/gedung-laporan-aset/{building}', [\App\Http\Controllers\Admin\AssetReportManagementController::class, 'destroyBuilding'])->name('asset-report-buildings.destroy');
+        Route::post('/ruangan-laporan-aset', [\App\Http\Controllers\Admin\AssetReportManagementController::class, 'storeLocation'])->name('asset-report-locations.store');
+        Route::put('/ruangan-laporan-aset/{location}', [\App\Http\Controllers\Admin\AssetReportManagementController::class, 'updateLocation'])->name('asset-report-locations.update');
+        Route::delete('/ruangan-laporan-aset/{location}', [\App\Http\Controllers\Admin\AssetReportManagementController::class, 'destroyLocation'])->name('asset-report-locations.destroy');
+        Route::get('/qr-laporan-aset-cetak', [\App\Http\Controllers\Admin\AssetReportManagementController::class, 'printQr'])->name('asset-report-qrs.print');
+        Route::patch('/laporan-aset/{report}', [\App\Http\Controllers\Admin\AssetReportManagementController::class, 'updateReport'])->name('asset-reports.update');
+        Route::get('/laporan-aset/{report}/foto', [\App\Http\Controllers\Admin\AssetReportManagementController::class, 'photo'])->name('asset-reports.photo');
     });
 });
 
@@ -1405,6 +1418,14 @@ Route::get('/verifikasi-iq/{code}', [\App\Http\Controllers\IqVerificationControl
 // ============================================================
 // PUBLIC BERITA DETAIL PAGE
 // ============================================================
+Route::get('/lapor-aset/{location}', [\App\Http\Controllers\PublicAssetReportController::class, 'create'])
+    ->name('asset-report.public.create');
+Route::post('/lapor-aset/{location}', [\App\Http\Controllers\PublicAssetReportController::class, 'store'])
+    ->middleware('throttle:5,10')
+    ->name('asset-report.public.store');
+Route::get('/lapor-aset/{location}/berhasil/{ticket}', [\App\Http\Controllers\PublicAssetReportController::class, 'success'])
+    ->name('asset-report.public.success');
+
 Route::post('/berita/{berita:slug}/komentar', [\App\Http\Controllers\Public\BeritaCommentController::class, 'store'])
     ->middleware('throttle:10,1')
     ->name('berita.comments.store');
