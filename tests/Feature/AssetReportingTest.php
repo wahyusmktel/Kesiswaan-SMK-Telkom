@@ -6,6 +6,8 @@ use App\Models\AssetReport;
 use App\Models\AssetReportBuilding;
 use App\Models\AssetReportLocation;
 use App\Models\User;
+use App\Support\DashboardRedirector;
+use Database\Seeders\KaurSarpraRoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -30,6 +32,15 @@ class AssetReportingTest extends TestCase
         $this->assertGreaterThanOrEqual(20, AssetReportLocation::count());
         $this->assertDatabaseHas('asset_report_locations', ['name' => 'Toilet Pria', 'type' => 'toilet']);
         $this->assertDatabaseHas('asset_report_locations', ['name' => 'Aula Sekolah', 'type' => 'aula']);
+    }
+
+    public function test_kaur_sarpra_role_seeder_is_idempotent(): void
+    {
+        $this->seed(KaurSarpraRoleSeeder::class);
+        $this->seed(KaurSarpraRoleSeeder::class);
+
+        $this->assertSame(1, Role::where('name', 'KAUR SARPRA')->where('guard_name', 'web')->count());
+        $this->assertSame('super-admin.asset-report-qrs.index', DashboardRedirector::routeNameForRole('KAUR SARPRA'));
     }
 
     public function test_public_can_open_qr_page_and_submit_asset_report(): void
@@ -71,6 +82,7 @@ class AssetReportingTest extends TestCase
     public function test_only_super_admin_can_manage_qr_and_reports(): void
     {
         $superAdmin = $this->userWithRole('Super Admin');
+        $kaurSarpra = $this->userWithRole('KAUR SARPRA');
         $teacher = $this->userWithRole('Guru Kelas');
 
         $this->actingAs($teacher)->withSession(['active_role' => 'Guru Kelas'])
@@ -79,6 +91,14 @@ class AssetReportingTest extends TestCase
         $this->actingAs($superAdmin)->withSession(['active_role' => 'Super Admin'])
             ->get(route('super-admin.asset-report-qrs.index'))
             ->assertOk()->assertSee('QR Laporan Aset')->assertSee('Gedung 1');
+
+        $this->actingAs($kaurSarpra)->withSession(['active_role' => 'KAUR SARPRA'])
+            ->get(route('super-admin.asset-report-qrs.index'))
+            ->assertOk()->assertSee('QR Laporan Aset')->assertSee('Gedung 1');
+
+        $this->actingAs($kaurSarpra)->withSession(['active_role' => 'KAUR SARPRA'])
+            ->get(route('super-admin.asset-reports.index'))
+            ->assertOk()->assertSee('Pengelolaan Laporan Aset');
     }
 
     public function test_super_admin_can_create_location_and_update_report_status(): void

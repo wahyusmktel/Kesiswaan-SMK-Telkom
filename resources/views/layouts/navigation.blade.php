@@ -518,6 +518,34 @@
     </li>
     @endif
 
+    @if(session('active_role') == 'KAUR SARPRA')
+    <div class="section-title">Sarana & Prasarana</div>
+    <li>
+        <a href="{{ route('super-admin.asset-report-qrs.index') }}" title="QR Laporan Aset"
+            class="nav-link {{ request()->routeIs('super-admin.asset-report-qrs.*', 'super-admin.asset-report-buildings.*', 'super-admin.asset-report-locations.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h6v6H3V3Zm12 0h6v6h-6V3ZM3 15h6v6H3v-6Zm12 0h2m4 0v2m-6 4h2m2-4h2v4h-4v-2" />
+                </svg>
+            </div>
+            <span class="nav-text">QR Laporan Aset</span>
+            <span class="nav-badge ml-auto rounded-full bg-cyan-100 px-1.5 py-0.5 text-[10px] font-black text-cyan-700">QR</span>
+        </a>
+    </li>
+    <li>
+        <a href="{{ route('super-admin.asset-reports.index') }}" title="Kelola Laporan Aset"
+            class="nav-link {{ request()->routeIs('super-admin.asset-reports.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M9 8h2m-5-5h9l4 4v14H6V3Zm9 0v5h5" />
+                </svg>
+            </div>
+            <span class="nav-text">Laporan Aset</span>
+            <span class="nav-badge ml-auto rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-black text-amber-700">ADUAN</span>
+        </a>
+    </li>
+    @endif
+
     @if(session('active_role') == 'Kepala Sekolah')
         <div class="section-title">Layanan Digital</div>
         <li>

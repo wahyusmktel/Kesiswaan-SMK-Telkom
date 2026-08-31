@@ -20,6 +20,7 @@ class DashboardRedirector
             'Siswa', 'siswa' => 'siswa.dashboard.index',
             'Security', 'Petugas Keamanan' => 'security.dashboard.index',
             'KAUR SDM' => 'sdm.dashboard.index',
+            'KAUR SARPRA' => 'super-admin.asset-report-qrs.index',
             'Operator' => 'operator.dashboard.index',
             'Tata Usaha' => 'tu.dashboard.index',
             'Kantin' => 'kantin.dashboard.index',
@@ -36,7 +37,7 @@ class DashboardRedirector
         $roles = $user->getRoleNames();
         $activeRole = session('active_role');
 
-        if (!$activeRole || !$roles->contains($activeRole)) {
+        if (! $activeRole || ! $roles->contains($activeRole)) {
             $activeRole = $roles->first();
             session(['active_role' => $activeRole]);
         }

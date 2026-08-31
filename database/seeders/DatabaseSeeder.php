@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             SuperAdminSeeder::class,
             OperatorRoleSeeder::class,
             KaurSdmRoleSeeder::class,
+            KaurSarpraRoleSeeder::class,
             KurikulumRoleSeeder::class,
             WakaKesiswaanSeeder::class,
             KoordinatorPrakerinRoleSeeder::class,

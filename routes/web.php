@@ -1046,7 +1046,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/cctv/{camera}/sync', [\App\Http\Controllers\Admin\CctvCameraController::class, 'sync'])->name('cctv.sync');
         Route::post('/cctv-sync-all', [\App\Http\Controllers\Admin\CctvCameraController::class, 'syncAll'])->name('cctv.sync-all');
 
-        // QR laporan aset dan pengelolaan laporan fasilitas
+    });
+
+    // QR dan laporan aset: Super Admin serta KAUR SARPRA
+    Route::middleware(['role:Super Admin|KAUR SARPRA'])->prefix('super-admin')->name('super-admin.')->group(function () {
         Route::get('/qr-laporan-aset', [\App\Http\Controllers\Admin\AssetReportManagementController::class, 'index'])->name('asset-report-qrs.index');
         Route::get('/laporan-aset', [\App\Http\Controllers\Admin\AssetReportManagementController::class, 'index'])->name('asset-reports.index');
         Route::post('/gedung-laporan-aset', [\App\Http\Controllers\Admin\AssetReportManagementController::class, 'storeBuilding'])->name('asset-report-buildings.store');
