@@ -177,6 +177,8 @@ class AssetReportingTest extends TestCase
         $admin = $this->userWithRole('Super Admin');
         $location = AssetReportLocation::firstOrFail();
 
+        $this->assertFileExists(public_path('images/asset-report/smk-telkom-lampung-white.png'));
+
         $response = $this->actingAs($admin)->withSession(['active_role' => 'Super Admin'])
             ->get(route('super-admin.asset-report-qrs.print', ['location_id' => $location->id]));
 

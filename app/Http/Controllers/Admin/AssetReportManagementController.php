@@ -145,7 +145,11 @@ class AssetReportManagementController extends Controller
             return [$location->id => 'data:image/svg+xml;base64,'.base64_encode($svg)];
         });
 
-        $pdf = Pdf::loadView('pdf.asset-report-qr', compact('locations', 'qrCodes'))
+        $brandLogo = 'data:image/png;base64,'.base64_encode(file_get_contents(
+            public_path('images/asset-report/smk-telkom-lampung-white.png')
+        ));
+
+        $pdf = Pdf::loadView('pdf.asset-report-qr', compact('locations', 'qrCodes', 'brandLogo'))
             ->setPaper('a4', 'portrait');
 
         $suffix = $locations->count() === 1 ? Str::slug($locations->first()->code) : 'semua-ruangan';

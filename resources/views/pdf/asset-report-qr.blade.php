@@ -9,7 +9,9 @@
         body { margin: 0; font-family: DejaVu Sans, sans-serif; color: #0f172a; }
         .poster { position: relative; width: 210mm; height: 296.5mm; overflow: hidden; page-break-after: always; background: #fff; }
         .poster:last-child { page-break-after: auto; }
-        .top { height: 60mm; padding: 18mm 18mm 12mm; background: #b91c1c; color: white; }
+        .top { position: relative; height: 60mm; padding: 18mm 18mm 12mm; background: #b91c1c; color: white; }
+        .top-copy { width: 130mm; }
+        .brand-logo { position: absolute; top: 9mm; right: 18mm; width: 32mm; height: auto; }
         .eyebrow { font-size: 10pt; font-weight: bold; letter-spacing: 1.8px; text-transform: uppercase; color: #fecaca; }
         h1 { margin: 5mm 0 2mm; font-size: 28pt; line-height: 1.08; }
         .sub { margin: 0; font-size: 11pt; color: #fee2e2; }
@@ -28,9 +30,12 @@
 @foreach($locations as $location)
     <section class="poster">
         <header class="top">
-            <div class="eyebrow">SMK Telkom Lampung · Peduli Fasilitas</div>
-            <h1>Lihat kerusakan?<br>Jangan dibiarkan.</h1>
-            <p class="sub">Satu laporan kecil bisa membuat sekolah lebih aman dan nyaman.</p>
+            <img class="brand-logo" src="{{ $brandLogo }}" alt="Logo SMK Telkom Lampung">
+            <div class="top-copy">
+                <div class="eyebrow">SMK Telkom Lampung · Peduli Fasilitas</div>
+                <h1>Lihat kerusakan?<br>Jangan dibiarkan.</h1>
+                <p class="sub">Satu laporan kecil bisa membuat sekolah lebih aman dan nyaman.</p>
+            </div>
         </header>
         <main class="content">
             <h2 class="location">{{ $location->name }}</h2>
