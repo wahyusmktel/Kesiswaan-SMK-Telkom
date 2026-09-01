@@ -1,16 +1,18 @@
 <?php
 
 use App\Jobs\SyncFingerprintAttendancesJob;
+use App\Models\CctvCamera;
 use App\Models\FingerprintAutoSyncSetting;
 use App\Models\FingerprintDevice;
 use App\Models\FingerprintUser;
-use App\Models\CctvCamera;
+use App\Models\RepositoryUpload;
 use App\Services\MediaMtxService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schedule;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 Artisan::command('inspire', function () {
@@ -20,8 +22,9 @@ Artisan::command('inspire', function () {
 Artisan::command('fingerprint:auto-sync', function () {
     $setting = FingerprintAutoSyncSetting::getSetting();
 
-    if (!$setting->is_enabled) {
+    if (! $setting->is_enabled) {
         $this->line('Tarik log otomatis fingerprint sedang nonaktif.');
+
         return 0;
     }
 
@@ -30,11 +33,13 @@ Artisan::command('fingerprint:auto-sync', function () {
 
     if ($now->format('H:i') < $runTime) {
         $this->line("Belum waktunya tarik log otomatis. Jadwal hari ini: {$runTime}.");
+
         return 0;
     }
 
     if ($setting->last_dispatched_at?->isSameDay($now)) {
         $this->line('Tarik log otomatis hari ini sudah dikirim ke antrean.');
+
         return 0;
     }
 
@@ -48,7 +53,7 @@ Artisan::command('fingerprint:auto-sync', function () {
 
     $devices = FingerprintDevice::query()
         ->where('is_active', true)
-        ->when(!empty($setting->device_ids), fn ($query) => $query->whereIn('id', $setting->device_ids))
+        ->when(! empty($setting->device_ids), fn ($query) => $query->whereIn('id', $setting->device_ids))
         ->orderBy('name')
         ->get();
 
@@ -59,17 +64,18 @@ Artisan::command('fingerprint:auto-sync', function () {
             ->whereNotNull('app_user_id')
             ->exists();
 
-        if (!$hasMappedUser) {
+        if (! $hasMappedUser) {
             $results[] = [
                 'device_id' => $device->id,
                 'device_name' => $device->name,
                 'status' => 'skipped',
                 'message' => 'Belum ada user mesin yang dimapping.',
             ];
+
             continue;
         }
 
-        $progressId = 'auto-' . $device->id . '-' . Str::uuid();
+        $progressId = 'auto-'.$device->id.'-'.Str::uuid();
 
         Cache::put("fingerprint:sync-progress:{$progressId}", [
             'status' => 'queued',
@@ -139,3 +145,23 @@ Artisan::command('cctv:sync', function (MediaMtxService $mediaMtx) {
 })->purpose('Synchronize active CCTV paths to MediaMTX');
 
 Schedule::command('cctv:sync')->everyFiveMinutes()->withoutOverlapping();
+
+Artisan::command('repository:cleanup-uploads', function () {
+    $disk = Storage::disk(config('repository.disk'));
+    $cleaned = 0;
+
+    RepositoryUpload::query()
+        ->where('expires_at', '<', now())
+        ->each(function (RepositoryUpload $upload) use ($disk, &$cleaned) {
+            $directory = trim(config('repository.uploads_directory'), '/').'/'.$upload->id;
+            $disk->deleteDirectory($directory);
+            $upload->delete();
+            $cleaned++;
+        });
+
+    $this->info("{$cleaned} sesi upload repository kedaluwarsa dibersihkan.");
+
+    return 0;
+})->purpose('Remove expired repository upload sessions');
+
+Schedule::command('repository:cleanup-uploads')->dailyAt('02:30')->withoutOverlapping();

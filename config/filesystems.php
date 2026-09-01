@@ -67,6 +67,14 @@ return [
             'report' => false,
         ],
 
+        'repository' => [
+            'driver' => 'local',
+            'root' => env('REPOSITORY_STORAGE_PATH') ?: storage_path('app/repository'),
+            'visibility' => 'private',
+            'throw' => true,
+            'report' => true,
+        ],
+
     ],
 
     /*

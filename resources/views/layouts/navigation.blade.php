@@ -393,6 +393,19 @@
     </li>
 
     <li>
+        <a href="{{ route('super-admin.repository.index') }}" title="Repository Bahan Praktikum"
+            class="nav-link {{ request()->routeIs('super-admin.repository.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7.5A2.5 2.5 0 015.5 5H9l2 2h7.5A2.5 2.5 0 0121 9.5v7a2.5 2.5 0 01-2.5 2.5h-13A2.5 2.5 0 013 16.5v-9zM12 10v6m0 0l-2.5-2.5M12 16l2.5-2.5" />
+                </svg>
+            </div>
+            <span class="nav-text">Repository</span>
+            <span class="nav-badge ml-auto rounded-full bg-indigo-100 px-1.5 py-0.5 text-[10px] font-black text-indigo-700">LAN</span>
+        </a>
+    </li>
+
+    <li>
         <a href="{{ route('super-admin.berita.index') }}"
             class="nav-link {{ request()->routeIs('super-admin.berita.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
             <div class="nav-icon-container">

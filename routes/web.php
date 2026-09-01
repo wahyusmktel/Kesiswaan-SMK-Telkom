@@ -121,6 +121,10 @@ Route::get('/security', function () {
     return view('pages.legal.security');
 })->name('security');
 
+// Direct link publik/LAN untuk bahan praktikum repository.
+Route::get('/repository/{repositoryFile}/download', \App\Http\Controllers\RepositoryDownloadController::class)
+    ->name('repository.download');
+
 // ==================================
 //     BATAS ROUTE PUBLIK
 // ==================================
@@ -1004,6 +1008,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // System Update
         Route::get('/system-update', [SystemUpdateController::class, 'index'])->name('system-update.index');
         Route::post('/system-update/deploy', [SystemUpdateController::class, 'deploy'])->name('system-update.deploy');
+
+        // Repository bahan praktikum
+        Route::get('/repository', [\App\Http\Controllers\Admin\RepositoryController::class, 'index'])->name('repository.index');
+        Route::put('/repository/settings', [\App\Http\Controllers\Admin\RepositoryController::class, 'updateSettings'])->name('repository.settings.update');
+        Route::post('/repository/uploads', [\App\Http\Controllers\Admin\RepositoryUploadController::class, 'initialize'])->name('repository.uploads.initialize');
+        Route::put('/repository/uploads/{upload}/chunks/{index}', [\App\Http\Controllers\Admin\RepositoryUploadController::class, 'chunk'])->whereNumber('index')->name('repository.uploads.chunk');
+        Route::post('/repository/uploads/{upload}/complete', [\App\Http\Controllers\Admin\RepositoryUploadController::class, 'complete'])->name('repository.uploads.complete');
+        Route::delete('/repository/uploads/{upload}', [\App\Http\Controllers\Admin\RepositoryUploadController::class, 'cancel'])->name('repository.uploads.cancel');
+        Route::patch('/repository/files/{repositoryFile}', [\App\Http\Controllers\Admin\RepositoryController::class, 'update'])->name('repository.files.update');
+        Route::delete('/repository/files/{repositoryFile}', [\App\Http\Controllers\Admin\RepositoryController::class, 'destroy'])->name('repository.files.destroy');
 
         // Sinkronisasi Aset
         Route::get('/asset-sync', [AssetSyncController::class, 'index'])->name('asset-sync.index');

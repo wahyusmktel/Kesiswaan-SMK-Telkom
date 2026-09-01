@@ -1,0 +1,32 @@
+# Repository bahan praktikum - Nginx
+#
+# 1. Samakan alias dengan REPOSITORY_STORAGE_PATH. Jika env kosong, gunakan:
+#    /path/ke/aplikasi/storage/app/repository/
+# 2. Tempatkan blok ini di dalam server {} untuk domain publik DAN vhost/IP LAN.
+# 3. Setelah `nginx -t` berhasil, reload Nginx dan ubah:
+#    REPOSITORY_DOWNLOAD_DRIVER=nginx
+#
+# Upload dikirim per chunk 8 MB, jadi batas request tidak perlu sebesar file ISO.
+client_max_body_size 12m;
+
+location /_protected_repository/ {
+    internal;
+    alias /path/ke/aplikasi/storage/app/repository/;
+
+    # Nginx menangani Range request, sendfile, dan koneksi siswa secara langsung.
+    sendfile on;
+    tcp_nopush on;
+    open_file_cache max=1000 inactive=60s;
+    open_file_cache_valid 120s;
+    open_file_cache_min_uses 2;
+}
+
+# Opsional untuk jaringan laboratorium: batasi bandwidth per koneksi agar satu
+# komputer tidak menghabiskan seluruh jalur. Contoh 20 MB/s per siswa:
+# location /_protected_repository/ {
+#     internal;
+#     alias /path/ke/aplikasi/storage/app/repository/;
+#     sendfile on;
+#     limit_rate_after 10m;
+#     limit_rate 20m;
+# }
