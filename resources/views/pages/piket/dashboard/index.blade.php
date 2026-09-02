@@ -319,9 +319,9 @@
                                 <tbody class="divide-y divide-gray-100">
                                     @forelse ($izinHariIni as $izin)
                                         <tr class="hover:bg-gray-50 transition-colors">
-                                            <td class="px-6 py-3 font-medium text-gray-900">{{ $izin->user->name }}</td>
+                                            <td class="px-6 py-3 font-medium text-gray-900">{{ $izin->user?->name ?? 'Pengguna tidak ditemukan' }}</td>
                                             <td class="px-6 py-3 text-gray-500">
-                                                {{ $izin->user->masterSiswa?->rombels->first()?->kelas->nama_kelas ?? '-' }}
+                                                {{ $izin->user?->masterSiswa?->rombels->first()?->kelas?->nama_kelas ?? '-' }}
                                             </td>
                                             <td class="px-6 py-3 text-right">
                                                 @php
@@ -379,11 +379,11 @@
                                     @forelse ($detailKeterlambatan as $late)
                                         <tr class="hover:bg-gray-50 transition-colors">
                                             <td class="px-6 py-3">
-                                                <div class="font-medium text-gray-900">{{ $late->siswa->user->name }}</div>
-                                                <div class="text-[10px] text-gray-400">Security: {{ $late->security->name }}</div>
+                                                <div class="font-medium text-gray-900">{{ $late->siswa?->user?->name ?? $late->siswa?->nama_lengkap ?? 'Siswa tidak ditemukan' }}</div>
+                                                <div class="text-[10px] text-gray-400">Security: {{ $late->security?->name ?? 'Petugas tidak ditemukan' }}</div>
                                             </td>
                                             <td class="px-6 py-3 text-gray-500">
-                                                {{ $late->siswa->rombels->first()?->kelas->nama_kelas ?? '-' }}
+                                                {{ $late->siswa?->rombels->first()?->kelas?->nama_kelas ?? '-' }}
                                             </td>
                                             <td class="px-6 py-3 text-gray-500 font-mono text-xs">
                                                 {{ $late->waktu_dicatat_security->format('H:i') }}

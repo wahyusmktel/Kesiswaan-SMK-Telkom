@@ -147,7 +147,7 @@ class DashboardController extends Controller
         }
 
         // List: Siswa Terlambat Hari Ini (Detail)
-        $detailKeterlambatanHariIni = \App\Models\Keterlambatan::with(['siswa.rombels.kelas', 'security'])
+        $detailKeterlambatanHariIni = \App\Models\Keterlambatan::with(['siswa.user', 'siswa.rombels.kelas', 'security'])
             ->whereDate('waktu_dicatat_security', today())
             ->orderBy('waktu_dicatat_security', 'desc')
             ->get();
@@ -174,7 +174,7 @@ class DashboardController extends Controller
         $recentPermissions = Perizinan::with('user')->latest()->take(5)->get()->map(function($item) {
             return [
                 'type' => 'Izin Tidak Masuk',
-                'name' => $item->user->name,
+                'name' => $item->user?->name ?? 'Pengguna tidak ditemukan',
                 'time' => $item->created_at,
                 'status' => $item->status,
                 'color' => 'amber'
@@ -184,7 +184,9 @@ class DashboardController extends Controller
         $recentLate = \App\Models\Keterlambatan::with('siswa.user')->latest()->take(5)->get()->map(function($item) {
             return [
                 'type' => 'Keterlambatan',
-                'name' => $item->siswa->user->name,
+                'name' => $item->siswa?->user?->name
+                    ?? $item->siswa?->nama_lengkap
+                    ?? 'Siswa tidak ditemukan',
                 'time' => $item->waktu_dicatat_security,
                 'status' => $item->status,
                 'color' => 'red'
