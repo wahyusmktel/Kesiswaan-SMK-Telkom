@@ -1133,6 +1133,7 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('role:Super Admin|KAUR SDM')->prefix('teacher-activity')->name('teacher-activity.')->group(function () {
         Route::get('/', [\App\Http\Controllers\SDM\TeacherActivityController::class, 'index'])->name('index');
+        Route::patch('/{teacher}/employment', [\App\Http\Controllers\SDM\TeacherActivityController::class, 'updateEmployment'])->name('employment.update');
         Route::patch('/{teacher}', [\App\Http\Controllers\SDM\TeacherActivityController::class, 'update'])->name('update');
     });
 
