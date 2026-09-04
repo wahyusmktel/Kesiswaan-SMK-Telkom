@@ -2,13 +2,44 @@
     <x-slot name="header"><h2 class="text-xl font-bold text-gray-800">Monitoring Absensi Fingerprint Guru</h2></x-slot>
     <div class="space-y-6 px-4 py-6 sm:px-6 lg:px-8" x-data="{
         rows: @js($rows), search: '', status: 'all', page: 1,
+        syncing: false, syncMessage: '', syncJobs: [],
+        async pullToday() {
+            if (this.syncing) return;
+            this.syncing = true; this.syncJobs = []; this.syncMessage = 'Mengantrekan penarikan data hari ini...';
+            try {
+                const response = await fetch(@js(route('kepala-sekolah.fingerprint-sync.store')), { method: 'POST', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': @js(csrf_token()) } });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'Gagal mengantrekan sinkronisasi.');
+                for (let attempt = 0; attempt < 240; attempt++) {
+                    const poll = await fetch(data.status_url, { headers: { 'Accept': 'application/json' } });
+                    if (!poll.ok) throw new Error('Progres tidak tersedia. Muat ulang halaman untuk melihat data terbaru.');
+                    const progress = await poll.json(); this.syncJobs = progress.jobs;
+                    this.syncMessage = 'Penarikan berjalan di background. Pastikan worker fingerprint aktif.';
+                    if (progress.done) {
+                        if (progress.jobs.every(job => job.status === 'finished')) {
+                            this.syncMessage = 'Selesai. Memperbarui rekap hari ini...';
+                            window.location.assign(@js(route('kepala-sekolah.monitoring.index', 'fingerprint')) + '?date=' + encodeURIComponent(data.date));
+                            return;
+                        }
+                        throw new Error('Sebagian mesin gagal atau progres kedaluwarsa. Hubungi Super Admin; lihat data yang berhasil ditarik dengan tombol Tampilkan.');
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                }
+                throw new Error('Proses masih antre/berjalan. Hubungi Super Admin untuk memeriksa worker sebelum mengulang penarikan.');
+            } catch (error) { this.syncMessage = error.message; }
+            finally { this.syncing = false; }
+        },
         get filtered() { return this.rows.filter(r => r.name.toLowerCase().includes(this.search.toLowerCase()) && (this.status === 'all' || (this.status === 'present' && r.check_in) || (this.status === 'out' && r.check_out) || (this.status === 'missing' && !r.check_in))); },
         get pages() { return Math.max(1, Math.ceil(this.filtered.length / 25)); },
         get visible() { return this.filtered.slice((this.page - 1) * 25, this.page * 25); }
     }">
         <div class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-slate-900 p-6 text-white">
             <div><h3 class="text-2xl font-bold">Kehadiran Guru</h3><p class="mt-1 text-sm text-slate-300">{{ $date->translatedFormat('l, d F Y') }} · Rekap per guru, bukan jumlah scan</p></div>
-            <form method="GET" class="flex items-end gap-3"><label><span class="mb-1 block text-xs">Tanggal kehadiran</span><input type="date" name="date" value="{{ $date->toDateString() }}" required class="rounded-lg border-gray-300 text-gray-900"></label><button class="rounded-lg bg-red-600 px-4 py-2.5 font-semibold">Tampilkan</button></form>
+            <form method="GET" class="flex flex-wrap items-end gap-3"><label><span class="mb-1 block text-xs">Tanggal kehadiran</span><input type="date" name="date" value="{{ $date->toDateString() }}" required class="rounded-lg border-gray-300 text-gray-900"></label><button class="rounded-lg bg-red-600 px-4 py-2.5 font-semibold">Tampilkan</button><button type="button" @click="pullToday()" :disabled="syncing" class="rounded-lg bg-emerald-600 px-4 py-2.5 font-semibold disabled:opacity-50" x-text="syncing ? 'Sedang Menarik...' : 'Tarik Data Hari Ini'"></button></form>
+        </div>
+        <div x-show="syncMessage" x-cloak class="rounded-xl bg-blue-50 p-4 text-sm text-blue-800" role="status" aria-live="polite">
+            <p x-text="syncMessage"></p>
+            <template x-for="job in syncJobs" :key="job.name"><p class="mt-2" x-text="job.name + ': ' + job.status + ' (' + job.percent + '%)'"></p></template>
         </div>
         @if($errors->any())<p class="text-red-700">{{ $errors->first() }}</p>@endif
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

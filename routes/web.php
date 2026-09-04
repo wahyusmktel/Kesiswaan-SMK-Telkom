@@ -1372,6 +1372,10 @@ Route::middleware(['auth', 'verified', 'role:Kepala Sekolah', 'permission:view e
         Route::get('/monitoring/{section}', [\App\Http\Controllers\KepalaSekolah\MonitoringController::class, 'index'])
             ->whereIn('section', array_keys(\App\Http\Controllers\KepalaSekolah\MonitoringController::SECTIONS))
             ->name('monitoring.index');
+        Route::post('/fingerprint/tarik-hari-ini', [\App\Http\Controllers\KepalaSekolah\FingerprintSyncController::class, 'store'])
+            ->middleware('throttle:1,2')->name('fingerprint-sync.store');
+        Route::get('/fingerprint/progres/{batch}', [\App\Http\Controllers\KepalaSekolah\FingerprintSyncController::class, 'show'])
+            ->whereUuid('batch')->name('fingerprint-sync.show');
     });
 
 // ============================================================

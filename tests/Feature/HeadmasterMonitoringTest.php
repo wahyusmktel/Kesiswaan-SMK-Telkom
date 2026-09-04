@@ -3,14 +3,17 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\KepalaSekolah\MonitoringController;
+use App\Jobs\SyncFingerprintAttendancesJob;
 use App\Models\FingerprintAttendance;
 use App\Models\FingerprintDevice;
+use App\Models\FingerprintUser;
 use App\Models\Keterlambatan;
 use App\Models\MasterGuru;
 use App\Models\MasterSiswa;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -35,6 +38,46 @@ class HeadmasterMonitoringTest extends TestCase
         $this->actingAs($user)->withSession(['active_role' => $roleName]);
 
         return $user;
+    }
+
+    public function test_headmaster_can_queue_today_only_for_active_mapped_devices(): void
+    {
+        Queue::fake();
+        config(['queue.default' => 'database']);
+        $user = $this->login();
+        $device = FingerprintDevice::create(['name' => 'Aktif', 'ip_address' => '127.0.0.1', 'is_active' => true]);
+        FingerprintDevice::create(['name' => 'Tanpa Mapping', 'ip_address' => '127.0.0.2', 'is_active' => true]);
+        $inactive = FingerprintDevice::create(['name' => 'Nonaktif', 'ip_address' => '127.0.0.3', 'is_active' => false]);
+        foreach ([$device, $inactive] as $item) {
+            FingerprintUser::create(['fingerprint_device_id' => $item->id, 'user_id' => '1', 'app_user_id' => $user->id]);
+        }
+        $response = $this->postJson(route('kepala-sekolah.fingerprint-sync.store'), ['date' => '2000-01-01', 'device_id' => $inactive->id])->assertOk();
+        Queue::assertPushed(SyncFingerprintAttendancesJob::class, 1);
+        Queue::assertPushed(SyncFingerprintAttendancesJob::class, fn ($job) => $job->deviceId === $device->id && $job->dateFrom === today()->toDateString() && $job->dateTo === today()->toDateString() && $job->sendDailyRecaps === false && $job->queue === 'fingerprint');
+        $this->getJson($response->json('status_url'))->assertOk()->assertJsonPath('jobs.0.status', 'queued');
+        $this->postJson(route('kepala-sekolah.fingerprint-sync.store'))->assertStatus(429);
+        $this->login();
+        $this->getJson($response->json('status_url'))->assertNotFound();
+    }
+
+    public function test_teacher_cannot_trigger_headmaster_sync(): void
+    {
+        Queue::fake();
+        $this->login('Guru Kelas');
+        $this->postJson(route('kepala-sekolah.fingerprint-sync.store'))->assertForbidden();
+        Queue::assertNothingPushed();
+    }
+
+    public function test_sync_rejects_missing_devices_and_sync_queue(): void
+    {
+        Queue::fake();
+        config(['queue.default' => 'database']);
+        $this->login();
+        $this->postJson(route('kepala-sekolah.fingerprint-sync.store'))->assertUnprocessable();
+        $this->login();
+        config(['queue.default' => 'sync']);
+        $this->postJson(route('kepala-sekolah.fingerprint-sync.store'))->assertUnprocessable();
+        Queue::assertNothingPushed();
     }
 
     public function test_navigation_matches_requested_visibility_and_monitoring_order(): void
