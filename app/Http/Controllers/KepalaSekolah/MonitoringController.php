@@ -8,9 +8,12 @@ use App\Models\GuruIzin;
 use App\Models\IzinMeninggalkanKelas;
 use App\Models\JadwalPelajaran;
 use App\Models\Keterlambatan;
+use App\Models\MasterGuru;
 use App\Models\Perizinan;
 use App\Models\SiswaPelanggaran;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class MonitoringController extends Controller
 {
@@ -26,6 +29,9 @@ class MonitoringController extends Controller
     public function index(Request $request, string $section)
     {
         abort_unless(isset(self::SECTIONS[$section]), 404);
+        if ($section === 'fingerprint') {
+            return $this->fingerprint($request);
+        }
         $filters = $request->validate([
             'q' => ['nullable', 'string', 'max:100'],
             'from' => ['nullable', 'date_format:Y-m-d'],
@@ -47,15 +53,6 @@ class MonitoringController extends Controller
                 $nameColumn = 'nama_lengkap';
                 $headers = ['Waktu', 'Siswa', 'Alasan', 'Status', 'Petugas'];
                 $row = fn ($item) => [$item->waktu_dicatat_security?->format('d/m/Y H:i'), $item->siswa?->nama_lengkap, $item->alasan_siswa, $item->status, $item->security?->name];
-                break;
-            case 'fingerprint':
-                $query = FingerprintAttendance::with(['appUser', 'device'])->whereHas('appUser.masterGuru');
-                $dateColumn = 'timestamp';
-                $relation = 'appUser';
-                $nameColumn = 'name';
-                $headers = ['Waktu Scan', 'Guru', 'Mesin', 'Kode Punch', 'Sumber'];
-                $row = fn ($item) => [$item->timestamp?->format('d/m/Y H:i:s'), $item->appUser?->name, $item->device?->name, $item->punch, $item->entry_source ?? 'mesin'];
-                $note = 'Log scan guru yang sudah dipetakan ke akun dan data master guru. Jumlah log bukan jumlah guru hadir; log kosong tidak otomatis berarti alpha.';
                 break;
             case 'jadwal':
                 $query = JadwalPelajaran::with(['guru', 'rombel.kelas', 'mataPelajaran'])->inActiveAcademicPeriod();
@@ -125,5 +122,40 @@ class MonitoringController extends Controller
             'from' => $from,
             'to' => $to,
         ]);
+    }
+
+    private function fingerprint(Request $request)
+    {
+        $input = $request->validate(['date' => ['nullable', 'date_format:Y-m-d']]);
+        $date = Carbon::parse($input['date'] ?? today()->toDateString());
+        $scans = FingerprintAttendance::query()
+            ->select('app_user_id', DB::raw('MIN(timestamp) as first_scan'), DB::raw('MAX(timestamp) as last_scan'))
+            ->whereNotNull('app_user_id')
+            ->whereBetween('timestamp', [$date->copy()->startOfDay(), $date->copy()->endOfDay()])
+            ->groupBy('app_user_id')->get()->keyBy('app_user_id');
+        $teachers = MasterGuru::orderBy('nama_lengkap')->get(['id', 'user_id', 'nama_lengkap']);
+        $rows = $teachers->map(function ($teacher) use ($scans) {
+            $scan = $teacher->user_id ? $scans->get($teacher->user_id) : null;
+
+            return [
+                'id' => $teacher->id,
+                'name' => $teacher->nama_lengkap,
+                'check_in' => $scan ? Carbon::parse($scan->first_scan)->format('H:i') : null,
+                'check_out' => $scan && $scan->last_scan > $scan->first_scan ? Carbon::parse($scan->last_scan)->format('H:i') : null,
+                'hour' => $scan ? Carbon::parse($scan->first_scan)->hour : null,
+            ];
+        })->values();
+        $summary = [
+            'total' => $rows->count(),
+            'present' => $rows->whereNotNull('check_in')->count(),
+            'out' => $rows->whereNotNull('check_out')->count(),
+            'missing' => $rows->whereNull('check_in')->count(),
+        ];
+        $hours = collect(range(0, 23))->map(fn ($hour) => [
+            'label' => sprintf('%02d:00', $hour),
+            'count' => $rows->filter(fn ($row) => $row['hour'] === $hour)->count(),
+        ]);
+
+        return view('pages.kepala-sekolah.fingerprint', compact('date', 'rows', 'summary', 'hours'));
     }
 }

@@ -94,7 +94,31 @@ class HeadmasterMonitoringTest extends TestCase
         foreach ([$teacher, $other] as $user) {
             FingerprintAttendance::create(['fingerprint_device_id' => $device->id, 'user_id' => (string) $user->id, 'app_user_id' => $user->id, 'timestamp' => now(), 'punch' => '0']);
         }
-        $this->get(route('kepala-sekolah.monitoring.index', 'fingerprint'))->assertOk()->assertSee($teacher->name)->assertDontSee($other->name)->assertSee('Mesin Test');
+        $this->get(route('kepala-sekolah.monitoring.index', 'fingerprint'))->assertOk()->assertSee($teacher->name)->assertDontSee($other->name)->assertSee('Total Kehadiran')->assertDontSee('Kode Punch');
+    }
+
+    public function test_daily_teacher_recap_counts_people_and_separates_dates_and_duplicate_scans(): void
+    {
+        $this->login();
+        $teacher = User::factory()->create();
+        MasterGuru::create(['nama_lengkap' => 'Guru Hadir', 'jenis_kelamin' => 'L', 'user_id' => $teacher->id]);
+        MasterGuru::create(['nama_lengkap' => 'Guru Belum Dipetakan', 'jenis_kelamin' => 'P']);
+        $device = FingerprintDevice::create(['name' => 'Mesin A', 'ip_address' => '127.0.0.1']);
+        $second = FingerprintDevice::create(['name' => 'Mesin B', 'ip_address' => '127.0.0.2']);
+        foreach (['2026-09-03 06:55:00', '2026-09-03 08:00:00', '2026-09-03 16:20:00', '2026-09-04 07:10:00'] as $timestamp) {
+            FingerprintAttendance::create(['fingerprint_device_id' => $device->id, 'user_id' => '1', 'app_user_id' => $teacher->id, 'timestamp' => $timestamp]);
+        }
+        FingerprintAttendance::create(['fingerprint_device_id' => $second->id, 'user_id' => '1', 'app_user_id' => $teacher->id, 'timestamp' => '2026-09-04 07:10:00']);
+        $this->get(route('kepala-sekolah.monitoring.index', ['section' => 'fingerprint', 'date' => '2026-09-03']))
+            ->assertOk()
+            ->assertViewHas('summary', ['total' => 2, 'present' => 1, 'out' => 1, 'missing' => 1])
+            ->assertViewHas('rows', fn ($rows) => $rows->firstWhere('name', 'Guru Hadir')['check_in'] === '06:55' && $rows->firstWhere('name', 'Guru Hadir')['check_out'] === '16:20');
+        $this->get(route('kepala-sekolah.monitoring.index', ['section' => 'fingerprint', 'date' => '2026-09-04']))
+            ->assertOk()->assertViewHas('summary', ['total' => 2, 'present' => 1, 'out' => 0, 'missing' => 1])
+            ->assertViewHas('rows', fn ($rows) => $rows->firstWhere('name', 'Guru Hadir')['check_out'] === null);
+        $this->get(route('kepala-sekolah.monitoring.index', ['section' => 'fingerprint', 'date' => '2026-09-05']))
+            ->assertOk()->assertViewHas('summary', ['total' => 2, 'present' => 0, 'out' => 0, 'missing' => 2]);
+        $this->getJson(route('kepala-sekolah.monitoring.index', ['section' => 'fingerprint', 'date' => 'invalid']))->assertUnprocessable();
     }
 
     public function test_headmaster_can_access_personal_asset_services(): void
