@@ -52,6 +52,7 @@ class WebAuthnLoginController
             'Operator'       => 'operator.dashboard.index',
             'Security'       => 'security.dashboard.index',
             'KAUR SDM'       => 'sdm.dashboard.index',
+            'Kepala Sekolah' => 'kepala-sekolah.dashboard.index',
             'Super Admin'    => 'super-admin.dashboard.index',
             'Kantin'         => 'kantin.dashboard.index',
         ];

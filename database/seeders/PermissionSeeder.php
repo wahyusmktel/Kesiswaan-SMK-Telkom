@@ -119,6 +119,7 @@ class PermissionSeeder extends Seeder
             'view monitoring keterlambatan',
             'view guru kelas dashboard',
             'manage pengaduan ortu',
+            'view executive dashboard',
         ];
 
         foreach ($permissions as $permission) {
@@ -291,7 +292,10 @@ class PermissionSeeder extends Seeder
 
         $kepalaSekolahRole = Role::where('name', 'Kepala Sekolah')->first();
         if ($kepalaSekolahRole) {
-            $kepalaSekolahRole->givePermissionTo('view erapor');
+            $kepalaSekolahRole->syncPermissions([
+                'view executive dashboard',
+                'view erapor',
+            ]);
         }
     }
 }

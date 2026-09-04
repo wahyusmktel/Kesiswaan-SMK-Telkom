@@ -435,6 +435,10 @@ class OkrController extends Controller
 
     private function editableUnitIds(User $user, $units): array
     {
+        if ($this->isExecutiveViewer($user)) {
+            return [];
+        }
+
         if ($this->canManageAll($user)) {
             return $units->pluck('id')->map(fn ($id) => (int) $id)->all();
         }
@@ -452,7 +456,14 @@ class OkrController extends Controller
     {
         $activeRole = session('active_role') ?: $user->getRoleNames()->first();
 
-        return in_array($activeRole, ['Super Admin', 'Kepala Sekolah'], true);
+        return $activeRole === 'Super Admin';
+    }
+
+    private function isExecutiveViewer(User $user): bool
+    {
+        $activeRole = session('active_role') ?: $user->getRoleNames()->first();
+
+        return $activeRole === 'Kepala Sekolah';
     }
 
     private function ensureManager(User $user): void
@@ -462,6 +473,8 @@ class OkrController extends Controller
 
     private function ensureUnitEditor(User $user, OkrUnit $unit): void
     {
+        abort_if($this->isExecutiveViewer($user), 403);
+
         abort_unless(
             $this->canManageAll($user)
             || in_array(session('active_role') ?: $user->getRoleNames()->first(), $unit->role_names ?? [], true),

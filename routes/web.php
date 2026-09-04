@@ -1362,6 +1362,15 @@ Route::middleware(['auth', 'role:Kurikulum'])->prefix('kurikulum/ukk')->name('ku
     Route::get('/rekap-nilai/export', [\App\Http\Controllers\Kaprodi\RekapNilaiUkkController::class, 'export'])->name('rekap-nilai.export');
 });
 
+// Dashboard eksekutif lintas unit (read-only)
+Route::middleware(['auth', 'verified', 'role:Kepala Sekolah', 'permission:view executive dashboard'])
+    ->prefix('kepala-sekolah')
+    ->name('kepala-sekolah.')
+    ->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\KepalaSekolah\DashboardController::class, 'index'])
+            ->name('dashboard.index');
+    });
+
 // ============================================================
 // Integrasi Inventaris Aset (semua role kecuali Siswa)
 // ============================================================

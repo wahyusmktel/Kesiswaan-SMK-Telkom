@@ -26,7 +26,7 @@ class DashboardRedirector
             'Kantin' => 'kantin.dashboard.index',
             'Kaprodi' => 'kaprodi.ukk.index',
             'Koordinator Prakerin' => 'prakerin.industri.index',
-            'Kepala Sekolah' => 'tanda-tangan.index',
+            'Kepala Sekolah' => 'kepala-sekolah.dashboard.index',
             'Petugas UKS' => 'uks.records.index',
             default => null,
         };
