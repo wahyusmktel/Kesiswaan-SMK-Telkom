@@ -141,7 +141,7 @@ class MonitoringController extends Controller
         $schedules = JadwalPelajaran::inActiveAcademicPeriod()->where('hari', $dayName)
             ->select('master_guru_id', DB::raw('MIN(jam_mulai) as starts_at'), DB::raw('MAX(jam_selesai) as ends_at'))
             ->groupBy('master_guru_id')->get()->keyBy('master_guru_id');
-        $teachers = MasterGuru::with('dapodikGuru')->orderBy('nama_lengkap')->get(['id', 'user_id', 'nama_lengkap']);
+        $teachers = MasterGuru::with('dapodikGuru')->where('is_active', true)->orderBy('nama_lengkap')->get(['id', 'user_id', 'nama_lengkap']);
         $rows = $teachers->map(function ($teacher) use ($scans, $workingDay, $schedules, $holiday) {
             $scan = $teacher->user_id ? $scans->get($teacher->user_id) : null;
             $employment = EmploymentStatus::normalize($teacher->dapodikGuru?->status_kepegawaian);

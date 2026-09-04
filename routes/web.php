@@ -1131,6 +1131,11 @@ Route::middleware('auth')->group(function () {
         Route::put('/dapodik-guru/{dapodikGuru}', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'update'])->name('dapodik-guru.update');
     });
 
+    Route::middleware('role:Super Admin|KAUR SDM')->prefix('teacher-activity')->name('teacher-activity.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\SDM\TeacherActivityController::class, 'index'])->name('index');
+        Route::patch('/{teacher}', [\App\Http\Controllers\SDM\TeacherActivityController::class, 'update'])->name('update');
+    });
+
     // Fingerprint GF1600 / ZKTeco (Super Admin, Operator, KAUR SDM)
     Route::middleware(['role:Super Admin|Operator|KAUR SDM'])->prefix('fingerprint')->name('fingerprint.')->group(function () {
         Route::get('/', [\App\Http\Controllers\FingerprintController::class, 'index'])->name('index');

@@ -11,6 +11,8 @@ class MasterGuru extends Model
 
     protected $table = 'master_gurus';
 
+    protected $casts = ['is_active' => 'boolean'];
+
     protected $fillable = [
         'kode_guru',
         'nik',

@@ -187,6 +187,12 @@ class HeadmasterMonitoringTest extends TestCase
         $this->get($url)->assertOk()->assertSee('66.7%')
             ->assertViewHas('summary', fn ($s) => $s['required'] === 3 && $s['required_present'] === 2 && $s['present'] === 3)
             ->assertViewHas('rows', fn ($rows) => $rows->firstWhere('name', 'Guru 2')['obligation'] === 'Jadwal 10:00–12:00' && ! $rows->firstWhere('name', 'Guru 3')['required']);
+        MasterGuru::where('nama_lengkap', 'Guru 0')->update(['is_active' => false]);
+        $this->get($url)->assertOk()
+            ->assertViewHas('summary', fn ($s) => $s['total'] === 3 && $s['required'] === 2 && $s['required_present'] === 1 && $s['present'] === 2)
+            ->assertViewHas('rows', fn ($rows) => ! $rows->contains('name', 'Guru 0'));
+        $this->assertDatabaseCount('fingerprint_attendances', 3);
+        MasterGuru::where('nama_lengkap', 'Guru 0')->update(['is_active' => true]);
         $year->update(['is_active' => false]);
         $this->get($url)->assertOk()->assertViewHas('summary', fn ($s) => $s['required'] === 2 && $s['required_present'] === 1);
         \App\Models\WorkCalendarEvent::create(['title' => 'Libur Test', 'type' => 'holiday', 'is_non_working' => true, 'date_from' => '2026-09-04', 'date_to' => '2026-09-04']);

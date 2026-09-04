@@ -1,5 +1,6 @@
 <x-app-layout>
     <x-slot name="header"><h2 class="text-xl font-bold text-gray-800">Monitoring Absensi Fingerprint Guru</h2></x-slot>
+    <p class="px-6 pt-4 text-sm text-gray-500">Hanya guru berstatus aktif saat ini yang masuk rekap, termasuk saat memilih tanggal lampau. Keaktifan dikelola oleh Kaur SDM / Super Admin.</p>
     <div class="space-y-6 px-4 py-6 sm:px-6 lg:px-8" x-data="{
         rows: @js($rows), search: '', status: 'all', page: 1,
         syncing: false, syncMessage: '', syncJobs: [],

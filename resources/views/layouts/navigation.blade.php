@@ -2331,6 +2331,19 @@
 @endcan
 
 {{-- ============================================================ --}}
+@hasanyrole('Super Admin|KAUR SDM')
+@if(in_array(session('active_role') ?: auth()->user()->getRoleNames()->first(), ['Super Admin', 'KAUR SDM']))
+    <li>
+        <a href="{{ route('teacher-activity.index') }}" class="nav-link {{ request()->routeIs('teacher-activity.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="flex items-center">
+                <div class="nav-icon-container"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2m14-10 2 2 4-4M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg></div>
+                <span class="nav-text">Status Keaktifan Guru</span>
+            </div>
+        </a>
+    </li>
+@endif
+@endhasanyrole
+
 {{-- ROLE: KAUR SDM --}}
 {{-- ============================================================ --}}
 @can('view sdm dashboard')
