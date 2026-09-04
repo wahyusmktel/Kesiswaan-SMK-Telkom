@@ -154,14 +154,44 @@ class HeadmasterMonitoringTest extends TestCase
         FingerprintAttendance::create(['fingerprint_device_id' => $second->id, 'user_id' => '1', 'app_user_id' => $teacher->id, 'timestamp' => '2026-09-04 07:10:00']);
         $this->get(route('kepala-sekolah.monitoring.index', ['section' => 'fingerprint', 'date' => '2026-09-03']))
             ->assertOk()
-            ->assertViewHas('summary', ['total' => 2, 'present' => 1, 'out' => 1, 'missing' => 1])
+            ->assertViewHas('summary', ['total' => 2, 'present' => 1, 'out' => 1, 'missing' => 1, 'required' => 0, 'required_present' => 0, 'required_missing' => 0, 'unclassified' => 2])
             ->assertViewHas('rows', fn ($rows) => $rows->firstWhere('name', 'Guru Hadir')['check_in'] === '06:55' && $rows->firstWhere('name', 'Guru Hadir')['check_out'] === '16:20');
         $this->get(route('kepala-sekolah.monitoring.index', ['section' => 'fingerprint', 'date' => '2026-09-04']))
-            ->assertOk()->assertViewHas('summary', ['total' => 2, 'present' => 1, 'out' => 0, 'missing' => 1])
+            ->assertOk()->assertViewHas('summary', ['total' => 2, 'present' => 1, 'out' => 0, 'missing' => 1, 'required' => 0, 'required_present' => 0, 'required_missing' => 0, 'unclassified' => 2])
             ->assertViewHas('rows', fn ($rows) => $rows->firstWhere('name', 'Guru Hadir')['check_out'] === null);
         $this->get(route('kepala-sekolah.monitoring.index', ['section' => 'fingerprint', 'date' => '2026-09-05']))
-            ->assertOk()->assertViewHas('summary', ['total' => 2, 'present' => 0, 'out' => 0, 'missing' => 2]);
+            ->assertOk()->assertViewHas('summary', ['total' => 2, 'present' => 0, 'out' => 0, 'missing' => 2, 'required' => 0, 'required_present' => 0, 'required_missing' => 0, 'unclassified' => 2]);
         $this->getJson(route('kepala-sekolah.monitoring.index', ['section' => 'fingerprint', 'date' => 'invalid']))->assertUnprocessable();
+    }
+
+    public function test_percentage_uses_employment_schedule_and_work_calendar(): void
+    {
+        $principal = $this->login();
+        $year = \App\Models\TahunPelajaran::create(['tahun' => '2026/2027', 'semester' => 'Ganjil', 'is_active' => true]);
+        $class = \App\Models\Kelas::create(['nama_kelas' => 'X Test', 'jurusan' => 'TKJ']);
+        $rombel = \App\Models\Rombel::create(['tahun_ajaran' => '2026/2027', 'tahun_pelajaran_id' => $year->id, 'kelas_id' => $class->id, 'wali_kelas_id' => $principal->id]);
+        $subject = \App\Models\MataPelajaran::create(['kode_mapel' => 'TEST', 'nama_mapel' => 'Test']);
+        $device = FingerprintDevice::create(['name' => 'Test', 'ip_address' => '127.0.0.1']);
+        foreach (['Pegawai Tetap', 'Pegawai Full Time', 'Pegawai Part Time', 'Pegawai Part Time'] as $i => $status) {
+            $user = User::factory()->create();
+            $teacher = MasterGuru::create(['nama_lengkap' => 'Guru '.$i, 'jenis_kelamin' => 'L', 'user_id' => $user->id]);
+            \App\Models\DapodikGuru::create(['master_guru_id' => $teacher->id, 'nama' => $teacher->nama_lengkap, 'status_kepegawaian' => $status]);
+            if ($i === 2) {
+                \App\Models\JadwalPelajaran::create(['master_guru_id' => $teacher->id, 'rombel_id' => $rombel->id, 'mata_pelajaran_id' => $subject->id, 'hari' => 'Jumat', 'jam_ke' => 1, 'jam_mulai' => '10:00:00', 'jam_selesai' => '12:00:00']);
+            }
+            if ($i !== 1) {
+                FingerprintAttendance::create(['fingerprint_device_id' => $device->id, 'user_id' => (string) $user->id, 'app_user_id' => $user->id, 'timestamp' => '2026-09-04 09:50:00']);
+            }
+        }
+        $url = route('kepala-sekolah.monitoring.index', ['section' => 'fingerprint', 'date' => '2026-09-04']);
+        $this->get($url)->assertOk()->assertSee('66.7%')
+            ->assertViewHas('summary', fn ($s) => $s['required'] === 3 && $s['required_present'] === 2 && $s['present'] === 3)
+            ->assertViewHas('rows', fn ($rows) => $rows->firstWhere('name', 'Guru 2')['obligation'] === 'Jadwal 10:00–12:00' && ! $rows->firstWhere('name', 'Guru 3')['required']);
+        $year->update(['is_active' => false]);
+        $this->get($url)->assertOk()->assertViewHas('summary', fn ($s) => $s['required'] === 2 && $s['required_present'] === 1);
+        \App\Models\WorkCalendarEvent::create(['title' => 'Libur Test', 'type' => 'holiday', 'is_non_working' => true, 'date_from' => '2026-09-04', 'date_to' => '2026-09-04']);
+        $this->get($url)->assertOk()->assertViewHas('summary', fn ($s) => $s['required'] === 0 && $s['required_present'] === 0)->assertSee('Tidak ada guru wajib hadir');
+        $this->get(route('kepala-sekolah.monitoring.index', ['section' => 'fingerprint', 'date' => '2026-09-05']))->assertOk()->assertViewHas('summary', fn ($s) => $s['required'] === 0);
     }
 
     public function test_headmaster_can_access_personal_asset_services(): void

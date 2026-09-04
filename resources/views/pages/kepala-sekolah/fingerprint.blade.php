@@ -52,9 +52,12 @@
         <div class="grid gap-6 lg:grid-cols-3">
             <section class="rounded-2xl border bg-white p-6">
                 <h3 class="font-bold">Persentase Kehadiran</h3>
-                @php($percent = $summary['total'] ? round($summary['present'] / $summary['total'] * 100, 1) : 0)
-                <div class="mt-6 flex justify-center"><div role="img" aria-label="Kehadiran {{ $percent }} persen" class="flex h-44 w-44 items-center justify-center rounded-full" style="background: conic-gradient(#10b981 {{ $percent }}%, #e5e7eb 0)"><div class="flex h-32 w-32 items-center justify-center rounded-full bg-white text-3xl font-bold">{{ $percent }}%</div></div></div>
-                <p class="mt-5 text-center text-sm text-gray-500">{{ $summary['present'] }} dari {{ $summary['total'] }} guru memiliki scan pada tanggal terpilih.</p>
+                @php($percent = $summary['required'] ? round($summary['required_present'] / $summary['required'] * 100, 1) : null)
+                <div class="mt-6 flex justify-center"><div role="img" aria-label="{{ $percent === null ? 'Tidak ada guru wajib hadir' : 'Kehadiran '.$percent.' persen' }}" class="flex h-44 w-44 items-center justify-center rounded-full" style="background: conic-gradient(#10b981 {{ $percent ?? 0 }}%, #e5e7eb 0)"><div class="flex h-32 w-32 items-center justify-center rounded-full bg-white text-3xl font-bold">{{ $percent === null ? '—' : $percent.'%' }}</div></div></div>
+                <p class="mt-5 text-center text-sm text-gray-500">{{ $summary['required_present'] }} dari {{ $summary['required'] }} guru wajib hadir memiliki scan.</p>
+                <p class="mt-2 text-center text-xs text-gray-500">{{ $summary['required_missing'] }} guru wajib hadir belum memiliki scan. Bukan otomatis alpha.</p>
+                @if($summary['unclassified'])<p class="mt-3 rounded-lg bg-amber-50 p-3 text-xs text-amber-800">{{ $summary['unclassified'] }} guru memiliki status kosong/tidak dikenali; tidak masuk perhitungan persentase.</p>@endif
+                <p class="mt-3 text-xs leading-relaxed text-gray-500">Tetap/full-time: hari kerja. Part-time: hari dengan jadwal mengajar semester aktif. Kalender libur dan akhir pekan dikecualikan. Scan di luar kewajiban tetap terlihat di total scan guru, tetapi tidak menambah persentase.</p>
             </section>
             <section class="rounded-2xl border bg-white p-6 lg:col-span-2">
                 <h3 class="font-bold">Distribusi Jam Hadir</h3><p class="mt-1 text-sm text-gray-500">Scan pertama setiap guru. Arahkan kursor atau fokus ke batang untuk melihat jumlah.</p>
@@ -68,7 +71,7 @@
         <section class="overflow-hidden rounded-2xl border bg-white shadow-sm">
             <div class="flex flex-wrap items-center justify-between gap-4 border-b p-5"><div><h3 class="font-bold">Daftar Guru</h3><p class="text-xs text-gray-500">Ringkasan dan chart tetap mencakup seluruh guru pada tanggal terpilih.</p></div><label><span class="sr-only">Cari guru</span><input x-model="search" @input="page = 1" placeholder="Cari nama guru..." class="rounded-lg border-gray-300"></label></div>
             <div class="overflow-x-auto"><table class="w-full text-left text-sm"><thead class="bg-gray-50"><tr><th class="px-6 py-4">Guru</th><th class="px-6 py-4">Hadir</th><th class="px-6 py-4">Pulang</th></tr></thead><tbody class="divide-y">
-                <template x-for="row in visible" :key="row.id"><tr><td class="px-6 py-4 font-semibold" x-text="row.name"></td><td class="px-6 py-4 font-mono text-emerald-700" x-text="row.check_in || '—'"></td><td class="px-6 py-4 font-mono text-blue-700" x-text="row.check_out || '—'"></td></tr></template>
+                <template x-for="row in visible" :key="row.id"><tr><td class="px-6 py-4"><span class="font-semibold" x-text="row.name"></span><span class="mt-1 block text-xs text-gray-500" x-text="row.employment + ' · ' + row.obligation"></span></td><td class="px-6 py-4 font-mono text-emerald-700" x-text="row.check_in || '—'"></td><td class="px-6 py-4 font-mono text-blue-700" x-text="row.check_out || '—'"></td></tr></template>
                 <tr x-show="filtered.length === 0"><td colspan="3" class="p-10 text-center text-gray-500">Tidak ada data sesuai filter.</td></tr>
             </tbody></table></div>
             <div class="flex items-center justify-between border-t p-5 text-sm"><span x-text="filtered.length + ' guru · Halaman ' + page + ' / ' + pages"></span><div class="flex gap-2"><button @click="page--" :disabled="page <= 1" class="rounded border px-3 py-2 disabled:opacity-40">Sebelumnya</button><button @click="page++" :disabled="page >= pages" class="rounded border px-3 py-2 disabled:opacity-40">Berikutnya</button></div></div>

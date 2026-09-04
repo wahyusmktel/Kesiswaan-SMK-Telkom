@@ -11,6 +11,8 @@ use App\Models\Keterlambatan;
 use App\Models\MasterGuru;
 use App\Models\Perizinan;
 use App\Models\SiswaPelanggaran;
+use App\Models\WorkCalendarEvent;
+use App\Support\EmploymentStatus;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -133,13 +135,34 @@ class MonitoringController extends Controller
             ->whereNotNull('app_user_id')
             ->whereBetween('timestamp', [$date->copy()->startOfDay(), $date->copy()->endOfDay()])
             ->groupBy('app_user_id')->get()->keyBy('app_user_id');
-        $teachers = MasterGuru::orderBy('nama_lengkap')->get(['id', 'user_id', 'nama_lengkap']);
-        $rows = $teachers->map(function ($teacher) use ($scans) {
+        $holiday = WorkCalendarEvent::eventFor($date);
+        $workingDay = ! $date->isWeekend() && ! $holiday;
+        $dayName = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'][$date->dayOfWeekIso - 1];
+        $schedules = JadwalPelajaran::inActiveAcademicPeriod()->where('hari', $dayName)
+            ->select('master_guru_id', DB::raw('MIN(jam_mulai) as starts_at'), DB::raw('MAX(jam_selesai) as ends_at'))
+            ->groupBy('master_guru_id')->get()->keyBy('master_guru_id');
+        $teachers = MasterGuru::with('dapodikGuru')->orderBy('nama_lengkap')->get(['id', 'user_id', 'nama_lengkap']);
+        $rows = $teachers->map(function ($teacher) use ($scans, $workingDay, $schedules, $holiday) {
             $scan = $teacher->user_id ? $scans->get($teacher->user_id) : null;
+            $employment = EmploymentStatus::normalize($teacher->dapodikGuru?->status_kepegawaian);
+            $recognized = in_array($employment, [EmploymentStatus::PERMANENT, EmploymentStatus::FULL_TIME, EmploymentStatus::PART_TIME], true);
+            $schedule = $schedules->get($teacher->id);
+            $required = $recognized && $workingDay && ($employment !== EmploymentStatus::PART_TIME || $schedule !== null);
+            $obligation = match (true) {
+                ! $recognized => 'Status kepegawaian perlu diperiksa',
+                ! $workingDay => $holiday ? 'Libur: '.$holiday->title : 'Akhir pekan',
+                $employment === EmploymentStatus::PART_TIME && ! $schedule => 'Tidak ada jadwal mengajar',
+                $employment === EmploymentStatus::PART_TIME => 'Jadwal '.substr($schedule->starts_at, 0, 5).'–'.substr($schedule->ends_at, 0, 5),
+                default => 'Wajib hadir hari kerja',
+            };
 
             return [
                 'id' => $teacher->id,
                 'name' => $teacher->nama_lengkap,
+                'employment' => $employment ?? 'Belum diisi',
+                'required' => $required,
+                'recognized' => $recognized,
+                'obligation' => $obligation,
                 'check_in' => $scan ? Carbon::parse($scan->first_scan)->format('H:i') : null,
                 'check_out' => $scan && $scan->last_scan > $scan->first_scan ? Carbon::parse($scan->last_scan)->format('H:i') : null,
                 'hour' => $scan ? Carbon::parse($scan->first_scan)->hour : null,
@@ -150,6 +173,10 @@ class MonitoringController extends Controller
             'present' => $rows->whereNotNull('check_in')->count(),
             'out' => $rows->whereNotNull('check_out')->count(),
             'missing' => $rows->whereNull('check_in')->count(),
+            'required' => $rows->where('required', true)->count(),
+            'required_present' => $rows->where('required', true)->whereNotNull('check_in')->count(),
+            'required_missing' => $rows->where('required', true)->whereNull('check_in')->count(),
+            'unclassified' => $rows->where('recognized', false)->count(),
         ];
         $hours = collect(range(0, 23))->map(fn ($hour) => [
             'label' => sprintf('%02d:00', $hour),
