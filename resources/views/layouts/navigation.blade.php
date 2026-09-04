@@ -204,6 +204,7 @@
 </style>
 
 @can('view erapor')
+@if((session('active_role') ?: auth()->user()?->getRoleNames()->first()) !== 'Kepala Sekolah')
     <div class="section-title">e-Rapor</div>
     <li>
         <a href="{{ route('erapor.index') }}" title="e-Rapor SISFO"
@@ -217,6 +218,7 @@
             <span class="nav-text">e-Rapor SISFO</span>
         </a>
     </li>
+@endif
 @endcan
 
 
@@ -3068,9 +3070,20 @@
         <span class="nav-badge bg-emerald-100 text-emerald-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">NEW</span>
     </a>
 </li>
+@if($activeNavigationRole === 'Kepala Sekolah')
+    @foreach(\App\Http\Controllers\KepalaSekolah\MonitoringController::SECTIONS as $section => $label)
+        <li>
+            <a href="{{ route('kepala-sekolah.monitoring.index', $section) }}"
+                class="nav-link {{ request()->routeIs('kepala-sekolah.monitoring.index') && request()->route('section') === $section ? 'nav-link-active' : 'nav-link-inactive' }}">
+                <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5h6M9 12h6m-6 4h6M5 3h14v18H5z" /></svg></div>
+                <span class="nav-text">{{ $label }}</span>
+            </a>
+        </li>
+    @endforeach
+@endif
 @endif
 
-@if($canViewCctv)
+@if($canViewCctv && $activeNavigationRole !== 'Kepala Sekolah')
 <div class="section-title">Keamanan Sekolah</div>
 <li>
     <a href="{{ route('cctv-live.index') }}"
@@ -3096,7 +3109,7 @@
         && filled($appSetting?->stella_ai_api_key)
         && filled($appSetting?->stella_ai_chat_model);
 @endphp
-@if($aiEnabled)
+@if($aiEnabled || $activeNavigationRole === 'Kepala Sekolah')
 <div class="section-title">Stella AI</div>
 <li>
     <a href="{{ route('stella-ai.index') }}"
@@ -3185,6 +3198,7 @@
     </a>
 </li>
 
+@if($activeNavigationRole !== 'Kepala Sekolah')
 <li>
     <a href="{{ route('forum-stella.index') }}"
         class="nav-link {{ request()->routeIs('forum-stella.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
@@ -3198,6 +3212,7 @@
         <span class="nav-badge bg-cyan-100 text-cyan-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">OPEN</span>
     </a>
 </li>
+@endif
 
 <li>
     <a href="{{ route('notted.games') }}"
@@ -3460,7 +3475,7 @@
 {{-- ============================================================ --}}
 {{-- MENU: PENILAIAN SEMESTER --}}
 {{-- ============================================================ --}}
-@if(in_array(session('active_role'), ['Kepala Sekolah', 'Guru Kelas', 'Siswa', 'Operator', 'Super Admin', 'KAUR SDM']))
+@if(in_array(session('active_role'), ['Guru Kelas', 'Siswa', 'Operator', 'Super Admin', 'KAUR SDM']))
     <div class="section-title">Penilaian</div>
     <li>
         <a href="{{ route('penilaian.index') }}"

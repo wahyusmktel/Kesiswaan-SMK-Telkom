@@ -1369,12 +1369,15 @@ Route::middleware(['auth', 'verified', 'role:Kepala Sekolah', 'permission:view e
     ->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\KepalaSekolah\DashboardController::class, 'index'])
             ->name('dashboard.index');
+        Route::get('/monitoring/{section}', [\App\Http\Controllers\KepalaSekolah\MonitoringController::class, 'index'])
+            ->whereIn('section', array_keys(\App\Http\Controllers\KepalaSekolah\MonitoringController::SECTIONS))
+            ->name('monitoring.index');
     });
 
 // ============================================================
-// Integrasi Inventaris Aset (semua role kecuali Siswa)
+// Integrasi Inventaris Aset (termasuk layanan pribadi Kepala Sekolah)
 // ============================================================
-Route::middleware(['auth', 'role:Super Admin|Waka Kesiswaan|Guru BK|Guru Piket|Kurikulum|Wali Kelas|Tata Usaha|Security|KAUR SDM|Operator|Koordinator Prakerin|Guru Kelas'])
+Route::middleware(['auth', 'role:Super Admin|Kepala Sekolah|Waka Kesiswaan|Guru BK|Guru Piket|Kurikulum|Wali Kelas|Tata Usaha|Security|KAUR SDM|Operator|Koordinator Prakerin|Guru Kelas'])
     ->prefix('inventaris-aset')
     ->name('inventaris-aset.')
     ->group(function () {
