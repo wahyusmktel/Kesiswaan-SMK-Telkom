@@ -16,7 +16,7 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class FingerprintAttendanceMonitoringExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithColumnWidths, WithTitle, ShouldAutoSize
+class FingerprintAttendanceMonitoringExport implements FromCollection, ShouldAutoSize, WithColumnWidths, WithHeadings, WithMapping, WithStyles, WithTitle
 {
     private int $rowNumber = 0;
 
@@ -55,7 +55,7 @@ class FingerprintAttendanceMonitoringExport implements FromCollection, WithHeadi
         $this->rowNumber++;
         $firstScan = $row->first_scan ? Carbon::parse($row->first_scan) : null;
         $lastScan = $row->last_scan ? Carbon::parse($row->last_scan) : null;
-        $hasCheckout = $firstScan && $lastScan && !$firstScan->equalTo($lastScan);
+        $hasCheckout = $firstScan && $lastScan && ! $firstScan->equalTo($lastScan);
 
         return [
             $this->rowNumber,
@@ -102,8 +102,8 @@ class FingerprintAttendanceMonitoringExport implements FromCollection, WithHeadi
 
         $sheet->insertNewRowBefore(1, 3);
         $sheet->setCellValue('A1', 'MONITORING ABSENSI FINGERPRINT');
-        $sheet->setCellValue('A2', 'Tanggal: ' . Carbon::parse($this->date)->translatedFormat('d F Y'));
-        $sheet->setCellValue('A3', 'Filter: ' . $this->filterLabel() . ' | Diekspor: ' . now()->format('d/m/Y H:i'));
+        $sheet->setCellValue('A2', 'Tanggal: '.Carbon::parse($this->date)->translatedFormat('d F Y'));
+        $sheet->setCellValue('A3', 'Filter: '.$this->filterLabel().' | Diekspor: '.now()->format('d/m/Y H:i'));
         $sheet->mergeCells('A1:L1');
         $sheet->mergeCells('A2:L2');
         $sheet->mergeCells('A3:L3');
@@ -142,6 +142,8 @@ class FingerprintAttendanceMonitoringExport implements FromCollection, WithHeadi
                     'Hadir Opsional' => 'EFF6FF',
                     'Tidak Wajib Hadir' => 'F3F4F6',
                     'Belum Scan Pulang' => 'FFFBEB',
+                    'Terlambat' => 'FFEDD5',
+                    'Menunggu Absensi' => 'F0F9FF',
                     default => 'FEF2F2',
                 };
 
@@ -161,12 +163,12 @@ class FingerprintAttendanceMonitoringExport implements FromCollection, WithHeadi
     {
         $parts = [];
 
-        if (!empty($this->filters['search'])) {
-            $parts[] = 'Pencarian "' . $this->filters['search'] . '"';
+        if (! empty($this->filters['search'])) {
+            $parts[] = 'Pencarian "'.$this->filters['search'].'"';
         }
 
-        if (!empty($this->filters['device_id'])) {
-            $parts[] = 'Mesin ID ' . $this->filters['device_id'];
+        if (! empty($this->filters['device_id'])) {
+            $parts[] = 'Mesin ID '.$this->filters['device_id'];
         }
 
         return $parts ? implode(', ', $parts) : 'Semua pegawai termapping';

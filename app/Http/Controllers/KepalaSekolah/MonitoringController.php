@@ -4,6 +4,7 @@ namespace App\Http\Controllers\KepalaSekolah;
 
 use App\Http\Controllers\Controller;
 use App\Models\FingerprintAttendance;
+use App\Models\FingerprintAttendanceSetting;
 use App\Models\GuruIzin;
 use App\Models\IzinMeninggalkanKelas;
 use App\Models\JadwalPelajaran;
@@ -130,6 +131,7 @@ class MonitoringController extends Controller
     {
         $input = $request->validate(['date' => ['nullable', 'date_format:Y-m-d']]);
         $date = Carbon::parse($input['date'] ?? today()->toDateString());
+        $setting = FingerprintAttendanceSetting::getSetting();
         $scans = FingerprintAttendance::query()
             ->select('app_user_id', DB::raw('MIN(timestamp) as first_scan'), DB::raw('MAX(timestamp) as last_scan'))
             ->whereNotNull('app_user_id')
@@ -142,12 +144,25 @@ class MonitoringController extends Controller
             ->select('master_guru_id', DB::raw('MIN(jam_mulai) as starts_at'), DB::raw('MAX(jam_selesai) as ends_at'))
             ->groupBy('master_guru_id')->get()->keyBy('master_guru_id');
         $teachers = MasterGuru::with('dapodikGuru')->where('is_active', true)->orderBy('nama_lengkap')->get(['id', 'user_id', 'nama_lengkap']);
-        $rows = $teachers->map(function ($teacher) use ($scans, $workingDay, $schedules, $holiday) {
+        $rows = $teachers->map(function ($teacher) use ($scans, $workingDay, $schedules, $holiday, $date, $setting) {
             $scan = $teacher->user_id ? $scans->get($teacher->user_id) : null;
             $employment = EmploymentStatus::normalize($teacher->dapodikGuru?->status_kepegawaian);
             $recognized = in_array($employment, [EmploymentStatus::PERMANENT, EmploymentStatus::FULL_TIME, EmploymentStatus::PART_TIME], true);
             $schedule = $schedules->get($teacher->id);
             $required = $recognized && $workingDay && ($employment !== EmploymentStatus::PART_TIME || $schedule !== null);
+            $deadline = $required
+                ? Carbon::parse($date->toDateString().' '.($employment === EmploymentStatus::PART_TIME ? $schedule->starts_at : $setting->checkin_end))
+                : null;
+            $firstScan = $scan ? Carbon::parse($scan->first_scan) : null;
+            $deadlinePassed = $deadline && now()->greaterThan($deadline);
+            $status = match (true) {
+                ! $required && ! $firstScan => 'Tidak Wajib Hadir',
+                ! $required => 'Hadir Opsional',
+                ! $firstScan && $deadlinePassed => 'Tidak Hadir',
+                ! $firstScan => 'Menunggu Absensi',
+                $firstScan->greaterThan($deadline) => 'Terlambat',
+                default => 'Hadir',
+            };
             $obligation = match (true) {
                 ! $recognized => 'Status kepegawaian perlu diperiksa',
                 ! $workingDay => $holiday ? 'Libur: '.$holiday->title : 'Akhir pekan',
@@ -163,7 +178,9 @@ class MonitoringController extends Controller
                 'required' => $required,
                 'recognized' => $recognized,
                 'obligation' => $obligation,
-                'check_in' => $scan ? Carbon::parse($scan->first_scan)->format('H:i') : null,
+                'status' => $status,
+                'deadline' => $deadline?->format('H:i'),
+                'check_in' => $firstScan?->format('H:i'),
                 'check_out' => $scan && $scan->last_scan > $scan->first_scan ? Carbon::parse($scan->last_scan)->format('H:i') : null,
                 'hour' => $scan ? Carbon::parse($scan->first_scan)->hour : null,
             ];
@@ -176,13 +193,25 @@ class MonitoringController extends Controller
             'required' => $rows->where('required', true)->count(),
             'required_present' => $rows->where('required', true)->whereNotNull('check_in')->count(),
             'required_missing' => $rows->where('required', true)->whereNull('check_in')->count(),
+            'absent' => $rows->where('status', 'Tidak Hadir')->count(),
+            'late' => $rows->where('status', 'Terlambat')->count(),
+            'pending' => $rows->where('status', 'Menunggu Absensi')->count(),
             'unclassified' => $rows->where('recognized', false)->count(),
         ];
         $hours = collect(range(0, 23))->map(fn ($hour) => [
             'label' => sprintf('%02d:00', $hour),
             'count' => $rows->filter(fn ($row) => $row['hour'] === $hour)->count(),
         ]);
+        $chartMax = max(1, $hours->max('count'));
+        $hours = $hours->values()->map(function (array $hour, int $index) use ($chartMax) {
+            $hour['x'] = round(20 + ($index * 680 / 23), 1);
+            $hour['y'] = round(175 - ($hour['count'] / $chartMax * 145), 1);
 
-        return view('pages.kepala-sekolah.fingerprint', compact('date', 'rows', 'summary', 'hours'));
+            return $hour;
+        });
+        $chartPoints = $hours->map(fn (array $hour) => $hour['x'].','.$hour['y'])->implode(' ');
+        $areaPoints = '20,175 '.$chartPoints.' 700,175';
+
+        return view('pages.kepala-sekolah.fingerprint', compact('date', 'rows', 'summary', 'hours', 'chartPoints', 'areaPoints'));
     }
 }

@@ -11,6 +11,7 @@ use App\Models\Keterlambatan;
 use App\Models\MasterGuru;
 use App\Models\MasterSiswa;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
@@ -154,13 +155,13 @@ class HeadmasterMonitoringTest extends TestCase
         FingerprintAttendance::create(['fingerprint_device_id' => $second->id, 'user_id' => '1', 'app_user_id' => $teacher->id, 'timestamp' => '2026-09-04 07:10:00']);
         $this->get(route('kepala-sekolah.monitoring.index', ['section' => 'fingerprint', 'date' => '2026-09-03']))
             ->assertOk()
-            ->assertViewHas('summary', ['total' => 2, 'present' => 1, 'out' => 1, 'missing' => 1, 'required' => 0, 'required_present' => 0, 'required_missing' => 0, 'unclassified' => 2])
+            ->assertViewHas('summary', ['total' => 2, 'present' => 1, 'out' => 1, 'missing' => 1, 'required' => 0, 'required_present' => 0, 'required_missing' => 0, 'absent' => 0, 'late' => 0, 'pending' => 0, 'unclassified' => 2])
             ->assertViewHas('rows', fn ($rows) => $rows->firstWhere('name', 'Guru Hadir')['check_in'] === '06:55' && $rows->firstWhere('name', 'Guru Hadir')['check_out'] === '16:20');
         $this->get(route('kepala-sekolah.monitoring.index', ['section' => 'fingerprint', 'date' => '2026-09-04']))
-            ->assertOk()->assertViewHas('summary', ['total' => 2, 'present' => 1, 'out' => 0, 'missing' => 1, 'required' => 0, 'required_present' => 0, 'required_missing' => 0, 'unclassified' => 2])
+            ->assertOk()->assertViewHas('summary', ['total' => 2, 'present' => 1, 'out' => 0, 'missing' => 1, 'required' => 0, 'required_present' => 0, 'required_missing' => 0, 'absent' => 0, 'late' => 0, 'pending' => 0, 'unclassified' => 2])
             ->assertViewHas('rows', fn ($rows) => $rows->firstWhere('name', 'Guru Hadir')['check_out'] === null);
         $this->get(route('kepala-sekolah.monitoring.index', ['section' => 'fingerprint', 'date' => '2026-09-05']))
-            ->assertOk()->assertViewHas('summary', ['total' => 2, 'present' => 0, 'out' => 0, 'missing' => 2, 'required' => 0, 'required_present' => 0, 'required_missing' => 0, 'unclassified' => 2]);
+            ->assertOk()->assertViewHas('summary', ['total' => 2, 'present' => 0, 'out' => 0, 'missing' => 2, 'required' => 0, 'required_present' => 0, 'required_missing' => 0, 'absent' => 0, 'late' => 0, 'pending' => 0, 'unclassified' => 2]);
         $this->getJson(route('kepala-sekolah.monitoring.index', ['section' => 'fingerprint', 'date' => 'invalid']))->assertUnprocessable();
     }
 
@@ -198,6 +199,27 @@ class HeadmasterMonitoringTest extends TestCase
         \App\Models\WorkCalendarEvent::create(['title' => 'Libur Test', 'type' => 'holiday', 'is_non_working' => true, 'date_from' => '2026-09-04', 'date_to' => '2026-09-04']);
         $this->get($url)->assertOk()->assertViewHas('summary', fn ($s) => $s['required'] === 0 && $s['required_present'] === 0)->assertSee('Tidak ada guru wajib hadir');
         $this->get(route('kepala-sekolah.monitoring.index', ['section' => 'fingerprint', 'date' => '2026-09-05']))->assertOk()->assertViewHas('summary', fn ($s) => $s['required'] === 0);
+    }
+
+    public function test_headmaster_status_changes_from_waiting_to_absent_then_late_and_shows_line_chart(): void
+    {
+        $this->login();
+        $teacherUser = User::factory()->create();
+        $teacher = MasterGuru::create(['nama_lengkap' => 'Guru Dinamis', 'jenis_kelamin' => 'L', 'user_id' => $teacherUser->id]);
+        $teacher->dapodikGuru()->create(['nama' => $teacher->nama_lengkap, 'status_kepegawaian' => 'Pegawai Tetap']);
+        $url = route('kepala-sekolah.monitoring.index', ['section' => 'fingerprint', 'date' => '2026-09-07']);
+
+        Carbon::setTestNow('2026-09-07 07:00:00');
+        $this->get($url)->assertOk()->assertViewHas('rows', fn ($rows) => $rows->first()['status'] === 'Menunggu Absensi')
+            ->assertSee('Line chart jumlah scan pertama guru per jam');
+        Carbon::setTestNow('2026-09-07 08:00:00');
+        $this->get($url)->assertOk()->assertViewHas('summary', fn ($summary) => $summary['absent'] === 1 && $summary['pending'] === 0);
+
+        $device = FingerprintDevice::create(['name' => 'Test Dinamis', 'ip_address' => '127.0.0.9']);
+        FingerprintAttendance::create(['fingerprint_device_id' => $device->id, 'user_id' => '99', 'app_user_id' => $teacherUser->id, 'timestamp' => '2026-09-07 08:05:00']);
+        $this->get($url)->assertOk()->assertViewHas('rows', fn ($rows) => $rows->first()['status'] === 'Terlambat')
+            ->assertViewHas('summary', fn ($summary) => $summary['late'] === 1 && $summary['absent'] === 0);
+        Carbon::setTestNow();
     }
 
     public function test_headmaster_can_access_personal_asset_services(): void

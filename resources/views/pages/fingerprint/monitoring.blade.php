@@ -26,9 +26,9 @@
                 <p class="mt-1 text-sm text-amber-700/70">Baru terdeteksi satu waktu scan.</p>
             </div>
             <div class="rounded-2xl border border-red-100 bg-red-50 p-5 shadow-sm">
-                <p class="text-xs font-black uppercase tracking-widest text-red-600">Belum Ada Scan</p>
+                <p class="text-xs font-black uppercase tracking-widest text-red-600">Tidak Hadir</p>
                 <p class="mt-3 text-3xl font-black text-red-700">{{ number_format($stats['absent']) }}</p>
-                <p class="mt-1 text-sm text-red-700/70">Tidak ada log pada tanggal filter.</p>
+                <p class="mt-1 text-sm text-red-700/70">Batas akhir datang terlewati tanpa scan. {{ $stats['pending'] }} masih menunggu batas datang.</p>
             </div>
         </div>
 

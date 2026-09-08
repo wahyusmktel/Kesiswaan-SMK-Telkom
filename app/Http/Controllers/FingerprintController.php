@@ -5,14 +5,13 @@ namespace App\Http\Controllers;
 use App\Exports\FingerprintAttendanceMonitoringExport;
 use App\Jobs\SyncFingerprintAttendancesJob;
 use App\Models\FingerprintAttendance;
+use App\Models\FingerprintAttendanceSetting;
 use App\Models\FingerprintAutoSyncSetting;
 use App\Models\FingerprintDevice;
-use App\Models\FingerprintAttendanceSetting;
 use App\Models\FingerprintSecurityShift;
 use App\Models\FingerprintSecurityShiftAssignment;
 use App\Models\FingerprintUser;
 use App\Models\JadwalPelajaran;
-use App\Models\MasterGuru;
 use App\Models\User;
 use App\Models\WorkCalendarEvent;
 use App\Support\AttendanceDuration;
@@ -94,10 +93,10 @@ class FingerprintController extends Controller
         ]);
 
         FingerprintAttendanceSetting::getSetting()->update([
-            'checkin_start' => $data['checkin_start'] . ':00',
-            'checkin_end' => $data['checkin_end'] . ':00',
-            'checkout_start' => $data['checkout_start'] . ':00',
-            'checkout_end' => $data['checkout_end'] . ':00',
+            'checkin_start' => $data['checkin_start'].':00',
+            'checkin_end' => $data['checkin_end'].':00',
+            'checkout_start' => $data['checkout_start'].':00',
+            'checkout_end' => $data['checkout_end'].':00',
         ]);
 
         return back()->with('success', 'Seting waktu absensi fingerprint berhasil diperbarui.');
@@ -115,13 +114,13 @@ class FingerprintController extends Controller
 
         foreach ($data['shifts'] as $shiftId => $shiftData) {
             $shift = FingerprintSecurityShift::find($shiftId);
-            if (!$shift) {
+            if (! $shift) {
                 continue;
             }
 
             $shift->update([
-                'starts_at' => $shiftData['starts_at'] . ':00',
-                'ends_at' => $shiftData['ends_at'] . ':00',
+                'starts_at' => $shiftData['starts_at'].':00',
+                'ends_at' => $shiftData['ends_at'].':00',
                 'is_overnight' => $shiftData['ends_at'] <= $shiftData['starts_at'],
             ]);
         }
@@ -176,7 +175,7 @@ class FingerprintController extends Controller
         ]);
 
         $fingerprintUser = FingerprintUser::whereNotNull('app_user_id')->findOrFail($data['fingerprint_user_id']);
-        $timestamp = Carbon::parse($data['attendance_date'] . ' ' . $data['attendance_time']);
+        $timestamp = Carbon::parse($data['attendance_date'].' '.$data['attendance_time']);
 
         $exists = FingerprintAttendance::where('fingerprint_device_id', $fingerprintUser->fingerprint_device_id)
             ->where('user_id', $fingerprintUser->user_id)
@@ -212,7 +211,7 @@ class FingerprintController extends Controller
             'correction_note' => ['required', 'string', 'max:1000'],
         ]);
 
-        $timestamp = Carbon::parse($data['attendance_date'] . ' ' . $data['attendance_time']);
+        $timestamp = Carbon::parse($data['attendance_date'].' '.$data['attendance_time']);
         $conflict = FingerprintAttendance::where('fingerprint_device_id', $attendance->fingerprint_device_id)
             ->where('user_id', $attendance->user_id)
             ->where('timestamp', $timestamp)
@@ -373,13 +372,15 @@ class FingerprintController extends Controller
         $this->applyMonitoringRules($rows->getCollection(), $date, $setting);
         $statsRows = $this->monitoringRows($request, $date)->get();
         $this->applyMonitoringRules($statsRows, $date, $setting);
+        $completeRows = $statsRows->filter(fn ($row) => $row->first_scan && $row->last_scan && ! Carbon::parse($row->first_scan)->equalTo(Carbon::parse($row->last_scan)));
 
         $stats = [
             'total' => $statsRows->count(),
             'present' => $statsRows->filter(fn ($row) => $row->first_scan)->count(),
-            'complete' => $statsRows->where('monitoring_status_text', 'Hadir Lengkap')->count(),
-            'incomplete' => $statsRows->where('monitoring_status_text', 'Belum Scan Pulang')->count(),
-            'absent' => $statsRows->where('monitoring_status_text', 'Belum Ada Scan')->count(),
+            'complete' => $completeRows->count(),
+            'incomplete' => $statsRows->filter(fn ($row) => $row->first_scan && ! $completeRows->containsStrict($row))->count(),
+            'absent' => $statsRows->where('monitoring_status_text', 'Tidak Hadir')->count(),
+            'pending' => $statsRows->where('monitoring_status_text', 'Menunggu Absensi')->count(),
             'late' => $statsRows->filter(fn ($row) => (int) $row->monitoring_late_minutes > 0)->count(),
             'early' => $statsRows->filter(fn ($row) => (int) $row->monitoring_early_minutes > 0)->count(),
         ];
@@ -396,7 +397,7 @@ class FingerprintController extends Controller
         $rows = $this->monitoringRows($request, $date)->get();
         $setting = FingerprintAttendanceSetting::getSetting();
         $this->applyMonitoringRules($rows, $date, $setting);
-        $fileName = 'monitoring-absensi-fingerprint-' . Carbon::parse($date)->format('Y-m-d') . '.xlsx';
+        $fileName = 'monitoring-absensi-fingerprint-'.Carbon::parse($date)->format('Y-m-d').'.xlsx';
 
         return Excel::download(new FingerprintAttendanceMonitoringExport($rows, $date, $request->only(['search', 'device_id']), $setting), $fileName);
     }
@@ -421,13 +422,13 @@ class FingerprintController extends Controller
         $analysis = $this->buildAttendanceAnalysis($request, $dateFrom, $dateTo);
         $employee = $analysis['rankings']->firstWhere('user_id', $user->id);
 
-        abort_if(!$employee, 404, 'Data analisa pegawai tidak ditemukan pada filter ini.');
+        abort_if(! $employee, 404, 'Data analisa pegawai tidak ditemukan pada filter ini.');
 
         $isCertificate = (int) $employee['rank'] <= 10;
         $view = $isCertificate ? 'pdf.fingerprint-attendance-certificate' : 'pdf.fingerprint-attendance-evaluation';
         $fileName = ($isCertificate ? 'Sertifikat-Apresiasi-' : 'Evaluasi-Kehadiran-')
-            . str($employee['name'])->slug('-')
-            . '-' . $dateFrom->format('Ymd') . '-' . $dateTo->format('Ymd') . '.pdf';
+            .str($employee['name'])->slug('-')
+            .'-'.$dateFrom->format('Ymd').'-'.$dateTo->format('Ymd').'.pdf';
 
         $pdf = Pdf::loadView($view, [
             'employee' => $employee,
@@ -480,7 +481,7 @@ class FingerprintController extends Controller
 
         try {
             [$zk, $connected] = $this->connectDevice($device);
-            if (!$connected) {
+            if (! $connected) {
                 return back()->with('error', "Mesin {$device->name} tidak merespons.");
             }
 
@@ -490,10 +491,11 @@ class FingerprintController extends Controller
             }
             $zk->disconnect();
 
-            return back()->with('success', "Koneksi berhasil. Serial: " . ($serialNumber ?: '-'));
+            return back()->with('success', 'Koneksi berhasil. Serial: '.($serialNumber ?: '-'));
         } catch (Throwable $e) {
             Log::warning('Fingerprint test connection failed', ['device_id' => $device->id, 'error' => $e->getMessage()]);
-            return back()->with('error', 'Gagal konek ke mesin: ' . $e->getMessage());
+
+            return back()->with('error', 'Gagal konek ke mesin: '.$e->getMessage());
         }
     }
 
@@ -503,7 +505,7 @@ class FingerprintController extends Controller
 
         try {
             [$zk, $connected] = $this->connectDevice($device);
-            if (!$connected) {
+            if (! $connected) {
                 return back()->with('error', "Mesin {$device->name} tidak bisa dikoneksikan.");
             }
 
@@ -541,7 +543,8 @@ class FingerprintController extends Controller
             return back()->with('success', "Tarik data user selesai. {$synced} user tersimpan/diperbarui.");
         } catch (Throwable $e) {
             Log::error('Fingerprint sync users failed', ['device_id' => $device->id, 'error' => $e->getMessage()]);
-            return back()->with('error', 'Gagal tarik data user: ' . $e->getMessage());
+
+            return back()->with('error', 'Gagal tarik data user: '.$e->getMessage());
         }
     }
 
@@ -550,7 +553,7 @@ class FingerprintController extends Controller
         $device = FingerprintDevice::findOrFail($id);
         [$dateFrom, $dateTo, $rangeLabel] = $this->resolveSyncRange($request);
 
-        if (!FingerprintUser::where('fingerprint_device_id', $device->id)->whereNotNull('app_user_id')->exists()) {
+        if (! FingerprintUser::where('fingerprint_device_id', $device->id)->whereNotNull('app_user_id')->exists()) {
             $message = 'Belum ada user mesin yang dimapping ke pegawai. Lakukan mapping manual terlebih dahulu.';
 
             if ($request->expectsJson()) {
@@ -605,7 +608,7 @@ class FingerprintController extends Controller
 
         FingerprintAutoSyncSetting::getSetting()->update([
             'is_enabled' => $request->boolean('is_enabled'),
-            'run_time' => $data['run_time'] . ':00',
+            'run_time' => $data['run_time'].':00',
             'range_type' => $data['range_type'],
             'device_ids' => array_values(array_filter($data['device_ids'] ?? [])),
         ]);
@@ -653,7 +656,7 @@ class FingerprintController extends Controller
 
     private function parseTimestamp($value): ?Carbon
     {
-        if (!$value) {
+        if (! $value) {
             return null;
         }
 
@@ -702,8 +705,8 @@ class FingerprintController extends Controller
             '2_days' => [$today->copy()->subDay()->startOfDay(), $today->copy()->endOfDay(), '2 hari terakhir'],
             '2_months' => [$today->copy()->subMonthsNoOverflow(2)->startOfDay(), $today->copy()->endOfDay(), '2 bulan terakhir'],
             'custom' => [
-                !empty($data['date_from']) ? Carbon::parse($data['date_from'])->startOfDay() : null,
-                !empty($data['date_to']) ? Carbon::parse($data['date_to'])->endOfDay() : null,
+                ! empty($data['date_from']) ? Carbon::parse($data['date_from'])->startOfDay() : null,
+                ! empty($data['date_to']) ? Carbon::parse($data['date_to'])->endOfDay() : null,
                 'rentang kustom',
             ],
             'all' => [null, null, 'semua data'],
@@ -745,6 +748,7 @@ class FingerprintController extends Controller
 
         if ($mode === 'day' && $request->filled('date')) {
             $date = Carbon::parse($request->date);
+
             return [$date->copy()->startOfDay(), $date->copy()->endOfDay()];
         }
 
@@ -764,7 +768,7 @@ class FingerprintController extends Controller
 
     private function timeToChartMinutes($timestamp): ?int
     {
-        if (!$timestamp) {
+        if (! $timestamp) {
             return null;
         }
 
@@ -873,7 +877,7 @@ class FingerprintController extends Controller
                     'class' => 'bg-amber-400',
                 ],
                 [
-                    'label' => 'Belum Scan',
+                    'label' => 'Tidak Hadir',
                     'value' => $absent,
                     'percent' => (int) round(($absent / max((int) $stats['total'], 1)) * 100),
                     'class' => 'bg-red-500',
@@ -942,7 +946,7 @@ class FingerprintController extends Controller
             ->when($request->filled('device_id'), fn ($query) => $query->where('fingerprint_device_id', $request->device_id))
             ->groupBy('app_user_id', DB::raw('DATE(timestamp)'))
             ->get()
-            ->groupBy(fn ($row) => $row->app_user_id . '|' . $row->attendance_date);
+            ->groupBy(fn ($row) => $row->app_user_id.'|'.$row->attendance_date);
 
         $trend = $dates->mapWithKeys(fn ($date) => [$date => [
             'date' => $date,
@@ -970,7 +974,7 @@ class FingerprintController extends Controller
             ];
 
             foreach ($dates as $date) {
-                $log = $dailyLogs->get($user->id . '|' . $date)?->first();
+                $log = $dailyLogs->get($user->id.'|'.$date)?->first();
                 $row = new FingerprintUser([
                     'app_user_id' => $user->id,
                     'name' => $user->name,
@@ -984,10 +988,11 @@ class FingerprintController extends Controller
 
                 $isRequired = (bool) $row->monitoring_required;
                 $isPresent = (bool) $row->first_scan;
-                $isComplete = $row->monitoring_status_text === 'Hadir Lengkap';
+                $isComplete = $row->first_scan && $row->last_scan
+                    && ! Carbon::parse($row->first_scan)->equalTo(Carbon::parse($row->last_scan));
                 $isLate = (int) $row->monitoring_late_minutes > 0;
                 $isEarly = (int) $row->monitoring_early_minutes > 0;
-                $isDisciplined = $isRequired && $isPresent && !$isLate && !$isEarly;
+                $isDisciplined = $isRequired && $isPresent && ! $isLate && ! $isEarly;
 
                 if ($isRequired) {
                     $metrics['required_days']++;
@@ -1009,7 +1014,7 @@ class FingerprintController extends Controller
                     $metrics['complete_days']++;
                 }
 
-                if ($isRequired && !$isPresent) {
+                if ($row->monitoring_status_text === 'Tidak Hadir') {
                     $metrics['absent_days']++;
                     $trend[$date]['absent']++;
                 }
@@ -1168,7 +1173,7 @@ class FingerprintController extends Controller
             $totalScan = $shiftLogs->count();
         }
 
-        $hasCheckout = $firstScan && $lastScan && !$firstScan->equalTo($lastScan);
+        $hasCheckout = $firstScan && $lastScan && ! $firstScan->equalTo($lastScan);
         $lateMinutes = 0;
         $earlyMinutes = 0;
         $notes = [];
@@ -1176,21 +1181,24 @@ class FingerprintController extends Controller
         if ($rule['required']) {
             if ($firstScan && $rule['checkin_deadline'] && $firstScan->greaterThan($rule['checkin_deadline'])) {
                 $lateMinutes = (int) ceil($rule['checkin_deadline']->diffInMinutes($firstScan));
-                $notes[] = 'Terlambat ' . AttendanceDuration::humanizeMinutes($lateMinutes);
+                $notes[] = 'Terlambat '.AttendanceDuration::humanizeMinutes($lateMinutes);
             }
 
             if ($hasCheckout && $rule['checkout_minimum'] && $lastScan->lessThan($rule['checkout_minimum'])) {
                 $earlyMinutes = (int) ceil($lastScan->diffInMinutes($rule['checkout_minimum']));
-                $notes[] = 'Pulang cepat ' . AttendanceDuration::humanizeMinutes($earlyMinutes);
+                $notes[] = 'Pulang cepat '.AttendanceDuration::humanizeMinutes($earlyMinutes);
             }
-        } elseif (!empty($rule['note'])) {
+        } elseif (! empty($rule['note'])) {
             $notes[] = $rule['note'];
         }
 
+        $deadlinePassed = $rule['required'] && $rule['checkin_deadline'] && now()->greaterThan($rule['checkin_deadline']);
         $statusText = match (true) {
-            !$rule['required'] && !$firstScan => 'Tidak Wajib Hadir',
-            !$rule['required'] && (bool) $firstScan => 'Hadir Opsional',
-            !$firstScan => 'Belum Ada Scan',
+            ! $rule['required'] && ! $firstScan => 'Tidak Wajib Hadir',
+            ! $rule['required'] && (bool) $firstScan => 'Hadir Opsional',
+            ! $firstScan && $deadlinePassed => 'Tidak Hadir',
+            ! $firstScan => 'Menunggu Absensi',
+            $lateMinutes > 0 => 'Terlambat',
             $hasCheckout => 'Hadir Lengkap',
             default => 'Belum Scan Pulang',
         };
@@ -1200,6 +1208,8 @@ class FingerprintController extends Controller
             'Hadir Opsional' => 'bg-blue-50 text-blue-700',
             'Tidak Wajib Hadir' => 'bg-gray-100 text-gray-600',
             'Belum Scan Pulang' => 'bg-amber-50 text-amber-700',
+            'Terlambat' => 'bg-orange-100 text-orange-800',
+            'Menunggu Absensi' => 'bg-sky-50 text-sky-700',
             default => 'bg-red-50 text-red-700',
         };
 
@@ -1247,7 +1257,7 @@ class FingerprintController extends Controller
                 'end_at' => null,
                 'use_shift_window' => false,
                 'label' => $calendarEvent->type_label,
-                'note' => $calendarEvent->type_label . ': ' . $calendarEvent->title,
+                'note' => $calendarEvent->type_label.': '.$calendarEvent->title,
             ];
         }
 
@@ -1274,10 +1284,10 @@ class FingerprintController extends Controller
 
         return [
             'required' => $required,
-            'checkin_deadline' => $required ? Carbon::parse($date . ' ' . $setting->checkin_end) : null,
-            'checkout_minimum' => $required ? Carbon::parse($date . ' ' . $setting->checkout_start) : null,
-            'start_at' => $required ? Carbon::parse($date . ' ' . $setting->checkin_start) : null,
-            'end_at' => $required ? Carbon::parse($date . ' ' . $setting->checkout_end) : null,
+            'checkin_deadline' => $required ? Carbon::parse($date.' '.$setting->checkin_end) : null,
+            'checkout_minimum' => $required ? Carbon::parse($date.' '.$setting->checkout_start) : null,
+            'start_at' => $required ? Carbon::parse($date.' '.$setting->checkin_start) : null,
+            'end_at' => $required ? Carbon::parse($date.' '.$setting->checkout_end) : null,
             'use_shift_window' => false,
             'label' => 'Full day',
             'note' => $required ? null : 'Tidak wajib hadir akhir pekan',
@@ -1289,7 +1299,7 @@ class FingerprintController extends Controller
         $masterGuruId = $row->appUser?->masterGuru?->id;
         $dayName = $this->indonesianDayName(Carbon::parse($date));
 
-        if (!$masterGuruId) {
+        if (! $masterGuruId) {
             return [
                 'required' => false,
                 'checkin_deadline' => null,
@@ -1308,7 +1318,7 @@ class FingerprintController extends Controller
             ->selectRaw('MIN(jam_mulai) as starts_at, MAX(jam_selesai) as ends_at, COUNT(*) as total')
             ->first();
 
-        if (!$schedule || (int) $schedule->total === 0) {
+        if (! $schedule || (int) $schedule->total === 0) {
             return [
                 'required' => false,
                 'checkin_deadline' => null,
@@ -1323,12 +1333,12 @@ class FingerprintController extends Controller
 
         return [
             'required' => true,
-            'checkin_deadline' => Carbon::parse($date . ' ' . $schedule->starts_at),
-            'checkout_minimum' => Carbon::parse($date . ' ' . $schedule->ends_at),
-            'start_at' => Carbon::parse($date . ' ' . $schedule->starts_at),
-            'end_at' => Carbon::parse($date . ' ' . $schedule->ends_at),
+            'checkin_deadline' => Carbon::parse($date.' '.$schedule->starts_at),
+            'checkout_minimum' => Carbon::parse($date.' '.$schedule->ends_at),
+            'start_at' => Carbon::parse($date.' '.$schedule->starts_at),
+            'end_at' => Carbon::parse($date.' '.$schedule->ends_at),
             'use_shift_window' => false,
-            'label' => 'Part time ' . substr($schedule->starts_at, 0, 5) . '-' . substr($schedule->ends_at, 0, 5),
+            'label' => 'Part time '.substr($schedule->starts_at, 0, 5).'-'.substr($schedule->ends_at, 0, 5),
             'note' => null,
         ];
     }
@@ -1337,7 +1347,7 @@ class FingerprintController extends Controller
     {
         $shift = $row->appUser?->securityShiftAssignment?->shift;
 
-        if (!$shift) {
+        if (! $shift) {
             return [
                 'required' => false,
                 'checkin_deadline' => null,
@@ -1350,8 +1360,8 @@ class FingerprintController extends Controller
             ];
         }
 
-        $startAt = Carbon::parse($date . ' ' . $shift->starts_at);
-        $endAt = Carbon::parse($date . ' ' . $shift->ends_at);
+        $startAt = Carbon::parse($date.' '.$shift->starts_at);
+        $endAt = Carbon::parse($date.' '.$shift->ends_at);
         if ($shift->is_overnight || $endAt->lessThanOrEqualTo($startAt)) {
             $endAt->addDay();
         }
@@ -1363,7 +1373,7 @@ class FingerprintController extends Controller
             'start_at' => $startAt,
             'end_at' => $endAt,
             'use_shift_window' => true,
-            'label' => $shift->name . ' ' . $startAt->format('H:i') . '-' . $endAt->format('H:i'),
+            'label' => $shift->name.' '.$startAt->format('H:i').'-'.$endAt->format('H:i'),
             'note' => null,
         ];
     }
