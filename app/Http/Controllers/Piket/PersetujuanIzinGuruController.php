@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Piket;
 
 use App\Http\Controllers\Controller;
-use App\Models\GuruIzin;
 use App\Models\AbsensiGuru;
+use App\Models\GuruIzin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -13,11 +13,11 @@ class PersetujuanIzinGuruController extends Controller
     public function index(Request $request)
     {
         $query = GuruIzin::with([
-            'guru', 
-            'jadwals.rombel.kelas', 
-            'jadwals.mataPelajaran'
+            'guru',
+            'jadwals.rombel.kelas',
+            'jadwals.mataPelajaran',
         ])->latest();
-        
+
         if ($request->filled('status')) {
             $query->where('status_piket', $request->status);
         } else {
@@ -25,13 +25,13 @@ class PersetujuanIzinGuruController extends Controller
         }
 
         $izins = $query->paginate(10);
-        
+
         // Manually load LMS materials and assignments for pivot data
         $this->loadLmsResourcesForIzins($izins);
-        
+
         return view('pages.piket.izin-guru.index', compact('izins'));
     }
-    
+
     /**
      * Load LMS materials and assignments for the pivot data of each izin.
      */
@@ -39,7 +39,7 @@ class PersetujuanIzinGuruController extends Controller
     {
         $materialIds = [];
         $assignmentIds = [];
-        
+
         foreach ($izins as $izin) {
             foreach ($izin->jadwals as $jadwal) {
                 if ($jadwal->pivot->lms_material_id) {
@@ -50,17 +50,17 @@ class PersetujuanIzinGuruController extends Controller
                 }
             }
         }
-        
+
         $materials = \App\Models\LmsMaterial::whereIn('id', array_unique($materialIds))->get()->keyBy('id');
         $assignments = \App\Models\LmsAssignment::whereIn('id', array_unique($assignmentIds))->get()->keyBy('id');
-        
+
         foreach ($izins as $izin) {
             foreach ($izin->jadwals as $jadwal) {
-                $jadwal->pivot->loadedMaterial = $jadwal->pivot->lms_material_id 
-                    ? $materials->get($jadwal->pivot->lms_material_id) 
+                $jadwal->pivot->loadedMaterial = $jadwal->pivot->lms_material_id
+                    ? $materials->get($jadwal->pivot->lms_material_id)
                     : null;
-                $jadwal->pivot->loadedAssignment = $jadwal->pivot->lms_assignment_id 
-                    ? $assignments->get($jadwal->pivot->lms_assignment_id) 
+                $jadwal->pivot->loadedAssignment = $jadwal->pivot->lms_assignment_id
+                    ? $assignments->get($jadwal->pivot->lms_assignment_id)
                     : null;
             }
         }
@@ -68,6 +68,9 @@ class PersetujuanIzinGuruController extends Controller
 
     public function approve(GuruIzin $izin)
     {
+        abort_unless($izin->status_piket === 'menunggu', 409, 'Tahap Piket sudah diputuskan.');
+        $izin->load('guru.dapodikGuru');
+        $requiresHeadmaster = \App\Support\EmploymentStatus::normalize($izin->guru?->dapodikGuru?->status_kepegawaian) === \App\Support\EmploymentStatus::PERMANENT;
         $updateData = [
             'status_piket' => 'disetujui',
             'piket_id' => Auth::id(),
@@ -82,6 +85,7 @@ class PersetujuanIzinGuruController extends Controller
             $updateData['sdm_id'] = Auth::id();
             $updateData['kurikulum_at'] = now();
             $updateData['sdm_at'] = now();
+            $updateData['status_kepala_sekolah'] = $requiresHeadmaster ? 'menunggu' : 'tidak_diperlukan';
 
             $izin->update($updateData);
 
@@ -92,16 +96,35 @@ class PersetujuanIzinGuruController extends Controller
                 \App\Models\DigitalDocument::autoSign(
                     $user,
                     'IZIN_GURU_PIKET',
-                    'Izin Guru (Piket) - ' . ($izin->guru->nama_lengkap ?? ''),
+                    'Izin Guru (Piket) - '.($izin->guru->nama_lengkap ?? ''),
                     $izin->id,
                     ['IZIN_GURU_PIKET', (string) $izin->id, (string) $izin->master_guru_id, $izin->guru->nama_lengkap ?? '']
                 );
             }
 
+            if ($requiresHeadmaster) {
+                foreach (\App\Models\User::role('Kepala Sekolah')->get() as $headmaster) {
+                    $headmaster->notify(new \App\Notifications\PengajuanIzinGuruNotification(
+                        $izin,
+                        'approval_required',
+                        'Izin Pegawai Tetap '.$izin->guru->nama_lengkap.' menunggu persetujuan Anda.',
+                        route('kepala-sekolah.persetujuan-izin-guru.index')
+                    ));
+                }
+                $izin->guru?->user?->notify(new \App\Notifications\PengajuanIzinGuruNotification(
+                    $izin,
+                    'status_updated',
+                    'Izin disetujui Guru Piket dan menunggu persetujuan akhir Kepala Sekolah.',
+                    route('guru.izin.index')
+                ));
+
+                return redirect()->back()->with('success', 'Izin Pegawai Tetap diteruskan ke Kepala Sekolah untuk persetujuan akhir.');
+            }
+
             // Notify Teacher
             $teacherUser = $izin->guru->user;
             if ($teacherUser) {
-                $msg = "Izin Anda (Lingkungan Sekolah) telah disetujui sepenuhnya.";
+                $msg = 'Izin Anda (Lingkungan Sekolah) telah disetujui sepenuhnya.';
                 $url = route('guru.izin.index');
                 $teacherUser->notify(new \App\Notifications\PengajuanIzinGuruNotification($izin, 'status_updated', $msg, $url));
             }
@@ -111,11 +134,11 @@ class PersetujuanIzinGuruController extends Controller
                 AbsensiGuru::updateOrCreate(
                     [
                         'jadwal_pelajaran_id' => $jadwal->id,
-                        'tanggal' => $izin->tanggal_mulai, 
+                        'tanggal' => $izin->tanggal_mulai,
                     ],
                     [
                         'status' => 'izin',
-                        'keterangan' => 'Izin Guru (Lingkungan Sekolah): ' . $izin->jenis_izin . ' (' . $izin->deskripsi . ')',
+                        'keterangan' => 'Izin Guru (Lingkungan Sekolah): '.$izin->jenis_izin.' ('.$izin->deskripsi.')',
                         'waktu_absen' => now(),
                         'dicatat_oleh' => Auth::id(),
                     ]
@@ -142,7 +165,7 @@ class PersetujuanIzinGuruController extends Controller
             \App\Models\DigitalDocument::autoSign(
                 $user,
                 'IZIN_GURU_PIKET',
-                'Izin Guru (Piket) - ' . ($izin->guru->nama_lengkap ?? ''),
+                'Izin Guru (Piket) - '.($izin->guru->nama_lengkap ?? ''),
                 $izin->id,
                 ['IZIN_GURU_PIKET', (string) $izin->id, (string) $izin->master_guru_id, $izin->guru->nama_lengkap ?? '']
             );
@@ -150,7 +173,7 @@ class PersetujuanIzinGuruController extends Controller
 
         // Notify Kurikulum
         $approvers = \App\Models\User::role('Kurikulum')->get();
-        $msg = "Ada pengajuan Izin Guru (Luar Sekolah) baru dari " . $izin->guru->nama_lengkap;
+        $msg = 'Ada pengajuan Izin Guru (Luar Sekolah) baru dari '.$izin->guru->nama_lengkap;
         $url = route('kurikulum.persetujuan-izin-guru.index');
         foreach ($approvers as $approver) {
             $approver->notify(new \App\Notifications\PengajuanIzinGuruNotification($izin, 'pending_approval', $msg, $url));
@@ -161,8 +184,9 @@ class PersetujuanIzinGuruController extends Controller
 
     public function reject(Request $request, GuruIzin $izin)
     {
+        abort_unless($izin->status_piket === 'menunggu', 409, 'Tahap Piket sudah diputuskan.');
         $request->validate(['catatan_piket' => 'required|string']);
-        
+
         $izin->update([
             'status_piket' => 'ditolak',
             'piket_id' => Auth::id(),
@@ -173,7 +197,7 @@ class PersetujuanIzinGuruController extends Controller
         // Notify Teacher
         $teacherUser = $izin->guru->user;
         if ($teacherUser) {
-            $msg = "Permohonan izin Anda ditolak oleh Guru Piket.";
+            $msg = 'Permohonan izin Anda ditolak oleh Guru Piket.';
             $url = route('guru.izin.index');
             $teacherUser->notify(new \App\Notifications\PengajuanIzinGuruNotification($izin, 'status_updated', $msg, $url));
         }

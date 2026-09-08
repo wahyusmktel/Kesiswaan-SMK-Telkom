@@ -9,7 +9,7 @@
     <div class="space-y-6">
         @include('pages.fingerprint.partials.flash')
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
             <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
                 <p class="text-xs font-black uppercase tracking-widest text-gray-400">Pegawai Termapping</p>
                 <p class="mt-3 text-3xl font-black text-gray-900">{{ number_format($stats['total']) }}</p>
@@ -29,6 +29,11 @@
                 <p class="text-xs font-black uppercase tracking-widest text-red-600">Tidak Hadir</p>
                 <p class="mt-3 text-3xl font-black text-red-700">{{ number_format($stats['absent']) }}</p>
                 <p class="mt-1 text-sm text-red-700/70">Batas akhir datang terlewati tanpa scan. {{ $stats['pending'] }} masih menunggu batas datang.</p>
+            </div>
+            <div class="rounded-2xl border border-violet-100 bg-violet-50 p-5 shadow-sm">
+                <p class="text-xs font-black uppercase tracking-widest text-violet-600">Izin Disetujui</p>
+                <p class="mt-3 text-3xl font-black text-violet-700">{{ number_format($stats['leave']) }}</p>
+                <p class="mt-1 text-sm text-violet-700/70">Tidak dihitung sebagai Tidak Hadir.</p>
             </div>
         </div>
 

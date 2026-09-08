@@ -155,13 +155,13 @@ class HeadmasterMonitoringTest extends TestCase
         FingerprintAttendance::create(['fingerprint_device_id' => $second->id, 'user_id' => '1', 'app_user_id' => $teacher->id, 'timestamp' => '2026-09-04 07:10:00']);
         $this->get(route('kepala-sekolah.monitoring.index', ['section' => 'fingerprint', 'date' => '2026-09-03']))
             ->assertOk()
-            ->assertViewHas('summary', ['total' => 2, 'present' => 1, 'out' => 1, 'missing' => 1, 'required' => 0, 'required_present' => 0, 'required_missing' => 0, 'absent' => 0, 'late' => 0, 'pending' => 0, 'unclassified' => 2])
+            ->assertViewHas('summary', ['total' => 2, 'present' => 1, 'out' => 1, 'missing' => 1, 'required' => 0, 'required_present' => 0, 'required_missing' => 0, 'absent' => 0, 'late' => 0, 'pending' => 0, 'leave' => 0, 'unclassified' => 2])
             ->assertViewHas('rows', fn ($rows) => $rows->firstWhere('name', 'Guru Hadir')['check_in'] === '06:55' && $rows->firstWhere('name', 'Guru Hadir')['check_out'] === '16:20');
         $this->get(route('kepala-sekolah.monitoring.index', ['section' => 'fingerprint', 'date' => '2026-09-04']))
-            ->assertOk()->assertViewHas('summary', ['total' => 2, 'present' => 1, 'out' => 0, 'missing' => 1, 'required' => 0, 'required_present' => 0, 'required_missing' => 0, 'absent' => 0, 'late' => 0, 'pending' => 0, 'unclassified' => 2])
+            ->assertOk()->assertViewHas('summary', ['total' => 2, 'present' => 1, 'out' => 0, 'missing' => 1, 'required' => 0, 'required_present' => 0, 'required_missing' => 0, 'absent' => 0, 'late' => 0, 'pending' => 0, 'leave' => 0, 'unclassified' => 2])
             ->assertViewHas('rows', fn ($rows) => $rows->firstWhere('name', 'Guru Hadir')['check_out'] === null);
         $this->get(route('kepala-sekolah.monitoring.index', ['section' => 'fingerprint', 'date' => '2026-09-05']))
-            ->assertOk()->assertViewHas('summary', ['total' => 2, 'present' => 0, 'out' => 0, 'missing' => 2, 'required' => 0, 'required_present' => 0, 'required_missing' => 0, 'absent' => 0, 'late' => 0, 'pending' => 0, 'unclassified' => 2]);
+            ->assertOk()->assertViewHas('summary', ['total' => 2, 'present' => 0, 'out' => 0, 'missing' => 2, 'required' => 0, 'required_present' => 0, 'required_missing' => 0, 'absent' => 0, 'late' => 0, 'pending' => 0, 'leave' => 0, 'unclassified' => 2]);
         $this->getJson(route('kepala-sekolah.monitoring.index', ['section' => 'fingerprint', 'date' => 'invalid']))->assertUnprocessable();
     }
 
@@ -219,6 +219,20 @@ class HeadmasterMonitoringTest extends TestCase
         FingerprintAttendance::create(['fingerprint_device_id' => $device->id, 'user_id' => '99', 'app_user_id' => $teacherUser->id, 'timestamp' => '2026-09-07 08:05:00']);
         $this->get($url)->assertOk()->assertViewHas('rows', fn ($rows) => $rows->first()['status'] === 'Terlambat')
             ->assertViewHas('summary', fn ($summary) => $summary['late'] === 1 && $summary['absent'] === 0);
+        \App\Models\GuruIzin::create([
+            'master_guru_id' => $teacher->id,
+            'tanggal_mulai' => '2026-09-07 06:00:00',
+            'tanggal_selesai' => '2026-09-07 16:00:00',
+            'jenis_izin' => 'Sakit',
+            'kategori_penyetujuan' => 'luar',
+            'deskripsi' => 'Istirahat',
+            'status_piket' => 'disetujui',
+            'status_kurikulum' => 'disetujui',
+            'status_sdm' => 'disetujui',
+        ]);
+        $this->get($url)->assertOk()->assertViewHas('rows', fn ($rows) => $rows->first()['status'] === 'Izin')
+            ->assertViewHas('summary', fn ($summary) => $summary['leave'] === 1 && $summary['required'] === 0 && $summary['absent'] === 0 && $summary['late'] === 0)
+            ->assertSee('Izin Sakit');
         Carbon::setTestNow();
     }
 

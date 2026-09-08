@@ -23,6 +23,7 @@
                     </div>
                     <div>
                         <h4 class="text-blue-900 font-bold mb-2 text-sm uppercase tracking-wider">Panduan Pengajuan Izin Guru</h4>
+                        <p class="mb-3 text-sm text-blue-800">Khusus Pegawai Tetap, seluruh kategori izin memerlukan persetujuan akhir Kepala Sekolah setelah tahap persetujuan kategori berikut selesai.</p>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div class="bg-white/50 p-3 rounded-xl border border-blue-100">
                                 <p class="text-xs font-bold text-blue-800 mb-1">1. Izin Lingkungan Sekolah</p>
@@ -102,10 +103,18 @@
                                                 <span class="text-[10px] font-bold text-gray-400 uppercase">SDM</span>
                                                 <x-status-badge-izin :status="$izin->status_sdm" />
                                             </div>
+                                            @if($izin->status_kepala_sekolah !== 'tidak_diperlukan')
+                                                <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                                <div class="flex flex-col items-center">
+                                                    <span class="text-[10px] font-bold text-gray-400 uppercase">Kepala Sekolah</span>
+                                                    <x-status-badge-izin :status="$izin->status_kepala_sekolah" />
+                                                    @if($izin->catatan_kepala_sekolah)<p class="mt-1 max-w-xs whitespace-normal text-xs text-red-700">{{ $izin->catatan_kepala_sekolah }}</p>@endif
+                                                </div>
+                                            @endif
                                         </div>
                                     </td>
                                     <td class="px-6 py-4">
-                                        @if ($izin->status_sdm === 'disetujui')
+                                        @if ($izin->isFullyApproved())
                                             <a href="{{ route('sdm.persetujuan-izin-guru.print', $izin->id) }}" target="_blank"
                                                class="text-indigo-600 hover:text-indigo-900 font-bold inline-flex items-center gap-1">
                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/></svg>

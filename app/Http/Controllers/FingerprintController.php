@@ -11,6 +11,7 @@ use App\Models\FingerprintDevice;
 use App\Models\FingerprintSecurityShift;
 use App\Models\FingerprintSecurityShiftAssignment;
 use App\Models\FingerprintUser;
+use App\Models\GuruIzin;
 use App\Models\JadwalPelajaran;
 use App\Models\User;
 use App\Models\WorkCalendarEvent;
@@ -29,6 +30,8 @@ use Throwable;
 
 class FingerprintController extends Controller
 {
+    private array $approvedLeaveCache = [];
+
     public function index(Request $request)
     {
         $devices = FingerprintDevice::withCount(['fingerprintUsers', 'attendances'])
@@ -283,6 +286,7 @@ class FingerprintController extends Controller
 
     public function attendanceDetail(Request $request, User $user)
     {
+        $this->approvedLeaveCache = [];
         [$dateFrom, $dateTo] = $this->resolveDetailDateRange($request);
 
         $attendances = FingerprintAttendance::with(['device', 'appUser.masterGuru.dapodikGuru', 'appUser.securityShiftAssignment.shift'])
@@ -365,6 +369,7 @@ class FingerprintController extends Controller
 
     public function monitoring(Request $request)
     {
+        $this->approvedLeaveCache = [];
         $date = $request->filled('date') ? Carbon::parse($request->date)->toDateString() : now()->toDateString();
         $rows = $this->monitoringRows($request, $date)->paginate(30)->withQueryString();
         $allDevices = FingerprintDevice::orderBy('name')->get();
@@ -381,6 +386,7 @@ class FingerprintController extends Controller
             'incomplete' => $statsRows->filter(fn ($row) => $row->first_scan && ! $completeRows->containsStrict($row))->count(),
             'absent' => $statsRows->where('monitoring_status_text', 'Tidak Hadir')->count(),
             'pending' => $statsRows->where('monitoring_status_text', 'Menunggu Absensi')->count(),
+            'leave' => $statsRows->where('monitoring_status_text', 'Izin')->count(),
             'late' => $statsRows->filter(fn ($row) => (int) $row->monitoring_late_minutes > 0)->count(),
             'early' => $statsRows->filter(fn ($row) => (int) $row->monitoring_early_minutes > 0)->count(),
         ];
@@ -393,6 +399,7 @@ class FingerprintController extends Controller
 
     public function exportMonitoring(Request $request)
     {
+        $this->approvedLeaveCache = [];
         $date = $request->filled('date') ? Carbon::parse($request->date)->toDateString() : now()->toDateString();
         $rows = $this->monitoringRows($request, $date)->get();
         $setting = FingerprintAttendanceSetting::getSetting();
@@ -404,6 +411,7 @@ class FingerprintController extends Controller
 
     public function attendanceAnalysis(Request $request)
     {
+        $this->approvedLeaveCache = [];
         [$dateFrom, $dateTo] = $this->resolveAnalysisDateRange($request);
         $analysis = $this->buildAttendanceAnalysis($request, $dateFrom, $dateTo);
         $allDevices = FingerprintDevice::orderBy('name')->get();
@@ -418,6 +426,7 @@ class FingerprintController extends Controller
 
     public function attendanceAnalysisPdf(Request $request, User $user)
     {
+        $this->approvedLeaveCache = [];
         [$dateFrom, $dateTo] = $this->resolveAnalysisDateRange($request);
         $analysis = $this->buildAttendanceAnalysis($request, $dateFrom, $dateTo);
         $employee = $analysis['rankings']->firstWhere('user_id', $user->id);
@@ -1160,6 +1169,7 @@ class FingerprintController extends Controller
         $totalScan = (int) ($row->total_scan ?? 0);
         $status = EmploymentStatus::normalize($row->appUser?->masterGuru?->dapodikGuru?->status_kepegawaian);
         $rule = $this->attendanceRuleFor($row, $date, $setting, $status);
+        $approvedLeave = $this->approvedLeaveFor($row->appUser?->masterGuru?->id, $date);
 
         if (($rule['use_shift_window'] ?? false) && $rule['start_at'] && $rule['end_at'] && $row->fingerprint_device_id && $row->user_id) {
             $shiftLogs = FingerprintAttendance::where('fingerprint_device_id', $row->fingerprint_device_id)
@@ -1177,6 +1187,24 @@ class FingerprintController extends Controller
         $lateMinutes = 0;
         $earlyMinutes = 0;
         $notes = [];
+
+        if ($approvedLeave) {
+            $row->setAttribute('first_scan', $firstScan);
+            $row->setAttribute('last_scan', $lastScan);
+            $row->setAttribute('total_scan', $totalScan);
+            $row->setAttribute('monitoring_status_text', 'Izin');
+            $row->setAttribute('monitoring_status_class', 'bg-violet-50 text-violet-700');
+            $row->setAttribute('monitoring_notes', [
+                $approvedLeave->jenis_izin,
+                $approvedLeave->tanggal_mulai->format('d/m H:i').'–'.$approvedLeave->tanggal_selesai->format('d/m H:i'),
+            ]);
+            $row->setAttribute('monitoring_late_minutes', 0);
+            $row->setAttribute('monitoring_early_minutes', 0);
+            $row->setAttribute('monitoring_required', false);
+            $row->setAttribute('monitoring_rule_label', 'Izin disetujui SDM');
+
+            return;
+        }
 
         if ($rule['required']) {
             if ($firstScan && $rule['checkin_deadline'] && $firstScan->greaterThan($rule['checkin_deadline'])) {
@@ -1223,6 +1251,28 @@ class FingerprintController extends Controller
         $row->setAttribute('monitoring_early_minutes', $earlyMinutes);
         $row->setAttribute('monitoring_required', $rule['required']);
         $row->setAttribute('monitoring_rule_label', $rule['label']);
+    }
+
+    private function approvedLeaveFor(?int $masterGuruId, string $date): ?GuruIzin
+    {
+        if (! $masterGuruId) {
+            return null;
+        }
+
+        $key = $masterGuruId.'|'.$date;
+        if (! array_key_exists($key, $this->approvedLeaveCache)) {
+            $day = Carbon::parse($date);
+            $this->approvedLeaveCache[$key] = GuruIzin::query()
+                ->where('master_guru_id', $masterGuruId)
+                ->where('status_sdm', 'disetujui')
+                ->whereIn('status_kepala_sekolah', ['disetujui', 'tidak_diperlukan'])
+                ->where('tanggal_mulai', '<=', $day->copy()->endOfDay())
+                ->where('tanggal_selesai', '>=', $day->copy()->startOfDay())
+                ->orderBy('tanggal_mulai')
+                ->first();
+        }
+
+        return $this->approvedLeaveCache[$key];
     }
 
     private function attendanceRuleFor(FingerprintUser $row, string $date, FingerprintAttendanceSetting $setting, ?string $status): array

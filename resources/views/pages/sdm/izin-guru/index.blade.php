@@ -1,13 +1,13 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-bold text-xl text-gray-800 leading-tight">Persetujuan Akhir Izin Guru (KAUR SDM)</h2>
+        <h2 class="font-bold text-xl text-gray-800 leading-tight">Persetujuan Izin Guru (KAUR SDM)</h2>
     </x-slot>
 
     <div class="py-6 w-full" x-data="approvalSDM()">
         <div class="w-full px-4 sm:px-6 lg:px-8 space-y-6">
             <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                 <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                    <h3 class="font-bold text-gray-800">Review Akhir & Validasi Absensi</h3>
+                    <h3 class="font-bold text-gray-800">Validasi SDM · Pegawai Tetap dilanjutkan ke Kepala Sekolah</h3>
                     <div class="flex gap-2">
                         <a href="?status=menunggu" class="text-xs font-bold px-3 py-1 rounded-full {{ request('status', 'menunggu') == 'menunggu' ? 'bg-yellow-100 text-yellow-700' : 'bg-white text-gray-500 border' }}">Menunggu</a>
                         <a href="?status=disetujui" class="text-xs font-bold px-3 py-1 rounded-full {{ request('status') == 'disetujui' ? 'bg-green-100 text-green-700' : 'bg-white text-gray-500 border' }}">Disetujui</a>
@@ -63,6 +63,9 @@
                                                 <span class="text-[9px] font-bold text-gray-400">KAUR SDM</span>
                                                 <x-status-badge-izin :status="$izin->status_sdm" />
                                             </div>
+                                            @if($izin->status_kepala_sekolah !== 'tidak_diperlukan')
+                                                <div class="flex flex-col"><span class="text-[9px] font-bold text-gray-400">Kepala Sekolah</span><x-status-badge-izin :status="$izin->status_kepala_sekolah" /></div>
+                                            @endif
                                         </div>
                                     </td>
                                     <td class="px-6 py-4">
@@ -93,7 +96,7 @@
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                     </svg>
                                                 </button>
-                                                @if($izin->status_sdm == 'disetujui')
+                                                @if($izin->isFullyApproved())
                                                     <a href="{{ route('sdm.persetujuan-izin-guru.print', $izin->id) }}" target="_blank" class="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
                                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                                                     </a>

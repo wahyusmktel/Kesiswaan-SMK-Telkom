@@ -97,8 +97,8 @@ class MonitoringController extends Controller
                 $dateColumn = 'tanggal_mulai';
                 $relation = 'guru';
                 $nameColumn = 'nama_lengkap';
-                $headers = ['Mulai', 'Selesai', 'Guru', 'Jenis Izin', 'Piket', 'Kurikulum', 'SDM'];
-                $row = fn ($item) => [$item->tanggal_mulai?->format('d/m/Y'), $item->tanggal_selesai?->format('d/m/Y'), $item->guru?->nama_lengkap, $item->jenis_izin, $item->status_piket, $item->status_kurikulum, $item->status_sdm];
+                $headers = ['Mulai', 'Selesai', 'Guru', 'Jenis Izin', 'Piket', 'Kurikulum', 'SDM', 'Kepala Sekolah'];
+                $row = fn ($item) => [$item->tanggal_mulai?->format('d/m/Y'), $item->tanggal_selesai?->format('d/m/Y'), $item->guru?->nama_lengkap, $item->jenis_izin, $item->status_piket, $item->status_kurikulum, $item->status_sdm, $item->status_kepala_sekolah === 'tidak_diperlukan' ? '-' : $item->status_kepala_sekolah];
                 break;
         }
 
@@ -143,19 +143,27 @@ class MonitoringController extends Controller
         $schedules = JadwalPelajaran::inActiveAcademicPeriod()->where('hari', $dayName)
             ->select('master_guru_id', DB::raw('MIN(jam_mulai) as starts_at'), DB::raw('MAX(jam_selesai) as ends_at'))
             ->groupBy('master_guru_id')->get()->keyBy('master_guru_id');
+        $approvedLeaves = GuruIzin::query()
+            ->where('status_sdm', 'disetujui')
+            ->whereIn('status_kepala_sekolah', ['disetujui', 'tidak_diperlukan'])
+            ->where('tanggal_mulai', '<=', $date->copy()->endOfDay())
+            ->where('tanggal_selesai', '>=', $date->copy()->startOfDay())
+            ->orderBy('tanggal_mulai')->get()->keyBy('master_guru_id');
         $teachers = MasterGuru::with('dapodikGuru')->where('is_active', true)->orderBy('nama_lengkap')->get(['id', 'user_id', 'nama_lengkap']);
-        $rows = $teachers->map(function ($teacher) use ($scans, $workingDay, $schedules, $holiday, $date, $setting) {
+        $rows = $teachers->map(function ($teacher) use ($scans, $workingDay, $schedules, $approvedLeaves, $holiday, $date, $setting) {
             $scan = $teacher->user_id ? $scans->get($teacher->user_id) : null;
             $employment = EmploymentStatus::normalize($teacher->dapodikGuru?->status_kepegawaian);
             $recognized = in_array($employment, [EmploymentStatus::PERMANENT, EmploymentStatus::FULL_TIME, EmploymentStatus::PART_TIME], true);
             $schedule = $schedules->get($teacher->id);
-            $required = $recognized && $workingDay && ($employment !== EmploymentStatus::PART_TIME || $schedule !== null);
+            $approvedLeave = $approvedLeaves->get($teacher->id);
+            $required = ! $approvedLeave && $recognized && $workingDay && ($employment !== EmploymentStatus::PART_TIME || $schedule !== null);
             $deadline = $required
                 ? Carbon::parse($date->toDateString().' '.($employment === EmploymentStatus::PART_TIME ? $schedule->starts_at : $setting->checkin_end))
                 : null;
             $firstScan = $scan ? Carbon::parse($scan->first_scan) : null;
             $deadlinePassed = $deadline && now()->greaterThan($deadline);
             $status = match (true) {
+                (bool) $approvedLeave => 'Izin',
                 ! $required && ! $firstScan => 'Tidak Wajib Hadir',
                 ! $required => 'Hadir Opsional',
                 ! $firstScan && $deadlinePassed => 'Tidak Hadir',
@@ -164,6 +172,7 @@ class MonitoringController extends Controller
                 default => 'Hadir',
             };
             $obligation = match (true) {
+                (bool) $approvedLeave => 'Izin '.$approvedLeave->jenis_izin.' · '.$approvedLeave->tanggal_mulai->format('d/m H:i').'–'.$approvedLeave->tanggal_selesai->format('d/m H:i'),
                 ! $recognized => 'Status kepegawaian perlu diperiksa',
                 ! $workingDay => $holiday ? 'Libur: '.$holiday->title : 'Akhir pekan',
                 $employment === EmploymentStatus::PART_TIME && ! $schedule => 'Tidak ada jadwal mengajar',
@@ -196,6 +205,7 @@ class MonitoringController extends Controller
             'absent' => $rows->where('status', 'Tidak Hadir')->count(),
             'late' => $rows->where('status', 'Terlambat')->count(),
             'pending' => $rows->where('status', 'Menunggu Absensi')->count(),
+            'leave' => $rows->where('status', 'Izin')->count(),
             'unclassified' => $rows->where('recognized', false)->count(),
         ];
         $hours = collect(range(0, 23))->map(fn ($hour) => [

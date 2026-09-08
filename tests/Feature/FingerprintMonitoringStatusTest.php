@@ -36,6 +36,26 @@ class FingerprintMonitoringStatusTest extends TestCase
         $this->get($url)->assertOk()->assertSee('Tidak Hadir')->assertViewHas('stats', fn ($stats) => $stats['pending'] === 0 && $stats['absent'] === 1);
         FingerprintAttendance::create(['fingerprint_device_id' => $device->id, 'user_id' => '12', 'app_user_id' => $user->id, 'timestamp' => '2026-09-07 07:35:00']);
         $this->get($url)->assertOk()->assertSee('Terlambat')->assertViewHas('stats', fn ($stats) => $stats['late'] === 1 && $stats['absent'] === 0);
+
+        $leave = \App\Models\GuruIzin::create([
+            'master_guru_id' => $teacher->id,
+            'tanggal_mulai' => '2026-09-07 06:00:00',
+            'tanggal_selesai' => '2026-09-07 16:00:00',
+            'jenis_izin' => 'Dinas',
+            'kategori_penyetujuan' => 'sekolah',
+            'deskripsi' => 'Tugas sekolah',
+            'status_piket' => 'disetujui',
+            'status_kurikulum' => 'disetujui',
+            'status_sdm' => 'disetujui',
+        ]);
+        $this->get($url)->assertOk()
+            ->assertViewHas('rows', fn ($rows) => $rows->first()->monitoring_status_text === 'Izin'
+                && $rows->first()->monitoring_rule_label === 'Izin disetujui SDM'
+                && in_array('Dinas', $rows->first()->monitoring_notes, true))
+            ->assertViewHas('stats', fn ($stats) => $stats['leave'] === 1 && $stats['late'] === 0 && $stats['absent'] === 0);
+        $leave->update(['status_sdm' => 'ditolak']);
+        $this->get($url)->assertOk()->assertSee('Terlambat')
+            ->assertViewHas('stats', fn ($stats) => $stats['leave'] === 0 && $stats['late'] === 1);
         Carbon::setTestNow();
     }
 }

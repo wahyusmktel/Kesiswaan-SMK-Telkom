@@ -293,6 +293,16 @@
                     <div class="sig-id">Tgl: {{ $izin->sdm_at?->format('d/m/Y H:i') ?? '-' }}</div>
                     @endif
                 </td>
+                @if($izin->status_kepala_sekolah !== 'tidak_diperlukan')
+                <td class="sig-box">
+                    <div class="sig-role">Kepala Sekolah</div>
+                    <div style="height:65px;"></div>
+                    <span class="sig-name">{{ $izin->kepalaSekolah->name ?? '..........................' }}</span>
+                    @if($izin->kepalaSekolah)
+                    <div class="sig-id">Tgl: {{ $izin->kepala_sekolah_at?->format('d/m/Y H:i') ?? '-' }}</div>
+                    @endif
+                </td>
+                @endif
             </tr>
         </table>
     </div>

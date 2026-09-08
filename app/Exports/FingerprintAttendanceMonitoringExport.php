@@ -144,6 +144,7 @@ class FingerprintAttendanceMonitoringExport implements FromCollection, ShouldAut
                     'Belum Scan Pulang' => 'FFFBEB',
                     'Terlambat' => 'FFEDD5',
                     'Menunggu Absensi' => 'F0F9FF',
+                    'Izin' => 'F5F3FF',
                     default => 'FEF2F2',
                 };
 

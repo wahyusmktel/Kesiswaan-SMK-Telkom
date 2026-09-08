@@ -567,6 +567,13 @@
 
     <div class="section-title">Layanan Pimpinan</div>
     <li>
+        <a href="{{ route('kepala-sekolah.persetujuan-izin-guru.index') }}"
+            class="nav-link {{ request()->routeIs('kepala-sekolah.persetujuan-izin-guru.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+            <span class="nav-text">Persetujuan Izin Pegawai</span>
+        </a>
+    </li>
+    <li>
         <a href="{{ route('tanda-tangan.index') }}"
             class="nav-link {{ request()->routeIs('tanda-tangan.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
             <div class="nav-icon-container">

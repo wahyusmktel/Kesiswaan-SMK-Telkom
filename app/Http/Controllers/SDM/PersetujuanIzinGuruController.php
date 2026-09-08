@@ -3,23 +3,24 @@
 namespace App\Http\Controllers\SDM;
 
 use App\Http\Controllers\Controller;
-use App\Models\GuruIzin;
 use App\Models\AbsensiGuru;
+use App\Models\AppSetting;
+use App\Models\GuruIzin;
+use App\Support\EmploymentStatus;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\AppSetting;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class PersetujuanIzinGuruController extends Controller
 {
     public function index(Request $request)
     {
         $query = GuruIzin::with([
-            'guru', 
-            'jadwals.rombel.kelas', 
-            'jadwals.mataPelajaran'
+            'guru',
+            'jadwals.rombel.kelas',
+            'jadwals.mataPelajaran',
         ])->where('status_kurikulum', 'disetujui')->latest();
-        
+
         if ($request->filled('status')) {
             $query->where('status_sdm', $request->status);
         } else {
@@ -27,18 +28,18 @@ class PersetujuanIzinGuruController extends Controller
         }
 
         $izins = $query->paginate(10);
-        
+
         // Manually load LMS materials and assignments for pivot data
         $this->loadLmsResourcesForIzins($izins);
-        
+
         return view('pages.sdm.izin-guru.index', compact('izins'));
     }
-    
+
     private function loadLmsResourcesForIzins($izins)
     {
         $materialIds = [];
         $assignmentIds = [];
-        
+
         foreach ($izins as $izin) {
             foreach ($izin->jadwals as $jadwal) {
                 if ($jadwal->pivot->lms_material_id) {
@@ -49,17 +50,17 @@ class PersetujuanIzinGuruController extends Controller
                 }
             }
         }
-        
+
         $materials = \App\Models\LmsMaterial::whereIn('id', array_unique($materialIds))->get()->keyBy('id');
         $assignments = \App\Models\LmsAssignment::whereIn('id', array_unique($assignmentIds))->get()->keyBy('id');
-        
+
         foreach ($izins as $izin) {
             foreach ($izin->jadwals as $jadwal) {
-                $jadwal->pivot->loadedMaterial = $jadwal->pivot->lms_material_id 
-                    ? $materials->get($jadwal->pivot->lms_material_id) 
+                $jadwal->pivot->loadedMaterial = $jadwal->pivot->lms_material_id
+                    ? $materials->get($jadwal->pivot->lms_material_id)
                     : null;
-                $jadwal->pivot->loadedAssignment = $jadwal->pivot->lms_assignment_id 
-                    ? $assignments->get($jadwal->pivot->lms_assignment_id) 
+                $jadwal->pivot->loadedAssignment = $jadwal->pivot->lms_assignment_id
+                    ? $assignments->get($jadwal->pivot->lms_assignment_id)
                     : null;
             }
         }
@@ -67,8 +68,12 @@ class PersetujuanIzinGuruController extends Controller
 
     public function approve(GuruIzin $izin)
     {
+        abort_unless($izin->status_kurikulum === 'disetujui' && $izin->status_sdm === 'menunggu', 409, 'Izin tidak lagi menunggu persetujuan SDM.');
+        $izin->load('guru.dapodikGuru');
+        $requiresHeadmaster = EmploymentStatus::normalize($izin->guru?->dapodikGuru?->status_kepegawaian) === EmploymentStatus::PERMANENT;
         $izin->update([
             'status_sdm' => 'disetujui',
+            'status_kepala_sekolah' => $requiresHeadmaster ? 'menunggu' : 'tidak_diperlukan',
             'sdm_id' => Auth::id(),
             'sdm_at' => now(),
         ]);
@@ -80,16 +85,35 @@ class PersetujuanIzinGuruController extends Controller
             \App\Models\DigitalDocument::autoSign(
                 $user,
                 'IZIN_GURU_SDM',
-                'Izin Guru (SDM) - ' . ($izin->guru->nama_lengkap ?? ''),
+                'Izin Guru (SDM) - '.($izin->guru->nama_lengkap ?? ''),
                 $izin->id,
                 ['IZIN_GURU_SDM', (string) $izin->id, (string) $izin->master_guru_id, $izin->guru->nama_lengkap ?? '']
             );
         }
 
+        if ($requiresHeadmaster) {
+            foreach (\App\Models\User::role('Kepala Sekolah')->get() as $headmaster) {
+                $headmaster->notify(new \App\Notifications\PengajuanIzinGuruNotification(
+                    $izin,
+                    'approval_required',
+                    'Izin Pegawai Tetap '.$izin->guru->nama_lengkap.' menunggu persetujuan Anda.',
+                    route('kepala-sekolah.persetujuan-izin-guru.index')
+                ));
+            }
+            $izin->guru?->user?->notify(new \App\Notifications\PengajuanIzinGuruNotification(
+                $izin,
+                'status_updated',
+                'Permohonan izin disetujui KAUR SDM dan menunggu persetujuan akhir Kepala Sekolah.',
+                route('guru.izin.index')
+            ));
+
+            return back()->with('success', 'Persetujuan SDM tersimpan. Karena pemohon Pegawai Tetap, izin diteruskan ke Kepala Sekolah.');
+        }
+
         // Notify Teacher
         $teacherUser = $izin->guru->user;
         if ($teacherUser) {
-            $msg = "Permohonan izin Anda telah disetujui sepenuhnya oleh KAUR SDM.";
+            $msg = 'Permohonan izin Anda telah disetujui sepenuhnya oleh KAUR SDM.';
             $url = route('guru.izin.index');
             $teacherUser->notify(new \App\Notifications\PengajuanIzinGuruNotification($izin, 'status_updated', $msg, $url));
         }
@@ -99,11 +123,11 @@ class PersetujuanIzinGuruController extends Controller
             AbsensiGuru::updateOrCreate(
                 [
                     'jadwal_pelajaran_id' => $jadwal->id,
-                    'tanggal' => $izin->tanggal_mulai, 
+                    'tanggal' => $izin->tanggal_mulai,
                 ],
                 [
                     'status' => 'izin',
-                    'keterangan' => 'Izin Guru: ' . $izin->jenis_izin . ' (' . $izin->deskripsi . ')',
+                    'keterangan' => 'Izin Guru: '.$izin->jenis_izin.' ('.$izin->deskripsi.')',
                     'waktu_absen' => now(),
                     'dicatat_oleh' => Auth::id(),
                 ]
@@ -125,18 +149,20 @@ class PersetujuanIzinGuruController extends Controller
     {
         $options = new \chillerlan\QRCode\QROptions([
             'outputInterface' => \chillerlan\QRCode\Output\QRGdImagePNG::class,
-            'outputBase64'    => true,
-            'scale'           => 4,
-            'quietzoneSize'   => 1,
-            'eccLevel'        => \chillerlan\QRCode\Common\EccLevel::M,
+            'outputBase64' => true,
+            'scale' => 4,
+            'quietzoneSize' => 1,
+            'eccLevel' => \chillerlan\QRCode\Common\EccLevel::M,
         ]);
+
         return (new \chillerlan\QRCode\QRCode($options))->render($url);
     }
 
     public function reject(Request $request, GuruIzin $izin)
     {
+        abort_unless($izin->status_kurikulum === 'disetujui' && $izin->status_sdm === 'menunggu', 409, 'Izin tidak lagi menunggu persetujuan SDM.');
         $request->validate(['catatan_sdm' => 'required|string']);
-        
+
         $izin->update([
             'status_sdm' => 'ditolak',
             'sdm_id' => Auth::id(),
@@ -147,7 +173,7 @@ class PersetujuanIzinGuruController extends Controller
         // Notify Teacher
         $teacherUser = $izin->guru->user;
         if ($teacherUser) {
-            $msg = "Permohonan izin Anda ditolak oleh KAUR SDM.";
+            $msg = 'Permohonan izin Anda ditolak oleh KAUR SDM.';
             $url = route('guru.izin.index');
             $teacherUser->notify(new \App\Notifications\PengajuanIzinGuruNotification($izin, 'status_updated', $msg, $url));
         }
@@ -157,16 +183,16 @@ class PersetujuanIzinGuruController extends Controller
 
     public function printPdf(GuruIzin $izin)
     {
-        if ($izin->status_sdm !== 'disetujui') {
-            abort(403, 'Surat izin belum disetujui oleh KAUR SDM.');
+        if (! $izin->isFullyApproved()) {
+            abort(403, 'Surat izin belum memperoleh seluruh persetujuan wajib.');
         }
 
         // Security check: If teacher, only allow printing their own permit
         // Bypass this if user also has KAUR SDM role
         $user = Auth::user();
-        if ($user->hasRole('Guru Kelas') && !$user->hasRole('KAUR SDM')) {
+        if ($user->hasRole('Guru Kelas') && ! $user->hasRole('KAUR SDM')) {
             $guru = $user->masterGuru;
-            if (!$guru || $izin->master_guru_id !== $guru->id) {
+            if (! $guru || $izin->master_guru_id !== $guru->id) {
                 abort(403, 'Anda tidak memiliki akses untuk mengunduh surat izin ini.');
             }
         }
@@ -176,26 +202,28 @@ class PersetujuanIzinGuruController extends Controller
             'piket',
             'kurikulum',
             'sdm',
+            'kepalaSekolah',
             'jadwals.rombel.kelas',
-            'jadwals.mataPelajaran'
+            'jadwals.mataPelajaran',
         ]);
 
         $settings = AppSetting::first();
 
         // Digital signature QR codes
-        $docPiket     = \App\Models\DigitalDocument::where('document_type', 'IZIN_GURU_PIKET')->where('reference_id', $izin->id)->where('is_valid', true)->first();
+        $docPiket = \App\Models\DigitalDocument::where('document_type', 'IZIN_GURU_PIKET')->where('reference_id', $izin->id)->where('is_valid', true)->first();
         $docKurikulum = \App\Models\DigitalDocument::where('document_type', 'IZIN_GURU_KURIKULUM')->where('reference_id', $izin->id)->where('is_valid', true)->first();
-        $docSdm       = \App\Models\DigitalDocument::where('document_type', 'IZIN_GURU_SDM')->where('reference_id', $izin->id)->where('is_valid', true)->first();
+        $docSdm = \App\Models\DigitalDocument::where('document_type', 'IZIN_GURU_SDM')->where('reference_id', $izin->id)->where('is_valid', true)->first();
 
-        $qrPiketBase64     = $docPiket     ? $this->generateQrBase64(route('verifikasi.dokumen', $docPiket->token))     : null;
+        $qrPiketBase64 = $docPiket ? $this->generateQrBase64(route('verifikasi.dokumen', $docPiket->token)) : null;
         $qrKurikulumBase64 = $docKurikulum ? $this->generateQrBase64(route('verifikasi.dokumen', $docKurikulum->token)) : null;
-        $qrSdmBase64       = $docSdm       ? $this->generateQrBase64(route('verifikasi.dokumen', $docSdm->token))       : null;
+        $qrSdmBase64 = $docSdm ? $this->generateQrBase64(route('verifikasi.dokumen', $docSdm->token)) : null;
 
         $pdf = Pdf::loadView('pdf.izin-guru', compact(
             'izin', 'settings',
             'docPiket', 'docKurikulum', 'docSdm',
             'qrPiketBase64', 'qrKurikulumBase64', 'qrSdmBase64'
         ));
-        return $pdf->stream('Surat_Izin_Guru_' . str_replace(' ', '_', $izin->guru->nama_lengkap) . '.pdf');
+
+        return $pdf->stream('Surat_Izin_Guru_'.str_replace(' ', '_', $izin->guru->nama_lengkap).'.pdf');
     }
 }

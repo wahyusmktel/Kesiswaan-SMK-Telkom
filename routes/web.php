@@ -1375,6 +1375,9 @@ Route::middleware(['auth', 'verified', 'role:Kepala Sekolah', 'permission:view e
     ->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\KepalaSekolah\DashboardController::class, 'index'])
             ->name('dashboard.index');
+        Route::get('/persetujuan-izin-guru', [\App\Http\Controllers\KepalaSekolah\TeacherLeaveApprovalController::class, 'index'])->name('persetujuan-izin-guru.index');
+        Route::patch('/persetujuan-izin-guru/{izin}/approve', [\App\Http\Controllers\KepalaSekolah\TeacherLeaveApprovalController::class, 'approve'])->name('persetujuan-izin-guru.approve');
+        Route::patch('/persetujuan-izin-guru/{izin}/reject', [\App\Http\Controllers\KepalaSekolah\TeacherLeaveApprovalController::class, 'reject'])->name('persetujuan-izin-guru.reject');
         Route::get('/monitoring/{section}', [\App\Http\Controllers\KepalaSekolah\MonitoringController::class, 'index'])
             ->whereIn('section', array_keys(\App\Http\Controllers\KepalaSekolah\MonitoringController::SECTIONS))
             ->name('monitoring.index');
