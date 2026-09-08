@@ -127,7 +127,7 @@ class TelegramService
                 'short_description' => 'Notifikasi resmi kepegawaian SMK Telkom Lampung.',
             ],
             'setMyDescription' => [
-                'description' => 'Selamat datang di '.$bot->name.'. Tekan Mulai, lalu bagikan nomor HP Telegram yang sama dengan kolom HP Dapodik Guru Anda untuk menerima notifikasi kepegawaian dari SISFO.',
+                'description' => 'Selamat datang di '.$bot->name.'. Tekan Mulai, lalu bagikan nomor HP Telegram yang sama dengan nomor WhatsApp Anda di Group Sekolah untuk menerima notifikasi kepegawaian dari SISFO.',
             ],
         ];
 

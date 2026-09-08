@@ -114,7 +114,6 @@ class TelegramNotificationTest extends TestCase
             ])->assertOk()->assertJson(['ok' => true]);
         $this->assertDatabaseHas('telegram_user_links', ['telegram_bot_id' => $bot->id, 'user_id' => $user->id, 'chat_id' => '998877']);
 
-        FingerprintAutoSyncSetting::getSetting()->update(['notification_channel' => 'telegram', 'telegram_bot_id' => $bot->id]);
         $device = FingerprintDevice::create(['name' => 'Mesin', 'ip_address' => '127.0.0.9', 'is_active' => true]);
         foreach (['07:00:00', '16:00:00'] as $time) {
             FingerprintAttendance::create(['fingerprint_device_id' => $device->id, 'user_id' => '1', 'app_user_id' => $user->id, 'timestamp' => '2026-09-08 '.$time]);
@@ -122,10 +121,17 @@ class TelegramNotificationTest extends TestCase
 
         $admin = $this->loginSuperadmin();
         $this->actingAs($admin)->withSession(['active_role' => 'Super Admin'])
-            ->postJson(route('super-admin.whatsapp-gateway.fingerprint-notifications.send-now'))
+            ->postJson(route('super-admin.whatsapp-gateway.fingerprint-notifications.send-now'), [
+                'notification_channel' => 'telegram',
+                'telegram_bot_id' => $bot->id,
+            ])
             ->assertOk()
             ->assertJsonPath('summary.sent', 1)
             ->assertJsonPath('summary.failed', 0);
+        $this->assertDatabaseHas('fingerprint_auto_sync_settings', [
+            'notification_channel' => 'telegram',
+            'telegram_bot_id' => $bot->id,
+        ]);
         $this->assertDatabaseHas('telegram_logs', ['telegram_bot_id' => $bot->id, 'recipient_user_id' => $user->id, 'status' => 'sent', 'event_key' => FingerprintWhatsappNotificationService::EVENT_KEY.'_manual']);
         $this->assertSame('998877', TelegramLog::firstOrFail()->chat_id);
         Http::assertSent(fn ($request) => str_ends_with($request->url(), '/sendMessage') && (string) $request['chat_id'] === '998877');
@@ -188,6 +194,7 @@ class TelegramNotificationTest extends TestCase
 
         Http::assertSent(fn ($request) => str_ends_with($request->url(), '/sendMessage')
             && str_contains($request['text'], 'Selamat datang di HC SMK Telkom Lampung')
+            && str_contains($request['text'], 'nomor WhatsApp yang bergabung di Group Sekolah')
             && $request['reply_markup']['keyboard'][0][0]['request_contact'] === true
             && str_contains($request['reply_markup']['keyboard'][0][0]['text'], 'Bagikan Nomor HP Saya'));
     }

@@ -997,7 +997,16 @@
                 try {
                     const res = await fetch("{{ route('super-admin.whatsapp-gateway.fingerprint-notifications.send-now') }}", {
                         method: 'POST',
-                        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            notification_channel: this.fingerprintNotificationSettings.notification_channel,
+                            telegram_bot_id: this.fingerprintNotificationSettings.notification_channel === 'telegram'
+                                ? this.fingerprintNotificationSettings.telegram_bot_id
+                                : null,
+                        })
                     });
                     const data = await res.json();
                     this.showToast(data.message || (res.ok ? 'Pengiriman selesai.' : 'Pengiriman gagal.'), data.success ? 'success' : 'error');

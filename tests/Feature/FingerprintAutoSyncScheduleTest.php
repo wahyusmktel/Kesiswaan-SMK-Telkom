@@ -132,7 +132,9 @@ class FingerprintAutoSyncScheduleTest extends TestCase
         $notifications->shouldReceive('sendRemindersToday')->once()->andReturn(['sent' => 1, 'failed' => 0, 'skipped' => 2]);
 
         $this->actingAs($admin)->withSession(['active_role' => 'Super Admin'])
-            ->postJson(route('super-admin.whatsapp-gateway.fingerprint-notifications.send-now'))
+            ->postJson(route('super-admin.whatsapp-gateway.fingerprint-notifications.send-now'), [
+                'notification_channel' => 'whatsapp',
+            ])
             ->assertOk()
             ->assertJson([
                 'success' => true,

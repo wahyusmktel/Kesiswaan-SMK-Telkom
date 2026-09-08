@@ -405,8 +405,25 @@ class WhatsappGatewayController extends Controller
         ]);
     }
 
-    public function sendFingerprintNotificationsNow(FingerprintWhatsappNotificationService $notifications)
+    public function sendFingerprintNotificationsNow(Request $request, FingerprintWhatsappNotificationService $notifications)
     {
+        $data = $request->validate([
+            'notification_channel' => ['nullable', Rule::in(['whatsapp', 'telegram'])],
+            'telegram_bot_id' => [
+                'nullable',
+                'required_if:notification_channel,telegram',
+                Rule::exists('telegram_bots', 'id')->where(fn ($query) => $query->where('purpose', 'employment')->where('is_active', true)->where('status', 'connected')),
+            ],
+        ]);
+
+        $setting = FingerprintAutoSyncSetting::getSetting();
+        if (filled($data['notification_channel'] ?? null)) {
+            $setting->update([
+                'notification_channel' => $data['notification_channel'],
+                'telegram_bot_id' => $data['notification_channel'] === 'telegram' ? $data['telegram_bot_id'] : null,
+            ]);
+        }
+
         $recaps = $notifications->sendToday(today(), true);
         $reminders = $notifications->sendRemindersToday(today(), true);
         $configurationError = $recaps['configuration_error'] ?? $reminders['configuration_error'] ?? null;
@@ -422,7 +439,7 @@ class WhatsappGatewayController extends Controller
         $sent = (int) ($recaps['sent'] ?? 0) + (int) ($reminders['sent'] ?? 0);
         $failed = (int) ($recaps['failed'] ?? 0) + (int) ($reminders['failed'] ?? 0);
         $skipped = (int) ($recaps['skipped'] ?? 0) + (int) ($reminders['skipped'] ?? 0);
-        $channel = FingerprintAutoSyncSetting::getSetting()->notification_channel === 'telegram' ? 'Telegram' : 'WhatsApp';
+        $channel = $setting->refresh()->notification_channel === 'telegram' ? 'Telegram' : 'WhatsApp';
 
         $message = match (true) {
             $sent > 0 => "Pengiriman {$channel} selesai: {$sent} berhasil, {$failed} gagal, dan {$skipped} dilewati.",
