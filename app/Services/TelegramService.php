@@ -120,12 +120,35 @@ class TelegramService
         ]);
     }
 
-    public function markAccountLinked(TelegramBot $bot, string $chatId): void
+    public function markAccountLinked(TelegramBot $bot, string $chatId, ?User $user = null): void
     {
-        $this->setChatCommands($bot, $chatId, [[
+        $commands = [[
             'command' => 'status',
             'description' => 'Lihat status hubungan akun SISFO',
-        ]]);
+        ]];
+        if ($bot->purpose === 'employment' && $user?->hasRole('Guru Kelas')) {
+            $commands[] = ['command' => 'izin', 'description' => 'Ajukan izin guru'];
+            $commands[] = ['command' => 'batal', 'description' => 'Batalkan pengisian izin'];
+        }
+
+        $this->setChatCommands($bot, $chatId, $commands);
+    }
+
+    public function linkedMenuMarkup(TelegramBot $bot, User $user): array
+    {
+        if ($bot->purpose !== 'employment' || ! $user->hasRole('Guru Kelas')) {
+            return ['remove_keyboard' => true];
+        }
+
+        return [
+            'keyboard' => [
+                [['text' => '📝 Ajukan Izin Guru']],
+                [['text' => '📋 Status Izin Terakhir']],
+            ],
+            'resize_keyboard' => true,
+            'is_persistent' => true,
+            'input_field_placeholder' => 'Pilih layanan SISFO',
+        ];
     }
 
     public function prepareAccountForRelinking(TelegramUserLink $link): array

@@ -7,11 +7,12 @@ use App\Models\TelegramBot;
 use App\Models\TelegramUserLink;
 use App\Models\User;
 use App\Services\TelegramService;
+use App\Services\TelegramTeacherLeaveService;
 use Illuminate\Http\Request;
 
 class TelegramWebhookController extends Controller
 {
-    public function __invoke(Request $request, TelegramBot $telegramBot, TelegramService $telegram)
+    public function __invoke(Request $request, TelegramBot $telegramBot, TelegramService $telegram, TelegramTeacherLeaveService $teacherLeave)
     {
         abort_unless($telegramBot->is_active && hash_equals($telegramBot->webhook_secret, (string) $request->header('X-Telegram-Bot-Api-Secret-Token')), 403);
 
@@ -28,8 +29,8 @@ class TelegramWebhookController extends Controller
             ->with('user')
             ->first();
         if ($existingLink) {
-            $telegram->markAccountLinked($telegramBot, $chatId);
-            $telegram->reply($telegramBot, $chatId, 'Akun Telegram Anda sudah terhubung dengan SISFO atas nama '.($existingLink->user?->name ?? 'pegawai').'. Notifikasi dari '.$telegramBot->name.' dalam keadaan aktif.', ['remove_keyboard' => true]);
+            $existingLink->update(['last_interaction_at' => now()]);
+            $teacherLeave->handle($telegramBot, $existingLink, $message);
 
             return response()->json(['ok' => true]);
         }
@@ -74,8 +75,8 @@ class TelegramWebhookController extends Controller
                     'last_interaction_at' => now(),
                 ],
             );
-            $telegram->markAccountLinked($telegramBot, $link->chat_id);
-            $telegram->reply($telegramBot, $chatId, 'Akun Telegram berhasil terhubung dengan SISFO atas nama '.$user->name.'. Notifikasi dari '.$telegramBot->name.' sekarang dapat diterima.', ['remove_keyboard' => true]);
+            $telegram->markAccountLinked($telegramBot, $link->chat_id, $user);
+            $telegram->reply($telegramBot, $chatId, 'Akun Telegram berhasil terhubung dengan SISFO atas nama '.$user->name.'. Notifikasi dari '.$telegramBot->name.' sekarang dapat diterima.', $telegram->linkedMenuMarkup($telegramBot, $user));
 
             return response()->json(['ok' => true]);
         }

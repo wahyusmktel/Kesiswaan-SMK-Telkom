@@ -232,6 +232,56 @@ class TelegramNotificationTest extends TestCase
             && $request['reply_markup']['keyboard'][0][0]['request_contact'] === true);
     }
 
+    public function test_guru_kelas_gets_leave_menu_and_can_submit_a_teacher_leave(): void
+    {
+        $bot = $this->createBot();
+        $teacher = $this->createLinkedEmployee($bot, 'Guru Kelas Telegram', '998805');
+        $teacher->assignRole(Role::findOrCreate('Guru Kelas', 'web'));
+        Role::findOrCreate('Guru Piket', 'web');
+
+        $this->sendBotMessage($bot, '998805', '/start');
+
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/setMyCommands')
+            && (string) $request['scope']['chat_id'] === '998805'
+            && collect($request['commands'])->contains('command', 'izin'));
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/sendMessage')
+            && str_contains(json_encode($request['reply_markup']), 'Ajukan Izin Guru'));
+
+        foreach (['/izin', '🚗 Luar Sekolah / Tidak Masuk', 'Sakit', '10-09-2026 07:00', '10-09-2026 16:00', 'Perlu beristirahat sesuai arahan dokter.', '✅ Kirim Pengajuan'] as $message) {
+            $this->sendBotMessage($bot, '998805', $message);
+        }
+
+        $this->assertDatabaseHas('guru_izins', [
+            'master_guru_id' => $teacher->masterGuru->id,
+            'jenis_izin' => 'Sakit',
+            'kategori_penyetujuan' => 'luar',
+            'deskripsi' => 'Perlu beristirahat sesuai arahan dokter.',
+            'status_piket' => 'menunggu',
+            'status_kurikulum' => 'menunggu',
+            'status_sdm' => 'menunggu',
+        ]);
+        $this->assertDatabaseMissing('telegram_conversations', [
+            'telegram_user_link_id' => TelegramUserLink::where('user_id', $teacher->id)->value('id'),
+        ]);
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/sendMessage')
+            && str_contains($request['text'], 'berhasil dikirim'));
+    }
+
+    public function test_non_guru_kelas_cannot_open_teacher_leave_flow_even_by_typing_command(): void
+    {
+        $bot = $this->createBot();
+        $employee = $this->createLinkedEmployee($bot, 'Pegawai Biasa', '998806');
+
+        $this->sendBotMessage($bot, '998806', '/izin');
+
+        $this->assertDatabaseMissing('telegram_conversations', [
+            'telegram_user_link_id' => TelegramUserLink::where('user_id', $employee->id)->value('id'),
+        ]);
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/sendMessage')
+            && str_contains($request['text'], 'Notifikasi dari')
+            && ($request['reply_markup']['remove_keyboard'] ?? false) === true);
+    }
+
     public function test_webhook_rejects_a_contact_owned_by_another_telegram_user(): void
     {
         $user = User::factory()->create(['phone_number' => '081234567890']);
@@ -330,6 +380,18 @@ class TelegramNotificationTest extends TestCase
             'status' => 'connected',
             'is_active' => true,
         ]);
+    }
+
+    private function sendBotMessage(TelegramBot $bot, string $chatId, string $text): void
+    {
+        $this->withHeader('X-Telegram-Bot-Api-Secret-Token', $bot->webhook_secret)
+            ->postJson(route('telegram.webhook', $bot->slug), [
+                'message' => [
+                    'chat' => ['id' => $chatId, 'type' => 'private'],
+                    'from' => ['id' => $chatId, 'first_name' => 'Guru'],
+                    'text' => $text,
+                ],
+            ])->assertOk()->assertJson(['ok' => true]);
     }
 
     private function createLinkedEmployee(TelegramBot $bot, string $name, string $chatId): User
