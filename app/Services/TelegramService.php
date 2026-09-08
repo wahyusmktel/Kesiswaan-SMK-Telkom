@@ -30,6 +30,8 @@ class TelegramService
                 throw new \RuntimeException((string) $webhook->json('description', 'Telegram menolak webhook.'));
             }
 
+            $this->configureBotProfile($bot);
+
             $bot->update([
                 'bot_username' => $identity['username'] ?? null,
                 'status' => 'connected',
@@ -110,5 +112,30 @@ class TelegramService
             'https://api.telegram.org/bot'.$bot->bot_token.'/'.$method,
             $payload,
         );
+    }
+
+    private function configureBotProfile(TelegramBot $bot): void
+    {
+        $requests = [
+            'setMyCommands' => [
+                'commands' => [[
+                    'command' => 'start',
+                    'description' => 'Mulai dan hubungkan akun SISFO',
+                ]],
+            ],
+            'setMyShortDescription' => [
+                'short_description' => 'Notifikasi resmi kepegawaian SMK Telkom Lampung.',
+            ],
+            'setMyDescription' => [
+                'description' => 'Selamat datang di '.$bot->name.'. Tekan Mulai, lalu bagikan nomor HP Telegram Anda untuk menerima rekap absensi dan notifikasi kepegawaian dari SISFO.',
+            ],
+        ];
+
+        foreach ($requests as $method => $payload) {
+            $response = $this->request($bot, $method, $payload);
+            if (! $response->successful() || ! $response->json('ok')) {
+                throw new \RuntimeException((string) $response->json('description', 'Telegram gagal memperbarui profil bot.'));
+            }
+        }
     }
 }

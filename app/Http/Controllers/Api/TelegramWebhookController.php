@@ -31,10 +31,26 @@ class TelegramWebhookController extends Controller
             }
 
             $phone = $this->normalizePhone((string) ($contact['phone_number'] ?? ''));
-            $users = User::whereNotNull('phone_number')->get(['id', 'name', 'phone_number'])
-                ->filter(fn ($user) => $this->normalizePhone($user->phone_number) === $phone);
-            if ($users->count() !== 1) {
-                $telegram->reply($telegramBot, $chatId, 'Nomor HP belum ditemukan atau digunakan lebih dari satu akun SISFO. Hubungi Superadmin untuk memperbaiki nomor HP akun Anda.');
+            $users = User::query()
+                ->with('masterGuru.dapodikGuru')
+                ->where(fn ($query) => $query
+                    ->whereNotNull('phone_number')
+                    ->orWhereHas('masterGuru.dapodikGuru', fn ($dapodik) => $dapodik
+                        ->whereNotNull('hp')
+                        ->orWhereNotNull('telepon')))
+                ->get(['id', 'name', 'phone_number'])
+                ->filter(fn ($user) => collect([
+                    $user->phone_number,
+                    $user->masterGuru?->dapodikGuru?->hp,
+                    $user->masterGuru?->dapodikGuru?->telepon,
+                ])->filter()->contains(fn ($candidate) => $this->normalizePhone($candidate) === $phone));
+            if ($users->isEmpty()) {
+                $telegram->reply($telegramBot, $chatId, 'Nomor HP '.$this->displayPhone($phone).' belum ditemukan pada akun maupun profil Dapodik guru di SISFO. Hubungi Superadmin untuk memeriksa data nomor HP Anda.');
+
+                return response()->json(['ok' => true]);
+            }
+            if ($users->count() > 1) {
+                $telegram->reply($telegramBot, $chatId, 'Nomor HP '.$this->displayPhone($phone).' digunakan oleh lebih dari satu akun SISFO. Hubungi Superadmin agar nomor duplikat diperbaiki.');
 
                 return response()->json(['ok' => true]);
             }
@@ -57,10 +73,11 @@ class TelegramWebhookController extends Controller
             return response()->json(['ok' => true]);
         }
 
-        $telegram->reply($telegramBot, $chatId, 'Selamat datang di '.$telegramBot->name.'. Hubungkan akun Telegram dengan SISFO menggunakan nomor HP yang terdaftar.', [
-            'keyboard' => [[['text' => 'Bagikan Nomor HP Saya', 'request_contact' => true]]],
+        $telegram->reply($telegramBot, $chatId, "Selamat datang di {$telegramBot->name}!\n\nAgar Anda dapat menerima rekap absensi, pengingat keterlambatan, dan notifikasi kepegawaian dari SISFO, tekan tombol Bagikan Nomor HP Saya di bawah ini.\n\nGunakan tombol tersebut agar Telegram mengirim nomor milik Anda secara aman; jangan mengirim kontak secara manual.", [
+            'keyboard' => [[['text' => '📱 Bagikan Nomor HP Saya', 'request_contact' => true]]],
             'resize_keyboard' => true,
             'one_time_keyboard' => true,
+            'input_field_placeholder' => 'Tekan tombol untuk menghubungkan akun SISFO',
         ]);
 
         return response()->json(['ok' => true]);
@@ -69,10 +86,21 @@ class TelegramWebhookController extends Controller
     private function normalizePhone(?string $phone): string
     {
         $phone = preg_replace('/\D/', '', (string) $phone);
+        if (str_starts_with($phone, '620')) {
+            return '62'.substr($phone, 3);
+        }
         if (str_starts_with($phone, '0')) {
             return '62'.substr($phone, 1);
         }
+        if (str_starts_with($phone, '8')) {
+            return '62'.$phone;
+        }
 
         return $phone;
+    }
+
+    private function displayPhone(string $phone): string
+    {
+        return str_starts_with($phone, '62') ? '+'.$phone : $phone;
     }
 }

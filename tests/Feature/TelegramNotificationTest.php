@@ -32,6 +32,9 @@ class TelegramNotificationTest extends TestCase
         Http::fake(fn ($request) => match (true) {
             str_ends_with($request->url(), '/getMe') => Http::response(['ok' => true, 'result' => ['username' => 'hc_smktel_bot']], 200),
             str_ends_with($request->url(), '/setWebhook') => Http::response(['ok' => true, 'result' => true], 200),
+            str_ends_with($request->url(), '/setMyCommands') => Http::response(['ok' => true, 'result' => true], 200),
+            str_ends_with($request->url(), '/setMyShortDescription') => Http::response(['ok' => true, 'result' => true], 200),
+            str_ends_with($request->url(), '/setMyDescription') => Http::response(['ok' => true, 'result' => true], 200),
             str_ends_with($request->url(), '/sendMessage') => Http::response(['ok' => true, 'result' => ['message_id' => 10]], 200),
             default => Http::response(['ok' => false], 404),
         });
@@ -65,6 +68,8 @@ class TelegramNotificationTest extends TestCase
         Http::assertSent(fn ($request) => str_ends_with($request->url(), '/setWebhook')
             && $request['url'] === route('telegram.webhook', $bot->slug)
             && $request['secret_token'] === $bot->webhook_secret);
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/setMyCommands')
+            && $request['commands'][0]['command'] === 'start');
 
         $this->actingAs($admin)->withSession(['active_role' => 'Super Admin'])
             ->get(route('super-admin.telegram-bots.index'))
@@ -162,6 +167,52 @@ class TelegramNotificationTest extends TestCase
             'message' => ['chat' => ['id' => 1, 'type' => 'private'], 'from' => ['id' => 1], 'contact' => ['phone_number' => '081234567890', 'user_id' => 2]],
         ])->assertOk();
         $this->assertDatabaseCount('telegram_user_links', 0);
+    }
+
+    public function test_start_command_shows_welcome_and_own_contact_button(): void
+    {
+        $bot = $this->createBot();
+
+        $this->withHeader('X-Telegram-Bot-Api-Secret-Token', $bot->webhook_secret)
+            ->postJson(route('telegram.webhook', $bot->slug), [
+                'message' => [
+                    'chat' => ['id' => 998899, 'type' => 'private'],
+                    'from' => ['id' => 998899, 'first_name' => 'Guru'],
+                    'text' => '/start sisfo',
+                ],
+            ])->assertOk();
+
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/sendMessage')
+            && str_contains($request['text'], 'Selamat datang di HC SMK Telkom Lampung')
+            && $request['reply_markup']['keyboard'][0][0]['request_contact'] === true
+            && str_contains($request['reply_markup']['keyboard'][0][0]['text'], 'Bagikan Nomor HP Saya'));
+    }
+
+    public function test_employee_can_link_using_a_phone_number_stored_in_dapodik(): void
+    {
+        $user = User::factory()->create(['name' => 'Guru Dapodik', 'phone_number' => null]);
+        $teacher = MasterGuru::create(['nama_lengkap' => 'Guru Dapodik', 'jenis_kelamin' => 'L', 'user_id' => $user->id]);
+        $teacher->dapodikGuru()->create([
+            'nama' => 'Guru Dapodik',
+            'status_kepegawaian' => 'Pegawai Tetap',
+            'hp' => '0821-8590-3635',
+        ]);
+        $bot = $this->createBot();
+
+        $this->withHeader('X-Telegram-Bot-Api-Secret-Token', $bot->webhook_secret)
+            ->postJson(route('telegram.webhook', $bot->slug), [
+                'message' => [
+                    'chat' => ['id' => 82185903635, 'type' => 'private'],
+                    'from' => ['id' => 82185903635, 'first_name' => 'Guru'],
+                    'contact' => ['phone_number' => '+62 821 85903635', 'user_id' => 82185903635],
+                ],
+            ])->assertOk();
+
+        $this->assertDatabaseHas('telegram_user_links', [
+            'telegram_bot_id' => $bot->id,
+            'user_id' => $user->id,
+            'chat_id' => '82185903635',
+        ]);
     }
 
     public function test_webhook_rejects_an_invalid_secret(): void

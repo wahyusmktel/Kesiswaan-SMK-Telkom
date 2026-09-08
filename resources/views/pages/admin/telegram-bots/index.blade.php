@@ -28,7 +28,7 @@
                 <article class="rounded-2xl border bg-white p-6 shadow-sm">
                     <div class="flex items-start justify-between gap-3"><div><h3 class="text-lg font-black">{{ $bot->name }}</h3><p class="text-sm text-gray-500">{{ '@'.($bot->bot_username ?: 'belum terverifikasi') }} · {{ $bot->purpose }}</p></div><span class="rounded-full px-3 py-1 text-xs font-bold {{ $bot->status === 'connected' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' }}">{{ $bot->status }}</span></div>
                     <p class="mt-3 text-sm"><strong>{{ $bot->user_links_count }}</strong> akun pegawai terhubung</p>
-                    @if($bot->bot_username)<a target="_blank" rel="noopener" href="https://t.me/{{ $bot->bot_username }}" class="mt-3 inline-block text-sm font-bold text-sky-700">Buka bot & bagikan ke pegawai ↗</a>@endif
+                    @if($bot->bot_username)<a target="_blank" rel="noopener" href="https://t.me/{{ $bot->bot_username }}?start=sisfo" class="mt-3 inline-block text-sm font-bold text-sky-700">Buka bot & bagikan ke pegawai ↗</a>@endif
                     @if($bot->last_error)<p class="mt-3 rounded-lg bg-red-50 p-3 text-xs text-red-700">{{ $bot->last_error }}</p>@endif
                     <form method="POST" action="{{ route('super-admin.telegram-bots.update', $bot) }}" class="mt-5 grid gap-3 sm:grid-cols-2">
                         @csrf @method('PUT')
