@@ -116,4 +116,22 @@ class FingerprintAutoSyncScheduleTest extends TestCase
             'notification_time' => 'invalid',
         ])->assertUnprocessable()->assertJsonValidationErrors('notification_time');
     }
+
+    public function test_superadmin_can_queue_a_manual_notification_without_replacing_the_schedule(): void
+    {
+        Queue::fake();
+        config(['app.key' => 'base64:'.base64_encode(str_repeat('a', 32))]);
+        $this->travelTo(\Carbon\Carbon::parse('2026-09-08 10:15:00'));
+        $admin = User::factory()->create();
+        $admin->assignRole(Role::findOrCreate('Super Admin', 'web'));
+
+        $this->actingAs($admin)->withSession(['active_role' => 'Super Admin'])
+            ->postJson(route('super-admin.whatsapp-gateway.fingerprint-notifications.send-now'))
+            ->assertOk()
+            ->assertJson(['success' => true]);
+
+        Queue::assertPushed(SendFingerprintDailyRecapsJob::class, fn ($job) => $job->notificationDate === '2026-09-08' && $job->manual === true && $job->queue === 'fingerprint');
+        $this->assertNull(FingerprintAutoSyncSetting::getSetting()->last_notification_dispatched_at);
+        $this->travelBack();
+    }
 }

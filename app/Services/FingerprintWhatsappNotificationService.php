@@ -29,7 +29,7 @@ class FingerprintWhatsappNotificationService
 
     public function __construct(private readonly WhatsappService $whatsappService) {}
 
-    public function sendToday(?Carbon $date = null): array
+    public function sendToday(?Carbon $date = null, bool $manual = false): array
     {
         $template = WhatsappTemplate::where('event_key', self::EVENT_KEY)->first();
         if (! $template?->is_enabled) {
@@ -54,8 +54,8 @@ class FingerprintWhatsappNotificationService
         foreach ($users as $user) {
             try {
                 Cache::lock("fingerprint:wa-recap:{$today->toDateString()}:{$user->id}", 60)
-                    ->block(5, function () use ($user, $today, &$result) {
-                        if ($this->alreadySent($user, $today)) {
+                    ->block(5, function () use ($user, $today, $manual, &$result) {
+                        if (! $manual && $this->alreadySent($user, $today)) {
                             $result['skipped']++;
 
                             return;
@@ -78,9 +78,10 @@ class FingerprintWhatsappNotificationService
                             self::EVENT_KEY,
                             $this->templateData($user, $recap, $today),
                             $user->name,
-                            'fingerprint_rekap',
+                            $manual ? 'fingerprint_rekap_manual' : 'fingerprint_rekap',
                             $user->id,
                             $today->toDateString(),
+                            $manual ? self::EVENT_KEY.'_manual' : null,
                         );
 
                         $result[$response['success'] ? 'sent' : 'failed']++;
@@ -100,7 +101,7 @@ class FingerprintWhatsappNotificationService
         return $result;
     }
 
-    public function sendRemindersToday(?Carbon $notificationDate = null): array
+    public function sendRemindersToday(?Carbon $notificationDate = null, bool $manual = false): array
     {
         $template = WhatsappTemplate::where('event_key', self::REMINDER_EVENT_KEY)->first();
         if (! $template?->is_enabled) {
@@ -168,7 +169,7 @@ class FingerprintWhatsappNotificationService
             }
 
             try {
-                if ($this->alreadySent($teacher->user, $date, self::REMINDER_EVENT_KEY)) {
+                if (! $manual && $this->alreadySent($teacher->user, $date, self::REMINDER_EVENT_KEY)) {
                     $result['skipped']++;
 
                     continue;
@@ -189,9 +190,10 @@ class FingerprintWhatsappNotificationService
                         'catatan' => $firstScan ? 'Fingerprint masuk tercatat melewati batas waktu.' : 'Belum ada fingerprint masuk sampai waktu pengiriman notifikasi.',
                     ],
                     $teacher->nama_lengkap,
-                    'fingerprint_peringatan',
+                    $manual ? 'fingerprint_peringatan_manual' : 'fingerprint_peringatan',
                     $teacher->user->id,
                     $date->toDateString(),
+                    $manual ? self::REMINDER_EVENT_KEY.'_manual' : null,
                 );
                 $result[$response['success'] ? 'sent' : 'failed']++;
             } catch (Throwable $e) {

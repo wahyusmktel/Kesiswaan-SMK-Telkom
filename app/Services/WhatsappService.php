@@ -228,6 +228,7 @@ class WhatsappService
         ?string $logType = null,
         ?int $recipientUserId = null,
         ?string $notificationDate = null,
+        ?string $logEventKey = null,
     ): array {
         $template = WhatsappTemplate::where('event_key', $eventKey)->first();
         if (! $template || ! $template->is_enabled) {
@@ -248,7 +249,7 @@ class WhatsappService
             $logType ?: $template->category,
             null,
             $recipientUserId,
-            $eventKey,
+            $logEventKey ?: $eventKey,
             $notificationDate,
         );
         if ($result['success'] && $recipientName && isset($result['log'])) {

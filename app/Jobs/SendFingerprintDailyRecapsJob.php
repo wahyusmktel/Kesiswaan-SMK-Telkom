@@ -12,7 +12,7 @@ class SendFingerprintDailyRecapsJob implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(public ?string $notificationDate = null)
+    public function __construct(public ?string $notificationDate = null, public bool $manual = false)
     {
         $this->onQueue('fingerprint');
     }
@@ -26,8 +26,9 @@ class SendFingerprintDailyRecapsJob implements ShouldQueue
         $date = $this->notificationDate ? Carbon::parse($this->notificationDate) : today();
         Log::info('Pengiriman notifikasi fingerprint WhatsApp selesai.', [
             'date' => $date->toDateString(),
-            'recaps' => $service->sendToday($date),
-            'reminders' => $service->sendRemindersToday($date),
+            'manual' => $this->manual,
+            'recaps' => $service->sendToday($date, $this->manual),
+            'reminders' => $service->sendRemindersToday($date, $this->manual),
         ]);
     }
 }

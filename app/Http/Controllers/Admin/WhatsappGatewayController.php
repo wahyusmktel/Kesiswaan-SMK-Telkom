@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendFingerprintDailyRecapsJob;
 use App\Models\WhatsappDevice;
 use App\Models\FingerprintAutoSyncSetting;
 use App\Models\WhatsappLog;
@@ -390,6 +391,16 @@ class WhatsappGatewayController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Jadwal notifikasi fingerprint berhasil disimpan.',
+        ]);
+    }
+
+    public function sendFingerprintNotificationsNow()
+    {
+        SendFingerprintDailyRecapsJob::dispatch(today()->toDateString(), true);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Rekap dan pengingat fingerprint hari ini sudah masuk antrean pengiriman.',
         ]);
     }
 

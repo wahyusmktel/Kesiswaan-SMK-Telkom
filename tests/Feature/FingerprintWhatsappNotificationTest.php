@@ -146,6 +146,27 @@ class FingerprintWhatsappNotificationTest extends TestCase
         $this->assertDatabaseMissing('whatsapp_logs', ['recipient_user_id' => $leave->id]);
     }
 
+    public function test_manual_recap_uses_separate_log_and_does_not_consume_the_scheduled_delivery(): void
+    {
+        $employee = $this->userWithRole('Guru Kelas', '081211119999');
+        $this->createAttendance($employee, '2026-07-23 07:00:00');
+        $service = app(FingerprintWhatsappNotificationService::class);
+
+        $this->assertSame(1, $service->sendToday(today(), true)['sent']);
+        $this->assertSame(1, $service->sendToday()['sent']);
+
+        $this->assertDatabaseHas('whatsapp_logs', [
+            'recipient_user_id' => $employee->id,
+            'event_key' => FingerprintWhatsappNotificationService::EVENT_KEY.'_manual',
+            'type' => 'fingerprint_rekap_manual',
+        ]);
+        $this->assertDatabaseHas('whatsapp_logs', [
+            'recipient_user_id' => $employee->id,
+            'event_key' => FingerprintWhatsappNotificationService::EVENT_KEY,
+            'type' => 'fingerprint_rekap',
+        ]);
+    }
+
     private function userWithRole(string $roleName, ?string $phoneNumber = null): User
     {
         $role = Role::findOrCreate($roleName, 'web');

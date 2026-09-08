@@ -1054,6 +1054,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/whatsapp-gateway/logs/clear', [\App\Http\Controllers\Admin\WhatsappGatewayController::class, 'clearLogs'])->name('whatsapp-gateway.logs.clear');
         Route::post('/whatsapp-gateway/templates', [\App\Http\Controllers\Admin\WhatsappGatewayController::class, 'saveTemplates'])->name('whatsapp-gateway.templates.save');
         Route::put('/whatsapp-gateway/fingerprint-notifications', [\App\Http\Controllers\Admin\WhatsappGatewayController::class, 'saveFingerprintNotificationSettings'])->name('whatsapp-gateway.fingerprint-notifications.update');
+        Route::post('/whatsapp-gateway/fingerprint-notifications/send-now', [\App\Http\Controllers\Admin\WhatsappGatewayController::class, 'sendFingerprintNotificationsNow'])->name('whatsapp-gateway.fingerprint-notifications.send-now');
 
         // CCTV internal sekolah
         Route::get('/cctv', [\App\Http\Controllers\Admin\CctvCameraController::class, 'index'])->name('cctv.index');
