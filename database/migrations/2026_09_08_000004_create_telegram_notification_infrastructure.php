@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('purpose')->index();
             $table->string('bot_username')->nullable();
             $table->text('bot_token');
-            $table->string('webhook_secret');
+            $table->text('webhook_secret');
             $table->string('status')->default('not_configured');
             $table->text('last_error')->nullable();
             $table->boolean('is_active')->default(true);
