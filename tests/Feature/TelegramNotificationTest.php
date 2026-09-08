@@ -168,6 +168,31 @@ class TelegramNotificationTest extends TestCase
         $this->assertStringContainsString('Tidak Hadir', TelegramLog::where('recipient_user_id', $absent->id)->value('message'));
     }
 
+    public function test_superadmin_can_send_a_connection_test_without_attendance_data(): void
+    {
+        $bot = $this->createBot();
+        $employee = $this->createLinkedEmployee($bot, 'Guru Uji Telegram', '998803');
+        $link = TelegramUserLink::where('user_id', $employee->id)->firstOrFail();
+        $admin = $this->loginSuperadmin();
+
+        $this->actingAs($admin)->withSession(['active_role' => 'Super Admin'])
+            ->post(route('super-admin.telegram-links.test', $link))
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('telegram_logs', [
+            'telegram_bot_id' => $bot->id,
+            'recipient_user_id' => $employee->id,
+            'chat_id' => '998803',
+            'type' => 'connection_test',
+            'event_key' => 'telegram_connection_test',
+            'status' => 'sent',
+        ]);
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/sendMessage')
+            && (string) $request['chat_id'] === '998803'
+            && str_contains($request['text'], 'TES NOTIFIKASI BERHASIL'));
+    }
+
     public function test_webhook_rejects_a_contact_owned_by_another_telegram_user(): void
     {
         $user = User::factory()->create(['phone_number' => '081234567890']);

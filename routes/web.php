@@ -1057,6 +1057,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/whatsapp-gateway/fingerprint-notifications/send-now', [\App\Http\Controllers\Admin\WhatsappGatewayController::class, 'sendFingerprintNotificationsNow'])->name('whatsapp-gateway.fingerprint-notifications.send-now');
         Route::resource('/telegram-bots', \App\Http\Controllers\Admin\TelegramBotController::class)->parameters(['telegram-bots' => 'telegramBot'])->only(['index', 'store', 'update', 'destroy']);
         Route::post('/telegram-bots/{telegramBot}/verify', [\App\Http\Controllers\Admin\TelegramBotController::class, 'verify'])->name('telegram-bots.verify');
+        Route::post('/telegram-links/{telegramUserLink}/test', [\App\Http\Controllers\Admin\TelegramBotController::class, 'sendTest'])->name('telegram-links.test');
         Route::delete('/telegram-links/{telegramUserLink}', [\App\Http\Controllers\Admin\TelegramBotController::class, 'unlink'])->name('telegram-links.destroy');
 
         // CCTV internal sekolah

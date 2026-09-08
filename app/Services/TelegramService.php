@@ -106,6 +106,46 @@ class TelegramService
         $this->request($bot, 'sendMessage', $payload)->throw();
     }
 
+    public function sendTestNotification(TelegramUserLink $link): array
+    {
+        $link->loadMissing(['bot', 'user']);
+        $bot = $link->bot;
+        if (! $bot?->is_active || $bot->status !== 'connected') {
+            return ['success' => false, 'message' => 'Bot Telegram tidak aktif atau belum terhubung.'];
+        }
+
+        $message = "✅ TES NOTIFIKASI BERHASIL\n\nHalo {$link->user?->name}, akun Telegram Anda telah terhubung dengan SISFO melalui {$bot->name}.\n\nPesan ini adalah pengujian koneksi. Notifikasi rekap absensi dan kepegawaian akan dikirim melalui bot ini sesuai jadwal yang ditetapkan.\n\n_Sistem Informasi SMK Telkom Lampung_";
+        $log = TelegramLog::create([
+            'telegram_bot_id' => $bot->id,
+            'recipient_user_id' => $link->user_id,
+            'chat_id' => $link->chat_id,
+            'recipient_name' => $link->user?->name,
+            'message' => $message,
+            'type' => 'connection_test',
+            'event_key' => 'telegram_connection_test',
+            'notification_date' => today(),
+            'status' => 'pending',
+        ]);
+
+        try {
+            $response = $this->request($bot, 'sendMessage', [
+                'chat_id' => $link->chat_id,
+                'text' => $message,
+            ]);
+            if (! $response->successful() || ! $response->json('ok')) {
+                throw new \RuntimeException((string) $response->json('description', 'Telegram menolak pesan uji.'));
+            }
+            $log->update(['status' => 'sent', 'sent_at' => now(), 'response_data' => $response->json()]);
+
+            return ['success' => true, 'message' => 'Pesan uji berhasil dikirim kepada '.$link->user?->name.'.'];
+        } catch (Throwable $e) {
+            $error = str_replace($bot->bot_token, '[TOKEN DISEMBUNYIKAN]', $e->getMessage());
+            $log->update(['status' => 'failed', 'error_message' => $error]);
+
+            return ['success' => false, 'message' => 'Pesan uji gagal dikirim: '.$error];
+        }
+    }
+
     private function request(TelegramBot $bot, string $method, array $payload = [])
     {
         return Http::asJson()->acceptJson()->timeout(20)->post(
