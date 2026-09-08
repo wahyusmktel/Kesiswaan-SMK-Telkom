@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\FingerprintAttendance;
 use App\Models\FingerprintDevice;
+use App\Models\GuruIzin;
+use App\Models\MasterGuru;
 use App\Models\User;
 use App\Models\WhatsappDevice;
 use App\Models\WhatsappLog;
@@ -104,11 +106,55 @@ class FingerprintWhatsappNotificationTest extends TestCase
         $this->assertDatabaseCount('whatsapp_logs', 0);
     }
 
+    public function test_it_sends_late_and_absent_reminders_once_and_skips_approved_leave(): void
+    {
+        $late = $this->userWithRole('Guru Kelas', '081211110001');
+        $absent = $this->userWithRole('Guru Kelas', '081211110002');
+        $onTime = $this->userWithRole('Guru Kelas', '081211110003');
+        $leave = $this->userWithRole('Guru Kelas', '081211110004');
+        $this->createAttendance($late, '2026-07-23 08:00:00');
+        $this->createAttendance($onTime, '2026-07-23 07:00:00');
+        GuruIzin::create([
+            'master_guru_id' => $leave->masterGuru->id,
+            'tanggal_mulai' => '2026-07-23 00:00:00',
+            'tanggal_selesai' => '2026-07-23 23:59:59',
+            'jenis_izin' => 'Sakit',
+            'deskripsi' => 'Istirahat',
+            'status_sdm' => 'disetujui',
+            'status_kepala_sekolah' => 'disetujui',
+        ]);
+
+        $service = app(FingerprintWhatsappNotificationService::class);
+        $first = $service->sendRemindersToday();
+        $second = $service->sendRemindersToday();
+
+        $this->assertSame(2, $first['sent']);
+        $this->assertSame(4, $second['skipped']);
+        $this->assertDatabaseCount('whatsapp_logs', 2);
+        $this->assertDatabaseHas('whatsapp_logs', [
+            'recipient_user_id' => $late->id,
+            'event_key' => FingerprintWhatsappNotificationService::REMINDER_EVENT_KEY,
+            'type' => 'fingerprint_peringatan',
+        ]);
+        $this->assertDatabaseHas('whatsapp_logs', [
+            'recipient_user_id' => $absent->id,
+            'event_key' => FingerprintWhatsappNotificationService::REMINDER_EVENT_KEY,
+        ]);
+        $this->assertStringContainsString('Terlambat', WhatsappLog::where('recipient_user_id', $late->id)->value('message'));
+        $this->assertStringContainsString('Tidak Hadir', WhatsappLog::where('recipient_user_id', $absent->id)->value('message'));
+        $this->assertDatabaseMissing('whatsapp_logs', ['recipient_user_id' => $onTime->id]);
+        $this->assertDatabaseMissing('whatsapp_logs', ['recipient_user_id' => $leave->id]);
+    }
+
     private function userWithRole(string $roleName, ?string $phoneNumber = null): User
     {
         $role = Role::findOrCreate($roleName, 'web');
         $user = User::factory()->create(['phone_number' => $phoneNumber]);
         $user->assignRole($role);
+        if ($roleName !== 'Siswa') {
+            $teacher = MasterGuru::create(['nama_lengkap' => $user->name, 'jenis_kelamin' => 'L', 'user_id' => $user->id]);
+            $teacher->dapodikGuru()->create(['nama' => $user->name, 'status_kepegawaian' => 'Pegawai Full Time']);
+        }
 
         return $user;
     }

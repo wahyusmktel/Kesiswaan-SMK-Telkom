@@ -93,4 +93,57 @@ class TeacherActivityTest extends TestCase
             ->assertSessionHasErrors('status_kepegawaian');
         $this->assertDatabaseCount('dapodik_gurus', 0);
     }
+
+    public function test_superadmin_can_quickly_update_the_phone_number_used_by_whatsapp_recap(): void
+    {
+        $account = User::factory()->create(['phone_number' => null]);
+        $teacher = MasterGuru::create(['nama_lengkap' => 'Guru WhatsApp', 'jenis_kelamin' => 'P', 'user_id' => $account->id]);
+        $url = route('teacher-activity.phone.update', $teacher);
+
+        $this->login('Super Admin');
+        $this->get(route('teacher-activity.index'))
+            ->assertOk()
+            ->assertSee('action="'.$url.'"', false)
+            ->assertSee('Nomor HP/WhatsApp');
+
+        $this->patch($url, ['phone_number' => '+62 812-3456-7890', 'name' => 'Tampered'])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+        $this->assertSame('+6281234567890', $account->refresh()->phone_number);
+        $this->assertNotSame('Tampered', $account->name);
+
+        $this->patch($url, ['phone_number' => 'nomor-tidak-valid'])
+            ->assertSessionHasErrors('phone_number');
+        $this->assertSame('+6281234567890', $account->refresh()->phone_number);
+
+        $this->patch($url, ['phone_number' => ''])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+        $this->assertNull($account->refresh()->phone_number);
+    }
+
+    public function test_kaur_sdm_cannot_use_the_superadmin_phone_quick_action(): void
+    {
+        $account = User::factory()->create(['phone_number' => '081234567890']);
+        $teacher = MasterGuru::create(['nama_lengkap' => 'Guru SDM', 'jenis_kelamin' => 'L', 'user_id' => $account->id]);
+        $url = route('teacher-activity.phone.update', $teacher);
+
+        $this->login('KAUR SDM');
+        $this->get(route('teacher-activity.index'))
+            ->assertOk()
+            ->assertDontSee('action="'.$url.'"', false)
+            ->assertSee('081234567890');
+        $this->patch($url, ['phone_number' => '089999999999'])->assertForbidden();
+        $this->assertSame('081234567890', $account->refresh()->phone_number);
+    }
+
+    public function test_phone_quick_action_requires_a_linked_user_account(): void
+    {
+        $teacher = MasterGuru::create(['nama_lengkap' => 'Tanpa Akun', 'jenis_kelamin' => 'L']);
+        $this->login('Super Admin');
+
+        $this->get(route('teacher-activity.index'))->assertOk()->assertSee('Akun pengguna belum terhubung');
+        $this->patch(route('teacher-activity.phone.update', $teacher), ['phone_number' => '081234567890'])
+            ->assertSessionHasErrors('phone_number');
+    }
 }

@@ -54,7 +54,7 @@ class HeadmasterMonitoringTest extends TestCase
         }
         $response = $this->postJson(route('kepala-sekolah.fingerprint-sync.store'), ['date' => '2000-01-01', 'device_id' => $inactive->id])->assertOk();
         Queue::assertPushed(SyncFingerprintAttendancesJob::class, 1);
-        Queue::assertPushed(SyncFingerprintAttendancesJob::class, fn ($job) => $job->deviceId === $device->id && $job->dateFrom === today()->toDateString() && $job->dateTo === today()->toDateString() && $job->sendDailyRecaps === false && $job->queue === 'fingerprint');
+        Queue::assertPushed(SyncFingerprintAttendancesJob::class, fn ($job) => $job->deviceId === $device->id && $job->dateFrom === today()->toDateString() && $job->dateTo === today()->toDateString() && $job->queue === 'fingerprint');
         $this->getJson($response->json('status_url'))->assertOk()->assertJsonPath('jobs.0.status', 'queued');
         $this->postJson(route('kepala-sekolah.fingerprint-sync.store'))->assertStatus(429);
         $this->login();

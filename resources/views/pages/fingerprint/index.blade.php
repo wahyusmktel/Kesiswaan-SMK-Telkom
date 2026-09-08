@@ -54,14 +54,20 @@
                             <input type="checkbox" name="is_enabled" value="1" @checked($autoSyncSetting->is_enabled) class="mt-1 rounded border-gray-300 text-red-600 focus:ring-red-500">
                             <span>
                                 <span class="block text-sm font-black text-gray-900">Aktifkan penarikan otomatis</span>
-                                <span class="block text-xs text-gray-500 mt-1">Sistem akan mengecek jadwal setiap menit melalui Laravel Scheduler, lalu mengirim job ke queue fingerprint sekali per hari.</span>
+                                <span class="block text-xs text-gray-500 mt-1">Penarikan berjalan pada waktu pertama dan waktu kedua jika diisi. Jadwal mengikuti zona waktu {{ config('app.timezone') }}.</span>
                             </span>
                         </label>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <label class="block">
-                                <span class="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Jam Penarikan</span>
-                                <input type="time" name="run_time" value="{{ substr((string) $autoSyncSetting->run_time, 0, 5) }}" class="w-full rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500">
+                                <span class="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Waktu Pertama</span>
+                                <input type="time" name="run_time" required value="{{ old('run_time', substr((string) $autoSyncSetting->run_time, 0, 5)) }}" class="w-full rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500">
+                            </label>
+                            <label class="block">
+                                <span class="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Waktu Kedua (Opsional)</span>
+                                <input type="time" name="second_run_time" value="{{ old('second_run_time', substr((string) $autoSyncSetting->second_run_time, 0, 5)) }}" class="w-full rounded-xl border-gray-300 text-sm focus:border-red-500 focus:ring-red-500">
+                                <span class="mt-2 block text-xs text-gray-500">Harus setelah waktu pertama, misalnya 08:00 dan 16:30. Kosongkan untuk satu kali sehari.</span>
+                                @error('second_run_time')<span class="block text-xs text-red-600">{{ $message }}</span>@enderror
                             </label>
                             <label class="block">
                                 <span class="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Rentang Data</span>

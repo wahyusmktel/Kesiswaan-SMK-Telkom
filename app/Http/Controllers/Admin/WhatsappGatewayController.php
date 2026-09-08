@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\WhatsappDevice;
+use App\Models\FingerprintAutoSyncSetting;
 use App\Models\WhatsappLog;
 use App\Models\WhatsappTemplate;
 use Illuminate\Http\Request;
@@ -35,8 +36,9 @@ class WhatsappGatewayController extends Controller
         ];
 
         $logs = WhatsappLog::with('device')->latest()->take(20)->get();
+        $fingerprintNotificationSetting = FingerprintAutoSyncSetting::getSetting();
 
-        return view('pages.admin.whatsapp-gateway.index', compact('devices', 'templates', 'stats', 'logs'));
+        return view('pages.admin.whatsapp-gateway.index', compact('devices', 'templates', 'stats', 'logs', 'fingerprintNotificationSetting'));
     }
 
     public function getDevicesData()
@@ -373,6 +375,24 @@ class WhatsappGatewayController extends Controller
         ]);
     }
 
+    public function saveFingerprintNotificationSettings(Request $request)
+    {
+        $data = $request->validate([
+            'notifications_enabled' => ['nullable', 'boolean'],
+            'notification_time' => ['required', 'date_format:H:i'],
+        ]);
+
+        FingerprintAutoSyncSetting::getSetting()->update([
+            'notifications_enabled' => $request->boolean('notifications_enabled'),
+            'notification_time' => $data['notification_time'].':00',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Jadwal notifikasi fingerprint berhasil disimpan.',
+        ]);
+    }
+
     private function ensureDefaultDataExists()
     {
         if (WhatsappDevice::count() === 0) {
@@ -414,6 +434,12 @@ class WhatsappGatewayController extends Controller
                 'category' => 'presensi',
                 'template_text' => "*REKAP ABSENSI FINGERPRINT HARIAN*\n\nYth. Bapak/Ibu *{nama_pegawai}*,\n\nBerikut kami sampaikan rekap absensi fingerprint Anda:\n- Tanggal: {tanggal}\n- Jam masuk: {jam_masuk}\n- Jam pulang: {jam_pulang}\n- Jumlah scan: {total_scan}\n- Status: *{status_kehadiran}*\n- Catatan: {catatan}\n- Durasi terlambat: {durasi_terlambat}\n\nData ini tercatat otomatis setelah sinkronisasi mesin fingerprint. Apabila terdapat ketidaksesuaian, silakan menghubungi KAUR SDM.\n\nTerima kasih atas kedisiplinan dan kontribusi Bapak/Ibu.\n_\"Kedisiplinan yang dijaga hari ini membangun kualitas kerja yang lebih baik esok hari.\"_\n\n_Sistem Informasi SMK Telkom Lampung_",
                 'variables' => ['nama_pegawai', 'tanggal', 'jam_masuk', 'jam_pulang', 'total_scan', 'status_kehadiran', 'catatan', 'durasi_terlambat'],
+            ],
+            'fingerprint_peringatan_harian' => [
+                'title' => 'Pengingat Keterlambatan / Tidak Hadir Pegawai',
+                'category' => 'presensi',
+                'template_text' => "*PENGINGAT ABSENSI FINGERPRINT*\n\nYth. Bapak/Ibu *{nama_pegawai}*,\n\nRekap kehadiran pada {tanggal} mencatat status Anda: *{status_kehadiran}*.\n- Jam masuk: {jam_masuk}\n- Batas masuk: {batas_masuk}\n- Durasi terlambat: {durasi_terlambat}\n- Catatan: {catatan}\n\nPesan ini merupakan pengingat kedisiplinan otomatis. Jika data belum sesuai atau terdapat kendala saat melakukan fingerprint, silakan segera menghubungi KAUR SDM.\n\n_Sistem Informasi SMK Telkom Lampung_",
+                'variables' => ['nama_pegawai', 'tanggal', 'status_kehadiran', 'jam_masuk', 'batas_masuk', 'durasi_terlambat', 'catatan'],
             ],
             'panggilan_siswa' => [
                 'title' => 'Notifikasi Panggilan Orang Tua (BK/Kesiswaan)',

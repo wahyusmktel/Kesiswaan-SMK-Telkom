@@ -610,6 +610,7 @@ class FingerprintController extends Controller
         $data = $request->validate([
             'is_enabled' => ['nullable', 'boolean'],
             'run_time' => ['required', 'date_format:H:i'],
+            'second_run_time' => ['nullable', 'date_format:H:i', 'after:run_time'],
             'range_type' => ['required', 'in:1_day,2_days,1_month,2_months,all'],
             'device_ids' => ['nullable', 'array'],
             'device_ids.*' => ['integer', 'exists:fingerprint_devices,id'],
@@ -618,6 +619,7 @@ class FingerprintController extends Controller
         FingerprintAutoSyncSetting::getSetting()->update([
             'is_enabled' => $request->boolean('is_enabled'),
             'run_time' => $data['run_time'].':00',
+            'second_run_time' => ! empty($data['second_run_time']) ? $data['second_run_time'].':00' : null,
             'range_type' => $data['range_type'],
             'device_ids' => array_values(array_filter($data['device_ids'] ?? [])),
         ]);

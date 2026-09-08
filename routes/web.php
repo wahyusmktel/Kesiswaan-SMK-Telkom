@@ -1053,6 +1053,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/whatsapp-gateway/logs/{log}/resend', [\App\Http\Controllers\Admin\WhatsappGatewayController::class, 'resendLog'])->name('whatsapp-gateway.logs.resend');
         Route::delete('/whatsapp-gateway/logs/clear', [\App\Http\Controllers\Admin\WhatsappGatewayController::class, 'clearLogs'])->name('whatsapp-gateway.logs.clear');
         Route::post('/whatsapp-gateway/templates', [\App\Http\Controllers\Admin\WhatsappGatewayController::class, 'saveTemplates'])->name('whatsapp-gateway.templates.save');
+        Route::put('/whatsapp-gateway/fingerprint-notifications', [\App\Http\Controllers\Admin\WhatsappGatewayController::class, 'saveFingerprintNotificationSettings'])->name('whatsapp-gateway.fingerprint-notifications.update');
 
         // CCTV internal sekolah
         Route::get('/cctv', [\App\Http\Controllers\Admin\CctvCameraController::class, 'index'])->name('cctv.index');
@@ -1134,6 +1135,9 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:Super Admin|KAUR SDM')->prefix('teacher-activity')->name('teacher-activity.')->group(function () {
         Route::get('/', [\App\Http\Controllers\SDM\TeacherActivityController::class, 'index'])->name('index');
         Route::patch('/{teacher}/employment', [\App\Http\Controllers\SDM\TeacherActivityController::class, 'updateEmployment'])->name('employment.update');
+        Route::patch('/{teacher}/phone', [\App\Http\Controllers\SDM\TeacherActivityController::class, 'updatePhone'])
+            ->middleware('role:Super Admin')
+            ->name('phone.update');
         Route::patch('/{teacher}', [\App\Http\Controllers\SDM\TeacherActivityController::class, 'update'])->name('update');
     });
 
@@ -1375,6 +1379,7 @@ Route::middleware(['auth', 'verified', 'role:Kepala Sekolah', 'permission:view e
     ->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\KepalaSekolah\DashboardController::class, 'index'])
             ->name('dashboard.index');
+        Route::get('/fingerprint/laporan', [\App\Http\Controllers\KepalaSekolah\FingerprintReportController::class, 'index'])->name('fingerprint-report.index');
         Route::get('/persetujuan-izin-guru', [\App\Http\Controllers\KepalaSekolah\TeacherLeaveApprovalController::class, 'index'])->name('persetujuan-izin-guru.index');
         Route::patch('/persetujuan-izin-guru/{izin}/approve', [\App\Http\Controllers\KepalaSekolah\TeacherLeaveApprovalController::class, 'approve'])->name('persetujuan-izin-guru.approve');
         Route::patch('/persetujuan-izin-guru/{izin}/reject', [\App\Http\Controllers\KepalaSekolah\TeacherLeaveApprovalController::class, 'reject'])->name('persetujuan-izin-guru.reject');

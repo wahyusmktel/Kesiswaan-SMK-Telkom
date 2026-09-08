@@ -30,7 +30,6 @@ class SyncFingerprintAttendancesJob implements ShouldQueue
         public ?string $dateFrom,
         public ?string $dateTo,
         public string $rangeLabel,
-        public bool $sendDailyRecaps = true,
     ) {
         $this->onQueue('fingerprint');
     }
@@ -146,10 +145,6 @@ class SyncFingerprintAttendancesJob implements ShouldQueue
 
             $zk->disconnect();
 
-            if (($this->sendDailyRecaps ?? true) && $this->rangeIncludesToday($dateFrom, $dateTo)) {
-                SendFingerprintDailyRecapsJob::dispatch();
-            }
-
             $this->progress([
                 'status' => 'finished',
                 'percent' => 100,
@@ -258,11 +253,4 @@ class SyncFingerprintAttendancesJob implements ShouldQueue
         }
     }
 
-    private function rangeIncludesToday(?Carbon $dateFrom, ?Carbon $dateTo): bool
-    {
-        $today = today();
-
-        return (! $dateFrom || $dateFrom->lte($today->copy()->endOfDay()))
-            && (! $dateTo || $dateTo->gte($today->copy()->startOfDay()));
-    }
 }

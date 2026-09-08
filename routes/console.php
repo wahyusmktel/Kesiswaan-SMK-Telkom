@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\SendFingerprintDailyRecapsJob;
 use App\Jobs\SyncFingerprintAttendancesJob;
 use App\Models\CctvCamera;
 use App\Models\FingerprintAutoSyncSetting;
@@ -37,8 +38,14 @@ Artisan::command('fingerprint:auto-sync', function () {
         return 0;
     }
 
-    if ($setting->last_dispatched_at?->isSameDay($now)) {
-        $this->line('Tarik log otomatis hari ini sudah dikirim ke antrean.');
+    // Use the latest due slot. After downtime one pull covers both missed slots.
+    $dueAt = $now->copy()->setTimeFromTimeString($setting->run_time);
+    if ($setting->second_run_time && $now->format('H:i') >= substr($setting->second_run_time, 0, 5)) {
+        $dueAt = $now->copy()->setTimeFromTimeString($setting->second_run_time);
+    }
+
+    if ($setting->last_dispatched_at && $setting->last_dispatched_at->greaterThanOrEqualTo($dueAt)) {
+        $this->line('Jadwal tarik log otomatis ini sudah dikirim ke antrean.');
 
         return 0;
     }
@@ -119,6 +126,38 @@ Artisan::command('fingerprint:auto-sync', function () {
 })->purpose('Dispatch scheduled fingerprint attendance sync jobs');
 
 Schedule::command('fingerprint:auto-sync')->everyMinute()->withoutOverlapping();
+
+Artisan::command('fingerprint:send-daily-notifications', function () {
+    $setting = FingerprintAutoSyncSetting::getSetting();
+    if (! $setting->notifications_enabled) {
+        $this->line('Notifikasi harian fingerprint sedang nonaktif.');
+
+        return 0;
+    }
+
+    $now = now();
+    $notificationTime = substr((string) $setting->notification_time, 0, 5);
+    if ($now->format('H:i') < $notificationTime) {
+        $this->line("Belum waktunya mengirim notifikasi fingerprint. Jadwal hari ini: {$notificationTime}.");
+
+        return 0;
+    }
+
+    $dueAt = $now->copy()->setTimeFromTimeString($setting->notification_time);
+    if ($setting->last_notification_dispatched_at?->greaterThanOrEqualTo($dueAt)) {
+        $this->line('Notifikasi fingerprint hari ini sudah dikirim ke antrean.');
+
+        return 0;
+    }
+
+    SendFingerprintDailyRecapsJob::dispatch($now->toDateString());
+    $setting->update(['last_notification_dispatched_at' => $now]);
+    $this->info("Notifikasi rekap dan pengingat fingerprint dikirim ke antrean untuk pukul {$notificationTime}.");
+
+    return 0;
+})->purpose('Dispatch daily fingerprint recap and attendance reminder notifications');
+
+Schedule::command('fingerprint:send-daily-notifications')->everyMinute()->withoutOverlapping();
 
 Artisan::command('cctv:sync', function (MediaMtxService $mediaMtx) {
     $success = 0;

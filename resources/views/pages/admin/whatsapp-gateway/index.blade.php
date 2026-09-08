@@ -263,13 +263,33 @@
                 <div class="flex items-center justify-between pb-4 border-b border-slate-100">
                     <div>
                         <h3 class="text-xl font-bold text-slate-800">Template Bot Notifikasi</h3>
-                        <p class="text-xs text-slate-500 mt-0.5">Atur format pesan otomatis yang dikirim ke siswa / orang tua siswa.</p>
+                        <p class="text-xs text-slate-500 mt-0.5">Atur format pesan otomatis untuk siswa, orang tua, dan pegawai.</p>
                     </div>
                     <button @click="saveTemplates()" :disabled="loading"
                         class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-md transition-all flex items-center space-x-1.5">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                         <span>Simpan Perubahan</span>
                     </button>
+                </div>
+
+                <div class="rounded-2xl border border-blue-200 bg-blue-50 p-5">
+                    <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                        <div>
+                            <h4 class="font-extrabold text-slate-800">Jadwal Notifikasi Fingerprint Pegawai</h4>
+                            <p class="mt-1 max-w-2xl text-xs leading-relaxed text-slate-600">Pada jam ini sistem mengirim rekap harian kepada pegawai yang memiliki data scan, sekaligus pengingat khusus bagi pegawai yang terlambat atau tidak hadir. Pastikan waktu tarik log kedua tidak melewati jadwal ini.</p>
+                            <label class="mt-3 flex items-center gap-2 text-sm font-semibold text-slate-700">
+                                <input type="checkbox" x-model="fingerprintNotificationSettings.notifications_enabled" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                                Aktifkan pengiriman otomatis setiap hari
+                            </label>
+                        </div>
+                        <div class="flex items-end gap-2">
+                            <label class="text-xs font-bold uppercase tracking-wider text-slate-600">Waktu Kirim
+                                <input type="time" x-model="fingerprintNotificationSettings.notification_time" required class="mt-1 block rounded-xl border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500">
+                            </label>
+                            <button type="button" @click="saveFingerprintNotificationSettings()" :disabled="loading" class="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-500 disabled:opacity-50">Simpan Jadwal</button>
+                        </div>
+                    </div>
+                    <p class="mt-3 text-xs font-semibold text-blue-800">Zona waktu: {{ config('app.timezone') }} · Default: 18:00</p>
                 </div>
 
                 <div class="space-y-6">
@@ -617,6 +637,10 @@
             stats: @json($stats),
             templateList: @json($templates),
             selectedTemplateKey: 'absensi_alpha',
+            fingerprintNotificationSettings: {
+                notifications_enabled: @json((bool) $fingerprintNotificationSetting->notifications_enabled),
+                notification_time: @json(substr((string) $fingerprintNotificationSetting->notification_time, 0, 5)),
+            },
 
             // Modals
             deviceModalOpen: false,
@@ -679,9 +703,17 @@
 
                 return found.template_text
                     .replace('{nama_siswa}', 'Ahmad Fadhil')
+                    .replace('{nama_pegawai}', 'Budi Santoso')
                     .replace('{kelas}', 'XI RPL 1')
                     .replace('{tanggal}', '23 Juli 2026')
                     .replace('{jam_tap}', '07:15 WIB')
+                    .replace('{jam_masuk}', '07:45')
+                    .replace('{jam_pulang}', '16:05')
+                    .replace('{batas_masuk}', '07:30')
+                    .replace('{total_scan}', '2')
+                    .replace('{status_kehadiran}', 'Terlambat')
+                    .replace('{catatan}', 'Fingerprint masuk tercatat melewati batas waktu.')
+                    .replace('{durasi_terlambat}', '15 menit')
                     .replace('{durasi_keterlambatan}', '15')
                     .replace('{alasan}', 'Sakit Demam')
                     .replace('{tanggal_panggilan}', '24 Juli 2026')
@@ -912,6 +944,30 @@
                     }
                 } catch (e) {
                     this.showToast('Gagal menyimpan template.', 'error');
+                } finally {
+                    this.loading = false;
+                }
+            },
+
+            async saveFingerprintNotificationSettings() {
+                if (!this.fingerprintNotificationSettings.notification_time) {
+                    this.showToast('Waktu pengiriman wajib diisi.', 'error');
+                    return;
+                }
+                this.loading = true;
+                try {
+                    const res = await fetch("{{ route('super-admin.whatsapp-gateway.fingerprint-notifications.update') }}", {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        },
+                        body: JSON.stringify(this.fingerprintNotificationSettings)
+                    });
+                    const data = await res.json();
+                    this.showToast(data.message || (res.ok ? 'Jadwal berhasil disimpan.' : 'Jadwal gagal disimpan.'), res.ok ? 'success' : 'error');
+                } catch (e) {
+                    this.showToast('Gagal menyimpan jadwal notifikasi.', 'error');
                 } finally {
                     this.loading = false;
                 }

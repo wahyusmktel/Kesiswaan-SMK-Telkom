@@ -26,7 +26,7 @@ class FingerprintSyncController extends Controller
         foreach ($jobs as $job) {
             Cache::put('fingerprint:sync-progress:'.$job['id'], ['status' => 'queued', 'percent' => 0], now()->addHours(2));
             try {
-                SyncFingerprintAttendancesJob::dispatch($job['device_id'], $job['id'], $date, $date, 'hari ini', false);
+                SyncFingerprintAttendancesJob::dispatch($job['device_id'], $job['id'], $date, $date, 'hari ini');
             } catch (\Throwable $exception) {
                 report($exception);
                 Cache::put('fingerprint:sync-progress:'.$job['id'], ['status' => 'failed', 'percent' => 100], now()->addHours(2));

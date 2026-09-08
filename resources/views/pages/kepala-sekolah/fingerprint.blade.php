@@ -43,6 +43,10 @@
             <template x-for="job in syncJobs" :key="job.name"><p class="mt-2" x-text="job.name + ': ' + job.status + ' (' + job.percent + '%)'"></p></template>
         </div>
         @if($errors->any())<p class="text-red-700">{{ $errors->first() }}</p>@endif
+        <div class="flex flex-wrap gap-3">
+            <a href="{{ route('kepala-sekolah.fingerprint-report.index', ['period' => 'week', 'date' => $date->toDateString()]) }}" class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 font-semibold text-emerald-800">Laporan Mingguan</a>
+            <a href="{{ route('kepala-sekolah.fingerprint-report.index', ['period' => 'month', 'date' => $date->toDateString()]) }}" class="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 font-semibold text-blue-800">Laporan Bulanan</a>
+        </div>
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-7">
             @foreach(['all' => ['Total Guru', $summary['total']], 'present' => ['Total Kehadiran', $summary['present']], 'out' => ['Tercatat Pulang', $summary['out']], 'late' => ['Terlambat', $summary['late']], 'absent' => ['Tidak Hadir', $summary['absent']], 'leave' => ['Izin', $summary['leave']], 'pending' => ['Menunggu', $summary['pending']]] as $key => [$label, $value])
                 <button type="button" @click="status = '{{ $key }}'; page = 1" :aria-pressed="status === '{{ $key }}'" :class="status === '{{ $key }}' ? 'ring-2 ring-red-500' : ''" class="rounded-2xl border bg-white p-5 text-left shadow-sm">
@@ -62,14 +66,14 @@
             </section>
             <section class="rounded-2xl border bg-white p-6 lg:col-span-2">
                 <h3 class="font-bold">Tren Jam Kedatangan</h3><p class="mt-1 text-sm text-gray-500">Line chart jumlah scan pertama guru per jam pada tanggal terpilih.</p>
-                <div class="mt-5 overflow-x-auto rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 p-4 text-white">
+                <div class="mt-5 overflow-x-auto rounded-2xl border border-emerald-100 bg-gradient-to-br from-white to-emerald-50 p-4 text-gray-800">
                     <svg class="min-w-[650px]" viewBox="0 0 720 220" role="img" aria-label="Line chart jumlah kedatangan guru per jam">
                         <defs><linearGradient id="attendanceArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#34d399" stop-opacity=".55"/><stop offset="1" stop-color="#34d399" stop-opacity="0"/></linearGradient><filter id="lineGlow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
                         @foreach([30, 78, 126, 175] as $gridY)<line x1="20" y1="{{ $gridY }}" x2="700" y2="{{ $gridY }}" stroke="#64748b" stroke-opacity=".25" stroke-dasharray="4 6"/>@endforeach
                         <polygon points="{{ $areaPoints }}" fill="url(#attendanceArea)"/>
-                        <polyline points="{{ $chartPoints }}" fill="none" stroke="#34d399" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#lineGlow)"/>
+                        <polyline points="{{ $chartPoints }}" fill="none" stroke="#047857" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
                         @foreach($hours as $index => $hour)
-                            <circle cx="{{ $hour['x'] }}" cy="{{ $hour['y'] }}" r="{{ $hour['count'] ? 5 : 2.5 }}" fill="{{ $hour['count'] ? '#f8fafc' : '#34d399' }}"><title>{{ $hour['label'] }}: {{ $hour['count'] }} guru</title></circle>
+                            <circle cx="{{ $hour['x'] }}" cy="{{ $hour['y'] }}" r="{{ $hour['count'] ? 5 : 2.5 }}" fill="#047857"><title>{{ $hour['label'] }}: {{ $hour['count'] }} guru</title></circle>
                             @if($index % 3 === 0)<text x="{{ $hour['x'] }}" y="205" text-anchor="middle" fill="#94a3b8" font-size="10">{{ substr($hour['label'], 0, 2) }}</text>@endif
                         @endforeach
                     </svg>
