@@ -992,7 +992,7 @@
             },
 
             async sendFingerprintNotificationsNow() {
-                if (!confirm('Kirim rekap dan pengingat fingerprint berdasarkan data hari ini sekarang? Pengiriman manual dapat dilakukan berulang dan tidak menggantikan jadwal otomatis.')) return;
+                if (!confirm('Kirim rekap dan pengingat fingerprint berdasarkan data hari ini sekarang? Proses menunggu sampai hasil pengiriman tersedia dan tidak menggantikan jadwal otomatis.')) return;
                 this.sendingFingerprintNotifications = true;
                 try {
                     const res = await fetch("{{ route('super-admin.whatsapp-gateway.fingerprint-notifications.send-now') }}", {
@@ -1000,9 +1000,9 @@
                         headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
                     });
                     const data = await res.json();
-                    this.showToast(data.message || (res.ok ? 'Pesan masuk antrean.' : 'Gagal mengantrekan pesan.'), res.ok ? 'success' : 'error');
+                    this.showToast(data.message || (res.ok ? 'Pengiriman selesai.' : 'Pengiriman gagal.'), data.success ? 'success' : 'error');
                 } catch (e) {
-                    this.showToast('Gagal mengantrekan notifikasi fingerprint.', 'error');
+                    this.showToast('Gagal menjalankan pengiriman notifikasi fingerprint.', 'error');
                 } finally {
                     this.sendingFingerprintNotifications = false;
                 }

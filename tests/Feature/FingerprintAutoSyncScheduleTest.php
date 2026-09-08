@@ -2,12 +2,13 @@
 
 namespace Tests\Feature;
 
-use App\Jobs\SyncFingerprintAttendancesJob;
 use App\Jobs\SendFingerprintDailyRecapsJob;
+use App\Jobs\SyncFingerprintAttendancesJob;
 use App\Models\FingerprintAutoSyncSetting;
 use App\Models\FingerprintDevice;
 use App\Models\FingerprintUser;
 use App\Models\User;
+use App\Services\FingerprintWhatsappNotificationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Spatie\Permission\Models\Role;
@@ -119,20 +120,27 @@ class FingerprintAutoSyncScheduleTest extends TestCase
         ])->assertUnprocessable()->assertJsonValidationErrors('notification_time');
     }
 
-    public function test_superadmin_can_queue_a_manual_notification_without_replacing_the_schedule(): void
+    public function test_superadmin_can_send_a_manual_notification_immediately_without_replacing_the_schedule(): void
     {
         Queue::fake();
         config(['app.key' => 'base64:'.base64_encode(str_repeat('a', 32))]);
         $this->travelTo(\Carbon\Carbon::parse('2026-09-08 10:15:00'));
         $admin = User::factory()->create();
         $admin->assignRole(Role::findOrCreate('Super Admin', 'web'));
+        $notifications = $this->mock(FingerprintWhatsappNotificationService::class);
+        $notifications->shouldReceive('sendToday')->once()->andReturn(['sent' => 1, 'failed' => 0, 'skipped' => 0]);
+        $notifications->shouldReceive('sendRemindersToday')->once()->andReturn(['sent' => 1, 'failed' => 0, 'skipped' => 2]);
 
         $this->actingAs($admin)->withSession(['active_role' => 'Super Admin'])
             ->postJson(route('super-admin.whatsapp-gateway.fingerprint-notifications.send-now'))
             ->assertOk()
-            ->assertJson(['success' => true]);
+            ->assertJson([
+                'success' => true,
+                'summary' => ['sent' => 2, 'failed' => 0, 'skipped' => 2],
+            ])
+            ->assertJsonPath('message', 'Pengiriman WhatsApp selesai: 2 berhasil, 0 gagal, dan 2 dilewati.');
 
-        Queue::assertPushed(SendFingerprintDailyRecapsJob::class, fn ($job) => $job->notificationDate === '2026-09-08' && $job->manual === true && $job->queue === 'fingerprint');
+        Queue::assertNothingPushed();
         $this->assertNull(FingerprintAutoSyncSetting::getSetting()->last_notification_dispatched_at);
         $this->travelBack();
     }

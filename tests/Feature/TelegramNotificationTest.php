@@ -120,9 +120,13 @@ class TelegramNotificationTest extends TestCase
             FingerprintAttendance::create(['fingerprint_device_id' => $device->id, 'user_id' => '1', 'app_user_id' => $user->id, 'timestamp' => '2026-09-08 '.$time]);
         }
 
-        $result = app(FingerprintWhatsappNotificationService::class)->sendToday();
-        $this->assertSame(1, $result['sent']);
-        $this->assertDatabaseHas('telegram_logs', ['telegram_bot_id' => $bot->id, 'recipient_user_id' => $user->id, 'status' => 'sent', 'event_key' => FingerprintWhatsappNotificationService::EVENT_KEY]);
+        $admin = $this->loginSuperadmin();
+        $this->actingAs($admin)->withSession(['active_role' => 'Super Admin'])
+            ->postJson(route('super-admin.whatsapp-gateway.fingerprint-notifications.send-now'))
+            ->assertOk()
+            ->assertJsonPath('summary.sent', 1)
+            ->assertJsonPath('summary.failed', 0);
+        $this->assertDatabaseHas('telegram_logs', ['telegram_bot_id' => $bot->id, 'recipient_user_id' => $user->id, 'status' => 'sent', 'event_key' => FingerprintWhatsappNotificationService::EVENT_KEY.'_manual']);
         $this->assertSame('998877', TelegramLog::firstOrFail()->chat_id);
         Http::assertSent(fn ($request) => str_ends_with($request->url(), '/sendMessage') && (string) $request['chat_id'] === '998877');
     }

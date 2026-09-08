@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Jobs\SendFingerprintDailyRecapsJob;
-use App\Models\WhatsappDevice;
 use App\Models\FingerprintAutoSyncSetting;
 use App\Models\TelegramBot;
+use App\Models\WhatsappDevice;
 use App\Models\WhatsappLog;
 use App\Models\WhatsappTemplate;
+use App\Services\FingerprintWhatsappNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -405,13 +405,37 @@ class WhatsappGatewayController extends Controller
         ]);
     }
 
-    public function sendFingerprintNotificationsNow()
+    public function sendFingerprintNotificationsNow(FingerprintWhatsappNotificationService $notifications)
     {
-        SendFingerprintDailyRecapsJob::dispatch(today()->toDateString(), true);
+        $recaps = $notifications->sendToday(today(), true);
+        $reminders = $notifications->sendRemindersToday(today(), true);
+        $configurationError = $recaps['configuration_error'] ?? $reminders['configuration_error'] ?? null;
+        if ($configurationError) {
+            return response()->json([
+                'success' => false,
+                'message' => $configurationError,
+                'recaps' => $recaps,
+                'reminders' => $reminders,
+            ], 422);
+        }
+
+        $sent = (int) ($recaps['sent'] ?? 0) + (int) ($reminders['sent'] ?? 0);
+        $failed = (int) ($recaps['failed'] ?? 0) + (int) ($reminders['failed'] ?? 0);
+        $skipped = (int) ($recaps['skipped'] ?? 0) + (int) ($reminders['skipped'] ?? 0);
+        $channel = FingerprintAutoSyncSetting::getSetting()->notification_channel === 'telegram' ? 'Telegram' : 'WhatsApp';
+
+        $message = match (true) {
+            $sent > 0 => "Pengiriman {$channel} selesai: {$sent} berhasil, {$failed} gagal, dan {$skipped} dilewati.",
+            $failed > 0 => "Pengiriman {$channel} selesai, tetapi {$failed} pesan gagal. Periksa log pengiriman untuk melihat penyebabnya.",
+            default => "Tidak ada pesan {$channel} yang terkirim. Pastikan template aktif, data absensi hari ini tersedia, dan akun penerima sudah terhubung.",
+        };
 
         return response()->json([
-            'success' => true,
-            'message' => 'Rekap dan pengingat fingerprint hari ini sudah masuk antrean pengiriman.',
+            'success' => $sent > 0 && $failed === 0,
+            'message' => $message,
+            'summary' => compact('sent', 'failed', 'skipped'),
+            'recaps' => $recaps,
+            'reminders' => $reminders,
         ]);
     }
 
