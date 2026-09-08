@@ -22,6 +22,18 @@ class TelegramWebhookController extends Controller
 
         $chatId = (string) data_get($message, 'chat.id');
         $fromId = (string) data_get($message, 'from.id');
+        $existingLink = TelegramUserLink::query()
+            ->where('telegram_bot_id', $telegramBot->id)
+            ->where(fn ($query) => $query->where('chat_id', $chatId)->orWhere('telegram_user_id', $fromId))
+            ->with('user')
+            ->first();
+        if ($existingLink) {
+            $telegram->markAccountLinked($telegramBot, $chatId);
+            $telegram->reply($telegramBot, $chatId, 'Akun Telegram Anda sudah terhubung dengan SISFO atas nama '.($existingLink->user?->name ?? 'pegawai').'. Notifikasi dari '.$telegramBot->name.' dalam keadaan aktif.', ['remove_keyboard' => true]);
+
+            return response()->json(['ok' => true]);
+        }
+
         $contact = data_get($message, 'contact');
         if (is_array($contact)) {
             if ((string) ($contact['user_id'] ?? '') !== $fromId) {
@@ -51,7 +63,7 @@ class TelegramWebhookController extends Controller
 
             $user = $users->first();
             TelegramUserLink::where('telegram_bot_id', $telegramBot->id)->where('chat_id', $chatId)->where('user_id', '!=', $user->id)->delete();
-            TelegramUserLink::updateOrCreate(
+            $link = TelegramUserLink::updateOrCreate(
                 ['telegram_bot_id' => $telegramBot->id, 'user_id' => $user->id],
                 [
                     'chat_id' => $chatId,
@@ -62,17 +74,13 @@ class TelegramWebhookController extends Controller
                     'last_interaction_at' => now(),
                 ],
             );
+            $telegram->markAccountLinked($telegramBot, $link->chat_id);
             $telegram->reply($telegramBot, $chatId, 'Akun Telegram berhasil terhubung dengan SISFO atas nama '.$user->name.'. Notifikasi dari '.$telegramBot->name.' sekarang dapat diterima.', ['remove_keyboard' => true]);
 
             return response()->json(['ok' => true]);
         }
 
-        $telegram->reply($telegramBot, $chatId, "Selamat datang di {$telegramBot->name}!\n\nAgar Anda dapat menerima rekap absensi, pengingat keterlambatan, dan notifikasi kepegawaian dari SISFO, tekan tombol Bagikan Nomor HP Saya di bawah ini. Nomor Telegram harus sama dengan nomor WhatsApp yang bergabung di Group Sekolah, apabila ada perbedaan silahkan hubungi admin.\n\nGunakan tombol tersebut agar Telegram mengirim nomor milik Anda secara aman; jangan mengirim kontak secara manual.", [
-            'keyboard' => [[['text' => '📱 Bagikan Nomor HP Saya', 'request_contact' => true]]],
-            'resize_keyboard' => true,
-            'one_time_keyboard' => true,
-            'input_field_placeholder' => 'Tekan tombol untuk menghubungkan akun SISFO',
-        ]);
+        $telegram->sendOnboarding($telegramBot, $chatId);
 
         return response()->json(['ok' => true]);
     }

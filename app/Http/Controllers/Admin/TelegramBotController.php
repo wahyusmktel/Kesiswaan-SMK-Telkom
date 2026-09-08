@@ -76,11 +76,12 @@ class TelegramBotController extends Controller
         return back()->with('success', 'Bot Telegram berhasil dihapus.');
     }
 
-    public function unlink(TelegramUserLink $telegramUserLink)
+    public function unlink(TelegramUserLink $telegramUserLink, TelegramService $telegram)
     {
+        $result = $telegram->prepareAccountForRelinking($telegramUserLink);
         $telegramUserLink->delete();
 
-        return back()->with('success', 'Hubungan akun Telegram berhasil dilepas.');
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
     }
 
     public function sendTest(TelegramUserLink $telegramUserLink, TelegramService $telegram)

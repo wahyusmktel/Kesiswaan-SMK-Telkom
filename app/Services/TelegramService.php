@@ -106,6 +106,48 @@ class TelegramService
         $this->request($bot, 'sendMessage', $payload)->throw();
     }
 
+    public function sendOnboarding(TelegramBot $bot, string $chatId): void
+    {
+        $this->setChatCommands($bot, $chatId, [[
+            'command' => 'start',
+            'description' => 'Mulai dan hubungkan akun SISFO',
+        ]]);
+        $this->reply($bot, $chatId, "Selamat datang di {$bot->name}!\n\nAgar Anda dapat menerima rekap absensi, pengingat keterlambatan, dan notifikasi kepegawaian dari SISFO, tekan tombol Bagikan Nomor HP Saya di bawah ini. Nomor Telegram harus sama dengan nomor WhatsApp yang bergabung di Group Sekolah, apabila ada perbedaan silahkan hubungi admin.\n\nGunakan tombol tersebut agar Telegram mengirim nomor milik Anda secara aman; jangan mengirim kontak secara manual.", [
+            'keyboard' => [[['text' => '📱 Bagikan Nomor HP Saya', 'request_contact' => true]]],
+            'resize_keyboard' => true,
+            'one_time_keyboard' => true,
+            'input_field_placeholder' => 'Tekan tombol untuk menghubungkan akun SISFO',
+        ]);
+    }
+
+    public function markAccountLinked(TelegramBot $bot, string $chatId): void
+    {
+        $this->setChatCommands($bot, $chatId, [[
+            'command' => 'status',
+            'description' => 'Lihat status hubungan akun SISFO',
+        ]]);
+    }
+
+    public function prepareAccountForRelinking(TelegramUserLink $link): array
+    {
+        $link->loadMissing(['bot', 'user']);
+        $bot = $link->bot;
+        if (! $bot?->is_active || $bot->status !== 'connected') {
+            return ['success' => false, 'message' => 'Bot Telegram tidak aktif sehingga tombol hubungkan ulang belum dapat dikirim.'];
+        }
+
+        try {
+            $this->sendOnboarding($bot, $link->chat_id);
+
+            return ['success' => true, 'message' => 'Hubungan akun Telegram dilepas dan tombol hubungkan ulang telah dikirim.'];
+        } catch (Throwable $e) {
+            return [
+                'success' => false,
+                'message' => 'Hubungan akun dilepas, tetapi Telegram gagal menampilkan tombol hubungkan ulang: '.$this->sanitizeError($bot, $e),
+            ];
+        }
+    }
+
     public function sendTestNotification(TelegramUserLink $link): array
     {
         $link->loadMissing(['bot', 'user']);
@@ -152,6 +194,22 @@ class TelegramService
             'https://api.telegram.org/bot'.$bot->bot_token.'/'.$method,
             $payload,
         );
+    }
+
+    private function setChatCommands(TelegramBot $bot, string $chatId, array $commands): void
+    {
+        $response = $this->request($bot, 'setMyCommands', [
+            'commands' => $commands,
+            'scope' => ['type' => 'chat', 'chat_id' => $chatId],
+        ]);
+        if (! $response->successful() || ! $response->json('ok')) {
+            throw new \RuntimeException((string) $response->json('description', 'Telegram gagal memperbarui menu akun.'));
+        }
+    }
+
+    private function sanitizeError(TelegramBot $bot, Throwable $error): string
+    {
+        return str_replace($bot->bot_token, '[TOKEN DISEMBUNYIKAN]', $error->getMessage());
     }
 
     private function configureBotProfile(TelegramBot $bot): void

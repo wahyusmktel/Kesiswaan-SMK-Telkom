@@ -193,6 +193,45 @@ class TelegramNotificationTest extends TestCase
             && str_contains($request['text'], 'TES NOTIFIKASI BERHASIL'));
     }
 
+    public function test_linked_account_hides_onboarding_and_unlink_restores_contact_button(): void
+    {
+        $bot = $this->createBot();
+        $employee = $this->createLinkedEmployee($bot, 'Guru Sudah Terhubung', '998804');
+        $link = TelegramUserLink::where('user_id', $employee->id)->firstOrFail();
+
+        $this->withHeader('X-Telegram-Bot-Api-Secret-Token', $bot->webhook_secret)
+            ->postJson(route('telegram.webhook', $bot->slug), [
+                'message' => [
+                    'chat' => ['id' => 998804, 'type' => 'private'],
+                    'from' => ['id' => 998804, 'first_name' => 'Guru'],
+                    'text' => '/start sisfo',
+                ],
+            ])->assertOk();
+
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/setMyCommands')
+            && $request['scope']['type'] === 'chat'
+            && (string) $request['scope']['chat_id'] === '998804'
+            && $request['commands'][0]['command'] === 'status');
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/sendMessage')
+            && str_contains($request['text'], 'sudah terhubung')
+            && $request['reply_markup']['remove_keyboard'] === true);
+
+        $admin = $this->loginSuperadmin();
+        $this->actingAs($admin)->withSession(['active_role' => 'Super Admin'])
+            ->delete(route('super-admin.telegram-links.destroy', $link))
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('telegram_user_links', ['id' => $link->id]);
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/setMyCommands')
+            && $request['scope']['type'] === 'chat'
+            && (string) $request['scope']['chat_id'] === '998804'
+            && $request['commands'][0]['command'] === 'start');
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/sendMessage')
+            && str_contains($request['text'], 'Selamat datang')
+            && $request['reply_markup']['keyboard'][0][0]['request_contact'] === true);
+    }
+
     public function test_webhook_rejects_a_contact_owned_by_another_telegram_user(): void
     {
         $user = User::factory()->create(['phone_number' => '081234567890']);
