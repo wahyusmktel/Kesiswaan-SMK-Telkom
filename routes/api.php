@@ -86,3 +86,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // Webhook WhatsApp Gateway
 Route::post('/whatsapp/webhook/{sessionId}', [\App\Http\Controllers\Admin\WhatsappGatewayController::class, 'handleWebhook'])->name('whatsapp.webhook');
+Route::post('/telegram/webhook/{telegramBot:slug}', \App\Http\Controllers\Api\TelegramWebhookController::class)
+    ->middleware('throttle:120,1')
+    ->name('telegram.webhook');

@@ -485,7 +485,7 @@
         </a>
     </li>
     <li>
-        <a href="{{ route('super-admin.whatsapp-gateway.index') }}" title="WhatsApp Gateway"
+        <a href="{{ route('super-admin.whatsapp-gateway.index') }}" title="Gateway Notifikasi"
             class="nav-link {{ request()->routeIs('super-admin.whatsapp-gateway.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
             <div class="nav-icon-container">
                 <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -493,8 +493,16 @@
                         d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
             </div>
-            <span class="nav-text">WhatsApp Gateway</span>
+            <span class="nav-text">Gateway Notifikasi</span>
             <span class="nav-badge bg-emerald-500/20 text-emerald-300 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">BOT</span>
+        </a>
+    </li>
+    <li>
+        <a href="{{ route('super-admin.telegram-bots.index') }}" title="Telegram Bot"
+            class="nav-link {{ request()->routeIs('super-admin.telegram-bots.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg></div>
+            <span class="nav-text">Telegram Bot</span>
+            <span class="nav-badge ml-auto rounded-full bg-sky-500/20 px-1.5 py-0.5 text-[10px] font-black text-sky-200">BOT</span>
         </a>
     </li>
     @include('shared.fingerprint-saya-nav-link')

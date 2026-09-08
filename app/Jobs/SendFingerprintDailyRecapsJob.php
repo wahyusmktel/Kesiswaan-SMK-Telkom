@@ -3,9 +3,9 @@
 namespace App\Jobs;
 
 use App\Services\FingerprintWhatsappNotificationService;
-use Illuminate\Support\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 
 class SendFingerprintDailyRecapsJob implements ShouldQueue
@@ -24,7 +24,7 @@ class SendFingerprintDailyRecapsJob implements ShouldQueue
     public function handle(FingerprintWhatsappNotificationService $service): void
     {
         $date = $this->notificationDate ? Carbon::parse($this->notificationDate) : today();
-        Log::info('Pengiriman notifikasi fingerprint WhatsApp selesai.', [
+        Log::info('Pengiriman notifikasi fingerprint selesai.', [
             'date' => $date->toDateString(),
             'manual' => $this->manual,
             'recaps' => $service->sendToday($date, $this->manual),

@@ -135,6 +135,11 @@ class User extends Authenticatable implements WebAuthnAuthenticatableContract
         return $this->hasMany(FingerprintUser::class, 'app_user_id');
     }
 
+    public function telegramLinks()
+    {
+        return $this->hasMany(TelegramUserLink::class);
+    }
+
     public function notaDinasMasuk()
     {
         return $this->belongsToMany(NotaDinas::class, 'nota_dinas_penerima', 'penerima_user_id', 'nota_dinas_id')

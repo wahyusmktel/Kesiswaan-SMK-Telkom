@@ -6,12 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Jobs\SendFingerprintDailyRecapsJob;
 use App\Models\WhatsappDevice;
 use App\Models\FingerprintAutoSyncSetting;
+use App\Models\TelegramBot;
 use App\Models\WhatsappLog;
 use App\Models\WhatsappTemplate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class WhatsappGatewayController extends Controller
 {
@@ -38,8 +40,9 @@ class WhatsappGatewayController extends Controller
 
         $logs = WhatsappLog::with('device')->latest()->take(20)->get();
         $fingerprintNotificationSetting = FingerprintAutoSyncSetting::getSetting();
+        $telegramBots = TelegramBot::where('purpose', 'employment')->where('is_active', true)->where('status', 'connected')->orderBy('name')->get(['id', 'name', 'bot_username']);
 
-        return view('pages.admin.whatsapp-gateway.index', compact('devices', 'templates', 'stats', 'logs', 'fingerprintNotificationSetting'));
+        return view('pages.admin.whatsapp-gateway.index', compact('devices', 'templates', 'stats', 'logs', 'fingerprintNotificationSetting', 'telegramBots'));
     }
 
     public function getDevicesData()
@@ -372,7 +375,7 @@ class WhatsappGatewayController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Template notifikasi WhatsApp Bot berhasil disimpan!',
+            'message' => 'Template bot notifikasi berhasil disimpan!',
         ]);
     }
 
@@ -381,11 +384,19 @@ class WhatsappGatewayController extends Controller
         $data = $request->validate([
             'notifications_enabled' => ['nullable', 'boolean'],
             'notification_time' => ['required', 'date_format:H:i'],
+            'notification_channel' => ['required', Rule::in(['whatsapp', 'telegram'])],
+            'telegram_bot_id' => [
+                'nullable',
+                'required_if:notification_channel,telegram',
+                Rule::exists('telegram_bots', 'id')->where(fn ($query) => $query->where('purpose', 'employment')->where('is_active', true)->where('status', 'connected')),
+            ],
         ]);
 
         FingerprintAutoSyncSetting::getSetting()->update([
             'notifications_enabled' => $request->boolean('notifications_enabled'),
             'notification_time' => $data['notification_time'].':00',
+            'notification_channel' => $data['notification_channel'],
+            'telegram_bot_id' => $data['notification_channel'] === 'telegram' ? $data['telegram_bot_id'] : null,
         ]);
 
         return response()->json([

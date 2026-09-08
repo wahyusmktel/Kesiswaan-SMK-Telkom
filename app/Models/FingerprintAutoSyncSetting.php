@@ -12,6 +12,8 @@ class FingerprintAutoSyncSetting extends Model
         'second_run_time',
         'notifications_enabled',
         'notification_time',
+        'notification_channel',
+        'telegram_bot_id',
         'last_notification_dispatched_at',
         'range_type',
         'device_ids',
@@ -37,6 +39,7 @@ class FingerprintAutoSyncSetting extends Model
                 'run_time' => '23:30:00',
                 'notifications_enabled' => true,
                 'notification_time' => '18:00:00',
+                'notification_channel' => 'whatsapp',
                 'range_type' => '1_day',
                 'device_ids' => null,
             ]

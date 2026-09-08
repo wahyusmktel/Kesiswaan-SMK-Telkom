@@ -1055,6 +1055,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/whatsapp-gateway/templates', [\App\Http\Controllers\Admin\WhatsappGatewayController::class, 'saveTemplates'])->name('whatsapp-gateway.templates.save');
         Route::put('/whatsapp-gateway/fingerprint-notifications', [\App\Http\Controllers\Admin\WhatsappGatewayController::class, 'saveFingerprintNotificationSettings'])->name('whatsapp-gateway.fingerprint-notifications.update');
         Route::post('/whatsapp-gateway/fingerprint-notifications/send-now', [\App\Http\Controllers\Admin\WhatsappGatewayController::class, 'sendFingerprintNotificationsNow'])->name('whatsapp-gateway.fingerprint-notifications.send-now');
+        Route::resource('/telegram-bots', \App\Http\Controllers\Admin\TelegramBotController::class)->parameters(['telegram-bots' => 'telegramBot'])->only(['index', 'store', 'update', 'destroy']);
+        Route::post('/telegram-bots/{telegramBot}/verify', [\App\Http\Controllers\Admin\TelegramBotController::class, 'verify'])->name('telegram-bots.verify');
+        Route::delete('/telegram-links/{telegramUserLink}', [\App\Http\Controllers\Admin\TelegramBotController::class, 'unlink'])->name('telegram-links.destroy');
 
         // CCTV internal sekolah
         Route::get('/cctv', [\App\Http\Controllers\Admin\CctvCameraController::class, 'index'])->name('cctv.index');

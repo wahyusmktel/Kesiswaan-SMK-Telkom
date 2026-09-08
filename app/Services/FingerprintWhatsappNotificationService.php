@@ -4,9 +4,12 @@ namespace App\Services;
 
 use App\Models\FingerprintAttendance;
 use App\Models\FingerprintAttendanceSetting;
+use App\Models\FingerprintAutoSyncSetting;
 use App\Models\GuruIzin;
 use App\Models\JadwalPelajaran;
 use App\Models\MasterGuru;
+use App\Models\TelegramBot;
+use App\Models\TelegramLog;
 use App\Models\User;
 use App\Models\WorkCalendarEvent;
 use App\Models\WhatsappLog;
@@ -27,7 +30,7 @@ class FingerprintWhatsappNotificationService
 
     public const REMINDER_EVENT_KEY = 'fingerprint_peringatan_harian';
 
-    public function __construct(private readonly WhatsappService $whatsappService) {}
+    public function __construct(private readonly WhatsappService $whatsappService, private readonly TelegramService $telegramService) {}
 
     public function sendToday(?Carbon $date = null, bool $manual = false): array
     {
@@ -38,11 +41,15 @@ class FingerprintWhatsappNotificationService
 
         $today = ($date ?? today())->copy()->startOfDay();
         $result = ['sent' => 0, 'skipped' => 0, 'failed' => 0, 'disabled' => false];
+        [$channel, $bot] = $this->deliveryContext();
+        if ($channel === 'telegram' && ! $bot) {
+            return $result + ['configuration_error' => 'Bot Telegram kepegawaian belum aktif atau belum dipilih.'];
+        }
 
         $users = User::query()
-            ->with(['masterGuru.dapodikGuru', 'securityShiftAssignment.shift'])
-            ->whereNotNull('phone_number')
-            ->where('phone_number', '!=', '')
+            ->with(['masterGuru.dapodikGuru', 'securityShiftAssignment.shift', 'telegramLinks'])
+            ->when($channel === 'whatsapp', fn ($query) => $query->whereNotNull('phone_number')->where('phone_number', '!=', ''))
+            ->when($channel === 'telegram', fn ($query) => $query->whereHas('telegramLinks', fn ($links) => $links->where('telegram_bot_id', $bot->id)))
             ->whereDoesntHave('roles', fn ($query) => $query->whereRaw('LOWER(name) = ?', ['siswa']))
             ->whereHas('masterGuru', fn ($query) => $query->where('is_active', true))
             ->whereIn('id', FingerprintAttendance::query()
@@ -53,9 +60,9 @@ class FingerprintWhatsappNotificationService
 
         foreach ($users as $user) {
             try {
-                Cache::lock("fingerprint:wa-recap:{$today->toDateString()}:{$user->id}", 60)
-                    ->block(5, function () use ($user, $today, $manual, &$result) {
-                        if (! $manual && $this->alreadySent($user, $today)) {
+                Cache::lock("fingerprint:{$channel}-recap:{$today->toDateString()}:{$user->id}", 60)
+                    ->block(5, function () use ($user, $today, $manual, $channel, $bot, &$result) {
+                        if (! $manual && $this->alreadySent($user, $today, self::EVENT_KEY, $channel, $bot)) {
                             $result['skipped']++;
 
                             return;
@@ -73,13 +80,14 @@ class FingerprintWhatsappNotificationService
                             return;
                         }
 
-                        $response = $this->whatsappService->sendTemplateNotification(
-                            $user->phone_number,
+                        $response = $this->sendNotification(
+                            $channel,
+                            $bot,
+                            $user,
                             self::EVENT_KEY,
                             $this->templateData($user, $recap, $today),
                             $user->name,
                             $manual ? 'fingerprint_rekap_manual' : 'fingerprint_rekap',
-                            $user->id,
                             $today->toDateString(),
                             $manual ? self::EVENT_KEY.'_manual' : null,
                         );
@@ -90,7 +98,8 @@ class FingerprintWhatsappNotificationService
                 $result['skipped']++;
             } catch (Throwable $e) {
                 $result['failed']++;
-                Log::error('Gagal mengirim rekap fingerprint WhatsApp pegawai.', [
+                Log::error('Gagal mengirim rekap fingerprint pegawai.', [
+                    'channel' => $channel,
                     'user_id' => $user->id,
                     'date' => $today->toDateString(),
                     'error' => $e->getMessage(),
@@ -110,15 +119,21 @@ class FingerprintWhatsappNotificationService
 
         $date = ($notificationDate ?? today())->copy()->startOfDay();
         $result = ['sent' => 0, 'skipped' => 0, 'failed' => 0, 'disabled' => false];
+        [$channel, $bot] = $this->deliveryContext();
+        if ($channel === 'telegram' && ! $bot) {
+            return $result + ['configuration_error' => 'Bot Telegram kepegawaian belum aktif atau belum dipilih.'];
+        }
         if ($date->isWeekend() || WorkCalendarEvent::eventFor($date)) {
             return $result;
         }
 
         $teachers = MasterGuru::query()
-            ->with(['user', 'dapodikGuru'])
+            ->with(['user.telegramLinks', 'dapodikGuru'])
             ->where('is_active', true)
             ->whereNotNull('user_id')
-            ->whereHas('user', fn ($query) => $query->whereNotNull('phone_number')->where('phone_number', '!=', ''))
+            ->whereHas('user', fn ($query) => $query
+                ->when($channel === 'whatsapp', fn ($users) => $users->whereNotNull('phone_number')->where('phone_number', '!=', ''))
+                ->when($channel === 'telegram', fn ($users) => $users->whereHas('telegramLinks', fn ($links) => $links->where('telegram_bot_id', $bot->id))))
             ->get(['id', 'user_id', 'nama_lengkap']);
         $dayName = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'][$date->dayOfWeekIso - 1];
         $schedules = JadwalPelajaran::inActiveAcademicPeriod()
@@ -169,7 +184,7 @@ class FingerprintWhatsappNotificationService
             }
 
             try {
-                if (! $manual && $this->alreadySent($teacher->user, $date, self::REMINDER_EVENT_KEY)) {
+                if (! $manual && $this->alreadySent($teacher->user, $date, self::REMINDER_EVENT_KEY, $channel, $bot)) {
                     $result['skipped']++;
 
                     continue;
@@ -177,8 +192,10 @@ class FingerprintWhatsappNotificationService
 
                 $lateMinutes = $firstScan ? (int) ceil($deadline->diffInMinutes($firstScan)) : 0;
                 $status = $firstScan ? 'Terlambat' : 'Tidak Hadir';
-                $response = $this->whatsappService->sendTemplateNotification(
-                    $teacher->user->phone_number,
+                $response = $this->sendNotification(
+                    $channel,
+                    $bot,
+                    $teacher->user,
                     self::REMINDER_EVENT_KEY,
                     [
                         'nama_pegawai' => $teacher->nama_lengkap,
@@ -191,14 +208,14 @@ class FingerprintWhatsappNotificationService
                     ],
                     $teacher->nama_lengkap,
                     $manual ? 'fingerprint_peringatan_manual' : 'fingerprint_peringatan',
-                    $teacher->user->id,
                     $date->toDateString(),
                     $manual ? self::REMINDER_EVENT_KEY.'_manual' : null,
                 );
                 $result[$response['success'] ? 'sent' : 'failed']++;
             } catch (Throwable $e) {
                 $result['failed']++;
-                Log::error('Gagal mengirim pengingat fingerprint WhatsApp pegawai.', [
+                Log::error('Gagal mengirim pengingat fingerprint pegawai.', [
+                    'channel' => $channel,
                     'user_id' => $teacher->user->id,
                     'date' => $date->toDateString(),
                     'error' => $e->getMessage(),
@@ -209,14 +226,44 @@ class FingerprintWhatsappNotificationService
         return $result;
     }
 
-    private function alreadySent(User $user, Carbon $date, string $eventKey = self::EVENT_KEY): bool
+    private function alreadySent(User $user, Carbon $date, string $eventKey, string $channel, ?TelegramBot $bot): bool
     {
+        if ($channel === 'telegram') {
+            return TelegramLog::query()
+                ->where('telegram_bot_id', $bot?->id)
+                ->where('recipient_user_id', $user->id)
+                ->where('event_key', $eventKey)
+                ->whereDate('notification_date', $date)
+                ->whereIn('status', ['sent', 'delivered'])
+                ->exists();
+        }
+
         return WhatsappLog::query()
             ->where('recipient_user_id', $user->id)
             ->where('event_key', $eventKey)
             ->whereDate('notification_date', $date)
             ->whereIn('status', ['sent', 'delivered'])
             ->exists();
+    }
+
+    private function deliveryContext(): array
+    {
+        $setting = FingerprintAutoSyncSetting::getSetting();
+        $channel = $setting->notification_channel === 'telegram' ? 'telegram' : 'whatsapp';
+        $bot = $channel === 'telegram'
+            ? TelegramBot::whereKey($setting->telegram_bot_id)->where('purpose', 'employment')->where('is_active', true)->where('status', 'connected')->first()
+            : null;
+
+        return [$channel, $bot];
+    }
+
+    private function sendNotification(string $channel, ?TelegramBot $bot, User $user, string $eventKey, array $data, string $recipientName, string $logType, string $notificationDate, ?string $logEventKey): array
+    {
+        if ($channel === 'telegram' && $bot) {
+            return $this->telegramService->sendTemplateNotification($bot, $user, $eventKey, $data, $recipientName, $logType, $notificationDate, $logEventKey);
+        }
+
+        return $this->whatsappService->sendTemplateNotification($user->phone_number, $eventKey, $data, $recipientName, $logType, $user->id, $notificationDate, $logEventKey);
     }
 
     private function templateData(User $user, object $recap, Carbon $date): array

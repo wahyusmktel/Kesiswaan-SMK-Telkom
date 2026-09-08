@@ -105,6 +105,7 @@ class FingerprintAutoSyncScheduleTest extends TestCase
             ->putJson(route('super-admin.whatsapp-gateway.fingerprint-notifications.update'), [
                 'notifications_enabled' => true,
                 'notification_time' => '18:00',
+                'notification_channel' => 'whatsapp',
             ]);
 
         $response->assertOk()->assertJson(['success' => true]);
@@ -114,6 +115,7 @@ class FingerprintAutoSyncScheduleTest extends TestCase
         $this->putJson(route('super-admin.whatsapp-gateway.fingerprint-notifications.update'), [
             'notifications_enabled' => true,
             'notification_time' => 'invalid',
+            'notification_channel' => 'whatsapp',
         ])->assertUnprocessable()->assertJsonValidationErrors('notification_time');
     }
 

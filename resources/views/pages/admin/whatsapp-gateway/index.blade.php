@@ -33,19 +33,20 @@
             <div class="space-y-2">
                 <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-bold tracking-wider uppercase backdrop-blur-md">
                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span>WhatsApp Engine 2.0 SPA</span>
+                    <span>WhatsApp & Telegram</span>
                 </div>
                 <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight flex items-center gap-3">
-                    <span>WhatsApp Gateway</span>
+                    <span>Gateway Notifikasi</span>
                     <span class="text-xs bg-emerald-500 text-slate-950 font-black px-2.5 py-1 rounded-lg">SUPERADMIN</span>
                 </h1>
                 <p class="text-emerald-100/80 text-sm max-w-2xl">
-                    Kelola koneksi nomor WhatsApp, konfigurasi trigger bot notifikasi otomatis untuk presensi & perizinan siswa, serta pantau log pengiriman pesan secara real-time.
+                    Kelola kanal WhatsApp atau Telegram, konfigurasi bot notifikasi otomatis, dan pantau pengiriman pesan dari SISFO.
                 </p>
             </div>
 
             <!-- Header Quick Actions -->
             <div class="flex flex-wrap items-center gap-3">
+                <a href="{{ route('super-admin.telegram-bots.index') }}" class="rounded-xl bg-sky-500 px-4 py-2.5 text-sm font-bold text-white shadow-lg transition-all hover:bg-sky-400">Kelola Telegram Bot</a>
                 <button @click="openAddDeviceModal()"
                     class="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/30 hover:shadow-emerald-400/40 transition-all flex items-center space-x-2 transform active:scale-95">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -274,13 +275,22 @@
 
                 <div class="rounded-2xl border border-blue-200 bg-blue-50 p-5">
                     <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                        <div>
+                        <div class="space-y-3">
                             <h4 class="font-extrabold text-slate-800">Jadwal Notifikasi Fingerprint Pegawai</h4>
                             <p class="mt-1 max-w-2xl text-xs leading-relaxed text-slate-600">Pada jam ini sistem mengirim rekap harian kepada pegawai yang memiliki data scan, sekaligus pengingat khusus bagi pegawai yang terlambat atau tidak hadir. Pastikan waktu tarik log kedua tidak melewati jadwal ini.</p>
                             <label class="mt-3 flex items-center gap-2 text-sm font-semibold text-slate-700">
                                 <input type="checkbox" x-model="fingerprintNotificationSettings.notifications_enabled" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
                                 Aktifkan pengiriman otomatis setiap hari
                             </label>
+                            <div class="flex flex-wrap gap-3">
+                                <label class="text-xs font-bold uppercase tracking-wider text-slate-600">Kanal Pengiriman
+                                    <select x-model="fingerprintNotificationSettings.notification_channel" class="mt-1 block rounded-xl border-slate-300 text-sm"><option value="whatsapp">WhatsApp</option><option value="telegram">Telegram</option></select>
+                                </label>
+                                <label x-show="fingerprintNotificationSettings.notification_channel === 'telegram'" class="text-xs font-bold uppercase tracking-wider text-slate-600">Bot Kepegawaian
+                                    <select x-model="fingerprintNotificationSettings.telegram_bot_id" class="mt-1 block rounded-xl border-slate-300 text-sm"><option value="">Pilih bot</option>@foreach($telegramBots as $bot)<option value="{{ $bot->id }}">{{ $bot->name }} ({{ '@'.$bot->bot_username }})</option>@endforeach</select>
+                                </label>
+                            </div>
+                            <p x-show="fingerprintNotificationSettings.notification_channel === 'telegram'" class="text-xs text-sky-800">Telegram memakai chat ID hasil penghubungan akun, bukan mengirim langsung ke nomor HP. <a href="{{ route('super-admin.telegram-bots.index') }}" class="font-bold underline">Kelola bot dan akun terhubung</a>.</p>
                         </div>
                         <div class="flex flex-wrap items-end gap-2">
                             <label class="text-xs font-bold uppercase tracking-wider text-slate-600">Waktu Kirim
@@ -313,11 +323,11 @@
                             </div>
 
                             <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Format Pesan WhatsApp:</label>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Format Pesan Notifikasi (WhatsApp/Telegram):</label>
                                 <textarea x-model="tpl.template_text" rows="5"
                                     @focus="selectedTemplateKey = tpl.event_key"
                                     class="w-full rounded-xl border-slate-300 text-xs font-sans focus:ring-emerald-500 focus:border-emerald-500 shadow-sm leading-relaxed"
-                                    placeholder="Tulis format pesan bot WhatsApp..."></textarea>
+                                    placeholder="Tulis format pesan bot notifikasi..."></textarea>
                             </div>
 
                             <div>
@@ -642,6 +652,8 @@
             fingerprintNotificationSettings: {
                 notifications_enabled: @json((bool) $fingerprintNotificationSetting->notifications_enabled),
                 notification_time: @json(substr((string) $fingerprintNotificationSetting->notification_time, 0, 5)),
+                notification_channel: @json($fingerprintNotificationSetting->notification_channel ?: 'whatsapp'),
+                telegram_bot_id: @json($fingerprintNotificationSetting->telegram_bot_id ? (string) $fingerprintNotificationSetting->telegram_bot_id : ''),
             },
 
             // Modals
@@ -954,6 +966,10 @@
             async saveFingerprintNotificationSettings() {
                 if (!this.fingerprintNotificationSettings.notification_time) {
                     this.showToast('Waktu pengiriman wajib diisi.', 'error');
+                    return;
+                }
+                if (this.fingerprintNotificationSettings.notification_channel === 'telegram' && !this.fingerprintNotificationSettings.telegram_bot_id) {
+                    this.showToast('Pilih bot Telegram kepegawaian terlebih dahulu.', 'error');
                     return;
                 }
                 this.loading = true;
