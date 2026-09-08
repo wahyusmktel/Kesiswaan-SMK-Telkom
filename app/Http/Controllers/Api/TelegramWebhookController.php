@@ -33,24 +33,18 @@ class TelegramWebhookController extends Controller
             $phone = $this->normalizePhone((string) ($contact['phone_number'] ?? ''));
             $users = User::query()
                 ->with('masterGuru.dapodikGuru')
-                ->where(fn ($query) => $query
-                    ->whereNotNull('phone_number')
-                    ->orWhereHas('masterGuru.dapodikGuru', fn ($dapodik) => $dapodik
-                        ->whereNotNull('hp')
-                        ->orWhereNotNull('telepon')))
-                ->get(['id', 'name', 'phone_number'])
-                ->filter(fn ($user) => collect([
-                    $user->phone_number,
-                    $user->masterGuru?->dapodikGuru?->hp,
-                    $user->masterGuru?->dapodikGuru?->telepon,
-                ])->filter()->contains(fn ($candidate) => $this->normalizePhone($candidate) === $phone));
+                ->whereHas('masterGuru.dapodikGuru', fn ($dapodik) => $dapodik
+                    ->whereNotNull('hp')
+                    ->where('hp', '!=', ''))
+                ->get(['id', 'name'])
+                ->filter(fn ($user) => $this->normalizePhone($user->masterGuru?->dapodikGuru?->hp) === $phone);
             if ($users->isEmpty()) {
-                $telegram->reply($telegramBot, $chatId, 'Nomor HP '.$this->displayPhone($phone).' belum ditemukan pada akun maupun profil Dapodik guru di SISFO. Hubungi Superadmin untuk memeriksa data nomor HP Anda.');
+                $telegram->reply($telegramBot, $chatId, 'Nomor HP '.$this->displayPhone($phone).' belum ditemukan pada kolom HP Dapodik Guru yang terhubung ke akun SISFO. Hubungi Superadmin untuk memeriksa data Dapodik dan hubungan akun Anda.');
 
                 return response()->json(['ok' => true]);
             }
             if ($users->count() > 1) {
-                $telegram->reply($telegramBot, $chatId, 'Nomor HP '.$this->displayPhone($phone).' digunakan oleh lebih dari satu akun SISFO. Hubungi Superadmin agar nomor duplikat diperbaiki.');
+                $telegram->reply($telegramBot, $chatId, 'Nomor HP '.$this->displayPhone($phone).' digunakan oleh lebih dari satu data Dapodik Guru. Hubungi Superadmin agar nomor duplikat diperbaiki.');
 
                 return response()->json(['ok' => true]);
             }
@@ -73,7 +67,7 @@ class TelegramWebhookController extends Controller
             return response()->json(['ok' => true]);
         }
 
-        $telegram->reply($telegramBot, $chatId, "Selamat datang di {$telegramBot->name}!\n\nAgar Anda dapat menerima rekap absensi, pengingat keterlambatan, dan notifikasi kepegawaian dari SISFO, tekan tombol Bagikan Nomor HP Saya di bawah ini.\n\nGunakan tombol tersebut agar Telegram mengirim nomor milik Anda secara aman; jangan mengirim kontak secara manual.", [
+        $telegram->reply($telegramBot, $chatId, "Selamat datang di {$telegramBot->name}!\n\nAgar Anda dapat menerima rekap absensi, pengingat keterlambatan, dan notifikasi kepegawaian dari SISFO, tekan tombol Bagikan Nomor HP Saya di bawah ini. Nomor Telegram harus sama dengan kolom HP pada Dapodik Guru Anda.\n\nGunakan tombol tersebut agar Telegram mengirim nomor milik Anda secara aman; jangan mengirim kontak secara manual.", [
             'keyboard' => [[['text' => '📱 Bagikan Nomor HP Saya', 'request_contact' => true]]],
             'resize_keyboard' => true,
             'one_time_keyboard' => true,

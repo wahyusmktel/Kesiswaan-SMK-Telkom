@@ -45,7 +45,7 @@
         </section>
 
         <section class="rounded-2xl border bg-white p-6 shadow-sm">
-            <h3 class="font-bold">Akun Telegram Terhubung</h3><p class="mt-1 text-sm text-gray-500">Pegawai membuka bot, menekan Start, lalu membagikan nomor HP miliknya. Nomor harus sama dengan nomor akun SISFO.</p>
+            <h3 class="font-bold">Akun Telegram Terhubung</h3><p class="mt-1 text-sm text-gray-500">Pegawai membuka bot, menekan Start, lalu membagikan nomor HP miliknya. Nomor harus sama dengan kolom HP Dapodik Guru, dan data guru harus sudah terhubung ke akun SISFO.</p>
             <div class="mt-4 overflow-x-auto"><table class="w-full text-left text-sm"><thead class="bg-gray-50"><tr><th class="p-3">Pegawai</th><th class="p-3">Bot</th><th class="p-3">Telegram</th><th class="p-3">Terhubung</th><th class="p-3">Aksi</th></tr></thead><tbody class="divide-y">
                 @forelse($links as $link)<tr><td class="p-3 font-semibold">{{ $link->user?->name }}</td><td class="p-3">{{ $link->bot?->name }}</td><td class="p-3">{{ $link->telegram_username ? '@'.$link->telegram_username : $link->telegram_name }}</td><td class="p-3">{{ $link->linked_at?->format('d/m/Y H:i') }}</td><td class="p-3"><form method="POST" action="{{ route('super-admin.telegram-links.destroy', $link) }}" onsubmit="return confirm('Lepas hubungan akun Telegram ini?');">@csrf @method('DELETE')<button class="text-xs font-bold text-red-700">Lepaskan</button></form></td></tr>@empty<tr><td colspan="5" class="p-6 text-center text-gray-500">Belum ada akun yang terhubung.</td></tr>@endforelse
             </tbody></table></div><div class="mt-4">{{ $links->links() }}</div>

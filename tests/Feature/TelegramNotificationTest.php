@@ -101,7 +101,7 @@ class TelegramNotificationTest extends TestCase
     {
         $user = User::factory()->create(['name' => 'Guru Telegram', 'phone_number' => '0812-3456-7890']);
         $teacher = MasterGuru::create(['nama_lengkap' => 'Guru Telegram', 'jenis_kelamin' => 'L', 'user_id' => $user->id]);
-        $teacher->dapodikGuru()->create(['nama' => 'Guru Telegram', 'status_kepegawaian' => 'Pegawai Full Time']);
+        $teacher->dapodikGuru()->create(['nama' => 'Guru Telegram', 'status_kepegawaian' => 'Pegawai Full Time', 'hp' => '0812-3456-7890']);
         $bot = $this->createBot();
 
         $this->withHeader('X-Telegram-Bot-Api-Secret-Token', $bot->webhook_secret)
@@ -215,6 +215,25 @@ class TelegramNotificationTest extends TestCase
         ]);
     }
 
+    public function test_phone_on_user_account_alone_cannot_link_without_dapodik_hp(): void
+    {
+        $user = User::factory()->create(['name' => 'Guru Tanpa HP Dapodik', 'phone_number' => '082185903635']);
+        $teacher = MasterGuru::create(['nama_lengkap' => $user->name, 'jenis_kelamin' => 'L', 'user_id' => $user->id]);
+        $teacher->dapodikGuru()->create(['nama' => $user->name, 'status_kepegawaian' => 'Pegawai Tetap', 'hp' => null]);
+        $bot = $this->createBot();
+
+        $this->withHeader('X-Telegram-Bot-Api-Secret-Token', $bot->webhook_secret)
+            ->postJson(route('telegram.webhook', $bot->slug), [
+                'message' => [
+                    'chat' => ['id' => 82185903635, 'type' => 'private'],
+                    'from' => ['id' => 82185903635, 'first_name' => 'Guru'],
+                    'contact' => ['phone_number' => '+6282185903635', 'user_id' => 82185903635],
+                ],
+            ])->assertOk();
+
+        $this->assertDatabaseCount('telegram_user_links', 0);
+    }
+
     public function test_webhook_rejects_an_invalid_secret(): void
     {
         $bot = $this->createBot();
@@ -242,7 +261,7 @@ class TelegramNotificationTest extends TestCase
     {
         $user = User::factory()->create(['name' => $name, 'phone_number' => '08'.$chatId]);
         $teacher = MasterGuru::create(['nama_lengkap' => $name, 'jenis_kelamin' => 'L', 'user_id' => $user->id]);
-        $teacher->dapodikGuru()->create(['nama' => $name, 'status_kepegawaian' => 'Pegawai Full Time']);
+        $teacher->dapodikGuru()->create(['nama' => $name, 'status_kepegawaian' => 'Pegawai Full Time', 'hp' => '08'.$chatId]);
         TelegramUserLink::create([
             'telegram_bot_id' => $bot->id,
             'user_id' => $user->id,
