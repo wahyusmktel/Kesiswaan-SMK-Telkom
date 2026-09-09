@@ -49,8 +49,9 @@ class DapodikGuruImport implements SkipsEmptyRows, ToCollection, WithStartRow
                 continue;
             }
 
-            // Find linked master_guru by NIK
-            $masterGuru = MasterGuru::where('nik', $nik)->first();
+            // TPA memiliki master pegawai sendiri agar pilihan mapping tidak
+            // bercampur dengan guru. Impor ulang juga memperbarui identitasnya.
+            $masterGuru = $this->resolveMasterEmployee($nik, $nama, $row);
             $masterGuruId = $masterGuru?->id;
 
             $data = [
@@ -126,6 +127,37 @@ class DapodikGuruImport implements SkipsEmptyRows, ToCollection, WithStartRow
         }
 
         return trim((string) $value);
+    }
+
+    private function resolveMasterEmployee(string $nik, string $name, $row): ?MasterGuru
+    {
+        $masterGuru = MasterGuru::where('nik', $nik)->first();
+
+        if ($this->employeeCategory !== DapodikGuru::CATEGORY_TPA) {
+            return $masterGuru;
+        }
+
+        $attributes = [
+            'nama_lengkap' => $name,
+            'nik' => $nik,
+            'jenis_kelamin' => in_array($this->str($row[3] ?? null), ['L', 'P'], true)
+                ? $this->str($row[3] ?? null)
+                : ($masterGuru?->jenis_kelamin ?? 'L'),
+            'employee_category' => MasterGuru::CATEGORY_TPA,
+        ];
+
+        $nuptk = $this->str($row[2] ?? null);
+        if ($nuptk && ! MasterGuru::where('nuptk', $nuptk)->when($masterGuru, fn ($query) => $query->whereKeyNot($masterGuru->id))->exists()) {
+            $attributes['nuptk'] = $nuptk;
+        }
+
+        if ($masterGuru) {
+            $masterGuru->update($attributes);
+
+            return $masterGuru->refresh();
+        }
+
+        return MasterGuru::create($attributes);
     }
 
     private function parseDate($value): ?string

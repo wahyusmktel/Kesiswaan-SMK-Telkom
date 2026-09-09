@@ -30,6 +30,9 @@
                             <div>
                                 <h3 class="text-base font-bold text-gray-900">Import {{ $context['label'] }}</h3>
                                 <p class="text-xs text-gray-400">Sinkronisasi data {{ strtolower($context['description']) }} dari aplikasi Dapodik</p>
+                                @if($context['category'] === \App\Models\DapodikGuru::CATEGORY_TPA)
+                                    <p class="mt-1 text-xs text-violet-600">Master pegawai TPA dibuat dan dihubungkan otomatis berdasarkan NIK.</p>
+                                @endif
                             </div>
                         </div>
                         <button @click="showImport=false" class="text-gray-400 hover:text-gray-600 transition-colors">
@@ -283,7 +286,7 @@
                                                     <option value="">Tidak terhubung</option>
                                                     @foreach($employees as $employee)
                                                         <option value="{{ $employee->id }}" {{ (string) $item->master_guru_id === (string) $employee->id ? 'selected' : '' }}>
-                                                            {{ $employee->nama_lengkap }}{{ $employee->kode_guru ? ' - ' . $employee->kode_guru : '' }}{{ $employee->nik ? ' | NIK ' . $employee->nik : '' }}
+                                                            {{ $employee->nama_lengkap }}{{ $employee->kode_guru ? ' - ' . $employee->kode_guru : '' }}{{ $employee->nik ? ' | NIK ' . $employee->nik : '' }}{{ $employee->user ? '' : ' | Belum ada akun SISFO' }}
                                                         </option>
                                                     @endforeach
                                                 </select>

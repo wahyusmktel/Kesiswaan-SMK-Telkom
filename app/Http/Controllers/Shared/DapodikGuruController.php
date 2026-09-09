@@ -51,6 +51,7 @@ class DapodikGuruController extends Controller
         $jenisPtkList = (clone $categoryQuery)->select('jenis_ptk')->distinct()->whereNotNull('jenis_ptk')->orderBy('jenis_ptk')->pluck('jenis_ptk');
 
         $employees = MasterGuru::with('user')
+            ->where('employee_category', $context['category'])
             ->orderBy('nama_lengkap')
             ->get();
 
@@ -202,7 +203,10 @@ class DapodikGuruController extends Controller
         $context = $this->context($request);
         abort_unless($dapodikGuru->employee_category === $context['category'], 404);
         $data = $request->validate([
-            'master_guru_id' => ['nullable', 'exists:master_gurus,id'],
+            'master_guru_id' => [
+                'nullable',
+                Rule::exists('master_gurus', 'id')->where('employee_category', $context['category']),
+            ],
         ]);
 
         DB::transaction(function () use ($dapodikGuru, $data) {

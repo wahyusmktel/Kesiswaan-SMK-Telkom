@@ -9,6 +9,10 @@ class MasterGuru extends Model
 {
     use HasFactory;
 
+    public const CATEGORY_TEACHER = 'guru';
+
+    public const CATEGORY_TPA = 'tpa';
+
     protected $table = 'master_gurus';
 
     protected $casts = ['is_active' => 'boolean'];
@@ -20,6 +24,7 @@ class MasterGuru extends Model
         'nama_lengkap',
         'jenis_kelamin',
         'user_id',
+        'employee_category',
     ];
 
     /**
@@ -43,6 +48,11 @@ class MasterGuru extends Model
     public function dapodikGuru()
     {
         return $this->hasOne(DapodikGuru::class);
+    }
+
+    public function getIsTpaAttribute(): bool
+    {
+        return $this->employee_category === self::CATEGORY_TPA;
     }
 
     public function dapodikSubmissions()
