@@ -1135,6 +1135,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/dapodik-guru/{dapodikGuru}', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'show'])->name('dapodik-guru.show');
         Route::get('/dapodik-guru/{dapodikGuru}/edit', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'edit'])->name('dapodik-guru.edit');
         Route::put('/dapodik-guru/{dapodikGuru}', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'update'])->name('dapodik-guru.update');
+
+        Route::post('/dapodik-tpa/import', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'import'])->name('dapodik-tpa.import');
+        Route::get('/dapodik-tpa', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'index'])->name('dapodik-tpa.index');
+        Route::get('/dapodik-tpa/create', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'create'])->name('dapodik-tpa.create');
+        Route::post('/dapodik-tpa', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'store'])->name('dapodik-tpa.store');
+        Route::patch('/dapodik-tpa/{dapodikGuru}/mapping', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'updateMapping'])->name('dapodik-tpa.mapping.update');
+        Route::get('/dapodik-tpa/{dapodikGuru}', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'show'])->name('dapodik-tpa.show');
+        Route::get('/dapodik-tpa/{dapodikGuru}/edit', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'edit'])->name('dapodik-tpa.edit');
+        Route::put('/dapodik-tpa/{dapodikGuru}', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'update'])->name('dapodik-tpa.update');
     });
 
     Route::middleware('role:Super Admin|KAUR SDM')->prefix('teacher-activity')->name('teacher-activity.')->group(function () {

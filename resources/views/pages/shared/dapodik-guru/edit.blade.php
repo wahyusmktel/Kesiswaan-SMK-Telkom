@@ -2,12 +2,12 @@
     @php $isCreate = $isCreate ?? false; @endphp
     <x-slot name="header">
         <div class="flex items-center gap-3">
-            <a href="{{ $isCreate ? route('dapodik-guru.index') : route('dapodik-guru.show', $dapodikGuru) }}" class="text-gray-400 hover:text-gray-600 transition-colors">
+            <a href="{{ $isCreate ? route($context['route'].'.index') : route($context['route'].'.show', $dapodikGuru) }}" class="text-gray-400 hover:text-gray-600 transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
             </a>
             <div>
                 <h2 class="font-bold text-xl text-gray-800 leading-tight">{{ $isCreate ? 'Tambah Data Dapodik' : 'Edit Data Dapodik' }}</h2>
-                <p class="text-sm text-gray-500 mt-0.5">{{ $isCreate ? 'Input data guru Dapodik secara manual' : $dapodikGuru->nama }}</p>
+                <p class="text-sm text-gray-500 mt-0.5">{{ $isCreate ? 'Input data '.strtolower($context['description']).' Dapodik secara manual' : $dapodikGuru->nama }}</p>
             </div>
         </div>
     </x-slot>
@@ -22,7 +22,7 @@
 
     <div class="py-6">
         <div class="w-full px-4 sm:px-6 lg:px-8">
-            <form method="POST" action="{{ $isCreate ? route('dapodik-guru.store') : route('dapodik-guru.update', $dapodikGuru) }}">
+            <form method="POST" action="{{ $isCreate ? route($context['route'].'.store') : route($context['route'].'.update', $dapodikGuru) }}">
                 @csrf
                 @unless($isCreate)
                     @method('PUT')
@@ -319,7 +319,7 @@
 
                     {{-- Actions --}}
                     <div class="flex items-center justify-end gap-3 pb-6">
-                        <a href="{{ $isCreate ? route('dapodik-guru.index') : route('dapodik-guru.show', $dapodikGuru) }}"
+                        <a href="{{ $isCreate ? route($context['route'].'.index') : route($context['route'].'.show', $dapodikGuru) }}"
                             class="px-5 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
                             Batal
                         </a>

@@ -6,10 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class DapodikGuru extends Model
 {
+    public const CATEGORY_TEACHER = 'guru';
+
+    public const CATEGORY_TPA = 'tpa';
+
     protected $table = 'dapodik_gurus';
 
     protected $fillable = [
         'master_guru_id',
+        'employee_category',
         'nik', 'nama', 'nuptk', 'jenis_kelamin', 'tempat_lahir', 'tanggal_lahir', 'agama', 'kewarganegaraan',
         'nip', 'status_kepegawaian', 'jenis_ptk', 'tugas_tambahan',
         'sk_cpns', 'tanggal_cpns', 'sk_pengangkatan', 'tmt_pengangkatan',
@@ -23,10 +28,10 @@ class DapodikGuru extends Model
     ];
 
     protected $casts = [
-        'tanggal_lahir'   => 'date',
-        'tanggal_cpns'    => 'date',
-        'tmt_pengangkatan'=> 'date',
-        'tmt_pns'         => 'date',
+        'tanggal_lahir' => 'date',
+        'tanggal_cpns' => 'date',
+        'tmt_pengangkatan' => 'date',
+        'tmt_pns' => 'date',
     ];
 
     public function masterGuru()
@@ -36,7 +41,7 @@ class DapodikGuru extends Model
 
     public function getJenisKelaminLabelAttribute(): string
     {
-        return match($this->jenis_kelamin) {
+        return match ($this->jenis_kelamin) {
             'L' => 'Laki-laki',
             'P' => 'Perempuan',
             default => '-',
@@ -46,5 +51,10 @@ class DapodikGuru extends Model
     public function getIsLinkedAttribute(): bool
     {
         return $this->master_guru_id !== null;
+    }
+
+    public function getIsTpaAttribute(): bool
+    {
+        return $this->employee_category === self::CATEGORY_TPA;
     }
 }

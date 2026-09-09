@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-bold text-xl text-gray-800 leading-tight">Data Dapodik Guru</h2>
+        <h2 class="font-bold text-xl text-gray-800 leading-tight">Data {{ $context['label'] }}</h2>
         <p class="text-sm text-gray-500 mt-0.5">Integrasi data Dapodik dengan data pegawai berdasarkan NIK</p>
     </x-slot>
 
@@ -28,8 +28,8 @@
                                 <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                             </div>
                             <div>
-                                <h3 class="text-base font-bold text-gray-900">Import Data Dapodik</h3>
-                                <p class="text-xs text-gray-400">Sinkronisasi data guru dari aplikasi Dapodik</p>
+                                <h3 class="text-base font-bold text-gray-900">Import {{ $context['label'] }}</h3>
+                                <p class="text-xs text-gray-400">Sinkronisasi data {{ strtolower($context['description']) }} dari aplikasi Dapodik</p>
                             </div>
                         </div>
                         <button @click="showImport=false" class="text-gray-400 hover:text-gray-600 transition-colors">
@@ -58,7 +58,7 @@
                     </div>
 
                     {{-- Upload form --}}
-                    <form method="POST" action="{{ route('dapodik-guru.import') }}" enctype="multipart/form-data">
+                    <form method="POST" action="{{ route($context['route'].'.import') }}" enctype="multipart/form-data">
                         @csrf
                         <div x-data="{ fileName: '' }">
                             <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-all group">
@@ -141,7 +141,7 @@
 
                 {{-- Search & Filter --}}
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-                    <form method="GET" action="{{ route('dapodik-guru.index') }}" class="flex flex-col sm:flex-row gap-3">
+                    <form method="GET" action="{{ route($context['route'].'.index') }}" class="flex flex-col sm:flex-row gap-3">
                         <div class="relative flex-1">
                             <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                             <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama, NIK, NUPTK, NIP..."
@@ -160,7 +160,7 @@
                         </select>
                         <button type="submit" class="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-500 transition-colors shrink-0">Filter</button>
                         @if(request('search') || request('status') || request('jenis_ptk'))
-                            <a href="{{ route('dapodik-guru.index') }}" class="px-4 py-2.5 border border-gray-200 text-gray-500 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors text-center shrink-0">Reset</a>
+                            <a href="{{ route($context['route'].'.index') }}" class="px-4 py-2.5 border border-gray-200 text-gray-500 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors text-center shrink-0">Reset</a>
                         @endif
                     </form>
                 </div>
@@ -169,11 +169,11 @@
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                         <div>
-                            <h3 class="font-bold text-gray-900">Daftar Data Dapodik Guru</h3>
+                            <h3 class="font-bold text-gray-900">Daftar {{ $context['label'] }}</h3>
                             <p class="text-xs text-gray-400 mt-0.5">Menampilkan {{ $dapodikGurus->count() }} dari {{ $dapodikGurus->total() }} data</p>
                         </div>
                         <div class="flex flex-col sm:flex-row gap-2">
-                            <a href="{{ route('dapodik-guru.create') }}"
+                            <a href="{{ route($context['route'].'.create') }}"
                                 class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-xl shadow-sm transition-all">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                                 Tambah
@@ -191,7 +191,7 @@
                             <thead>
                                 <tr class="bg-gray-50 border-b border-gray-100">
                                     <th class="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider w-8">#</th>
-                                    <th class="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Nama Guru</th>
+                                    <th class="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Nama {{ $context['person_label'] }}</th>
                                     <th class="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">NIK / NUPTK</th>
                                     <th class="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Jenis PTK</th>
                                     <th class="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Status Kepegawaian</th>
@@ -276,7 +276,7 @@
 
                                         {{-- Link akun --}}
                                         <td class="px-6 py-4">
-                                            <form method="POST" action="{{ route('dapodik-guru.mapping.update', $item) }}" class="flex min-w-[300px] items-center gap-2">
+                                            <form method="POST" action="{{ route($context['route'].'.mapping.update', $item) }}" class="flex min-w-[300px] items-center gap-2">
                                                 @csrf
                                                 @method('PATCH')
                                                 <select name="master_guru_id" class="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
@@ -301,11 +301,11 @@
                                         {{-- Actions --}}
                                         <td class="px-6 py-4">
                                             <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <a href="{{ route('dapodik-guru.show', $item) }}"
+                                                <a href="{{ route($context['route'].'.show', $item) }}"
                                                     class="w-8 h-8 rounded-lg flex items-center justify-center text-blue-600 hover:bg-blue-50 transition-colors" title="Detail">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                                 </a>
-                                                <a href="{{ route('dapodik-guru.edit', $item) }}"
+                                                <a href="{{ route($context['route'].'.edit', $item) }}"
                                                     class="w-8 h-8 rounded-lg flex items-center justify-center text-amber-600 hover:bg-amber-50 transition-colors" title="Edit">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                                 </a>

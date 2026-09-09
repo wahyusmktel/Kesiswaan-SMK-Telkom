@@ -36,6 +36,10 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (Throwable $e, Request $request) {
+            if (method_exists($e, 'getStatusCode') && $e->getStatusCode() === 503 && ! $request->expectsJson()) {
+                return response()->view('errors.503', [], 503, ['Retry-After' => '30']);
+            }
+
             // Biarkan Laravel menangani validasi web secara normal: kembali ke
             // formulir dengan old input dan pesan error, bukan halaman debug.
             if ($e instanceof ValidationException || $e instanceof AuthenticationException) {

@@ -22,7 +22,7 @@ class MonitoringController extends Controller
 {
     public const SECTIONS = [
         'keterlambatan' => 'Monitoring Keterlambatan Siswa',
-        'fingerprint' => 'Monitoring Absensi Fingerprint Guru',
+        'fingerprint' => 'Monitoring Absensi Fingerprint Pegawai',
         'jadwal' => 'Jadwal Mengajar Guru',
         'izin-siswa' => 'Monitoring Izin Siswa',
         'pelanggaran' => 'Monitoring Poin Pelanggaran Siswa',
@@ -153,12 +153,13 @@ class MonitoringController extends Controller
         $rows = $teachers->map(function ($teacher) use ($scans, $workingDay, $schedules, $approvedLeaves, $holiday, $date, $setting) {
             $scan = $teacher->user_id ? $scans->get($teacher->user_id) : null;
             $employment = EmploymentStatus::normalize($teacher->dapodikGuru?->status_kepegawaian);
-            $recognized = in_array($employment, [EmploymentStatus::PERMANENT, EmploymentStatus::FULL_TIME, EmploymentStatus::PART_TIME], true);
+            $isTpa = (bool) $teacher->dapodikGuru?->is_tpa;
+            $recognized = $isTpa || in_array($employment, [EmploymentStatus::PERMANENT, EmploymentStatus::FULL_TIME, EmploymentStatus::PART_TIME], true);
             $schedule = $schedules->get($teacher->id);
             $approvedLeave = $approvedLeaves->get($teacher->id);
-            $required = ! $approvedLeave && $recognized && $workingDay && ($employment !== EmploymentStatus::PART_TIME || $schedule !== null);
+            $required = ! $approvedLeave && $recognized && $workingDay && ($isTpa || $employment !== EmploymentStatus::PART_TIME || $schedule !== null);
             $deadline = $required
-                ? Carbon::parse($date->toDateString().' '.($employment === EmploymentStatus::PART_TIME ? $schedule->starts_at : $setting->checkin_end))
+                ? Carbon::parse($date->toDateString().' '.(! $isTpa && $employment === EmploymentStatus::PART_TIME ? $schedule->starts_at : $setting->checkin_end))
                 : null;
             $firstScan = $scan ? Carbon::parse($scan->first_scan) : null;
             $deadlinePassed = $deadline && now()->greaterThan($deadline);
@@ -175,6 +176,7 @@ class MonitoringController extends Controller
                 (bool) $approvedLeave => 'Izin '.$approvedLeave->jenis_izin.' · '.$approvedLeave->tanggal_mulai->format('d/m H:i').'–'.$approvedLeave->tanggal_selesai->format('d/m H:i'),
                 ! $recognized => 'Status kepegawaian perlu diperiksa',
                 ! $workingDay => $holiday ? 'Libur: '.$holiday->title : 'Akhir pekan',
+                $isTpa => 'TPA · wajib hadir hari kerja',
                 $employment === EmploymentStatus::PART_TIME && ! $schedule => 'Tidak ada jadwal mengajar',
                 $employment === EmploymentStatus::PART_TIME => 'Jadwal '.substr($schedule->starts_at, 0, 5).'–'.substr($schedule->ends_at, 0, 5),
                 default => 'Wajib hadir hari kerja',

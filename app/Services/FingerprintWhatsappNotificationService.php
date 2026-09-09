@@ -11,9 +11,9 @@ use App\Models\MasterGuru;
 use App\Models\TelegramBot;
 use App\Models\TelegramLog;
 use App\Models\User;
-use App\Models\WorkCalendarEvent;
 use App\Models\WhatsappLog;
 use App\Models\WhatsappTemplate;
+use App\Models\WorkCalendarEvent;
 use App\Support\AttendanceDuration;
 use App\Support\EmploymentStatus;
 use App\Support\MyFingerprintAttendance;
@@ -160,7 +160,8 @@ class FingerprintWhatsappNotificationService
 
         foreach ($teachers as $teacher) {
             $employment = EmploymentStatus::normalize($teacher->dapodikGuru?->status_kepegawaian);
-            if (! in_array($employment, [EmploymentStatus::PERMANENT, EmploymentStatus::FULL_TIME, EmploymentStatus::PART_TIME], true)
+            $isTpa = (bool) $teacher->dapodikGuru?->is_tpa;
+            if ((! $isTpa && ! in_array($employment, [EmploymentStatus::PERMANENT, EmploymentStatus::FULL_TIME, EmploymentStatus::PART_TIME], true))
                 || in_array($teacher->id, $leaves, true)) {
                 $result['skipped']++;
 
@@ -168,13 +169,13 @@ class FingerprintWhatsappNotificationService
             }
 
             $schedule = $schedules->get($teacher->id);
-            if ($employment === EmploymentStatus::PART_TIME && ! $schedule) {
+            if (! $isTpa && $employment === EmploymentStatus::PART_TIME && ! $schedule) {
                 $result['skipped']++;
 
                 continue;
             }
 
-            $deadline = Carbon::parse($date->toDateString().' '.($employment === EmploymentStatus::PART_TIME ? $schedule->starts_at : $setting->checkin_end));
+            $deadline = Carbon::parse($date->toDateString().' '.(! $isTpa && $employment === EmploymentStatus::PART_TIME ? $schedule->starts_at : $setting->checkin_end));
             $firstScan = $scans->get($teacher->user_id)?->first_scan;
             $firstScan = $firstScan ? Carbon::parse($firstScan) : null;
             if (now()->lessThanOrEqualTo($deadline) || ($firstScan && $firstScan->lessThanOrEqualTo($deadline))) {

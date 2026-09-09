@@ -40,7 +40,8 @@ class FingerprintReportController extends Controller
         $trend = $days->mapWithKeys(fn ($d) => [$d['date']->toDateString() => ['label' => $d['date']->format('d/m'), 'present' => 0, 'late' => 0, 'absent' => 0]])->all();
         $rows = $teachers->map(function ($teacher) use ($days, $scans, $schedules, $leaves, $setting, $now, &$trend) {
             $employment = EmploymentStatus::normalize($teacher->dapodikGuru?->status_kepegawaian);
-            $recognized = in_array($employment, [EmploymentStatus::PERMANENT, EmploymentStatus::FULL_TIME, EmploymentStatus::PART_TIME], true);
+            $isTpa = (bool) $teacher->dapodikGuru?->is_tpa;
+            $recognized = $isTpa || in_array($employment, [EmploymentStatus::PERMANENT, EmploymentStatus::FULL_TIME, EmploymentStatus::PART_TIME], true);
             $row = ['name' => $teacher->nama_lengkap, 'employment' => $employment ?: 'Belum diisi', 'present' => 0, 'late' => 0, 'absent' => 0, 'leave' => 0];
             $in = [];
             $out = [];
@@ -63,10 +64,10 @@ class FingerprintReportController extends Controller
                 }
                 $dayName = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'][$day['date']->dayOfWeekIso - 1];
                 $schedule = $schedules->get($teacher->id.'|'.$dayName);
-                if (! $recognized || ! $day['working'] || ($employment === EmploymentStatus::PART_TIME && ! $schedule)) {
+                if (! $recognized || ! $day['working'] || (! $isTpa && $employment === EmploymentStatus::PART_TIME && ! $schedule)) {
                     continue;
                 }
-                $deadline = Carbon::parse($key.' '.($employment === EmploymentStatus::PART_TIME ? $schedule->starts_at : $setting->checkin_end));
+                $deadline = Carbon::parse($key.' '.(! $isTpa && $employment === EmploymentStatus::PART_TIME ? $schedule->starts_at : $setting->checkin_end));
                 if ($scan && Carbon::parse($scan->first_scan)->gt($deadline)) {
                     $row['late']++;
                     $trend[$key]['late']++;

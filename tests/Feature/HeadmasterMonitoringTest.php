@@ -197,7 +197,7 @@ class HeadmasterMonitoringTest extends TestCase
         $year->update(['is_active' => false]);
         $this->get($url)->assertOk()->assertViewHas('summary', fn ($s) => $s['required'] === 2 && $s['required_present'] === 1);
         \App\Models\WorkCalendarEvent::create(['title' => 'Libur Test', 'type' => 'holiday', 'is_non_working' => true, 'date_from' => '2026-09-04', 'date_to' => '2026-09-04']);
-        $this->get($url)->assertOk()->assertViewHas('summary', fn ($s) => $s['required'] === 0 && $s['required_present'] === 0)->assertSee('Tidak ada guru wajib hadir');
+        $this->get($url)->assertOk()->assertViewHas('summary', fn ($s) => $s['required'] === 0 && $s['required_present'] === 0)->assertSee('Tidak ada pegawai wajib hadir');
         $this->get(route('kepala-sekolah.monitoring.index', ['section' => 'fingerprint', 'date' => '2026-09-05']))->assertOk()->assertViewHas('summary', fn ($s) => $s['required'] === 0);
     }
 
@@ -211,7 +211,7 @@ class HeadmasterMonitoringTest extends TestCase
 
         Carbon::setTestNow('2026-09-07 07:00:00');
         $this->get($url)->assertOk()->assertViewHas('rows', fn ($rows) => $rows->first()['status'] === 'Menunggu Absensi')
-            ->assertSee('Line chart jumlah scan pertama guru per jam');
+            ->assertSee('Line chart jumlah scan pertama pegawai per jam');
         Carbon::setTestNow('2026-09-07 08:00:00');
         $this->get($url)->assertOk()->assertViewHas('summary', fn ($summary) => $summary['absent'] === 1 && $summary['pending'] === 0);
 
@@ -233,6 +233,30 @@ class HeadmasterMonitoringTest extends TestCase
         $this->get($url)->assertOk()->assertViewHas('rows', fn ($rows) => $rows->first()['status'] === 'Izin')
             ->assertViewHas('summary', fn ($summary) => $summary['leave'] === 1 && $summary['required'] === 0 && $summary['absent'] === 0 && $summary['late'] === 0)
             ->assertSee('Izin Sakit');
+        Carbon::setTestNow();
+    }
+
+    public function test_tpa_is_required_full_day_without_a_teaching_schedule(): void
+    {
+        $this->login();
+        $employeeUser = User::factory()->create();
+        $employee = MasterGuru::create(['nama_lengkap' => 'TPA Wajib Harian', 'jenis_kelamin' => 'L', 'user_id' => $employeeUser->id]);
+        $employee->dapodikGuru()->create([
+            'employee_category' => 'tpa',
+            'nama' => $employee->nama_lengkap,
+            'status_kepegawaian' => 'Pegawai Part Time',
+            'jenis_ptk' => 'Tenaga Administrasi Sekolah',
+        ]);
+
+        Carbon::setTestNow('2026-09-07 08:00:00');
+        $response = $this->get(route('kepala-sekolah.monitoring.index', [
+            'section' => 'fingerprint',
+            'date' => '2026-09-07',
+        ]));
+
+        $response->assertOk()
+            ->assertViewHas('summary', fn ($summary) => $summary['required'] === 1 && $summary['absent'] === 1)
+            ->assertViewHas('rows', fn ($rows) => $rows->firstWhere('name', 'TPA Wajib Harian')['obligation'] === 'TPA · wajib hadir hari kerja');
         Carbon::setTestNow();
     }
 

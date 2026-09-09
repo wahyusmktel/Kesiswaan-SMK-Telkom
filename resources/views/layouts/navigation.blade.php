@@ -2458,6 +2458,18 @@
                 </a>
             </li>
 
+            <li>
+                <a href="{{ route('dapodik-tpa.index') }}"
+                    class="nav-link {{ request()->routeIs('dapodik-tpa.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                    <div class="nav-icon-container">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2m7-10a4 4 0 100-8 4 4 0 000 8zm13 10v-2a4 4 0 00-3-3.87m-1-7.26a4 4 0 010 7.75"/>
+                        </svg>
+                    </div>
+                    <span class="nav-text">Dapodik TPA</span>
+                </a>
+            </li>
+
             {{-- ====== MANAJEMEN PEGAWAI (KAUR SDM) ====== --}}
             <li>
                 <a href="{{ route('manajemen-pegawai.index') }}"
@@ -2842,6 +2854,17 @@
                     </svg>
                 </div>
                 <span class="nav-text">Dapodik Guru</span>
+            </a>
+        </li>
+        <li>
+            <a href="{{ route('dapodik-tpa.index') }}"
+                class="nav-link {{ request()->routeIs('dapodik-tpa.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                <div class="nav-icon-container">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2m7-10a4 4 0 100-8 4 4 0 000 8zm13 10v-2a4 4 0 00-3-3.87m-1-7.26a4 4 0 010 7.75"/>
+                    </svg>
+                </div>
+                <span class="nav-text">Dapodik TPA</span>
             </a>
         </li>
         {{-- Verifikasi Dapodik Guru (Operator only — not KAUR SDM) --}}

@@ -55,7 +55,7 @@ class MyFingerprintAttendance
 
         return [
             'labels' => $items
-                ->map(fn ($recap) => self::indonesianDayName(Carbon::parse($recap->tanggal)) . ', ' . Carbon::parse($recap->tanggal)->format('d M'))
+                ->map(fn ($recap) => self::indonesianDayName(Carbon::parse($recap->tanggal)).', '.Carbon::parse($recap->tanggal)->format('d M'))
                 ->all(),
             'checkinTimes' => $items
                 ->map(fn ($recap) => self::minutesFromTimestamp($recap->scan_masuk))
@@ -127,7 +127,7 @@ class MyFingerprintAttendance
                 }
             }
 
-            $hasCheckout = $firstScan && $lastScan && !$firstScan->equalTo($lastScan);
+            $hasCheckout = $firstScan && $lastScan && ! $firstScan->equalTo($lastScan);
             $lateMinutes = 0;
             $earlyMinutes = 0;
             $notes = [];
@@ -135,21 +135,21 @@ class MyFingerprintAttendance
             if ($rule['required']) {
                 if ($firstScan && $rule['checkin_deadline'] && $firstScan->greaterThan($rule['checkin_deadline'])) {
                     $lateMinutes = (int) ceil($rule['checkin_deadline']->diffInMinutes($firstScan));
-                    $notes[] = 'Terlambat ' . AttendanceDuration::humanizeMinutes($lateMinutes);
+                    $notes[] = 'Terlambat '.AttendanceDuration::humanizeMinutes($lateMinutes);
                 }
 
                 if ($hasCheckout && $rule['checkout_minimum'] && $lastScan->lessThan($rule['checkout_minimum'])) {
                     $earlyMinutes = (int) ceil($lastScan->diffInMinutes($rule['checkout_minimum']));
-                    $notes[] = 'Pulang cepat ' . AttendanceDuration::humanizeMinutes($earlyMinutes);
+                    $notes[] = 'Pulang cepat '.AttendanceDuration::humanizeMinutes($earlyMinutes);
                 }
-            } elseif (!empty($rule['note'])) {
+            } elseif (! empty($rule['note'])) {
                 $notes[] = $rule['note'];
             }
 
             $statusText = match (true) {
-                !$rule['required'] && !$firstScan => 'Tidak Wajib Hadir',
-                !$rule['required'] && (bool) $firstScan => 'Hadir Opsional',
-                !$firstScan => 'Belum Ada Scan',
+                ! $rule['required'] && ! $firstScan => 'Tidak Wajib Hadir',
+                ! $rule['required'] && (bool) $firstScan => 'Hadir Opsional',
+                ! $firstScan => 'Belum Ada Scan',
                 $hasCheckout => 'Hadir Lengkap',
                 default => 'Belum Scan Pulang',
             };
@@ -181,7 +181,10 @@ class MyFingerprintAttendance
             return $nonWorkingRule;
         }
 
-        $status = EmploymentStatus::normalize($user->masterGuru?->dapodikGuru?->status_kepegawaian);
+        $dapodik = $user->masterGuru?->dapodikGuru;
+        $status = $dapodik?->is_tpa
+            ? EmploymentStatus::ACADEMIC_SUPPORT
+            : EmploymentStatus::normalize($dapodik?->status_kepegawaian);
 
         if ($status === EmploymentStatus::PART_TIME) {
             return self::partTimeAttendanceRule($user, $date);
@@ -208,7 +211,7 @@ class MyFingerprintAttendance
                 'end_at' => null,
                 'use_shift_window' => false,
                 'label' => $calendarEvent->type_label,
-                'note' => $calendarEvent->type_label . ': ' . $calendarEvent->title,
+                'note' => $calendarEvent->type_label.': '.$calendarEvent->title,
             ];
         }
 
@@ -235,10 +238,10 @@ class MyFingerprintAttendance
 
         return [
             'required' => $required,
-            'checkin_deadline' => $required ? Carbon::parse($date . ' ' . $setting->checkin_end) : null,
-            'checkout_minimum' => $required ? Carbon::parse($date . ' ' . $setting->checkout_start) : null,
-            'start_at' => $required ? Carbon::parse($date . ' ' . $setting->checkin_start) : null,
-            'end_at' => $required ? Carbon::parse($date . ' ' . $setting->checkout_end) : null,
+            'checkin_deadline' => $required ? Carbon::parse($date.' '.$setting->checkin_end) : null,
+            'checkout_minimum' => $required ? Carbon::parse($date.' '.$setting->checkout_start) : null,
+            'start_at' => $required ? Carbon::parse($date.' '.$setting->checkin_start) : null,
+            'end_at' => $required ? Carbon::parse($date.' '.$setting->checkout_end) : null,
             'use_shift_window' => false,
             'label' => 'Full day',
             'note' => $required ? null : 'Tidak wajib hadir akhir pekan',
@@ -250,7 +253,7 @@ class MyFingerprintAttendance
         $masterGuruId = $user->masterGuru?->id;
         $dayName = self::indonesianDayName(Carbon::parse($date));
 
-        if (!$masterGuruId) {
+        if (! $masterGuruId) {
             return [
                 'required' => false,
                 'checkin_deadline' => null,
@@ -269,7 +272,7 @@ class MyFingerprintAttendance
             ->selectRaw('MIN(jam_mulai) as starts_at, MAX(jam_selesai) as ends_at, COUNT(*) as total')
             ->first();
 
-        if (!$schedule || (int) $schedule->total === 0) {
+        if (! $schedule || (int) $schedule->total === 0) {
             return [
                 'required' => false,
                 'checkin_deadline' => null,
@@ -284,12 +287,12 @@ class MyFingerprintAttendance
 
         return [
             'required' => true,
-            'checkin_deadline' => Carbon::parse($date . ' ' . $schedule->starts_at),
-            'checkout_minimum' => Carbon::parse($date . ' ' . $schedule->ends_at),
-            'start_at' => Carbon::parse($date . ' ' . $schedule->starts_at),
-            'end_at' => Carbon::parse($date . ' ' . $schedule->ends_at),
+            'checkin_deadline' => Carbon::parse($date.' '.$schedule->starts_at),
+            'checkout_minimum' => Carbon::parse($date.' '.$schedule->ends_at),
+            'start_at' => Carbon::parse($date.' '.$schedule->starts_at),
+            'end_at' => Carbon::parse($date.' '.$schedule->ends_at),
             'use_shift_window' => false,
-            'label' => 'Part time ' . substr($schedule->starts_at, 0, 5) . '-' . substr($schedule->ends_at, 0, 5),
+            'label' => 'Part time '.substr($schedule->starts_at, 0, 5).'-'.substr($schedule->ends_at, 0, 5),
             'note' => null,
         ];
     }
@@ -298,7 +301,7 @@ class MyFingerprintAttendance
     {
         $shift = $user->securityShiftAssignment?->shift;
 
-        if (!$shift) {
+        if (! $shift) {
             return [
                 'required' => false,
                 'checkin_deadline' => null,
@@ -311,8 +314,8 @@ class MyFingerprintAttendance
             ];
         }
 
-        $startAt = Carbon::parse($date . ' ' . $shift->starts_at);
-        $endAt = Carbon::parse($date . ' ' . $shift->ends_at);
+        $startAt = Carbon::parse($date.' '.$shift->starts_at);
+        $endAt = Carbon::parse($date.' '.$shift->ends_at);
         if ($shift->is_overnight || $endAt->lessThanOrEqualTo($startAt)) {
             $endAt->addDay();
         }
@@ -324,7 +327,7 @@ class MyFingerprintAttendance
             'start_at' => $startAt,
             'end_at' => $endAt,
             'use_shift_window' => true,
-            'label' => $shift->name . ' ' . $startAt->format('H:i') . '-' . $endAt->format('H:i'),
+            'label' => $shift->name.' '.$startAt->format('H:i').'-'.$endAt->format('H:i'),
             'note' => null,
         ];
     }
@@ -344,7 +347,7 @@ class MyFingerprintAttendance
 
     private static function minutesFromTimestamp($timestamp): ?int
     {
-        if (!$timestamp) {
+        if (! $timestamp) {
             return null;
         }
 

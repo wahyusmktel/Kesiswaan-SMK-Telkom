@@ -17,15 +17,16 @@ class DapodikGuruController extends Controller
 {
     public function index(Request $request)
     {
-        $query = DapodikGuru::with('masterGuru.user');
+        $context = $this->context($request);
+        $query = DapodikGuru::with('masterGuru.user')->where('employee_category', $context['category']);
 
         if ($request->filled('search')) {
             $s = $request->search;
             $query->where(function ($q) use ($s) {
                 $q->where('nama', 'like', "%{$s}%")
-                  ->orWhere('nik', 'like', "%{$s}%")
-                  ->orWhere('nuptk', 'like', "%{$s}%")
-                  ->orWhere('nip', 'like', "%{$s}%");
+                    ->orWhere('nik', 'like', "%{$s}%")
+                    ->orWhere('nuptk', 'like', "%{$s}%")
+                    ->orWhere('nip', 'like', "%{$s}%");
             });
         }
 
@@ -43,42 +44,52 @@ class DapodikGuruController extends Controller
 
         $dapodikGurus = $query->orderBy('nama')->paginate(20)->withQueryString();
 
-        $totalDapodik  = DapodikGuru::count();
-        $totalLinked   = DapodikGuru::whereNotNull('master_guru_id')->count();
-        $totalUnlinked = DapodikGuru::whereNull('master_guru_id')->count();
-        $jenisPtkList  = DapodikGuru::select('jenis_ptk')->distinct()->whereNotNull('jenis_ptk')->orderBy('jenis_ptk')->pluck('jenis_ptk');
+        $categoryQuery = DapodikGuru::where('employee_category', $context['category']);
+        $totalDapodik = (clone $categoryQuery)->count();
+        $totalLinked = (clone $categoryQuery)->whereNotNull('master_guru_id')->count();
+        $totalUnlinked = (clone $categoryQuery)->whereNull('master_guru_id')->count();
+        $jenisPtkList = (clone $categoryQuery)->select('jenis_ptk')->distinct()->whereNotNull('jenis_ptk')->orderBy('jenis_ptk')->pluck('jenis_ptk');
 
         $employees = MasterGuru::with('user')
             ->orderBy('nama_lengkap')
             ->get();
 
         return view('pages.shared.dapodik-guru.index', compact(
-            'dapodikGurus', 'totalDapodik', 'totalLinked', 'totalUnlinked', 'jenisPtkList', 'employees'
+            'dapodikGurus', 'totalDapodik', 'totalLinked', 'totalUnlinked', 'jenisPtkList', 'employees', 'context'
         ));
     }
 
-    public function show(DapodikGuru $dapodikGuru)
+    public function show(Request $request, DapodikGuru $dapodikGuru)
     {
+        $context = $this->context($request);
+        abort_unless($dapodikGuru->employee_category === $context['category'], 404);
         $dapodikGuru->load('masterGuru.user.roles');
-        return view('pages.shared.dapodik-guru.show', compact('dapodikGuru'));
+
+        return view('pages.shared.dapodik-guru.show', compact('dapodikGuru', 'context'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        $dapodikGuru = new DapodikGuru();
+        $dapodikGuru = new DapodikGuru;
         $isCreate = true;
+        $context = $this->context($request);
 
-        return view('pages.shared.dapodik-guru.edit', compact('dapodikGuru', 'isCreate'));
+        return view('pages.shared.dapodik-guru.edit', compact('dapodikGuru', 'isCreate', 'context'));
     }
 
-    public function edit(DapodikGuru $dapodikGuru)
+    public function edit(Request $request, DapodikGuru $dapodikGuru)
     {
+        $context = $this->context($request);
+        abort_unless($dapodikGuru->employee_category === $context['category'], 404);
         $dapodikGuru->load('masterGuru.user');
-        return view('pages.shared.dapodik-guru.edit', compact('dapodikGuru'));
+        $isCreate = false;
+
+        return view('pages.shared.dapodik-guru.edit', compact('dapodikGuru', 'isCreate', 'context'));
     }
 
     public function store(Request $request)
     {
+        $context = $this->context($request);
         $data = $this->validatedData($request);
 
         try {
@@ -89,15 +100,15 @@ class DapodikGuruController extends Controller
 
             $dapodikGuru = DapodikGuru::create(array_merge(
                 $data,
-                ['master_guru_id' => $masterGuru?->id]
+                ['master_guru_id' => $masterGuru?->id, 'employee_category' => $context['category']]
             ));
 
-            toast('Data dapodik guru berhasil ditambahkan.', 'success');
+            toast('Data '.$context['label'].' berhasil ditambahkan.', 'success');
 
-            return redirect()->route('dapodik-guru.show', $dapodikGuru);
+            return redirect()->route($context['route'].'.show', $dapodikGuru);
         } catch (\Exception $e) {
-            Log::error('DapodikGuru store error: ' . $e->getMessage());
-            toast('Gagal menambahkan: ' . $e->getMessage(), 'error');
+            Log::error('DapodikGuru store error: '.$e->getMessage());
+            toast('Gagal menambahkan: '.$e->getMessage(), 'error');
 
             return back()->withInput();
         }
@@ -105,6 +116,8 @@ class DapodikGuruController extends Controller
 
     public function update(Request $request, DapodikGuru $dapodikGuru)
     {
+        $context = $this->context($request);
+        abort_unless($dapodikGuru->employee_category === $context['category'], 404);
         $data = $this->validatedData($request, $dapodikGuru);
 
         try {
@@ -121,71 +134,73 @@ class DapodikGuruController extends Controller
 
             toast('Data dapodik berhasil diperbarui.', 'success');
         } catch (\Exception $e) {
-            Log::error('DapodikGuru update error: ' . $e->getMessage());
-            toast('Gagal menyimpan: ' . $e->getMessage(), 'error');
+            Log::error('DapodikGuru update error: '.$e->getMessage());
+            toast('Gagal menyimpan: '.$e->getMessage(), 'error');
         }
 
-        return redirect()->route('dapodik-guru.show', $dapodikGuru);
+        return redirect()->route($context['route'].'.show', $dapodikGuru);
     }
 
     private function validatedData(Request $request, ?DapodikGuru $dapodikGuru = null): array
     {
         return $request->validate([
-            'nama'                    => 'required|string|max:255',
-            'nik'                     => ['nullable', 'string', 'max:20', Rule::unique('dapodik_gurus', 'nik')->ignore($dapodikGuru?->id)],
-            'nuptk'                   => 'nullable|string|max:20',
-            'jenis_kelamin'           => 'nullable|in:L,P',
-            'tempat_lahir'            => 'nullable|string|max:255',
-            'tanggal_lahir'           => 'nullable|date',
-            'agama'                   => 'nullable|string|max:255',
-            'kewarganegaraan'         => 'nullable|string|max:5',
-            'no_kk'                   => 'nullable|string|max:20',
-            'nama_ibu_kandung'        => 'nullable|string|max:255',
-            'nip'                     => 'nullable|string|max:30',
-            'status_kepegawaian'      => ['nullable', Rule::in(EmploymentStatus::options())],
-            'jenis_ptk'               => 'nullable|string|max:255',
-            'tugas_tambahan'          => 'nullable|string|max:255',
-            'pangkat_golongan'        => 'nullable|string|max:255',
-            'sumber_gaji'             => 'nullable|string|max:255',
-            'lembaga_pengangkatan'    => 'nullable|string|max:255',
-            'sk_pengangkatan'         => 'nullable|string|max:255',
-            'tmt_pengangkatan'        => 'nullable|date',
-            'sk_cpns'                 => 'nullable|string|max:255',
-            'tanggal_cpns'            => 'nullable|date',
-            'tmt_pns'                 => 'nullable|date',
-            'nuks'                    => 'nullable|string|max:30',
-            'karpeg'                  => 'nullable|string|max:20',
-            'karis_karsu'             => 'nullable|string|max:20',
-            'alamat_jalan'            => 'nullable|string|max:255',
-            'rt'                      => 'nullable|string|max:5',
-            'rw'                      => 'nullable|string|max:5',
-            'nama_dusun'              => 'nullable|string|max:255',
-            'desa_kelurahan'          => 'nullable|string|max:255',
-            'kecamatan'               => 'nullable|string|max:255',
-            'kode_pos'                => 'nullable|string|max:10',
-            'telepon'                 => 'nullable|string|max:20',
-            'hp'                      => 'nullable|string|max:20',
-            'email_dapodik'           => 'nullable|email',
-            'lintang'                 => 'nullable|string|max:255',
-            'bujur'                   => 'nullable|string|max:255',
-            'status_perkawinan'       => 'nullable|string|max:255',
-            'nama_pasangan'           => 'nullable|string|max:255',
-            'nip_pasangan'            => 'nullable|string|max:30',
-            'pekerjaan_pasangan'      => 'nullable|string|max:255',
-            'npwp'                    => 'nullable|string|max:30',
-            'nama_wajib_pajak'        => 'nullable|string|max:255',
-            'bank'                    => 'nullable|string|max:255',
-            'no_rekening'             => 'nullable|string|max:30',
-            'rekening_atas_nama'      => 'nullable|string|max:255',
-            'lisensi_kepala_sekolah'  => 'nullable|in:Ya,Tidak',
-            'diklat_kepengawasan'     => 'nullable|in:Ya,Tidak',
-            'keahlian_braille'        => 'nullable|in:Ya,Tidak',
+            'nama' => 'required|string|max:255',
+            'nik' => ['nullable', 'string', 'max:20', Rule::unique('dapodik_gurus', 'nik')->ignore($dapodikGuru?->id)],
+            'nuptk' => 'nullable|string|max:20',
+            'jenis_kelamin' => 'nullable|in:L,P',
+            'tempat_lahir' => 'nullable|string|max:255',
+            'tanggal_lahir' => 'nullable|date',
+            'agama' => 'nullable|string|max:255',
+            'kewarganegaraan' => 'nullable|string|max:5',
+            'no_kk' => 'nullable|string|max:20',
+            'nama_ibu_kandung' => 'nullable|string|max:255',
+            'nip' => 'nullable|string|max:30',
+            'status_kepegawaian' => ['nullable', Rule::in(EmploymentStatus::options())],
+            'jenis_ptk' => 'nullable|string|max:255',
+            'tugas_tambahan' => 'nullable|string|max:255',
+            'pangkat_golongan' => 'nullable|string|max:255',
+            'sumber_gaji' => 'nullable|string|max:255',
+            'lembaga_pengangkatan' => 'nullable|string|max:255',
+            'sk_pengangkatan' => 'nullable|string|max:255',
+            'tmt_pengangkatan' => 'nullable|date',
+            'sk_cpns' => 'nullable|string|max:255',
+            'tanggal_cpns' => 'nullable|date',
+            'tmt_pns' => 'nullable|date',
+            'nuks' => 'nullable|string|max:30',
+            'karpeg' => 'nullable|string|max:20',
+            'karis_karsu' => 'nullable|string|max:20',
+            'alamat_jalan' => 'nullable|string|max:255',
+            'rt' => 'nullable|string|max:5',
+            'rw' => 'nullable|string|max:5',
+            'nama_dusun' => 'nullable|string|max:255',
+            'desa_kelurahan' => 'nullable|string|max:255',
+            'kecamatan' => 'nullable|string|max:255',
+            'kode_pos' => 'nullable|string|max:10',
+            'telepon' => 'nullable|string|max:20',
+            'hp' => 'nullable|string|max:20',
+            'email_dapodik' => 'nullable|email',
+            'lintang' => 'nullable|string|max:255',
+            'bujur' => 'nullable|string|max:255',
+            'status_perkawinan' => 'nullable|string|max:255',
+            'nama_pasangan' => 'nullable|string|max:255',
+            'nip_pasangan' => 'nullable|string|max:30',
+            'pekerjaan_pasangan' => 'nullable|string|max:255',
+            'npwp' => 'nullable|string|max:30',
+            'nama_wajib_pajak' => 'nullable|string|max:255',
+            'bank' => 'nullable|string|max:255',
+            'no_rekening' => 'nullable|string|max:30',
+            'rekening_atas_nama' => 'nullable|string|max:255',
+            'lisensi_kepala_sekolah' => 'nullable|in:Ya,Tidak',
+            'diklat_kepengawasan' => 'nullable|in:Ya,Tidak',
+            'keahlian_braille' => 'nullable|in:Ya,Tidak',
             'keahlian_bahasa_isyarat' => 'nullable|in:Ya,Tidak',
         ]);
     }
 
     public function updateMapping(Request $request, DapodikGuru $dapodikGuru)
     {
+        $context = $this->context($request);
+        abort_unless($dapodikGuru->employee_category === $context['category'], 404);
         $data = $request->validate([
             'master_guru_id' => ['nullable', 'exists:master_gurus,id'],
         ]);
@@ -202,31 +217,47 @@ class DapodikGuruController extends Controller
             $dapodikGuru->update(['master_guru_id' => $masterGuruId]);
         });
 
-        return back()->with('success', 'Mapping Dapodik Guru ke data pegawai berhasil diperbarui.');
+        return back()->with('success', 'Mapping '.$context['label'].' ke data pegawai berhasil diperbarui.');
     }
 
     public function import(Request $request)
     {
+        $context = $this->context($request);
         $request->validate([
             'file_import' => 'required|file|mimes:xlsx,xls|max:10240',
         ]);
 
         try {
-            $import = new DapodikGuruImport();
+            $import = new DapodikGuruImport($context['category']);
             Excel::import($import, $request->file('file_import'));
 
             $msg = "Import selesai: {$import->created} data baru, {$import->updated} diperbarui";
-            if ($import->skipped > 0) $msg .= ", {$import->skipped} dilewati";
-            toast($msg . '.', 'success');
+            if ($import->skipped > 0) {
+                $msg .= ", {$import->skipped} dilewati";
+            }
+            toast($msg.'.', 'success');
 
-            if (!empty($import->errors)) {
+            if (! empty($import->errors)) {
                 session()->flash('dapodik_import_errors', $import->errors);
             }
         } catch (\Exception $e) {
-            Log::error('DapodikGuru import error: ' . $e->getMessage());
-            toast('Gagal memproses file: ' . $e->getMessage(), 'error');
+            Log::error('DapodikGuru import error: '.$e->getMessage());
+            toast('Gagal memproses file: '.$e->getMessage(), 'error');
         }
 
         return back();
+    }
+
+    private function context(Request $request): array
+    {
+        $isTpa = $request->routeIs('dapodik-tpa.*');
+
+        return [
+            'category' => $isTpa ? DapodikGuru::CATEGORY_TPA : DapodikGuru::CATEGORY_TEACHER,
+            'route' => $isTpa ? 'dapodik-tpa' : 'dapodik-guru',
+            'label' => $isTpa ? 'Dapodik TPA' : 'Dapodik Guru',
+            'person_label' => $isTpa ? 'TPA' : 'Guru',
+            'description' => $isTpa ? 'Tenaga Penunjang Akademik' : 'Guru',
+        ];
     }
 }
