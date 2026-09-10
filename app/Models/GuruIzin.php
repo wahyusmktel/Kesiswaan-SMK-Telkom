@@ -6,6 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class GuruIzin extends Model
 {
+    public const CATEGORY_SCHOOL = 'sekolah';
+
+    public const CATEGORY_OUTSIDE = 'luar';
+
+    public const CATEGORY_ABSENT = 'tidak_masuk';
+
+    public const CATEGORY_LATE = 'terlambat';
+
     protected $fillable = [
         'master_guru_id',
         'tanggal_mulai',
@@ -70,6 +78,34 @@ class GuruIzin extends Model
     {
         return $this->status_sdm === 'disetujui'
             && in_array($this->status_kepala_sekolah, ['disetujui', 'tidak_diperlukan'], true);
+    }
+
+    public function categoryLabel(): string
+    {
+        return match ($this->kategori_penyetujuan) {
+            self::CATEGORY_SCHOOL => 'Lingkungan Sekolah',
+            self::CATEGORY_OUTSIDE => 'Luar Sekolah',
+            self::CATEGORY_ABSENT => 'Izin Tidak Masuk',
+            self::CATEGORY_LATE => 'Datang Terlambat',
+            default => 'Izin Guru',
+        };
+    }
+
+    public function startsAtSdm(): bool
+    {
+        return in_array($this->kategori_penyetujuan, [self::CATEGORY_ABSENT, self::CATEGORY_LATE], true);
+    }
+
+    public function requiresHeadmasterApproval(): bool
+    {
+        if (! in_array($this->kategori_penyetujuan, [self::CATEGORY_OUTSIDE, self::CATEGORY_ABSENT, self::CATEGORY_LATE], true)) {
+            return false;
+        }
+
+        $this->loadMissing('guru.dapodikGuru');
+
+        return \App\Support\EmploymentStatus::normalize($this->guru?->dapodikGuru?->status_kepegawaian)
+            === \App\Support\EmploymentStatus::PERMANENT;
     }
 
     public function scopeFullyApproved($query)

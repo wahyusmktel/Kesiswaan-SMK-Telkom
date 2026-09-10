@@ -74,7 +74,7 @@
                             {{ $izin->tanggal_mulai->translatedFormat('d/m/Y') }} - {{ $izin->tanggal_selesai->translatedFormat('d/m/Y') }}
                         @endif
                     </td>
-                    <td><span class="badge">{{ $izin->kategori_penyetujuan === 'sekolah' ? 'SEKOLAH' : ($izin->kategori_penyetujuan === 'terlambat' ? 'TERLAMBAT' : 'LUAR') }}</span></td>
+                    <td><span class="badge">{{ strtoupper($izin->categoryLabel()) }}</span></td>
                     <td><span class="badge">{{ strtoupper($izin->jenis_izin) }}</span></td>
                     <td>{{ $izin->deskripsi }}</td>
                 </tr>

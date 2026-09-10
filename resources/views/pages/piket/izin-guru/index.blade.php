@@ -55,6 +55,8 @@
                                             <span class="inline-block mt-1 px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-100 text-[10px] font-black uppercase">Lingkungan Sekolah</span>
                                         @elseif($izin->kategori_penyetujuan === 'luar')
                                             <span class="inline-block mt-1 px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-100 text-[10px] font-black uppercase">Luar Sekolah</span>
+                                        @elseif($izin->kategori_penyetujuan === 'tidak_masuk')
+                                            <span class="inline-block mt-1 px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-100 text-[10px] font-black uppercase">Tidak Masuk</span>
                                         @else
                                             <span class="inline-block mt-1 px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-100 text-[10px] font-black uppercase">Terlambat</span>
                                         @endif

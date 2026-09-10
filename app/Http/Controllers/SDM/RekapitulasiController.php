@@ -44,6 +44,7 @@ class RekapitulasiController extends Controller
             'labels' => [],
             'izin_sekolah' => [],
             'izin_luar' => [],
+            'tidak_masuk' => [],
             'terlambat' => [],
         ];
 
@@ -66,6 +67,9 @@ class RekapitulasiController extends Controller
 
             $chartData['izin_luar'][] = (! $filteredKategori || $filteredKategori === 'luar')
                 ? (clone $dayQuery)->where('kategori_penyetujuan', 'luar')->count() : 0;
+
+            $chartData['tidak_masuk'][] = (! $filteredKategori || $filteredKategori === 'tidak_masuk')
+                ? (clone $dayQuery)->where('kategori_penyetujuan', 'tidak_masuk')->count() : 0;
 
             $chartData['terlambat'][] = (! $filteredKategori || $filteredKategori === 'terlambat')
                 ? (clone $dayQuery)->where('kategori_penyetujuan', 'terlambat')->count() : 0;
@@ -148,7 +152,7 @@ class RekapitulasiController extends Controller
                 fputcsv($file, [
                     $izin->id,
                     $izin->guru->nama_lengkap,
-                    $izin->kategori_penyetujuan === 'sekolah' ? 'Lingkungan Sekolah' : ($izin->kategori_penyetujuan === 'terlambat' ? 'Terlambat' : 'Luar Sekolah'),
+                    $izin->categoryLabel(),
                     $izin->jenis_izin,
                     $izin->tanggal_mulai->format('Y-m-d H:i'),
                     $izin->tanggal_selesai->format('Y-m-d H:i'),

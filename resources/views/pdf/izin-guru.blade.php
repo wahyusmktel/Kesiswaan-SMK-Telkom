@@ -248,6 +248,7 @@
         
         <table class="signature-grid">
             <tr>
+                @if(in_array($izin->kategori_penyetujuan, ['sekolah', 'luar'], true))
                 <td class="sig-box">
                     <div class="sig-role">Guru Piket</div>
                     @if(!empty($qrPiketBase64))
@@ -263,6 +264,8 @@
                     <div class="sig-id">Tgl: {{ $izin->piket_at?->format('d/m/Y H:i') ?? '-' }}</div>
                     @endif
                 </td>
+                @endif
+                @if($izin->kategori_penyetujuan === 'luar')
                 <td class="sig-box">
                     <div class="sig-role">Waka Kurikulum</div>
                     @if(!empty($qrKurikulumBase64))
@@ -278,6 +281,8 @@
                     <div class="sig-id">Tgl: {{ $izin->kurikulum_at?->format('d/m/Y H:i') ?? '-' }}</div>
                     @endif
                 </td>
+                @endif
+                @if($izin->kategori_penyetujuan !== 'sekolah')
                 <td class="sig-box">
                     <div class="sig-role">KAUR SDM</div>
                     @if(!empty($qrSdmBase64))
@@ -293,6 +298,7 @@
                     <div class="sig-id">Tgl: {{ $izin->sdm_at?->format('d/m/Y H:i') ?? '-' }}</div>
                     @endif
                 </td>
+                @endif
                 @if($izin->status_kepala_sekolah !== 'tidak_diperlukan')
                 <td class="sig-box">
                     <div class="sig-role">Kepala Sekolah</div>

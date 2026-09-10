@@ -43,6 +43,8 @@
                                                 <span class="px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-100 text-[10px] font-black uppercase">Terlambat</span>
                                             @elseif($izin->kategori_penyetujuan === 'sekolah')
                                                 <span class="px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-100 text-[10px] font-black uppercase">Sekolah</span>
+                                            @elseif($izin->kategori_penyetujuan === 'tidak_masuk')
+                                                <span class="px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-100 text-[10px] font-black uppercase">Tidak Masuk</span>
                                             @else
                                                 <span class="px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-100 text-[10px] font-black uppercase">Luar</span>
                                             @endif
@@ -51,6 +53,7 @@
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="flex items-center gap-2">
+                                            @if($izin->kategori_penyetujuan === 'luar')
                                             <div class="flex flex-col">
                                                 <span class="text-[9px] font-bold text-gray-400">Piket</span>
                                                 <x-status-badge-izin :status="$izin->status_piket" />
@@ -59,6 +62,7 @@
                                                 <span class="text-[9px] font-bold text-gray-400">Kurikulum</span>
                                                 <x-status-badge-izin :status="$izin->status_kurikulum" />
                                             </div>
+                                            @endif
                                             <div class="flex flex-col">
                                                 <span class="text-[9px] font-bold text-gray-400">KAUR SDM</span>
                                                 <x-status-badge-izin :status="$izin->status_sdm" />

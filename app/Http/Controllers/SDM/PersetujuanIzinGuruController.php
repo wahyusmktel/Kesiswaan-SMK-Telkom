@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\AbsensiGuru;
 use App\Models\AppSetting;
 use App\Models\GuruIzin;
-use App\Support\EmploymentStatus;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,7 +18,8 @@ class PersetujuanIzinGuruController extends Controller
             'guru',
             'jadwals.rombel.kelas',
             'jadwals.mataPelajaran',
-        ])->where('status_kurikulum', 'disetujui')->latest();
+        ])->whereIn('kategori_penyetujuan', ['luar', 'tidak_masuk', 'terlambat'])
+            ->where('status_kurikulum', 'disetujui')->latest();
 
         if ($request->filled('status')) {
             $query->where('status_sdm', $request->status);
@@ -68,9 +68,9 @@ class PersetujuanIzinGuruController extends Controller
 
     public function approve(GuruIzin $izin)
     {
+        abort_unless(in_array($izin->kategori_penyetujuan, ['luar', 'tidak_masuk', 'terlambat'], true), 409, 'Kategori izin ini tidak memerlukan persetujuan SDM.');
         abort_unless($izin->status_kurikulum === 'disetujui' && $izin->status_sdm === 'menunggu', 409, 'Izin tidak lagi menunggu persetujuan SDM.');
-        $izin->load('guru.dapodikGuru');
-        $requiresHeadmaster = EmploymentStatus::normalize($izin->guru?->dapodikGuru?->status_kepegawaian) === EmploymentStatus::PERMANENT;
+        $requiresHeadmaster = $izin->requiresHeadmasterApproval();
         $izin->update([
             'status_sdm' => 'disetujui',
             'status_kepala_sekolah' => $requiresHeadmaster ? 'menunggu' : 'tidak_diperlukan',
@@ -160,6 +160,7 @@ class PersetujuanIzinGuruController extends Controller
 
     public function reject(Request $request, GuruIzin $izin)
     {
+        abort_unless(in_array($izin->kategori_penyetujuan, ['luar', 'tidak_masuk', 'terlambat'], true), 409, 'Kategori izin ini tidak memerlukan persetujuan SDM.');
         abort_unless($izin->status_kurikulum === 'disetujui' && $izin->status_sdm === 'menunggu', 409, 'Izin tidak lagi menunggu persetujuan SDM.');
         $request->validate(['catatan_sdm' => 'required|string']);
 

@@ -57,14 +57,17 @@
                                 <label class="block text-sm font-bold text-gray-700">Kategori Penyetujuan</label>
                                 <select name="kategori_penyetujuan" required
                                     class="w-full rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500">
-                                    <option value="sekolah">Lingkungan Sekolah (Rapat, dsb)</option>
-                                    <option value="luar" selected>Luar Sekolah / Tidak Masuk</option>
-                                    <option value="terlambat">Terlambat (Datang Terlambat)</option>
+                                    <option value="sekolah" {{ old('kategori_penyetujuan') === 'sekolah' ? 'selected' : '' }}>Lingkungan Sekolah (Rapat, dsb)</option>
+                                    <option value="luar" {{ old('kategori_penyetujuan', 'luar') === 'luar' ? 'selected' : '' }}>Luar Sekolah</option>
+                                    <option value="tidak_masuk" {{ old('kategori_penyetujuan') === 'tidak_masuk' ? 'selected' : '' }}>Izin Tidak Masuk</option>
+                                    <option value="terlambat" {{ old('kategori_penyetujuan') === 'terlambat' ? 'selected' : '' }}>Terlambat (Datang Terlambat)</option>
                                 </select>
                                 <p class="text-[10px] text-gray-500 mt-2">
                                     * <strong>Sekolah</strong>: Hanya butuh persetujuan Piket.<br>
                                     * <strong>Luar Sekolah</strong>: Piket → Kurikulum → SDM.<br>
-                                    * <strong>Terlambat</strong>: Hanya butuh persetujuan <strong>KAUR SDM</strong>.
+                                    * <strong>Izin Tidak Masuk</strong>: Langsung ke KAUR SDM.<br>
+                                    * <strong>Terlambat</strong>: Langsung ke KAUR SDM.<br>
+                                    * Khusus <strong>Pegawai Tetap</strong>, Luar Sekolah, Izin Tidak Masuk, dan Terlambat dilanjutkan ke Kepala Sekolah.
                                 </p>
                             </div>
 

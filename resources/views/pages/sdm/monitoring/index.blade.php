@@ -8,7 +8,17 @@
     <div class="py-6 w-full">
         <div class="w-full px-4 sm:px-6 lg:px-8 space-y-6">
             {{-- Stats Overview --}}
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div class="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm flex items-center gap-3">
+                    <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center flex-shrink-0">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-3-3v6m9-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <div>
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Tidak Masuk</p>
+                        <h3 class="text-2xl font-black text-gray-900 leading-none">{{ $stats['total_tidak_masuk'] }}</h3>
+                    </div>
+                </div>
+
                 <div class="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm flex items-center gap-3">
                     <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center flex-shrink-0">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
@@ -81,7 +91,7 @@
                             </div>
                             <div class="flex items-center justify-between">
                                 <span class="text-gray-400">Rata-rata Izin Harian</span>
-                                <span class="font-bold">{{ number_format((collect($chartData['izin_sekolah'])->avg() + collect($chartData['izin_luar'])->avg() + collect($chartData['terlambat'])->avg()), 1) }} Kasus</span>
+                                <span class="font-bold">{{ number_format((collect($chartData['izin_sekolah'])->avg() + collect($chartData['izin_luar'])->avg() + collect($chartData['tidak_masuk'])->avg() + collect($chartData['terlambat'])->avg()), 1) }} Kasus</span>
                             </div>
                         </div>
                     </div>
@@ -136,7 +146,7 @@
                             pointRadius: 4
                         },
                         {
-                            label: 'Luar Sekolah / Absen',
+                            label: 'Luar Sekolah',
                             data: {!! json_encode($chartData['izin_luar']) !!},
                             borderColor: '#F97316',
                             borderWidth: 3,
@@ -144,6 +154,19 @@
                             fill: false,
                             tension: 0.4,
                             pointBackgroundColor: '#F97316',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 4
+                        },
+                        {
+                            label: 'Izin Tidak Masuk',
+                            data: {!! json_encode($chartData['tidak_masuk']) !!},
+                            borderColor: '#E11D48',
+                            borderWidth: 3,
+                            backgroundColor: 'transparent',
+                            fill: false,
+                            tension: 0.4,
+                            pointBackgroundColor: '#E11D48',
                             pointBorderColor: '#fff',
                             pointBorderWidth: 2,
                             pointRadius: 4

@@ -98,7 +98,7 @@ class IzinGuruController extends Controller
             'tanggal_mulai' => 'required|date',
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
             'jenis_izin' => 'required|string',
-            'kategori_penyetujuan' => 'required|in:sekolah,luar,terlambat',
+            'kategori_penyetujuan' => 'required|in:sekolah,luar,tidak_masuk,terlambat',
             'deskripsi' => 'required|string',
             'jadwal_ids' => 'nullable|array',
             'jadwal_ids.*' => 'exists:jadwal_pelajarans,id',
@@ -184,7 +184,7 @@ class IzinGuruController extends Controller
         $statusPiket = 'menunggu';
         $statusKurikulum = 'menunggu';
 
-        if ($request->kategori_penyetujuan === 'terlambat') {
+        if (in_array($request->kategori_penyetujuan, ['tidak_masuk', 'terlambat'], true)) {
             $statusPiket = 'disetujui';
             $statusKurikulum = 'disetujui';
         }
@@ -213,10 +213,10 @@ class IzinGuruController extends Controller
         }
 
         // Notifikasi untuk Approver
-        if ($izin->kategori_penyetujuan === 'terlambat') {
+        if ($izin->startsAtSdm()) {
             // Langsung ke SDM
             $approvers = \App\Models\User::role('KAUR SDM')->get();
-            $msg = 'Ada pengajuan Izin Terlambat baru dari '.$guru->nama_lengkap;
+            $msg = 'Ada pengajuan '.$izin->categoryLabel().' baru dari '.$guru->nama_lengkap;
             $url = route('sdm.persetujuan-izin-guru.index');
         } else {
             // Ke Piket terlebih dahulu

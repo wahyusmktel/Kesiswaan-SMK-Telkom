@@ -13,6 +13,7 @@ class DashboardController extends Controller
             'total_pending' => GuruIzin::where('status_kurikulum', 'disetujui')->where('status_sdm', 'menunggu')->count(),
             'total_izin_sekolah' => GuruIzin::fullyApproved()->where('kategori_penyetujuan', 'sekolah')->count(),
             'total_izin_luar' => GuruIzin::fullyApproved()->where('kategori_penyetujuan', 'luar')->count(),
+            'total_tidak_masuk' => GuruIzin::fullyApproved()->where('kategori_penyetujuan', 'tidak_masuk')->count(),
             'total_terlambat' => GuruIzin::fullyApproved()->where('kategori_penyetujuan', 'terlambat')->count(),
             'total_approved' => GuruIzin::fullyApproved()->count(),
             'latest_requests' => GuruIzin::with('guru')->latest()->take(5)->get(),
@@ -26,6 +27,7 @@ class DashboardController extends Controller
         $stats = [
             'total_izin_sekolah' => GuruIzin::fullyApproved()->where('kategori_penyetujuan', 'sekolah')->count(),
             'total_izin_luar' => GuruIzin::fullyApproved()->where('kategori_penyetujuan', 'luar')->count(),
+            'total_tidak_masuk' => GuruIzin::fullyApproved()->where('kategori_penyetujuan', 'tidak_masuk')->count(),
             'total_terlambat' => GuruIzin::fullyApproved()->where('kategori_penyetujuan', 'terlambat')->count(),
             'total_pending' => GuruIzin::where('status_sdm', 'menunggu')->count(),
         ];
@@ -35,6 +37,7 @@ class DashboardController extends Controller
             'labels' => [],
             'izin_sekolah' => [],
             'izin_luar' => [],
+            'tidak_masuk' => [],
             'terlambat' => [],
         ];
 
@@ -45,6 +48,7 @@ class DashboardController extends Controller
             $chartData['labels'][] = $label;
             $chartData['izin_sekolah'][] = GuruIzin::whereDate('tanggal_mulai', $date)->fullyApproved()->where('kategori_penyetujuan', 'sekolah')->count();
             $chartData['izin_luar'][] = GuruIzin::whereDate('tanggal_mulai', $date)->fullyApproved()->where('kategori_penyetujuan', 'luar')->count();
+            $chartData['tidak_masuk'][] = GuruIzin::whereDate('tanggal_mulai', $date)->fullyApproved()->where('kategori_penyetujuan', 'tidak_masuk')->count();
             $chartData['terlambat'][] = GuruIzin::whereDate('tanggal_mulai', $date)->fullyApproved()->where('kategori_penyetujuan', 'terlambat')->count();
         }
 

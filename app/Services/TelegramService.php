@@ -165,6 +165,7 @@ class TelegramService
         ]];
         if ($bot->purpose === 'employment' && $user?->hasRole('Guru Kelas')) {
             $commands[] = ['command' => 'izin', 'description' => 'Ajukan izin guru'];
+            $commands[] = ['command' => 'status_izin', 'description' => 'Lihat status izin terakhir'];
             $commands[] = ['command' => 'batal', 'description' => 'Batalkan pengisian izin'];
         }
 

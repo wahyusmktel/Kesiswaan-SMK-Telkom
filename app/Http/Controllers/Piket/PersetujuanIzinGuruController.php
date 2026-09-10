@@ -16,7 +16,7 @@ class PersetujuanIzinGuruController extends Controller
             'guru',
             'jadwals.rombel.kelas',
             'jadwals.mataPelajaran',
-        ])->latest();
+        ])->whereIn('kategori_penyetujuan', ['sekolah', 'luar'])->latest();
 
         if ($request->filled('status')) {
             $query->where('status_piket', $request->status);
@@ -68,9 +68,8 @@ class PersetujuanIzinGuruController extends Controller
 
     public function approve(GuruIzin $izin)
     {
+        abort_unless(in_array($izin->kategori_penyetujuan, ['sekolah', 'luar'], true), 409, 'Kategori izin ini tidak memerlukan persetujuan Piket.');
         abort_unless($izin->status_piket === 'menunggu', 409, 'Tahap Piket sudah diputuskan.');
-        $izin->load('guru.dapodikGuru');
-        $requiresHeadmaster = \App\Support\EmploymentStatus::normalize($izin->guru?->dapodikGuru?->status_kepegawaian) === \App\Support\EmploymentStatus::PERMANENT;
         $updateData = [
             'status_piket' => 'disetujui',
             'piket_id' => Auth::id(),
@@ -85,7 +84,7 @@ class PersetujuanIzinGuruController extends Controller
             $updateData['sdm_id'] = Auth::id();
             $updateData['kurikulum_at'] = now();
             $updateData['sdm_at'] = now();
-            $updateData['status_kepala_sekolah'] = $requiresHeadmaster ? 'menunggu' : 'tidak_diperlukan';
+            $updateData['status_kepala_sekolah'] = 'tidak_diperlukan';
 
             $izin->update($updateData);
 
@@ -100,25 +99,6 @@ class PersetujuanIzinGuruController extends Controller
                     $izin->id,
                     ['IZIN_GURU_PIKET', (string) $izin->id, (string) $izin->master_guru_id, $izin->guru->nama_lengkap ?? '']
                 );
-            }
-
-            if ($requiresHeadmaster) {
-                foreach (\App\Models\User::role('Kepala Sekolah')->get() as $headmaster) {
-                    $headmaster->notify(new \App\Notifications\PengajuanIzinGuruNotification(
-                        $izin,
-                        'approval_required',
-                        'Izin Pegawai Tetap '.$izin->guru->nama_lengkap.' menunggu persetujuan Anda.',
-                        route('kepala-sekolah.persetujuan-izin-guru.index')
-                    ));
-                }
-                $izin->guru?->user?->notify(new \App\Notifications\PengajuanIzinGuruNotification(
-                    $izin,
-                    'status_updated',
-                    'Izin disetujui Guru Piket dan menunggu persetujuan akhir Kepala Sekolah.',
-                    route('guru.izin.index')
-                ));
-
-                return redirect()->back()->with('success', 'Izin Pegawai Tetap diteruskan ke Kepala Sekolah untuk persetujuan akhir.');
             }
 
             // Notify Teacher
@@ -184,6 +164,7 @@ class PersetujuanIzinGuruController extends Controller
 
     public function reject(Request $request, GuruIzin $izin)
     {
+        abort_unless(in_array($izin->kategori_penyetujuan, ['sekolah', 'luar'], true), 409, 'Kategori izin ini tidak memerlukan persetujuan Piket.');
         abort_unless($izin->status_piket === 'menunggu', 409, 'Tahap Piket sudah diputuskan.');
         $request->validate(['catatan_piket' => 'required|string']);
 

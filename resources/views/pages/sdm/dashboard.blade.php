@@ -30,6 +30,10 @@
                                 <span class="text-[10px] font-bold uppercase tracking-widest text-indigo-200">Izin Luar</span>
                             </div>
                             <div class="border-l border-white/20 pl-6">
+                                <span class="text-3xl font-black block">{{ $stats['total_tidak_masuk'] }}</span>
+                                <span class="text-[10px] font-bold uppercase tracking-widest text-indigo-200">Tidak Masuk</span>
+                            </div>
+                            <div class="border-l border-white/20 pl-6">
                                 <span class="text-3xl font-black block">{{ $stats['total_terlambat'] }}</span>
                                 <span class="text-[10px] font-bold uppercase tracking-widest text-indigo-200">Terlambat</span>
                             </div>
@@ -78,6 +82,8 @@
                                             <span class="px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-100 text-[10px] font-black uppercase tracking-tighter">Terlambat</span>
                                         @elseif($req->kategori_penyetujuan === 'sekolah')
                                             <span class="px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-100 text-[10px] font-black uppercase tracking-tighter">Sekolah</span>
+                                        @elseif($req->kategori_penyetujuan === 'tidak_masuk')
+                                            <span class="px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-100 text-[10px] font-black uppercase tracking-tighter">Tidak Masuk</span>
                                         @else
                                             <span class="px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-100 text-[10px] font-black uppercase tracking-tighter">Luar</span>
                                         @endif
@@ -88,7 +94,7 @@
                                     </td>
                                     <td class="px-6 py-4 text-xs">{{ $req->tanggal_mulai->translatedFormat('d F Y') }}</td>
                                     <td class="px-6 py-4">
-                                        @if($req->status_piket === 'ditolak' || $req->status_kurikulum === 'ditolak' || $req->status_sdm === 'ditolak')
+                                        @if($req->status_piket === 'ditolak' || $req->status_kurikulum === 'ditolak' || $req->status_sdm === 'ditolak' || $req->status_kepala_sekolah === 'ditolak')
                                             <x-status-badge-izin status="ditolak" />
                                         @elseif($req->status_piket === 'menunggu')
                                             <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black border bg-amber-50 text-amber-700 border-amber-200 uppercase tracking-tighter">
@@ -101,6 +107,10 @@
                                         @elseif($req->status_sdm === 'menunggu')
                                             <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black border bg-indigo-50 text-indigo-700 border-indigo-200 uppercase tracking-tighter">
                                                 Menunggu: SDM
+                                            </span>
+                                        @elseif($req->status_kepala_sekolah === 'menunggu')
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black border bg-rose-50 text-rose-700 border-rose-200 uppercase tracking-tighter">
+                                                Menunggu: Kepala Sekolah
                                             </span>
                                         @else
                                             <x-status-badge-izin status="disetujui" />

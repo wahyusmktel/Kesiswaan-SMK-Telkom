@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\AbsensiGuru;
 use App\Models\GuruIzin;
 use App\Notifications\PengajuanIzinGuruNotification;
-use App\Support\EmploymentStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -17,6 +16,7 @@ class TeacherLeaveApprovalController extends Controller
         $filters = $request->validate(['status' => ['nullable', 'in:menunggu,disetujui,ditolak']]);
         $status = $filters['status'] ?? 'menunggu';
         $izins = GuruIzin::with(['guru.dapodikGuru', 'jadwals.rombel.kelas', 'jadwals.mataPelajaran', 'sdm', 'kepalaSekolah'])
+            ->whereIn('kategori_penyetujuan', ['luar', 'tidak_masuk', 'terlambat'])
             ->where('status_sdm', 'disetujui')->where('status_kepala_sekolah', $status)
             ->latest('sdm_at')->paginate(15)->withQueryString();
 
@@ -28,7 +28,7 @@ class TeacherLeaveApprovalController extends Controller
         DB::transaction(function () use ($izin) {
             $izin = GuruIzin::with(['guru.user', 'guru.dapodikGuru', 'jadwals.rombel.siswa.user'])->lockForUpdate()->findOrFail($izin->id);
             abort_unless($izin->status_sdm === 'disetujui' && $izin->status_kepala_sekolah === 'menunggu', 409, 'Izin tidak lagi menunggu persetujuan Kepala Sekolah.');
-            abort_unless(EmploymentStatus::normalize($izin->guru?->dapodikGuru?->status_kepegawaian) === EmploymentStatus::PERMANENT, 409, 'Persetujuan Kepala Sekolah hanya berlaku untuk Pegawai Tetap.');
+            abort_unless($izin->requiresHeadmasterApproval(), 409, 'Persetujuan Kepala Sekolah hanya berlaku untuk kategori izin tertentu milik Pegawai Tetap.');
             $izin->update(['status_kepala_sekolah' => 'disetujui', 'kepala_sekolah_id' => auth()->id(), 'kepala_sekolah_at' => now(), 'catatan_kepala_sekolah' => null]);
             $this->finalizeApproval($izin);
         });
@@ -42,7 +42,7 @@ class TeacherLeaveApprovalController extends Controller
         DB::transaction(function () use ($izin, $data) {
             $izin = GuruIzin::with(['guru.user', 'guru.dapodikGuru'])->lockForUpdate()->findOrFail($izin->id);
             abort_unless($izin->status_sdm === 'disetujui' && $izin->status_kepala_sekolah === 'menunggu', 409, 'Izin tidak lagi menunggu persetujuan Kepala Sekolah.');
-            abort_unless(EmploymentStatus::normalize($izin->guru?->dapodikGuru?->status_kepegawaian) === EmploymentStatus::PERMANENT, 409, 'Persetujuan Kepala Sekolah hanya berlaku untuk Pegawai Tetap.');
+            abort_unless($izin->requiresHeadmasterApproval(), 409, 'Persetujuan Kepala Sekolah hanya berlaku untuk kategori izin tertentu milik Pegawai Tetap.');
             $izin->update(['status_kepala_sekolah' => 'ditolak', 'kepala_sekolah_id' => auth()->id(), 'kepala_sekolah_at' => now(), 'catatan_kepala_sekolah' => $data['catatan_kepala_sekolah']]);
             $izin->guru?->user?->notify(new PengajuanIzinGuruNotification($izin, 'status_updated', 'Permohonan izin Anda ditolak oleh Kepala Sekolah.', route('guru.izin.index')));
         });

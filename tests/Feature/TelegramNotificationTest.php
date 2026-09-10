@@ -262,11 +262,12 @@ class TelegramNotificationTest extends TestCase
 
         Http::assertSent(fn ($request) => str_ends_with($request->url(), '/setMyCommands')
             && (string) $request['scope']['chat_id'] === '998805'
-            && collect($request['commands'])->contains('command', 'izin'));
+            && collect($request['commands'])->contains('command', 'izin')
+            && collect($request['commands'])->contains('command', 'status_izin'));
         Http::assertSent(fn ($request) => str_ends_with($request->url(), '/sendMessage')
             && str_contains(json_encode($request['reply_markup']), 'Ajukan Izin Guru'));
 
-        foreach (['/izin', '🚗 Luar Sekolah / Tidak Masuk', 'Sakit', '10-09-2026 07:00', '10-09-2026 16:00', 'Perlu beristirahat sesuai arahan dokter.', '✅ Kirim Pengajuan'] as $message) {
+        foreach (['/izin', '🚗 Luar Sekolah', 'Sakit', '10-09-2026 07:00', '10-09-2026 16:00', 'Perlu beristirahat sesuai arahan dokter.', '✅ Kirim Pengajuan'] as $message) {
             $this->sendBotMessage($bot, '998805', $message);
         }
 
@@ -337,7 +338,7 @@ class TelegramNotificationTest extends TestCase
             ]);
         }
 
-        foreach (['/izin', '🚗 Luar Sekolah / Tidak Masuk', 'Sakit', '10-09-2026 12:00', '10-09-2026 16:00'] as $message) {
+        foreach (['/izin', '🚗 Luar Sekolah', 'Sakit', '10-09-2026 12:00', '10-09-2026 16:00'] as $message) {
             $this->sendBotMessage($bot, '998807', $message);
         }
 
@@ -389,6 +390,35 @@ class TelegramNotificationTest extends TestCase
         ]);
         Http::assertSent(fn ($request) => str_ends_with($request->url(), '/sendMessage')
             && str_contains($request['text'], 'berhasil dibuat di LMS'));
+    }
+
+    public function test_account_status_and_leave_status_commands_are_distinct_and_absence_starts_at_sdm(): void
+    {
+        $bot = $this->createBot();
+        $teacher = $this->createLinkedEmployee($bot, 'Guru Izin Tidak Masuk', '998809');
+        $teacher->assignRole(Role::findOrCreate('Guru Kelas', 'web'));
+        Role::findOrCreate('KAUR SDM', 'web');
+
+        $this->sendBotMessage($bot, '998809', '/status');
+        $this->sendBotMessage($bot, '998809', '/status_izin');
+
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/sendMessage')
+            && str_contains($request['text'], 'Status Hubungan Akun SISFO')
+            && str_contains($request['text'], 'Terhubung'));
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/sendMessage')
+            && str_contains($request['text'], 'Belum ada riwayat pengajuan izin guru'));
+
+        foreach (['/izin', '🏠 Izin Tidak Masuk', 'Sakit', '10-09-2026 07:00', '10-09-2026 16:00', 'Tidak dapat hadir karena perlu beristirahat.', '✅ Kirim Pengajuan'] as $message) {
+            $this->sendBotMessage($bot, '998809', $message);
+        }
+
+        $this->assertDatabaseHas('guru_izins', [
+            'master_guru_id' => $teacher->masterGuru->id,
+            'kategori_penyetujuan' => 'tidak_masuk',
+            'status_piket' => 'disetujui',
+            'status_kurikulum' => 'disetujui',
+            'status_sdm' => 'menunggu',
+        ]);
     }
 
     public function test_non_guru_kelas_cannot_open_teacher_leave_flow_even_by_typing_command(): void

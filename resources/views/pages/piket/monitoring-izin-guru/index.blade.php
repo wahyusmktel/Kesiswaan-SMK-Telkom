@@ -66,6 +66,7 @@
                                     <option value="">Semua</option>
                                     <option value="sekolah" {{ request('kategori') == 'sekolah' ? 'selected' : '' }}>Sekolah</option>
                                     <option value="luar" {{ request('kategori') == 'luar' ? 'selected' : '' }}>Luar Sekolah</option>
+                                    <option value="tidak_masuk" {{ request('kategori') == 'tidak_masuk' ? 'selected' : '' }}>Izin Tidak Masuk</option>
                                     <option value="terlambat" {{ request('kategori') == 'terlambat' ? 'selected' : '' }}>Terlambat</option>
                                 </select>
                             </div>
@@ -121,6 +122,8 @@
                                                 <span class="px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-100 text-[10px] font-black uppercase">Sekolah</span>
                                             @elseif($izin->kategori_penyetujuan === 'luar')
                                                 <span class="px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-100 text-[10px] font-black uppercase">Luar</span>
+                                            @elseif($izin->kategori_penyetujuan === 'tidak_masuk')
+                                                <span class="px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-100 text-[10px] font-black uppercase">Tidak Masuk</span>
                                             @else
                                                 <span class="px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-100 text-[10px] font-black uppercase">Terlambat</span>
                                             @endif
@@ -129,20 +132,24 @@
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="flex items-center gap-3">
+                                            @if(in_array($izin->kategori_penyetujuan, ['sekolah', 'luar'], true))
                                             <div class="flex flex-col items-center">
                                                 <span class="text-[9px] font-bold text-gray-400">Piket</span>
                                                 <x-status-badge-izin :status="$izin->status_piket" />
                                             </div>
-                                            <svg class="w-3 h-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                            @endif
+                                            @if($izin->kategori_penyetujuan === 'luar')
                                             <div class="flex flex-col items-center">
                                                 <span class="text-[9px] font-bold text-gray-400">Kurikulum</span>
                                                 <x-status-badge-izin :status="$izin->status_kurikulum" />
                                             </div>
-                                            <svg class="w-3 h-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                            @endif
+                                            @if($izin->kategori_penyetujuan !== 'sekolah')
                                             <div class="flex flex-col items-center">
                                                 <span class="text-[9px] font-bold text-gray-400">SDM</span>
                                                 <x-status-badge-izin :status="$izin->status_sdm" />
                                             </div>
+                                            @endif
                                         </div>
                                     </td>
                                     <td class="px-6 py-4">
@@ -305,5 +312,3 @@
     </script>
     @endpush
 </x-app-layout>
-
-

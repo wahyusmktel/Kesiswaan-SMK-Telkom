@@ -52,12 +52,20 @@ class TelegramTeacherLeaveService
             return;
         }
 
-        if (in_array($command, ['start', 'menu', 'status'], true) || $text === '📋 Status Izin Terakhir') {
-            if ($command === 'status' || $text === '📋 Status Izin Terakhir') {
-                $this->sendLatestStatus($bot, $link);
-            } else {
-                $this->sendMenu($bot, $user, $chatId);
-            }
+        if (in_array($command, ['start', 'menu'], true)) {
+            $this->sendMenu($bot, $user, $chatId);
+
+            return;
+        }
+
+        if ($command === 'status') {
+            $this->sendAccountStatus($bot, $link);
+
+            return;
+        }
+
+        if ($command === 'status_izin' || $text === '📋 Status Izin Terakhir') {
+            $this->sendLatestStatus($bot, $link);
 
             return;
         }
@@ -86,7 +94,8 @@ class TelegramTeacherLeaveService
             ]);
             $this->telegram->reply($bot, $chatId, "Pengajuan Izin Guru\n\nPilih kategori izin:", $this->keyboard([
                 ['🏫 Lingkungan Sekolah'],
-                ['🚗 Luar Sekolah / Tidak Masuk'],
+                ['🚗 Luar Sekolah'],
+                ['🏠 Izin Tidak Masuk'],
                 ['⏰ Datang Terlambat'],
                 ['❌ Batalkan'],
             ]));
@@ -122,7 +131,8 @@ class TelegramTeacherLeaveService
     {
         $category = match ($text) {
             '🏫 Lingkungan Sekolah' => 'sekolah',
-            '🚗 Luar Sekolah / Tidak Masuk' => 'luar',
+            '🚗 Luar Sekolah' => 'luar',
+            '🏠 Izin Tidak Masuk' => 'tidak_masuk',
             '⏰ Datang Terlambat' => 'terlambat',
             default => null,
         };
@@ -415,7 +425,7 @@ class TelegramTeacherLeaveService
 
         $this->advance($conversation, 'confirmation', ['description' => $text]);
         $payload = $conversation->fresh()->payload;
-        $labels = ['sekolah' => 'Lingkungan Sekolah', 'luar' => 'Luar Sekolah / Tidak Masuk', 'terlambat' => 'Datang Terlambat'];
+        $labels = ['sekolah' => 'Lingkungan Sekolah', 'luar' => 'Luar Sekolah', 'tidak_masuk' => 'Izin Tidak Masuk', 'terlambat' => 'Datang Terlambat'];
         $summary = "Periksa Pengajuan Izin\n\n"
             .'Kategori: '.$labels[$payload['category']]."\n"
             .'Jenis: '.$payload['type']."\n"
@@ -473,7 +483,7 @@ class TelegramTeacherLeaveService
         }
 
         $izin = DB::transaction(function () use ($guru, $payload, $sharedResource) {
-            $terlambat = $payload['category'] === 'terlambat';
+            $startsAtSdm = in_array($payload['category'], ['tidak_masuk', 'terlambat'], true);
             $izin = GuruIzin::create([
                 'master_guru_id' => $guru->id,
                 'tanggal_mulai' => $payload['start'],
@@ -481,8 +491,8 @@ class TelegramTeacherLeaveService
                 'jenis_izin' => $payload['type'],
                 'kategori_penyetujuan' => $payload['category'],
                 'deskripsi' => $payload['description'],
-                'status_piket' => $terlambat ? 'disetujui' : 'menunggu',
-                'status_kurikulum' => $terlambat ? 'disetujui' : 'menunggu',
+                'status_piket' => $startsAtSdm ? 'disetujui' : 'menunggu',
+                'status_kurikulum' => $startsAtSdm ? 'disetujui' : 'menunggu',
                 'status_sdm' => 'menunggu',
             ]);
 
@@ -565,13 +575,28 @@ class TelegramTeacherLeaveService
         if (! $izin) {
             $text = 'Belum ada riwayat pengajuan izin guru.';
         } else {
-            $status = "Piket: {$izin->status_piket}\nKurikulum: {$izin->status_kurikulum}\nSDM: {$izin->status_sdm}";
+            $statusLines = match ($izin->kategori_penyetujuan) {
+                'sekolah' => ["Piket: {$izin->status_piket}"],
+                'luar' => ["Piket: {$izin->status_piket}", "Kurikulum: {$izin->status_kurikulum}", "SDM: {$izin->status_sdm}"],
+                'tidak_masuk', 'terlambat' => ["SDM: {$izin->status_sdm}"],
+                default => ["SDM: {$izin->status_sdm}"],
+            };
             if ($izin->status_kepala_sekolah !== 'tidak_diperlukan') {
-                $status .= "\nKepala Sekolah: {$izin->status_kepala_sekolah}";
+                $statusLines[] = "Kepala Sekolah: {$izin->status_kepala_sekolah}";
             }
-            $text = "Pengajuan Izin Terakhir #{$izin->id}\n{$izin->jenis_izin}\n".$izin->tanggal_mulai->format('d-m-Y H:i').' s.d. '.$izin->tanggal_selesai->format('d-m-Y H:i')."\n\n{$status}";
+            $text = "Pengajuan Izin Terakhir #{$izin->id}\n{$izin->categoryLabel()} · {$izin->jenis_izin}\n".$izin->tanggal_mulai->format('d-m-Y H:i').' s.d. '.$izin->tanggal_selesai->format('d-m-Y H:i')."\n\n".implode("\n", $statusLines);
         }
         $this->telegram->reply($bot, $link->chat_id, $text, $this->telegram->linkedMenuMarkup($bot, $link->user));
+    }
+
+    private function sendAccountStatus(TelegramBot $bot, TelegramUserLink $link): void
+    {
+        $this->telegram->reply(
+            $bot,
+            $link->chat_id,
+            "Status Hubungan Akun SISFO\n\n✅ Terhubung\nNama: ".($link->user?->name ?? 'Pegawai')."\nBot: {$bot->name}\n\nGunakan /status_izin untuk melihat status pengajuan izin terakhir.",
+            $this->telegram->linkedMenuMarkup($bot, $link->user),
+        );
     }
 
     private function affectedSchedules(int $guruId, Carbon $start, Carbon $end)
@@ -589,9 +614,9 @@ class TelegramTeacherLeaveService
 
     private function notifyApprovers(GuruIzin $izin, string $teacherName): void
     {
-        if ($izin->kategori_penyetujuan === 'terlambat') {
+        if ($izin->startsAtSdm()) {
             $approvers = User::whereHas('roles', fn ($query) => $query->where('name', 'KAUR SDM'))->get();
-            $message = 'Ada pengajuan Izin Terlambat baru dari '.$teacherName;
+            $message = 'Ada pengajuan '.$izin->categoryLabel().' baru dari '.$teacherName;
             $url = route('sdm.persetujuan-izin-guru.index');
         } else {
             $approvers = User::whereHas('roles', fn ($query) => $query->where('name', 'Guru Piket'))->get();

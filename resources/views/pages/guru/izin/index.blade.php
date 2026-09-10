@@ -23,18 +23,22 @@
                     </div>
                     <div>
                         <h4 class="text-blue-900 font-bold mb-2 text-sm uppercase tracking-wider">Panduan Pengajuan Izin Guru</h4>
-                        <p class="mb-3 text-sm text-blue-800">Khusus Pegawai Tetap, seluruh kategori izin memerlukan persetujuan akhir Kepala Sekolah setelah tahap persetujuan kategori berikut selesai.</p>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <p class="mb-3 text-sm text-blue-800">Khusus Pegawai Tetap, kategori Luar Sekolah, Izin Tidak Masuk, dan Terlambat memerlukan persetujuan akhir Kepala Sekolah.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                             <div class="bg-white/50 p-3 rounded-xl border border-blue-100">
                                 <p class="text-xs font-bold text-blue-800 mb-1">1. Izin Lingkungan Sekolah</p>
                                 <p class="text-[11px] text-blue-600 leading-relaxed font-medium">Gunakan kategori ini jika Anda izin meninggalkan kelas untuk kegiatan operasional sekolah (Rapat, dsb) namun tetap berada di lingkungan sekolah. Cukup memerlukan persetujuan dari <strong>Guru Piket</strong>.</p>
                             </div>
                             <div class="bg-white/50 p-3 rounded-xl border border-blue-100">
-                                <p class="text-xs font-bold text-blue-800 mb-1">2. Izin Luar Sekolah / Absen</p>
-                                <p class="text-[11px] text-blue-600 leading-relaxed font-medium">Gunakan kategori ini jika Anda izin keluar lingkungan sekolah atau tidak masuk di hari berikutnya. Memerlukan persetujuan berjenjang: <strong>Guru Piket &rarr; Waka Kurikulum &rarr; KAUR SDM</strong>.</p>
+                                <p class="text-xs font-bold text-blue-800 mb-1">2. Izin Luar Sekolah</p>
+                                <p class="text-[11px] text-blue-600 leading-relaxed font-medium">Gunakan kategori ini jika Anda meninggalkan lingkungan sekolah. Alurnya: <strong>Guru Piket &rarr; Waka Kurikulum &rarr; KAUR SDM</strong>.</p>
                             </div>
                             <div class="bg-white/50 p-3 rounded-xl border border-blue-100">
-                                <p class="text-xs font-bold text-blue-800 mb-1">3. Izin Keterlambatan</p>
+                                <p class="text-xs font-bold text-blue-800 mb-1">3. Izin Tidak Masuk</p>
+                                <p class="text-[11px] text-blue-600 leading-relaxed font-medium">Gunakan saat tidak dapat hadir bekerja. Pengajuan langsung menuju <strong>KAUR SDM</strong>, tanpa persetujuan Piket dan Kurikulum.</p>
+                            </div>
+                            <div class="bg-white/50 p-3 rounded-xl border border-blue-100">
+                                <p class="text-xs font-bold text-blue-800 mb-1">4. Izin Keterlambatan</p>
                                 <p class="text-[11px] text-blue-600 leading-relaxed font-medium">Gunakan kategori ini jika Anda hadir terlambat di sekolah. Pengajuan ini akan langsung diteruskan ke <strong>KAUR SDM</strong> untuk validasi, melewati Guru Piket dan Waka Kurikulum.</p>
                             </div>
                         </div>
@@ -79,6 +83,12 @@
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200 uppercase">
                                                 Sekolah
                                             </span>
+                                        @elseif($izin->kategori_penyetujuan === 'luar')
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 text-orange-800 border border-orange-200 uppercase">Luar Sekolah</span>
+                                        @elseif($izin->kategori_penyetujuan === 'tidak_masuk')
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-800 border border-red-200 uppercase">Tidak Masuk</span>
+                                        @elseif($izin->kategori_penyetujuan === 'terlambat')
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 uppercase">Terlambat</span>
                                         @endif
                                     </td>
                                     <td class="px-6 py-4 max-w-xs truncate text-gray-600">
@@ -86,25 +96,25 @@
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="flex items-center gap-2">
-                                            {{-- Status Piket --}}
+                                            @if(in_array($izin->kategori_penyetujuan, ['sekolah', 'luar'], true))
                                             <div class="flex flex-col items-center">
                                                 <span class="text-[10px] font-bold text-gray-400 uppercase">Piket</span>
                                                 <x-status-badge-izin :status="$izin->status_piket" />
                                             </div>
-                                            <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                                            {{-- Status Kurikulum --}}
+                                            @endif
+                                            @if($izin->kategori_penyetujuan === 'luar')
                                             <div class="flex flex-col items-center">
                                                 <span class="text-[10px] font-bold text-gray-400 uppercase">Kurikulum</span>
                                                 <x-status-badge-izin :status="$izin->status_kurikulum" />
                                             </div>
-                                            <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                                            {{-- Status SDM --}}
+                                            @endif
+                                            @if($izin->kategori_penyetujuan !== 'sekolah')
                                             <div class="flex flex-col items-center">
                                                 <span class="text-[10px] font-bold text-gray-400 uppercase">SDM</span>
                                                 <x-status-badge-izin :status="$izin->status_sdm" />
                                             </div>
+                                            @endif
                                             @if($izin->status_kepala_sekolah !== 'tidak_diperlukan')
-                                                <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                                                 <div class="flex flex-col items-center">
                                                     <span class="text-[10px] font-bold text-gray-400 uppercase">Kepala Sekolah</span>
                                                     <x-status-badge-izin :status="$izin->status_kepala_sekolah" />

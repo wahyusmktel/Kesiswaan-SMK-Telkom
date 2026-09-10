@@ -35,7 +35,7 @@ class HeadmasterTeacherLeaveApprovalTest extends TestCase
         return $user;
     }
 
-    private function leave(string $employment): GuruIzin
+    private function leave(string $employment, string $category = 'luar'): GuruIzin
     {
         $teacherUser = User::factory()->create();
         $teacher = MasterGuru::create(['nama_lengkap' => 'Guru '.$employment, 'jenis_kelamin' => 'L', 'user_id' => $teacherUser->id]);
@@ -43,7 +43,7 @@ class HeadmasterTeacherLeaveApprovalTest extends TestCase
 
         return GuruIzin::create([
             'master_guru_id' => $teacher->id, 'tanggal_mulai' => '2026-09-08 06:00:00', 'tanggal_selesai' => '2026-09-08 16:00:00',
-            'jenis_izin' => 'Sakit', 'kategori_penyetujuan' => 'luar', 'deskripsi' => 'Istirahat',
+            'jenis_izin' => 'Sakit', 'kategori_penyetujuan' => $category, 'deskripsi' => 'Istirahat',
             'status_piket' => 'disetujui', 'status_kurikulum' => 'disetujui', 'status_sdm' => 'menunggu',
         ]);
     }
@@ -72,9 +72,41 @@ class HeadmasterTeacherLeaveApprovalTest extends TestCase
         $this->assertSame($headmaster->id, $leave->kepala_sekolah_id);
     }
 
-    public function test_school_category_cannot_bypass_headmaster_for_permanent_employee(): void
+    public function test_teacher_can_submit_absence_directly_to_sdm(): void
     {
-        $this->userWithRole('Kepala Sekolah', ['view executive dashboard']);
+        $teacherUser = $this->userWithRole('Guru Kelas');
+        $teacher = MasterGuru::create([
+            'nama_lengkap' => 'Guru Tidak Masuk',
+            'jenis_kelamin' => 'L',
+            'user_id' => $teacherUser->id,
+        ]);
+        $teacher->dapodikGuru()->create([
+            'nama' => $teacher->nama_lengkap,
+            'status_kepegawaian' => 'Pegawai Full Time',
+        ]);
+        $this->userWithRole('KAUR SDM');
+
+        $this->actingAs($teacherUser)->withSession(['active_role' => 'Guru Kelas'])
+            ->post(route('guru.izin.store'), [
+                'tanggal_mulai' => '2026-09-12 07:00:00',
+                'tanggal_selesai' => '2026-09-12 16:00:00',
+                'jenis_izin' => 'Sakit',
+                'kategori_penyetujuan' => 'tidak_masuk',
+                'deskripsi' => 'Perlu beristirahat di rumah.',
+            ])->assertRedirect(route('guru.izin.index'));
+
+        $this->assertDatabaseHas('guru_izins', [
+            'master_guru_id' => $teacher->id,
+            'kategori_penyetujuan' => 'tidak_masuk',
+            'status_piket' => 'disetujui',
+            'status_kurikulum' => 'disetujui',
+            'status_sdm' => 'menunggu',
+        ]);
+    }
+
+    public function test_school_category_finishes_at_piket_even_for_permanent_employee(): void
+    {
+        $headmaster = $this->userWithRole('Kepala Sekolah', ['view executive dashboard']);
         $piket = $this->userWithRole('Guru Piket');
         $leave = $this->leave('Pegawai Tetap');
         $leave->update(['kategori_penyetujuan' => 'sekolah', 'status_piket' => 'menunggu', 'status_kurikulum' => 'menunggu']);
@@ -83,8 +115,29 @@ class HeadmasterTeacherLeaveApprovalTest extends TestCase
             ->patch(route('piket.persetujuan-izin-guru.approve', $leave))->assertRedirect()->assertSessionHas('success');
         $leave->refresh();
         $this->assertSame('disetujui', $leave->status_sdm);
-        $this->assertSame('menunggu', $leave->status_kepala_sekolah);
-        $this->assertFalse($leave->isFullyApproved());
+        $this->assertSame('tidak_diperlukan', $leave->status_kepala_sekolah);
+        $this->assertTrue($leave->isFullyApproved());
+        Notification::assertNotSentTo($headmaster, \App\Notifications\PengajuanIzinGuruNotification::class);
+    }
+
+    public function test_absence_category_starts_at_sdm_and_only_permanent_employee_continues_to_headmaster(): void
+    {
+        $headmaster = $this->userWithRole('Kepala Sekolah', ['view executive dashboard']);
+        $sdm = $this->userWithRole('KAUR SDM', ['view sdm dashboard', 'manage perizinan guru']);
+
+        $permanent = $this->leave('Pegawai Tetap', 'tidak_masuk');
+        $fullTime = $this->leave('Pegawai Full Time', 'tidak_masuk');
+
+        foreach ([$permanent, $fullTime] as $leave) {
+            $this->actingAs($sdm)->withSession(['active_role' => 'KAUR SDM'])
+                ->patch(route('sdm.persetujuan-izin-guru.approve', $leave))->assertRedirect();
+        }
+
+        $this->assertSame('menunggu', $permanent->refresh()->status_kepala_sekolah);
+        $this->assertSame('tidak_diperlukan', $fullTime->refresh()->status_kepala_sekolah);
+        $this->assertFalse($permanent->isFullyApproved());
+        $this->assertTrue($fullTime->isFullyApproved());
+        Notification::assertSentTo($headmaster, \App\Notifications\PengajuanIzinGuruNotification::class);
     }
 
     public function test_non_permanent_employee_finishes_at_sdm_and_cannot_enter_headmaster_action(): void
