@@ -102,6 +102,18 @@
                     <div role="alert" class="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">{{ $errors->first() }}</div>
                 @endif
 
+                @if($context['category'] === \App\Models\DapodikGuru::CATEGORY_TPA)
+                    <section class="rounded-2xl border border-violet-200 bg-violet-50 p-4">
+                        <h3 class="text-sm font-bold text-violet-900">Alur penambahan TPA yang disarankan</h3>
+                        <ol class="mt-2 list-inside list-decimal space-y-1 text-xs leading-relaxed text-violet-800">
+                            <li>Import file melalui halaman <strong>Data Dapodik TPA</strong>; master pegawai dicari atau dibuat berdasarkan NIK.</li>
+                            <li>Jika pegawai sudah mempunyai akun SISFO, gunakan <strong>Rekonsiliasi Akun SISFO</strong>. Role lama seperti Kepala Sekolah, KAUR SDM, atau Security tidak berubah.</li>
+                            <li>Jika belum mempunyai akun, pastikan email Dapodik valid lalu klik <strong>Sinkronkan Akun TPA</strong>. Akun baru akan dibuat dengan role TPA.</li>
+                            <li>Gunakan <strong>Status Keaktifan Pegawai</strong> untuk mengatur kategori, status kepegawaian, dan pegawai yang sudah tidak aktif.</li>
+                        </ol>
+                    </section>
+                @endif
+
                 {{-- Import errors --}}
                 @if(session('dapodik_import_errors'))
                     <div class="bg-red-50 border border-red-200 rounded-2xl p-4">
@@ -408,7 +420,7 @@
 
                                         {{-- Actions --}}
                                         <td class="px-6 py-4">
-                                            <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div class="flex items-center justify-end gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
                                                 <a href="{{ route($context['route'].'.show', $item) }}"
                                                     class="w-8 h-8 rounded-lg flex items-center justify-center text-blue-600 hover:bg-blue-50 transition-colors" title="Detail">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
@@ -417,6 +429,15 @@
                                                     class="w-8 h-8 rounded-lg flex items-center justify-center text-amber-600 hover:bg-amber-50 transition-colors" title="Edit">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                                 </a>
+                                                @if($context['category'] === \App\Models\DapodikGuru::CATEGORY_TPA)
+                                                    <form method="POST" action="{{ route('dapodik-tpa.destroy', $item) }}" onsubmit="return confirm('Hapus data Dapodik TPA ini? Master pegawai, akun SISFO, dan role tidak akan dihapus.');">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="flex h-8 w-8 items-center justify-center rounded-lg text-red-600 transition-colors hover:bg-red-50" title="Hapus Dapodik TPA" aria-label="Hapus Dapodik TPA {{ $item->nama }}">
+                                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3M4 7h16"/></svg>
+                                                        </button>
+                                                    </form>
+                                                @endif
                                             </div>
                                         </td>
                                     </tr>

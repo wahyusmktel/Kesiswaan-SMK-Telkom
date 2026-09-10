@@ -236,6 +236,54 @@ class DapodikTpaTest extends TestCase
         $this->assertTrue($dapodikMaster->fresh()->is_active);
     }
 
+    public function test_operator_can_delete_tpa_dapodik_without_deleting_master_account_or_roles(): void
+    {
+        $operator = User::factory()->create();
+        $operator->assignRole(Role::findOrCreate('Operator', 'web'));
+        $employee = User::factory()->create();
+        $employee->assignRole(Role::findOrCreate('Kepala Sekolah', 'web'));
+        $master = MasterGuru::create([
+            'nama_lengkap' => 'TPA Tetap Aman',
+            'jenis_kelamin' => 'L',
+            'nik' => '1801000000000044',
+            'user_id' => $employee->id,
+            'employee_category' => MasterGuru::CATEGORY_TPA,
+        ]);
+        $dapodik = DapodikGuru::create([
+            'employee_category' => DapodikGuru::CATEGORY_TPA,
+            'master_guru_id' => $master->id,
+            'nama' => 'TPA Tetap Aman',
+            'nik' => '1801000000000044',
+        ]);
+
+        $this->actingAs($operator)->withSession(['active_role' => 'Operator'])
+            ->delete(route('dapodik-tpa.destroy', $dapodik))
+            ->assertRedirect(route('dapodik-tpa.index'))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('dapodik_gurus', ['id' => $dapodik->id]);
+        $this->assertDatabaseHas('master_gurus', ['id' => $master->id, 'user_id' => $employee->id]);
+        $this->assertDatabaseHas('users', ['id' => $employee->id]);
+        $this->assertTrue($employee->fresh()->hasRole('Kepala Sekolah'));
+    }
+
+    public function test_tpa_delete_route_cannot_delete_teacher_dapodik(): void
+    {
+        $operator = User::factory()->create();
+        $operator->assignRole(Role::findOrCreate('Operator', 'web'));
+        $teacher = DapodikGuru::create([
+            'employee_category' => DapodikGuru::CATEGORY_TEACHER,
+            'nama' => 'Guru Tidak Boleh Terhapus',
+            'nik' => '1801000000000055',
+        ]);
+
+        $this->actingAs($operator)->withSession(['active_role' => 'Operator'])
+            ->delete(route('dapodik-tpa.destroy', $teacher))
+            ->assertNotFound();
+
+        $this->assertDatabaseHas('dapodik_gurus', ['id' => $teacher->id]);
+    }
+
     public function test_account_sync_generates_tpa_account_and_forces_password_change(): void
     {
         $operator = User::factory()->create();

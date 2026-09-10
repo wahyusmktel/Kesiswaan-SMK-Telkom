@@ -324,6 +324,19 @@ class DapodikGuruController extends Controller
         return back()->with('success', $message);
     }
 
+    public function destroyTpa(Request $request, DapodikGuru $dapodikGuru)
+    {
+        abort_unless($request->routeIs('dapodik-tpa.*') && $dapodikGuru->is_tpa, 404);
+
+        $name = $dapodikGuru->nama;
+        $dapodikGuru->delete();
+
+        return redirect()->route('dapodik-tpa.index')->with(
+            'success',
+            'Data Dapodik TPA '.$name.' berhasil dihapus. Master pegawai, akun SISFO, dan seluruh role tetap disimpan.'
+        );
+    }
+
     private function reconcileIdentity(DapodikGuru $dapodik, ?MasterGuru $source, MasterGuru $target): void
     {
         foreach (['nik' => 'NIK', 'nuptk' => 'NUPTK'] as $field => $label) {

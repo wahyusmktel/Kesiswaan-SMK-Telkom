@@ -1143,6 +1143,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/dapodik-tpa', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'store'])->name('dapodik-tpa.store');
         Route::patch('/dapodik-tpa/{dapodikGuru}/mapping', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'updateMapping'])->name('dapodik-tpa.mapping.update');
         Route::patch('/dapodik-tpa/{dapodikGuru}/account', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'reconcileTpaAccount'])->name('dapodik-tpa.account.reconcile');
+        Route::delete('/dapodik-tpa/{dapodikGuru}', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'destroyTpa'])->name('dapodik-tpa.destroy');
         Route::get('/dapodik-tpa/{dapodikGuru}', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'show'])->name('dapodik-tpa.show');
         Route::get('/dapodik-tpa/{dapodikGuru}/edit', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'edit'])->name('dapodik-tpa.edit');
         Route::put('/dapodik-tpa/{dapodikGuru}', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'update'])->name('dapodik-tpa.update');
