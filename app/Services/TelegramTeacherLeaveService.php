@@ -96,6 +96,12 @@ class TelegramTeacherLeaveService
             'start' => $this->receiveStart($bot, $conversation, $chatId, $text),
             'end' => $this->receiveEnd($bot, $conversation, $chatId, $text),
             'schedule_resource' => $this->receiveScheduleResource($bot, $conversation, $chatId, $text),
+            'assignment_offer' => $this->receiveAssignmentOffer($bot, $conversation, $chatId, $text),
+            'assignment_title' => $this->receiveAssignmentTitle($bot, $conversation, $chatId, $text),
+            'assignment_description' => $this->receiveAssignmentDescription($bot, $conversation, $chatId, $text),
+            'assignment_due_date' => $this->receiveAssignmentDueDate($bot, $conversation, $chatId, $text),
+            'assignment_points' => $this->receiveAssignmentPoints($bot, $conversation, $chatId, $text),
+            'assignment_confirmation' => $this->receiveAssignmentConfirmation($bot, $conversation, $chatId, $text),
             'description' => $this->receiveDescription($bot, $conversation, $chatId, $text),
             'confirmation' => $this->receiveConfirmation($bot, $conversation, $link, $text),
             default => $this->resetInvalidConversation($bot, $conversation, $user, $chatId),
@@ -197,6 +203,186 @@ class TelegramTeacherLeaveService
             'current_resource_options' => [],
         ]);
 
+        if ($nextIndex >= count($payload['schedule_ids'])) {
+            $this->askDescription($bot, $chatId);
+        } else {
+            $this->askScheduleResource($bot, $conversation->fresh(), $chatId);
+        }
+    }
+
+    private function receiveAssignmentOffer(TelegramBot $bot, TelegramConversation $conversation, string $chatId, string $text): void
+    {
+        if ($text !== '📝 Buat Penugasan Sekarang') {
+            $this->telegram->reply($bot, $chatId, 'Tekan Buat Penugasan Sekarang untuk melanjutkan pengajuan izin, atau Batalkan untuk membatalkan.');
+
+            return;
+        }
+
+        $schedule = $this->currentSchedule($conversation);
+        if (! $schedule) {
+            $this->resetInvalidConversation($bot, $conversation, $conversation->link->user, $chatId);
+
+            return;
+        }
+
+        $this->advance($conversation, 'assignment_title', [
+            'assignment_schedule_id' => $schedule->id,
+            'assignment_draft' => [],
+        ]);
+        $this->telegram->reply(
+            $bot,
+            $chatId,
+            "Membuat penugasan untuk {$this->scheduleName($schedule)}.\n\nKetik judul tugas (3-255 karakter):",
+            ['remove_keyboard' => true],
+        );
+    }
+
+    private function receiveAssignmentTitle(TelegramBot $bot, TelegramConversation $conversation, string $chatId, string $text): void
+    {
+        $length = mb_strlen($text);
+        if ($length < 3 || $length > 255) {
+            $this->telegram->reply($bot, $chatId, 'Judul tugas harus terdiri dari 3 sampai 255 karakter. Silakan ketik ulang.');
+
+            return;
+        }
+
+        $this->advanceAssignmentDraft($conversation, 'assignment_description', ['title' => $text]);
+        $this->telegram->reply($bot, $chatId, 'Tuliskan petunjuk atau deskripsi tugas untuk siswa:', $this->keyboard([
+            ['⏭ Tanpa Deskripsi'],
+            ['❌ Batalkan'],
+        ]));
+    }
+
+    private function receiveAssignmentDescription(TelegramBot $bot, TelegramConversation $conversation, string $chatId, string $text): void
+    {
+        $description = $text === '⏭ Tanpa Deskripsi' ? null : $text;
+        if ($description !== null && mb_strlen($description) > 5000) {
+            $this->telegram->reply($bot, $chatId, 'Deskripsi tugas maksimal 5.000 karakter. Silakan ringkas deskripsi Anda.');
+
+            return;
+        }
+
+        $this->advanceAssignmentDraft($conversation, 'assignment_due_date', ['description' => $description]);
+        $this->telegram->reply($bot, $chatId, "Ketik batas pengumpulan dengan format DD-MM-YYYY HH:MM.\nContoh: 11-09-2026 16:00", $this->keyboard([
+            ['⏭ Tanpa Tenggat'],
+            ['❌ Batalkan'],
+        ]));
+    }
+
+    private function receiveAssignmentDueDate(TelegramBot $bot, TelegramConversation $conversation, string $chatId, string $text): void
+    {
+        $dueDate = null;
+        if ($text !== '⏭ Tanpa Tenggat') {
+            $dueDate = $this->parseDate($text);
+            if (! $dueDate) {
+                $this->telegram->reply($bot, $chatId, 'Format batas pengumpulan belum benar. Contoh: 11-09-2026 16:00');
+
+                return;
+            }
+            if ($dueDate->isPast()) {
+                $this->telegram->reply($bot, $chatId, 'Batas pengumpulan harus berada di waktu mendatang. Silakan ketik ulang.');
+
+                return;
+            }
+        }
+
+        $this->advanceAssignmentDraft($conversation, 'assignment_points', [
+            'due_date' => $dueDate?->format('Y-m-d H:i:s'),
+        ]);
+        $this->telegram->reply($bot, $chatId, 'Masukkan poin maksimal tugas (0-100):', $this->keyboard([
+            ['💯 Gunakan 100 Poin'],
+            ['❌ Batalkan'],
+        ]));
+    }
+
+    private function receiveAssignmentPoints(TelegramBot $bot, TelegramConversation $conversation, string $chatId, string $text): void
+    {
+        $points = $text === '💯 Gunakan 100 Poin' ? 100 : filter_var($text, FILTER_VALIDATE_INT);
+        if ($points === false || $points < 0 || $points > 100) {
+            $this->telegram->reply($bot, $chatId, 'Poin tugas harus berupa angka dari 0 sampai 100. Silakan ketik ulang.');
+
+            return;
+        }
+
+        $this->advanceAssignmentDraft($conversation, 'assignment_confirmation', ['points' => $points]);
+        $payload = $conversation->fresh()->payload;
+        $draft = $payload['assignment_draft'];
+        $schedule = $this->currentSchedule($conversation->fresh());
+        if (! $schedule) {
+            $this->resetInvalidConversation($bot, $conversation, $conversation->link->user, $chatId);
+
+            return;
+        }
+
+        $summary = "Periksa Penugasan\n\n"
+            .'Jadwal: '.$this->scheduleName($schedule)."\n"
+            .'Judul: '.$draft['title']."\n"
+            .'Deskripsi: '.($draft['description'] ?: '-')."\n"
+            .'Tenggat: '.($draft['due_date'] ? Carbon::parse($draft['due_date'])->format('d-m-Y H:i') : 'Tanpa tenggat')."\n"
+            .'Poin: '.$draft['points']."\n\nBuat tugas ini dan gunakan untuk pengajuan izin?";
+        $this->telegram->reply($bot, $chatId, $summary, $this->keyboard([
+            ['✅ Buat & Gunakan Tugas'],
+            ['❌ Batalkan'],
+        ]));
+    }
+
+    private function receiveAssignmentConfirmation(TelegramBot $bot, TelegramConversation $conversation, string $chatId, string $text): void
+    {
+        if ($text !== '✅ Buat & Gunakan Tugas') {
+            $this->telegram->reply($bot, $chatId, 'Tekan Buat & Gunakan Tugas untuk menyimpan, atau Batalkan untuk membatalkan.');
+
+            return;
+        }
+
+        $schedule = $this->currentSchedule($conversation);
+        $payload = $conversation->payload;
+        if (! $schedule || (int) ($payload['assignment_schedule_id'] ?? 0) !== $schedule->id) {
+            $this->resetInvalidConversation($bot, $conversation, $conversation->link->user, $chatId);
+
+            return;
+        }
+
+        $draft = $payload['assignment_draft'] ?? [];
+        if (! isset($draft['title'], $draft['points'])) {
+            $this->resetInvalidConversation($bot, $conversation, $conversation->link->user, $chatId);
+
+            return;
+        }
+
+        [$assignment, $nextIndex] = DB::transaction(function () use ($conversation, $schedule, $payload, $draft) {
+            $assignment = LmsAssignment::create([
+                'mata_pelajaran_id' => $schedule->mata_pelajaran_id,
+                'master_guru_id' => $schedule->master_guru_id,
+                'rombel_id' => $schedule->rombel_id,
+                'title' => $draft['title'],
+                'description' => $draft['description'] ?? null,
+                'due_date' => $draft['due_date'] ?? null,
+                'points' => $draft['points'],
+            ]);
+
+            $resources = $payload['schedule_resources'] ?? [];
+            $resources[(string) $schedule->id] = [
+                'type' => 'assignment',
+                'id' => $assignment->id,
+                'label' => 'Tugas: '.$assignment->title,
+            ];
+            $nextIndex = ((int) $payload['schedule_index']) + 1;
+            $this->advance(
+                $conversation,
+                $nextIndex >= count($payload['schedule_ids']) ? 'description' : 'schedule_resource',
+                [
+                    'schedule_resources' => $resources,
+                    'schedule_index' => $nextIndex,
+                    'current_resource_options' => [],
+                    'assignment_schedule_id' => null,
+                    'assignment_draft' => [],
+                ],
+            );
+
+            return [$assignment, $nextIndex];
+        });
+
+        $this->telegram->reply($bot, $chatId, '✅ Tugas “'.$assignment->title.'” berhasil dibuat di LMS dan otomatis dipilih untuk jadwal ini.');
         if ($nextIndex >= count($payload['schedule_ids'])) {
             $this->askDescription($bot, $chatId);
         } else {
@@ -328,8 +514,20 @@ class TelegramTeacherLeaveService
             ->values()->all();
 
         if (! $options) {
-            $conversation->delete();
-            $this->telegram->reply($bot, $chatId, 'Pengajuan melalui bot dihentikan karena jadwal '.$this->scheduleName($schedule).' belum memiliki materi/tugas LMS. Tambahkan materi atau tugas di SISFO, lalu ajukan kembali.', $this->telegram->linkedMenuMarkup($bot, $conversation->link->user));
+            $this->advance($conversation, 'assignment_offer', [
+                'current_resource_options' => [],
+                'assignment_schedule_id' => $schedule->id,
+                'assignment_draft' => [],
+            ]);
+            $this->telegram->reply(
+                $bot,
+                $chatId,
+                'Jadwal '.$this->scheduleName($schedule).' belum memiliki materi/tugas LMS. Anda dapat membuat penugasan sekarang tanpa keluar dari Telegram.',
+                $this->keyboard([
+                    ['📝 Buat Penugasan Sekarang'],
+                    ['❌ Batalkan'],
+                ]),
+            );
 
             return;
         }
@@ -432,6 +630,27 @@ class TelegramTeacherLeaveService
             'payload' => array_merge($conversation->payload ?? [], $values),
             'expires_at' => now()->addHours(6),
         ]);
+    }
+
+    private function advanceAssignmentDraft(TelegramConversation $conversation, string $step, array $values): void
+    {
+        $this->advance($conversation, $step, [
+            'assignment_draft' => array_merge($conversation->payload['assignment_draft'] ?? [], $values),
+        ]);
+    }
+
+    private function currentSchedule(TelegramConversation $conversation): ?JadwalPelajaran
+    {
+        $payload = $conversation->payload;
+        $scheduleId = $payload['schedule_ids'][$payload['schedule_index'] ?? -1] ?? null;
+        if (! $scheduleId) {
+            return null;
+        }
+
+        return JadwalPelajaran::with(['rombel.kelas', 'mataPelajaran'])
+            ->whereKey($scheduleId)
+            ->where('master_guru_id', $conversation->link->user->masterGuru?->id)
+            ->first();
     }
 
     private function parseDate(string $value): ?Carbon

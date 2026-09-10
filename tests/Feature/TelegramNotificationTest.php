@@ -6,7 +6,13 @@ use App\Models\FingerprintAttendance;
 use App\Models\FingerprintAttendanceSetting;
 use App\Models\FingerprintAutoSyncSetting;
 use App\Models\FingerprintDevice;
+use App\Models\JadwalPelajaran;
+use App\Models\Kelas;
+use App\Models\LmsAssignment;
 use App\Models\MasterGuru;
+use App\Models\MataPelajaran;
+use App\Models\Rombel;
+use App\Models\TahunPelajaran;
 use App\Models\TelegramBot;
 use App\Models\TelegramLog;
 use App\Models\TelegramUserLink;
@@ -265,6 +271,93 @@ class TelegramNotificationTest extends TestCase
         ]);
         Http::assertSent(fn ($request) => str_ends_with($request->url(), '/sendMessage')
             && str_contains($request['text'], 'berhasil dikirim'));
+    }
+
+    public function test_guru_kelas_can_create_a_missing_lms_assignment_in_the_leave_bot_flow(): void
+    {
+        $bot = $this->createBot();
+        $teacher = $this->createLinkedEmployee($bot, 'Guru Pembuat Tugas Telegram', '998807');
+        $teacher->assignRole(Role::findOrCreate('Guru Kelas', 'web'));
+        Role::findOrCreate('Guru Piket', 'web');
+
+        $period = TahunPelajaran::create([
+            'tahun' => '2026/2027',
+            'semester' => 'Ganjil',
+            'is_active' => true,
+        ]);
+        $classroom = Kelas::create([
+            'nama_kelas' => 'XII TKJ 1',
+            'jurusan' => 'Teknik Komputer dan Jaringan',
+        ]);
+        $rombel = Rombel::create([
+            'tahun_ajaran' => $period->tahun,
+            'tahun_pelajaran_id' => $period->id,
+            'kelas_id' => $classroom->id,
+            'wali_kelas_id' => $teacher->id,
+        ]);
+        $subject = MataPelajaran::create([
+            'kode_mapel' => 'MPTKJ',
+            'nama_mapel' => 'Materi Peminatan TKJ',
+        ]);
+        $schedule = JadwalPelajaran::create([
+            'rombel_id' => $rombel->id,
+            'mata_pelajaran_id' => $subject->id,
+            'master_guru_id' => $teacher->masterGuru->id,
+            'hari' => 'Kamis',
+            'jam_ke' => 7,
+            'jam_mulai' => '12:45:00',
+            'jam_selesai' => '13:30:00',
+        ]);
+
+        foreach (['/izin', '🚗 Luar Sekolah / Tidak Masuk', 'Sakit', '10-09-2026 12:00', '10-09-2026 14:00'] as $message) {
+            $this->sendBotMessage($bot, '998807', $message);
+        }
+
+        $linkId = TelegramUserLink::where('user_id', $teacher->id)->value('id');
+        $this->assertDatabaseHas('telegram_conversations', [
+            'telegram_user_link_id' => $linkId,
+            'step' => 'assignment_offer',
+        ]);
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/sendMessage')
+            && str_contains($request['text'], 'belum memiliki materi/tugas LMS')
+            && str_contains(json_encode($request['reply_markup']), 'Buat Penugasan Sekarang'));
+
+        foreach ([
+            '📝 Buat Penugasan Sekarang',
+            'Praktik konfigurasi routing',
+            'Kerjakan konfigurasi routing sesuai topologi pada modul.',
+            '11-09-2026 16:00',
+            '💯 Gunakan 100 Poin',
+            '✅ Buat & Gunakan Tugas',
+        ] as $message) {
+            $this->sendBotMessage($bot, '998807', $message);
+        }
+
+        $assignment = LmsAssignment::where('master_guru_id', $teacher->masterGuru->id)->firstOrFail();
+        $this->assertSame('Praktik konfigurasi routing', $assignment->title);
+        $this->assertSame(100, $assignment->points);
+        $this->assertSame($schedule->rombel_id, $assignment->rombel_id);
+        $this->assertSame($schedule->mata_pelajaran_id, $assignment->mata_pelajaran_id);
+        $this->assertDatabaseHas('telegram_conversations', [
+            'telegram_user_link_id' => $linkId,
+            'step' => 'description',
+        ]);
+
+        foreach (['Perlu beristirahat sesuai arahan dokter.', '✅ Kirim Pengajuan'] as $message) {
+            $this->sendBotMessage($bot, '998807', $message);
+        }
+
+        $izinId = DB::table('guru_izins')->where('master_guru_id', $teacher->masterGuru->id)->value('id');
+        $this->assertDatabaseHas('guru_izin_jadwal', [
+            'guru_izin_id' => $izinId,
+            'jadwal_pelajaran_id' => $schedule->id,
+            'lms_assignment_id' => $assignment->id,
+        ]);
+        $this->assertDatabaseMissing('telegram_conversations', [
+            'telegram_user_link_id' => $linkId,
+        ]);
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/sendMessage')
+            && str_contains($request['text'], 'berhasil dibuat di LMS'));
     }
 
     public function test_non_guru_kelas_cannot_open_teacher_leave_flow_even_by_typing_command(): void
