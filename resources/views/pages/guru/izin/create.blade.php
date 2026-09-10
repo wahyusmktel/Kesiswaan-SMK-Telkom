@@ -90,82 +90,78 @@
 
                             <div x-show="!loading && schedules.length > 0" class="grid grid-cols-1 gap-4">
                                 <template x-for="schedule in schedules" :key="schedule.id">
-                                    <div class="space-y-3">
-                                        <label class="relative flex items-center p-4 rounded-xl border border-gray-200 hover:border-indigo-200 hover:bg-indigo-50/50 cursor-pointer transition-all"
-                                               :class="selectedIds.includes(schedule.id.toString()) ? 'bg-indigo-50 border-indigo-200 ring-1 ring-indigo-100' : ''">
-                                            <input type="checkbox" name="jadwal_ids[]" :value="schedule.id" 
-                                                   x-model="selectedIds"
-                                                   @change="handleScheduleToggle(schedule)"
-                                                   class="rounded text-indigo-600 focus:ring-indigo-500 mr-4 transition-all">
-                                            <div class="flex-1">
-                                                <div class="flex justify-between items-center mb-1">
-                                                    <span class="font-bold text-gray-900" x-text="schedule.rombel.kelas.nama_kelas"></span>
-                                                    <span class="text-xs font-black text-indigo-600 uppercase tracking-widest" x-text="'Jam ' + schedule.jam_ke"></span>
-                                                </div>
-                                                <div class="flex justify-between items-center">
-                                                    <span class="text-sm text-gray-600" x-text="schedule.mata_pelajaran.nama_mapel"></span>
-                                                    <span class="text-xs font-mono text-gray-400" x-text="formatTime(schedule.jam_mulai) + ' - ' + formatTime(schedule.jam_selesai)"></span>
-                                                </div>
+                                    <label class="relative flex cursor-pointer items-center rounded-xl border border-gray-200 p-4 transition-all hover:border-indigo-200 hover:bg-indigo-50/50"
+                                        :class="selectedIds.includes(schedule.id.toString()) ? 'bg-indigo-50 border-indigo-200 ring-1 ring-indigo-100' : ''">
+                                        <input type="checkbox" name="jadwal_ids[]" :value="schedule.id"
+                                            x-model="selectedIds" @change="refreshLmsResources()"
+                                            class="mr-4 rounded text-indigo-600 transition-all focus:ring-indigo-500">
+                                        <div class="flex-1">
+                                            <div class="mb-1 flex items-center justify-between">
+                                                <span class="font-bold text-gray-900" x-text="schedule.rombel.kelas.nama_kelas"></span>
+                                                <span class="text-xs font-black uppercase tracking-widest text-indigo-600" x-text="'Jam ' + schedule.jam_ke"></span>
                                             </div>
-                                        </label>
-
-                                        {{-- LMS Resource Selectors (Conditional) --}}
-                                        <div x-show="selectedIds.includes(schedule.id.toString())" 
-                                             x-transition:enter="transition ease-out duration-200"
-                                             x-transition:enter-start="opacity-0 -translate-y-2"
-                                             x-transition:enter-end="opacity-100 translate-y-0"
-                                             class="ml-8 p-5 bg-gray-50 rounded-2xl border border-gray-100 space-y-4 shadow-sm">
-                                            
-                                            <div class="flex items-center gap-2 mb-2">
-                                                <div class="p-1.5 bg-indigo-100 text-indigo-700 rounded-lg">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                                                    </svg>
-                                                </div>
-                                                <h5 class="text-xs font-black text-gray-900 uppercase tracking-widest">Penugasan & Materi (Wajib)</h5>
-                                            </div>
-
-                                            <p class="text-[10px] text-gray-500 leading-normal mb-3">
-                                                * Anda wajib melampirkan minimal satu materi atau tugas untuk setiap jam pelajaran yang ditinggalkan.
-                                            </p>
-
-                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div class="space-y-1.5">
-                                                    <label class="text-[10px] font-bold text-gray-400 uppercase">Materi Pelajaran</label>
-                                                    <select :name="'lms_material_ids[' + schedule.id + ']'" 
-                                                        x-model="selectedLms[schedule.id + '_material']"
-                                                        class="w-full text-xs rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 bg-white shadow-sm">
-                                                        <option value="">-- Pilih Materi --</option>
-                                                        <template x-for="material in lmsData[schedule.id]?.materials || []" :key="material.id">
-                                                            <option :value="material.id" x-text="material.title"></option>
-                                                        </template>
-                                                    </select>
-                                                </div>
-                                                <div class="space-y-1.5">
-                                                    <label class="text-[10px] font-bold text-gray-400 uppercase">Tugas & PR</label>
-                                                    <select :name="'lms_assignment_ids[' + schedule.id + ']'" 
-                                                        x-model="selectedLms[schedule.id + '_assignment']"
-                                                        class="w-full text-xs rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 bg-white shadow-sm">
-                                                        <option value="">-- Pilih Tugas --</option>
-                                                        <template x-for="assignment in lmsData[schedule.id]?.assignments || []" :key="assignment.id">
-                                                            <option :value="assignment.id" x-text="assignment.title"></option>
-                                                        </template>
-                                                    </select>
-                                                </div>
-                                            </div>
-
-                                            <div x-show="lmsData[schedule.id] && lmsData[schedule.id].materials.length === 0 && lmsData[schedule.id].assignments.length === 0" 
-                                                 class="p-3 bg-red-50 border border-red-100 rounded-xl flex items-center gap-2">
-                                                <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                                </svg>
-                                                <p class="text-[10px] text-red-600 font-bold">
-                                                    Data LSM belum tersedia untuk kelas ini. Silakan buat materi/tugas di Ruang Belajar terlebih dahulu.
-                                                </p>
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-sm text-gray-600" x-text="schedule.mata_pelajaran.nama_mapel"></span>
+                                                <span class="font-mono text-xs text-gray-400" x-text="formatTime(schedule.jam_mulai) + ' - ' + formatTime(schedule.jam_selesai)"></span>
                                             </div>
                                         </div>
-                                    </div>
+                                    </label>
                                 </template>
+                            </div>
+
+                            {{-- One LMS resource selection applies to every selected lesson period. --}}
+                            <div x-show="selectedIds.length > 0" x-transition
+                                class="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-5 shadow-sm">
+                                <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <div class="rounded-lg bg-indigo-100 p-1.5 text-indigo-700">
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                                            </div>
+                                            <h5 class="text-xs font-black uppercase tracking-widest text-gray-900">Materi atau Tugas Bersama</h5>
+                                        </div>
+                                        <p class="mt-2 text-xs leading-5 text-gray-600">
+                                            Pilih satu kali. Materi atau tugas ini otomatis digunakan untuk seluruh
+                                            <strong x-text="selectedIds.length"></strong> jam pelajaran yang dipilih.
+                                        </p>
+                                    </div>
+                                    <span class="w-fit rounded-full bg-indigo-100 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-indigo-700"
+                                        x-text="selectedIds.length + ' jam terdampak'"></span>
+                                </div>
+
+                                <div x-show="lmsLoading" class="mt-5 flex items-center gap-2 text-xs font-bold text-indigo-600">
+                                    <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                    Memuat materi dan tugas LMS...
+                                </div>
+
+                                <div x-show="!lmsLoading" class="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    <div class="space-y-1.5">
+                                        <label class="text-[10px] font-bold uppercase text-gray-500">Materi Pelajaran</label>
+                                        <select name="lms_material_id" x-model="selectedMaterialId"
+                                            class="w-full rounded-xl border-gray-200 bg-white text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                            <option value="">-- Pilih Materi --</option>
+                                            <template x-for="material in lmsData.materials" :key="material.id">
+                                                <option :value="material.id" x-text="material.title"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <div class="space-y-1.5">
+                                        <label class="text-[10px] font-bold uppercase text-gray-500">Tugas & PR</label>
+                                        <select name="lms_assignment_id" x-model="selectedAssignmentId"
+                                            class="w-full rounded-xl border-gray-200 bg-white text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                            <option value="">-- Pilih Tugas --</option>
+                                            <template x-for="assignment in lmsData.assignments" :key="assignment.id">
+                                                <option :value="assignment.id" x-text="assignment.title"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div x-show="!lmsLoading && lmsData.materials.length === 0 && lmsData.assignments.length === 0"
+                                    class="mt-4 flex items-center gap-2 rounded-xl border border-red-100 bg-red-50 p-3">
+                                    <svg class="h-4 w-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                                    <p class="text-[10px] font-bold text-red-600">Data LMS belum tersedia. Silakan buat materi atau tugas di Ruang Belajar terlebih dahulu.</p>
+                                </div>
                             </div>
 
                             <div x-show="!loading && schedules.length === 0 && startDate" class="text-center py-10 bg-gray-50 rounded-2xl border border-dashed border-gray-300">
@@ -186,7 +182,7 @@
                             </svg>
                             <div>
                                 <p class="text-sm font-black">Penugasan Belum Lengkap</p>
-                                <p class="text-xs font-medium opacity-80">Anda wajib memilih minimal satu Materi Pelajaran atau Tugas & PR untuk setiap jam pelajaran yang dipilih sebelum mengirim pengajuan.</p>
+                                <p class="text-xs font-medium opacity-80">Pilih satu Materi Pelajaran atau Tugas & PR. Pilihan tersebut berlaku untuk seluruh jam pelajaran yang terdampak.</p>
                             </div>
                         </div>
 
@@ -215,9 +211,13 @@
                 endDate: '',
                 schedules: [],
                 selectedIds: [],
-                lmsData: {}, // Map of scheduleId -> {materials, assignments}
-                selectedLms: {}, // Map of scheduleId_material/scheduleId_assignment -> value
+                lmsData: { materials: [], assignments: [] },
+                selectedMaterialId: '',
+                selectedAssignmentId: '',
+                resourceScheduleId: null,
+                lmsRequestNumber: 0,
                 loading: false,
+                lmsLoading: false,
 
                 async fetchSchedules() {
                     if (!this.startDate) return;
@@ -225,7 +225,14 @@
                     try {
                         const response = await fetch(`{{ route('guru.izin.schedules') }}?tanggal=${this.startDate}`);
                         this.schedules = await response.json();
-                        
+                        this.selectedIds = [];
+                        this.lmsRequestNumber++;
+                        this.resourceScheduleId = null;
+                        this.lmsData = { materials: [], assignments: [] };
+                        this.selectedMaterialId = '';
+                        this.selectedAssignmentId = '';
+                        this.lmsLoading = false;
+
                         // Auto-selection logic
                         this.autoSelectOverlappingSchedules();
                     } catch (error) {
@@ -235,18 +242,42 @@
                     this.loading = false;
                 },
 
-                async handleScheduleToggle(schedule) {
-                    const id = schedule.id.toString();
-                    if (this.selectedIds.includes(id)) {
-                        // Fetch LMS resources if not already loaded
-                        if (!this.lmsData[schedule.id]) {
-                            try {
-                                const response = await fetch(`/guru/izin/lms-resources/${schedule.id}`);
-                                this.lmsData[schedule.id] = await response.json();
-                            } catch (error) {
-                                console.error('Failed to fetch LMS resources', error);
-                            }
+                async refreshLmsResources() {
+                    const reference = this.schedules.find(schedule => this.selectedIds.includes(schedule.id.toString()));
+                    if (!reference) {
+                        this.lmsRequestNumber++;
+                        this.resourceScheduleId = null;
+                        this.lmsData = { materials: [], assignments: [] };
+                        this.selectedMaterialId = '';
+                        this.selectedAssignmentId = '';
+                        this.lmsLoading = false;
+                        return;
+                    }
+
+                    if (this.resourceScheduleId === reference.id) return;
+
+                    const requestNumber = ++this.lmsRequestNumber;
+                    this.resourceScheduleId = reference.id;
+                    this.selectedMaterialId = '';
+                    this.selectedAssignmentId = '';
+                    this.lmsLoading = true;
+                    try {
+                        const response = await fetch(`/guru/izin/lms-resources/${reference.id}`);
+                        if (!response.ok) throw new Error('LMS response failed');
+                        const data = await response.json();
+                        if (requestNumber === this.lmsRequestNumber) {
+                            this.lmsData = {
+                                materials: data.materials || [],
+                                assignments: data.assignments || [],
+                            };
                         }
+                    } catch (error) {
+                        if (requestNumber === this.lmsRequestNumber) {
+                            this.lmsData = { materials: [], assignments: [] };
+                            console.error('Failed to fetch LMS resources', error);
+                        }
+                    } finally {
+                        if (requestNumber === this.lmsRequestNumber) this.lmsLoading = false;
                     }
                 },
 
@@ -266,9 +297,10 @@
 
                         if (pStartTime < sEnd && pEndTime > sStart) {
                             this.selectedIds.push(schedule.id.toString());
-                            this.handleScheduleToggle(schedule);
                         }
                     });
+                    this.resourceScheduleId = null;
+                    this.refreshLmsResources();
                 },
 
                 validateAndSubmit() {
@@ -312,11 +344,11 @@
                         return;
                     }
 
-                    // Check if LMS resources are selected for all checked schedules
+                    // One LMS resource selection covers all checked schedules.
                     if (this.selectedIds.length > 0 && !this.isLmsValid()) {
                         Swal.fire({
                             title: 'Penugasan Belum Lengkap',
-                            text: 'Anda wajib memilih minimal satu Materi atau Tugas untuk setiap jam pelajaran yang dipilih.',
+                            text: 'Anda wajib memilih satu Materi atau Tugas untuk seluruh jam pelajaran yang dipilih.',
                             icon: 'warning',
                             confirmButtonColor: '#4f46e5'
                         });
@@ -332,18 +364,8 @@
                 },
 
                 isLmsValid() {
-                    // Check if every selected schedule has at least one material or assignment
-                    for (const scheduleId of this.selectedIds) {
-                        const materialKey = scheduleId + '_material';
-                        const assignmentKey = scheduleId + '_assignment';
-                        const hasMaterial = this.selectedLms[materialKey] && this.selectedLms[materialKey] !== '';
-                        const hasAssignment = this.selectedLms[assignmentKey] && this.selectedLms[assignmentKey] !== '';
-                        
-                        if (!hasMaterial && !hasAssignment) {
-                            return false;
-                        }
-                    }
-                    return true;
+                    return (this.selectedMaterialId && this.selectedMaterialId !== '')
+                        || (this.selectedAssignmentId && this.selectedAssignmentId !== '');
                 }
             }
         }

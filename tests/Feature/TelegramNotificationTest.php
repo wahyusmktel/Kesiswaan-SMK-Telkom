@@ -321,8 +321,23 @@ class TelegramNotificationTest extends TestCase
             'jam_mulai' => '12:45:00',
             'jam_selesai' => '13:30:00',
         ]);
+        foreach ([
+            [8, '13:30:00', '14:15:00'],
+            [9, '14:15:00', '15:00:00'],
+            [10, '15:00:00', '15:45:00'],
+        ] as [$periodNumber, $startsAt, $endsAt]) {
+            JadwalPelajaran::create([
+                'rombel_id' => $rombel->id,
+                'mata_pelajaran_id' => $subject->id,
+                'master_guru_id' => $teacher->masterGuru->id,
+                'hari' => 'Kamis',
+                'jam_ke' => $periodNumber,
+                'jam_mulai' => $startsAt,
+                'jam_selesai' => $endsAt,
+            ]);
+        }
 
-        foreach (['/izin', '🚗 Luar Sekolah / Tidak Masuk', 'Sakit', '10-09-2026 12:00', '10-09-2026 14:00'] as $message) {
+        foreach (['/izin', '🚗 Luar Sekolah / Tidak Masuk', 'Sakit', '10-09-2026 12:00', '10-09-2026 16:00'] as $message) {
             $this->sendBotMessage($bot, '998807', $message);
         }
 
@@ -332,7 +347,8 @@ class TelegramNotificationTest extends TestCase
             'step' => 'assignment_offer',
         ]);
         Http::assertSent(fn ($request) => str_ends_with($request->url(), '/sendMessage')
-            && str_contains($request['text'], 'belum memiliki materi/tugas LMS')
+            && str_contains($request['text'], 'materi/tugas LMS')
+            && str_contains($request['text'], 'seluruh 4 jam pelajaran')
             && str_contains(json_encode($request['reply_markup']), 'Buat Penugasan Sekarang'));
 
         foreach ([
@@ -366,6 +382,8 @@ class TelegramNotificationTest extends TestCase
             'jadwal_pelajaran_id' => $schedule->id,
             'lms_assignment_id' => $assignment->id,
         ]);
+        $this->assertSame(4, DB::table('guru_izin_jadwal')->where('guru_izin_id', $izinId)->count());
+        $this->assertSame(1, DB::table('guru_izin_jadwal')->where('guru_izin_id', $izinId)->distinct()->count('lms_assignment_id'));
         $this->assertDatabaseMissing('telegram_conversations', [
             'telegram_user_link_id' => $linkId,
         ]);

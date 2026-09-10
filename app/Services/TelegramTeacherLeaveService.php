@@ -182,6 +182,7 @@ class TelegramTeacherLeaveService
             'end' => $end->format('Y-m-d H:i:s'),
             'schedule_ids' => $schedules->pluck('id')->all(),
             'schedule_index' => 0,
+            'shared_resource' => null,
             'schedule_resources' => [],
         ]);
         if ($schedules->isEmpty()) {
@@ -203,21 +204,21 @@ class TelegramTeacherLeaveService
             return;
         }
 
-        $scheduleId = $payload['schedule_ids'][$payload['schedule_index']];
-        $resources = $payload['schedule_resources'] ?? [];
-        $resources[(string) $scheduleId] = $options[$selected - 1];
-        $nextIndex = $payload['schedule_index'] + 1;
-        $this->advance($conversation, $nextIndex >= count($payload['schedule_ids']) ? 'description' : 'schedule_resource', [
+        $resource = $options[$selected - 1];
+        $resources = collect($payload['schedule_ids'])->mapWithKeys(
+            fn ($scheduleId) => [(string) $scheduleId => $resource]
+        )->all();
+        $this->advance($conversation, 'description', [
+            'shared_resource' => $resource,
             'schedule_resources' => $resources,
-            'schedule_index' => $nextIndex,
+            'schedule_index' => count($payload['schedule_ids']),
             'current_resource_options' => [],
         ]);
-
-        if ($nextIndex >= count($payload['schedule_ids'])) {
-            $this->askDescription($bot, $chatId);
-        } else {
-            $this->askScheduleResource($bot, $conversation->fresh(), $chatId);
-        }
+        $this->askDescription(
+            $bot,
+            $chatId,
+            '✅ '.$resource['label'].' digunakan untuk seluruh '.count($payload['schedule_ids']).' jam pelajaran yang terdampak.',
+        );
     }
 
     private function receiveAssignmentOffer(TelegramBot $bot, TelegramConversation $conversation, string $chatId, string $text): void
@@ -242,7 +243,7 @@ class TelegramTeacherLeaveService
         $this->telegram->reply(
             $bot,
             $chatId,
-            "Membuat penugasan untuk {$this->scheduleName($schedule)}.\n\nKetik judul tugas (3-255 karakter):",
+            'Membuat satu penugasan untuk seluruh '.count($conversation->payload['schedule_ids'] ?? [])." jam pelajaran terdampak.\nAcuan: {$this->scheduleName($schedule)}.\n\nKetik judul tugas (3-255 karakter):",
             ['remove_keyboard' => true],
         );
     }
@@ -325,7 +326,8 @@ class TelegramTeacherLeaveService
         }
 
         $summary = "Periksa Penugasan\n\n"
-            .'Jadwal: '.$this->scheduleName($schedule)."\n"
+            .'Acuan: '.$this->scheduleName($schedule)."\n"
+            .'Berlaku untuk: '.count($payload['schedule_ids'] ?? [])." jam pelajaran terdampak\n"
             .'Judul: '.$draft['title']."\n"
             .'Deskripsi: '.($draft['description'] ?: '-')."\n"
             .'Tenggat: '.($draft['due_date'] ? Carbon::parse($draft['due_date'])->format('d-m-Y H:i') : 'Tanpa tenggat')."\n"
@@ -359,7 +361,7 @@ class TelegramTeacherLeaveService
             return;
         }
 
-        [$assignment, $nextIndex] = DB::transaction(function () use ($conversation, $schedule, $payload, $draft) {
+        $assignment = DB::transaction(function () use ($conversation, $schedule, $payload, $draft) {
             $assignment = LmsAssignment::create([
                 'mata_pelajaran_id' => $schedule->mata_pelajaran_id,
                 'master_guru_id' => $schedule->master_guru_id,
@@ -370,34 +372,32 @@ class TelegramTeacherLeaveService
                 'points' => $draft['points'],
             ]);
 
-            $resources = $payload['schedule_resources'] ?? [];
-            $resources[(string) $schedule->id] = [
+            $resource = [
                 'type' => 'assignment',
                 'id' => $assignment->id,
                 'label' => 'Tugas: '.$assignment->title,
             ];
-            $nextIndex = ((int) $payload['schedule_index']) + 1;
+            $resources = collect($payload['schedule_ids'])->mapWithKeys(
+                fn ($scheduleId) => [(string) $scheduleId => $resource]
+            )->all();
             $this->advance(
                 $conversation,
-                $nextIndex >= count($payload['schedule_ids']) ? 'description' : 'schedule_resource',
+                'description',
                 [
+                    'shared_resource' => $resource,
                     'schedule_resources' => $resources,
-                    'schedule_index' => $nextIndex,
+                    'schedule_index' => count($payload['schedule_ids']),
                     'current_resource_options' => [],
                     'assignment_schedule_id' => null,
                     'assignment_draft' => [],
                 ],
             );
 
-            return [$assignment, $nextIndex];
+            return $assignment;
         });
 
-        $successMessage = '✅ Tugas “'.$assignment->title.'” berhasil dibuat di LMS dan otomatis dipilih untuk jadwal ini.';
-        if ($nextIndex >= count($payload['schedule_ids'])) {
-            $this->askDescription($bot, $chatId, $successMessage);
-        } else {
-            $this->askScheduleResource($bot, $conversation->fresh(), $chatId, $successMessage);
-        }
+        $successMessage = '✅ Tugas “'.$assignment->title.'” berhasil dibuat di LMS dan digunakan untuk seluruh '.count($payload['schedule_ids']).' jam pelajaran yang terdampak.';
+        $this->askDescription($bot, $chatId, $successMessage);
     }
 
     private function receiveDescription(TelegramBot $bot, TelegramConversation $conversation, string $chatId, string $text): void
@@ -462,16 +462,17 @@ class TelegramTeacherLeaveService
 
             return;
         }
-        foreach ($affected as $schedule) {
-            if (! $this->resourceStillValid($schedule, $payload['schedule_resources'][(string) $schedule->id] ?? null)) {
-                $conversation->delete();
-                $this->telegram->reply($bot, $link->chat_id, 'Materi atau tugas LMS yang dipilih sudah berubah. Silakan ajukan ulang agar penugasan tetap valid.', $this->telegram->linkedMenuMarkup($bot, $link->user));
+        $sharedResource = $payload['shared_resource']
+            ?? collect($payload['schedule_resources'] ?? [])->first();
+        $referenceSchedule = $affected->first();
+        if ($referenceSchedule && ! $this->resourceStillValid($referenceSchedule, $sharedResource)) {
+            $conversation->delete();
+            $this->telegram->reply($bot, $link->chat_id, 'Materi atau tugas LMS yang dipilih sudah berubah. Silakan ajukan ulang agar penugasan tetap valid.', $this->telegram->linkedMenuMarkup($bot, $link->user));
 
-                return;
-            }
+            return;
         }
 
-        $izin = DB::transaction(function () use ($guru, $payload) {
+        $izin = DB::transaction(function () use ($guru, $payload, $sharedResource) {
             $terlambat = $payload['category'] === 'terlambat';
             $izin = GuruIzin::create([
                 'master_guru_id' => $guru->id,
@@ -486,10 +487,10 @@ class TelegramTeacherLeaveService
             ]);
 
             $pivot = [];
-            foreach ($payload['schedule_resources'] ?? [] as $scheduleId => $resource) {
+            foreach ($payload['schedule_ids'] ?? [] as $scheduleId) {
                 $pivot[$scheduleId] = [
-                    'lms_material_id' => $resource['type'] === 'material' ? $resource['id'] : null,
-                    'lms_assignment_id' => $resource['type'] === 'assignment' ? $resource['id'] : null,
+                    'lms_material_id' => ($sharedResource['type'] ?? null) === 'material' ? $sharedResource['id'] : null,
+                    'lms_assignment_id' => ($sharedResource['type'] ?? null) === 'assignment' ? $sharedResource['id'] : null,
                 ];
             }
             if ($pivot) {
@@ -512,7 +513,7 @@ class TelegramTeacherLeaveService
     private function askScheduleResource(TelegramBot $bot, TelegramConversation $conversation, string $chatId, ?string $prefix = null): void
     {
         $payload = $conversation->payload;
-        $schedule = JadwalPelajaran::with(['rombel.kelas', 'mataPelajaran'])->find($payload['schedule_ids'][$payload['schedule_index']]);
+        $schedule = JadwalPelajaran::with(['rombel.kelas', 'mataPelajaran'])->find($payload['schedule_ids'][0]);
         $materials = LmsMaterial::where('master_guru_id', $schedule->master_guru_id)
             ->where('rombel_id', $schedule->rombel_id)->where('mata_pelajaran_id', $schedule->mata_pelajaran_id)
             ->where('is_published', true)->orderBy('title')->get(['id', 'title']);
@@ -532,7 +533,7 @@ class TelegramTeacherLeaveService
             $this->telegram->reply(
                 $bot,
                 $chatId,
-                ($prefix ? $prefix."\n\n" : '').'Jadwal '.$this->scheduleName($schedule).' belum memiliki materi/tugas LMS. Anda dapat membuat penugasan sekarang tanpa keluar dari Telegram.',
+                ($prefix ? $prefix."\n\n" : '').'Belum ada materi/tugas LMS pada acuan '.$this->scheduleName($schedule).'. Buat satu penugasan sekarang dan tugas tersebut akan digunakan untuk seluruh '.count($payload['schedule_ids']).' jam pelajaran yang terdampak.',
                 $this->keyboard([
                     ['📝 Buat Penugasan Sekarang'],
                     ['❌ Batalkan'],
@@ -544,7 +545,7 @@ class TelegramTeacherLeaveService
 
         $this->advance($conversation, 'schedule_resource', ['current_resource_options' => $options]);
         $lines = collect($options)->map(fn ($option, $index) => ($index + 1).'. '.$option['label'])->implode("\n");
-        $this->telegram->reply($bot, $chatId, ($prefix ? $prefix."\n\n" : '').'Jadwal terdampak '.($payload['schedule_index'] + 1).'/'.count($payload['schedule_ids']).': '.$this->scheduleName($schedule)."\n\nPilih satu materi/tugas dengan membalas nomornya:\n{$lines}", ['remove_keyboard' => true]);
+        $this->telegram->reply($bot, $chatId, ($prefix ? $prefix."\n\n" : '').'Terdapat '.count($payload['schedule_ids']).' jam pelajaran terdampak. Acuan materi/tugas: '.$this->scheduleName($schedule)."\n\nPilih satu kali materi/tugas berikut; pilihan ini berlaku untuk seluruh jam terdampak:\n{$lines}", ['remove_keyboard' => true]);
     }
 
     private function askDescription(TelegramBot $bot, string $chatId, ?string $prefix = null): void
@@ -652,7 +653,7 @@ class TelegramTeacherLeaveService
     private function currentSchedule(TelegramConversation $conversation): ?JadwalPelajaran
     {
         $payload = $conversation->payload;
-        $scheduleId = $payload['schedule_ids'][$payload['schedule_index'] ?? -1] ?? null;
+        $scheduleId = $payload['assignment_schedule_id'] ?? ($payload['schedule_ids'][0] ?? null);
         if (! $scheduleId) {
             return null;
         }
