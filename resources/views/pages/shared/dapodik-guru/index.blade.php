@@ -108,7 +108,8 @@
                         <ol class="mt-2 list-inside list-decimal space-y-1 text-xs leading-relaxed text-violet-800">
                             <li>Import file melalui halaman <strong>Data Dapodik TPA</strong>; master pegawai dicari atau dibuat berdasarkan NIK.</li>
                             <li>Jika pegawai sudah mempunyai akun SISFO, gunakan <strong>Rekonsiliasi Akun SISFO</strong>. Role lama seperti Kepala Sekolah, KAUR SDM, atau Security tidak berubah.</li>
-                            <li>Jika belum mempunyai akun, pastikan email Dapodik valid lalu klik <strong>Sinkronkan Akun TPA</strong>. Akun baru akan dibuat dengan role TPA.</li>
+                            <li>Jika belum mempunyai akun, buka <strong>Belum punya akun? Buat Akun SISFO</strong>, koreksi email, lalu pilih role yang sesuai.</li>
+                            <li>Untuk membuat banyak akun TPA biasa sekaligus, pastikan email Dapodik valid lalu klik <strong>Sinkronkan Akun TPA</strong>.</li>
                             <li>Gunakan <strong>Status Keaktifan Pegawai</strong> untuk mengatur kategori, status kepegawaian, dan pegawai yang sudah tidak aktif.</li>
                         </ol>
                     </section>
@@ -135,7 +136,7 @@
                     <section class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5" id="tpa-credentials">
                         <div class="flex flex-wrap items-start justify-between gap-4">
                             <div>
-                                <h3 class="font-bold text-emerald-900">Akun TPA baru berhasil dibuat</h3>
+                                <h3 class="font-bold text-emerald-900">Akun pegawai baru berhasil dibuat</h3>
                                 <p class="mt-1 text-xs text-emerald-700">Simpan kredensial ini sekarang. Password hanya ditampilkan pada halaman ini dan wajib diganti saat login pertama.</p>
                             </div>
                             <button type="button" id="download-tpa-credentials" class="rounded-xl bg-emerald-700 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-800">
@@ -144,10 +145,10 @@
                         </div>
                         <div class="mt-4 overflow-x-auto rounded-xl border border-emerald-200 bg-white">
                             <table class="w-full text-left text-sm">
-                                <thead class="bg-emerald-100/70 text-xs uppercase text-emerald-800"><tr><th class="px-4 py-3">Nama</th><th class="px-4 py-3">Email</th><th class="px-4 py-3">Password Sementara</th></tr></thead>
+                                <thead class="bg-emerald-100/70 text-xs uppercase text-emerald-800"><tr><th class="px-4 py-3">Nama</th><th class="px-4 py-3">Email</th><th class="px-4 py-3">Role</th><th class="px-4 py-3">Password Sementara</th></tr></thead>
                                 <tbody class="divide-y divide-emerald-100">
                                     @foreach(session('tpa_generated_credentials') as $credential)
-                                        <tr><td class="px-4 py-3 font-semibold">{{ $credential['name'] }}</td><td class="px-4 py-3">{{ $credential['email'] }}</td><td class="px-4 py-3 font-mono font-bold">{{ $credential['password'] }}</td></tr>
+                                        <tr><td class="px-4 py-3 font-semibold">{{ $credential['name'] }}</td><td class="px-4 py-3">{{ $credential['email'] }}</td><td class="px-4 py-3">{{ $credential['role'] ?? 'TPA' }}</td><td class="px-4 py-3 font-mono font-bold">{{ $credential['password'] }}</td></tr>
                                     @endforeach
                                 </tbody>
                             </table>
@@ -161,7 +162,7 @@
                                 if (/^[=+\-@]/.test(text)) text = "'" + text;
                                 return '"' + text.replaceAll('"', '""') + '"';
                             };
-                            const csv = ['Nama,Email,Password Sementara', ...credentials.map(row => [row.name, row.email, row.password].map(safe).join(','))].join('\r\n');
+                            const csv = ['Nama,Email,Role,Password Sementara', ...credentials.map(row => [row.name, row.email, row.role ?? 'TPA', row.password].map(safe).join(','))].join('\r\n');
                             const link = document.createElement('a');
                             link.href = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' }));
                             link.download = 'kredensial-tpa-{{ now()->format('Ymd-His') }}.csv';
@@ -408,6 +409,29 @@
                                                         <p class="mt-1 text-[10px] font-semibold text-violet-600">Saran otomatis: {{ $suggestedAccount->name }} berdasarkan identitas yang cocok.</p>
                                                     @endif
                                                 </form>
+                                                @if(! $item->masterGuru?->user)
+                                                    @php
+                                                        $isHeadmaster = str_contains(strtolower((string) $item->jenis_ptk), 'kepala sekolah');
+                                                        $suggestedRole = $isHeadmaster && $accountRoles->contains('name', 'Kepala Sekolah') ? 'Kepala Sekolah' : 'TPA';
+                                                    @endphp
+                                                    <details class="mt-2 rounded-xl border border-emerald-200 bg-emerald-50/70 p-2" @if($errors->any() && (string) old('dapodik_id') === (string) $item->id) open @endif>
+                                                        <summary class="cursor-pointer text-[11px] font-bold text-emerald-700">Belum punya akun? Buat Akun SISFO</summary>
+                                                        <form method="POST" action="{{ route('dapodik-tpa.account.create', $item) }}" class="mt-2 space-y-2" onsubmit="return confirm('Buat akun SISFO baru untuk {{ $item->nama }}? Password sementara hanya ditampilkan satu kali.');">
+                                                            @csrf
+                                                            <input type="hidden" name="dapodik_id" value="{{ $item->id }}">
+                                                            <label class="block text-[10px] font-bold uppercase tracking-wider text-emerald-800" for="new-email-{{ $item->id }}">Email Login</label>
+                                                            <input id="new-email-{{ $item->id }}" type="email" name="email" required maxlength="255" value="{{ (string) old('dapodik_id') === (string) $item->id ? old('email', $item->email_dapodik) : $item->email_dapodik }}" placeholder="nama@smktelkom-lpg.id" class="w-full rounded-lg border-emerald-200 bg-white px-2 py-2 text-xs focus:border-emerald-500 focus:ring-emerald-500">
+                                                            <label class="block text-[10px] font-bold uppercase tracking-wider text-emerald-800" for="new-role-{{ $item->id }}">Role Akun</label>
+                                                            <select id="new-role-{{ $item->id }}" name="role" required class="w-full rounded-lg border-emerald-200 bg-white px-2 py-2 text-xs focus:border-emerald-500 focus:ring-emerald-500">
+                                                                @foreach($accountRoles as $role)
+                                                                    <option value="{{ $role->name }}" @selected(((string) old('dapodik_id') === (string) $item->id ? old('role', $suggestedRole) : $suggestedRole) === $role->name)>{{ $role->name }}</option>
+                                                                @endforeach
+                                                            </select>
+                                                            <p class="text-[10px] leading-relaxed text-emerald-700">Master pegawai yang sama akan digunakan. Password sementara dibuat otomatis dan wajib diganti saat login pertama.</p>
+                                                            <button type="submit" class="w-full rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-500">Buat dan Hubungkan Akun</button>
+                                                        </form>
+                                                    </details>
+                                                @endif
                                             @endif
                                             @if($item->masterGuru?->user)
                                                 <p class="mt-1 text-[11px] font-semibold text-green-600">Sinkron: {{ $item->masterGuru->nama_lengkap }} · {{ $item->masterGuru->user->email }} [{{ $item->masterGuru->user->getRoleNames()->join(', ') }}]</p>

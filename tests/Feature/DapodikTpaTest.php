@@ -284,6 +284,78 @@ class DapodikTpaTest extends TestCase
         $this->assertDatabaseHas('dapodik_gurus', ['id' => $teacher->id]);
     }
 
+    public function test_operator_can_create_headmaster_account_directly_from_tpa_dapodik(): void
+    {
+        $operator = User::factory()->create();
+        $operator->assignRole(Role::findOrCreate('Operator', 'web'));
+        Role::findOrCreate('Kepala Sekolah', 'web');
+        $master = MasterGuru::create([
+            'nama_lengkap' => 'Kepala Sekolah Baru',
+            'jenis_kelamin' => 'L',
+            'nik' => '1801000000000066',
+            'employee_category' => MasterGuru::CATEGORY_TPA,
+        ]);
+        $dapodik = DapodikGuru::create([
+            'employee_category' => DapodikGuru::CATEGORY_TPA,
+            'master_guru_id' => $master->id,
+            'nama' => 'Kepala Sekolah Baru',
+            'nik' => '1801000000000066',
+            'jenis_ptk' => 'Kepala Sekolah',
+            'hp' => '081234567890',
+        ]);
+
+        $response = $this->actingAs($operator)->withSession(['active_role' => 'Operator'])
+            ->post(route('dapodik-tpa.account.create', $dapodik), [
+                'dapodik_id' => $dapodik->id,
+                'email' => 'kepala.baru@example.test',
+                'role' => 'Kepala Sekolah',
+            ]);
+
+        $response->assertRedirect()
+            ->assertSessionHas('success')
+            ->assertSessionHas('tpa_generated_credentials', fn ($rows) => count($rows) === 1
+                && $rows[0]['email'] === 'kepala.baru@example.test'
+                && $rows[0]['role'] === 'Kepala Sekolah');
+
+        $credential = session('tpa_generated_credentials')[0];
+        $account = User::where('email', 'kepala.baru@example.test')->firstOrFail();
+        $this->assertTrue($account->hasRole('Kepala Sekolah'));
+        $this->assertFalse($account->hasRole('TPA'));
+        $this->assertTrue($account->must_change_password);
+        $this->assertTrue(Hash::check($credential['password'], $account->password));
+        $this->assertSame($account->id, $master->fresh()->user_id);
+        $this->assertSame($master->id, $dapodik->fresh()->master_guru_id);
+        $this->assertSame('kepala.baru@example.test', $dapodik->fresh()->email_dapodik);
+        $this->assertSame('081234567890', $account->phone_number);
+    }
+
+    public function test_direct_tpa_account_creation_cannot_create_superadmin(): void
+    {
+        $operator = User::factory()->create();
+        $operator->assignRole(Role::findOrCreate('Operator', 'web'));
+        Role::findOrCreate('Super Admin', 'web');
+        $master = MasterGuru::create([
+            'nama_lengkap' => 'TPA Bukan Superadmin',
+            'jenis_kelamin' => 'P',
+            'employee_category' => MasterGuru::CATEGORY_TPA,
+        ]);
+        $dapodik = DapodikGuru::create([
+            'employee_category' => DapodikGuru::CATEGORY_TPA,
+            'master_guru_id' => $master->id,
+            'nama' => 'TPA Bukan Superadmin',
+        ]);
+
+        $this->actingAs($operator)->withSession(['active_role' => 'Operator'])
+            ->post(route('dapodik-tpa.account.create', $dapodik), [
+                'email' => 'forbidden.superadmin@example.test',
+                'role' => 'Super Admin',
+            ])
+            ->assertSessionHasErrors('role');
+
+        $this->assertDatabaseMissing('users', ['email' => 'forbidden.superadmin@example.test']);
+        $this->assertNull($master->fresh()->user_id);
+    }
+
     public function test_account_sync_generates_tpa_account_and_forces_password_change(): void
     {
         $operator = User::factory()->create();

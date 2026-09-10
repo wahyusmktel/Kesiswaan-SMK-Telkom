@@ -70,9 +70,12 @@ class DapodikGuruController extends Controller
                 ->orderBy('name')
                 ->get(['id', 'name', 'email'])
             : collect();
+        $accountRoles = $context['category'] === DapodikGuru::CATEGORY_TPA
+            ? Role::whereNotIn('name', ['Siswa', 'Super Admin'])->orderBy('name')->get(['id', 'name'])
+            : collect();
 
         return view('pages.shared.dapodik-guru.index', compact(
-            'dapodikGurus', 'totalDapodik', 'totalLinked', 'totalAccountsLinked', 'totalUnlinked', 'jenisPtkList', 'employees', 'accountOptions', 'context'
+            'dapodikGurus', 'totalDapodik', 'totalLinked', 'totalAccountsLinked', 'totalUnlinked', 'jenisPtkList', 'employees', 'accountOptions', 'accountRoles', 'context'
         ));
     }
 
@@ -335,6 +338,95 @@ class DapodikGuruController extends Controller
             'success',
             'Data Dapodik TPA '.$name.' berhasil dihapus. Master pegawai, akun SISFO, dan seluruh role tetap disimpan.'
         );
+    }
+
+    public function createTpaAccount(Request $request, DapodikGuru $dapodikGuru)
+    {
+        abort_unless($request->routeIs('dapodik-tpa.*') && $dapodikGuru->is_tpa, 404);
+
+        $input = $request->validate([
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
+            'role' => ['required', 'string', Rule::exists('roles', 'name')],
+        ]);
+
+        if (in_array($input['role'], ['Siswa', 'Super Admin'], true)) {
+            throw ValidationException::withMessages([
+                'role' => 'Role tersebut tidak dapat dibuat melalui halaman Dapodik TPA.',
+            ]);
+        }
+
+        $temporaryPassword = Str::random(12);
+        $result = DB::transaction(function () use ($dapodikGuru, $input, $temporaryPassword) {
+            $dapodik = DapodikGuru::query()->lockForUpdate()->findOrFail($dapodikGuru->id);
+            $master = $dapodik->master_guru_id
+                ? MasterGuru::query()->lockForUpdate()->find($dapodik->master_guru_id)
+                : null;
+
+            if (! $master && $dapodik->nik) {
+                $master = MasterGuru::query()->lockForUpdate()->where('nik', $dapodik->nik)->first();
+            }
+            if (! $master && $dapodik->nuptk) {
+                $master = MasterGuru::query()->lockForUpdate()->where('nuptk', $dapodik->nuptk)->first();
+            }
+            if (! $master) {
+                $master = MasterGuru::create([
+                    'nama_lengkap' => $dapodik->nama,
+                    'jenis_kelamin' => in_array($dapodik->jenis_kelamin, ['L', 'P'], true) ? $dapodik->jenis_kelamin : 'L',
+                    'employee_category' => MasterGuru::CATEGORY_TPA,
+                ]);
+            }
+
+            if ($master->user_id) {
+                throw ValidationException::withMessages([
+                    'email' => 'Master pegawai ini sudah memiliki akun SISFO. Gunakan Rekonsiliasi Akun jika mapping yang tampil belum sesuai.',
+                ]);
+            }
+
+            $otherDapodik = DapodikGuru::query()
+                ->lockForUpdate()
+                ->where('master_guru_id', $master->id)
+                ->whereKeyNot($dapodik->id)
+                ->first();
+            if ($otherDapodik) {
+                throw ValidationException::withMessages([
+                    'email' => 'Master pegawai sudah digunakan data Dapodik '.$otherDapodik->nama.'. Periksa kemungkinan data ganda.',
+                ]);
+            }
+
+            $this->reconcileIdentity($dapodik, $master, $master);
+            $master->employee_category = MasterGuru::CATEGORY_TPA;
+            $master->is_active = true;
+            $master->save();
+
+            $account = User::create([
+                'name' => $dapodik->nama,
+                'email' => Str::lower(trim($input['email'])),
+                'phone_number' => $dapodik->hp,
+                'password' => Hash::make($temporaryPassword),
+                'must_change_password' => true,
+            ]);
+            $account->forceFill(['email_verified_at' => now()])->save();
+            $account->assignRole(Role::findByName($input['role'], 'web'));
+
+            $master->user_id = $account->id;
+            $master->save();
+            $dapodik->update([
+                'master_guru_id' => $master->id,
+                'employee_category' => DapodikGuru::CATEGORY_TPA,
+                'email_dapodik' => $account->email,
+            ]);
+
+            return compact('account');
+        });
+
+        return back()
+            ->with('success', 'Akun SISFO '.$result['account']->name.' berhasil dibuat dengan role '.$input['role'].'.')
+            ->with('tpa_generated_credentials', [[
+                'name' => $result['account']->name,
+                'email' => $result['account']->email,
+                'role' => $input['role'],
+                'password' => $temporaryPassword,
+            ]]);
     }
 
     private function reconcileIdentity(DapodikGuru $dapodik, ?MasterGuru $source, MasterGuru $target): void
