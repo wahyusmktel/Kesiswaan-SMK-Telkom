@@ -15,24 +15,30 @@ class TelegramWebhookController extends Controller
     public function __invoke(Request $request, TelegramBot $telegramBot, TelegramService $telegram, TelegramTeacherLeaveService $teacherLeave)
     {
         abort_unless($telegramBot->is_active && hash_equals($telegramBot->webhook_secret, (string) $request->header('X-Telegram-Bot-Api-Secret-Token')), 403);
+        $telegram->beginWebhookReply();
+        $teacherLeave->beginWebhookReply();
 
         $message = $request->input('message');
         if (! is_array($message) || data_get($message, 'chat.type') !== 'private') {
-            return response()->json(['ok' => true]);
+            return $this->telegramResponse($telegram);
         }
 
         $chatId = (string) data_get($message, 'chat.id');
         $fromId = (string) data_get($message, 'from.id');
-        $existingLink = TelegramUserLink::query()
+        $linkQuery = TelegramUserLink::query()
             ->where('telegram_bot_id', $telegramBot->id)
-            ->where(fn ($query) => $query->where('chat_id', $chatId)->orWhere('telegram_user_id', $fromId))
-            ->with('user')
-            ->first();
+            ->with(['user.roles', 'user.masterGuru']);
+        $existingLink = (clone $linkQuery)->where('chat_id', $chatId)->first();
+        if (! $existingLink && $fromId !== '') {
+            $existingLink = (clone $linkQuery)->where('telegram_user_id', $fromId)->first();
+        }
         if ($existingLink) {
-            $existingLink->update(['last_interaction_at' => now()]);
+            if (! $existingLink->last_interaction_at || $existingLink->last_interaction_at->lt(now()->subMinutes(5))) {
+                $existingLink->forceFill(['last_interaction_at' => now()])->saveQuietly();
+            }
             $teacherLeave->handle($telegramBot, $existingLink, $message);
 
-            return response()->json(['ok' => true]);
+            return response()->json($teacherLeave->takeWebhookReply() ?? ['ok' => true]);
         }
 
         $contact = data_get($message, 'contact');
@@ -40,7 +46,7 @@ class TelegramWebhookController extends Controller
             if ((string) ($contact['user_id'] ?? '') !== $fromId) {
                 $telegram->reply($telegramBot, $chatId, 'Demi keamanan, silakan bagikan nomor Telegram Anda sendiri melalui tombol yang tersedia.');
 
-                return response()->json(['ok' => true]);
+                return $this->telegramResponse($telegram);
             }
 
             $phone = $this->normalizePhone((string) ($contact['phone_number'] ?? ''));
@@ -54,12 +60,12 @@ class TelegramWebhookController extends Controller
             if ($users->isEmpty()) {
                 $telegram->reply($telegramBot, $chatId, 'Nomor HP '.$this->displayPhone($phone).' belum ditemukan pada kolom HP Dapodik Guru yang terhubung ke akun SISFO. Hubungi Superadmin untuk memeriksa data Dapodik dan hubungan akun Anda.');
 
-                return response()->json(['ok' => true]);
+                return $this->telegramResponse($telegram);
             }
             if ($users->count() > 1) {
                 $telegram->reply($telegramBot, $chatId, 'Nomor HP '.$this->displayPhone($phone).' digunakan oleh lebih dari satu data Dapodik Guru. Hubungi Superadmin agar nomor duplikat diperbaiki.');
 
-                return response()->json(['ok' => true]);
+                return $this->telegramResponse($telegram);
             }
 
             $user = $users->first();
@@ -78,12 +84,17 @@ class TelegramWebhookController extends Controller
             $telegram->markAccountLinked($telegramBot, $link->chat_id, $user);
             $telegram->reply($telegramBot, $chatId, 'Akun Telegram berhasil terhubung dengan SISFO atas nama '.$user->name.'. Notifikasi dari '.$telegramBot->name.' sekarang dapat diterima.', $telegram->linkedMenuMarkup($telegramBot, $user));
 
-            return response()->json(['ok' => true]);
+            return $this->telegramResponse($telegram);
         }
 
         $telegram->sendOnboarding($telegramBot, $chatId);
 
-        return response()->json(['ok' => true]);
+        return $this->telegramResponse($telegram);
+    }
+
+    private function telegramResponse(TelegramService $telegram)
+    {
+        return response()->json($telegram->takeWebhookReply() ?? ['ok' => true]);
     }
 
     private function normalizePhone(?string $phone): string

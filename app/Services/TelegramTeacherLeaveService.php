@@ -20,6 +20,16 @@ class TelegramTeacherLeaveService
 
     public function __construct(private readonly TelegramService $telegram) {}
 
+    public function beginWebhookReply(): void
+    {
+        $this->telegram->beginWebhookReply();
+    }
+
+    public function takeWebhookReply(): ?array
+    {
+        return $this->telegram->takeWebhookReply();
+    }
+
     public function handle(TelegramBot $bot, TelegramUserLink $link, array $message): void
     {
         $link->loadMissing('user.masterGuru');
@@ -382,11 +392,11 @@ class TelegramTeacherLeaveService
             return [$assignment, $nextIndex];
         });
 
-        $this->telegram->reply($bot, $chatId, '✅ Tugas “'.$assignment->title.'” berhasil dibuat di LMS dan otomatis dipilih untuk jadwal ini.');
+        $successMessage = '✅ Tugas “'.$assignment->title.'” berhasil dibuat di LMS dan otomatis dipilih untuk jadwal ini.';
         if ($nextIndex >= count($payload['schedule_ids'])) {
-            $this->askDescription($bot, $chatId);
+            $this->askDescription($bot, $chatId, $successMessage);
         } else {
-            $this->askScheduleResource($bot, $conversation->fresh(), $chatId);
+            $this->askScheduleResource($bot, $conversation->fresh(), $chatId, $successMessage);
         }
     }
 
@@ -499,7 +509,7 @@ class TelegramTeacherLeaveService
         );
     }
 
-    private function askScheduleResource(TelegramBot $bot, TelegramConversation $conversation, string $chatId): void
+    private function askScheduleResource(TelegramBot $bot, TelegramConversation $conversation, string $chatId, ?string $prefix = null): void
     {
         $payload = $conversation->payload;
         $schedule = JadwalPelajaran::with(['rombel.kelas', 'mataPelajaran'])->find($payload['schedule_ids'][$payload['schedule_index']]);
@@ -522,7 +532,7 @@ class TelegramTeacherLeaveService
             $this->telegram->reply(
                 $bot,
                 $chatId,
-                'Jadwal '.$this->scheduleName($schedule).' belum memiliki materi/tugas LMS. Anda dapat membuat penugasan sekarang tanpa keluar dari Telegram.',
+                ($prefix ? $prefix."\n\n" : '').'Jadwal '.$this->scheduleName($schedule).' belum memiliki materi/tugas LMS. Anda dapat membuat penugasan sekarang tanpa keluar dari Telegram.',
                 $this->keyboard([
                     ['📝 Buat Penugasan Sekarang'],
                     ['❌ Batalkan'],
@@ -534,12 +544,12 @@ class TelegramTeacherLeaveService
 
         $this->advance($conversation, 'schedule_resource', ['current_resource_options' => $options]);
         $lines = collect($options)->map(fn ($option, $index) => ($index + 1).'. '.$option['label'])->implode("\n");
-        $this->telegram->reply($bot, $chatId, 'Jadwal terdampak '.($payload['schedule_index'] + 1).'/'.count($payload['schedule_ids']).': '.$this->scheduleName($schedule)."\n\nPilih satu materi/tugas dengan membalas nomornya:\n{$lines}", ['remove_keyboard' => true]);
+        $this->telegram->reply($bot, $chatId, ($prefix ? $prefix."\n\n" : '').'Jadwal terdampak '.($payload['schedule_index'] + 1).'/'.count($payload['schedule_ids']).': '.$this->scheduleName($schedule)."\n\nPilih satu materi/tugas dengan membalas nomornya:\n{$lines}", ['remove_keyboard' => true]);
     }
 
-    private function askDescription(TelegramBot $bot, string $chatId): void
+    private function askDescription(TelegramBot $bot, string $chatId, ?string $prefix = null): void
     {
-        $this->telegram->reply($bot, $chatId, 'Tuliskan alasan atau deskripsi izin Anda (minimal 5 karakter):', ['remove_keyboard' => true]);
+        $this->telegram->reply($bot, $chatId, ($prefix ? $prefix."\n\n" : '').'Tuliskan alasan atau deskripsi izin Anda (minimal 5 karakter):', ['remove_keyboard' => true]);
     }
 
     private function sendMenu(TelegramBot $bot, User $user, string $chatId): void

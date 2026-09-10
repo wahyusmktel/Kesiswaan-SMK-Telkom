@@ -47,6 +47,14 @@ return [
         'api_key' => env('WHATSAPP_GATEWAY_API_KEY'),
     ],
 
+    'telegram' => [
+        'webhook_reply' => env('TELEGRAM_WEBHOOK_REPLY', true),
+        'connect_timeout' => (int) env('TELEGRAM_CONNECT_TIMEOUT', 3),
+        'timeout' => (int) env('TELEGRAM_REQUEST_TIMEOUT', 10),
+        'force_ipv4' => env('TELEGRAM_FORCE_IPV4', true),
+        'slow_request_ms' => (int) env('TELEGRAM_SLOW_REQUEST_MS', 1500),
+    ],
+
     'cctv' => [
         'mediamtx_api_url' => env('CCTV_MEDIAMTX_API_URL', 'http://127.0.0.1:9997'),
         'mediamtx_api_user' => env('CCTV_MEDIAMTX_API_USER'),

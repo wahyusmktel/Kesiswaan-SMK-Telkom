@@ -7,11 +7,20 @@ use App\Models\TelegramLog;
 use App\Models\TelegramUserLink;
 use App\Models\User;
 use App\Models\WhatsappTemplate;
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class TelegramService
 {
+    /** @var array<string, PendingRequest> */
+    private array $clients = [];
+
+    private bool $deferWebhookReply = false;
+
+    private ?array $pendingWebhookReply = null;
+
     public function verifyAndRegisterWebhook(TelegramBot $bot): array
     {
         try {
@@ -103,7 +112,35 @@ class TelegramService
         if ($replyMarkup) {
             $payload['reply_markup'] = $replyMarkup;
         }
+
+        if ($this->deferWebhookReply) {
+            if ($this->pendingWebhookReply) {
+                $pending = $this->pendingWebhookReply;
+                $method = $pending['method'];
+                unset($pending['method']);
+                $this->request($bot, $method, $pending)->throw();
+            }
+            $this->pendingWebhookReply = ['method' => 'sendMessage'] + $payload;
+
+            return;
+        }
+
         $this->request($bot, 'sendMessage', $payload)->throw();
+    }
+
+    public function beginWebhookReply(): void
+    {
+        $this->deferWebhookReply = (bool) config('services.telegram.webhook_reply', true);
+        $this->pendingWebhookReply = null;
+    }
+
+    public function takeWebhookReply(): ?array
+    {
+        $reply = $this->pendingWebhookReply;
+        $this->pendingWebhookReply = null;
+        $this->deferWebhookReply = false;
+
+        return $reply;
     }
 
     public function sendOnboarding(TelegramBot $bot, string $chatId): void
@@ -131,7 +168,37 @@ class TelegramService
             $commands[] = ['command' => 'batal', 'description' => 'Batalkan pengisian izin'];
         }
 
-        $this->setChatCommands($bot, $chatId, $commands);
+        $commandsHash = hash('sha256', json_encode($commands, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+        $link = TelegramUserLink::query()
+            ->where('telegram_bot_id', $bot->id)
+            ->where('chat_id', $chatId)
+            ->first(['id', 'commands_hash']);
+        if ($link?->commands_hash === $commandsHash) {
+            return;
+        }
+
+        $updateCommands = function () use ($bot, $chatId, $commands, $commandsHash, $link): void {
+            try {
+                $this->setChatCommands($bot, $chatId, $commands);
+                if ($link) {
+                    $link->forceFill(['commands_hash' => $commandsHash])->saveQuietly();
+                }
+            } catch (Throwable $error) {
+                Log::warning('Telegram chat commands could not be refreshed.', [
+                    'telegram_bot_id' => $bot->id,
+                    'duration_context' => 'after_webhook_response',
+                    'error' => $this->sanitizeError($bot, $error),
+                ]);
+            }
+        };
+
+        if ($this->deferWebhookReply) {
+            app()->terminating($updateCommands);
+
+            return;
+        }
+
+        $updateCommands();
     }
 
     public function linkedMenuMarkup(TelegramBot $bot, User $user): array
@@ -213,10 +280,41 @@ class TelegramService
 
     private function request(TelegramBot $bot, string $method, array $payload = [])
     {
-        return Http::asJson()->acceptJson()->timeout(20)->post(
-            'https://api.telegram.org/bot'.$bot->bot_token.'/'.$method,
-            $payload,
-        );
+        $startedAt = microtime(true);
+
+        try {
+            return $this->client($bot)->post($method, $payload);
+        } finally {
+            $durationMs = (int) round((microtime(true) - $startedAt) * 1000);
+            if ($durationMs >= config('services.telegram.slow_request_ms', 1500)) {
+                Log::warning('Telegram Bot API responded slowly.', [
+                    'telegram_bot_id' => $bot->id,
+                    'method' => $method,
+                    'duration_ms' => $durationMs,
+                ]);
+            }
+        }
+    }
+
+    private function client(TelegramBot $bot): PendingRequest
+    {
+        $token = $bot->bot_token;
+        $key = $bot->id.':'.hash('sha256', $token);
+        if (isset($this->clients[$key])) {
+            return $this->clients[$key];
+        }
+
+        $options = [];
+        if (config('services.telegram.force_ipv4', true) && defined('CURLOPT_IPRESOLVE')) {
+            $options['curl'] = [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4];
+        }
+
+        return $this->clients[$key] = Http::baseUrl('https://api.telegram.org/bot'.$token.'/')
+            ->asJson()
+            ->acceptJson()
+            ->connectTimeout(config('services.telegram.connect_timeout', 3))
+            ->timeout(config('services.telegram.timeout', 10))
+            ->withOptions($options);
     }
 
     private function setChatCommands(TelegramBot $bot, string $chatId, array $commands): void

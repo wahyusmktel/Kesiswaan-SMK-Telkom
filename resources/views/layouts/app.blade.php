@@ -134,9 +134,86 @@
             <!-- Navigation Area -->
             <div class="flex-1 overflow-hidden flex flex-col" x-data="globalNotificationSystem()" x-init="init()">
                 <nav class="px-4 space-y-1 overflow-y-auto flex-1 sidebar-scroll">
-                    <ul class="space-y-1 font-medium" :class="sidebarCollapsed ? 'sidebar-collapsed' : ''">
+                    @php($roleMenuSettings = app(\App\Services\RoleMenuService::class)->settingsForActiveRole())
+                    <ul id="role-navigation" class="space-y-1 font-medium"
+                        :class="sidebarCollapsed ? 'sidebar-collapsed' : ''" style="visibility: hidden;">
                         @include('layouts.navigation')
                     </ul>
+                    <script>
+                        (() => {
+                            const navigation = document.getElementById('role-navigation');
+                            if (!navigation) return;
+
+                            const settings = {{ Illuminate\Support\Js::from($roleMenuSettings) }};
+                            const slug = value => String(value || '')
+                                .normalize('NFD')
+                                .replace(/[\u0300-\u036f]/g, '')
+                                .toLowerCase()
+                                .trim()
+                                .replace(/[^a-z0-9]+/g, '-')
+                                .replace(/^-+|-+$/g, '');
+
+                            try {
+                                let section = 'Menu';
+                                const occurrences = {};
+                                const groups = [];
+                                let group = { title: null, items: [] };
+                                groups.push(group);
+
+                                Array.from(navigation.children).forEach((node, defaultOrder) => {
+                                    if (node.classList?.contains('section-title')) {
+                                        section = node.textContent.trim() || 'Menu';
+                                        group = { title: node, items: [] };
+                                        groups.push(group);
+                                        return;
+                                    }
+
+                                    if (node.tagName !== 'LI') return;
+                                    const labelNode = node.querySelector('.nav-text');
+                                    if (!labelNode) return;
+
+                                    const label = labelNode.textContent.trim();
+                                    const base = slug(`${section} ${label}`);
+                                    occurrences[base] = (occurrences[base] || 0) + 1;
+                                    const key = occurrences[base] > 1 ? `${base}-${occurrences[base]}` : base;
+                                    const configured = settings[key];
+
+                                    node.dataset.menuKey = key;
+                                    node.dataset.menuSection = section;
+                                    node.hidden = configured?.visible === false;
+                                    group.items.push({
+                                        node,
+                                        order: Number.isFinite(Number(configured?.order)) ? Number(configured.order) : defaultOrder,
+                                        defaultOrder,
+                                    });
+                                });
+
+                                groups.forEach(current => {
+                                    if (!current.items.length) {
+                                        if (current.title) current.title.hidden = true;
+                                        return;
+                                    }
+
+                                    const sorted = [...current.items].sort((a, b) =>
+                                        (a.order - b.order) || (a.defaultOrder - b.defaultOrder));
+                                    const marker = document.createComment('role-menu-order');
+                                    const first = current.items[0].node;
+                                    first.parentNode.insertBefore(marker, first);
+                                    sorted.forEach(item => marker.parentNode.insertBefore(item.node, marker));
+                                    marker.remove();
+
+                                    if (current.title) {
+                                        current.title.hidden = current.items.every(item => item.node.hidden);
+                                    }
+                                });
+                            } catch (error) {
+                                console.warn('Pengaturan menu tidak dapat diterapkan.', error);
+                            } finally {
+                                navigation.style.visibility = 'visible';
+                            }
+                        })();
+                    </script>
+                    <noscript><style>#role-navigation { visibility: visible !important; }</style></noscript>
                 </nav>
             </div>
 

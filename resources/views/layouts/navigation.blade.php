@@ -381,6 +381,20 @@
     @endcan
 
     <li>
+        <a href="{{ route('super-admin.role-menus.index') }}"
+            class="nav-link {{ request()->routeIs('super-admin.role-menus.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 6h16M4 12h10M4 18h13M18 10l2 2-2 2" />
+                </svg>
+            </div>
+            <span class="nav-text">Pengaturan Menu</span>
+            <span class="nav-badge ml-auto rounded-full bg-white/15 px-1.5 py-0.5 text-[10px] font-black text-white">ROLE</span>
+        </a>
+    </li>
+
+    <li>
         <a href="{{ route('super-admin.system-update.index') }}"
             class="nav-link {{ request()->routeIs("super-admin.system-update.*") ? "nav-link-active" : "nav-link-inactive" }}">
             <div class="nav-icon-container">
@@ -3588,6 +3602,7 @@
 
 {{-- SEPARATOR & PROFILE MENU (Always Visible) --}}
 <li class="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent mx-6 my-4"></li>
+<div class="section-title">Akun</div>
 
 <li>
     <a href="{{ route('profile.edit') }}" title="Profile" class="nav-link nav-link-inactive">

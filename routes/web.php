@@ -1005,6 +1005,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/permissions/{role}', [PermissionManagementController::class, 'getRolePermissions'])->name('permissions.get');
         Route::post('/permissions/{role}', [PermissionManagementController::class, 'syncPermissions'])->name('permissions.sync');
 
+        // Pengaturan tampilan dan urutan menu per role
+        Route::get('/pengaturan-menu', [\App\Http\Controllers\Admin\RoleMenuController::class, 'index'])->name('role-menus.index');
+        Route::put('/pengaturan-menu/{role}', [\App\Http\Controllers\Admin\RoleMenuController::class, 'update'])->name('role-menus.update');
+        Route::delete('/pengaturan-menu/{role}', [\App\Http\Controllers\Admin\RoleMenuController::class, 'reset'])->name('role-menus.reset');
+
         // System Update
         Route::get('/system-update', [SystemUpdateController::class, 'index'])->name('system-update.index');
         Route::post('/system-update/deploy', [SystemUpdateController::class, 'deploy'])->name('system-update.deploy');

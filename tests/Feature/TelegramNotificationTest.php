@@ -34,6 +34,7 @@ class TelegramNotificationTest extends TestCase
     {
         parent::setUp();
         config(['app.key' => 'base64:'.base64_encode(str_repeat('t', 32))]);
+        config(['services.telegram.webhook_reply' => false]);
         Carbon::setTestNow('2026-09-08 18:00:00');
         Http::fake(fn ($request) => match (true) {
             str_ends_with($request->url(), '/getMe') => Http::response(['ok' => true, 'result' => ['username' => 'hc_smktel_bot']], 200),
@@ -222,6 +223,18 @@ class TelegramNotificationTest extends TestCase
             && str_contains($request['text'], 'sudah terhubung')
             && $request['reply_markup']['remove_keyboard'] === true);
 
+        $this->withHeader('X-Telegram-Bot-Api-Secret-Token', $bot->webhook_secret)
+            ->postJson(route('telegram.webhook', $bot->slug), [
+                'message' => [
+                    'chat' => ['id' => 998804, 'type' => 'private'],
+                    'from' => ['id' => 998804, 'first_name' => 'Guru'],
+                    'text' => '/start sisfo',
+                ],
+            ])->assertOk();
+        $commandRequests = collect(Http::recorded())
+            ->filter(fn ($record) => str_ends_with($record[0]->url(), '/setMyCommands'));
+        $this->assertCount(1, $commandRequests, 'Perintah Telegram tidak boleh dikirim ulang jika menu akun tidak berubah.');
+
         $admin = $this->loginSuperadmin();
         $this->actingAs($admin)->withSession(['active_role' => 'Super Admin'])
             ->delete(route('super-admin.telegram-links.destroy', $link))
@@ -404,6 +417,28 @@ class TelegramNotificationTest extends TestCase
             && str_contains($request['text'], 'nomor WhatsApp yang bergabung di Group Sekolah')
             && $request['reply_markup']['keyboard'][0][0]['request_contact'] === true
             && str_contains($request['reply_markup']['keyboard'][0][0]['text'], 'Bagikan Nomor HP Saya'));
+    }
+
+    public function test_webhook_can_return_the_telegram_reply_directly_without_a_second_http_request(): void
+    {
+        config(['services.telegram.webhook_reply' => true]);
+        $bot = $this->createBot();
+        $employee = $this->createLinkedEmployee($bot, 'Pegawai Respon Cepat', '998808');
+
+        $response = $this->withHeader('X-Telegram-Bot-Api-Secret-Token', $bot->webhook_secret)
+            ->postJson(route('telegram.webhook', $bot->slug), [
+                'message' => [
+                    'chat' => ['id' => 998808, 'type' => 'private'],
+                    'from' => ['id' => 998808, 'first_name' => 'Pegawai'],
+                    'text' => '/start',
+                ],
+            ]);
+
+        $response->assertOk()
+            ->assertJsonPath('method', 'sendMessage')
+            ->assertJsonPath('chat_id', '998808');
+        $this->assertStringContainsString($employee->name, $response->json('text'));
+        Http::assertNotSent(fn ($request) => str_ends_with($request->url(), '/sendMessage'));
     }
 
     public function test_employee_can_link_using_a_phone_number_stored_in_dapodik(): void
