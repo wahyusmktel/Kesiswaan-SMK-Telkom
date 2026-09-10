@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
             \App\Http\Middleware\HandleActiveRole::class,
+            \App\Http\Middleware\EnsureTemporaryPasswordChanged::class,
         ]);
         $middleware->append(\App\Http\Middleware\EnsureSsoDomain::class);
         $middleware->redirectGuestsTo(function (Request $request) {

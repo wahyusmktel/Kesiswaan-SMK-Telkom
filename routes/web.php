@@ -1137,6 +1137,7 @@ Route::middleware('auth')->group(function () {
         Route::put('/dapodik-guru/{dapodikGuru}', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'update'])->name('dapodik-guru.update');
 
         Route::post('/dapodik-tpa/import', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'import'])->name('dapodik-tpa.import');
+        Route::post('/dapodik-tpa/sinkronkan-akun', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'syncTpaAccounts'])->name('dapodik-tpa.accounts.sync');
         Route::get('/dapodik-tpa', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'index'])->name('dapodik-tpa.index');
         Route::get('/dapodik-tpa/create', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'create'])->name('dapodik-tpa.create');
         Route::post('/dapodik-tpa', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'store'])->name('dapodik-tpa.store');
@@ -1420,7 +1421,7 @@ Route::middleware(['auth', 'role:Super Admin|Kepala Sekolah|Waka Kesiswaan|Guru 
         Route::get('/{id}', [SharedAssetController::class, 'show'])->name('show');
     });
 
-Route::middleware(['auth', 'role:Super Admin|Waka Kesiswaan|Guru BK|Guru Piket|Kurikulum|Wali Kelas|Tata Usaha|Security|KAUR SDM|Operator|Koordinator Prakerin|Guru Kelas'])
+Route::middleware(['auth', 'role:Super Admin|Waka Kesiswaan|Guru BK|Guru Piket|Kurikulum|Wali Kelas|Tata Usaha|Security|KAUR SDM|Operator|Koordinator Prakerin|Guru Kelas|TPA'])
     ->get('/fingerprint-saya', [\App\Http\Controllers\Shared\MyFingerprintAttendanceController::class, 'index'])
     ->name('fingerprint-saya.index');
 

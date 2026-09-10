@@ -5,8 +5,15 @@
         </h2>
     </x-slot>
 
-    <div class="py-6 w-full" x-data="{ activeTab: 'profile' }">
+    <div class="py-6 w-full" x-data="{ activeTab: '{{ $user->must_change_password ? 'password' : 'profile' }}' }">
         <div class="w-full px-4 sm:px-6 lg:px-8">
+
+            @if($user->must_change_password)
+                <div class="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-amber-900">
+                    <p class="font-bold">Ganti password sementara Anda</p>
+                    <p class="mt-1 text-sm text-amber-700">Sebelum menggunakan menu SISFO lainnya, masukkan password sementara pada kolom password saat ini lalu buat password pribadi yang baru.</p>
+                </div>
+            @endif
 
             {{-- Page Header with Subtle Background --}}
             <div class="relative mb-8">

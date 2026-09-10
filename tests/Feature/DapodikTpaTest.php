@@ -7,6 +7,7 @@ use App\Models\DapodikGuru;
 use App\Models\MasterGuru;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -111,5 +112,112 @@ class DapodikTpaTest extends TestCase
             ->assertSessionHasErrors('master_guru_id');
 
         $this->assertNull($tpa->fresh()->master_guru_id);
+    }
+
+    public function test_account_sync_keeps_every_existing_account_role(): void
+    {
+        $operator = User::factory()->create();
+        $operator->assignRole(Role::findOrCreate('Operator', 'web'));
+        $security = User::factory()->create(['email' => 'security.tpa@example.test']);
+        $security->assignRole(Role::findOrCreate('Security', 'web'));
+        $master = MasterGuru::create([
+            'employee_category' => MasterGuru::CATEGORY_TPA,
+            'nama_lengkap' => 'TPA Security',
+            'nik' => '1801000000000077',
+            'jenis_kelamin' => 'L',
+        ]);
+        DapodikGuru::create([
+            'employee_category' => DapodikGuru::CATEGORY_TPA,
+            'master_guru_id' => $master->id,
+            'nama' => 'TPA Security',
+            'nik' => '1801000000000077',
+            'jenis_kelamin' => 'L',
+            'email_dapodik' => $security->email,
+        ]);
+
+        $this->actingAs($operator)->withSession(['active_role' => 'Operator'])
+            ->post(route('dapodik-tpa.accounts.sync'))
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertSame($security->id, $master->fresh()->user_id);
+        $this->assertTrue($security->fresh()->hasRole('Security'));
+        $this->assertFalse($security->fresh()->hasRole('TPA'));
+    }
+
+    public function test_account_sync_generates_tpa_account_and_forces_password_change(): void
+    {
+        $operator = User::factory()->create();
+        $operator->assignRole(Role::findOrCreate('Operator', 'web'));
+        $master = MasterGuru::create([
+            'employee_category' => MasterGuru::CATEGORY_TPA,
+            'nama_lengkap' => 'TPA Baru',
+            'nik' => '1801000000000088',
+            'jenis_kelamin' => 'P',
+        ]);
+        DapodikGuru::create([
+            'employee_category' => DapodikGuru::CATEGORY_TPA,
+            'master_guru_id' => $master->id,
+            'nama' => 'TPA Baru',
+            'nik' => '1801000000000088',
+            'jenis_kelamin' => 'P',
+            'email_dapodik' => 'tpa.baru@example.test',
+            'hp' => '081234567890',
+        ]);
+
+        $response = $this->actingAs($operator)->withSession(['active_role' => 'Operator'])
+            ->post(route('dapodik-tpa.accounts.sync'));
+
+        $response->assertRedirect()
+            ->assertSessionHas('tpa_generated_credentials', fn ($rows) => count($rows) === 1 && $rows[0]['email'] === 'tpa.baru@example.test');
+        $credential = session('tpa_generated_credentials')[0];
+        $this->get(route('dapodik-tpa.index'))
+            ->assertOk()
+            ->assertSee('Unduh Kredensial CSV');
+        $account = User::where('email', 'tpa.baru@example.test')->firstOrFail();
+        $this->assertTrue($account->hasRole('TPA'));
+        $this->assertTrue($account->must_change_password);
+        $this->assertTrue(Hash::check($credential['password'], $account->password));
+        $this->assertSame($account->id, $master->fresh()->user_id);
+
+        $this->actingAs($account)->withSession(['active_role' => 'TPA'])
+            ->get(route('fingerprint-saya.index'))
+            ->assertRedirect(route('profile.edit'));
+        $this->get(route('profile.edit'))
+            ->assertOk()
+            ->assertSee('Ganti password sementara Anda');
+
+        $this->put(route('password.update'), [
+            'current_password' => $credential['password'],
+            'password' => 'Password-Baru-TPA-2026',
+            'password_confirmation' => 'Password-Baru-TPA-2026',
+        ])->assertSessionHas('status', 'password-updated');
+
+        $this->assertFalse($account->fresh()->must_change_password);
+        $this->get(route('fingerprint-saya.index'))->assertOk();
+    }
+
+    public function test_account_sync_does_not_create_account_without_valid_email(): void
+    {
+        $operator = User::factory()->create();
+        $operator->assignRole(Role::findOrCreate('Operator', 'web'));
+        $master = MasterGuru::create([
+            'employee_category' => MasterGuru::CATEGORY_TPA,
+            'nama_lengkap' => 'TPA Tanpa Email',
+            'nik' => '1801000000000066',
+            'jenis_kelamin' => 'L',
+        ]);
+        DapodikGuru::create([
+            'employee_category' => DapodikGuru::CATEGORY_TPA,
+            'master_guru_id' => $master->id,
+            'nama' => 'TPA Tanpa Email',
+            'nik' => '1801000000000066',
+        ]);
+
+        $this->actingAs($operator)->withSession(['active_role' => 'Operator'])
+            ->post(route('dapodik-tpa.accounts.sync'))
+            ->assertSessionHas('tpa_account_sync_errors', fn ($errors) => count($errors) === 1);
+
+        $this->assertNull($master->fresh()->user_id);
     }
 }

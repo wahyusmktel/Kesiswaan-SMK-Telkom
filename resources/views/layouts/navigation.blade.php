@@ -3106,6 +3106,10 @@
             || auth()->user()?->cctvCameras()->where('is_active', true)->exists();
     }
 @endphp
+@if($activeNavigationRole === 'TPA')
+    <div class="section-title">Kehadiran Saya</div>
+    @include('shared.fingerprint-saya-nav-link')
+@endif
 @if(!in_array(\Illuminate\Support\Str::lower((string) $activeNavigationRole), ['siswa', 'student'], true))
 <div class="section-title">Kinerja Sekolah</div>
 <li>

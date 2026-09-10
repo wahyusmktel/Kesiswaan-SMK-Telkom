@@ -30,6 +30,7 @@ class User extends Authenticatable implements WebAuthnAuthenticatableContract
         'avatar',
         'face_photo',
         'face_descriptor',
+        'must_change_password',
     ];
 
     /**
@@ -52,6 +53,7 @@ class User extends Authenticatable implements WebAuthnAuthenticatableContract
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'must_change_password' => 'boolean',
         ];
     }
 

@@ -111,6 +111,55 @@
                     </div>
                 @endif
 
+                @if(session('tpa_generated_credentials'))
+                    <section class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5" id="tpa-credentials">
+                        <div class="flex flex-wrap items-start justify-between gap-4">
+                            <div>
+                                <h3 class="font-bold text-emerald-900">Akun TPA baru berhasil dibuat</h3>
+                                <p class="mt-1 text-xs text-emerald-700">Simpan kredensial ini sekarang. Password hanya ditampilkan pada halaman ini dan wajib diganti saat login pertama.</p>
+                            </div>
+                            <button type="button" id="download-tpa-credentials" class="rounded-xl bg-emerald-700 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-800">
+                                Unduh Kredensial CSV
+                            </button>
+                        </div>
+                        <div class="mt-4 overflow-x-auto rounded-xl border border-emerald-200 bg-white">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-emerald-100/70 text-xs uppercase text-emerald-800"><tr><th class="px-4 py-3">Nama</th><th class="px-4 py-3">Email</th><th class="px-4 py-3">Password Sementara</th></tr></thead>
+                                <tbody class="divide-y divide-emerald-100">
+                                    @foreach(session('tpa_generated_credentials') as $credential)
+                                        <tr><td class="px-4 py-3 font-semibold">{{ $credential['name'] }}</td><td class="px-4 py-3">{{ $credential['email'] }}</td><td class="px-4 py-3 font-mono font-bold">{{ $credential['password'] }}</td></tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                    <script>
+                        document.getElementById('download-tpa-credentials')?.addEventListener('click', () => {
+                            const credentials = @js(session('tpa_generated_credentials'));
+                            const safe = value => {
+                                let text = String(value ?? '');
+                                if (/^[=+\-@]/.test(text)) text = "'" + text;
+                                return '"' + text.replaceAll('"', '""') + '"';
+                            };
+                            const csv = ['Nama,Email,Password Sementara', ...credentials.map(row => [row.name, row.email, row.password].map(safe).join(','))].join('\r\n');
+                            const link = document.createElement('a');
+                            link.href = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' }));
+                            link.download = 'kredensial-tpa-{{ now()->format('Ymd-His') }}.csv';
+                            link.click();
+                            URL.revokeObjectURL(link.href);
+                        });
+                    </script>
+                @endif
+
+                @if(session('tpa_account_sync_errors'))
+                    <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                        <p class="text-sm font-bold text-amber-800">Data berikut perlu ditangani manual:</p>
+                        <ul class="mt-2 space-y-1 text-xs text-amber-700">
+                            @foreach(session('tpa_account_sync_errors') as $error)<li>• {{ $error }}</li>@endforeach
+                        </ul>
+                    </div>
+                @endif
+
                 {{-- Stats --}}
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center gap-4">
@@ -176,6 +225,15 @@
                             <p class="text-xs text-gray-400 mt-0.5">Menampilkan {{ $dapodikGurus->count() }} dari {{ $dapodikGurus->total() }} data</p>
                         </div>
                         <div class="flex flex-col sm:flex-row gap-2">
+                            @if($context['category'] === \App\Models\DapodikGuru::CATEGORY_TPA)
+                                <form method="POST" action="{{ route('dapodik-tpa.accounts.sync') }}" onsubmit="return confirm('Sinkronkan akun seluruh TPA? Role akun lama tidak akan diubah. Akun baru akan mendapat role TPA dan password sementara.')">
+                                    @csrf
+                                    <button class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition-all hover:bg-violet-500">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 0 0-4-4h-1m-4 6H3v-2a4 4 0 0 1 4-4h2m6-4a4 4 0 1 1 0-8 4 4 0 0 1 0 8ZM8 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/></svg>
+                                        Sinkronkan Akun TPA
+                                    </button>
+                                </form>
+                            @endif
                             <a href="{{ route($context['route'].'.create') }}"
                                 class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-xl shadow-sm transition-all">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -286,7 +344,7 @@
                                                     <option value="">Tidak terhubung</option>
                                                     @foreach($employees as $employee)
                                                         <option value="{{ $employee->id }}" {{ (string) $item->master_guru_id === (string) $employee->id ? 'selected' : '' }}>
-                                                            {{ $employee->nama_lengkap }}{{ $employee->kode_guru ? ' - ' . $employee->kode_guru : '' }}{{ $employee->nik ? ' | NIK ' . $employee->nik : '' }}{{ $employee->user ? '' : ' | Belum ada akun SISFO' }}
+                                                            {{ $employee->nama_lengkap }}{{ $employee->kode_guru ? ' - ' . $employee->kode_guru : '' }}{{ $employee->nik ? ' | NIK ' . $employee->nik : '' }}{{ $employee->user ? ' | '.$employee->user->email.' ['.$employee->user->getRoleNames()->join(', ').']' : ' | Belum ada akun SISFO' }}
                                                         </option>
                                                     @endforeach
                                                 </select>

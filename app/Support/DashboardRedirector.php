@@ -28,6 +28,7 @@ class DashboardRedirector
             'Koordinator Prakerin' => 'prakerin.industri.index',
             'Kepala Sekolah' => 'kepala-sekolah.dashboard.index',
             'Petugas UKS' => 'uks.records.index',
+            'TPA' => 'profile.edit',
             default => null,
         };
     }

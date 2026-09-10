@@ -6,12 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Imports\DapodikGuruImport;
 use App\Models\DapodikGuru;
 use App\Models\MasterGuru;
+use App\Models\User;
 use App\Support\EmploymentStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
+use Spatie\Permission\Models\Role;
+use Throwable;
 
 class DapodikGuruController extends Controller
 {
@@ -50,7 +55,7 @@ class DapodikGuruController extends Controller
         $totalUnlinked = (clone $categoryQuery)->whereNull('master_guru_id')->count();
         $jenisPtkList = (clone $categoryQuery)->select('jenis_ptk')->distinct()->whereNotNull('jenis_ptk')->orderBy('jenis_ptk')->pluck('jenis_ptk');
 
-        $employees = MasterGuru::with('user')
+        $employees = MasterGuru::with('user.roles')
             ->where('employee_category', $context['category'])
             ->orderBy('nama_lengkap')
             ->get();
@@ -250,6 +255,142 @@ class DapodikGuruController extends Controller
         }
 
         return back();
+    }
+
+    public function syncTpaAccounts()
+    {
+        $role = Role::findOrCreate('TPA', 'web');
+        $summary = ['linked' => 0, 'created' => 0, 'unchanged' => 0, 'skipped' => 0];
+        $credentials = [];
+        $errors = [];
+
+        DapodikGuru::query()
+            ->where('employee_category', DapodikGuru::CATEGORY_TPA)
+            ->with('masterGuru.user')
+            ->orderBy('id')
+            ->each(function (DapodikGuru $dapodik) use ($role, &$summary, &$credentials, &$errors) {
+                try {
+                    $result = DB::transaction(fn () => $this->syncTpaAccount($dapodik, $role));
+                    $summary[$result['status']]++;
+
+                    if (isset($result['credential'])) {
+                        $credentials[] = $result['credential'];
+                    }
+                } catch (Throwable $exception) {
+                    $summary['skipped']++;
+                    $errors[] = $dapodik->nama.': '.$exception->getMessage();
+                    Log::warning('Gagal sinkronisasi akun TPA', [
+                        'dapodik_guru_id' => $dapodik->id,
+                        'message' => $exception->getMessage(),
+                    ]);
+                }
+            });
+
+        $message = "Sinkronisasi akun TPA selesai: {$summary['linked']} akun lama ditautkan, {$summary['created']} akun baru dibuat, {$summary['unchanged']} sudah terhubung";
+        if ($summary['skipped']) {
+            $message .= ", {$summary['skipped']} perlu ditangani";
+        }
+
+        return back()
+            ->with('success', $message.'.')
+            ->with('tpa_generated_credentials', $credentials)
+            ->with('tpa_account_sync_errors', $errors);
+    }
+
+    private function syncTpaAccount(DapodikGuru $dapodik, Role $role): array
+    {
+        $email = Str::lower(trim((string) $dapodik->email_dapodik));
+        $emailIsValid = filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+        $matchedUser = $emailIsValid ? User::where('email', $email)->first() : null;
+        $masterByNik = $dapodik->nik ? MasterGuru::where('nik', $dapodik->nik)->first() : null;
+        $mappedMaster = $dapodik->masterGuru;
+        $userMaster = $matchedUser?->masterGuru;
+
+        $masterIds = collect([$mappedMaster?->id, $masterByNik?->id, $userMaster?->id])->filter()->unique();
+        if ($masterIds->count() > 1) {
+            throw new \RuntimeException('NIK, email, atau mapping mengarah ke pegawai yang berbeda. Periksa data secara manual.');
+        }
+
+        $master = $mappedMaster ?? $masterByNik ?? $userMaster;
+        if (! $master) {
+            if (! $dapodik->nik) {
+                throw new \RuntimeException('NIK kosong sehingga master pegawai tidak dapat dibuat.');
+            }
+
+            $master = MasterGuru::create([
+                'nama_lengkap' => $dapodik->nama,
+                'nik' => $dapodik->nik,
+                'nuptk' => $this->availableMasterNuptk($dapodik->nuptk),
+                'jenis_kelamin' => in_array($dapodik->jenis_kelamin, ['L', 'P'], true) ? $dapodik->jenis_kelamin : 'L',
+                'employee_category' => MasterGuru::CATEGORY_TPA,
+            ]);
+        } else {
+            $master->update([
+                'nama_lengkap' => $dapodik->nama,
+                'nik' => $dapodik->nik ?: $master->nik,
+                'nuptk' => $this->availableMasterNuptk($dapodik->nuptk, $master) ?: $master->nuptk,
+                'jenis_kelamin' => in_array($dapodik->jenis_kelamin, ['L', 'P'], true) ? $dapodik->jenis_kelamin : $master->jenis_kelamin,
+                'employee_category' => MasterGuru::CATEGORY_TPA,
+            ]);
+        }
+
+        DapodikGuru::where('master_guru_id', $master->id)
+            ->whereKeyNot($dapodik->id)
+            ->update(['master_guru_id' => null]);
+        $dapodik->update(['master_guru_id' => $master->id]);
+
+        if ($master->user_id) {
+            return ['status' => 'unchanged'];
+        }
+
+        if ($matchedUser) {
+            if ($matchedUser->masterGuru && $matchedUser->masterGuru->id !== $master->id) {
+                throw new \RuntimeException('Email sudah terhubung ke master pegawai lain.');
+            }
+
+            $master->update(['user_id' => $matchedUser->id]);
+
+            // Role akun lama sengaja tidak diubah.
+            return ['status' => 'linked'];
+        }
+
+        if (! $emailIsValid) {
+            throw new \RuntimeException('Email Dapodik kosong atau tidak valid; akun baru belum dibuat.');
+        }
+
+        $temporaryPassword = Str::random(12);
+        $user = User::create([
+            'name' => $dapodik->nama,
+            'email' => $email,
+            'phone_number' => $dapodik->hp,
+            'password' => Hash::make($temporaryPassword),
+            'must_change_password' => true,
+        ]);
+        $user->forceFill(['email_verified_at' => now()])->save();
+        $user->assignRole($role);
+        $master->update(['user_id' => $user->id]);
+
+        return [
+            'status' => 'created',
+            'credential' => [
+                'name' => $dapodik->nama,
+                'email' => $email,
+                'password' => $temporaryPassword,
+            ],
+        ];
+    }
+
+    private function availableMasterNuptk(?string $nuptk, ?MasterGuru $except = null): ?string
+    {
+        if (! $nuptk) {
+            return null;
+        }
+
+        $exists = MasterGuru::where('nuptk', $nuptk)
+            ->when($except, fn ($query) => $query->whereKeyNot($except->id))
+            ->exists();
+
+        return $exists ? null : $nuptk;
     }
 
     private function context(Request $request): array
