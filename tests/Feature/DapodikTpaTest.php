@@ -145,6 +145,97 @@ class DapodikTpaTest extends TestCase
         $this->assertFalse($security->fresh()->hasRole('TPA'));
     }
 
+    public function test_operator_can_reconcile_existing_headmaster_account_without_changing_its_role(): void
+    {
+        $operator = User::factory()->create();
+        $operator->assignRole(Role::findOrCreate('Operator', 'web'));
+        $headmaster = User::factory()->create(['email' => 'kepala.sekolah@example.test']);
+        $headmaster->assignRole(Role::findOrCreate('Kepala Sekolah', 'web'));
+        $accountMaster = MasterGuru::create([
+            'nama_lengkap' => 'Kepala Sekolah',
+            'jenis_kelamin' => 'L',
+            'user_id' => $headmaster->id,
+            'employee_category' => MasterGuru::CATEGORY_TEACHER,
+        ]);
+        $duplicateMaster = MasterGuru::create([
+            'nama_lengkap' => 'Kepala Sekolah',
+            'jenis_kelamin' => 'L',
+            'nik' => '1801000000000011',
+            'nuptk' => '1234567890123456',
+            'employee_category' => MasterGuru::CATEGORY_TPA,
+        ]);
+        $dapodik = DapodikGuru::create([
+            'employee_category' => DapodikGuru::CATEGORY_TPA,
+            'master_guru_id' => $duplicateMaster->id,
+            'nama' => 'Kepala Sekolah',
+            'nik' => '1801000000000011',
+            'nuptk' => '1234567890123456',
+            'email_dapodik' => 'email.dapodik.berbeda@example.test',
+        ]);
+
+        $this->actingAs($operator)->withSession(['active_role' => 'Operator'])
+            ->patch(route('dapodik-tpa.account.reconcile', $dapodik), ['user_id' => $headmaster->id])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertSame($accountMaster->id, $dapodik->fresh()->master_guru_id);
+        $this->assertDatabaseHas('master_gurus', [
+            'id' => $accountMaster->id,
+            'user_id' => $headmaster->id,
+            'nik' => '1801000000000011',
+            'nuptk' => '1234567890123456',
+            'employee_category' => MasterGuru::CATEGORY_TPA,
+        ]);
+        $this->assertDatabaseHas('master_gurus', [
+            'id' => $duplicateMaster->id,
+            'nik' => null,
+            'nuptk' => null,
+            'is_active' => false,
+        ]);
+        $this->assertTrue($headmaster->fresh()->hasRole('Kepala Sekolah'));
+        $this->assertFalse($headmaster->fresh()->hasRole('TPA'));
+
+        $this->get(route('dapodik-tpa.index'))
+            ->assertOk()
+            ->assertSee('kepala.sekolah@example.test')
+            ->assertSee('Sinkron:');
+    }
+
+    public function test_account_reconciliation_rejects_conflicting_identity(): void
+    {
+        $operator = User::factory()->create();
+        $operator->assignRole(Role::findOrCreate('Operator', 'web'));
+        $account = User::factory()->create();
+        $account->assignRole(Role::findOrCreate('Kepala Sekolah', 'web'));
+        $accountMaster = MasterGuru::create([
+            'nama_lengkap' => 'Pegawai Berbeda',
+            'jenis_kelamin' => 'P',
+            'user_id' => $account->id,
+            'nik' => '1801000000000022',
+            'employee_category' => MasterGuru::CATEGORY_TPA,
+        ]);
+        $dapodikMaster = MasterGuru::create([
+            'nama_lengkap' => 'Data Dapodik',
+            'jenis_kelamin' => 'L',
+            'nik' => '1801000000000033',
+            'employee_category' => MasterGuru::CATEGORY_TPA,
+        ]);
+        $dapodik = DapodikGuru::create([
+            'employee_category' => DapodikGuru::CATEGORY_TPA,
+            'master_guru_id' => $dapodikMaster->id,
+            'nama' => 'Data Dapodik',
+            'nik' => '1801000000000033',
+        ]);
+
+        $this->actingAs($operator)->withSession(['active_role' => 'Operator'])
+            ->patch(route('dapodik-tpa.account.reconcile', $dapodik), ['user_id' => $account->id])
+            ->assertSessionHasErrors('user_id');
+
+        $this->assertSame($dapodikMaster->id, $dapodik->fresh()->master_guru_id);
+        $this->assertSame('1801000000000022', $accountMaster->fresh()->nik);
+        $this->assertTrue($dapodikMaster->fresh()->is_active);
+    }
+
     public function test_account_sync_generates_tpa_account_and_forces_password_change(): void
     {
         $operator = User::factory()->create();

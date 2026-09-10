@@ -94,6 +94,14 @@
         <div class="py-6">
             <div class="w-full px-4 sm:px-6 lg:px-8 space-y-6">
 
+                @if(session('success'))
+                    <div role="status" class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">{{ session('success') }}</div>
+                @endif
+
+                @if($errors->any())
+                    <div role="alert" class="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">{{ $errors->first() }}</div>
+                @endif
+
                 {{-- Import errors --}}
                 @if(session('dapodik_import_errors'))
                     <div class="bg-red-50 border border-red-200 rounded-2xl p-4">
@@ -161,7 +169,7 @@
                 @endif
 
                 {{-- Stats --}}
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                     <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center gap-4">
                         <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
                             <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
@@ -178,6 +186,15 @@
                         <div>
                             <div class="text-2xl font-black text-gray-900">{{ $totalLinked }}</div>
                             <div class="text-xs font-semibold text-gray-400">Terhubung ke Pegawai</div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-violet-50 flex items-center justify-center shrink-0">
+                            <svg class="w-6 h-6 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A9 9 0 1118.88 17.8M15 11a3 3 0 11-6 0 3 3 0 016 0Z"/></svg>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-black text-gray-900">{{ $totalAccountsLinked }}</div>
+                            <div class="text-xs font-semibold text-gray-400">Memiliki Akun SISFO</div>
                         </div>
                     </div>
                     <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center gap-4">
@@ -352,8 +369,38 @@
                                                     Simpan
                                                 </button>
                                             </form>
-                                            @if($item->masterGuru)
-                                                <p class="mt-1 text-[11px] font-semibold text-green-600">Terhubung ke {{ $item->masterGuru->user?->name ?? $item->masterGuru->nama_lengkap }}</p>
+                                            @if($context['category'] === \App\Models\DapodikGuru::CATEGORY_TPA)
+                                                @php
+                                                    $currentAccountId = $item->masterGuru?->user_id;
+                                                    $suggestedAccount = $accountOptions->firstWhere('id', $currentAccountId)
+                                                        ?? $accountOptions->first(fn ($account) => $item->nik && $account->masterGuru?->nik === $item->nik)
+                                                        ?? $accountOptions->first(fn ($account) => $item->nuptk && $account->masterGuru?->nuptk === $item->nuptk)
+                                                        ?? $accountOptions->first(fn ($account) => $item->email_dapodik && strcasecmp($account->email, $item->email_dapodik) === 0);
+                                                @endphp
+                                                <form method="POST" action="{{ route('dapodik-tpa.account.reconcile', $item) }}" class="mt-2 rounded-xl border border-violet-100 bg-violet-50/60 p-2" onsubmit="return confirm('Rekonsiliasi data ini dengan akun SISFO terpilih? NIK/NUPTK akan diselaraskan, sedangkan seluruh role akun tetap dipertahankan.');">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <label for="account-{{ $item->id }}" class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-violet-700">Rekonsiliasi Akun SISFO</label>
+                                                    <div class="flex items-center gap-2">
+                                                        <select id="account-{{ $item->id }}" name="user_id" required class="w-full rounded-lg border-violet-200 bg-white px-2 py-2 text-xs text-gray-700 focus:border-violet-500 focus:ring-violet-500">
+                                                            <option value="">Pilih akun pengguna</option>
+                                                            @foreach($accountOptions as $account)
+                                                                <option value="{{ $account->id }}" @selected((string) ($suggestedAccount?->id) === (string) $account->id)>
+                                                                    {{ $account->name }} · {{ $account->email }} [{{ $account->getRoleNames()->join(', ') ?: 'Tanpa role' }}]{{ $account->masterGuru ? ' · Master #'.$account->masterGuru->id : ' · Belum punya master' }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                        <button class="rounded-lg bg-violet-600 px-3 py-2 text-xs font-bold text-white hover:bg-violet-500">Hubungkan</button>
+                                                    </div>
+                                                    @if($suggestedAccount && ! $currentAccountId)
+                                                        <p class="mt-1 text-[10px] font-semibold text-violet-600">Saran otomatis: {{ $suggestedAccount->name }} berdasarkan identitas yang cocok.</p>
+                                                    @endif
+                                                </form>
+                                            @endif
+                                            @if($item->masterGuru?->user)
+                                                <p class="mt-1 text-[11px] font-semibold text-green-600">Sinkron: {{ $item->masterGuru->nama_lengkap }} · {{ $item->masterGuru->user->email }} [{{ $item->masterGuru->user->getRoleNames()->join(', ') }}]</p>
+                                            @elseif($item->masterGuru)
+                                                <p class="mt-1 text-[11px] font-semibold text-amber-600">Master pegawai terhubung, tetapi akun SISFO belum ditautkan.</p>
                                             @else
                                                 <p class="mt-1 text-[11px] font-semibold text-gray-400">Belum terhubung ke data pegawai.</p>
                                             @endif

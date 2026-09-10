@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Facades\Excel;
 use Spatie\Permission\Models\Role;
 use Throwable;
@@ -52,6 +53,9 @@ class DapodikGuruController extends Controller
         $categoryQuery = DapodikGuru::where('employee_category', $context['category']);
         $totalDapodik = (clone $categoryQuery)->count();
         $totalLinked = (clone $categoryQuery)->whereNotNull('master_guru_id')->count();
+        $totalAccountsLinked = (clone $categoryQuery)
+            ->whereHas('masterGuru', fn ($query) => $query->whereNotNull('user_id'))
+            ->count();
         $totalUnlinked = (clone $categoryQuery)->whereNull('master_guru_id')->count();
         $jenisPtkList = (clone $categoryQuery)->select('jenis_ptk')->distinct()->whereNotNull('jenis_ptk')->orderBy('jenis_ptk')->pluck('jenis_ptk');
 
@@ -60,8 +64,15 @@ class DapodikGuruController extends Controller
             ->orderBy('nama_lengkap')
             ->get();
 
+        $accountOptions = $context['category'] === DapodikGuru::CATEGORY_TPA
+            ? User::with(['roles', 'masterGuru'])
+                ->whereDoesntHave('roles', fn ($query) => $query->where('name', 'Siswa'))
+                ->orderBy('name')
+                ->get(['id', 'name', 'email'])
+            : collect();
+
         return view('pages.shared.dapodik-guru.index', compact(
-            'dapodikGurus', 'totalDapodik', 'totalLinked', 'totalUnlinked', 'jenisPtkList', 'employees', 'context'
+            'dapodikGurus', 'totalDapodik', 'totalLinked', 'totalAccountsLinked', 'totalUnlinked', 'jenisPtkList', 'employees', 'accountOptions', 'context'
         ));
     }
 
@@ -229,6 +240,122 @@ class DapodikGuruController extends Controller
         return back()->with('success', 'Mapping '.$context['label'].' ke data pegawai berhasil diperbarui.');
     }
 
+    public function reconcileTpaAccount(Request $request, DapodikGuru $dapodikGuru)
+    {
+        abort_unless($request->routeIs('dapodik-tpa.*') && $dapodikGuru->is_tpa, 404);
+
+        $input = $request->validate([
+            'user_id' => ['required', 'integer', Rule::exists('users', 'id')],
+        ]);
+
+        $result = DB::transaction(function () use ($dapodikGuru, $input) {
+            $dapodik = DapodikGuru::query()->lockForUpdate()->findOrFail($dapodikGuru->id);
+            $account = User::with('roles')->lockForUpdate()->findOrFail($input['user_id']);
+
+            if ($account->hasRole('Siswa')) {
+                throw ValidationException::withMessages([
+                    'user_id' => 'Akun siswa tidak dapat ditautkan sebagai akun pegawai.',
+                ]);
+            }
+
+            $emailOwner = filled($dapodik->email_dapodik)
+                ? User::whereRaw('LOWER(email) = ?', [Str::lower(trim($dapodik->email_dapodik))])->first()
+                : null;
+            if ($emailOwner && $emailOwner->id !== $account->id) {
+                throw ValidationException::withMessages([
+                    'user_id' => 'Email Dapodik sudah digunakan akun '.$emailOwner->name.'. Perbaiki email Dapodik sebelum melakukan rekonsiliasi.',
+                ]);
+            }
+
+            $source = $dapodik->master_guru_id
+                ? MasterGuru::query()->lockForUpdate()->find($dapodik->master_guru_id)
+                : null;
+            $target = MasterGuru::query()->lockForUpdate()->where('user_id', $account->id)->first();
+
+            if ($source?->user_id && $source->user_id !== $account->id) {
+                throw ValidationException::withMessages([
+                    'user_id' => 'Data Dapodik sedang terhubung ke akun lain. Lepaskan atau periksa mapping tersebut terlebih dahulu.',
+                ]);
+            }
+
+            if (! $target) {
+                $target = $source ?: MasterGuru::create([
+                    'nama_lengkap' => $dapodik->nama,
+                    'jenis_kelamin' => in_array($dapodik->jenis_kelamin, ['L', 'P'], true) ? $dapodik->jenis_kelamin : 'L',
+                    'employee_category' => MasterGuru::CATEGORY_TPA,
+                ]);
+            }
+
+            $otherDapodik = DapodikGuru::where('master_guru_id', $target->id)
+                ->whereKeyNot($dapodik->id)
+                ->first();
+            if ($otherDapodik) {
+                throw ValidationException::withMessages([
+                    'user_id' => 'Akun tersebut sudah terhubung dengan data Dapodik '.$otherDapodik->nama.'. Periksa kemungkinan data ganda.',
+                ]);
+            }
+
+            $this->reconcileIdentity($dapodik, $source, $target);
+
+            $target->user_id = $account->id;
+            $target->employee_category = MasterGuru::CATEGORY_TPA;
+            $target->save();
+
+            $dapodik->update([
+                'master_guru_id' => $target->id,
+                'employee_category' => DapodikGuru::CATEGORY_TPA,
+            ]);
+
+            $archivedDuplicate = false;
+            if ($source && $source->id !== $target->id && ! $source->user_id && ! DapodikGuru::where('master_guru_id', $source->id)->exists()) {
+                $source->is_active = false;
+                $source->save();
+                $archivedDuplicate = true;
+            }
+
+            return compact('account', 'archivedDuplicate');
+        });
+
+        $message = 'Akun SISFO '.$result['account']->name.' berhasil direkonsiliasi. Seluruh role akun tetap dipertahankan.';
+        if ($result['archivedDuplicate']) {
+            $message .= ' Master pegawai duplikat lama telah dinonaktifkan.';
+        }
+
+        return back()->with('success', $message);
+    }
+
+    private function reconcileIdentity(DapodikGuru $dapodik, ?MasterGuru $source, MasterGuru $target): void
+    {
+        foreach (['nik' => 'NIK', 'nuptk' => 'NUPTK'] as $field => $label) {
+            $incoming = filled($dapodik->{$field}) ? trim((string) $dapodik->{$field}) : null;
+            $current = filled($target->{$field}) ? trim((string) $target->{$field}) : null;
+
+            if ($incoming && $current && $incoming !== $current) {
+                throw ValidationException::withMessages([
+                    'user_id' => $label.' akun terpilih berbeda dengan '.$label.' Dapodik. Periksa identitas pegawai terlebih dahulu.',
+                ]);
+            }
+
+            if (! $incoming || $current) {
+                continue;
+            }
+
+            $owner = MasterGuru::where($field, $incoming)->lockForUpdate()->first();
+            if ($owner && $owner->id !== $target->id && $owner->id !== $source?->id) {
+                throw ValidationException::withMessages([
+                    'user_id' => $label.' Dapodik telah dimiliki master pegawai lain. Periksa kemungkinan data ganda.',
+                ]);
+            }
+
+            if ($source && $source->id !== $target->id && $source->{$field} === $incoming) {
+                $source->{$field} = null;
+                $source->save();
+            }
+
+            $target->{$field} = $incoming;
+        }
+    }
+
     public function import(Request $request)
     {
         $context = $this->context($request);
@@ -303,15 +430,16 @@ class DapodikGuruController extends Controller
         $emailIsValid = filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
         $matchedUser = $emailIsValid ? User::where('email', $email)->first() : null;
         $masterByNik = $dapodik->nik ? MasterGuru::where('nik', $dapodik->nik)->first() : null;
+        $masterByNuptk = $dapodik->nuptk ? MasterGuru::where('nuptk', $dapodik->nuptk)->first() : null;
         $mappedMaster = $dapodik->masterGuru;
         $userMaster = $matchedUser?->masterGuru;
 
-        $masterIds = collect([$mappedMaster?->id, $masterByNik?->id, $userMaster?->id])->filter()->unique();
+        $masterIds = collect([$mappedMaster?->id, $masterByNik?->id, $masterByNuptk?->id, $userMaster?->id])->filter()->unique();
         if ($masterIds->count() > 1) {
-            throw new \RuntimeException('NIK, email, atau mapping mengarah ke pegawai yang berbeda. Periksa data secara manual.');
+            throw new \RuntimeException('NIK, NUPTK, email, atau mapping mengarah ke pegawai yang berbeda. Gunakan Rekonsiliasi Akun SISFO untuk memeriksanya.');
         }
 
-        $master = $mappedMaster ?? $masterByNik ?? $userMaster;
+        $master = $mappedMaster ?? $masterByNik ?? $masterByNuptk ?? $userMaster;
         if (! $master) {
             if (! $dapodik->nik) {
                 throw new \RuntimeException('NIK kosong sehingga master pegawai tidak dapat dibuat.');
