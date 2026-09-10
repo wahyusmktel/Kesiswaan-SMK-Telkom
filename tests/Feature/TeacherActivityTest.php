@@ -53,11 +53,13 @@ class TeacherActivityTest extends TestCase
         $this->get(route('teacher-activity.index'))->assertRedirect(route('login'));
         $this->patch(route('teacher-activity.update', $teacher), ['is_active' => 0])->assertRedirect(route('login'));
         $this->patch(route('teacher-activity.employment.update', $teacher), ['status_kepegawaian' => 'Pegawai Tetap'])->assertRedirect(route('login'));
+        $this->patch(route('teacher-activity.category.update', $teacher), ['employee_category' => 'tpa'])->assertRedirect(route('login'));
         foreach (['Kepala Sekolah', 'Guru Kelas', 'Operator', 'Kurikulum'] as $role) {
             $this->login($role);
             $this->get(route('teacher-activity.index'))->assertForbidden();
             $this->patch(route('teacher-activity.update', $teacher), ['is_active' => 0])->assertForbidden();
             $this->patch(route('teacher-activity.employment.update', $teacher), ['status_kepegawaian' => 'Pegawai Tetap'])->assertForbidden();
+            $this->patch(route('teacher-activity.category.update', $teacher), ['employee_category' => 'tpa'])->assertForbidden();
         }
         $this->assertTrue($teacher->refresh()->is_active);
     }
@@ -92,6 +94,48 @@ class TeacherActivityTest extends TestCase
         $this->patch(route('teacher-activity.employment.update', $teacher), ['status_kepegawaian' => 'Pegawai Tetap'])
             ->assertSessionHasErrors('status_kepegawaian');
         $this->assertDatabaseCount('dapodik_gurus', 0);
+    }
+
+    public function test_sdm_and_superadmin_can_change_employee_category_without_changing_account_roles(): void
+    {
+        $account = User::factory()->create();
+        $account->assignRole(Role::findOrCreate('Security', 'web'));
+        $employee = MasterGuru::create([
+            'nama_lengkap' => 'Pegawai Pindah Kategori',
+            'jenis_kelamin' => 'L',
+            'user_id' => $account->id,
+            'employee_category' => MasterGuru::CATEGORY_TEACHER,
+        ]);
+        $dapodik = $employee->dapodikGuru()->create([
+            'nama' => $employee->nama_lengkap,
+            'employee_category' => 'guru',
+        ]);
+        $url = route('teacher-activity.category.update', $employee);
+
+        foreach (['KAUR SDM', 'Super Admin'] as $role) {
+            $this->login($role);
+            $this->patch($url, ['employee_category' => 'tpa'])
+                ->assertRedirect()
+                ->assertSessionHas('success');
+            $this->assertSame(MasterGuru::CATEGORY_TPA, $employee->refresh()->employee_category);
+            $this->assertSame('tpa', $dapodik->refresh()->employee_category);
+            $this->assertTrue($account->fresh()->hasRole('Security'));
+            $this->assertFalse($account->hasRole('TPA'));
+            $this->get(route('teacher-activity.index', ['category' => 'tpa']))
+                ->assertOk()
+                ->assertSee('Pegawai Pindah Kategori');
+            $this->get(route('teacher-activity.index', ['category' => 'guru']))
+                ->assertOk()
+                ->assertDontSee('Pegawai Pindah Kategori');
+
+            $this->patch($url, ['employee_category' => 'guru'])->assertRedirect();
+            $this->assertSame(MasterGuru::CATEGORY_TEACHER, $employee->refresh()->employee_category);
+            $this->assertSame('guru', $dapodik->refresh()->employee_category);
+        }
+
+        $this->patch($url, ['employee_category' => 'lainnya'])
+            ->assertSessionHasErrors('employee_category');
+        $this->assertSame(MasterGuru::CATEGORY_TEACHER, $employee->refresh()->employee_category);
     }
 
     public function test_superadmin_can_quickly_update_the_phone_number_used_by_whatsapp_recap(): void

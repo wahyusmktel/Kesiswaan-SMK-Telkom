@@ -40,7 +40,7 @@ class FingerprintReportController extends Controller
         $trend = $days->mapWithKeys(fn ($d) => [$d['date']->toDateString() => ['label' => $d['date']->format('d/m'), 'present' => 0, 'late' => 0, 'absent' => 0]])->all();
         $rows = $teachers->map(function ($teacher) use ($days, $scans, $schedules, $leaves, $setting, $now, &$trend) {
             $employment = EmploymentStatus::normalize($teacher->dapodikGuru?->status_kepegawaian);
-            $isTpa = (bool) $teacher->dapodikGuru?->is_tpa;
+            $isTpa = $teacher->is_tpa;
             $recognized = $isTpa || in_array($employment, [EmploymentStatus::PERMANENT, EmploymentStatus::FULL_TIME, EmploymentStatus::PART_TIME], true);
             $row = ['name' => $teacher->nama_lengkap, 'employment' => $employment ?: 'Belum diisi', 'present' => 0, 'late' => 0, 'absent' => 0, 'leave' => 0];
             $in = [];

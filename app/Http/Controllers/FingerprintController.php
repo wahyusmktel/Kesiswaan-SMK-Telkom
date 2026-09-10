@@ -1169,8 +1169,9 @@ class FingerprintController extends Controller
         $firstScan = $row->first_scan ? Carbon::parse($row->first_scan) : null;
         $lastScan = $row->last_scan ? Carbon::parse($row->last_scan) : null;
         $totalScan = (int) ($row->total_scan ?? 0);
-        $dapodik = $row->appUser?->masterGuru?->dapodikGuru;
-        $status = $dapodik?->is_tpa
+        $masterGuru = $row->appUser?->masterGuru;
+        $dapodik = $masterGuru?->dapodikGuru;
+        $status = $masterGuru?->is_tpa
             ? EmploymentStatus::ACADEMIC_SUPPORT
             : EmploymentStatus::normalize($dapodik?->status_kepegawaian);
         $rule = $this->attendanceRuleFor($row, $date, $setting, $status);

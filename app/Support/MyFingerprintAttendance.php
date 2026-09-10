@@ -181,8 +181,9 @@ class MyFingerprintAttendance
             return $nonWorkingRule;
         }
 
-        $dapodik = $user->masterGuru?->dapodikGuru;
-        $status = $dapodik?->is_tpa
+        $masterGuru = $user->masterGuru;
+        $dapodik = $masterGuru?->dapodikGuru;
+        $status = $masterGuru?->is_tpa
             ? EmploymentStatus::ACADEMIC_SUPPORT
             : EmploymentStatus::normalize($dapodik?->status_kepegawaian);
 

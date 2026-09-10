@@ -149,11 +149,11 @@ class MonitoringController extends Controller
             ->where('tanggal_mulai', '<=', $date->copy()->endOfDay())
             ->where('tanggal_selesai', '>=', $date->copy()->startOfDay())
             ->orderBy('tanggal_mulai')->get()->keyBy('master_guru_id');
-        $teachers = MasterGuru::with('dapodikGuru')->where('is_active', true)->orderBy('nama_lengkap')->get(['id', 'user_id', 'nama_lengkap']);
+        $teachers = MasterGuru::with('dapodikGuru')->where('is_active', true)->orderBy('nama_lengkap')->get(['id', 'user_id', 'nama_lengkap', 'employee_category']);
         $rows = $teachers->map(function ($teacher) use ($scans, $workingDay, $schedules, $approvedLeaves, $holiday, $date, $setting) {
             $scan = $teacher->user_id ? $scans->get($teacher->user_id) : null;
             $employment = EmploymentStatus::normalize($teacher->dapodikGuru?->status_kepegawaian);
-            $isTpa = (bool) $teacher->dapodikGuru?->is_tpa;
+            $isTpa = $teacher->is_tpa;
             $recognized = $isTpa || in_array($employment, [EmploymentStatus::PERMANENT, EmploymentStatus::FULL_TIME, EmploymentStatus::PART_TIME], true);
             $schedule = $schedules->get($teacher->id);
             $approvedLeave = $approvedLeaves->get($teacher->id);

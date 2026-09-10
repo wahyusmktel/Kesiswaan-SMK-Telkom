@@ -134,7 +134,7 @@ class FingerprintWhatsappNotificationService
             ->whereHas('user', fn ($query) => $query
                 ->when($channel === 'whatsapp', fn ($users) => $users->whereNotNull('phone_number')->where('phone_number', '!=', ''))
                 ->when($channel === 'telegram', fn ($users) => $users->whereHas('telegramLinks', fn ($links) => $links->where('telegram_bot_id', $bot->id))))
-            ->get(['id', 'user_id', 'nama_lengkap']);
+            ->get(['id', 'user_id', 'nama_lengkap', 'employee_category']);
         $dayName = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'][$date->dayOfWeekIso - 1];
         $schedules = JadwalPelajaran::inActiveAcademicPeriod()
             ->whereIn('master_guru_id', $teachers->modelKeys())
@@ -160,7 +160,7 @@ class FingerprintWhatsappNotificationService
 
         foreach ($teachers as $teacher) {
             $employment = EmploymentStatus::normalize($teacher->dapodikGuru?->status_kepegawaian);
-            $isTpa = (bool) $teacher->dapodikGuru?->is_tpa;
+            $isTpa = $teacher->is_tpa;
             if ((! $isTpa && ! in_array($employment, [EmploymentStatus::PERMANENT, EmploymentStatus::FULL_TIME, EmploymentStatus::PART_TIME], true))
                 || in_array($teacher->id, $leaves, true)) {
                 $result['skipped']++;

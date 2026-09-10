@@ -240,7 +240,12 @@ class HeadmasterMonitoringTest extends TestCase
     {
         $this->login();
         $employeeUser = User::factory()->create();
-        $employee = MasterGuru::create(['nama_lengkap' => 'TPA Wajib Harian', 'jenis_kelamin' => 'L', 'user_id' => $employeeUser->id]);
+        $employee = MasterGuru::create([
+            'nama_lengkap' => 'TPA Wajib Harian',
+            'jenis_kelamin' => 'L',
+            'user_id' => $employeeUser->id,
+            'employee_category' => MasterGuru::CATEGORY_TPA,
+        ]);
         $employee->dapodikGuru()->create([
             'employee_category' => 'tpa',
             'nama' => $employee->nama_lengkap,

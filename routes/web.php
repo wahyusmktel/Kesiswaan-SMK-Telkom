@@ -1150,6 +1150,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:Super Admin|KAUR SDM')->prefix('teacher-activity')->name('teacher-activity.')->group(function () {
         Route::get('/', [\App\Http\Controllers\SDM\TeacherActivityController::class, 'index'])->name('index');
         Route::patch('/{teacher}/employment', [\App\Http\Controllers\SDM\TeacherActivityController::class, 'updateEmployment'])->name('employment.update');
+        Route::patch('/{teacher}/category', [\App\Http\Controllers\SDM\TeacherActivityController::class, 'updateCategory'])->name('category.update');
         Route::patch('/{teacher}/phone', [\App\Http\Controllers\SDM\TeacherActivityController::class, 'updatePhone'])
             ->middleware('role:Super Admin')
             ->name('phone.update');

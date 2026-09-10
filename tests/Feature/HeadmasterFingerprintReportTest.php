@@ -28,7 +28,12 @@ class HeadmasterFingerprintReportTest extends TestCase
         $teacher = MasterGuru::create(['nama_lengkap' => 'Guru Rekap', 'jenis_kelamin' => 'L', 'user_id' => $teacherUser->id]);
         $teacher->dapodikGuru()->create(['nama' => 'Guru Rekap', 'status_kepegawaian' => 'Pegawai Tetap']);
         $tpaUser = User::factory()->create();
-        $tpa = MasterGuru::create(['nama_lengkap' => 'TPA Rekap', 'jenis_kelamin' => 'P', 'user_id' => $tpaUser->id]);
+        $tpa = MasterGuru::create([
+            'nama_lengkap' => 'TPA Rekap',
+            'jenis_kelamin' => 'P',
+            'user_id' => $tpaUser->id,
+            'employee_category' => MasterGuru::CATEGORY_TPA,
+        ]);
         $tpa->dapodikGuru()->create(['employee_category' => 'tpa', 'nama' => 'TPA Rekap', 'status_kepegawaian' => 'Pegawai Part Time']);
         $device = FingerprintDevice::create(['name' => 'Mesin', 'ip_address' => '127.0.0.1']);
         foreach (['2026-09-07 07:00', '2026-09-07 16:00', '2026-09-08 08:00'] as $time) {
