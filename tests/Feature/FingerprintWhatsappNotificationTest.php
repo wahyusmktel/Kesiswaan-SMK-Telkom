@@ -3,9 +3,15 @@
 namespace Tests\Feature;
 
 use App\Models\FingerprintAttendance;
+use App\Models\FingerprintAttendanceSetting;
 use App\Models\FingerprintDevice;
 use App\Models\GuruIzin;
+use App\Models\JadwalPelajaran;
+use App\Models\Kelas;
 use App\Models\MasterGuru;
+use App\Models\MataPelajaran;
+use App\Models\Rombel;
+use App\Models\TahunPelajaran;
 use App\Models\User;
 use App\Models\WhatsappDevice;
 use App\Models\WhatsappLog;
@@ -144,6 +150,70 @@ class FingerprintWhatsappNotificationTest extends TestCase
         $this->assertStringContainsString('Tidak Hadir', WhatsappLog::where('recipient_user_id', $absent->id)->value('message'));
         $this->assertDatabaseMissing('whatsapp_logs', ['recipient_user_id' => $onTime->id]);
         $this->assertDatabaseMissing('whatsapp_logs', ['recipient_user_id' => $leave->id]);
+    }
+
+    public function test_it_reminds_full_time_employee_ten_minutes_after_checkin_deadline(): void
+    {
+        $employee = $this->userWithRole('Guru Kelas', '081211110010');
+        FingerprintAttendanceSetting::getSetting()->update(['checkin_end' => '07:30:00']);
+        $service = app(FingerprintWhatsappNotificationService::class);
+
+        $beforeDue = $service->sendCheckinRemindersNow(Carbon::parse('2026-07-23 07:39:00'));
+        $whenDue = $service->sendCheckinRemindersNow(Carbon::parse('2026-07-23 07:40:00'));
+        $duplicate = $service->sendCheckinRemindersNow(Carbon::parse('2026-07-23 07:41:00'));
+
+        $this->assertSame(0, $beforeDue['sent']);
+        $this->assertSame(1, $whenDue['sent']);
+        $this->assertSame(1, $duplicate['skipped']);
+        $this->assertDatabaseHas('whatsapp_logs', [
+            'recipient_user_id' => $employee->id,
+            'event_key' => FingerprintWhatsappNotificationService::CHECKIN_REMINDER_LOG_EVENT_KEY,
+            'type' => 'fingerprint_peringatan',
+        ]);
+        $this->assertStringContainsString('Belum Check-in', WhatsappLog::firstOrFail()->message);
+    }
+
+    public function test_part_time_checkin_reminder_follows_first_teaching_schedule(): void
+    {
+        $employee = $this->userWithRole('Guru Kelas', '081211110011');
+        $employee->masterGuru->dapodikGuru()->update(['status_kepegawaian' => 'Pegawai Part Time']);
+        $period = TahunPelajaran::create(['tahun' => '2026/2027', 'semester' => 'Ganjil', 'is_active' => true]);
+        $classroom = Kelas::create(['nama_kelas' => 'X TKJ 1', 'jurusan' => 'TKJ']);
+        $rombel = Rombel::create([
+            'tahun_ajaran' => $period->tahun,
+            'tahun_pelajaran_id' => $period->id,
+            'kelas_id' => $classroom->id,
+            'wali_kelas_id' => $employee->id,
+        ]);
+        $subject = MataPelajaran::create(['kode_mapel' => 'TKJ', 'nama_mapel' => 'Produktif TKJ']);
+        JadwalPelajaran::create([
+            'master_guru_id' => $employee->masterGuru->id,
+            'rombel_id' => $rombel->id,
+            'mata_pelajaran_id' => $subject->id,
+            'hari' => 'Kamis',
+            'jam_ke' => 1,
+            'jam_mulai' => '09:00:00',
+            'jam_selesai' => '10:30:00',
+        ]);
+
+        $service = app(FingerprintWhatsappNotificationService::class);
+        $this->assertSame(0, $service->sendCheckinRemindersNow(Carbon::parse('2026-07-23 09:09:00'))['sent']);
+        $this->assertSame(1, $service->sendCheckinRemindersNow(Carbon::parse('2026-07-23 09:10:00'))['sent']);
+        $this->assertStringContainsString('09:00', WhatsappLog::firstOrFail()->message);
+    }
+
+    public function test_tpa_uses_daily_checkin_deadline_even_when_employment_is_part_time(): void
+    {
+        $employee = $this->userWithRole('TPA', '081211110012');
+        $employee->masterGuru->update(['employee_category' => MasterGuru::CATEGORY_TPA]);
+        $employee->masterGuru->dapodikGuru()->update(['status_kepegawaian' => 'Pegawai Part Time']);
+        FingerprintAttendanceSetting::getSetting()->update(['checkin_end' => '07:30:00']);
+
+        $result = app(FingerprintWhatsappNotificationService::class)
+            ->sendCheckinRemindersNow(Carbon::parse('2026-07-23 07:40:00'));
+
+        $this->assertSame(1, $result['sent']);
+        $this->assertStringContainsString('07:30', WhatsappLog::firstOrFail()->message);
     }
 
     public function test_manual_recap_uses_separate_log_and_does_not_consume_the_scheduled_delivery(): void

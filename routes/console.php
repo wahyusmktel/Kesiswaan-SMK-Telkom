@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\SendFingerprintCheckinRemindersJob;
 use App\Jobs\SendFingerprintDailyRecapsJob;
 use App\Jobs\SyncFingerprintAttendancesJob;
 use App\Models\CctvCamera;
@@ -158,6 +159,26 @@ Artisan::command('fingerprint:send-daily-notifications', function () {
 })->purpose('Dispatch daily fingerprint recap and attendance reminder notifications');
 
 Schedule::command('fingerprint:send-daily-notifications')->everyMinute()->withoutOverlapping();
+
+Artisan::command('fingerprint:send-checkin-reminders', function () {
+    $setting = FingerprintAutoSyncSetting::getSetting();
+    if (! $setting->notifications_enabled) {
+        $this->line('Notifikasi harian fingerprint sedang nonaktif.');
+
+        return 0;
+    }
+
+    SendFingerprintCheckinRemindersJob::dispatch();
+    $this->info('Pemeriksaan pengingat check-in fingerprint dikirim ke antrean.');
+
+    return 0;
+})->purpose('Dispatch fingerprint check-in reminder notifications');
+
+Schedule::command('fingerprint:send-checkin-reminders')
+    ->everyMinute()
+    ->weekdays()
+    ->between('05:00', '17:00')
+    ->withoutOverlapping();
 
 Artisan::command('cctv:sync', function (MediaMtxService $mediaMtx) {
     $success = 0;

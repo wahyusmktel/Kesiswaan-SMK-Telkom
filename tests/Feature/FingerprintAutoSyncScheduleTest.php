@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\SendFingerprintCheckinRemindersJob;
 use App\Jobs\SendFingerprintDailyRecapsJob;
 use App\Jobs\SyncFingerprintAttendancesJob;
 use App\Models\FingerprintAutoSyncSetting;
@@ -88,6 +89,20 @@ class FingerprintAutoSyncScheduleTest extends TestCase
         $this->artisan('fingerprint:send-daily-notifications')->assertExitCode(0);
         Queue::assertPushed(SendFingerprintDailyRecapsJob::class, 2);
         $this->travelBack();
+    }
+
+    public function test_checkin_reminder_worker_follows_the_notification_switch(): void
+    {
+        Queue::fake();
+        $setting = FingerprintAutoSyncSetting::getSetting();
+        $setting->update(['notifications_enabled' => true]);
+
+        $this->artisan('fingerprint:send-checkin-reminders')->assertExitCode(0);
+        Queue::assertPushed(SendFingerprintCheckinRemindersJob::class, 1);
+
+        $setting->update(['notifications_enabled' => false]);
+        $this->artisan('fingerprint:send-checkin-reminders')->assertExitCode(0);
+        Queue::assertPushed(SendFingerprintCheckinRemindersJob::class, 1);
     }
 
     public function test_superadmin_can_update_the_daily_notification_time(): void

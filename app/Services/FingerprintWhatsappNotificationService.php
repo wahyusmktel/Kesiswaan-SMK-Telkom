@@ -30,6 +30,8 @@ class FingerprintWhatsappNotificationService
 
     public const REMINDER_EVENT_KEY = 'fingerprint_peringatan_harian';
 
+    public const CHECKIN_REMINDER_LOG_EVENT_KEY = 'fingerprint_pengingat_checkin_harian';
+
     public function __construct(private readonly WhatsappService $whatsappService, private readonly TelegramService $telegramService) {}
 
     public function sendToday(?Carbon $date = null, bool $manual = false): array
@@ -218,6 +220,130 @@ class FingerprintWhatsappNotificationService
                 Log::error('Gagal mengirim pengingat fingerprint pegawai.', [
                     'channel' => $channel,
                     'user_id' => $teacher->user->id,
+                    'date' => $date->toDateString(),
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return $result;
+    }
+
+    public function sendCheckinRemindersNow(?Carbon $notificationTime = null): array
+    {
+        $template = WhatsappTemplate::where('event_key', self::REMINDER_EVENT_KEY)->first();
+        if (! $template?->is_enabled) {
+            return ['sent' => 0, 'skipped' => 0, 'failed' => 0, 'disabled' => true];
+        }
+
+        $now = ($notificationTime ?? now())->copy();
+        $date = $now->copy()->startOfDay();
+        $result = ['sent' => 0, 'skipped' => 0, 'failed' => 0, 'disabled' => false];
+        [$channel, $bot] = $this->deliveryContext();
+        if ($channel === 'telegram' && ! $bot) {
+            return $result + ['configuration_error' => 'Bot Telegram kepegawaian belum aktif atau belum dipilih.'];
+        }
+        if ($date->isWeekend() || WorkCalendarEvent::eventFor($date)) {
+            return $result;
+        }
+
+        $teachers = MasterGuru::query()
+            ->with(['user.telegramLinks', 'dapodikGuru'])
+            ->where('is_active', true)
+            ->whereNotNull('user_id')
+            ->whereHas('user', fn ($query) => $query
+                ->when($channel === 'whatsapp', fn ($users) => $users->whereNotNull('phone_number')->where('phone_number', '!=', ''))
+                ->when($channel === 'telegram', fn ($users) => $users->whereHas('telegramLinks', fn ($links) => $links->where('telegram_bot_id', $bot->id))))
+            ->get(['id', 'user_id', 'nama_lengkap', 'employee_category']);
+        $dayName = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'][$date->dayOfWeekIso - 1];
+        $schedules = JadwalPelajaran::inActiveAcademicPeriod()
+            ->whereIn('master_guru_id', $teachers->modelKeys())
+            ->where('hari', $dayName)
+            ->select('master_guru_id', DB::raw('MIN(jam_mulai) as starts_at'))
+            ->groupBy('master_guru_id')
+            ->get()
+            ->keyBy('master_guru_id');
+        $leaves = GuruIzin::fullyApproved()
+            ->whereIn('master_guru_id', $teachers->modelKeys())
+            ->where('tanggal_mulai', '<=', $date->copy()->endOfDay())
+            ->where('tanggal_selesai', '>=', $date)
+            ->pluck('master_guru_id')
+            ->all();
+        $checkedInUserIds = FingerprintAttendance::query()
+            ->whereIn('app_user_id', $teachers->pluck('user_id'))
+            ->whereBetween('timestamp', [$date, $now])
+            ->whereNotNull('app_user_id')
+            ->distinct()
+            ->pluck('app_user_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+        $setting = FingerprintAttendanceSetting::getSetting();
+
+        foreach ($teachers as $teacher) {
+            $employment = EmploymentStatus::normalize($teacher->dapodikGuru?->status_kepegawaian);
+            $isTpa = $teacher->is_tpa;
+            if ((! $isTpa && ! in_array($employment, [EmploymentStatus::PERMANENT, EmploymentStatus::FULL_TIME, EmploymentStatus::PART_TIME], true))
+                || in_array($teacher->id, $leaves, true)
+                || in_array((int) $teacher->user_id, $checkedInUserIds, true)) {
+                $result['skipped']++;
+
+                continue;
+            }
+
+            $schedule = $schedules->get($teacher->id);
+            if (! $isTpa && $employment === EmploymentStatus::PART_TIME && ! $schedule) {
+                $result['skipped']++;
+
+                continue;
+            }
+
+            $expectedAt = Carbon::parse($date->toDateString().' '.(! $isTpa && $employment === EmploymentStatus::PART_TIME
+                ? $schedule->starts_at
+                : $setting->checkin_end));
+            $reminderAt = $expectedAt->copy()->addMinutes(10);
+            if ($now->lt($reminderAt)) {
+                $result['skipped']++;
+
+                continue;
+            }
+
+            try {
+                Cache::lock("fingerprint:{$channel}-checkin-reminder:{$date->toDateString()}:{$teacher->user_id}", 60)
+                    ->block(2, function () use ($teacher, $date, $now, $expectedAt, $channel, $bot, &$result) {
+                        if ($this->alreadySent($teacher->user, $date, self::CHECKIN_REMINDER_LOG_EVENT_KEY, $channel, $bot)) {
+                            $result['skipped']++;
+
+                            return;
+                        }
+
+                        $response = $this->sendNotification(
+                            $channel,
+                            $bot,
+                            $teacher->user,
+                            self::REMINDER_EVENT_KEY,
+                            [
+                                'nama_pegawai' => $teacher->nama_lengkap,
+                                'tanggal' => $date->locale('id')->translatedFormat('l, d F Y'),
+                                'status_kehadiran' => 'Belum Check-in',
+                                'jam_masuk' => 'Belum tercatat',
+                                'batas_masuk' => $expectedAt->format('H:i'),
+                                'durasi_terlambat' => AttendanceDuration::humanizeMinutes((int) ceil($expectedAt->diffInMinutes($now))),
+                                'catatan' => 'Belum ada fingerprint masuk hingga sedikitnya 10 menit setelah jadwal. Segera lakukan fingerprint check-in apabila Anda sudah berada di sekolah.',
+                            ],
+                            $teacher->nama_lengkap,
+                            'fingerprint_peringatan',
+                            $date->toDateString(),
+                            self::CHECKIN_REMINDER_LOG_EVENT_KEY,
+                        );
+                        $result[$response['success'] ? 'sent' : 'failed']++;
+                    });
+            } catch (LockTimeoutException) {
+                $result['skipped']++;
+            } catch (Throwable $e) {
+                $result['failed']++;
+                Log::error('Gagal mengirim pengingat check-in fingerprint pegawai.', [
+                    'channel' => $channel,
+                    'user_id' => $teacher->user_id,
                     'date' => $date->toDateString(),
                     'error' => $e->getMessage(),
                 ]);

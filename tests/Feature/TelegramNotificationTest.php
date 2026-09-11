@@ -179,6 +179,33 @@ class TelegramNotificationTest extends TestCase
         $this->assertStringContainsString('Tidak Hadir', TelegramLog::where('recipient_user_id', $absent->id)->value('message'));
     }
 
+    public function test_telegram_channel_reminds_employee_who_has_not_checked_in_after_ten_minutes(): void
+    {
+        WhatsappTemplate::where('event_key', FingerprintWhatsappNotificationService::REMINDER_EVENT_KEY)->update([
+            'is_enabled' => true,
+            'template_text' => '{nama_pegawai}|{status_kehadiran}|{jam_masuk}|{batas_masuk}|{catatan}',
+        ]);
+        FingerprintAttendanceSetting::getSetting()->update(['checkin_end' => '07:30:00']);
+        $bot = $this->createBot();
+        FingerprintAutoSyncSetting::getSetting()->update(['notification_channel' => 'telegram', 'telegram_bot_id' => $bot->id]);
+        $employee = $this->createLinkedEmployee($bot, 'Guru Belum Check-in', '998806');
+
+        $service = app(FingerprintWhatsappNotificationService::class);
+        $first = $service->sendCheckinRemindersNow(Carbon::parse('2026-09-08 07:40:00'));
+        $second = $service->sendCheckinRemindersNow(Carbon::parse('2026-09-08 07:41:00'));
+
+        $this->assertSame(1, $first['sent']);
+        $this->assertSame(1, $second['skipped']);
+        $this->assertDatabaseHas('telegram_logs', [
+            'telegram_bot_id' => $bot->id,
+            'recipient_user_id' => $employee->id,
+            'event_key' => FingerprintWhatsappNotificationService::CHECKIN_REMINDER_LOG_EVENT_KEY,
+            'type' => 'fingerprint_peringatan',
+            'status' => 'sent',
+        ]);
+        $this->assertStringContainsString('Belum Check-in', TelegramLog::firstOrFail()->message);
+    }
+
     public function test_superadmin_can_send_a_connection_test_without_attendance_data(): void
     {
         $bot = $this->createBot();
