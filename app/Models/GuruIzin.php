@@ -93,16 +93,58 @@ class GuruIzin extends Model
 
     public function startsAtSdm(): bool
     {
-        return in_array($this->kategori_penyetujuan, [self::CATEGORY_ABSENT, self::CATEGORY_LATE], true);
+        $this->loadMissing('guru.user.roles');
+
+        return ! $this->startsAtHeadmaster()
+            && ($this->guru?->is_tpa || in_array($this->kategori_penyetujuan, [self::CATEGORY_ABSENT, self::CATEGORY_LATE], true));
+    }
+
+    public static function initialApprovalStatuses(MasterGuru $guru, string $category): array
+    {
+        $guru->loadMissing('user.roles');
+        if ($guru->user?->hasRole('KAUR SDM')) {
+            return [
+                'status_piket' => 'disetujui',
+                'status_kurikulum' => 'disetujui',
+                'status_sdm' => 'disetujui',
+                'status_kepala_sekolah' => 'menunggu',
+            ];
+        }
+
+        if ($guru->is_tpa || in_array($category, [self::CATEGORY_ABSENT, self::CATEGORY_LATE], true)) {
+            return [
+                'status_piket' => 'disetujui',
+                'status_kurikulum' => 'disetujui',
+                'status_sdm' => 'menunggu',
+                'status_kepala_sekolah' => 'tidak_diperlukan',
+            ];
+        }
+
+        return [
+            'status_piket' => 'menunggu',
+            'status_kurikulum' => 'menunggu',
+            'status_sdm' => 'menunggu',
+            'status_kepala_sekolah' => 'tidak_diperlukan',
+        ];
+    }
+
+    public function startsAtHeadmaster(): bool
+    {
+        $this->loadMissing('guru.user.roles');
+
+        return $this->guru?->user?->hasRole('KAUR SDM') ?? false;
     }
 
     public function requiresHeadmasterApproval(): bool
     {
-        if (! in_array($this->kategori_penyetujuan, [self::CATEGORY_OUTSIDE, self::CATEGORY_ABSENT, self::CATEGORY_LATE], true)) {
-            return false;
+        $this->loadMissing(['guru.dapodikGuru', 'guru.user.roles']);
+        if ($this->startsAtHeadmaster()) {
+            return true;
         }
 
-        $this->loadMissing('guru.dapodikGuru');
+        if ($this->kategori_penyetujuan === self::CATEGORY_SCHOOL) {
+            return false;
+        }
 
         return \App\Support\EmploymentStatus::normalize($this->guru?->dapodikGuru?->status_kepegawaian)
             === \App\Support\EmploymentStatus::PERMANENT;

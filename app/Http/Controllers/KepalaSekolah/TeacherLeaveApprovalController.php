@@ -17,7 +17,6 @@ class TeacherLeaveApprovalController extends Controller
         $filters = $request->validate(['status' => ['nullable', 'in:menunggu,disetujui,ditolak']]);
         $status = $filters['status'] ?? 'menunggu';
         $izins = GuruIzin::with(['guru.dapodikGuru', 'jadwals.rombel.kelas', 'jadwals.mataPelajaran', 'sdm', 'kepalaSekolah'])
-            ->whereIn('kategori_penyetujuan', ['luar', 'tidak_masuk', 'terlambat'])
             ->where('status_sdm', 'disetujui')->where('status_kepala_sekolah', $status)
             ->latest('sdm_at')->paginate(15)->withQueryString();
 

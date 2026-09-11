@@ -6,6 +6,7 @@ use App\Models\GuruIzin;
 use App\Models\JadwalPelajaran;
 use App\Models\LmsAssignment;
 use App\Models\LmsMaterial;
+use App\Models\MasterGuru;
 use App\Models\TelegramBot;
 use App\Models\TelegramConversation;
 use App\Models\TelegramUserLink;
@@ -49,7 +50,7 @@ class TelegramTeacherLeaveService
             return;
         }
 
-        if ($bot->purpose !== 'employment' || ! $user?->hasRole('Guru Kelas')) {
+        if ($bot->purpose !== 'employment' || ! $user?->masterGuru || (! $user->hasRole('Guru Kelas') && ! $user->masterGuru->is_tpa && ! $user->hasRole('KAUR SDM'))) {
             $conversation?->delete();
             $this->telegram->markAccountLinked($bot, $chatId, $user);
             $this->telegram->reply(
@@ -87,7 +88,7 @@ class TelegramTeacherLeaveService
             return;
         }
 
-        if ($command === 'izin' || $text === '📝 Ajukan Izin Guru') {
+        if ($command === 'izin' || in_array($text, ['📝 Ajukan Izin Guru', '📝 Ajukan Izin Pegawai'], true)) {
             if (! $user->masterGuru) {
                 $this->telegram->reply($bot, $chatId, 'Data Master Guru belum terhubung dengan akun Anda. Hubungi Superadmin sebelum mengajukan izin.');
 
@@ -233,7 +234,7 @@ class TelegramTeacherLeaveService
     private function continueAfterEnd(TelegramBot $bot, TelegramConversation $conversation, string $chatId, Carbon $start, Carbon $end): void
     {
 
-        $schedules = $this->affectedSchedules($conversation->link->user->masterGuru->id, $start, $end);
+        $schedules = $this->affectedSchedules($conversation->link->user->masterGuru, $start, $end);
         $this->advance($conversation, $schedules->isEmpty() ? 'description' : 'schedule_resource', [
             'end' => $end->format('Y-m-d H:i:s'),
             'schedule_ids' => $schedules->pluck('id')->all(),
@@ -511,7 +512,7 @@ class TelegramTeacherLeaveService
             return;
         }
 
-        $affected = $this->affectedSchedules($guru->id, $start, $end);
+        $affected = $this->affectedSchedules($guru, $start, $end);
         if ($affected->pluck('id')->sort()->values()->all() !== collect($payload['schedule_ids'] ?? [])->sort()->values()->all()) {
             $conversation->delete();
             $this->telegram->reply($bot, $link->chat_id, 'Jadwal mengajar berubah selama pengisian. Silakan ajukan ulang agar data penugasan sesuai.', $this->telegram->linkedMenuMarkup($bot, $link->user));
@@ -529,7 +530,7 @@ class TelegramTeacherLeaveService
         }
 
         $izin = DB::transaction(function () use ($guru, $payload, $sharedResource) {
-            $startsAtSdm = in_array($payload['category'], ['tidak_masuk', 'terlambat'], true);
+            $approvalStatuses = GuruIzin::initialApprovalStatuses($guru, $payload['category']);
             $izin = GuruIzin::create([
                 'master_guru_id' => $guru->id,
                 'tanggal_mulai' => $payload['start'],
@@ -537,9 +538,7 @@ class TelegramTeacherLeaveService
                 'jenis_izin' => $payload['type'],
                 'kategori_penyetujuan' => $payload['category'],
                 'deskripsi' => $payload['description'],
-                'status_piket' => $startsAtSdm ? 'disetujui' : 'menunggu',
-                'status_kurikulum' => $startsAtSdm ? 'disetujui' : 'menunggu',
-                'status_sdm' => 'menunggu',
+                ...$approvalStatuses,
             ]);
 
             $pivot = [];
@@ -621,11 +620,11 @@ class TelegramTeacherLeaveService
         if (! $izin) {
             $text = 'Belum ada riwayat pengajuan izin guru.';
         } else {
-            $statusLines = match ($izin->kategori_penyetujuan) {
-                'sekolah' => ["Piket: {$izin->status_piket}"],
-                'luar' => ["Piket: {$izin->status_piket}", "Kurikulum: {$izin->status_kurikulum}", "SDM: {$izin->status_sdm}"],
-                'tidak_masuk', 'terlambat' => ["SDM: {$izin->status_sdm}"],
-                default => ["SDM: {$izin->status_sdm}"],
+            $statusLines = match (true) {
+                $izin->startsAtHeadmaster() => [],
+                $izin->startsAtSdm() => ["SDM: {$izin->status_sdm}"],
+                $izin->kategori_penyetujuan === 'sekolah' => ["Piket: {$izin->status_piket}"],
+                default => ["Piket: {$izin->status_piket}", "Kurikulum: {$izin->status_kurikulum}", "SDM: {$izin->status_sdm}"],
             };
             if ($izin->status_kepala_sekolah !== 'tidak_diperlukan') {
                 $statusLines[] = "Kepala Sekolah: {$izin->status_kepala_sekolah}";
@@ -645,11 +644,15 @@ class TelegramTeacherLeaveService
         );
     }
 
-    private function affectedSchedules(int $guruId, Carbon $start, Carbon $end)
+    private function affectedSchedules(MasterGuru $guru, Carbon $start, Carbon $end)
     {
+        if ($guru->is_tpa) {
+            return collect();
+        }
+
         $days = ['Sunday' => 'Minggu', 'Monday' => 'Senin', 'Tuesday' => 'Selasa', 'Wednesday' => 'Rabu', 'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu'];
 
-        return JadwalPelajaran::where('master_guru_id', $guruId)
+        return JadwalPelajaran::where('master_guru_id', $guru->id)
             ->inActiveAcademicPeriod()
             ->where('hari', $days[$start->format('l')])
             ->where('jam_mulai', '<', $end->format('H:i:s'))
@@ -660,6 +663,11 @@ class TelegramTeacherLeaveService
 
     private function notifyApprovers(GuruIzin $izin, string $teacherName): void
     {
+        if ($izin->startsAtHeadmaster()) {
+            $this->leaveNotifications->notifyRoleApprovers($izin, 'kepsek');
+
+            return;
+        }
         if ($izin->startsAtSdm()) {
             $this->leaveNotifications->notifyRoleApprovers($izin, 'sdm');
 

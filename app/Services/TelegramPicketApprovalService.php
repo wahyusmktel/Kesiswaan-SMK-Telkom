@@ -147,7 +147,11 @@ class TelegramPicketApprovalService
         match ($stage) {
             'piket' => $pendingQuery->whereIn('kategori_penyetujuan', ['sekolah', 'luar'])->where('status_piket', 'menunggu'),
             'kurikulum' => $pendingQuery->where('kategori_penyetujuan', 'luar')->where('status_piket', 'disetujui')->where('status_kurikulum', 'menunggu'),
-            'sdm' => $pendingQuery->whereIn('kategori_penyetujuan', ['luar', 'tidak_masuk', 'terlambat'])->where('status_kurikulum', 'disetujui')->where('status_sdm', 'menunggu'),
+            'sdm' => $pendingQuery->where(fn ($approval) => $approval
+                ->whereIn('kategori_penyetujuan', ['luar', 'tidak_masuk', 'terlambat'])
+                ->orWhere(fn ($school) => $school->where('kategori_penyetujuan', 'sekolah')
+                    ->whereHas('guru', fn ($guru) => $guru->where('employee_category', \App\Models\MasterGuru::CATEGORY_TPA))))
+                ->where('status_kurikulum', 'disetujui')->where('status_sdm', 'menunggu'),
             'kepsek' => $pendingQuery->where('status_sdm', 'disetujui')->where('status_kepala_sekolah', 'menunggu'),
         };
         $pending = $pendingQuery->latest()->limit(10)->get();
@@ -196,7 +200,7 @@ class TelegramPicketApprovalService
         return match ($stage) {
             'piket' => in_array($izin->kategori_penyetujuan, ['sekolah', 'luar'], true) && $izin->status_piket === 'menunggu',
             'kurikulum' => $izin->kategori_penyetujuan === 'luar' && $izin->status_piket === 'disetujui' && $izin->status_kurikulum === 'menunggu',
-            'sdm' => in_array($izin->kategori_penyetujuan, ['luar', 'tidak_masuk', 'terlambat'], true) && $izin->status_kurikulum === 'disetujui' && $izin->status_sdm === 'menunggu',
+            'sdm' => (in_array($izin->kategori_penyetujuan, ['luar', 'tidak_masuk', 'terlambat'], true) || ($izin->kategori_penyetujuan === 'sekolah' && $izin->guru?->is_tpa)) && $izin->status_kurikulum === 'disetujui' && $izin->status_sdm === 'menunggu',
             'kepsek' => $izin->status_sdm === 'disetujui' && $izin->status_kepala_sekolah === 'menunggu',
             default => false,
         };

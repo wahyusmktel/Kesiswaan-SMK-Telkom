@@ -37,7 +37,7 @@ class TeacherLeaveWorkScheduleService
                 continue;
             }
 
-            if ($status === EmploymentStatus::PART_TIME) {
+            if (! $guru->is_tpa && $status === EmploymentStatus::PART_TIME) {
                 $schedule = JadwalPelajaran::query()->inActiveAcademicPeriod()
                     ->where('master_guru_id', $guru->id)
                     ->where('hari', self::DAY_MAP[$day->format('l')])
@@ -57,7 +57,7 @@ class TeacherLeaveWorkScheduleService
                 continue;
             }
 
-            if (in_array($status, [EmploymentStatus::PERMANENT, EmploymentStatus::FULL_TIME], true)) {
+            if ($guru->is_tpa || in_array($status, [EmploymentStatus::PERMANENT, EmploymentStatus::FULL_TIME], true)) {
                 $workStart = $day->copy()->setTime(7, 0);
                 $workEnd = $day->copy()->setTime(16, 0);
                 if ($rangeStart->lt($workStart) || $rangeEnd->gt($workEnd)) {

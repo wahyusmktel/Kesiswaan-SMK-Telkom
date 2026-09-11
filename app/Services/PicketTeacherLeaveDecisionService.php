@@ -132,7 +132,7 @@ class PicketTeacherLeaveDecisionService
     {
         [$izin, $requiresHeadmaster] = DB::transaction(function () use ($izin, $actor) {
             $izin = GuruIzin::query()->with(['guru.user', 'guru.dapodikGuru', 'jadwals.rombel.siswa.user'])->lockForUpdate()->findOrFail($izin->id);
-            abort_unless(in_array($izin->kategori_penyetujuan, [GuruIzin::CATEGORY_OUTSIDE, GuruIzin::CATEGORY_ABSENT, GuruIzin::CATEGORY_LATE], true), 409, 'Kategori izin ini tidak memerlukan persetujuan SDM.');
+            abort_unless(in_array($izin->kategori_penyetujuan, [GuruIzin::CATEGORY_OUTSIDE, GuruIzin::CATEGORY_ABSENT, GuruIzin::CATEGORY_LATE], true) || ($izin->kategori_penyetujuan === GuruIzin::CATEGORY_SCHOOL && $izin->guru?->is_tpa), 409, 'Kategori izin ini tidak memerlukan persetujuan SDM.');
             abort_unless($izin->status_kurikulum === 'disetujui' && $izin->status_sdm === 'menunggu', 409, 'Izin tidak lagi menunggu persetujuan SDM.');
             $requiresHeadmaster = $izin->requiresHeadmasterApproval();
             $izin->update([
@@ -164,7 +164,7 @@ class PicketTeacherLeaveDecisionService
     {
         $izin = DB::transaction(function () use ($izin, $actor, $note) {
             $izin = GuruIzin::query()->with('guru.user')->lockForUpdate()->findOrFail($izin->id);
-            abort_unless(in_array($izin->kategori_penyetujuan, [GuruIzin::CATEGORY_OUTSIDE, GuruIzin::CATEGORY_ABSENT, GuruIzin::CATEGORY_LATE], true), 409, 'Kategori izin ini tidak memerlukan persetujuan SDM.');
+            abort_unless(in_array($izin->kategori_penyetujuan, [GuruIzin::CATEGORY_OUTSIDE, GuruIzin::CATEGORY_ABSENT, GuruIzin::CATEGORY_LATE], true) || ($izin->kategori_penyetujuan === GuruIzin::CATEGORY_SCHOOL && $izin->guru?->is_tpa), 409, 'Kategori izin ini tidak memerlukan persetujuan SDM.');
             abort_unless($izin->status_kurikulum === 'disetujui' && $izin->status_sdm === 'menunggu', 409, 'Izin tidak lagi menunggu persetujuan SDM.');
             $izin->update(['status_sdm' => 'ditolak', 'sdm_id' => $actor->id, 'sdm_at' => now(), 'catatan_sdm' => $note]);
 

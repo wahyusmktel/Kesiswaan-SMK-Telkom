@@ -1,87 +1,87 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Auth\SsoLoginController;
+use App\Http\Controllers\Admin\AssetSyncController;
 use App\Http\Controllers\Admin\BeritaController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\IzinController;
-use App\Http\Controllers\WaliKelas\PerizinanController as WaliKelasPerizinanController;
-use App\Http\Controllers\KelasController;
-use App\Http\Controllers\MasterData\MasterSiswaController;
-use App\Http\Controllers\MasterData\RombelController;
-use App\Http\Controllers\MasterData\AlumniController;
-use App\Http\Controllers\MasterData\ClassPromotionController;
-use App\Http\Controllers\MasterData\StudentRegistrationController;
-use App\Http\Controllers\PublicStudentRegistrationController;
-use App\Http\Controllers\Kesiswaan\MonitoringIzinController;
-use App\Http\Controllers\Kesiswaan\DashboardController;
-use App\Http\Controllers\Kesiswaan\AnalisaKeterlambatanController;
-use App\Http\Controllers\Kesiswaan\UjianSemesterController;
-use App\Http\Controllers\Kesiswaan\LegerNilaiController;
-use App\Http\Controllers\WaliKelas\DashboardController as WaliKelasDashboardController;
-use App\Http\Controllers\Siswa\DashboardController as SiswaDashboardController;
+use App\Http\Controllers\Admin\LandingPopupController;
+use App\Http\Controllers\Admin\PermissionManagementController;
+use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\SuperAdminController;
+use App\Http\Controllers\Admin\SystemUpdateController;
+use App\Http\Controllers\Auth\GoogleController;
+use App\Http\Controllers\Auth\SecurityLoginController;
+use App\Http\Controllers\Auth\SsoLoginController;
+use App\Http\Controllers\BK\BKPembinaanTerlambatController;
 use App\Http\Controllers\BK\DashboardController as BKDashboardController;
 use App\Http\Controllers\BK\MonitoringController as BKMonitoringController;
-use App\Http\Controllers\Piket\DashboardController as PiketDashboardController;
-use App\Http\Controllers\Piket\MonitoringController as PiketMonitoringController;
-use App\Http\Controllers\Kurikulum\MataPelajaranController;
-use App\Http\Controllers\Kurikulum\MasterGuruController;
-use App\Http\Controllers\Kurikulum\JadwalPelajaranController;
-use App\Http\Controllers\Kurikulum\DashboardController as KurikulumDashboardController;
-use App\Http\Controllers\GuruKelas\DashboardController as GuruKelasDashboardController;
-use App\Http\Controllers\Siswa\IzinMeninggalkanKelasController;
-use App\Http\Controllers\GuruKelas\PersetujuanIzinKeluarController;
-use App\Http\Controllers\Piket\PersetujuanIzinKeluarController as PiketPersetujuanIzinKeluarController;
-use App\Http\Controllers\VerifikasiController;
-use App\Http\Controllers\Security\VerifikasiController as SecurityVerifikasiController;
-use App\Http\Controllers\Kurikulum\JamPelajaranController;
-use App\Http\Controllers\Piket\PenangananTerlambatController;
-use App\Http\Controllers\Security\PendataanTerlambatController;
-use App\Http\Controllers\Piket\VerifikasiTerlambatController;
-use App\Http\Controllers\PublicVerifikasiController;
-use App\Http\Controllers\GuruKelas\VerifikasiTerlambatController as GuruKelasVerifikasiTerlambatController;
-use App\Http\Controllers\GuruKelas\LessonPlanController;
-use App\Http\Controllers\GuruKelas\TeachingModuleController;
-use App\Http\Controllers\GuruKelas\EffectiveWeekAnalysisController;
 use App\Http\Controllers\Dispensasi\PengajuanDispensasiController;
-use App\Http\Controllers\Kesiswaan\PersetujuanDispensasiController;
-use App\Http\Controllers\Prakerin\IndustriController;
-use App\Http\Controllers\Prakerin\PenempatanController;
-use App\Http\Controllers\Prakerin\JurnalSiswaController;
-use App\Http\Controllers\Prakerin\MonitoringPembimbingController;
-use App\Http\Controllers\Admin\RoleController;
-use App\Http\Controllers\MasterData\TahunPelajaranController;
-use App\Http\Controllers\PengaduanController;
-use App\Http\Controllers\Admin\SuperAdminController;
-use App\Http\Controllers\Admin\PermissionManagementController;
-use App\Http\Controllers\Admin\SystemUpdateController;
-use App\Http\Controllers\Admin\LandingPopupController;
-use App\Http\Controllers\SDM\NdeReferensiController;
-use App\Http\Controllers\Shared\NotaDinasController;
-use App\Http\Controllers\MasterData\DapodikSiswaController;
-use App\Http\Controllers\Operator\DapodikManagementController;
-use App\Http\Controllers\Operator\DashboardController as OperatorDashboardController;
-use App\Http\Controllers\Auth\GoogleController;
-use App\Http\Controllers\Kurikulum\DistribusiMapelController;
-use App\Http\Controllers\Kurikulum\AnalisaKurikulumController;
-use App\Http\Controllers\Kurikulum\PengumumanKelulusanController as KurikulumPengumumanKelulusanController;
-use App\Http\Controllers\Siswa\PengumumanKelulusanController as SiswaPengumumanKelulusanController;
-use App\Http\Controllers\Security\GateTerminalController;
-use App\Http\Controllers\Auth\SecurityLoginController;
-use App\Http\Controllers\WaliKelas\WaliKelasMentoringController;
-use App\Http\Controllers\WaliKelas\StudentMasterBookController;
-use App\Http\Controllers\BK\BKPembinaanTerlambatController;
-use App\Http\Controllers\Shared\CoachingAnalyticsController;
-use App\Http\Controllers\Admin\AssetSyncController;
-use App\Http\Controllers\Shared\AbsensiSayaController;
-use App\Http\Controllers\SDM\AbsensiSettingController;
-use App\Http\Controllers\SDM\AbsensiMonitoringController;
-use App\Http\Controllers\Shared\AssetController as SharedAssetController;
-use App\Http\Controllers\Erapor\LandingController as EraporLandingController;
-use App\Http\Controllers\Erapor\ReferenceController as EraporReferenceController;
 use App\Http\Controllers\Erapor\AssignmentController as EraporAssignmentController;
 use App\Http\Controllers\Erapor\ConfigurationController as EraporConfigurationController;
+use App\Http\Controllers\Erapor\LandingController as EraporLandingController;
+use App\Http\Controllers\Erapor\ReferenceController as EraporReferenceController;
+use App\Http\Controllers\GuruKelas\DashboardController as GuruKelasDashboardController;
+use App\Http\Controllers\GuruKelas\EffectiveWeekAnalysisController;
+use App\Http\Controllers\GuruKelas\LessonPlanController;
+use App\Http\Controllers\GuruKelas\PersetujuanIzinKeluarController;
+use App\Http\Controllers\GuruKelas\TeachingModuleController;
+use App\Http\Controllers\GuruKelas\VerifikasiTerlambatController as GuruKelasVerifikasiTerlambatController;
+use App\Http\Controllers\IzinController;
+use App\Http\Controllers\KelasController;
+use App\Http\Controllers\Kesiswaan\AnalisaKeterlambatanController;
+use App\Http\Controllers\Kesiswaan\DashboardController;
+use App\Http\Controllers\Kesiswaan\LegerNilaiController;
+use App\Http\Controllers\Kesiswaan\MonitoringIzinController;
+use App\Http\Controllers\Kesiswaan\PersetujuanDispensasiController;
+use App\Http\Controllers\Kesiswaan\UjianSemesterController;
+use App\Http\Controllers\Kurikulum\AnalisaKurikulumController;
+use App\Http\Controllers\Kurikulum\DashboardController as KurikulumDashboardController;
+use App\Http\Controllers\Kurikulum\DistribusiMapelController;
+use App\Http\Controllers\Kurikulum\JadwalPelajaranController;
+use App\Http\Controllers\Kurikulum\JamPelajaranController;
+use App\Http\Controllers\Kurikulum\MasterGuruController;
+use App\Http\Controllers\Kurikulum\MataPelajaranController;
+use App\Http\Controllers\Kurikulum\PengumumanKelulusanController as KurikulumPengumumanKelulusanController;
+use App\Http\Controllers\MasterData\AlumniController;
+use App\Http\Controllers\MasterData\ClassPromotionController;
+use App\Http\Controllers\MasterData\DapodikSiswaController;
+use App\Http\Controllers\MasterData\MasterSiswaController;
+use App\Http\Controllers\MasterData\RombelController;
+use App\Http\Controllers\MasterData\StudentRegistrationController;
+use App\Http\Controllers\MasterData\TahunPelajaranController;
+use App\Http\Controllers\Operator\DapodikManagementController;
+use App\Http\Controllers\Operator\DashboardController as OperatorDashboardController;
+use App\Http\Controllers\PengaduanController;
+use App\Http\Controllers\Piket\DashboardController as PiketDashboardController;
+use App\Http\Controllers\Piket\MonitoringController as PiketMonitoringController;
+use App\Http\Controllers\Piket\PenangananTerlambatController;
+use App\Http\Controllers\Piket\PersetujuanIzinKeluarController as PiketPersetujuanIzinKeluarController;
+use App\Http\Controllers\Piket\VerifikasiTerlambatController;
+use App\Http\Controllers\Prakerin\IndustriController;
+use App\Http\Controllers\Prakerin\JurnalSiswaController;
+use App\Http\Controllers\Prakerin\MonitoringPembimbingController;
+use App\Http\Controllers\Prakerin\PenempatanController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PublicStudentRegistrationController;
+use App\Http\Controllers\PublicVerifikasiController;
+use App\Http\Controllers\SDM\AbsensiMonitoringController;
+use App\Http\Controllers\SDM\AbsensiSettingController;
+use App\Http\Controllers\SDM\NdeReferensiController;
+use App\Http\Controllers\Security\GateTerminalController;
+use App\Http\Controllers\Security\PendataanTerlambatController;
+use App\Http\Controllers\Security\VerifikasiController as SecurityVerifikasiController;
+use App\Http\Controllers\Shared\AbsensiSayaController;
+use App\Http\Controllers\Shared\AssetController as SharedAssetController;
+use App\Http\Controllers\Shared\CoachingAnalyticsController;
+use App\Http\Controllers\Shared\NotaDinasController;
+use App\Http\Controllers\Siswa\DashboardController as SiswaDashboardController;
+use App\Http\Controllers\Siswa\IzinMeninggalkanKelasController;
+use App\Http\Controllers\Siswa\PengumumanKelulusanController as SiswaPengumumanKelulusanController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\VerifikasiController;
+use App\Http\Controllers\WaliKelas\DashboardController as WaliKelasDashboardController;
+use App\Http\Controllers\WaliKelas\PerizinanController as WaliKelasPerizinanController;
+use App\Http\Controllers\WaliKelas\StudentMasterBookController;
+use App\Http\Controllers\WaliKelas\WaliKelasMentoringController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('auth/google', [GoogleController::class, 'redirectToGoogle'])->name('auth.google');
 Route::get('auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
@@ -593,14 +593,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Route Pameran Karya & Keahlian Siswa (Showcase)
         Route::prefix('showcase')->name('showcase.')->group(function () {
             Route::get('/', [\App\Http\Controllers\SiswaShowcaseController::class, 'index'])->name('index');
-            
+
             // Skills
             Route::get('/skill/create', [\App\Http\Controllers\SiswaShowcaseController::class, 'createSkill'])->name('skill.create');
             Route::post('/skill', [\App\Http\Controllers\SiswaShowcaseController::class, 'storeSkill'])->name('skill.store');
             Route::get('/skill/{skill}/edit', [\App\Http\Controllers\SiswaShowcaseController::class, 'editSkill'])->name('skill.edit');
             Route::put('/skill/{skill}', [\App\Http\Controllers\SiswaShowcaseController::class, 'updateSkill'])->name('skill.update');
             Route::delete('/skill/{skill}', [\App\Http\Controllers\SiswaShowcaseController::class, 'destroySkill'])->name('skill.destroy');
-            
+
             // Projects
             Route::get('/project/create', [\App\Http\Controllers\SiswaShowcaseController::class, 'createProject'])->name('project.create');
             Route::post('/project', [\App\Http\Controllers\SiswaShowcaseController::class, 'storeProject'])->name('project.store');
@@ -743,7 +743,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('jadwal-pelajaran/{rombel}', [JadwalPelajaranController::class, 'show'])->middleware('permission:manage jadwal pelajaran')->name('jadwal-pelajaran.show');
         Route::post('jadwal-pelajaran/{rombel}', [JadwalPelajaranController::class, 'store'])->middleware('permission:manage jadwal pelajaran')->name('jadwal-pelajaran.store');
 
-        //Route untuk Jam Pelajaran
+        // Route untuk Jam Pelajaran
         Route::resource('jam-pelajaran', JamPelajaranController::class)->middleware('permission:manage jam pelajaran');
 
         Route::post('mata-pelajaran/import', [MataPelajaranController::class, 'import'])->middleware('permission:manage mata pelajaran')->name('mata-pelajaran.import');
@@ -767,16 +767,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Route untuk Rencana Pembelajaran Guru
         Route::prefix('rencana-pembelajaran')->name('lesson-plan.')->group(function () {
-            Route::get('/',              [LessonPlanController::class, 'index'])   ->name('index');
-            Route::get('/buat',          [LessonPlanController::class, 'create'])  ->name('create');
-            Route::post('/',             [LessonPlanController::class, 'store'])   ->name('store');
-            Route::get('/kalender',      [LessonPlanController::class, 'calendar'])->name('calendar');
-            Route::get('/{id}',          [LessonPlanController::class, 'show'])    ->name('show');
-            Route::get('/{id}/edit',     [LessonPlanController::class, 'edit'])    ->name('edit');
-            Route::put('/{id}',          [LessonPlanController::class, 'update'])  ->name('update');
-            Route::delete('/{id}',       [LessonPlanController::class, 'destroy']) ->name('destroy');
-            Route::get('/{id}/pdf',      [LessonPlanController::class, 'downloadPdf'])->name('pdf');
-            Route::post('/{id}/refleksi',[LessonPlanController::class, 'reflect']) ->name('reflect');
+            Route::get('/', [LessonPlanController::class, 'index'])->name('index');
+            Route::get('/buat', [LessonPlanController::class, 'create'])->name('create');
+            Route::post('/', [LessonPlanController::class, 'store'])->name('store');
+            Route::get('/kalender', [LessonPlanController::class, 'calendar'])->name('calendar');
+            Route::get('/{id}', [LessonPlanController::class, 'show'])->name('show');
+            Route::get('/{id}/edit', [LessonPlanController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [LessonPlanController::class, 'update'])->name('update');
+            Route::delete('/{id}', [LessonPlanController::class, 'destroy'])->name('destroy');
+            Route::get('/{id}/pdf', [LessonPlanController::class, 'downloadPdf'])->name('pdf');
+            Route::post('/{id}/refleksi', [LessonPlanController::class, 'reflect'])->name('reflect');
             Route::post('/todo/{todoId}/toggle', [LessonPlanController::class, 'toggleTodo'])->name('todo.toggle');
         });
 
@@ -814,6 +814,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/penilaian-ukk/{ujian}/{siswa}/pdf', [\App\Http\Controllers\GuruKelas\PenilaianUkkController::class, 'cetakPdf'])->name('penilaian-ukk.pdf');
     });
 
+    // Pengajuan izin pegawai: Guru Kelas, TPA, dan KAUR SDM dapat mengajukan untuk dirinya sendiri.
+    Route::middleware(['role:Guru Kelas|TPA|KAUR SDM'])->prefix('guru')->name('guru.')->group(function () {
+        Route::get('/izin', [\App\Http\Controllers\Guru\IzinGuruController::class, 'index'])->name('izin.index');
+        Route::get('/izin/create', [\App\Http\Controllers\Guru\IzinGuruController::class, 'create'])->name('izin.create');
+        Route::post('/izin', [\App\Http\Controllers\Guru\IzinGuruController::class, 'store'])->name('izin.store');
+        Route::get('/izin/schedules', [\App\Http\Controllers\Guru\IzinGuruController::class, 'getSchedules'])->name('izin.schedules');
+        Route::get('/izin/lms-resources/{schedule}', [\App\Http\Controllers\Guru\IzinGuruController::class, 'getLmsResources'])->name('izin.lms-resources');
+    });
+
     // Grup Route untuk Guru (Submission)
     Route::middleware(['role:Guru Kelas'])->prefix('guru')->name('guru.')->group(function () {
         // Dapodik Guru
@@ -822,11 +831,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/dapodik/submission', [\App\Http\Controllers\Guru\DapodikController::class, 'storeSubmission'])->name('dapodik.store-submission');
         Route::get('/dapodik/history', [\App\Http\Controllers\Guru\DapodikController::class, 'history'])->name('dapodik.history');
 
-        Route::get('/izin', [\App\Http\Controllers\Guru\IzinGuruController::class, 'index'])->name('izin.index');
-        Route::get('/izin/create', [\App\Http\Controllers\Guru\IzinGuruController::class, 'create'])->name('izin.create');
-        Route::post('/izin', [\App\Http\Controllers\Guru\IzinGuruController::class, 'store'])->name('izin.store');
-        Route::get('/izin/schedules', [\App\Http\Controllers\Guru\IzinGuruController::class, 'getSchedules'])->name('izin.schedules');
-        Route::get('/izin/lms-resources/{schedule}', [\App\Http\Controllers\Guru\IzinGuruController::class, 'getLmsResources'])->name('izin.lms-resources');
         Route::get('/jadwal-saya', [\App\Http\Controllers\Guru\JadwalSayaController::class, 'index'])->name('jadwal-saya');
 
         // LMS Routes
@@ -898,7 +902,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Public/Shared print route for approved permits
     Route::get('/sdm/persetujuan-izin-guru/{izin}/print', [\App\Http\Controllers\SDM\PersetujuanIzinGuruController::class, 'printPdf'])
-        ->middleware(['role:KAUR SDM|Guru Kelas'])
+        ->middleware(['role:KAUR SDM|Guru Kelas|TPA'])
         ->name('sdm.persetujuan-izin-guru.print');
 
     // Grup Route untuk Security
@@ -934,7 +938,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/security/login', [SecurityLoginController::class, 'showLoginForm'])->name('security.login')->withoutMiddleware(['auth', 'verified']);
     Route::post('/security/login', [SecurityLoginController::class, 'login'])->name('security.login.submit')->withoutMiddleware(['auth', 'verified']);
     Route::post('/security/logout', [SecurityLoginController::class, 'logout'])->name('security.logout');
-
 
     // Grup Route untuk Pengajuan Dispensasi (bisa diakses beberapa peran)
     Route::middleware(['auth'])->prefix('dispensasi')->name('dispensasi.')->group(function () {
@@ -1360,7 +1363,7 @@ Route::middleware(['auth', 'role:Kantin', 'permission:view kantin dashboard'])->
     Route::get('/api/orders/pending-count', [\App\Http\Controllers\KantinOrderController::class, 'pendingCount'])->name('api.orders.pending-count');
 });
 
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';
 
 // ============================================================
 // KAPRODI

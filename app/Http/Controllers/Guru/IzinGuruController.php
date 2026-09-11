@@ -135,14 +135,16 @@ class IzinGuruController extends Controller
         $startTime = $startDate->format('H:i:s');
         $endTime = $endDate->format('H:i:s');
 
-        $availableSchedules = JadwalPelajaran::where('master_guru_id', $guru->id)
-            ->inActiveAcademicPeriod()
-            ->where('hari', $hari)
-            ->where(function ($q) use ($startTime, $endTime) {
-                $q->where('jam_mulai', '<', $endTime)
-                    ->where('jam_selesai', '>', $startTime);
-            })
-            ->get();
+        $availableSchedules = $guru->is_tpa
+            ? collect()
+            : JadwalPelajaran::where('master_guru_id', $guru->id)
+                ->inActiveAcademicPeriod()
+                ->where('hari', $hari)
+                ->where(function ($q) use ($startTime, $endTime) {
+                    $q->where('jam_mulai', '<', $endTime)
+                        ->where('jam_selesai', '>', $startTime);
+                })
+                ->get();
 
         $selectedJadwalIds = array_map('intval', $request->input('jadwal_ids', []));
         if ($availableSchedules->whereIn('id', $selectedJadwalIds)->count() !== count(array_unique($selectedJadwalIds))) {
@@ -192,13 +194,7 @@ class IzinGuruController extends Controller
             return redirect()->back()->withInput()->with('error', 'Anda sudah memiliki pengajuan izin pada rentang waktu tersebut yang sedang diproses atau sudah disetujui.');
         }
 
-        $statusPiket = 'menunggu';
-        $statusKurikulum = 'menunggu';
-
-        if (in_array($request->kategori_penyetujuan, ['tidak_masuk', 'terlambat'], true)) {
-            $statusPiket = 'disetujui';
-            $statusKurikulum = 'disetujui';
-        }
+        $approvalStatuses = GuruIzin::initialApprovalStatuses($guru, $request->kategori_penyetujuan);
 
         $izin = GuruIzin::create([
             'master_guru_id' => $guru->id,
@@ -207,9 +203,7 @@ class IzinGuruController extends Controller
             'jenis_izin' => $request->jenis_izin,
             'kategori_penyetujuan' => $request->kategori_penyetujuan,
             'deskripsi' => $request->deskripsi,
-            'status_piket' => $statusPiket,
-            'status_kurikulum' => $statusKurikulum,
-            'status_sdm' => 'menunggu',
+            ...$approvalStatuses,
         ]);
 
         if ($request->filled('jadwal_ids')) {
@@ -224,7 +218,9 @@ class IzinGuruController extends Controller
         }
 
         // Notifikasi untuk Approver
-        if ($izin->startsAtSdm()) {
+        if ($izin->startsAtHeadmaster()) {
+            $telegramNotifications->notifyRoleApprovers($izin, 'kepsek');
+        } elseif ($izin->startsAtSdm()) {
             $telegramNotifications->notifyRoleApprovers($izin, 'sdm');
         } else {
             // Hanya Guru Piket yang terjadwal hari ini.

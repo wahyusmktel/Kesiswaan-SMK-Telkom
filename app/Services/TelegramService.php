@@ -163,8 +163,8 @@ class TelegramService
             'command' => 'status',
             'description' => 'Lihat status hubungan akun SISFO',
         ]];
-        if ($bot->purpose === 'employment' && $user?->hasRole('Guru Kelas')) {
-            $commands[] = ['command' => 'izin', 'description' => 'Ajukan izin guru'];
+        if ($bot->purpose === 'employment' && $user?->masterGuru && ($user->hasRole('Guru Kelas') || $user->masterGuru->is_tpa || $user->hasRole('KAUR SDM'))) {
+            $commands[] = ['command' => 'izin', 'description' => 'Ajukan izin pegawai'];
             $commands[] = ['command' => 'status_izin', 'description' => 'Lihat status izin terakhir'];
             $commands[] = ['command' => 'batal', 'description' => 'Batalkan pengisian izin'];
         }
@@ -224,8 +224,8 @@ class TelegramService
         }
 
         $rows = [];
-        if ($user->hasRole('Guru Kelas')) {
-            $rows[] = [['text' => '📝 Ajukan Izin Guru']];
+        if ($user->masterGuru && ($user->hasRole('Guru Kelas') || $user->masterGuru->is_tpa || $user->hasRole('KAUR SDM'))) {
+            $rows[] = [['text' => '📝 Ajukan Izin Pegawai']];
             $rows[] = [['text' => '📋 Status Izin Terakhir']];
         }
         if ($user->masterGuru) {

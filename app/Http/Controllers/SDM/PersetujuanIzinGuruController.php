@@ -19,7 +19,11 @@ class PersetujuanIzinGuruController extends Controller
             'guru',
             'jadwals.rombel.kelas',
             'jadwals.mataPelajaran',
-        ])->whereIn('kategori_penyetujuan', ['luar', 'tidak_masuk', 'terlambat'])
+        ])->where(function ($approval) {
+            $approval->whereIn('kategori_penyetujuan', ['luar', 'tidak_masuk', 'terlambat'])
+                ->orWhere(fn ($school) => $school->where('kategori_penyetujuan', 'sekolah')
+                    ->whereHas('guru', fn ($guru) => $guru->where('employee_category', \App\Models\MasterGuru::CATEGORY_TPA)));
+        })
             ->where('status_kurikulum', 'disetujui')->latest();
 
         if ($request->filled('status')) {
@@ -69,7 +73,7 @@ class PersetujuanIzinGuruController extends Controller
 
     public function approve(GuruIzin $izin, TelegramLeaveNotificationService $telegramNotifications)
     {
-        abort_unless(in_array($izin->kategori_penyetujuan, ['luar', 'tidak_masuk', 'terlambat'], true), 409, 'Kategori izin ini tidak memerlukan persetujuan SDM.');
+        abort_unless(in_array($izin->kategori_penyetujuan, ['luar', 'tidak_masuk', 'terlambat'], true) || ($izin->kategori_penyetujuan === 'sekolah' && $izin->guru?->is_tpa), 409, 'Kategori izin ini tidak memerlukan persetujuan SDM.');
         abort_unless($izin->status_kurikulum === 'disetujui' && $izin->status_sdm === 'menunggu', 409, 'Izin tidak lagi menunggu persetujuan SDM.');
         $requiresHeadmaster = $izin->requiresHeadmasterApproval();
         $izin->update([
@@ -156,7 +160,7 @@ class PersetujuanIzinGuruController extends Controller
 
     public function reject(Request $request, GuruIzin $izin, TelegramLeaveNotificationService $telegramNotifications)
     {
-        abort_unless(in_array($izin->kategori_penyetujuan, ['luar', 'tidak_masuk', 'terlambat'], true), 409, 'Kategori izin ini tidak memerlukan persetujuan SDM.');
+        abort_unless(in_array($izin->kategori_penyetujuan, ['luar', 'tidak_masuk', 'terlambat'], true) || ($izin->kategori_penyetujuan === 'sekolah' && $izin->guru?->is_tpa), 409, 'Kategori izin ini tidak memerlukan persetujuan SDM.');
         abort_unless($izin->status_kurikulum === 'disetujui' && $izin->status_sdm === 'menunggu', 409, 'Izin tidak lagi menunggu persetujuan SDM.');
         $request->validate(['catatan_sdm' => 'required|string']);
 
@@ -185,10 +189,10 @@ class PersetujuanIzinGuruController extends Controller
             abort(403, 'Surat izin belum memperoleh seluruh persetujuan wajib.');
         }
 
-        // Security check: If teacher, only allow printing their own permit
-        // Bypass this if user also has KAUR SDM role
+        // Employees may only print their own permit. KAUR SDM retains the
+        // administrative access needed to print approved permits for employees.
         $user = Auth::user();
-        if ($user->hasRole('Guru Kelas') && ! $user->hasRole('KAUR SDM')) {
+        if (! $user->hasRole('KAUR SDM')) {
             $guru = $user->masterGuru;
             if (! $guru || $izin->master_guru_id !== $guru->id) {
                 abort(403, 'Anda tidak memiliki akses untuk mengunduh surat izin ini.');

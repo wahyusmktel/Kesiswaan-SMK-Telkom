@@ -269,7 +269,7 @@ class TelegramNotificationTest extends TestCase
             && collect($request['commands'])->contains('command', 'izin')
             && collect($request['commands'])->contains('command', 'status_izin'));
         Http::assertSent(fn ($request) => str_ends_with($request->url(), '/sendMessage')
-            && str_contains(json_encode($request['reply_markup']), 'Ajukan Izin Guru'));
+            && str_contains(json_encode($request['reply_markup']), 'Ajukan Izin Pegawai'));
 
         foreach (['/izin', '🚗 Luar Sekolah', 'Sakit', '10-09-2026 07:00', '10-09-2026 16:00', 'Perlu beristirahat sesuai arahan dokter.', '✅ Kirim Pengajuan'] as $message) {
             $this->sendBotMessage($bot, '998805', $message);
