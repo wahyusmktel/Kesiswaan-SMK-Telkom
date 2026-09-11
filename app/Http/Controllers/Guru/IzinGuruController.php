@@ -7,6 +7,7 @@ use App\Models\GuruIzin;
 use App\Models\JadwalPelajaran;
 use App\Models\LmsAssignment;
 use App\Models\LmsMaterial;
+use App\Services\TeacherLeaveWorkScheduleService;
 use App\Services\TelegramLeaveNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -93,7 +94,7 @@ class IzinGuruController extends Controller
         ]);
     }
 
-    public function store(Request $request, TelegramLeaveNotificationService $telegramNotifications)
+    public function store(Request $request, TelegramLeaveNotificationService $telegramNotifications, TeacherLeaveWorkScheduleService $workSchedule)
     {
         $request->validate([
             'tanggal_mulai' => 'required|date',
@@ -105,6 +106,8 @@ class IzinGuruController extends Controller
             'jadwal_ids.*' => 'exists:jadwal_pelajarans,id',
             'lms_material_id' => 'nullable|integer',
             'lms_assignment_id' => 'nullable|integer',
+            'confirm_work_schedule_warning' => 'nullable|string|size:64',
+            'work_schedule_validation_enabled' => 'nullable|boolean',
         ]);
 
         $guru = Auth::user()->masterGuru;
@@ -115,6 +118,13 @@ class IzinGuruController extends Controller
         // Logic check: If there are schedules within the permit timeframe, at least one must be selected
         $startDate = \Carbon\Carbon::parse($request->tanggal_mulai);
         $endDate = \Carbon\Carbon::parse($request->tanggal_selesai);
+
+        $scheduleWarnings = $workSchedule->warnings($guru, $startDate, $endDate);
+        $warningToken = hash('sha256', $startDate->toIso8601String().'|'.$endDate->toIso8601String());
+        $warningConfirmed = hash_equals($warningToken, (string) $request->input('confirm_work_schedule_warning'));
+        if ($request->boolean('work_schedule_validation_enabled') && $scheduleWarnings && ! $warningConfirmed) {
+            return redirect()->back()->withInput()->with('schedule_warnings', $scheduleWarnings)->with('schedule_warning_token', $warningToken);
+        }
 
         $hariMap = [
             'Sunday' => 'Minggu', 'Monday' => 'Senin', 'Tuesday' => 'Selasa',
@@ -215,13 +225,7 @@ class IzinGuruController extends Controller
 
         // Notifikasi untuk Approver
         if ($izin->startsAtSdm()) {
-            // Langsung ke SDM
-            $approvers = \App\Models\User::role('KAUR SDM')->get();
-            $msg = 'Ada pengajuan '.$izin->categoryLabel().' baru dari '.$guru->nama_lengkap;
-            $url = route('sdm.persetujuan-izin-guru.index');
-            foreach ($approvers as $approver) {
-                $approver->notify(new \App\Notifications\PengajuanIzinGuruNotification($izin, 'pending_approval', $msg, $url));
-            }
+            $telegramNotifications->notifyRoleApprovers($izin, 'sdm');
         } else {
             // Hanya Guru Piket yang terjadwal hari ini.
             $telegramNotifications->notifyPicketApprovers($izin);

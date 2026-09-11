@@ -171,6 +171,18 @@ class TelegramService
         if ($bot->purpose === 'employment' && $user?->hasRole('Guru Piket')) {
             $commands[] = ['command' => 'persetujuan_piket', 'description' => 'Lihat izin menunggu persetujuan Piket'];
         }
+        if ($bot->purpose === 'employment' && $user?->hasRole('Kurikulum')) {
+            $commands[] = ['command' => 'persetujuan_kurikulum', 'description' => 'Lihat izin menunggu persetujuan Kurikulum'];
+        }
+        if ($bot->purpose === 'employment' && $user?->hasRole('KAUR SDM')) {
+            $commands[] = ['command' => 'persetujuan_sdm', 'description' => 'Lihat izin menunggu persetujuan SDM'];
+        }
+        if ($bot->purpose === 'employment' && $user?->hasRole('Kepala Sekolah')) {
+            $commands[] = ['command' => 'persetujuan_kepsek', 'description' => 'Lihat izin menunggu persetujuan Kepala Sekolah'];
+        }
+        if ($bot->purpose === 'employment' && $user?->masterGuru) {
+            $commands[] = ['command' => 'rekap_absensi', 'description' => 'Rekap fingerprint 7 hari terakhir'];
+        }
 
         $commandsHash = hash('sha256', json_encode($commands, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
         $link = TelegramUserLink::query()
@@ -207,7 +219,7 @@ class TelegramService
 
     public function linkedMenuMarkup(TelegramBot $bot, User $user): array
     {
-        if ($bot->purpose !== 'employment' || (! $user->hasRole('Guru Kelas') && ! $user->hasRole('Guru Piket'))) {
+        if ($bot->purpose !== 'employment' || (! $user->masterGuru && ! $user->hasRole('Guru Kelas') && ! $user->hasRole('Guru Piket'))) {
             return ['remove_keyboard' => true];
         }
 
@@ -216,8 +228,20 @@ class TelegramService
             $rows[] = [['text' => '📝 Ajukan Izin Guru']];
             $rows[] = [['text' => '📋 Status Izin Terakhir']];
         }
+        if ($user->masterGuru) {
+            $rows[] = [['text' => '📊 Rekap Fingerprint 7 Hari']];
+        }
         if ($user->hasRole('Guru Piket')) {
             $rows[] = [['text' => '✅ Persetujuan Guru Piket']];
+        }
+        if ($user->hasRole('Kurikulum')) {
+            $rows[] = [['text' => '✅ Persetujuan Waka Kurikulum']];
+        }
+        if ($user->hasRole('KAUR SDM')) {
+            $rows[] = [['text' => '✅ Persetujuan KAUR SDM']];
+        }
+        if ($user->hasRole('Kepala Sekolah')) {
+            $rows[] = [['text' => '✅ Persetujuan Kepala Sekolah']];
         }
 
         return [

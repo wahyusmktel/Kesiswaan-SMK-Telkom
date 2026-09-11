@@ -10,7 +10,6 @@ use App\Models\TelegramBot;
 use App\Models\TelegramConversation;
 use App\Models\TelegramUserLink;
 use App\Models\User;
-use App\Notifications\PengajuanIzinGuruNotification;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -21,6 +20,8 @@ class TelegramTeacherLeaveService
     public function __construct(
         private readonly TelegramService $telegram,
         private readonly TelegramLeaveNotificationService $leaveNotifications,
+        private readonly TeacherLeaveWorkScheduleService $workSchedule,
+        private readonly TelegramFingerprintRecapService $fingerprintRecap,
     ) {}
 
     public function beginWebhookReply(): void
@@ -41,6 +42,12 @@ class TelegramTeacherLeaveService
         $text = trim((string) data_get($message, 'text', ''));
         $command = $this->command($text);
         $conversation = $this->conversation($link);
+
+        if ($bot->purpose === 'employment' && $user?->masterGuru && ($command === 'rekap_absensi' || $text === '📊 Rekap Fingerprint 7 Hari')) {
+            $this->telegram->reply($bot, $chatId, $this->fingerprintRecap->text($user->masterGuru), $this->telegram->linkedMenuMarkup($bot, $user));
+
+            return;
+        }
 
         if ($bot->purpose !== 'employment' || ! $user?->hasRole('Guru Kelas')) {
             $conversation?->delete();
@@ -117,6 +124,7 @@ class TelegramTeacherLeaveService
             'type' => $this->receiveType($bot, $conversation, $chatId, $text),
             'start' => $this->receiveStart($bot, $conversation, $chatId, $text),
             'end' => $this->receiveEnd($bot, $conversation, $chatId, $text),
+            'work_schedule_warning' => $this->receiveWorkScheduleWarning($bot, $conversation, $chatId, $text),
             'schedule_resource' => $this->receiveScheduleResource($bot, $conversation, $chatId, $text),
             'assignment_offer' => $this->receiveAssignmentOffer($bot, $conversation, $chatId, $text),
             'assignment_title' => $this->receiveAssignmentTitle($bot, $conversation, $chatId, $text),
@@ -189,6 +197,41 @@ class TelegramTeacherLeaveService
 
             return;
         }
+
+        $warnings = $this->workSchedule->warnings($conversation->link->user->masterGuru, $start, $end);
+        if ($warnings) {
+            $this->advance($conversation, 'work_schedule_warning', [
+                'end' => $end->format('Y-m-d H:i:s'),
+                'work_schedule_warnings' => $warnings,
+            ]);
+            $this->telegram->reply(
+                $bot,
+                $chatId,
+                "⚠️ Peringatan Waktu Izin\n\n• ".implode("\n• ", $warnings)."\n\nLanjutkan pengajuan dengan rentang tersebut?",
+                $this->keyboard([['✅ Tetap Lanjutkan'], ['❌ Batalkan']]),
+            );
+
+            return;
+        }
+
+        $this->continueAfterEnd($bot, $conversation, $chatId, $start, $end);
+    }
+
+    private function receiveWorkScheduleWarning(TelegramBot $bot, TelegramConversation $conversation, string $chatId, string $text): void
+    {
+        if ($text !== '✅ Tetap Lanjutkan') {
+            $this->telegram->reply($bot, $chatId, 'Pilih Tetap Lanjutkan atau Batalkan melalui tombol yang tersedia.');
+
+            return;
+        }
+
+        $start = Carbon::parse($conversation->payload['start']);
+        $end = Carbon::parse($conversation->payload['end']);
+        $this->continueAfterEnd($bot, $conversation, $chatId, $start, $end);
+    }
+
+    private function continueAfterEnd(TelegramBot $bot, TelegramConversation $conversation, string $chatId, Carbon $start, Carbon $end): void
+    {
 
         $schedules = $this->affectedSchedules($conversation->link->user->masterGuru->id, $start, $end);
         $this->advance($conversation, $schedules->isEmpty() ? 'description' : 'schedule_resource', [
@@ -618,16 +661,13 @@ class TelegramTeacherLeaveService
     private function notifyApprovers(GuruIzin $izin, string $teacherName): void
     {
         if ($izin->startsAtSdm()) {
-            $approvers = User::whereHas('roles', fn ($query) => $query->where('name', 'KAUR SDM'))->get();
-            $message = 'Ada pengajuan '.$izin->categoryLabel().' baru dari '.$teacherName;
-            $url = route('sdm.persetujuan-izin-guru.index');
+            $this->leaveNotifications->notifyRoleApprovers($izin, 'sdm');
+
+            return;
         } else {
             $this->leaveNotifications->notifyPicketApprovers($izin);
 
             return;
-        }
-        foreach ($approvers as $approver) {
-            $approver->notify(new PengajuanIzinGuruNotification($izin, 'pending_approval', $message, $url));
         }
     }
 

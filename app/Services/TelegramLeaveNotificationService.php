@@ -43,6 +43,33 @@ class TelegramLeaveNotificationService
         }
     }
 
+    public function notifyRoleApprovers(GuruIzin $izin, string $stage): void
+    {
+        $config = match ($stage) {
+            'kurikulum' => ['role' => 'Kurikulum', 'label' => 'Waka Kurikulum', 'url' => 'kurikulum.persetujuan-izin-guru.index'],
+            'sdm' => ['role' => 'KAUR SDM', 'label' => 'KAUR SDM', 'url' => 'sdm.persetujuan-izin-guru.index'],
+            'kepsek' => ['role' => 'Kepala Sekolah', 'label' => 'Kepala Sekolah', 'url' => 'kepala-sekolah.persetujuan-izin-guru.index'],
+            default => null,
+        };
+        if (! $config) {
+            return;
+        }
+
+        $izin->loadMissing('guru.user');
+        $message = 'Pengajuan '.$izin->categoryLabel().' dari '.($izin->guru?->nama_lengkap ?? 'pegawai').' menunggu persetujuan '.$config['label'].'.';
+        foreach (\App\Models\User::whereHas('roles', fn ($query) => $query->where('name', $config['role']))->get() as $approver) {
+            $approver->notify(new PengajuanIzinGuruNotification($izin, 'pending_approval', $message, route($config['url'])));
+            foreach ($this->employmentLinks($approver->id) as $link) {
+                $this->safeReply($link, $this->approvalSummary($izin, $config['label']), [
+                    'inline_keyboard' => [[
+                        ['text' => '✅ Setujui', 'callback_data' => $stage.':approve:'.$izin->id],
+                        ['text' => '❌ Tolak', 'callback_data' => $stage.':reject:'.$izin->id],
+                    ]],
+                ]);
+            }
+        }
+    }
+
     public function notifyApplicant(GuruIzin $izin, string $message): void
     {
         $izin->loadMissing('guru.user');
@@ -71,6 +98,16 @@ class TelegramLeaveNotificationService
                 ->where('status', 'connected'))
             ->with('bot')
             ->get();
+    }
+
+    private function approvalSummary(GuruIzin $izin, string $label): string
+    {
+        return "🔔 PERSETUJUAN IZIN — {$label}\n\n"
+            .'Pemohon: '.($izin->guru?->nama_lengkap ?? '-')."\n"
+            .'Kategori: '.$izin->categoryLabel()."\n"
+            .'Jenis: '.$izin->jenis_izin."\n"
+            .'Waktu: '.$izin->tanggal_mulai->format('d-m-Y H:i').' s.d. '.$izin->tanggal_selesai->format('d-m-Y H:i')."\n"
+            .'Alasan: '.$izin->deskripsi;
     }
 
     private function safeReply(TelegramUserLink $link, string $text, ?array $markup = null): void

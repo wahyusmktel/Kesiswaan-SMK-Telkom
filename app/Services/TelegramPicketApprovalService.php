@@ -22,21 +22,22 @@ class TelegramPicketApprovalService
     {
         $callbackId = (string) data_get($callback, 'id');
         $data = (string) data_get($callback, 'data');
-        if (! preg_match('/^piket:(approve|reject):(\d+)$/', $data, $matches)) {
+        if (! preg_match('/^(piket|kurikulum|sdm|kepsek):(approve|reject):(\d+)$/', $data, $matches)) {
             $this->answer($bot, $callbackId, 'Perintah tidak dikenali.');
 
             return;
         }
 
         $link->loadMissing('user.roles');
-        if ($bot->purpose !== 'employment' || ! $link->user || ! $this->duty->isOnDuty($link->user)) {
-            $this->answer($bot, $callbackId, 'Akses ditolak: Anda tidak sedang bertugas sebagai Guru Piket hari ini.');
+        $stage = $matches[1];
+        if ($bot->purpose !== 'employment' || ! $link->user || ! $this->authorized($stage, $link->user)) {
+            $this->answer($bot, $callbackId, 'Akses ditolak: akun atau jadwal tugas Anda tidak sesuai tahap persetujuan ini.');
 
             return;
         }
 
-        $izin = GuruIzin::find($matches[2]);
-        if (! $izin || $izin->status_piket !== 'menunggu') {
+        $izin = GuruIzin::find($matches[3]);
+        if (! $izin || ! $this->isPending($stage, $izin)) {
             $this->answer($bot, $callbackId, 'Izin ini sudah diputuskan atau tidak tersedia.');
 
             return;
@@ -44,13 +45,13 @@ class TelegramPicketApprovalService
 
         $chatId = (string) data_get($callback, 'message.chat.id', $link->chat_id);
         $messageId = (int) data_get($callback, 'message.message_id', 0);
-        if ($matches[1] === 'reject') {
+        if ($matches[2] === 'reject') {
             TelegramConversation::updateOrCreate(
                 ['telegram_user_link_id' => $link->id, 'flow' => self::FLOW],
                 [
                     'telegram_bot_id' => $bot->id,
                     'step' => 'reason',
-                    'payload' => ['guru_izin_id' => $izin->id, 'source_message_id' => $messageId],
+                    'payload' => ['guru_izin_id' => $izin->id, 'stage' => $stage, 'source_message_id' => $messageId],
                     'expires_at' => now()->addHour(),
                 ],
             );
@@ -62,7 +63,7 @@ class TelegramPicketApprovalService
 
         $this->answer($bot, $callbackId, 'Persetujuan sedang diproses.');
         try {
-            $result = $this->decisions->approve($izin, $link->user);
+            $result = $this->approve($stage, $izin, $link->user);
             $this->clearKeyboard($bot, $chatId, $messageId);
             $this->telegram->reply($bot, $chatId, "✅ Pengajuan izin #{$izin->id} berhasil disetujui.\n\n{$result['message']}", $this->telegram->linkedMenuMarkup($bot, $link->user));
         } catch (Throwable $error) {
@@ -98,9 +99,10 @@ class TelegramPicketApprovalService
             }
 
             $link->loadMissing('user.roles');
-            if (! $link->user || ! $this->duty->isOnDuty($link->user)) {
+            $stage = (string) ($conversation->payload['stage'] ?? 'piket');
+            if (! $link->user || ! $this->authorized($stage, $link->user)) {
                 $conversation->delete();
-                $this->telegram->reply($bot, $link->chat_id, 'Penolakan tidak diproses karena Anda tidak sedang bertugas sebagai Guru Piket hari ini.');
+                $this->telegram->reply($bot, $link->chat_id, 'Penolakan tidak diproses karena akun atau jadwal tugas Anda tidak lagi sesuai tahap persetujuan ini.');
 
                 return true;
             }
@@ -110,7 +112,7 @@ class TelegramPicketApprovalService
                 if (! $izin) {
                     throw new \RuntimeException('Pengajuan izin tidak ditemukan.');
                 }
-                $this->decisions->reject($izin, $link->user, $text);
+                $this->reject($stage, $izin, $link->user, $text);
                 $this->clearKeyboard($bot, $link->chat_id, (int) ($conversation->payload['source_message_id'] ?? 0));
                 $conversation->delete();
                 $this->telegram->reply($bot, $link->chat_id, "❌ Pengajuan izin #{$izin->id} berhasil ditolak. Pemohon telah menerima notifikasi beserta catatan Anda.", $this->telegram->linkedMenuMarkup($bot, $link->user));
@@ -122,21 +124,35 @@ class TelegramPicketApprovalService
             return true;
         }
 
-        if ($command !== 'persetujuan_piket' && $text !== '✅ Persetujuan Guru Piket') {
+        $stage = match (true) {
+            $command === 'persetujuan_piket' || $text === '✅ Persetujuan Guru Piket' => 'piket',
+            $command === 'persetujuan_kurikulum' || $text === '✅ Persetujuan Waka Kurikulum' => 'kurikulum',
+            $command === 'persetujuan_sdm' || $text === '✅ Persetujuan KAUR SDM' => 'sdm',
+            $command === 'persetujuan_kepsek' || $text === '✅ Persetujuan Kepala Sekolah' => 'kepsek',
+            default => null,
+        };
+        if (! $stage) {
             return false;
         }
 
         $link->loadMissing('user.roles');
-        if ($bot->purpose !== 'employment' || ! $link->user || ! $this->duty->isOnDuty($link->user)) {
+        if ($bot->purpose !== 'employment' || ! $link->user || ! $this->authorized($stage, $link->user)) {
             $markup = $link->user ? $this->telegram->linkedMenuMarkup($bot, $link->user) : ['remove_keyboard' => true];
-            $this->telegram->reply($bot, $link->chat_id, 'Menu persetujuan hanya aktif bagi Guru Piket yang terjadwal hari ini.', $markup);
+            $this->telegram->reply($bot, $link->chat_id, 'Menu persetujuan tidak tersedia karena akun atau jadwal tugas Anda tidak sesuai tahap tersebut.', $markup);
 
             return true;
         }
 
-        $pending = GuruIzin::query()->with('guru')->whereIn('kategori_penyetujuan', ['sekolah', 'luar'])->where('status_piket', 'menunggu')->latest()->limit(10)->get();
+        $pendingQuery = GuruIzin::query()->with('guru');
+        match ($stage) {
+            'piket' => $pendingQuery->whereIn('kategori_penyetujuan', ['sekolah', 'luar'])->where('status_piket', 'menunggu'),
+            'kurikulum' => $pendingQuery->where('kategori_penyetujuan', 'luar')->where('status_piket', 'disetujui')->where('status_kurikulum', 'menunggu'),
+            'sdm' => $pendingQuery->whereIn('kategori_penyetujuan', ['luar', 'tidak_masuk', 'terlambat'])->where('status_kurikulum', 'disetujui')->where('status_sdm', 'menunggu'),
+            'kepsek' => $pendingQuery->where('status_sdm', 'disetujui')->where('status_kepala_sekolah', 'menunggu'),
+        };
+        $pending = $pendingQuery->latest()->limit(10)->get();
         if ($pending->isEmpty()) {
-            $this->telegram->reply($bot, $link->chat_id, 'Tidak ada pengajuan izin yang menunggu persetujuan Guru Piket.', $this->telegram->linkedMenuMarkup($bot, $link->user));
+            $this->telegram->reply($bot, $link->chat_id, 'Tidak ada pengajuan izin yang menunggu pada tahap persetujuan Anda.', $this->telegram->linkedMenuMarkup($bot, $link->user));
 
             return true;
         }
@@ -145,8 +161,8 @@ class TelegramPicketApprovalService
         foreach ($pending as $izin) {
             $this->telegram->reply($bot, $link->chat_id, $this->summary($izin), [
                 'inline_keyboard' => [[
-                    ['text' => '✅ Setujui', 'callback_data' => 'piket:approve:'.$izin->id],
-                    ['text' => '❌ Tolak', 'callback_data' => 'piket:reject:'.$izin->id],
+                    ['text' => '✅ Setujui', 'callback_data' => $stage.':approve:'.$izin->id],
+                    ['text' => '❌ Tolak', 'callback_data' => $stage.':reject:'.$izin->id],
                 ]],
             ]);
         }
@@ -162,6 +178,48 @@ class TelegramPicketApprovalService
             .'Jenis: '.$izin->jenis_izin."\n"
             .'Waktu: '.$izin->tanggal_mulai->format('d-m-Y H:i').' s.d. '.$izin->tanggal_selesai->format('d-m-Y H:i')."\n"
             .'Alasan: '.$izin->deskripsi;
+    }
+
+    private function authorized(string $stage, \App\Models\User $user): bool
+    {
+        return match ($stage) {
+            'piket' => $this->duty->isOnDuty($user),
+            'kurikulum' => $user->hasRole('Kurikulum'),
+            'sdm' => $user->hasRole('KAUR SDM'),
+            'kepsek' => $user->hasRole('Kepala Sekolah'),
+            default => false,
+        };
+    }
+
+    private function isPending(string $stage, GuruIzin $izin): bool
+    {
+        return match ($stage) {
+            'piket' => in_array($izin->kategori_penyetujuan, ['sekolah', 'luar'], true) && $izin->status_piket === 'menunggu',
+            'kurikulum' => $izin->kategori_penyetujuan === 'luar' && $izin->status_piket === 'disetujui' && $izin->status_kurikulum === 'menunggu',
+            'sdm' => in_array($izin->kategori_penyetujuan, ['luar', 'tidak_masuk', 'terlambat'], true) && $izin->status_kurikulum === 'disetujui' && $izin->status_sdm === 'menunggu',
+            'kepsek' => $izin->status_sdm === 'disetujui' && $izin->status_kepala_sekolah === 'menunggu',
+            default => false,
+        };
+    }
+
+    private function approve(string $stage, GuruIzin $izin, \App\Models\User $user): array
+    {
+        return match ($stage) {
+            'piket' => $this->decisions->approve($izin, $user),
+            'kurikulum' => $this->decisions->approveKurikulum($izin, $user),
+            'sdm' => $this->decisions->approveSdm($izin, $user),
+            'kepsek' => $this->decisions->approveHeadmaster($izin, $user),
+        };
+    }
+
+    private function reject(string $stage, GuruIzin $izin, \App\Models\User $user, string $note): array
+    {
+        return match ($stage) {
+            'piket' => $this->decisions->reject($izin, $user, $note),
+            'kurikulum' => $this->decisions->rejectKurikulum($izin, $user, $note),
+            'sdm' => $this->decisions->rejectSdm($izin, $user, $note),
+            'kepsek' => $this->decisions->rejectHeadmaster($izin, $user, $note),
+        };
     }
 
     private function answer(TelegramBot $bot, string $callbackId, string $text): void
@@ -188,6 +246,8 @@ class TelegramPicketApprovalService
 
     private function friendlyError(Throwable $error): string
     {
-        return $error->getMessage() ?: 'silakan muat ulang status izin.';
+        return $error instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface
+            ? ($error->getMessage() ?: 'izin ini sudah diputuskan oleh pejabat lain.')
+            : 'terjadi gangguan saat menyimpan keputusan. Silakan coba kembali.';
     }
 }

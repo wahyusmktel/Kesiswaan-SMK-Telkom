@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AbsensiGuru;
 use App\Models\GuruIzin;
 use App\Notifications\PengajuanIzinGuruNotification;
+use App\Services\TelegramLeaveNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -23,7 +24,7 @@ class TeacherLeaveApprovalController extends Controller
         return view('pages.kepala-sekolah.teacher-leave-approvals', compact('izins', 'status'));
     }
 
-    public function approve(GuruIzin $izin)
+    public function approve(GuruIzin $izin, TelegramLeaveNotificationService $telegramNotifications)
     {
         DB::transaction(function () use ($izin) {
             $izin = GuruIzin::with(['guru.user', 'guru.dapodikGuru', 'jadwals.rombel.siswa.user'])->lockForUpdate()->findOrFail($izin->id);
@@ -32,11 +33,12 @@ class TeacherLeaveApprovalController extends Controller
             $izin->update(['status_kepala_sekolah' => 'disetujui', 'kepala_sekolah_id' => auth()->id(), 'kepala_sekolah_at' => now(), 'catatan_kepala_sekolah' => null]);
             $this->finalizeApproval($izin);
         });
+        $telegramNotifications->notifyApplicant($izin->fresh(), 'Permohonan izin Anda telah disetujui sepenuhnya oleh Kepala Sekolah.');
 
         return back()->with('success', 'Izin Pegawai Tetap telah disetujui dan absensi diperbarui.');
     }
 
-    public function reject(Request $request, GuruIzin $izin)
+    public function reject(Request $request, GuruIzin $izin, TelegramLeaveNotificationService $telegramNotifications)
     {
         $data = $request->validate(['catatan_kepala_sekolah' => ['required', 'string', 'max:2000']]);
         DB::transaction(function () use ($izin, $data) {
@@ -46,6 +48,7 @@ class TeacherLeaveApprovalController extends Controller
             $izin->update(['status_kepala_sekolah' => 'ditolak', 'kepala_sekolah_id' => auth()->id(), 'kepala_sekolah_at' => now(), 'catatan_kepala_sekolah' => $data['catatan_kepala_sekolah']]);
             $izin->guru?->user?->notify(new PengajuanIzinGuruNotification($izin, 'status_updated', 'Permohonan izin Anda ditolak oleh Kepala Sekolah.', route('guru.izin.index')));
         });
+        $telegramNotifications->notifyApplicant($izin->fresh(), 'Permohonan izin Anda ditolak oleh Kepala Sekolah. Catatan: '.$data['catatan_kepala_sekolah']);
 
         return back()->with('success', 'Izin telah ditolak.');
     }

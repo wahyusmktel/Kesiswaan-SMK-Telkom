@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AbsensiGuru;
 use App\Models\AppSetting;
 use App\Models\GuruIzin;
+use App\Services\TelegramLeaveNotificationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -66,7 +67,7 @@ class PersetujuanIzinGuruController extends Controller
         }
     }
 
-    public function approve(GuruIzin $izin)
+    public function approve(GuruIzin $izin, TelegramLeaveNotificationService $telegramNotifications)
     {
         abort_unless(in_array($izin->kategori_penyetujuan, ['luar', 'tidak_masuk', 'terlambat'], true), 409, 'Kategori izin ini tidak memerlukan persetujuan SDM.');
         abort_unless($izin->status_kurikulum === 'disetujui' && $izin->status_sdm === 'menunggu', 409, 'Izin tidak lagi menunggu persetujuan SDM.');
@@ -92,20 +93,14 @@ class PersetujuanIzinGuruController extends Controller
         }
 
         if ($requiresHeadmaster) {
-            foreach (\App\Models\User::role('Kepala Sekolah')->get() as $headmaster) {
-                $headmaster->notify(new \App\Notifications\PengajuanIzinGuruNotification(
-                    $izin,
-                    'approval_required',
-                    'Izin Pegawai Tetap '.$izin->guru->nama_lengkap.' menunggu persetujuan Anda.',
-                    route('kepala-sekolah.persetujuan-izin-guru.index')
-                ));
-            }
+            $telegramNotifications->notifyRoleApprovers($izin, 'kepsek');
             $izin->guru?->user?->notify(new \App\Notifications\PengajuanIzinGuruNotification(
                 $izin,
                 'status_updated',
                 'Permohonan izin disetujui KAUR SDM dan menunggu persetujuan akhir Kepala Sekolah.',
                 route('guru.izin.index')
             ));
+            $telegramNotifications->notifyApplicant($izin, 'Permohonan izin disetujui KAUR SDM dan menunggu persetujuan akhir Kepala Sekolah.');
 
             return back()->with('success', 'Persetujuan SDM tersimpan. Karena pemohon Pegawai Tetap, izin diteruskan ke Kepala Sekolah.');
         }
@@ -116,6 +111,7 @@ class PersetujuanIzinGuruController extends Controller
             $msg = 'Permohonan izin Anda telah disetujui sepenuhnya oleh KAUR SDM.';
             $url = route('guru.izin.index');
             $teacherUser->notify(new \App\Notifications\PengajuanIzinGuruNotification($izin, 'status_updated', $msg, $url));
+            $telegramNotifications->notifyApplicant($izin, $msg);
         }
 
         // Sync to AbsensiGuru
@@ -158,7 +154,7 @@ class PersetujuanIzinGuruController extends Controller
         return (new \chillerlan\QRCode\QRCode($options))->render($url);
     }
 
-    public function reject(Request $request, GuruIzin $izin)
+    public function reject(Request $request, GuruIzin $izin, TelegramLeaveNotificationService $telegramNotifications)
     {
         abort_unless(in_array($izin->kategori_penyetujuan, ['luar', 'tidak_masuk', 'terlambat'], true), 409, 'Kategori izin ini tidak memerlukan persetujuan SDM.');
         abort_unless($izin->status_kurikulum === 'disetujui' && $izin->status_sdm === 'menunggu', 409, 'Izin tidak lagi menunggu persetujuan SDM.');
@@ -177,6 +173,7 @@ class PersetujuanIzinGuruController extends Controller
             $msg = 'Permohonan izin Anda ditolak oleh KAUR SDM.';
             $url = route('guru.izin.index');
             $teacherUser->notify(new \App\Notifications\PengajuanIzinGuruNotification($izin, 'status_updated', $msg, $url));
+            $telegramNotifications->notifyApplicant($izin, $msg.' Catatan: '.$request->catatan_sdm);
         }
 
         return redirect()->back()->with('info', 'Permohonan izin telah ditolak oleh KAUR SDM.');

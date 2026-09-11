@@ -635,6 +635,95 @@ class TelegramNotificationTest extends TestCase
             && str_contains($request['text'], 'Data pendukung belum lengkap.'));
     }
 
+    public function test_telegram_can_complete_the_full_role_based_leave_approval_chain(): void
+    {
+        $bot = $this->createBot();
+        $applicant = $this->createLinkedEmployee($bot, 'Pegawai Tetap Pemohon', '998831');
+        $applicant->masterGuru->dapodikGuru->update(['status_kepegawaian' => 'Pegawai Tetap']);
+        $picket = $this->createLinkedEmployee($bot, 'Piket Telegram', '998832');
+        $curriculum = $this->createLinkedEmployee($bot, 'Kurikulum Telegram', '998833');
+        $sdm = $this->createLinkedEmployee($bot, 'SDM Telegram', '998834');
+        $headmaster = $this->createLinkedEmployee($bot, 'Kepala Sekolah Telegram', '998835');
+        $picket->assignRole(Role::findOrCreate('Guru Piket', 'web'));
+        $curriculum->assignRole(Role::findOrCreate('Kurikulum', 'web'));
+        $sdm->assignRole(Role::findOrCreate('KAUR SDM', 'web'));
+        $headmaster->assignRole(Role::findOrCreate('Kepala Sekolah', 'web'));
+        GuruPiketSchedule::create(['weekday' => 'Selasa', 'slot' => 1, 'user_id' => $picket->id]);
+        $izin = GuruIzin::create([
+            'master_guru_id' => $applicant->masterGuru->id,
+            'tanggal_mulai' => now()->addDay(),
+            'tanggal_selesai' => now()->addDay()->addHours(2),
+            'jenis_izin' => 'Dinas',
+            'kategori_penyetujuan' => 'luar',
+            'deskripsi' => 'Kegiatan dinas luar sekolah.',
+            'status_piket' => 'menunggu',
+            'status_kurikulum' => 'menunggu',
+            'status_sdm' => 'menunggu',
+        ]);
+
+        $this->sendPicketCallback($bot, '998832', 'piket:approve:'.$izin->id);
+        $this->sendPicketCallback($bot, '998833', 'kurikulum:approve:'.$izin->id);
+        $this->sendPicketCallback($bot, '998834', 'sdm:approve:'.$izin->id);
+        $this->sendPicketCallback($bot, '998835', 'kepsek:approve:'.$izin->id);
+
+        $this->assertDatabaseHas('guru_izins', [
+            'id' => $izin->id,
+            'status_piket' => 'disetujui',
+            'status_kurikulum' => 'disetujui',
+            'status_sdm' => 'disetujui',
+            'status_kepala_sekolah' => 'disetujui',
+            'piket_id' => $picket->id,
+            'kurikulum_id' => $curriculum->id,
+            'sdm_id' => $sdm->id,
+            'kepala_sekolah_id' => $headmaster->id,
+        ]);
+        foreach ([
+            '998833' => 'kurikulum:approve:'.$izin->id,
+            '998834' => 'sdm:approve:'.$izin->id,
+            '998835' => 'kepsek:approve:'.$izin->id,
+        ] as $chatId => $callbackData) {
+            Http::assertSent(fn ($request) => str_ends_with($request->url(), '/sendMessage')
+                && (string) $request['chat_id'] === (string) $chatId
+                && ($request['reply_markup']['inline_keyboard'][0][0]['callback_data'] ?? null) === $callbackData);
+        }
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/sendMessage')
+            && (string) $request['chat_id'] === '998831'
+            && str_contains($request['text'], 'disetujui sepenuhnya oleh Kepala Sekolah'));
+    }
+
+    public function test_linked_employee_can_request_the_last_seven_days_fingerprint_recap(): void
+    {
+        $bot = $this->createBot();
+        $employee = $this->createLinkedEmployee($bot, 'Pegawai Rekap Telegram', '998841');
+        $employee->assignRole(Role::findOrCreate('Guru Kelas', 'web'));
+        $device = FingerprintDevice::create(['name' => 'Mesin Telegram', 'ip_address' => '127.0.0.41']);
+        FingerprintAttendance::create([
+            'fingerprint_device_id' => $device->id,
+            'app_user_id' => $employee->id,
+            'user_id' => '841',
+            'uid' => '841',
+            'timestamp' => now()->copy()->setTime(7, 5),
+            'status' => 1,
+            'punch' => 0,
+        ]);
+        FingerprintAttendance::create([
+            'fingerprint_device_id' => $device->id,
+            'app_user_id' => $employee->id,
+            'user_id' => '841',
+            'uid' => '841',
+            'timestamp' => now()->copy()->setTime(16, 2),
+            'status' => 1,
+            'punch' => 1,
+        ]);
+
+        $this->sendBotMessage($bot, '998841', '/rekap_absensi');
+
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/sendMessage')
+            && (string) $request['chat_id'] === '998841'
+            && str_contains($request['text'], 'REKAP FINGERPRINT 7 HARI TERAKHIR')
+            && str_contains($request['text'], '07:05–16:02'));
+    }
+
     private function createBot(): TelegramBot
     {
         return TelegramBot::create([

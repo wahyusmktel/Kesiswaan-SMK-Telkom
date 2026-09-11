@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Kurikulum;
 
 use App\Http\Controllers\Controller;
 use App\Models\GuruIzin;
+use App\Services\PicketTeacherLeaveDecisionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -62,58 +63,17 @@ class PersetujuanIzinGuruController extends Controller
         }
     }
 
-    public function approve(GuruIzin $izin)
+    public function approve(GuruIzin $izin, PicketTeacherLeaveDecisionService $decisions)
     {
-        abort_unless($izin->kategori_penyetujuan === 'luar' && $izin->status_piket === 'disetujui' && $izin->status_kurikulum === 'menunggu', 409, 'Izin tidak lagi menunggu persetujuan Kurikulum.');
-        $izin->update([
-            'status_kurikulum' => 'disetujui',
-            'kurikulum_id' => Auth::id(),
-            'kurikulum_at' => now(),
-        ]);
-
-        // Auto-sign TTD Waka Kurikulum (izin guru)
-        $user = Auth::user();
-        $sig = \App\Models\UserDigitalSignature::where('user_id', $user->id)->first();
-        if ($sig && $sig->isReady() && $sig->auto_sign_izin_guru) {
-            \App\Models\DigitalDocument::autoSign(
-                $user,
-                'IZIN_GURU_KURIKULUM',
-                'Izin Guru (Kurikulum) - '.($izin->guru->nama_lengkap ?? ''),
-                $izin->id,
-                ['IZIN_GURU_KURIKULUM', (string) $izin->id, (string) $izin->master_guru_id, $izin->guru->nama_lengkap ?? '']
-            );
-        }
-
-        // Notify SDM
-        $approvers = \App\Models\User::role('KAUR SDM')->get();
-        $msg = 'Ada pengajuan Izin Guru (Luar Sekolah) yang perlu validasi akhir.';
-        $url = route('sdm.persetujuan-izin-guru.index');
-        foreach ($approvers as $approver) {
-            $approver->notify(new \App\Notifications\PengajuanIzinGuruNotification($izin, 'pending_approval', $msg, $url));
-        }
+        $decisions->approveKurikulum($izin, Auth::user());
 
         return redirect()->back()->with('success', 'Permohonan izin diteruskan ke KAUR SDM.');
     }
 
-    public function reject(Request $request, GuruIzin $izin)
+    public function reject(Request $request, GuruIzin $izin, PicketTeacherLeaveDecisionService $decisions)
     {
-        abort_unless($izin->kategori_penyetujuan === 'luar' && $izin->status_piket === 'disetujui' && $izin->status_kurikulum === 'menunggu', 409, 'Izin tidak lagi menunggu persetujuan Kurikulum.');
         $request->validate(['catatan_kurikulum' => 'required|string']);
-
-        $izin->update([
-            'status_kurikulum' => 'ditolak',
-            'kurikulum_id' => Auth::id(),
-            'kurikulum_at' => now(),
-            'catatan_kurikulum' => $request->catatan_kurikulum,
-        ]);
-
-        // Notify Teacher
-        $teacherUser = $izin->guru->user;
-        if ($teacherUser) {
-            $msg = 'Permohonan izin Anda ditolak oleh Waka Kurikulum.';
-            $url = route('guru.izin.index');
-            $teacherUser->notify(new \App\Notifications\PengajuanIzinGuruNotification($izin, 'status_updated', $msg, $url));
-        }
+        $decisions->rejectKurikulum($izin, Auth::user(), $request->catatan_kurikulum);
 
         return redirect()->back()->with('info', 'Permohonan izin telah ditolak oleh Waka Kurikulum.');
     }

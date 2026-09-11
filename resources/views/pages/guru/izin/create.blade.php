@@ -3,11 +3,15 @@
         <h2 class="font-bold text-xl text-gray-800 leading-tight">Pengajuan Izin Guru</h2>
     </x-slot>
 
-    <div class="py-6 w-full" x-data="permitForm()">
+    <div class="py-6 w-full" x-data="permitForm()" x-init="if (startDate) fetchSchedules()">
         <div class="w-full px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
             <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                 <form x-ref="form" action="{{ route('guru.izin.store') }}" method="POST" @submit.prevent="validateAndSubmit()">
                     @csrf
+                    <input type="hidden" name="work_schedule_validation_enabled" value="1">
+                    @if(session('schedule_warnings'))
+                        <input type="hidden" name="confirm_work_schedule_warning" value="{{ session('schedule_warning_token') }}">
+                    @endif
                     <div class="p-8 space-y-8">
                         <div>
                             <h3 class="text-xl font-bold text-gray-900 mb-1">Informasi Izin</h3>
@@ -23,6 +27,18 @@
                                     <p class="text-sm font-black">Gagal Mengajukan Izin</p>
                                     <p class="text-xs font-medium opacity-80">{{ session('error') }}</p>
                                 </div>
+                            </div>
+                        @endif
+
+                        @if(session('schedule_warnings'))
+                            <div class="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-amber-900">
+                                <p class="text-sm font-black">Peringatan Waktu Izin</p>
+                                <p class="mt-1 text-xs">Rentang yang dipilih berada di luar kewajiban kerja atau pada hari libur. Periksa kembali, lalu tekan Kirim Pengajuan jika memang benar.</p>
+                                <ul class="mt-2 list-disc pl-5 text-xs font-medium space-y-1">
+                                    @foreach(session('schedule_warnings') as $warning)
+                                        <li>{{ $warning }}</li>
+                                    @endforeach
+                                </ul>
                             </div>
                         @endif
 
@@ -46,10 +62,10 @@
                                 <select name="jenis_izin" required
                                     class="w-full rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500">
                                     <option value="">Pilih Jenis</option>
-                                    <option value="Sakit">Sakit</option>
-                                    <option value="Dinas">Dinas Out</option>
-                                    <option value="Keperluan Pribadi">Keperluan Pribadi</option>
-                                    <option value="Lainnya">Lainnya</option>
+                                    <option value="Sakit" {{ old('jenis_izin') === 'Sakit' ? 'selected' : '' }}>Sakit</option>
+                                    <option value="Dinas" {{ old('jenis_izin') === 'Dinas' ? 'selected' : '' }}>Dinas Out</option>
+                                    <option value="Keperluan Pribadi" {{ old('jenis_izin') === 'Keperluan Pribadi' ? 'selected' : '' }}>Keperluan Pribadi</option>
+                                    <option value="Lainnya" {{ old('jenis_izin') === 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
                                 </select>
                             </div>
 
@@ -75,7 +91,7 @@
                                 <label class="block text-sm font-bold text-gray-700">Alasan / Deskripsi</label>
                                 <textarea name="deskripsi" rows="3" required
                                     class="w-full rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
-                                    placeholder="Jelaskan alasan izin Anda..."></textarea>
+                                    placeholder="Jelaskan alasan izin Anda...">{{ old('deskripsi') }}</textarea>
                             </div>
                         </div>
 
@@ -210,8 +226,8 @@
     <script>
         function permitForm() {
             return {
-                startDate: '',
-                endDate: '',
+                startDate: @js(old('tanggal_mulai', '')),
+                endDate: @js(old('tanggal_selesai', '')),
                 schedules: [],
                 selectedIds: [],
                 lmsData: { materials: [], assignments: [] },
