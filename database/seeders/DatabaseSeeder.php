@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             WakaKesiswaanSeeder::class,
             KoordinatorPrakerinRoleSeeder::class,
             PetugasUksRoleSeeder::class,
+            OkrUnitRoleSeeder::class,
 
             JamPelajaranSeeder::class,
         ]);

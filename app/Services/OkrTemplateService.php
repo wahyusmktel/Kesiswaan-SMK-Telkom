@@ -145,15 +145,15 @@ class OkrTemplateService
     private function units(): array
     {
         return [
-            ['code' => 'QMR', 'name' => 'QMR', 'role_names' => ['Kepala Sekolah', 'Super Admin']],
+            ['code' => 'QMR', 'name' => 'QMR', 'role_names' => ['QMR', 'Kepala Sekolah', 'Super Admin']],
             ['code' => 'KURIKULUM', 'name' => 'Kurikulum', 'role_names' => ['Kurikulum', 'Kaprodi', 'Guru Kelas', 'Wali Kelas']],
-            ['code' => 'KESISWAAN', 'name' => 'Kesiswaan', 'role_names' => ['Waka Kesiswaan', 'Guru BK', 'Guru Piket', 'Petugas UKS']],
-            ['code' => 'HUBIN-SINERGI', 'name' => 'Hubin Sinergi UP dan Alumni', 'role_names' => ['Koordinator Prakerin']],
-            ['code' => 'HUBIN-PPDB', 'name' => 'Hubin PPDB', 'role_names' => ['Operator']],
-            ['code' => 'HUMAN-CAPITAL', 'name' => 'Human Capital', 'role_names' => ['KAUR SDM']],
-            ['code' => 'KEUANGAN', 'name' => 'Keuangan', 'role_names' => ['Tata Usaha', 'Kantin']],
-            ['code' => 'SARPRAS', 'name' => 'Sarana dan Prasarana', 'role_names' => ['Security']],
-            ['code' => 'IT', 'name' => 'IT', 'role_names' => ['Super Admin']],
+            ['code' => 'KESISWAAN', 'name' => 'Kesiswaan', 'role_names' => ['Kesiswaan', 'Waka Kesiswaan', 'Guru BK', 'Guru Piket', 'Petugas UKS']],
+            ['code' => 'HUBIN-SINERGI', 'name' => 'Hubin Sinergi UP dan Alumni', 'role_names' => ['Hubin Sinergi UP dan Alumni', 'Koordinator Prakerin']],
+            ['code' => 'HUBIN-PPDB', 'name' => 'Hubin PPDB', 'role_names' => ['Hubin PPDB', 'Operator']],
+            ['code' => 'HUMAN-CAPITAL', 'name' => 'Human Capital', 'role_names' => ['Human Capital', 'KAUR SDM']],
+            ['code' => 'KEUANGAN', 'name' => 'Keuangan', 'role_names' => ['Keuangan', 'Tata Usaha', 'Kantin']],
+            ['code' => 'SARPRAS', 'name' => 'Sarana dan Prasarana', 'role_names' => ['Sarana dan Prasarana', 'KAUR SARPRA', 'Security']],
+            ['code' => 'IT', 'name' => 'IT', 'role_names' => ['IT', 'Super Admin']],
         ];
     }
 

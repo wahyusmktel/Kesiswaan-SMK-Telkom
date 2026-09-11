@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\OkrPeriod;
 use App\Models\OkrPlan;
+use App\Models\OkrProgressUpdate;
 use App\Models\OkrUnit;
 use App\Models\OkrWeeklyReport;
 use App\Models\User;
+use App\Services\OkrProgressService;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Http\RedirectResponse;
@@ -40,6 +42,13 @@ class OkrWeeklyReportController extends Controller
             ->get()
             ->keyBy('okr_unit_id');
         $report = $reports->get($selectedUnit->id);
+        $previousReport = OkrWeeklyReport::with('items')
+            ->where('okr_period_id', $period->id)
+            ->where('okr_unit_id', $selectedUnit->id)
+            ->whereDate('week_start', $weekStart->subWeek())
+            ->first();
+        $carryForwardCount = $report ? 0 : $this->unfinishedItems($previousReport)->count();
+        $progressRecommendations = $this->progressRecommendations($report, $period);
 
         $scopeReports = $this->isExecutiveViewer($request->user())
             ? $reports->values()
@@ -103,6 +112,10 @@ class OkrWeeklyReportController extends Controller
             'availablePlans' => $availablePlans,
             'unitSummaries' => $unitSummaries,
             'weeklyTrend' => $weeklyTrend,
+            'carryForwardCount' => $carryForwardCount,
+            'progressRecommendations' => $progressRecommendations,
+            'linkedProgressCount' => $report?->items->whereNotNull('okr_plan_id')->count() ?? 0,
+            'appliedProgressCount' => $report?->items->whereNotNull('progress_applied_at')->count() ?? 0,
             'stats' => [
                 'reported_units' => $scopeReports->whereIn('status', ['submitted', 'reviewed'])->count(),
                 'expected_units' => $this->isExecutiveViewer($request->user()) ? $units->count() : count($editableUnitIds),
@@ -194,6 +207,73 @@ class OkrWeeklyReportController extends Controller
         ])->with('success', 'Rencana rapat Senin berhasil disimpan.');
     }
 
+    public function copyPrevious(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'okr_period_id' => ['required', 'exists:okr_periods,id'],
+            'okr_unit_id' => ['required', 'exists:okr_units,id'],
+            'week_start' => ['required', 'date'],
+        ]);
+
+        $period = OkrPeriod::findOrFail($validated['okr_period_id']);
+        $unit = OkrUnit::findOrFail($validated['okr_unit_id']);
+        $this->ensureUnitEditor($request->user(), $unit);
+        $weekStart = $this->weekStart($validated['week_start']);
+
+        abort_if(
+            OkrWeeklyReport::query()
+                ->where('okr_period_id', $period->id)
+                ->where('okr_unit_id', $unit->id)
+                ->whereDate('week_start', $weekStart)
+                ->exists(),
+            422,
+            'Rencana pada pekan tujuan sudah tersedia.'
+        );
+
+        $previousReport = OkrWeeklyReport::with('items')
+            ->where('okr_period_id', $period->id)
+            ->where('okr_unit_id', $unit->id)
+            ->whereDate('week_start', $weekStart->subWeek())
+            ->first();
+        $unfinishedItems = $this->unfinishedItems($previousReport)->take(3)->values();
+
+        abort_if($unfinishedItems->isEmpty(), 422, 'Tidak ada komitmen pekan sebelumnya yang perlu dilanjutkan.');
+
+        DB::transaction(function () use ($request, $period, $unit, $weekStart, $previousReport, $unfinishedItems) {
+            $report = OkrWeeklyReport::create([
+                'okr_period_id' => $period->id,
+                'okr_unit_id' => $unit->id,
+                'week_start' => $weekStart,
+                'week_end' => $weekStart->addDays(4),
+                'weekly_focus' => 'Lanjutan: '.$previousReport->weekly_focus,
+                'support_needed' => $previousReport->support_needed,
+                'status' => 'draft',
+                'created_by' => $request->user()->id,
+            ]);
+
+            foreach ($unfinishedItems as $index => $sourceItem) {
+                $report->items()->create([
+                    'okr_plan_id' => $sourceItem->okr_plan_id,
+                    'priority_order' => $index + 1,
+                    'commitment' => filled($sourceItem->next_follow_up)
+                        ? $sourceItem->next_follow_up
+                        : $sourceItem->commitment,
+                    'measurable_target' => $sourceItem->measurable_target,
+                    'cross_unit_dependencies' => $sourceItem->cross_unit_dependencies,
+                    'approval_needs' => $sourceItem->approval_needs,
+                    'completion_percent' => 0,
+                    'final_status' => 'not_started',
+                ]);
+            }
+        });
+
+        return redirect()->route('okr.weekly.index', [
+            'period_id' => $period->id,
+            'unit_id' => $unit->id,
+            'week_start' => $weekStart->format('Y-m-d'),
+        ])->with('success', $unfinishedItems->count().' komitmen belum selesai berhasil disalin ke rencana pekan ini.');
+    }
+
     public function submitEvaluation(Request $request, OkrWeeklyReport $weeklyReport): RedirectResponse
     {
         $this->ensureUnitEditor($request->user(), $weeklyReport->unit);
@@ -262,6 +342,83 @@ class OkrWeeklyReportController extends Controller
             ->with('success', 'Laporan pekanan telah ditinjau.');
     }
 
+    public function applyProgress(
+        Request $request,
+        OkrWeeklyReport $weeklyReport,
+        OkrProgressService $progress
+    ): RedirectResponse {
+        $this->ensureUnitEditor($request->user(), $weeklyReport->unit);
+        abort_unless($weeklyReport->status === 'reviewed', 422, 'Progres hanya dapat diperbarui dari laporan yang sudah ditinjau.');
+
+        $validated = $request->validate([
+            'recorded_at' => ['required', 'date'],
+            'plans' => ['required', 'array'],
+            'plans.*.progress_percent' => ['required', 'numeric', 'between:0,100'],
+            'plans.*.status' => ['required', Rule::in(['not_started', 'in_progress', 'at_risk', 'completed'])],
+            'plans.*.note' => ['required', 'string', 'max:4000'],
+            'plans.*.evidence' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx', 'max:10240'],
+        ]);
+
+        DB::transaction(function () use ($request, $validated, $weeklyReport, $progress) {
+            $pendingItems = $weeklyReport->items()
+                ->whereNotNull('okr_plan_id')
+                ->whereNull('progress_applied_at')
+                ->lockForUpdate()
+                ->get()
+                ->groupBy('okr_plan_id');
+            $expectedPlanIds = $pendingItems->keys()->map(fn ($id) => (string) $id)->sort()->values();
+            $submittedPlanIds = collect(array_keys($validated['plans']))->map(fn ($id) => (string) $id)->sort()->values();
+
+            abort_if($expectedPlanIds->isEmpty(), 422, 'Semua target terkait sudah diperbarui dari laporan ini.');
+            abort_unless($expectedPlanIds->all() === $submittedPlanIds->all(), 422, 'Daftar target OKR tidak sesuai dengan laporan pekanan.');
+
+            foreach ($pendingItems as $planId => $items) {
+                $plan = OkrPlan::findOrFail($planId);
+                $this->ensurePlanBelongsToScope($plan->id, $weeklyReport->unit, $weeklyReport->period);
+                $input = $validated['plans'][$planId];
+                $before = (float) $plan->progress_percent;
+                $status = $input['status'];
+                $progressPercent = $status === 'completed' ? 100 : (float) $input['progress_percent'];
+                $status = $progressPercent >= 100 ? 'completed' : $status;
+                $currentValue = $plan->target_value !== null
+                    ? round((float) $plan->target_value * ($progressPercent / 100), 2)
+                    : $plan->current_value;
+                $evidencePath = $request->file("plans.{$planId}.evidence")?->store('okr-evidence', 'public');
+
+                $plan->update([
+                    'progress_percent' => $progressPercent,
+                    'current_value' => $currentValue,
+                    'status' => $status,
+                    'latest_evaluation' => $input['note'],
+                    'completed_at' => $status === 'completed' ? ($plan->completed_at ?? now()) : null,
+                ]);
+
+                $update = OkrProgressUpdate::create([
+                    'okr_plan_id' => $plan->id,
+                    'user_id' => $request->user()->id,
+                    'progress_before' => $before,
+                    'progress_after' => $progressPercent,
+                    'current_value' => $currentValue,
+                    'status' => $status,
+                    'note' => $input['note'],
+                    'evidence_path' => $evidencePath,
+                    'recorded_at' => $validated['recorded_at'],
+                ]);
+
+                $weeklyReport->items()->whereIn('id', $items->pluck('id'))->update([
+                    'okr_progress_update_id' => $update->id,
+                    'progress_applied_by' => $request->user()->id,
+                    'progress_applied_at' => now(),
+                ]);
+
+                $progress->rollUp($plan->parent);
+            }
+        });
+
+        return redirect()->route('okr.weekly.index', $this->reportQuery($weeklyReport))
+            ->with('success', 'Progres OKR berhasil diperbarui dari laporan pekanan.');
+    }
+
     private function ensurePlanBelongsToScope(?int $planId, OkrUnit $unit, OkrPeriod $period): void
     {
         if (! $planId) {
@@ -276,6 +433,53 @@ class OkrWeeklyReportController extends Controller
             422,
             'Target OKR yang dipilih tidak sesuai dengan unit atau periode.'
         );
+    }
+
+    private function unfinishedItems(?OkrWeeklyReport $report)
+    {
+        return $report?->items
+            ->filter(fn ($item) => $item->final_status !== 'completed' || (float) $item->completion_percent < 100)
+            ->sortBy('priority_order')
+            ->values() ?? collect();
+    }
+
+    private function progressRecommendations(?OkrWeeklyReport $report, OkrPeriod $period)
+    {
+        if (! $report || $report->status !== 'reviewed') {
+            return collect();
+        }
+
+        return $report->items
+            ->whereNotNull('okr_plan_id')
+            ->whereNull('progress_applied_at')
+            ->groupBy('okr_plan_id')
+            ->map(function ($items) use ($period, $report) {
+                $plan = $items->first()->plan;
+                $startsAt = CarbonImmutable::parse($plan->starts_at ?? $period->starts_at ?? $report->week_start);
+                $endsAt = CarbonImmutable::parse($plan->ends_at ?? $period->ends_at ?? $report->week_end);
+                $durationWeeks = max(1, (int) ceil(($startsAt->diffInDays($endsAt) + 1) / 7));
+                $weeklyCompletion = round((float) $items->avg('completion_percent'), 1);
+                $increment = round(($weeklyCompletion / 100) * (100 / $durationWeeks), 1);
+                $current = (float) $plan->progress_percent;
+                $suggested = min(100, round($current + $increment, 1));
+                $status = match (true) {
+                    $suggested >= 100 => 'completed',
+                    $plan->status === 'at_risk' => 'at_risk',
+                    $suggested > 0 => 'in_progress',
+                    default => 'not_started',
+                };
+
+                return [
+                    'plan' => $plan,
+                    'item_count' => $items->count(),
+                    'weekly_completion' => $weeklyCompletion,
+                    'increment' => $increment,
+                    'suggested' => $suggested,
+                    'status' => $status,
+                    'note' => "Pembaruan dari laporan pekan {$report->week_start->format('d/m/Y')}: {$items->pluck('actual_result')->filter()->implode(' | ')}",
+                ];
+            })
+            ->values();
     }
 
     private function weekStart(?string $date): CarbonImmutable

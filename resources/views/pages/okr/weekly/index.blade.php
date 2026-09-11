@@ -92,6 +92,14 @@
                 </div>
 
                 @if($canEditSelected && (!$report || $report->status === 'draft'))
+                    @if(!$report && $carryForwardCount > 0)
+                        <div class="border-b border-blue-200 bg-blue-50 px-5 py-4">
+                            <div class="flex flex-wrap items-center justify-between gap-3">
+                                <div><p class="text-sm font-black text-blue-950">Ada {{ $carryForwardCount }} komitmen pekan lalu yang belum selesai</p><p class="mt-1 text-xs text-blue-700">Salin tindak lanjutnya sebagai draft pekan ini, lalu sesuaikan target sebelum disimpan.</p></div>
+                                <form method="POST" action="{{ route('okr.weekly.copy-previous') }}">@csrf<input type="hidden" name="okr_period_id" value="{{ $period->id }}"><input type="hidden" name="okr_unit_id" value="{{ $selectedUnit->id }}"><input type="hidden" name="week_start" value="{{ $weekStart->format('Y-m-d') }}"><button class="rounded-md bg-blue-700 px-4 py-2.5 text-xs font-black text-white hover:bg-blue-600">Salin yang Belum Selesai</button></form>
+                            </div>
+                        </div>
+                    @endif
                     <form method="POST" action="{{ route('okr.weekly.planning') }}" class="space-y-5 p-5">
                         @csrf
                         <input type="hidden" name="okr_period_id" value="{{ $period->id }}"><input type="hidden" name="okr_unit_id" value="{{ $selectedUnit->id }}"><input type="hidden" name="week_start" value="{{ $weekStart->format('Y-m-d') }}">
@@ -156,6 +164,41 @@
                         <form method="POST" action="{{ route('okr.weekly.review', $report) }}" class="border-t border-gray-200 bg-amber-50 p-5">@csrf<label class="block"><span class="mb-1.5 block text-xs font-black text-amber-900">Catatan Kepala Sekolah</span><textarea name="review_notes" rows="3" class="w-full rounded-md border-amber-200 text-sm" placeholder="Apresiasi, arahan, atau tindak lanjut yang perlu dilakukan..."></textarea></label><div class="mt-3 flex justify-end"><button class="rounded-md bg-gray-900 px-5 py-2.5 text-sm font-bold text-white">Tandai Sudah Ditinjau</button></div></form>
                     @elseif($report->status === 'reviewed')
                         <div class="border-t border-emerald-200 bg-emerald-50 px-5 py-4"><p class="text-xs font-black text-emerald-900">Ditinjau oleh {{ $report->reviewer?->name ?? 'Kepala Sekolah' }} · {{ $report->reviewed_at?->translatedFormat('d M Y H:i') }}</p>@if($report->review_notes)<p class="mt-2 text-sm text-emerald-800">{{ $report->review_notes }}</p>@endif</div>
+                    @endif
+
+                    @if($report->status === 'reviewed' && $progressRecommendations->isNotEmpty())
+                        @if($canEditSelected)
+                            <form method="POST" action="{{ route('okr.weekly.apply-progress', $report) }}" enctype="multipart/form-data" class="space-y-5 border-t border-indigo-200 bg-indigo-50/60 p-5">
+                                @csrf
+                                <div class="border-l-4 border-indigo-600 pl-4"><p class="text-sm font-black text-indigo-950">Perbarui Progres OKR dari Laporan Ini</p><p class="mt-1 text-xs leading-5 text-indigo-700">Sistem menghitung rekomendasi berdasarkan capaian pekan dan panjang periode target. Periksa angkanya, tambahkan catatan atau bukti, kemudian konfirmasi.</p></div>
+                                <label class="block max-w-xs"><span class="mb-1 block text-xs font-bold text-gray-700">Tanggal pencatatan progres</span><input type="date" name="recorded_at" value="{{ old('recorded_at', $report->week_end->format('Y-m-d')) }}" required class="w-full rounded-md border-gray-300 text-sm"></label>
+                                @foreach($progressRecommendations as $recommendation)
+                                    @php($plan = $recommendation['plan'])
+                                    <div class="rounded-md border border-indigo-200 bg-white p-4">
+                                        <p class="text-xs font-black uppercase text-indigo-600">{{ strtoupper($plan->level) }} · {{ $recommendation['item_count'] }} komitmen terkait</p>
+                                        <p class="mt-1 text-sm font-black text-gray-900">{{ $plan->title }}</p>
+                                        <div class="mt-3 grid gap-3 sm:grid-cols-3">
+                                            <div class="rounded bg-gray-50 p-3"><p class="text-[10px] font-black uppercase text-gray-400">Progres sekarang</p><p class="mt-1 text-xl font-black text-gray-900">{{ (float) $plan->progress_percent }}%</p></div>
+                                            <div class="rounded bg-blue-50 p-3"><p class="text-[10px] font-black uppercase text-blue-500">Capaian pekan</p><p class="mt-1 text-xl font-black text-blue-800">{{ $recommendation['weekly_completion'] }}%</p></div>
+                                            <div class="rounded bg-indigo-50 p-3"><p class="text-[10px] font-black uppercase text-indigo-500">Rekomendasi kenaikan</p><p class="mt-1 text-xl font-black text-indigo-800">+{{ $recommendation['increment'] }}%</p></div>
+                                        </div>
+                                        <div class="mt-4 grid gap-4 lg:grid-cols-2">
+                                            <label><span class="mb-1 block text-xs font-bold">Progres OKR setelah diperbarui (%)</span><input type="number" name="plans[{{ $plan->id }}][progress_percent]" value="{{ old("plans.{$plan->id}.progress_percent", $recommendation['suggested']) }}" min="0" max="100" step="0.1" required class="w-full rounded-md border-gray-300 text-sm"></label>
+                                            <label><span class="mb-1 block text-xs font-bold">Status target</span><select name="plans[{{ $plan->id }}][status]" class="w-full rounded-md border-gray-300 text-sm"><option value="not_started" @selected(old("plans.{$plan->id}.status", $recommendation['status']) === 'not_started')>Belum dimulai</option><option value="in_progress" @selected(old("plans.{$plan->id}.status", $recommendation['status']) === 'in_progress')>Berjalan</option><option value="at_risk" @selected(old("plans.{$plan->id}.status", $recommendation['status']) === 'at_risk')>Berisiko</option><option value="completed" @selected(old("plans.{$plan->id}.status", $recommendation['status']) === 'completed')>Tercapai</option></select></label>
+                                            <label class="lg:col-span-2"><span class="mb-1 block text-xs font-bold">Catatan evaluasi</span><textarea name="plans[{{ $plan->id }}][note]" rows="3" required class="w-full rounded-md border-gray-300 text-sm">{{ old("plans.{$plan->id}.note", $recommendation['note']) }}</textarea></label>
+                                            <label class="lg:col-span-2"><span class="mb-1 block text-xs font-bold">Bukti tambahan <span class="font-normal text-gray-400">(opsional bila bukti sudah dilampirkan pada evaluasi Jumat)</span></span><input type="file" name="plans[{{ $plan->id }}][evidence]" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx" class="w-full rounded-md border border-gray-300 bg-white p-2 text-xs"></label>
+                                        </div>
+                                    </div>
+                                @endforeach
+                                <div class="flex justify-end"><button class="rounded-md bg-indigo-700 px-5 py-2.5 text-sm font-black text-white hover:bg-indigo-600">Konfirmasi dan Perbarui Progres</button></div>
+                            </form>
+                        @else
+                            <div class="border-t border-indigo-200 bg-indigo-50 px-5 py-4 text-xs font-semibold text-indigo-800">Laporan sudah direview. Unit {{ $selectedUnit->name }} dapat mengonfirmasi rekomendasi pembaruan progres OKR dari laporan ini.</div>
+                        @endif
+                    @elseif($report->status === 'reviewed' && $linkedProgressCount > 0 && $appliedProgressCount >= $linkedProgressCount)
+                        <div class="border-t border-emerald-200 bg-emerald-50 px-5 py-4 text-xs font-black text-emerald-800">Progres seluruh target OKR terkait sudah diperbarui dari laporan ini.</div>
+                    @elseif($report->status === 'reviewed' && $linkedProgressCount === 0)
+                        <div class="border-t border-amber-200 bg-amber-50 px-5 py-4 text-xs font-semibold text-amber-800">Laporan belum dapat memperbarui progres karena komitmennya belum dikaitkan dengan target OKR.</div>
                     @endif
                 @endif
             </section>

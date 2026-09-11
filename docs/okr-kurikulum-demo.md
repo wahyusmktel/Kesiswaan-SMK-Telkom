@@ -20,6 +20,8 @@ Seeder akan menyinkronkan Matriks OKR Sekolah, memasukkan 16 Objektif Unit dan 4
 5. **Jumat: unit melakukan evaluasi.** Unit mengisi capaian aktual, persentase penyelesaian, status, kendala, dan tindak lanjut untuk pekan berikutnya, lalu mengirim laporan.
 6. **Kepala Sekolah memonitor seluruh unit.** Dashboard menampilkan kepatuhan pelaporan, status pencapaian, tren beberapa pekan, dan rincian komitmen tiap unit.
 7. **Kepala Sekolah memberi review.** Setelah direview, laporan terkunci sehingga menjadi rekam jejak akuntabilitas rapat, bukan file yang dapat berubah tanpa jejak.
+8. **Unit mengonfirmasi pembaruan progres OKR.** SISFO menghitung rekomendasi kenaikan berdasarkan capaian pekan dan panjang periode target. Unit memeriksa angka, catatan, serta bukti sebelum menyimpannya ke riwayat progres OKR.
+9. **Pekerjaan yang belum selesai dibawa ke pekan berikutnya.** Tombol **Salin yang Belum Selesai** hanya mengambil komitmen berstatus belum dimulai, berjalan, atau terhambat; komitmen yang sudah tercapai tidak disalin.
 
 ## Contoh narasi singkat
 
@@ -38,3 +40,4 @@ Seeder akan menyinkronkan Matriks OKR Sekolah, memasukkan 16 Objektif Unit dan 4
 - Data pekan 7–11 September 2026 adalah contoh demonstrasi yang berasal dari laporan manual Kurikulum.
 - Untuk pekan berikutnya, unit mengisi langsung di SISFO; tidak perlu membuat salinan Excel baru.
 - Persentase pada laporan pekanan menggambarkan penyelesaian komitmen pekan tersebut. Progres utama OKR tetap dicatat melalui pembaruan progres OKR agar setiap perubahan disertai nilai, evaluasi, tanggal, dan bukti yang jelas.
+- Role pengelola tersedia untuk QMR, Kurikulum, Kesiswaan, Hubin Sinergi UP dan Alumni, Hubin PPDB, Human Capital, Keuangan, Sarana dan Prasarana, serta IT. Super Admin cukup memasangkan role unit yang sesuai kepada pegawai penanggung jawab.

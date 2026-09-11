@@ -1451,8 +1451,10 @@ Route::middleware(['auth', 'non.student'])->prefix('okr-sekolah')->name('okr.')-
     Route::get('/', [\App\Http\Controllers\OkrController::class, 'index'])->name('index');
     Route::get('/laporan-pekanan', [\App\Http\Controllers\OkrWeeklyReportController::class, 'index'])->name('weekly.index');
     Route::post('/laporan-pekanan/rencana', [\App\Http\Controllers\OkrWeeklyReportController::class, 'savePlanning'])->name('weekly.planning');
+    Route::post('/laporan-pekanan/salin-sebelumnya', [\App\Http\Controllers\OkrWeeklyReportController::class, 'copyPrevious'])->name('weekly.copy-previous');
     Route::post('/laporan-pekanan/{weeklyReport}/evaluasi', [\App\Http\Controllers\OkrWeeklyReportController::class, 'submitEvaluation'])->name('weekly.evaluation');
     Route::post('/laporan-pekanan/{weeklyReport}/tinjau', [\App\Http\Controllers\OkrWeeklyReportController::class, 'review'])->name('weekly.review');
+    Route::post('/laporan-pekanan/{weeklyReport}/perbarui-progres', [\App\Http\Controllers\OkrWeeklyReportController::class, 'applyProgress'])->name('weekly.apply-progress');
     Route::post('/periods', [\App\Http\Controllers\OkrController::class, 'storePeriod'])->name('periods.store');
     Route::patch('/periods/{period}', [\App\Http\Controllers\OkrController::class, 'updatePeriod'])->name('periods.update');
     Route::post('/objectives', [\App\Http\Controllers\OkrController::class, 'storeObjective'])->name('objectives.store');
