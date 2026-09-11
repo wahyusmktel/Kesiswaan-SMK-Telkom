@@ -18,12 +18,12 @@ class TelegramPicketApprovalService
         private readonly PicketTeacherLeaveDecisionService $decisions,
     ) {}
 
-    public function handleCallback(TelegramBot $bot, TelegramUserLink $link, array $callback): void
+    public function handleCallback(TelegramBot $bot, TelegramUserLink $link, array $callback, bool $acknowledge = true): void
     {
         $callbackId = (string) data_get($callback, 'id');
         $data = (string) data_get($callback, 'data');
         if (! preg_match('/^(piket|kurikulum|sdm|kepsek):(approve|reject):(\d+)$/', $data, $matches)) {
-            $this->answer($bot, $callbackId, 'Perintah tidak dikenali.');
+            $this->answerWhenRequested($acknowledge, $bot, $callbackId, 'Perintah tidak dikenali.');
 
             return;
         }
@@ -31,14 +31,14 @@ class TelegramPicketApprovalService
         $link->loadMissing('user.roles');
         $stage = $matches[1];
         if ($bot->purpose !== 'employment' || ! $link->user || ! $this->authorized($stage, $link->user)) {
-            $this->answer($bot, $callbackId, 'Akses ditolak: akun atau jadwal tugas Anda tidak sesuai tahap persetujuan ini.');
+            $this->answerWhenRequested($acknowledge, $bot, $callbackId, 'Akses ditolak: akun atau jadwal tugas Anda tidak sesuai tahap persetujuan ini.');
 
             return;
         }
 
         $izin = GuruIzin::find($matches[3]);
         if (! $izin || ! $this->isPending($stage, $izin)) {
-            $this->answer($bot, $callbackId, 'Izin ini sudah diputuskan atau tidak tersedia.');
+            $this->answerWhenRequested($acknowledge, $bot, $callbackId, 'Izin ini sudah diputuskan atau tidak tersedia.');
 
             return;
         }
@@ -55,13 +55,13 @@ class TelegramPicketApprovalService
                     'expires_at' => now()->addHour(),
                 ],
             );
-            $this->answer($bot, $callbackId, 'Silakan tulis alasan penolakan.');
+            $this->answerWhenRequested($acknowledge, $bot, $callbackId, 'Silakan tulis alasan penolakan.');
             $this->telegram->reply($bot, $chatId, "Tuliskan alasan penolakan untuk pengajuan izin #{$izin->id} (minimal 5 karakter). Ketik /batal untuk membatalkan.", ['remove_keyboard' => true]);
 
             return;
         }
 
-        $this->answer($bot, $callbackId, 'Persetujuan sedang diproses.');
+        $this->answerWhenRequested($acknowledge, $bot, $callbackId, 'Persetujuan sedang diproses.');
         try {
             $result = $this->approve($stage, $izin, $link->user);
             $this->clearKeyboard($bot, $chatId, $messageId);
@@ -234,6 +234,13 @@ class TelegramPicketApprovalService
         try {
             $this->telegram->answerCallbackQuery($bot, $callbackId, $text);
         } catch (Throwable) {
+        }
+    }
+
+    private function answerWhenRequested(bool $acknowledge, TelegramBot $bot, string $callbackId, string $text): void
+    {
+        if ($acknowledge) {
+            $this->answer($bot, $callbackId, $text);
         }
     }
 

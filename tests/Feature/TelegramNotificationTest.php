@@ -244,7 +244,7 @@ class TelegramNotificationTest extends TestCase
                     'from' => ['id' => 998804, 'first_name' => 'Guru'],
                     'text' => '/start sisfo',
                 ],
-            ])->assertOk();
+            ])->assertOk()->assertJson(['ok' => true]);
 
         Http::assertSent(fn ($request) => str_ends_with($request->url(), '/setMyCommands')
             && $request['scope']['type'] === 'chat'
@@ -261,7 +261,7 @@ class TelegramNotificationTest extends TestCase
                     'from' => ['id' => 998804, 'first_name' => 'Guru'],
                     'text' => '/start sisfo',
                 ],
-            ])->assertOk();
+            ])->assertOk()->assertJson(['ok' => true]);
         $commandRequests = collect(Http::recorded())
             ->filter(fn ($record) => str_ends_with($record[0]->url(), '/setMyCommands'));
         $this->assertCount(1, $commandRequests, 'Perintah Telegram tidak boleh dikirim ulang jika menu akun tidak berubah.');
@@ -614,7 +614,11 @@ class TelegramNotificationTest extends TestCase
                     'message' => ['message_id' => 77, 'chat' => ['id' => 998812, 'type' => 'private']],
                     'data' => 'piket:approve:'.$izin->id,
                 ],
-            ])->assertOk();
+            ])->assertOk()->assertJson([
+                'method' => 'answerCallbackQuery',
+                'callback_query_id' => 'callback-approve',
+                'text' => 'Keputusan sedang diproses.',
+            ]);
 
         $this->assertDatabaseHas('guru_izins', ['id' => $izin->id, 'status_piket' => 'disetujui', 'piket_id' => $scheduled->id]);
         Http::assertSent(fn ($request) => str_ends_with($request->url(), '/sendMessage')
@@ -779,15 +783,20 @@ class TelegramNotificationTest extends TestCase
 
     private function sendPicketCallback(TelegramBot $bot, string $chatId, string $data): void
     {
+        $callbackId = 'callback-'.$chatId;
         $this->withHeader('X-Telegram-Bot-Api-Secret-Token', $bot->webhook_secret)
             ->postJson(route('telegram.webhook', $bot->slug), [
                 'callback_query' => [
-                    'id' => 'callback-'.$chatId,
+                    'id' => $callbackId,
                     'from' => ['id' => (int) $chatId],
                     'message' => ['message_id' => 88, 'chat' => ['id' => (int) $chatId, 'type' => 'private']],
                     'data' => $data,
                 ],
-            ])->assertOk();
+            ])->assertOk()->assertJson([
+                'method' => 'answerCallbackQuery',
+                'callback_query_id' => $callbackId,
+                'text' => 'Keputusan sedang diproses.',
+            ]);
     }
 
     private function createLinkedEmployee(TelegramBot $bot, string $name, string $chatId): User

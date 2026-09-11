@@ -10,6 +10,8 @@ use App\Services\TelegramPicketApprovalService;
 use App\Services\TelegramService;
 use App\Services\TelegramTeacherLeaveService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class TelegramWebhookController extends Controller
 {
@@ -29,12 +31,33 @@ class TelegramWebhookController extends Controller
                 ->with(['user.roles', 'user.masterGuru'])
                 ->first();
             if ($link) {
-                $picketApproval->handleCallback($telegramBot, $link, $callback);
-            } else {
-                $telegram->answerCallbackQuery($telegramBot, (string) data_get($callback, 'id'), 'Hubungkan akun SISFO Anda terlebih dahulu.');
-            }
+                $callbackId = (string) data_get($callback, 'id');
+                app()->terminating(function () use ($telegramBot, $link, $callback, $picketApproval): void {
+                    try {
+                        $picketApproval->handleCallback($telegramBot, $link, $callback, false);
+                    } catch (Throwable $error) {
+                        Log::error('Pemrosesan callback persetujuan izin Telegram gagal.', [
+                            'telegram_bot_id' => $telegramBot->id,
+                            'telegram_user_link_id' => $link->id,
+                            'callback_data' => data_get($callback, 'data'),
+                            'error' => $error->getMessage(),
+                        ]);
+                    }
+                });
 
-            return $this->telegramResponse($telegram);
+                return response()->json([
+                    'method' => 'answerCallbackQuery',
+                    'callback_query_id' => $callbackId,
+                    'text' => 'Keputusan sedang diproses.',
+                ]);
+            } else {
+                return response()->json([
+                    'method' => 'answerCallbackQuery',
+                    'callback_query_id' => (string) data_get($callback, 'id'),
+                    'text' => 'Hubungkan akun SISFO Anda terlebih dahulu.',
+                    'show_alert' => true,
+                ]);
+            }
         }
 
         $message = $request->input('message');
