@@ -119,10 +119,15 @@
                         <h3 class="font-black text-gray-900">Matriks Objektif dan Key Result</h3>
                         <p class="mt-1 text-xs text-gray-500">{{ $period->title }} · Unit {{ $selectedUnit?->name }}</p>
                     </div>
-                    @if($canManageAll)
+                    @if($canManageMatrix || $canManageAll)
                         <div class="flex gap-2">
-                            <button type="button" @click="showObjectiveModal = true" class="rounded-md border border-gray-300 px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50">Tambah Objektif</button>
-                            <button type="button" @click="showPeriodModal = true" class="rounded-md bg-gray-900 px-3 py-2 text-xs font-bold text-white hover:bg-gray-800">Kelola Periode</button>
+                            @if($canManageMatrix)
+                                <button type="button" @click="showObjectiveModal = true" class="rounded-md border border-gray-300 px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50">Tambah Objektif</button>
+                                <button type="button" @click="openKeyResult('')" class="rounded-md bg-indigo-600 px-3 py-2 text-xs font-bold text-white hover:bg-indigo-500">Tambah Key Result</button>
+                            @endif
+                            @if($canManageAll)
+                                <button type="button" @click="showPeriodModal = true" class="rounded-md bg-gray-900 px-3 py-2 text-xs font-bold text-white hover:bg-gray-800">Kelola Periode</button>
+                            @endif
                         </div>
                     @endif
                 </div>
@@ -130,7 +135,32 @@
                 <div class="divide-y divide-gray-200">
                     @forelse($period->objectives as $objective)
                         <article x-data="{ open: true }">
-                            <button type="button" @click="open = !open" class="flex w-full items-center gap-4 bg-gray-50 px-5 py-4 text-left hover:bg-gray-100">
+                            <div class="flex items-center gap-2 bg-gray-50 px-5 py-4 hover:bg-gray-100">
+                                @if($canManageMatrix)
+                                    <details class="relative shrink-0">
+                                        <summary class="cursor-pointer list-none rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-bold text-gray-700 hover:border-indigo-300 hover:text-indigo-700">Edit</summary>
+                                        <div class="absolute left-0 z-30 mt-2 w-[min(86vw,520px)] border border-gray-200 bg-white p-4 shadow-xl">
+                                            <form method="POST" action="{{ route('okr.objectives.update', $objective) }}" class="space-y-3">
+                                                @csrf
+                                                @method('PATCH')
+                                                <p class="text-xs font-black text-gray-900">Edit Objektif {{ $objective->code }}</p>
+                                                <div class="grid gap-3 sm:grid-cols-[90px_1fr]">
+                                                    <input name="code" value="{{ $objective->code }}" required class="rounded-md border-gray-300 text-sm">
+                                                    <input name="title" value="{{ $objective->title }}" required class="rounded-md border-gray-300 text-sm">
+                                                </div>
+                                                <button class="rounded-md bg-gray-900 px-3 py-2 text-xs font-bold text-white">Simpan Perubahan</button>
+                                            </form>
+                                            @if($canManageAll)
+                                                <form method="POST" action="{{ route('okr.objectives.destroy', $objective) }}" class="mt-3 border-t border-gray-100 pt-3" onsubmit="return confirm('Hapus objektif beserta seluruh key result dan rencana unitnya?')">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button class="text-xs font-bold text-red-600 hover:underline">Hapus objektif</button>
+                                                </form>
+                                            @endif
+                                        </div>
+                                    </details>
+                                @endif
+                            <button type="button" @click="open = !open" class="flex min-w-0 flex-1 items-center gap-4 text-left">
                                 <span class="flex h-9 min-w-12 items-center justify-center rounded bg-gray-900 px-2 text-xs font-black text-white">{{ $objective->code }}</span>
                                 <span class="min-w-0 flex-1">
                                     <span class="block text-sm font-black text-gray-900">{{ $objective->title }}</span>
@@ -138,29 +168,11 @@
                                 </span>
                                 <svg class="h-5 w-5 text-gray-400 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                             </button>
+                            </div>
 
                             <div x-show="open" x-collapse>
-                                @if($canManageAll)
+                                @if($canManageMatrix)
                                     <div class="flex flex-wrap items-center justify-end gap-4 border-t border-gray-200 bg-white px-5 py-2">
-                                        <details class="relative">
-                                            <summary class="cursor-pointer list-none text-xs font-bold text-gray-500 hover:text-gray-800">Edit Objektif</summary>
-                                            <div class="absolute right-0 z-20 mt-2 w-[min(90vw,480px)] border border-gray-200 bg-white p-4 shadow-xl">
-                                                <form method="POST" action="{{ route('okr.objectives.update', $objective) }}" class="space-y-3">
-                                                    @csrf
-                                                    @method('PATCH')
-                                                    <div class="grid gap-3 sm:grid-cols-[90px_1fr]">
-                                                        <input name="code" value="{{ $objective->code }}" required class="rounded-md border-gray-300 text-sm">
-                                                        <input name="title" value="{{ $objective->title }}" required class="rounded-md border-gray-300 text-sm">
-                                                    </div>
-                                                    <button class="rounded-md bg-gray-900 px-3 py-2 text-xs font-bold text-white">Simpan Perubahan</button>
-                                                </form>
-                                                <form method="POST" action="{{ route('okr.objectives.destroy', $objective) }}" class="mt-3 border-t border-gray-100 pt-3" onsubmit="return confirm('Hapus objektif beserta seluruh key result dan rencana unitnya?')">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button class="text-xs font-bold text-red-600 hover:underline">Hapus objektif</button>
-                                                </form>
-                                            </div>
-                                        </details>
                                         <button type="button" @click="openKeyResult({{ $objective->id }})" class="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-800">
                                             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                                             Tambah Key Result
@@ -169,7 +181,39 @@
                                 @endif
                                 @foreach($objective->keyResults as $keyResult)
                                     <div class="border-t border-gray-200 first:border-t-0">
-                                        <div class="grid gap-4 px-5 py-4 lg:grid-cols-[minmax(0,1fr)_180px_auto] lg:items-center">
+                                        <div class="grid gap-4 px-5 py-4 lg:grid-cols-[auto_minmax(0,1fr)_180px_auto] lg:items-center">
+                                            @if($canManageMatrix)
+                                                <details class="relative lg:self-start">
+                                                    <summary class="cursor-pointer list-none rounded-md border border-gray-300 bg-white px-3 py-2 text-center text-xs font-bold text-gray-700 hover:border-indigo-300 hover:text-indigo-700">Edit</summary>
+                                                    <div class="absolute left-0 z-30 mt-2 w-[min(86vw,720px)] border border-gray-200 bg-white p-4 shadow-xl">
+                                                        <form method="POST" action="{{ route('okr.key-results.update', $keyResult) }}" class="grid gap-3 md:grid-cols-4">
+                                                            @csrf
+                                                            @method('PATCH')
+                                                            <input name="code" value="{{ $keyResult->code }}" required class="rounded-md border-gray-300 text-xs">
+                                                            <input name="title" value="{{ $keyResult->title }}" required class="rounded-md border-gray-300 text-xs md:col-span-2">
+                                                            <select name="metric_type" class="rounded-md border-gray-300 text-xs">
+                                                                @foreach(['percentage' => 'Persentase', 'number' => 'Jumlah', 'currency' => 'Rupiah', 'boolean' => 'Tercapai/tidak'] as $value => $label)
+                                                                    <option value="{{ $value }}" @selected($keyResult->metric_type === $value)>{{ $label }}</option>
+                                                                @endforeach
+                                                            </select>
+                                                            <textarea name="description" rows="2" required class="rounded-md border-gray-300 text-xs md:col-span-4">{{ $keyResult->description }}</textarea>
+                                                            <input type="number" name="baseline_value" value="{{ $keyResult->baseline_value }}" min="0" step="0.01" required class="rounded-md border-gray-300 text-xs" title="Nilai awal">
+                                                            <input type="number" name="target_value" value="{{ $keyResult->target_value }}" min="0" step="0.01" required class="rounded-md border-gray-300 text-xs" title="Nilai target">
+                                                            <input name="metric_unit" value="{{ $keyResult->metric_unit }}" required class="rounded-md border-gray-300 text-xs" title="Satuan">
+                                                            <input type="number" name="weight" value="{{ $keyResult->weight }}" min="0.01" step="0.01" required class="rounded-md border-gray-300 text-xs" title="Bobot">
+                                                            <input type="date" name="due_date" value="{{ $keyResult->due_date?->format('Y-m-d') }}" class="rounded-md border-gray-300 text-xs">
+                                                            <div class="flex items-center gap-4 md:col-span-3"><button class="rounded-md bg-gray-900 px-3 py-2 text-xs font-bold text-white">Simpan Key Result</button></div>
+                                                        </form>
+                                                        @if($canManageAll)
+                                                            <form method="POST" action="{{ route('okr.key-results.destroy', $keyResult) }}" class="mt-3 border-t border-gray-100 pt-3" onsubmit="return confirm('Hapus key result beserta seluruh rencana unitnya?')">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                                <button class="text-xs font-bold text-red-600 hover:underline">Hapus {{ $keyResult->code }}</button>
+                                                            </form>
+                                                        @endif
+                                                    </div>
+                                                </details>
+                                            @endif
                                             <div>
                                                 <div class="flex flex-wrap items-center gap-2">
                                                     <span class="rounded bg-red-50 px-2 py-1 text-[10px] font-black text-red-700">{{ $keyResult->code }}</span>
@@ -190,39 +234,6 @@
                                                 </button>
                                             @endif
                                         </div>
-
-                                        @if($canManageAll)
-                                            <details class="border-t border-dashed border-gray-200 bg-gray-50/60 px-5 py-2">
-                                                <summary class="cursor-pointer list-none text-[11px] font-bold text-gray-500 hover:text-gray-800">Edit struktur {{ $keyResult->code }}</summary>
-                                                <div class="py-3">
-                                                    <form method="POST" action="{{ route('okr.key-results.update', $keyResult) }}" class="grid gap-3 md:grid-cols-4">
-                                                        @csrf
-                                                        @method('PATCH')
-                                                        <input name="code" value="{{ $keyResult->code }}" required class="rounded-md border-gray-300 text-xs">
-                                                        <input name="title" value="{{ $keyResult->title }}" required class="rounded-md border-gray-300 text-xs md:col-span-2">
-                                                        <select name="metric_type" class="rounded-md border-gray-300 text-xs">
-                                                            @foreach(['percentage' => 'Persentase', 'number' => 'Jumlah', 'currency' => 'Rupiah', 'boolean' => 'Tercapai/tidak'] as $value => $label)
-                                                                <option value="{{ $value }}" @selected($keyResult->metric_type === $value)>{{ $label }}</option>
-                                                            @endforeach
-                                                        </select>
-                                                        <textarea name="description" rows="2" required class="rounded-md border-gray-300 text-xs md:col-span-4">{{ $keyResult->description }}</textarea>
-                                                        <input type="number" name="baseline_value" value="{{ $keyResult->baseline_value }}" min="0" step="0.01" required class="rounded-md border-gray-300 text-xs" title="Nilai awal">
-                                                        <input type="number" name="target_value" value="{{ $keyResult->target_value }}" min="0" step="0.01" required class="rounded-md border-gray-300 text-xs" title="Nilai target">
-                                                        <input name="metric_unit" value="{{ $keyResult->metric_unit }}" required class="rounded-md border-gray-300 text-xs" title="Satuan">
-                                                        <input type="number" name="weight" value="{{ $keyResult->weight }}" min="0.01" step="0.01" required class="rounded-md border-gray-300 text-xs" title="Bobot">
-                                                        <input type="date" name="due_date" value="{{ $keyResult->due_date?->format('Y-m-d') }}" class="rounded-md border-gray-300 text-xs">
-                                                        <div class="flex items-center gap-4 md:col-span-3">
-                                                            <button class="rounded-md bg-gray-900 px-3 py-2 text-xs font-bold text-white">Simpan Key Result</button>
-                                                        </div>
-                                                    </form>
-                                                    <form method="POST" action="{{ route('okr.key-results.destroy', $keyResult) }}" class="mt-3" onsubmit="return confirm('Hapus key result beserta seluruh rencana unitnya?')">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button class="text-xs font-bold text-red-600 hover:underline">Hapus {{ $keyResult->code }}</button>
-                                                    </form>
-                                                </div>
-                                            </details>
-                                        @endif
 
                                         @forelse($keyResult->plans as $plan)
                                             @include('pages.okr._plan-row', ['plan' => $plan, 'depth' => 0, 'canEditSelected' => $canEditSelected])
@@ -336,7 +347,7 @@
             </div>
         </div>
 
-        @if($canManageAll)
+        @if($canManageMatrix)
             <!-- Modal Objektif -->
             <div x-cloak x-show="showObjectiveModal" class="fixed inset-0 z-[70] flex items-center justify-center bg-gray-950/60 p-4">
                 <div class="w-full max-w-xl rounded-md bg-white p-6 shadow-2xl" @click.outside="showObjectiveModal = false">
@@ -350,7 +361,7 @@
                 <div class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-md bg-white p-6 shadow-2xl" @click.outside="showKeyResultModal = false">
                     <h3 class="font-black text-gray-900">Tambah Key Result Sekolah</h3>
                     <form method="POST" action="{{ route('okr.key-results.store') }}" class="mt-5 grid gap-4 sm:grid-cols-2">@csrf
-                        <input type="hidden" name="okr_objective_id" x-model="keyResultObjectiveId">
+                        <label class="sm:col-span-2"><span class="mb-1 block text-xs font-bold">Objektif induk</span><select name="okr_objective_id" x-model="keyResultObjectiveId" required class="w-full rounded-md border-gray-300"><option value="">Pilih objektif</option>@foreach($period->objectives as $objective)<option value="{{ $objective->id }}">{{ $objective->code }} · {{ $objective->title }}</option>@endforeach</select></label>
                         <label><span class="mb-1 block text-xs font-bold">Kode</span><input name="code" required placeholder="KR 1.4" class="w-full rounded-md border-gray-300"></label>
                         <label><span class="mb-1 block text-xs font-bold">Nama key result</span><input name="title" required class="w-full rounded-md border-gray-300"></label>
                         <label class="sm:col-span-2"><span class="mb-1 block text-xs font-bold">Rumusan target</span><textarea name="description" rows="3" required class="w-full rounded-md border-gray-300"></textarea></label>
@@ -365,6 +376,7 @@
                 </div>
             </div>
 
+            @if($canManageAll)
             <!-- Modal Periode -->
             <div x-cloak x-show="showPeriodModal" class="fixed inset-0 z-[70] flex items-center justify-center bg-gray-950/60 p-4">
                 <div class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-md bg-white p-6 shadow-2xl" @click.outside="showPeriodModal = false">
@@ -380,6 +392,7 @@
                     </form>
                 </div>
             </div>
+            @endif
         @endif
     </div>
 

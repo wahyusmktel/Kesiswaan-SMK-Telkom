@@ -115,6 +115,7 @@ class OkrController extends Controller
             'selectedUnit' => $selectedUnit,
             'editableUnitIds' => $editableUnitIds,
             'canManageAll' => $this->canManageAll($request->user()),
+            'canManageMatrix' => $this->canManageMatrix($request->user()),
             'canEditSelected' => $selectedUnit && in_array($selectedUnit->id, $editableUnitIds, true),
             'stats' => $stats,
             'unitStats' => $unitStats,
@@ -169,7 +170,7 @@ class OkrController extends Controller
 
     public function storeObjective(Request $request): RedirectResponse
     {
-        $this->ensureManager($request->user());
+        $this->ensureMatrixManager($request->user());
         $validated = $request->validate([
             'okr_period_id' => ['required', 'exists:okr_periods,id'],
             'code' => ['required', 'string', 'max:30'],
@@ -183,7 +184,7 @@ class OkrController extends Controller
 
     public function updateObjective(Request $request, OkrObjective $objective): RedirectResponse
     {
-        $this->ensureManager($request->user());
+        $this->ensureMatrixManager($request->user());
         $objective->update($request->validate([
             'code' => ['required', 'string', 'max:30'],
             'title' => ['required', 'string', 'max:2000'],
@@ -202,7 +203,7 @@ class OkrController extends Controller
 
     public function storeKeyResult(Request $request): RedirectResponse
     {
-        $this->ensureManager($request->user());
+        $this->ensureMatrixManager($request->user());
         $validated = $this->validateKeyResult($request);
         $validated['sort_order'] = OkrKeyResult::where('okr_objective_id', $validated['okr_objective_id'])->max('sort_order') + 1;
         OkrKeyResult::create($validated);
@@ -212,7 +213,7 @@ class OkrController extends Controller
 
     public function updateKeyResult(Request $request, OkrKeyResult $keyResult): RedirectResponse
     {
-        $this->ensureManager($request->user());
+        $this->ensureMatrixManager($request->user());
         $keyResult->update($this->validateKeyResult($request, false));
 
         return back()->with('success', 'Key result berhasil diperbarui.');
@@ -459,6 +460,13 @@ class OkrController extends Controller
         return $activeRole === 'Super Admin';
     }
 
+    private function canManageMatrix(User $user): bool
+    {
+        $activeRole = session('active_role') ?: $user->getRoleNames()->first();
+
+        return in_array($activeRole, ['Super Admin', 'Kepala Sekolah'], true);
+    }
+
     private function isExecutiveViewer(User $user): bool
     {
         $activeRole = session('active_role') ?: $user->getRoleNames()->first();
@@ -469,6 +477,11 @@ class OkrController extends Controller
     private function ensureManager(User $user): void
     {
         abort_unless($this->canManageAll($user), 403);
+    }
+
+    private function ensureMatrixManager(User $user): void
+    {
+        abort_unless($this->canManageMatrix($user), 403);
     }
 
     private function ensureUnitEditor(User $user, OkrUnit $unit): void

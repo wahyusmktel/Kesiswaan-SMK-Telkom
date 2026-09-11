@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\AppSetting;
 use App\Models\OkrKeyResult;
+use App\Models\OkrObjective;
 use App\Models\OkrPeriod;
 use App\Models\OkrPlan;
 use App\Models\OkrUnit;
@@ -135,6 +136,105 @@ class OkrManagementTest extends TestCase
             ->get(route('okr.report', OkrPeriod::firstOrFail()))
             ->assertOk()
             ->assertHeader('content-type', 'application/pdf');
+    }
+
+    public function test_headmaster_can_create_and_edit_objectives_and_key_results_but_cannot_delete_them(): void
+    {
+        $headmaster = $this->userWithRole('Kepala Sekolah');
+        $this->activeAcademicYear();
+
+        $this->actingAs($headmaster)
+            ->withSession(['active_role' => 'Kepala Sekolah'])
+            ->get(route('okr.index'))
+            ->assertOk()
+            ->assertSee('Tambah Objektif')
+            ->assertSee('Tambah Key Result')
+            ->assertSee('Edit');
+
+        $period = OkrPeriod::firstOrFail();
+        $this->actingAs($headmaster)
+            ->withSession(['active_role' => 'Kepala Sekolah'])
+            ->post(route('okr.objectives.store'), [
+                'okr_period_id' => $period->id,
+                'code' => 'O99',
+                'title' => 'Objektif Kepala Sekolah',
+            ])
+            ->assertRedirect();
+
+        $objective = OkrObjective::where('code', 'O99')->firstOrFail();
+        $this->actingAs($headmaster)
+            ->withSession(['active_role' => 'Kepala Sekolah'])
+            ->patch(route('okr.objectives.update', $objective), [
+                'code' => 'O99',
+                'title' => 'Objektif Kepala Sekolah Diperbarui',
+            ])
+            ->assertRedirect();
+
+        $this->actingAs($headmaster)
+            ->withSession(['active_role' => 'Kepala Sekolah'])
+            ->post(route('okr.key-results.store'), [
+                'okr_objective_id' => $objective->id,
+                'code' => 'KR 99.1',
+                'title' => 'Key Result Kepala Sekolah',
+                'description' => 'Target strategis sekolah.',
+                'metric_type' => 'percentage',
+                'metric_unit' => '%',
+                'baseline_value' => 0,
+                'target_value' => 100,
+                'weight' => 1,
+                'due_date' => now()->addMonth()->format('Y-m-d'),
+            ])
+            ->assertRedirect();
+
+        $keyResult = OkrKeyResult::where('code', 'KR 99.1')->firstOrFail();
+        $this->actingAs($headmaster)
+            ->withSession(['active_role' => 'Kepala Sekolah'])
+            ->patch(route('okr.key-results.update', $keyResult), [
+                'code' => 'KR 99.1',
+                'title' => 'Key Result Kepala Sekolah Diperbarui',
+                'description' => 'Target strategis sekolah diperbarui.',
+                'metric_type' => 'percentage',
+                'metric_unit' => '%',
+                'baseline_value' => 0,
+                'target_value' => 100,
+                'weight' => 1,
+                'due_date' => now()->addMonth()->format('Y-m-d'),
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('okr_objectives', ['id' => $objective->id, 'title' => 'Objektif Kepala Sekolah Diperbarui']);
+        $this->assertDatabaseHas('okr_key_results', ['id' => $keyResult->id, 'title' => 'Key Result Kepala Sekolah Diperbarui']);
+
+        $this->actingAs($headmaster)
+            ->withSession(['active_role' => 'Kepala Sekolah'])
+            ->delete(route('okr.key-results.destroy', $keyResult))
+            ->assertForbidden();
+        $this->actingAs($headmaster)
+            ->withSession(['active_role' => 'Kepala Sekolah'])
+            ->delete(route('okr.objectives.destroy', $objective))
+            ->assertForbidden();
+    }
+
+    public function test_regular_role_cannot_change_school_okr_matrix(): void
+    {
+        $teacher = $this->userWithRole('Guru Kelas');
+        $this->activeAcademicYear();
+        $this->actingAs($teacher)
+            ->withSession(['active_role' => 'Guru Kelas'])
+            ->get(route('okr.index'))
+            ->assertOk()
+            ->assertDontSee('Tambah Objektif')
+            ->assertDontSee('Tambah Key Result');
+
+        $period = OkrPeriod::firstOrFail();
+        $this->actingAs($teacher)
+            ->withSession(['active_role' => 'Guru Kelas'])
+            ->post(route('okr.objectives.store'), [
+                'okr_period_id' => $period->id,
+                'code' => 'O99',
+                'title' => 'Objektif tanpa izin',
+            ])
+            ->assertForbidden();
     }
 
     private function createPlan(
