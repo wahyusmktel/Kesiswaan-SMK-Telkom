@@ -1449,6 +1449,10 @@ Route::middleware(['auth', 'role:Super Admin|Waka Kesiswaan|Guru BK|Guru Piket|K
 // ============================================================
 Route::middleware(['auth', 'non.student'])->prefix('okr-sekolah')->name('okr.')->group(function () {
     Route::get('/', [\App\Http\Controllers\OkrController::class, 'index'])->name('index');
+    Route::get('/laporan-pekanan', [\App\Http\Controllers\OkrWeeklyReportController::class, 'index'])->name('weekly.index');
+    Route::post('/laporan-pekanan/rencana', [\App\Http\Controllers\OkrWeeklyReportController::class, 'savePlanning'])->name('weekly.planning');
+    Route::post('/laporan-pekanan/{weeklyReport}/evaluasi', [\App\Http\Controllers\OkrWeeklyReportController::class, 'submitEvaluation'])->name('weekly.evaluation');
+    Route::post('/laporan-pekanan/{weeklyReport}/tinjau', [\App\Http\Controllers\OkrWeeklyReportController::class, 'review'])->name('weekly.review');
     Route::post('/periods', [\App\Http\Controllers\OkrController::class, 'storePeriod'])->name('periods.store');
     Route::patch('/periods/{period}', [\App\Http\Controllers\OkrController::class, 'updatePeriod'])->name('periods.update');
     Route::post('/objectives', [\App\Http\Controllers\OkrController::class, 'storeObjective'])->name('objectives.store');

@@ -31,4 +31,9 @@ class OkrPeriod extends Model
     {
         return $this->hasMany(OkrObjective::class)->orderBy('sort_order');
     }
+
+    public function weeklyReports(): HasMany
+    {
+        return $this->hasMany(OkrWeeklyReport::class);
+    }
 }

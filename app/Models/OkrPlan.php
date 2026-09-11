@@ -54,4 +54,9 @@ class OkrPlan extends Model
     {
         return $this->hasMany(OkrProgressUpdate::class)->latest('recorded_at')->latest('id');
     }
+
+    public function weeklyReportItems(): HasMany
+    {
+        return $this->hasMany(OkrWeeklyReportItem::class);
+    }
 }

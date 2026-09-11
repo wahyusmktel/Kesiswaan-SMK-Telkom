@@ -18,4 +18,9 @@ class OkrUnit extends Model
     {
         return $this->hasMany(OkrPlan::class);
     }
+
+    public function weeklyReports(): HasMany
+    {
+        return $this->hasMany(OkrWeeklyReport::class);
+    }
 }
