@@ -2363,6 +2363,14 @@
 @hasanyrole('Super Admin|KAUR SDM')
 @if(in_array(session('active_role') ?: auth()->user()->getRoleNames()->first(), ['Super Admin', 'KAUR SDM']))
     <li>
+        <a href="{{ route('guru-piket-schedules.index') }}" class="nav-link {{ request()->routeIs('guru-piket-schedules.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="flex items-center">
+                <div class="nav-icon-container"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></div>
+                <span class="nav-text">Jadwal Guru Piket</span>
+            </div>
+        </a>
+    </li>
+    <li>
         <a href="{{ route('teacher-activity.index') }}" class="nav-link {{ request()->routeIs('teacher-activity.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
             <div class="flex items-center">
                 <div class="nav-icon-container"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2m14-10 2 2 4-4M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg></div>

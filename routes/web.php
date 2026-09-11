@@ -1155,6 +1155,13 @@ Route::middleware('auth')->group(function () {
         Route::put('/dapodik-tpa/{dapodikGuru}', [\App\Http\Controllers\Shared\DapodikGuruController::class, 'update'])->name('dapodik-tpa.update');
     });
 
+    Route::middleware('role:Super Admin|KAUR SDM')->group(function () {
+        Route::get('/jadwal-guru-piket', [\App\Http\Controllers\Shared\GuruPiketScheduleController::class, 'index'])
+            ->name('guru-piket-schedules.index');
+        Route::put('/jadwal-guru-piket', [\App\Http\Controllers\Shared\GuruPiketScheduleController::class, 'update'])
+            ->name('guru-piket-schedules.update');
+    });
+
     Route::middleware('role:Super Admin|KAUR SDM')->prefix('teacher-activity')->name('teacher-activity.')->group(function () {
         Route::get('/', [\App\Http\Controllers\SDM\TeacherActivityController::class, 'index'])->name('index');
         Route::patch('/{teacher}/employment', [\App\Http\Controllers\SDM\TeacherActivityController::class, 'updateEmployment'])->name('employment.update');
