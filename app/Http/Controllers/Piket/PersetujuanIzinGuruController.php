@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Piket;
 
 use App\Http\Controllers\Controller;
-use App\Models\AbsensiGuru;
 use App\Models\GuruIzin;
+use App\Services\PicketTeacherLeaveDecisionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -66,122 +66,19 @@ class PersetujuanIzinGuruController extends Controller
         }
     }
 
-    public function approve(GuruIzin $izin)
+    public function approve(GuruIzin $izin, PicketTeacherLeaveDecisionService $decisions)
     {
-        abort_unless(in_array($izin->kategori_penyetujuan, ['sekolah', 'luar'], true), 409, 'Kategori izin ini tidak memerlukan persetujuan Piket.');
-        abort_unless($izin->status_piket === 'menunggu', 409, 'Tahap Piket sudah diputuskan.');
-        $updateData = [
-            'status_piket' => 'disetujui',
-            'piket_id' => Auth::id(),
-            'piket_at' => now(),
-        ];
+        $result = $decisions->approve($izin, Auth::user());
 
-        // Jika kategori 'sekolah', maka otomatis setujui kurikulum dan sdm
-        if ($izin->kategori_penyetujuan === 'sekolah') {
-            $updateData['status_kurikulum'] = 'disetujui';
-            $updateData['status_sdm'] = 'disetujui';
-            $updateData['kurikulum_id'] = Auth::id(); // Menggunakan ID piket sebagai penanggung jawab sementara
-            $updateData['sdm_id'] = Auth::id();
-            $updateData['kurikulum_at'] = now();
-            $updateData['sdm_at'] = now();
-            $updateData['status_kepala_sekolah'] = 'tidak_diperlukan';
-
-            $izin->update($updateData);
-
-            // Auto-sign TTD Guru Piket (izin guru) jika diaktifkan
-            $user = Auth::user();
-            $sig = \App\Models\UserDigitalSignature::where('user_id', $user->id)->first();
-            if ($sig && $sig->isReady() && $sig->auto_sign_izin_guru) {
-                \App\Models\DigitalDocument::autoSign(
-                    $user,
-                    'IZIN_GURU_PIKET',
-                    'Izin Guru (Piket) - '.($izin->guru->nama_lengkap ?? ''),
-                    $izin->id,
-                    ['IZIN_GURU_PIKET', (string) $izin->id, (string) $izin->master_guru_id, $izin->guru->nama_lengkap ?? '']
-                );
-            }
-
-            // Notify Teacher
-            $teacherUser = $izin->guru->user;
-            if ($teacherUser) {
-                $msg = 'Izin Anda (Lingkungan Sekolah) telah disetujui sepenuhnya.';
-                $url = route('guru.izin.index');
-                $teacherUser->notify(new \App\Notifications\PengajuanIzinGuruNotification($izin, 'status_updated', $msg, $url));
-            }
-
-            // Sync to AbsensiGuru (Otomatis karena tuntas di Piket)
-            foreach ($izin->jadwals as $jadwal) {
-                AbsensiGuru::updateOrCreate(
-                    [
-                        'jadwal_pelajaran_id' => $jadwal->id,
-                        'tanggal' => $izin->tanggal_mulai,
-                    ],
-                    [
-                        'status' => 'izin',
-                        'keterangan' => 'Izin Guru (Lingkungan Sekolah): '.$izin->jenis_izin.' ('.$izin->deskripsi.')',
-                        'waktu_absen' => now(),
-                        'dicatat_oleh' => Auth::id(),
-                    ]
-                );
-
-                // Notify Students
-                $students = $jadwal->rombel->siswa()->with('user')->get();
-                foreach ($students as $student) {
-                    if ($student->user) {
-                        $student->user->notify(new \App\Notifications\TeacherAbsenceStudentNotification($izin, $jadwal));
-                    }
-                }
-            }
-
-            return redirect()->back()->with('success', 'Permohonan izin (Lingkungan Sekolah) telah disetujui sepenuhnya.');
-        }
-
-        $izin->update($updateData);
-
-        // Auto-sign TTD Guru Piket (izin guru luar)
-        $user = Auth::user();
-        $sig = \App\Models\UserDigitalSignature::where('user_id', $user->id)->first();
-        if ($sig && $sig->isReady() && $sig->auto_sign_izin_guru) {
-            \App\Models\DigitalDocument::autoSign(
-                $user,
-                'IZIN_GURU_PIKET',
-                'Izin Guru (Piket) - '.($izin->guru->nama_lengkap ?? ''),
-                $izin->id,
-                ['IZIN_GURU_PIKET', (string) $izin->id, (string) $izin->master_guru_id, $izin->guru->nama_lengkap ?? '']
-            );
-        }
-
-        // Notify Kurikulum
-        $approvers = \App\Models\User::role('Kurikulum')->get();
-        $msg = 'Ada pengajuan Izin Guru (Luar Sekolah) baru dari '.$izin->guru->nama_lengkap;
-        $url = route('kurikulum.persetujuan-izin-guru.index');
-        foreach ($approvers as $approver) {
-            $approver->notify(new \App\Notifications\PengajuanIzinGuruNotification($izin, 'pending_approval', $msg, $url));
-        }
-
-        return redirect()->back()->with('success', 'Permohonan izin diteruskan ke Waka Kurikulum.');
+        return redirect()->back()->with('success', $result['complete']
+            ? 'Permohonan izin (Lingkungan Sekolah) telah disetujui sepenuhnya.'
+            : 'Permohonan izin diteruskan ke Waka Kurikulum.');
     }
 
-    public function reject(Request $request, GuruIzin $izin)
+    public function reject(Request $request, GuruIzin $izin, PicketTeacherLeaveDecisionService $decisions)
     {
-        abort_unless(in_array($izin->kategori_penyetujuan, ['sekolah', 'luar'], true), 409, 'Kategori izin ini tidak memerlukan persetujuan Piket.');
-        abort_unless($izin->status_piket === 'menunggu', 409, 'Tahap Piket sudah diputuskan.');
         $request->validate(['catatan_piket' => 'required|string']);
-
-        $izin->update([
-            'status_piket' => 'ditolak',
-            'piket_id' => Auth::id(),
-            'piket_at' => now(),
-            'catatan_piket' => $request->catatan_piket,
-        ]);
-
-        // Notify Teacher
-        $teacherUser = $izin->guru->user;
-        if ($teacherUser) {
-            $msg = 'Permohonan izin Anda ditolak oleh Guru Piket.';
-            $url = route('guru.izin.index');
-            $teacherUser->notify(new \App\Notifications\PengajuanIzinGuruNotification($izin, 'status_updated', $msg, $url));
-        }
+        $decisions->reject($izin, Auth::user(), $request->catatan_piket);
 
         return redirect()->back()->with('info', 'Permohonan izin telah ditolak.');
     }

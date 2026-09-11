@@ -18,7 +18,10 @@ class TelegramTeacherLeaveService
 {
     private const FLOW = 'teacher_leave';
 
-    public function __construct(private readonly TelegramService $telegram) {}
+    public function __construct(
+        private readonly TelegramService $telegram,
+        private readonly TelegramLeaveNotificationService $leaveNotifications,
+    ) {}
 
     public function beginWebhookReply(): void
     {
@@ -619,9 +622,9 @@ class TelegramTeacherLeaveService
             $message = 'Ada pengajuan '.$izin->categoryLabel().' baru dari '.$teacherName;
             $url = route('sdm.persetujuan-izin-guru.index');
         } else {
-            $approvers = User::whereHas('roles', fn ($query) => $query->where('name', 'Guru Piket'))->get();
-            $message = 'Ada pengajuan Izin Guru baru dari '.$teacherName;
-            $url = route('piket.persetujuan-izin-guru.index');
+            $this->leaveNotifications->notifyPicketApprovers($izin);
+
+            return;
         }
         foreach ($approvers as $approver) {
             $approver->notify(new PengajuanIzinGuruNotification($izin, 'pending_approval', $message, $url));

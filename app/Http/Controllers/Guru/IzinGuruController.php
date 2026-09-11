@@ -7,6 +7,7 @@ use App\Models\GuruIzin;
 use App\Models\JadwalPelajaran;
 use App\Models\LmsAssignment;
 use App\Models\LmsMaterial;
+use App\Services\TelegramLeaveNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -92,7 +93,7 @@ class IzinGuruController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request, TelegramLeaveNotificationService $telegramNotifications)
     {
         $request->validate([
             'tanggal_mulai' => 'required|date',
@@ -218,15 +219,12 @@ class IzinGuruController extends Controller
             $approvers = \App\Models\User::role('KAUR SDM')->get();
             $msg = 'Ada pengajuan '.$izin->categoryLabel().' baru dari '.$guru->nama_lengkap;
             $url = route('sdm.persetujuan-izin-guru.index');
+            foreach ($approvers as $approver) {
+                $approver->notify(new \App\Notifications\PengajuanIzinGuruNotification($izin, 'pending_approval', $msg, $url));
+            }
         } else {
-            // Ke Piket terlebih dahulu
-            $approvers = \App\Models\User::role('Guru Piket')->get();
-            $msg = 'Ada pengajuan Izin Guru baru dari '.$guru->nama_lengkap;
-            $url = route('piket.persetujuan-izin-guru.index');
-        }
-
-        foreach ($approvers as $approver) {
-            $approver->notify(new \App\Notifications\PengajuanIzinGuruNotification($izin, 'pending_approval', $msg, $url));
+            // Hanya Guru Piket yang terjadwal hari ini.
+            $telegramNotifications->notifyPicketApprovers($izin);
         }
 
         return redirect()->route('guru.izin.index')->with('success', 'Permohonan izin berhasil diajukan dan sedang menunggu persetujuan.');

@@ -32,7 +32,7 @@ class TelegramService
             $webhook = $this->request($bot, 'setWebhook', [
                 'url' => route('telegram.webhook', $bot->slug),
                 'secret_token' => $bot->webhook_secret,
-                'allowed_updates' => ['message'],
+                'allowed_updates' => ['message', 'callback_query'],
                 'drop_pending_updates' => false,
             ]);
             if (! $webhook->successful() || ! $webhook->json('ok')) {
@@ -168,6 +168,9 @@ class TelegramService
             $commands[] = ['command' => 'status_izin', 'description' => 'Lihat status izin terakhir'];
             $commands[] = ['command' => 'batal', 'description' => 'Batalkan pengisian izin'];
         }
+        if ($bot->purpose === 'employment' && $user?->hasRole('Guru Piket')) {
+            $commands[] = ['command' => 'persetujuan_piket', 'description' => 'Lihat izin menunggu persetujuan Piket'];
+        }
 
         $commandsHash = hash('sha256', json_encode($commands, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
         $link = TelegramUserLink::query()
@@ -204,19 +207,42 @@ class TelegramService
 
     public function linkedMenuMarkup(TelegramBot $bot, User $user): array
     {
-        if ($bot->purpose !== 'employment' || ! $user->hasRole('Guru Kelas')) {
+        if ($bot->purpose !== 'employment' || (! $user->hasRole('Guru Kelas') && ! $user->hasRole('Guru Piket'))) {
             return ['remove_keyboard' => true];
         }
 
+        $rows = [];
+        if ($user->hasRole('Guru Kelas')) {
+            $rows[] = [['text' => '📝 Ajukan Izin Guru']];
+            $rows[] = [['text' => '📋 Status Izin Terakhir']];
+        }
+        if ($user->hasRole('Guru Piket')) {
+            $rows[] = [['text' => '✅ Persetujuan Guru Piket']];
+        }
+
         return [
-            'keyboard' => [
-                [['text' => '📝 Ajukan Izin Guru']],
-                [['text' => '📋 Status Izin Terakhir']],
-            ],
+            'keyboard' => $rows,
             'resize_keyboard' => true,
             'is_persistent' => true,
             'input_field_placeholder' => 'Pilih layanan SISFO',
         ];
+    }
+
+    public function answerCallbackQuery(TelegramBot $bot, string $callbackQueryId, string $text): void
+    {
+        $this->request($bot, 'answerCallbackQuery', [
+            'callback_query_id' => $callbackQueryId,
+            'text' => $text,
+        ])->throw();
+    }
+
+    public function clearInlineKeyboard(TelegramBot $bot, string $chatId, int $messageId): void
+    {
+        $this->request($bot, 'editMessageReplyMarkup', [
+            'chat_id' => $chatId,
+            'message_id' => $messageId,
+            'reply_markup' => ['inline_keyboard' => []],
+        ])->throw();
     }
 
     public function prepareAccountForRelinking(TelegramUserLink $link): array

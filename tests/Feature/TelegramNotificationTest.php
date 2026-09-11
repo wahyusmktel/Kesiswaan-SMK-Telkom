@@ -6,6 +6,8 @@ use App\Models\FingerprintAttendance;
 use App\Models\FingerprintAttendanceSetting;
 use App\Models\FingerprintAutoSyncSetting;
 use App\Models\FingerprintDevice;
+use App\Models\GuruIzin;
+use App\Models\GuruPiketSchedule;
 use App\Models\JadwalPelajaran;
 use App\Models\Kelas;
 use App\Models\LmsAssignment;
@@ -19,6 +21,7 @@ use App\Models\TelegramUserLink;
 use App\Models\User;
 use App\Models\WhatsappTemplate;
 use App\Services\FingerprintWhatsappNotificationService;
+use App\Services\TelegramLeaveNotificationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -74,7 +77,8 @@ class TelegramNotificationTest extends TestCase
         $this->assertStringNotContainsString($token, (string) DB::table('telegram_bots')->value('bot_token'));
         Http::assertSent(fn ($request) => str_ends_with($request->url(), '/setWebhook')
             && $request['url'] === route('telegram.webhook', $bot->slug)
-            && $request['secret_token'] === $bot->webhook_secret);
+            && $request['secret_token'] === $bot->webhook_secret
+            && $request['allowed_updates'] === ['message', 'callback_query']);
         Http::assertSent(fn ($request) => str_ends_with($request->url(), '/setMyCommands')
             && $request['commands'][0]['command'] === 'start');
 
@@ -544,6 +548,93 @@ class TelegramNotificationTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_only_scheduled_picket_receives_actionable_leave_notification_and_can_approve(): void
+    {
+        $bot = $this->createBot();
+        $applicant = $this->createLinkedEmployee($bot, 'Guru Pemohon', '998811');
+        $scheduled = $this->createLinkedEmployee($bot, 'Guru Piket Hari Ini', '998812');
+        $offDuty = $this->createLinkedEmployee($bot, 'Guru Piket Besok', '998813');
+        $picketRole = Role::findOrCreate('Guru Piket', 'web');
+        $scheduled->assignRole($picketRole);
+        $offDuty->assignRole($picketRole);
+        GuruPiketSchedule::create(['weekday' => 'Selasa', 'slot' => 1, 'user_id' => $scheduled->id]);
+        GuruPiketSchedule::create(['weekday' => 'Rabu', 'slot' => 1, 'user_id' => $offDuty->id]);
+        $izin = GuruIzin::create([
+            'master_guru_id' => $applicant->masterGuru->id,
+            'tanggal_mulai' => now()->addDay(),
+            'tanggal_selesai' => now()->addDay()->addHours(2),
+            'jenis_izin' => 'Sakit',
+            'kategori_penyetujuan' => 'luar',
+            'deskripsi' => 'Pemeriksaan kesehatan.',
+            'status_piket' => 'menunggu',
+            'status_kurikulum' => 'menunggu',
+            'status_sdm' => 'menunggu',
+        ]);
+
+        app(TelegramLeaveNotificationService::class)->notifyPicketApprovers($izin);
+
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/sendMessage')
+            && (string) $request['chat_id'] === '998812'
+            && $request['reply_markup']['inline_keyboard'][0][0]['callback_data'] === 'piket:approve:'.$izin->id);
+        Http::assertNotSent(fn ($request) => str_ends_with($request->url(), '/sendMessage')
+            && (string) ($request['chat_id'] ?? '') === '998813');
+
+        $this->withHeader('X-Telegram-Bot-Api-Secret-Token', $bot->webhook_secret)
+            ->postJson(route('telegram.webhook', $bot->slug), [
+                'callback_query' => [
+                    'id' => 'callback-approve',
+                    'from' => ['id' => 998812],
+                    'message' => ['message_id' => 77, 'chat' => ['id' => 998812, 'type' => 'private']],
+                    'data' => 'piket:approve:'.$izin->id,
+                ],
+            ])->assertOk();
+
+        $this->assertDatabaseHas('guru_izins', ['id' => $izin->id, 'status_piket' => 'disetujui', 'piket_id' => $scheduled->id]);
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/sendMessage')
+            && (string) $request['chat_id'] === '998811'
+            && str_contains($request['text'], 'diteruskan ke Waka Kurikulum'));
+    }
+
+    public function test_scheduled_picket_can_reject_with_a_reason_and_off_duty_picket_cannot_decide(): void
+    {
+        $bot = $this->createBot();
+        $applicant = $this->createLinkedEmployee($bot, 'Guru Pemohon Ditolak', '998821');
+        $scheduled = $this->createLinkedEmployee($bot, 'Guru Piket Aktif', '998822');
+        $offDuty = $this->createLinkedEmployee($bot, 'Guru Piket Tidak Aktif', '998823');
+        $role = Role::findOrCreate('Guru Piket', 'web');
+        $scheduled->assignRole($role);
+        $offDuty->assignRole($role);
+        GuruPiketSchedule::create(['weekday' => 'Selasa', 'slot' => 1, 'user_id' => $scheduled->id]);
+        GuruPiketSchedule::create(['weekday' => 'Rabu', 'slot' => 1, 'user_id' => $offDuty->id]);
+        $izin = GuruIzin::create([
+            'master_guru_id' => $applicant->masterGuru->id,
+            'tanggal_mulai' => now()->addDay(),
+            'tanggal_selesai' => now()->addDay()->addHour(),
+            'jenis_izin' => 'Keperluan Pribadi',
+            'kategori_penyetujuan' => 'sekolah',
+            'deskripsi' => 'Menghadiri rapat sekolah.',
+            'status_piket' => 'menunggu',
+            'status_kurikulum' => 'menunggu',
+            'status_sdm' => 'menunggu',
+        ]);
+
+        $this->sendPicketCallback($bot, '998823', 'piket:approve:'.$izin->id);
+        $this->assertSame('menunggu', $izin->fresh()->status_piket);
+
+        $this->sendPicketCallback($bot, '998822', 'piket:reject:'.$izin->id);
+        $this->sendBotMessage($bot, '998822', 'Data pendukung belum lengkap.');
+
+        $this->assertDatabaseHas('guru_izins', [
+            'id' => $izin->id,
+            'status_piket' => 'ditolak',
+            'piket_id' => $scheduled->id,
+            'catatan_piket' => 'Data pendukung belum lengkap.',
+        ]);
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/sendMessage')
+            && (string) $request['chat_id'] === '998821'
+            && str_contains($request['text'], 'Data pendukung belum lengkap.'));
+    }
+
     private function createBot(): TelegramBot
     {
         return TelegramBot::create([
@@ -568,6 +659,19 @@ class TelegramNotificationTest extends TestCase
                     'text' => $text,
                 ],
             ])->assertOk()->assertJson(['ok' => true]);
+    }
+
+    private function sendPicketCallback(TelegramBot $bot, string $chatId, string $data): void
+    {
+        $this->withHeader('X-Telegram-Bot-Api-Secret-Token', $bot->webhook_secret)
+            ->postJson(route('telegram.webhook', $bot->slug), [
+                'callback_query' => [
+                    'id' => 'callback-'.$chatId,
+                    'from' => ['id' => (int) $chatId],
+                    'message' => ['message_id' => 88, 'chat' => ['id' => (int) $chatId, 'type' => 'private']],
+                    'data' => $data,
+                ],
+            ])->assertOk();
     }
 
     private function createLinkedEmployee(TelegramBot $bot, string $name, string $chatId): User

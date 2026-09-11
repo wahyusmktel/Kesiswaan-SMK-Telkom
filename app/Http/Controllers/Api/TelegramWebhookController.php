@@ -6,17 +6,36 @@ use App\Http\Controllers\Controller;
 use App\Models\TelegramBot;
 use App\Models\TelegramUserLink;
 use App\Models\User;
+use App\Services\TelegramPicketApprovalService;
 use App\Services\TelegramService;
 use App\Services\TelegramTeacherLeaveService;
 use Illuminate\Http\Request;
 
 class TelegramWebhookController extends Controller
 {
-    public function __invoke(Request $request, TelegramBot $telegramBot, TelegramService $telegram, TelegramTeacherLeaveService $teacherLeave)
+    public function __invoke(Request $request, TelegramBot $telegramBot, TelegramService $telegram, TelegramTeacherLeaveService $teacherLeave, TelegramPicketApprovalService $picketApproval)
     {
         abort_unless($telegramBot->is_active && hash_equals($telegramBot->webhook_secret, (string) $request->header('X-Telegram-Bot-Api-Secret-Token')), 403);
         $telegram->beginWebhookReply();
         $teacherLeave->beginWebhookReply();
+
+        $callback = $request->input('callback_query');
+        if (is_array($callback) && data_get($callback, 'message.chat.type') === 'private') {
+            $chatId = (string) data_get($callback, 'message.chat.id');
+            $fromId = (string) data_get($callback, 'from.id');
+            $link = TelegramUserLink::query()
+                ->where('telegram_bot_id', $telegramBot->id)
+                ->where(fn ($query) => $query->where('chat_id', $chatId)->orWhere('telegram_user_id', $fromId))
+                ->with(['user.roles', 'user.masterGuru'])
+                ->first();
+            if ($link) {
+                $picketApproval->handleCallback($telegramBot, $link, $callback);
+            } else {
+                $telegram->answerCallbackQuery($telegramBot, (string) data_get($callback, 'id'), 'Hubungkan akun SISFO Anda terlebih dahulu.');
+            }
+
+            return $this->telegramResponse($telegram);
+        }
 
         $message = $request->input('message');
         if (! is_array($message) || data_get($message, 'chat.type') !== 'private') {
@@ -36,7 +55,9 @@ class TelegramWebhookController extends Controller
             if (! $existingLink->last_interaction_at || $existingLink->last_interaction_at->lt(now()->subMinutes(5))) {
                 $existingLink->forceFill(['last_interaction_at' => now()])->saveQuietly();
             }
-            $teacherLeave->handle($telegramBot, $existingLink, $message);
+            if (! $picketApproval->handleMessage($telegramBot, $existingLink, $message)) {
+                $teacherLeave->handle($telegramBot, $existingLink, $message);
+            }
 
             return response()->json($teacherLeave->takeWebhookReply() ?? ['ok' => true]);
         }
