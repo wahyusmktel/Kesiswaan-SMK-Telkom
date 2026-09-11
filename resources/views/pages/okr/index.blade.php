@@ -150,13 +150,11 @@
                                                 </div>
                                                 <button class="rounded-md bg-gray-900 px-3 py-2 text-xs font-bold text-white">Simpan Perubahan</button>
                                             </form>
-                                            @if($canManageAll)
-                                                <form method="POST" action="{{ route('okr.objectives.destroy', $objective) }}" class="mt-3 border-t border-gray-100 pt-3" onsubmit="return confirm('Hapus objektif beserta seluruh key result dan rencana unitnya?')">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button class="text-xs font-bold text-red-600 hover:underline">Hapus objektif</button>
-                                                </form>
-                                            @endif
+                                            <form method="POST" action="{{ route('okr.objectives.destroy', $objective) }}" class="mt-3 border-t border-gray-100 pt-3" onsubmit="return confirm('Hapus objektif beserta seluruh key result dan rencana unitnya? Tindakan ini tidak dapat dibatalkan.')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button class="text-xs font-bold text-red-600 hover:underline">Hapus objektif</button>
+                                            </form>
                                         </div>
                                     </details>
                                 @endif
@@ -204,13 +202,11 @@
                                                             <input type="date" name="due_date" value="{{ $keyResult->due_date?->format('Y-m-d') }}" class="rounded-md border-gray-300 text-xs">
                                                             <div class="flex items-center gap-4 md:col-span-3"><button class="rounded-md bg-gray-900 px-3 py-2 text-xs font-bold text-white">Simpan Key Result</button></div>
                                                         </form>
-                                                        @if($canManageAll)
-                                                            <form method="POST" action="{{ route('okr.key-results.destroy', $keyResult) }}" class="mt-3 border-t border-gray-100 pt-3" onsubmit="return confirm('Hapus key result beserta seluruh rencana unitnya?')">
-                                                                @csrf
-                                                                @method('DELETE')
-                                                                <button class="text-xs font-bold text-red-600 hover:underline">Hapus {{ $keyResult->code }}</button>
-                                                            </form>
-                                                        @endif
+                                                        <form method="POST" action="{{ route('okr.key-results.destroy', $keyResult) }}" class="mt-3 border-t border-gray-100 pt-3" onsubmit="return confirm('Hapus key result beserta seluruh rencana unitnya? Tindakan ini tidak dapat dibatalkan.')">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button class="text-xs font-bold text-red-600 hover:underline">Hapus {{ $keyResult->code }}</button>
+                                                        </form>
                                                     </div>
                                                 </details>
                                             @endif

@@ -195,7 +195,7 @@ class OkrController extends Controller
 
     public function destroyObjective(Request $request, OkrObjective $objective): RedirectResponse
     {
-        $this->ensureManager($request->user());
+        $this->ensureMatrixManager($request->user());
         $objective->delete();
 
         return back()->with('success', 'Objektif sekolah dihapus.');
@@ -221,7 +221,7 @@ class OkrController extends Controller
 
     public function destroyKeyResult(Request $request, OkrKeyResult $keyResult): RedirectResponse
     {
-        $this->ensureManager($request->user());
+        $this->ensureMatrixManager($request->user());
         $keyResult->delete();
 
         return back()->with('success', 'Key result dihapus.');

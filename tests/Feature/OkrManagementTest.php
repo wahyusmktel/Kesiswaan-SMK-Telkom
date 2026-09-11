@@ -138,7 +138,7 @@ class OkrManagementTest extends TestCase
             ->assertHeader('content-type', 'application/pdf');
     }
 
-    public function test_headmaster_can_create_and_edit_objectives_and_key_results_but_cannot_delete_them(): void
+    public function test_headmaster_can_create_edit_and_delete_objectives_and_key_results(): void
     {
         $headmaster = $this->userWithRole('Kepala Sekolah');
         $this->activeAcademicYear();
@@ -208,11 +208,14 @@ class OkrManagementTest extends TestCase
         $this->actingAs($headmaster)
             ->withSession(['active_role' => 'Kepala Sekolah'])
             ->delete(route('okr.key-results.destroy', $keyResult))
-            ->assertForbidden();
+            ->assertRedirect();
+        $this->assertDatabaseMissing('okr_key_results', ['id' => $keyResult->id]);
+
         $this->actingAs($headmaster)
             ->withSession(['active_role' => 'Kepala Sekolah'])
             ->delete(route('okr.objectives.destroy', $objective))
-            ->assertForbidden();
+            ->assertRedirect();
+        $this->assertDatabaseMissing('okr_objectives', ['id' => $objective->id]);
     }
 
     public function test_regular_role_cannot_change_school_okr_matrix(): void
