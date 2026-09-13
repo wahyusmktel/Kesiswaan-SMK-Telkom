@@ -23,6 +23,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class OkrController extends Controller
 {
@@ -232,7 +233,7 @@ class OkrController extends Controller
         $validated = $this->validatePlan($request);
         $unit = OkrUnit::findOrFail($validated['okr_unit_id']);
         $this->ensureUnitEditor($request->user(), $unit);
-        $this->validatePlanParent($validated);
+        $validated = $this->normalizeAndValidatePlanParent($validated);
 
         $plan = OkrPlan::create($validated + [
             'progress_percent' => 0,
@@ -249,9 +250,12 @@ class OkrController extends Controller
         $this->ensureUnitEditor($request->user(), $plan->unit);
         $validated = $this->validatePlan($request);
         abort_unless((int) $validated['okr_unit_id'] === $plan->okr_unit_id, 422);
-        $this->validatePlanParent($validated, $plan);
+        $validated = $this->normalizeAndValidatePlanParent($validated, $plan);
         $oldParent = $plan->parent;
         $plan->update($validated);
+        if ($plan->wasChanged('okr_key_result_id')) {
+            $this->syncDescendantKeyResult($plan);
+        }
         $progress->rollUp($oldParent);
         $progress->rollUp($plan->parent);
 
@@ -413,25 +417,60 @@ class OkrController extends Controller
         ]);
     }
 
-    private function validatePlanParent(array $validated, ?OkrPlan $currentPlan = null): void
+    private function normalizeAndValidatePlanParent(array $validated, ?OkrPlan $currentPlan = null): array
     {
         $expectedParentLevel = ['annual' => null, 'monthly' => 'annual', 'weekly' => 'monthly'][$validated['level']];
         if ($expectedParentLevel === null) {
-            abort_if(filled($validated['parent_id'] ?? null), 422, 'Target tahunan tidak boleh memiliki induk.');
+            if (filled($validated['parent_id'] ?? null)) {
+                throw ValidationException::withMessages([
+                    'parent_id' => 'Target tahunan tidak boleh memiliki target induk.',
+                ]);
+            }
 
-            return;
+            $validated['parent_id'] = null;
+
+            return $validated;
+        }
+
+        // Form edit lama dapat mengirim induk kosong walaupun relasinya masih ada.
+        // Pertahankan induk saat tingkat target tidak sedang diubah.
+        if (
+            $currentPlan
+            && $validated['level'] === $currentPlan->level
+            && blank($validated['parent_id'] ?? null)
+            && $currentPlan->parent_id
+        ) {
+            $validated['parent_id'] = $currentPlan->parent_id;
         }
 
         $parent = OkrPlan::find($validated['parent_id'] ?? null);
-        abort_unless(
-            $parent
-            && $parent->level === $expectedParentLevel
-            && $parent->okr_key_result_id === (int) $validated['okr_key_result_id']
-            && $parent->okr_unit_id === (int) $validated['okr_unit_id']
-            && $parent->id !== $currentPlan?->id,
-            422,
-            'Induk target tidak sesuai dengan tingkat, unit, atau key result.'
-        );
+        if (
+            ! $parent
+            || $parent->level !== $expectedParentLevel
+            || $parent->okr_unit_id !== (int) $validated['okr_unit_id']
+            || $parent->id === $currentPlan?->id
+        ) {
+            throw ValidationException::withMessages([
+                'parent_id' => 'Pilih target induk dengan tingkat dan unit yang sesuai.',
+            ]);
+        }
+
+        // Induk adalah sumber kebenaran hierarki. Ini sekaligus memperbaiki data
+        // lama yang anak dan induknya tersimpan pada Key Result berbeda.
+        $validated['okr_key_result_id'] = $parent->okr_key_result_id;
+
+        return $validated;
+    }
+
+    private function syncDescendantKeyResult(OkrPlan $plan): void
+    {
+        foreach ($plan->children()->get() as $child) {
+            if ($child->okr_key_result_id !== $plan->okr_key_result_id) {
+                $child->update(['okr_key_result_id' => $plan->okr_key_result_id]);
+            }
+
+            $this->syncDescendantKeyResult($child);
+        }
     }
 
     private function editableUnitIds(User $user, $units): array

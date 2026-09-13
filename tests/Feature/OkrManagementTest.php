@@ -240,6 +240,89 @@ class OkrManagementTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_editing_a_legacy_child_plan_repairs_its_key_result_from_the_parent(): void
+    {
+        $user = $this->userWithRole('Guru Kelas');
+        $this->activeAcademicYear();
+        $this->actingAs($user)->withSession(['active_role' => 'Guru Kelas'])->get(route('okr.index'));
+
+        $unit = OkrUnit::where('code', 'KURIKULUM')->firstOrFail();
+        $keyResults = OkrKeyResult::oldest('id')->take(2)->get();
+        $parent = OkrPlan::create([
+            'okr_key_result_id' => $keyResults[0]->id,
+            'okr_unit_id' => $unit->id,
+            'owner_id' => $user->id,
+            'level' => 'annual',
+            'title' => 'Induk target lama',
+            'target_value' => 100,
+            'metric_unit' => '%',
+            'weight' => 1,
+        ]);
+        $child = OkrPlan::create([
+            'okr_key_result_id' => $keyResults[1]->id,
+            'okr_unit_id' => $unit->id,
+            'parent_id' => $parent->id,
+            'owner_id' => $user->id,
+            'level' => 'monthly',
+            'title' => 'Anak dengan relasi lama tidak konsisten',
+            'target_value' => 100,
+            'metric_unit' => '%',
+            'weight' => 1,
+        ]);
+        $grandChild = OkrPlan::create([
+            'okr_key_result_id' => $keyResults[1]->id,
+            'okr_unit_id' => $unit->id,
+            'parent_id' => $child->id,
+            'owner_id' => $user->id,
+            'level' => 'weekly',
+            'title' => 'Turunan dari relasi lama',
+            'target_value' => 100,
+            'metric_unit' => '%',
+            'weight' => 1,
+        ]);
+
+        $this->actingAs($user)
+            ->withSession(['active_role' => 'Guru Kelas'])
+            ->patch(route('okr.plans.update', $child), [
+                'okr_key_result_id' => $child->okr_key_result_id,
+                'okr_unit_id' => $unit->id,
+                'parent_id' => $parent->id,
+                'owner_id' => $user->id,
+                'level' => 'monthly',
+                'title' => 'Anak berhasil diperbarui',
+                'target_value' => 100,
+                'metric_unit' => '%',
+                'weight' => 1,
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('okr_plans', [
+            'id' => $child->id,
+            'okr_key_result_id' => $parent->okr_key_result_id,
+            'parent_id' => $parent->id,
+            'title' => 'Anak berhasil diperbarui',
+        ]);
+        $this->assertSame($parent->okr_key_result_id, $grandChild->fresh()->okr_key_result_id);
+
+        $this->actingAs($user)
+            ->withSession(['active_role' => 'Guru Kelas'])
+            ->patch(route('okr.plans.update', $child), [
+                'okr_key_result_id' => $parent->okr_key_result_id,
+                'okr_unit_id' => $unit->id,
+                'owner_id' => $user->id,
+                'level' => 'monthly',
+                'title' => 'Induk lama tetap dipertahankan',
+                'target_value' => 100,
+                'metric_unit' => '%',
+                'weight' => 1,
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame($parent->id, $child->fresh()->parent_id);
+    }
+
     private function createPlan(
         User $user,
         OkrUnit $unit,

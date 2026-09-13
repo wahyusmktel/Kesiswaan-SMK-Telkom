@@ -296,7 +296,7 @@
                     <input type="hidden" name="okr_unit_id" value="{{ $selectedUnit?->id }}">
                     <div class="grid gap-4 md:grid-cols-2">
                         <label><span class="mb-1.5 block text-xs font-bold text-gray-700">Tingkat target</span><select name="level" x-model="plan.level" @change="plan.parent_id = ''" class="w-full rounded-md border-gray-300 text-sm"><option value="annual">Tahunan</option><option value="monthly">Bulanan</option><option value="weekly">Mingguan</option></select></label>
-                        <label x-show="plan.level !== 'annual'"><span class="mb-1.5 block text-xs font-bold text-gray-700">Target induk</span><select name="parent_id" x-model="plan.parent_id" class="w-full rounded-md border-gray-300 text-sm"><option value="">Pilih target induk</option><template x-for="parent in eligibleParents" :key="parent.id"><option :value="parent.id" x-text="parent.title"></option></template></select></label>
+                        <label x-show="plan.level !== 'annual'"><span class="mb-1.5 block text-xs font-bold text-gray-700">Target induk</span><select name="parent_id" x-model="plan.parent_id" :required="plan.level !== 'annual'" class="w-full rounded-md border-gray-300 text-sm"><option value="">Pilih target induk</option><template x-for="parent in eligibleParents" :key="parent.id"><option :value="parent.id" x-text="parent.title"></option></template></select></label>
                     </div>
 
                     @if($aiReady)
