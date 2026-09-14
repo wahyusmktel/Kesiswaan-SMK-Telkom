@@ -30,7 +30,7 @@ class DashboardRedirector
             'Petugas UKS' => 'uks.records.index',
             'TPA' => 'profile.edit',
             'KAUR LAB' => 'okr.index',
-            'QMR', 'Kesiswaan', 'Hubin Sinergi UP dan Alumni', 'Hubin PPDB', 'Human Capital', 'Keuangan', 'Sarana dan Prasarana', 'IT' => 'okr.index',
+            'QMR', 'Kesiswaan', 'Hubin Sinergi UP dan Alumni', 'Hubin PPDB', 'Human Capital', 'Keuangan', 'Sarana dan Prasarana', 'IT', 'Kaprodi PPLGIM ANIMASI', 'Kaprodi TJKT' => 'okr.index',
             default => null,
         };
     }

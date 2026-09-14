@@ -155,6 +155,8 @@ class OkrTemplateService
             ['code' => 'SARPRAS', 'name' => 'Sarana dan Prasarana', 'role_names' => ['Sarana dan Prasarana', 'KAUR SARPRA', 'Security']],
             ['code' => 'IT', 'name' => 'IT', 'role_names' => ['IT', 'Super Admin']],
             ['code' => 'LAB', 'name' => 'Laboratorium', 'role_names' => ['KAUR LAB']],
+            ['code' => 'KAPRODI-PPLGIM-ANIMASI', 'name' => 'Kaprodi PPLGIM ANIMASI', 'role_names' => ['Kaprodi PPLGIM ANIMASI']],
+            ['code' => 'KAPRODI-TJKT', 'name' => 'Kaprodi TJKT', 'role_names' => ['Kaprodi TJKT']],
         ];
     }
 

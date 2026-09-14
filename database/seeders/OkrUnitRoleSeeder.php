@@ -58,6 +58,8 @@ class OkrUnitRoleSeeder extends Seeder
             ['code' => 'SARPRAS', 'name' => 'Sarana dan Prasarana', 'unit_role' => 'Sarana dan Prasarana', 'role_names' => ['Sarana dan Prasarana', 'KAUR SARPRA', 'Security']],
             ['code' => 'IT', 'name' => 'IT', 'unit_role' => 'IT', 'role_names' => ['IT', 'Super Admin']],
             ['code' => 'LAB', 'name' => 'Laboratorium', 'unit_role' => 'KAUR LAB', 'role_names' => ['KAUR LAB']],
+            ['code' => 'KAPRODI-PPLGIM-ANIMASI', 'name' => 'Kaprodi PPLGIM ANIMASI', 'unit_role' => 'Kaprodi PPLGIM ANIMASI', 'role_names' => ['Kaprodi PPLGIM ANIMASI']],
+            ['code' => 'KAPRODI-TJKT', 'name' => 'Kaprodi TJKT', 'unit_role' => 'Kaprodi TJKT', 'role_names' => ['Kaprodi TJKT']],
         ];
     }
 }

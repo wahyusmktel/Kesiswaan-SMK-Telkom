@@ -472,7 +472,7 @@
                         if (typeof Chart === 'undefined') return;
                         new Chart(this.$refs.unitChart, {
                             type: 'bar',
-                            data: { labels: @js($unitStats->pluck('name')), datasets: [{ data: @js($unitStats->pluck('progress')), backgroundColor: ['#4f46e5','#0ea5e9','#10b981','#f59e0b','#ef4444','#8b5cf6','#14b8a6','#64748b','#111827','#ec4899'], borderRadius: 4, maxBarThickness: 42 }] },
+                            data: { labels: @js($unitStats->pluck('name')), datasets: [{ data: @js($unitStats->pluck('progress')), backgroundColor: ['#4f46e5','#0ea5e9','#10b981','#f59e0b','#ef4444','#8b5cf6','#14b8a6','#64748b','#111827','#ec4899','#f97316','#06b6d4'], borderRadius: 4, maxBarThickness: 42 }] },
                             options: { responsive: true, maintainAspectRatio: false, animation: { duration: 900 }, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100, ticks: { callback: value => value + '%' }, grid: { color: '#f3f4f6' } }, x: { grid: { display: false }, ticks: { maxRotation: 35, minRotation: 0, font: { size: 10 } } } } }
                         });
                         new Chart(this.$refs.trendChart, {
