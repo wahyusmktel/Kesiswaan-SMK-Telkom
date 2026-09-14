@@ -157,11 +157,33 @@
             </section>
         @else
             <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <form method="GET" class="grid gap-3 md:grid-cols-5">
-                    <input name="search" value="{{ request('search') }}" class="rounded-xl border-slate-300 text-sm md:col-span-2" placeholder="Cari tiket, pelapor, atau aset...">
+                <div class="flex flex-col gap-4 border-b border-slate-100 pb-5 lg:flex-row lg:items-center lg:justify-between">
+                    <div><h2 class="font-black text-slate-900">Filter dan Rekap Laporan</h2><p class="mt-1 text-xs text-slate-500">Unduhan mengikuti seluruh filter yang sedang diterapkan, bukan hanya data pada halaman aktif.</p></div>
+                    <div class="flex flex-wrap gap-2">
+                        <a href="{{ route('super-admin.asset-reports.export.excel', request()->query()) }}" class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-sm font-black text-white shadow-sm hover:bg-emerald-500">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
+                            Unduh Excel
+                        </a>
+                        @if(auth()->user()->hasRole('KAUR SARPRA'))
+                            @if($digitalSignatureReady)
+                                <a href="{{ route('super-admin.asset-reports.export.pdf', request()->query()) }}" class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-red-600 px-4 text-sm font-black text-white shadow-sm hover:bg-red-500">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 2h9l4 4v16H6V2Zm9 0v5h5M9 13h6m-6 4h6"/></svg>
+                                    Unduh PDF Bertanda Tangan
+                                </a>
+                            @else
+                                <a href="{{ route('tanda-tangan.index') }}" class="inline-flex h-10 items-center justify-center rounded-xl border border-amber-300 bg-amber-50 px-4 text-sm font-black text-amber-800">Siapkan Tanda Tangan Digital</a>
+                            @endif
+                        @endif
+                    </div>
+                </div>
+                <form method="GET" class="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-7">
+                    <input name="search" value="{{ request('search') }}" class="rounded-xl border-slate-300 text-sm xl:col-span-2" placeholder="Cari tiket, pelapor, atau aset...">
                     <select name="status" class="rounded-xl border-slate-300 text-sm"><option value="">Semua status</option>@foreach(\App\Models\AssetReport::STATUSES as $value => $label)<option value="{{ $value }}" @selected(request('status') === $value)>{{ $label }}</option>@endforeach</select>
                     <select name="urgency" class="rounded-xl border-slate-300 text-sm"><option value="">Semua urgensi</option>@foreach(['rendah'=>'Rendah','normal'=>'Normal','tinggi'=>'Tinggi','darurat'=>'Darurat'] as $value => $label)<option value="{{ $value }}" @selected(request('urgency') === $value)>{{ $label }}</option>@endforeach</select>
-                    <button class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-black text-white">Terapkan Filter</button>
+                    <select name="building_id" class="rounded-xl border-slate-300 text-sm"><option value="">Semua gedung</option>@foreach($buildings as $building)<option value="{{ $building->id }}" @selected((string) request('building_id') === (string) $building->id)>{{ $building->name }}</option>@endforeach</select>
+                    <select name="location_id" class="rounded-xl border-slate-300 text-sm"><option value="">Semua ruangan</option>@foreach($locations as $location)<option value="{{ $location->id }}" @selected((string) request('location_id') === (string) $location->id)>{{ $location->name }} - {{ $location->building->name }}</option>@endforeach</select>
+                    <div class="grid grid-cols-2 gap-2 xl:col-span-2"><input type="date" name="date_from" value="{{ request('date_from') }}" class="rounded-xl border-slate-300 text-sm" title="Tanggal mulai"><input type="date" name="date_to" value="{{ request('date_to') }}" class="rounded-xl border-slate-300 text-sm" title="Tanggal akhir"></div>
+                    <div class="flex gap-2 xl:col-span-2"><button class="flex-1 rounded-xl bg-slate-900 px-4 py-2 text-sm font-black text-white">Terapkan Filter</button><a href="{{ route('super-admin.asset-reports.index') }}" class="inline-flex items-center justify-center rounded-xl border border-slate-300 px-4 text-sm font-bold text-slate-600">Reset</a></div>
                 </form>
             </section>
 

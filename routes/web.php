@@ -1089,6 +1089,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/ruangan-laporan-aset/{location}', [\App\Http\Controllers\Admin\AssetReportManagementController::class, 'updateLocation'])->name('asset-report-locations.update');
         Route::delete('/ruangan-laporan-aset/{location}', [\App\Http\Controllers\Admin\AssetReportManagementController::class, 'destroyLocation'])->name('asset-report-locations.destroy');
         Route::get('/qr-laporan-aset-cetak', [\App\Http\Controllers\Admin\AssetReportManagementController::class, 'printQr'])->name('asset-report-qrs.print');
+        Route::get('/laporan-aset-ekspor/excel', [\App\Http\Controllers\Admin\AssetReportManagementController::class, 'exportExcel'])->name('asset-reports.export.excel');
+        Route::get('/laporan-aset-ekspor/pdf', [\App\Http\Controllers\Admin\AssetReportManagementController::class, 'exportPdf'])->name('asset-reports.export.pdf');
         Route::patch('/laporan-aset/{report}', [\App\Http\Controllers\Admin\AssetReportManagementController::class, 'updateReport'])->name('asset-reports.update');
         Route::get('/laporan-aset/{report}/foto', [\App\Http\Controllers\Admin\AssetReportManagementController::class, 'photo'])->name('asset-reports.photo');
     });
@@ -1474,7 +1476,7 @@ Route::middleware(['auth', 'non.student'])->prefix('okr-sekolah')->name('okr.')-
 // ============================================================
 // TANDA TANGAN DIGITAL (Guru, Waka Kurikulum, Waka Kesiswaan, Kaur SDM)
 // ============================================================
-Route::middleware(['auth', 'role:Guru Kelas|Guru Piket|Wali Kelas|Waka Kesiswaan|Kurikulum|KAUR SDM|Kepala Sekolah|Super Admin|Petugas UKS'])
+Route::middleware(['auth', 'role:Guru Kelas|Guru Piket|Wali Kelas|Waka Kesiswaan|Kurikulum|KAUR SDM|KAUR SARPRA|Kepala Sekolah|Super Admin|Petugas UKS'])
     ->prefix('tanda-tangan-digital')
     ->name('tanda-tangan.')
     ->group(function () {

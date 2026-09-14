@@ -5,13 +5,17 @@ namespace Tests\Feature;
 use App\Models\AssetReport;
 use App\Models\AssetReportBuilding;
 use App\Models\AssetReportLocation;
+use App\Models\DigitalDocument;
 use App\Models\User;
+use App\Models\UserDigitalSignature;
 use App\Support\DashboardRedirector;
 use Database\Seeders\KaurSarpraRoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -186,11 +190,92 @@ class AssetReportingTest extends TestCase
         $this->assertStringStartsWith('%PDF', $response->getContent());
     }
 
+    public function test_kaur_sarpra_can_download_a_filtered_excel_recap(): void
+    {
+        $kaurSarpra = $this->userWithRole('KAUR SARPRA');
+        $location = AssetReportLocation::firstOrFail();
+        $this->createReport($location, 'AST-EXCEL-001', 'darurat', 'baru');
+        $this->createReport($location, 'AST-EXCEL-002', 'normal', 'selesai');
+
+        $response = $this->actingAs($kaurSarpra)->withSession(['active_role' => 'KAUR SARPRA'])
+            ->get(route('super-admin.asset-reports.export.excel', ['urgency' => 'darurat']));
+
+        $response->assertOk();
+        $this->assertStringContainsString(
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            (string) $response->headers->get('content-type')
+        );
+
+        $temporaryFile = tempnam(sys_get_temp_dir(), 'asset-report-').'.xlsx';
+        file_put_contents($temporaryFile, $response->streamedContent());
+        $spreadsheet = IOFactory::load($temporaryFile);
+
+        $this->assertSame(['Ringkasan', 'Detail Laporan'], $spreadsheet->getSheetNames());
+        $this->assertSame('REKAP LAPORAN ASET DAN SARANA PRASARANA', $spreadsheet->getSheet(0)->getCell('A1')->getValue());
+        $this->assertSame('AST-EXCEL-001', $spreadsheet->getSheet(1)->getCell('B5')->getValue());
+        $this->assertSame(5, $spreadsheet->getSheet(1)->getHighestRow());
+        $this->assertSame('A4:U5', $spreadsheet->getSheet(1)->getAutoFilter()->getRange());
+
+        unlink($temporaryFile);
+    }
+
+    public function test_kaur_sarpra_can_download_pdf_with_verifiable_digital_signature(): void
+    {
+        $kaurSarpra = $this->userWithRole('KAUR SARPRA');
+        UserDigitalSignature::create([
+            'user_id' => $kaurSarpra->id,
+            'pin_hash' => Hash::make('1234'),
+            'is_active' => true,
+        ]);
+        $this->createReport(AssetReportLocation::firstOrFail(), 'AST-PDF-001', 'tinggi', 'diproses');
+
+        $response = $this->actingAs($kaurSarpra)->withSession(['active_role' => 'KAUR SARPRA'])
+            ->get(route('super-admin.asset-reports.export.pdf'));
+
+        $response->assertOk()->assertHeader('content-type', 'application/pdf');
+        $this->assertStringStartsWith('%PDF', $response->getContent());
+        $document = DigitalDocument::where('document_type', 'REKAP_LAPORAN_ASET')->firstOrFail();
+        $this->assertSame($kaurSarpra->id, $document->signed_by);
+        $this->assertSame('KAUR SARPRA', $document->signer_role);
+        $this->assertTrue($document->verifyHmac());
+    }
+
+    public function test_signed_pdf_requires_kaur_sarpra_role_and_ready_digital_signature(): void
+    {
+        $kaurSarpra = $this->userWithRole('KAUR SARPRA');
+        $superAdmin = $this->userWithRole('Super Admin');
+
+        $this->actingAs($kaurSarpra)->withSession(['active_role' => 'KAUR SARPRA'])
+            ->get(route('super-admin.asset-reports.export.pdf'))
+            ->assertRedirect(route('super-admin.asset-reports.index'))
+            ->assertSessionHas('error');
+
+        $this->actingAs($superAdmin)->withSession(['active_role' => 'Super Admin'])
+            ->get(route('super-admin.asset-reports.export.pdf'))
+            ->assertForbidden();
+    }
+
     private function userWithRole(string $role): User
     {
         $user = User::factory()->create(['email_verified_at' => now()]);
         $user->assignRole(Role::findOrCreate($role, 'web'));
 
         return $user;
+    }
+
+    private function createReport(AssetReportLocation $location, string $ticket, string $urgency, string $status): AssetReport
+    {
+        return AssetReport::create([
+            'asset_report_location_id' => $location->id,
+            'ticket_number' => $ticket,
+            'reporter_name' => 'Pelapor Uji',
+            'reporter_type' => 'pegawai',
+            'asset_name' => 'Perangkat Uji',
+            'category' => 'rusak',
+            'urgency' => $urgency,
+            'description' => 'Deskripsi laporan untuk pengujian ekspor.',
+            'status' => $status,
+            'completed_at' => $status === 'selesai' ? now() : null,
+        ]);
     }
 }

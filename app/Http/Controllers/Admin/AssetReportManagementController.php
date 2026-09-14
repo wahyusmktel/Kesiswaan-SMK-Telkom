@@ -2,21 +2,27 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\AssetReportExport;
 use App\Http\Controllers\Controller;
 use App\Models\AssetReport;
 use App\Models\AssetReportBuilding;
 use App\Models\AssetReportLocation;
+use App\Models\DigitalDocument;
+use App\Models\UserDigitalSignature;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Maatwebsite\Excel\Facades\Excel;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class AssetReportManagementController extends Controller
 {
     public function index(Request $request)
     {
+        $filters = $this->reportFilters($request);
         $section = $request->routeIs('super-admin.asset-reports.index') ? 'reports' : 'qrs';
         $buildings = AssetReportBuilding::withCount(['locations', 'locations as active_locations_count' => fn ($query) => $query->where('is_active', true)])
             ->orderBy('sort_order')->orderBy('name')->get();
@@ -25,20 +31,7 @@ class AssetReportManagementController extends Controller
             ->when($request->filled('building_id'), fn ($query) => $query->where('asset_report_building_id', $request->integer('building_id')))
             ->orderBy('asset_report_building_id')->orderBy('sort_order')->orderBy('name')->get();
 
-        $reportsQuery = AssetReport::with(['location.building', 'handler'])
-            ->when($request->filled('status'), fn ($query) => $query->where('status', $request->input('status')))
-            ->when($request->filled('urgency'), fn ($query) => $query->where('urgency', $request->input('urgency')))
-            ->when($request->filled('location_id'), fn ($query) => $query->where('asset_report_location_id', $request->integer('location_id')))
-            ->when($request->filled('search'), function ($query) use ($request) {
-                $search = '%'.trim((string) $request->input('search')).'%';
-                $query->where(fn ($subQuery) => $subQuery
-                    ->where('ticket_number', 'like', $search)
-                    ->orWhere('reporter_name', 'like', $search)
-                    ->orWhere('asset_name', 'like', $search)
-                    ->orWhere('description', 'like', $search));
-            });
-
-        $reports = $reportsQuery->latest()->paginate(20)->withQueryString();
+        $reports = $this->reportsQuery($filters)->latest()->paginate(20)->withQueryString();
         $stats = [
             'total_locations' => AssetReportLocation::count(),
             'new_reports' => AssetReport::where('status', 'baru')->count(),
@@ -46,7 +39,9 @@ class AssetReportManagementController extends Controller
             'completed' => AssetReport::where('status', 'selesai')->count(),
         ];
 
-        return view('pages.admin.asset-reports.index', compact('buildings', 'locations', 'reports', 'stats', 'section'));
+        $digitalSignatureReady = $request->user()?->digitalSignature?->isReady() ?? false;
+
+        return view('pages.admin.asset-reports.index', compact('buildings', 'locations', 'reports', 'stats', 'section', 'digitalSignatureReady'));
     }
 
     public function storeBuilding(Request $request)
@@ -157,6 +152,77 @@ class AssetReportManagementController extends Controller
         return $pdf->download('qr-laporan-aset-'.$suffix.'.pdf');
     }
 
+    public function exportExcel(Request $request)
+    {
+        $filters = $this->reportFilters($request);
+        $reports = $this->reportsQuery($filters)->latest()->get();
+        $filename = 'rekap-laporan-aset-'.now()->format('Ymd-His').'.xlsx';
+
+        return Excel::download(
+            new AssetReportExport($reports, $this->reportFilterLabels($filters)),
+            $filename
+        );
+    }
+
+    public function exportPdf(Request $request)
+    {
+        abort_unless($request->user()->hasRole('KAUR SARPRA'), 403);
+
+        $digitalSignature = UserDigitalSignature::where('user_id', $request->user()->id)->first();
+        if (! $digitalSignature?->isReady()) {
+            return redirect()->route('super-admin.asset-reports.index', $request->query())
+                ->with('error', 'Aktifkan identitas tanda tangan digital KAUR SARPRA sebelum mengunduh laporan PDF resmi.');
+        }
+
+        $filters = $this->reportFilters($request);
+        $reports = $this->reportsQuery($filters)->latest()->get();
+        $signedAt = now();
+        $hash = DigitalDocument::generateHash([
+            'REKAP_LAPORAN_ASET',
+            $request->user()->id,
+            $signedAt->toIso8601String(),
+            json_encode($filters),
+            hash('sha256', $reports->map(fn (AssetReport $report) => $report->id.':'.$report->updated_at?->timestamp)->implode('|')),
+        ]);
+        $document = DigitalDocument::create([
+            'document_type' => 'REKAP_LAPORAN_ASET',
+            'document_title' => 'Rekap Laporan Aset dan Sarana Prasarana',
+            'document_hash' => $hash,
+            'hmac_signature' => DigitalDocument::generateHmac($hash),
+            'signed_by' => $request->user()->id,
+            'signer_name' => $request->user()->name,
+            'signer_nip' => $request->user()->masterGuru?->dapodikGuru?->nip
+                ?: $request->user()->masterGuru?->nik
+                ?: $request->user()->masterGuru?->nuptk,
+            'signer_role' => 'KAUR SARPRA',
+            'signed_at' => $signedAt,
+            'is_valid' => true,
+        ]);
+        $verificationUrl = route('verifikasi.dokumen', $document->token);
+        $signatureQr = 'data:image/svg+xml;base64,'.base64_encode(
+            QrCode::format('svg')->size(220)->margin(1)->errorCorrection('H')->generate($verificationUrl)
+        );
+        $logoPath = public_path('images/teaching-module/smk-telkom-lampung.png');
+        $brandLogo = is_file($logoPath)
+            ? 'data:image/png;base64,'.base64_encode(file_get_contents($logoPath))
+            : null;
+        $summary = $this->reportSummary($reports);
+        $filterLabels = $this->reportFilterLabels($filters);
+
+        $pdf = Pdf::loadView('pdf.asset-report-recap', compact(
+            'reports',
+            'summary',
+            'filterLabels',
+            'document',
+            'signatureQr',
+            'verificationUrl',
+            'brandLogo',
+            'signedAt'
+        ))->setPaper('a4', 'landscape');
+
+        return $pdf->download('rekap-laporan-aset-'.$signedAt->format('Ymd-His').'.pdf');
+    }
+
     private function buildingRules(?AssetReportBuilding $building = null): array
     {
         return [
@@ -179,6 +245,80 @@ class AssetReportManagementController extends Controller
             'description' => ['nullable', 'string', 'max:255'],
             'is_active' => ['nullable', 'boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
+        ];
+    }
+
+    private function reportFilters(Request $request): array
+    {
+        return validator($request->query(), [
+            'search' => ['nullable', 'string', 'max:150'],
+            'status' => ['nullable', Rule::in(array_keys(AssetReport::STATUSES))],
+            'urgency' => ['nullable', Rule::in(['rendah', 'normal', 'tinggi', 'darurat'])],
+            'building_id' => ['nullable', 'integer', 'exists:asset_report_buildings,id'],
+            'location_id' => ['nullable', 'integer', 'exists:asset_report_locations,id'],
+            'date_from' => ['nullable', 'date_format:Y-m-d'],
+            'date_to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:date_from'],
+        ])->validate();
+    }
+
+    private function reportsQuery(array $filters): Builder
+    {
+        return AssetReport::with(['location.building', 'handler'])
+            ->when($filters['status'] ?? null, fn ($query, $status) => $query->where('status', $status))
+            ->when($filters['urgency'] ?? null, fn ($query, $urgency) => $query->where('urgency', $urgency))
+            ->when($filters['building_id'] ?? null, fn ($query, $buildingId) => $query->whereHas(
+                'location',
+                fn ($locationQuery) => $locationQuery->where('asset_report_building_id', $buildingId)
+            ))
+            ->when($filters['location_id'] ?? null, fn ($query, $locationId) => $query->where('asset_report_location_id', $locationId))
+            ->when($filters['date_from'] ?? null, fn ($query, $date) => $query->whereDate('created_at', '>=', $date))
+            ->when($filters['date_to'] ?? null, fn ($query, $date) => $query->whereDate('created_at', '<=', $date))
+            ->when($filters['search'] ?? null, function ($query, $value) {
+                $search = '%'.trim((string) $value).'%';
+                $query->where(fn ($subQuery) => $subQuery
+                    ->where('ticket_number', 'like', $search)
+                    ->orWhere('reporter_name', 'like', $search)
+                    ->orWhere('asset_name', 'like', $search)
+                    ->orWhere('description', 'like', $search));
+            });
+    }
+
+    private function reportFilterLabels(array $filters): array
+    {
+        $labels = [];
+        if ($filters['date_from'] ?? null) {
+            $labels[] = 'Mulai '.date('d/m/Y', strtotime($filters['date_from']));
+        }
+        if ($filters['date_to'] ?? null) {
+            $labels[] = 'Sampai '.date('d/m/Y', strtotime($filters['date_to']));
+        }
+        if ($filters['building_id'] ?? null) {
+            $labels[] = 'Gedung: '.(AssetReportBuilding::find($filters['building_id'])?->name ?? '-');
+        }
+        if ($filters['location_id'] ?? null) {
+            $labels[] = 'Ruangan: '.(AssetReportLocation::find($filters['location_id'])?->name ?? '-');
+        }
+        if ($filters['status'] ?? null) {
+            $labels[] = 'Status: '.(AssetReport::STATUSES[$filters['status']] ?? $filters['status']);
+        }
+        if ($filters['urgency'] ?? null) {
+            $labels[] = 'Urgensi: '.ucfirst($filters['urgency']);
+        }
+        if ($filters['search'] ?? null) {
+            $labels[] = 'Pencarian: "'.trim($filters['search']).'"';
+        }
+
+        return $labels ?: ['Semua laporan'];
+    }
+
+    private function reportSummary($reports): array
+    {
+        return [
+            'total' => $reports->count(),
+            'new' => $reports->where('status', 'baru')->count(),
+            'in_progress' => $reports->whereIn('status', ['diverifikasi', 'diproses'])->count(),
+            'completed' => $reports->where('status', 'selesai')->count(),
+            'urgent' => $reports->whereIn('urgency', ['tinggi', 'darurat'])->count(),
         ];
     }
 }
