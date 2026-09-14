@@ -7,7 +7,9 @@ use App\Http\Controllers\Controller;
 use App\Models\AssetReport;
 use App\Models\AssetReportBuilding;
 use App\Models\AssetReportLocation;
+use App\Models\DapodikGuru;
 use App\Models\DigitalDocument;
+use App\Models\MasterGuru;
 use App\Models\UserDigitalSignature;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
@@ -177,6 +179,7 @@ class AssetReportManagementController extends Controller
         $filters = $this->reportFilters($request);
         $reports = $this->reportsQuery($filters)->latest()->get();
         $signedAt = now();
+        $signerNip = $this->signerNipFromDapodik($request);
         $hash = DigitalDocument::generateHash([
             'REKAP_LAPORAN_ASET',
             $request->user()->id,
@@ -191,9 +194,7 @@ class AssetReportManagementController extends Controller
             'hmac_signature' => DigitalDocument::generateHmac($hash),
             'signed_by' => $request->user()->id,
             'signer_name' => $request->user()->name,
-            'signer_nip' => $request->user()->masterGuru?->dapodikGuru?->nip
-                ?: $request->user()->masterGuru?->nik
-                ?: $request->user()->masterGuru?->nuptk,
+            'signer_nip' => $signerNip,
             'signer_role' => 'KAUR SARPRA',
             'signed_at' => $signedAt,
             'is_valid' => true,
@@ -221,6 +222,24 @@ class AssetReportManagementController extends Controller
         ))->setPaper('a4', 'landscape');
 
         return $pdf->download('rekap-laporan-aset-'.$signedAt->format('Ymd-His').'.pdf');
+    }
+
+    private function signerNipFromDapodik(Request $request): ?string
+    {
+        $masterGuru = $request->user()->masterGuru;
+        if (! $masterGuru) {
+            return null;
+        }
+
+        $category = $masterGuru->employee_category === MasterGuru::CATEGORY_TPA
+            ? DapodikGuru::CATEGORY_TPA
+            : DapodikGuru::CATEGORY_TEACHER;
+
+        $nip = $masterGuru->dapodikGuru()
+            ->where('employee_category', $category)
+            ->value('nip');
+
+        return filled($nip) ? trim((string) $nip) : null;
     }
 
     private function buildingRules(?AssetReportBuilding $building = null): array

@@ -6,6 +6,7 @@ use App\Models\AssetReport;
 use App\Models\AssetReportBuilding;
 use App\Models\AssetReportLocation;
 use App\Models\DigitalDocument;
+use App\Models\MasterGuru;
 use App\Models\User;
 use App\Models\UserDigitalSignature;
 use App\Support\DashboardRedirector;
@@ -222,6 +223,20 @@ class AssetReportingTest extends TestCase
     public function test_kaur_sarpra_can_download_pdf_with_verifiable_digital_signature(): void
     {
         $kaurSarpra = $this->userWithRole('KAUR SARPRA');
+        $masterGuru = MasterGuru::create([
+            'user_id' => $kaurSarpra->id,
+            'nama_lengkap' => $kaurSarpra->name,
+            'jenis_kelamin' => 'L',
+            'nik' => 'NIK-MASTER-TIDAK-DIPAKAI',
+            'nuptk' => 'NUPTK-MASTER-TIDAK-DIPAKAI',
+            'employee_category' => MasterGuru::CATEGORY_TEACHER,
+        ]);
+        $masterGuru->dapodikGuru()->create([
+            'employee_category' => 'guru',
+            'nama' => $kaurSarpra->name,
+            'nik' => '1871010101010001',
+            'nip' => '198701012020121001',
+        ]);
         UserDigitalSignature::create([
             'user_id' => $kaurSarpra->id,
             'pin_hash' => Hash::make('1234'),
@@ -237,7 +252,41 @@ class AssetReportingTest extends TestCase
         $document = DigitalDocument::where('document_type', 'REKAP_LAPORAN_ASET')->firstOrFail();
         $this->assertSame($kaurSarpra->id, $document->signed_by);
         $this->assertSame('KAUR SARPRA', $document->signer_role);
+        $this->assertSame('198701012020121001', $document->signer_nip);
         $this->assertTrue($document->verifyHmac());
+    }
+
+    public function test_signed_pdf_uses_tpa_nip_from_tpa_dapodik_data(): void
+    {
+        $kaurSarpra = $this->userWithRole('KAUR SARPRA');
+        $masterTpa = MasterGuru::create([
+            'user_id' => $kaurSarpra->id,
+            'nama_lengkap' => $kaurSarpra->name,
+            'jenis_kelamin' => 'P',
+            'nik' => 'NIK-MASTER-TIDAK-DIPAKAI',
+            'nuptk' => 'NUPTK-MASTER-TIDAK-DIPAKAI',
+            'employee_category' => MasterGuru::CATEGORY_TPA,
+        ]);
+        $masterTpa->dapodikGuru()->create([
+            'employee_category' => 'tpa',
+            'nama' => $kaurSarpra->name,
+            'nik' => '1871010101010002',
+            'nip' => '199001012022032002',
+        ]);
+        UserDigitalSignature::create([
+            'user_id' => $kaurSarpra->id,
+            'pin_hash' => Hash::make('1234'),
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($kaurSarpra)->withSession(['active_role' => 'KAUR SARPRA'])
+            ->get(route('super-admin.asset-reports.export.pdf'));
+
+        $response->assertOk()->assertHeader('content-type', 'application/pdf');
+        $document = DigitalDocument::where('document_type', 'REKAP_LAPORAN_ASET')->firstOrFail();
+        $this->assertSame('199001012022032002', $document->signer_nip);
+        $this->assertNotSame($masterTpa->nik, $document->signer_nip);
+        $this->assertNotSame($masterTpa->nuptk, $document->signer_nip);
     }
 
     public function test_signed_pdf_requires_kaur_sarpra_role_and_ready_digital_signature(): void
