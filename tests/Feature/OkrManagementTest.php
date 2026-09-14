@@ -34,7 +34,7 @@ class OkrManagementTest extends TestCase
 
         $this->assertDatabaseCount('okr_objectives', 5);
         $this->assertDatabaseCount('okr_key_results', 16);
-        $this->assertDatabaseCount('okr_units', 9);
+        $this->assertDatabaseCount('okr_units', 10);
         $this->assertDatabaseHas('okr_key_results', ['code' => 'KR 5.3']);
     }
 

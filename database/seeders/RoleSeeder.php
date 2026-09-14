@@ -26,6 +26,7 @@ class RoleSeeder extends Seeder
         Role::firstOrCreate(['name' => 'Siswa']);
         Role::firstOrCreate(['name' => 'Petugas UKS']);
         Role::firstOrCreate(['name' => 'TPA']);
+        Role::firstOrCreate(['name' => 'KAUR LAB']);
         Role::firstOrCreate(['name' => 'adminup']);
     }
 }

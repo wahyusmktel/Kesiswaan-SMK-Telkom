@@ -42,7 +42,7 @@ class OkrUnitRoleSeeder extends Seeder
         }
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
-        $this->command?->info('Role pengelola untuk 9 unit OKR berhasil disinkronkan.');
+        $this->command?->info('Role pengelola untuk '.count($this->units()).' unit OKR berhasil disinkronkan.');
     }
 
     private function units(): array
@@ -57,6 +57,7 @@ class OkrUnitRoleSeeder extends Seeder
             ['code' => 'KEUANGAN', 'name' => 'Keuangan', 'unit_role' => 'Keuangan', 'role_names' => ['Keuangan', 'Tata Usaha', 'Kantin']],
             ['code' => 'SARPRAS', 'name' => 'Sarana dan Prasarana', 'unit_role' => 'Sarana dan Prasarana', 'role_names' => ['Sarana dan Prasarana', 'KAUR SARPRA', 'Security']],
             ['code' => 'IT', 'name' => 'IT', 'unit_role' => 'IT', 'role_names' => ['IT', 'Super Admin']],
+            ['code' => 'LAB', 'name' => 'Laboratorium', 'unit_role' => 'KAUR LAB', 'role_names' => ['KAUR LAB']],
         ];
     }
 }

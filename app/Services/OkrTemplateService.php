@@ -154,6 +154,7 @@ class OkrTemplateService
             ['code' => 'KEUANGAN', 'name' => 'Keuangan', 'role_names' => ['Keuangan', 'Tata Usaha', 'Kantin']],
             ['code' => 'SARPRAS', 'name' => 'Sarana dan Prasarana', 'role_names' => ['Sarana dan Prasarana', 'KAUR SARPRA', 'Security']],
             ['code' => 'IT', 'name' => 'IT', 'role_names' => ['IT', 'Super Admin']],
+            ['code' => 'LAB', 'name' => 'Laboratorium', 'role_names' => ['KAUR LAB']],
         ];
     }
 
