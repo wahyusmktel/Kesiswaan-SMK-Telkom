@@ -52,6 +52,15 @@ class TelegramTeacherLeaveService
 
         if ($bot->purpose !== 'employment' || ! $user?->masterGuru || (! $user->hasRole('Guru Kelas') && ! $user->masterGuru->is_tpa && ! $user->hasRole('KAUR SDM'))) {
             $conversation?->delete();
+            if ($bot->purpose === 'employment' && $user && app(TelegramTodayLeaveService::class)->canView($user)) {
+                if ($command === 'status') {
+                    $this->sendAccountStatus($bot, $link);
+                } else {
+                    $this->sendMenu($bot, $user, $chatId);
+                }
+
+                return;
+            }
             $this->telegram->markAccountLinked($bot, $chatId, $user);
             $this->telegram->reply(
                 $bot,

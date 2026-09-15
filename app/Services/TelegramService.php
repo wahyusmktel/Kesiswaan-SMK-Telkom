@@ -183,6 +183,9 @@ class TelegramService
         if ($bot->purpose === 'employment' && $user?->masterGuru) {
             $commands[] = ['command' => 'rekap_absensi', 'description' => 'Rekap fingerprint 7 hari terakhir'];
         }
+        if ($bot->purpose === 'employment' && $user && app(TelegramTodayLeaveService::class)->canView($user)) {
+            $commands[] = ['command' => 'izin_hari_ini', 'description' => 'Lihat pegawai dengan izin disetujui hari ini'];
+        }
 
         $commandsHash = hash('sha256', json_encode($commands, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
         $link = TelegramUserLink::query()
@@ -219,7 +222,7 @@ class TelegramService
 
     public function linkedMenuMarkup(TelegramBot $bot, User $user): array
     {
-        if ($bot->purpose !== 'employment' || (! $user->masterGuru && ! $user->hasRole('Guru Kelas') && ! $user->hasRole('Guru Piket'))) {
+        if ($bot->purpose !== 'employment' || (! $user->masterGuru && ! $user->hasRole('Guru Kelas') && ! $user->hasRole('Guru Piket') && ! $user->hasAnyRole(['KAUR SDM', 'Kepala Sekolah']))) {
             return ['remove_keyboard' => true];
         }
 
@@ -230,6 +233,9 @@ class TelegramService
         }
         if ($user->masterGuru) {
             $rows[] = [['text' => '📊 Rekap Fingerprint 7 Hari']];
+        }
+        if (app(TelegramTodayLeaveService::class)->canView($user)) {
+            $rows[] = [['text' => TelegramTodayLeaveService::MENU_LABEL]];
         }
         if ($user->hasRole('Guru Piket')) {
             $rows[] = [['text' => '✅ Persetujuan Guru Piket']];

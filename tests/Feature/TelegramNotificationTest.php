@@ -22,6 +22,7 @@ use App\Models\User;
 use App\Models\WhatsappTemplate;
 use App\Services\FingerprintWhatsappNotificationService;
 use App\Services\TelegramLeaveNotificationService;
+use App\Services\TelegramService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -624,6 +625,76 @@ class TelegramNotificationTest extends TestCase
         Http::assertSent(fn ($request) => str_ends_with($request->url(), '/sendMessage')
             && (string) $request['chat_id'] === '998811'
             && str_contains($request['text'], 'diteruskan ke Waka Kurikulum'));
+    }
+
+    public function test_sdm_headmaster_and_only_on_duty_picket_can_view_approved_leaves_today(): void
+    {
+        $bot = $this->createBot();
+        $applicant = $this->createLinkedEmployee($bot, 'Pegawai Izin Hari Ini', '998851');
+        $sdm = $this->createLinkedEmployee($bot, 'SDM Hari Ini', '998852');
+        $headmaster = $this->createLinkedEmployee($bot, 'Kepala Sekolah Hari Ini', '998853');
+        $onDuty = $this->createLinkedEmployee($bot, 'Piket Hari Ini', '998854');
+        $offDuty = $this->createLinkedEmployee($bot, 'Piket Besok', '998855');
+        $teacher = $this->createLinkedEmployee($bot, 'Guru Biasa', '998856');
+        $sdm->assignRole(Role::findOrCreate('KAUR SDM', 'web'));
+        $headmaster->assignRole(Role::findOrCreate('Kepala Sekolah', 'web'));
+        $picketRole = Role::findOrCreate('Guru Piket', 'web');
+        $onDuty->assignRole($picketRole);
+        $offDuty->assignRole($picketRole);
+        GuruPiketSchedule::create(['weekday' => 'Selasa', 'slot' => 1, 'user_id' => $onDuty->id]);
+        GuruPiketSchedule::create(['weekday' => 'Rabu', 'slot' => 1, 'user_id' => $offDuty->id]);
+
+        GuruIzin::create([
+            'master_guru_id' => $applicant->masterGuru->id,
+            'tanggal_mulai' => now()->startOfDay()->setTime(8, 0),
+            'tanggal_selesai' => now()->startOfDay()->setTime(12, 0),
+            'jenis_izin' => 'Keperluan Keluarga',
+            'deskripsi' => 'Keperluan keluarga yang telah disetujui.',
+            'kategori_penyetujuan' => GuruIzin::CATEGORY_ABSENT,
+            'status_piket' => 'disetujui',
+            'status_kurikulum' => 'disetujui',
+            'status_sdm' => 'disetujui',
+            'status_kepala_sekolah' => 'tidak_diperlukan',
+        ]);
+        GuruIzin::create([
+            'master_guru_id' => $teacher->masterGuru->id,
+            'tanggal_mulai' => now()->startOfDay()->setTime(9, 0),
+            'tanggal_selesai' => now()->startOfDay()->setTime(11, 0),
+            'jenis_izin' => 'Belum disetujui',
+            'deskripsi' => 'Permohonan masih dalam proses.',
+            'kategori_penyetujuan' => GuruIzin::CATEGORY_OUTSIDE,
+            'status_piket' => 'menunggu',
+            'status_kurikulum' => 'menunggu',
+            'status_sdm' => 'menunggu',
+        ]);
+
+        $telegram = app(TelegramService::class);
+        foreach ([$sdm, $headmaster, $onDuty] as $viewer) {
+            $markup = $telegram->linkedMenuMarkup($bot, $viewer);
+            $this->assertStringContainsString('Pegawai Izin Hari Ini', json_encode($markup, JSON_UNESCAPED_UNICODE));
+            $this->sendBotMessage($bot, (string) $viewer->telegramLinks->first()->chat_id, '/izin_hari_ini');
+        }
+        foreach ([$offDuty, $teacher] as $viewer) {
+            $markup = $telegram->linkedMenuMarkup($bot, $viewer);
+            $this->assertStringNotContainsString('Pegawai Izin Hari Ini', json_encode($markup, JSON_UNESCAPED_UNICODE));
+            $this->sendBotMessage($bot, (string) $viewer->telegramLinks->first()->chat_id, '📅 Pegawai Izin Hari Ini');
+        }
+
+        foreach (['998852', '998853', '998854'] as $chatId) {
+            Http::assertSent(fn ($request) => str_ends_with($request->url(), '/sendMessage')
+                && (string) ($request['chat_id'] ?? '') === $chatId
+                && str_contains((string) $request['text'], 'Pegawai Izin Hari Ini')
+                && str_contains((string) $request['text'], 'Keperluan Keluarga')
+                && ! str_contains((string) $request['text'], 'Belum disetujui'));
+        }
+        foreach (['998855', '998856'] as $chatId) {
+            Http::assertSent(fn ($request) => str_ends_with($request->url(), '/sendMessage')
+                && (string) ($request['chat_id'] ?? '') === $chatId
+                && str_contains((string) $request['text'], 'hanya tersedia untuk KAUR SDM'));
+            Http::assertNotSent(fn ($request) => str_ends_with($request->url(), '/sendMessage')
+                && (string) ($request['chat_id'] ?? '') === $chatId
+                && str_contains((string) $request['text'], 'Keperluan Keluarga'));
+        }
     }
 
     public function test_scheduled_picket_can_reject_with_a_reason_and_off_duty_picket_cannot_decide(): void

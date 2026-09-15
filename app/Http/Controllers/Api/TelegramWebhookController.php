@@ -9,13 +9,14 @@ use App\Models\User;
 use App\Services\TelegramPicketApprovalService;
 use App\Services\TelegramService;
 use App\Services\TelegramTeacherLeaveService;
+use App\Services\TelegramTodayLeaveService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class TelegramWebhookController extends Controller
 {
-    public function __invoke(Request $request, TelegramBot $telegramBot, TelegramService $telegram, TelegramTeacherLeaveService $teacherLeave, TelegramPicketApprovalService $picketApproval)
+    public function __invoke(Request $request, TelegramBot $telegramBot, TelegramService $telegram, TelegramTeacherLeaveService $teacherLeave, TelegramPicketApprovalService $picketApproval, TelegramTodayLeaveService $todayLeave)
     {
         abort_unless($telegramBot->is_active && hash_equals($telegramBot->webhook_secret, (string) $request->header('X-Telegram-Bot-Api-Secret-Token')), 403);
         $telegram->beginWebhookReply();
@@ -78,7 +79,8 @@ class TelegramWebhookController extends Controller
             if (! $existingLink->last_interaction_at || $existingLink->last_interaction_at->lt(now()->subMinutes(5))) {
                 $existingLink->forceFill(['last_interaction_at' => now()])->saveQuietly();
             }
-            if (! $picketApproval->handleMessage($telegramBot, $existingLink, $message)) {
+            if (! $picketApproval->handleMessage($telegramBot, $existingLink, $message)
+                && ! $todayLeave->handle($telegramBot, $existingLink, $message)) {
                 $teacherLeave->handle($telegramBot, $existingLink, $message);
             }
 
