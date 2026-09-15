@@ -12,6 +12,7 @@ use App\Services\MediaMtxService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Storage;
@@ -168,14 +169,46 @@ Artisan::command('fingerprint:send-checkin-reminders', function () {
         return 0;
     }
 
-    SendFingerprintCheckinRemindersJob::dispatch();
-    $this->info('Pemeriksaan pengingat check-in fingerprint dikirim ke antrean.');
+    $setting = FingerprintAutoSyncSetting::getSetting();
+    $devices = FingerprintDevice::query()
+        ->where('is_active', true)
+        ->when(! empty($setting->device_ids), fn ($query) => $query->whereIn('id', $setting->device_ids))
+        ->whereHas('fingerprintUsers', fn ($query) => $query->whereNotNull('app_user_id'))
+        ->orderBy('name')
+        ->get();
+
+    if ($devices->isEmpty()) {
+        $this->warn('Pengingat tidak dikirim karena tidak ada mesin fingerprint aktif dengan user yang sudah dimapping.');
+
+        return 0;
+    }
+
+    $dispatchLockKey = 'fingerprint:checkin-reminder-sync-dispatch';
+    if (! Cache::add($dispatchLockKey, now()->toIso8601String(), now()->addMinutes(10))) {
+        $this->line('Sinkronisasi sebelum pengingat check-in masih berjalan atau baru saja gagal.');
+
+        return 0;
+    }
+
+    $date = now()->toDateString();
+    $jobs = $devices->map(fn (FingerprintDevice $device) => new SyncFingerprintAttendancesJob(
+        $device->id,
+        'reminder-'.$device->id.'-'.Str::uuid(),
+        $date,
+        $date,
+        'hari ini sebelum pengingat check-in',
+        true,
+    ))->all();
+    $jobs[] = new SendFingerprintCheckinRemindersJob($dispatchLockKey);
+
+    Bus::chain($jobs)->onQueue('fingerprint')->dispatch();
+    $this->info("Penarikan log hari ini dari {$devices->count()} mesin masuk antrean. Pengingat hanya diperiksa setelah seluruh penarikan berhasil.");
 
     return 0;
 })->purpose('Dispatch fingerprint check-in reminder notifications');
 
 Schedule::command('fingerprint:send-checkin-reminders')
-    ->everyMinute()
+    ->everyFiveMinutes()
     ->weekdays()
     ->between('05:00', '17:00')
     ->withoutOverlapping();

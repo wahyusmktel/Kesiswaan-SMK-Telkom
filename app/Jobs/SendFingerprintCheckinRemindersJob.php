@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Services\FingerprintWhatsappNotificationService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class SendFingerprintCheckinRemindersJob implements ShouldQueue
@@ -15,13 +16,19 @@ class SendFingerprintCheckinRemindersJob implements ShouldQueue
 
     public int $tries = 2;
 
-    public function __construct()
+    public function __construct(public ?string $dispatchLockKey = null)
     {
         $this->onQueue('fingerprint');
     }
 
     public function handle(FingerprintWhatsappNotificationService $service): void
     {
-        Log::info('Pemeriksaan pengingat check-in fingerprint selesai.', $service->sendCheckinRemindersNow());
+        try {
+            Log::info('Pemeriksaan pengingat check-in fingerprint selesai.', $service->sendCheckinRemindersNow());
+        } finally {
+            if ($this->dispatchLockKey) {
+                Cache::forget($this->dispatchLockKey);
+            }
+        }
     }
 }

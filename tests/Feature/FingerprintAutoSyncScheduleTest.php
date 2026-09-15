@@ -96,13 +96,33 @@ class FingerprintAutoSyncScheduleTest extends TestCase
         Queue::fake();
         $setting = FingerprintAutoSyncSetting::getSetting();
         $setting->update(['notifications_enabled' => true]);
+        $device = FingerprintDevice::create(['name' => 'Mesin Pengingat', 'ip_address' => '127.0.0.1', 'is_active' => true]);
+        FingerprintUser::create([
+            'fingerprint_device_id' => $device->id,
+            'user_id' => '101',
+            'app_user_id' => User::factory()->create()->id,
+        ]);
 
         $this->artisan('fingerprint:send-checkin-reminders')->assertExitCode(0);
-        Queue::assertPushed(SendFingerprintCheckinRemindersJob::class, 1);
+        Queue::assertPushedWithChain(SyncFingerprintAttendancesJob::class, [SendFingerprintCheckinRemindersJob::class]);
+        Queue::assertPushed(SyncFingerprintAttendancesJob::class, fn ($job) => $job->dateFrom === now()->toDateString()
+            && $job->dateTo === now()->toDateString()
+            && $job->failOnError);
 
         $setting->update(['notifications_enabled' => false]);
         $this->artisan('fingerprint:send-checkin-reminders')->assertExitCode(0);
-        Queue::assertPushed(SendFingerprintCheckinRemindersJob::class, 1);
+        Queue::assertPushed(SyncFingerprintAttendancesJob::class, 1);
+    }
+
+    public function test_checkin_reminders_are_not_dispatched_without_an_active_mapped_device(): void
+    {
+        Queue::fake();
+        FingerprintAutoSyncSetting::getSetting()->update(['notifications_enabled' => true]);
+        FingerprintDevice::create(['name' => 'Mesin Tanpa Mapping', 'ip_address' => '127.0.0.1', 'is_active' => true]);
+
+        $this->artisan('fingerprint:send-checkin-reminders')->assertExitCode(0);
+
+        Queue::assertNothingPushed();
     }
 
     public function test_superadmin_can_update_the_daily_notification_time(): void

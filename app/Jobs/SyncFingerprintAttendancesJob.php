@@ -14,6 +14,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Rats\Zkteco\Lib\ZKTeco;
+use RuntimeException;
 use Throwable;
 
 class SyncFingerprintAttendancesJob implements ShouldQueue
@@ -30,6 +31,7 @@ class SyncFingerprintAttendancesJob implements ShouldQueue
         public ?string $dateFrom,
         public ?string $dateTo,
         public string $rangeLabel,
+        public bool $failOnError = false,
     ) {
         $this->onQueue('fingerprint');
     }
@@ -48,12 +50,17 @@ class SyncFingerprintAttendancesJob implements ShouldQueue
 
         try {
             if (! $zk->connect()) {
+                $message = "Mesin {$device->name} tidak bisa dikoneksikan.";
                 $this->progress([
                     'status' => 'failed',
                     'percent' => 100,
-                    'message' => "Mesin {$device->name} tidak bisa dikoneksikan.",
+                    'message' => $message,
                     'character' => 'Koneksi ditolak mesin',
                 ]);
+
+                if ($this->failOnError) {
+                    throw new RuntimeException($message);
+                }
 
                 return;
             }
@@ -77,12 +84,17 @@ class SyncFingerprintAttendancesJob implements ShouldQueue
 
             if ($mappedUsers->isEmpty()) {
                 $zk->disconnect();
+                $message = 'Belum ada user mesin yang dimapping ke pegawai.';
                 $this->progress([
                     'status' => 'failed',
                     'percent' => 100,
-                    'message' => 'Belum ada user mesin yang dimapping ke pegawai.',
+                    'message' => $message,
                     'character' => 'Mapping pegawai diperlukan',
                 ]);
+
+                if ($this->failOnError) {
+                    throw new RuntimeException($message);
+                }
 
                 return;
             }
@@ -174,6 +186,10 @@ class SyncFingerprintAttendancesJob implements ShouldQueue
                 'message' => 'Gagal tarik log absensi: '.$e->getMessage(),
                 'character' => 'Proses berhenti',
             ]);
+
+            if ($this->failOnError) {
+                throw $e;
+            }
         }
     }
 
@@ -252,5 +268,4 @@ class SyncFingerprintAttendancesJob implements ShouldQueue
             return null;
         }
     }
-
 }
