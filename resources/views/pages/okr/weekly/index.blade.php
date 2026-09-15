@@ -112,7 +112,12 @@
                                 <div class="rounded-md border border-gray-200 bg-gray-50 p-4">
                                     <p class="mb-3 text-xs font-black uppercase text-gray-500">Komitmen {{ $index + 1 }}{{ $index === 0 ? ' · wajib' : ' · opsional' }}</p>
                                     <div class="grid gap-4 lg:grid-cols-2">
-                                        <label class="lg:col-span-2"><span class="mb-1 block text-xs font-bold">Terkait target OKR</span><select name="items[{{ $index }}][okr_plan_id]" class="w-full rounded-md border-gray-300 text-sm"><option value="">Belum dikaitkan</option>@foreach($availablePlans as $plan)<option value="{{ $plan->id }}" @selected((string) old("items.$index.okr_plan_id", $planningItem?->okr_plan_id) === (string) $plan->id)>{{ strtoupper($plan->level) }} · {{ $plan->keyResult->code }} · {{ $plan->title }}</option>@endforeach</select></label>
+                                        <div class="lg:col-span-2">
+                                            @include('pages.okr.weekly._plan-picker', [
+                                                'fieldName' => "items[$index][okr_plan_id]",
+                                                'selectedPlanId' => old("items.$index.okr_plan_id", $planningItem?->okr_plan_id),
+                                            ])
+                                        </div>
                                         <label><span class="mb-1 block text-xs font-bold">Komitmen target</span><textarea name="items[{{ $index }}][commitment]" rows="3" @required($index === 0) class="w-full rounded-md border-gray-300 text-sm">{{ old("items.$index.commitment", $planningItem?->commitment) }}</textarea></label>
                                         <label><span class="mb-1 block text-xs font-bold">Target terukur / batas waktu</span><textarea name="items[{{ $index }}][measurable_target]" rows="3" @required($index === 0) class="w-full rounded-md border-gray-300 text-sm">{{ old("items.$index.measurable_target", $planningItem?->measurable_target) }}</textarea></label>
                                         <label><span class="mb-1 block text-xs font-bold">Ketergantungan lintas unit</span><textarea name="items[{{ $index }}][cross_unit_dependencies]" rows="2" class="w-full rounded-md border-gray-300 text-sm">{{ old("items.$index.cross_unit_dependencies", $planningItem?->cross_unit_dependencies) }}</textarea></label>
@@ -123,16 +128,68 @@
                         </div>
                         <div class="flex justify-end"><button class="rounded-md bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-500">Simpan Rencana Senin</button></div>
                     </form>
-                @elseif($report)
-                    <div class="space-y-4 p-5">
-                        <div><p class="text-[10px] font-black uppercase text-gray-400">Fokus pekan</p><p class="mt-1 text-sm text-gray-800">{{ $report->weekly_focus }}</p></div>
-                        @if($report->support_needed)<div><p class="text-[10px] font-black uppercase text-gray-400">Dukungan dibutuhkan</p><p class="mt-1 text-sm text-gray-700">{{ $report->support_needed }}</p></div>@endif
-                    </div>
-                @else
+                @elseif(!$report)
                     <div class="px-5 py-12 text-center text-sm text-gray-500">Unit ini belum membuat rencana pekanan.</div>
                 @endif
 
                 @if($report)
+                    <section class="border-t border-blue-200 bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-5" data-weekly-plan-resume>
+                        <div class="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                                <p class="text-[11px] font-black uppercase tracking-[0.16em] text-blue-600">Bahan Presentasi Rapat Pekanan</p>
+                                <h4 class="mt-1 text-lg font-black text-gray-950">Resume Rencana & Komitmen</h4>
+                                <p class="mt-1 text-xs text-gray-600">Ringkasan rencana {{ $selectedUnit->name }} untuk pekan {{ $weekStart->translatedFormat('d M') }}–{{ $weekEnd->translatedFormat('d M Y') }}.</p>
+                            </div>
+                            <span class="rounded-full border border-blue-200 bg-white px-3 py-1.5 text-[10px] font-black uppercase text-blue-700">{{ $report->items->count() }} komitmen utama</span>
+                        </div>
+
+                        <div class="mt-4 grid gap-3 lg:grid-cols-3">
+                            <div class="rounded-md border border-blue-100 bg-white p-4 lg:col-span-2">
+                                <p class="text-[10px] font-black uppercase tracking-wide text-gray-400">Fokus pekan ini</p>
+                                <p class="mt-2 text-sm font-bold leading-6 text-gray-900">{{ $report->weekly_focus }}</p>
+                            </div>
+                            <div class="rounded-md border border-amber-100 bg-amber-50 p-4">
+                                <p class="text-[10px] font-black uppercase tracking-wide text-amber-600">Dukungan dibutuhkan</p>
+                                <p class="mt-2 text-sm leading-6 text-amber-950">{{ $report->support_needed ?: 'Tidak ada dukungan khusus yang diajukan.' }}</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 grid gap-4 xl:grid-cols-3">
+                            @foreach($report->items->sortBy('priority_order') as $item)
+                                @php
+                                    $weeklyTarget = $item->plan;
+                                    $monthlyTarget = $weeklyTarget?->level === 'weekly' && $weeklyTarget?->parent?->level === 'monthly' ? $weeklyTarget->parent : null;
+                                    $annualTarget = $monthlyTarget?->parent?->level === 'annual' ? $monthlyTarget->parent : null;
+                                @endphp
+                                <article class="rounded-md border border-gray-200 bg-white p-4 shadow-sm">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-xs font-black text-white">{{ $item->priority_order }}</span>
+                                        @if($weeklyTarget)<span class="rounded-full bg-emerald-50 px-2 py-1 text-[9px] font-black uppercase text-emerald-700">OKR Mingguan</span>@endif
+                                    </div>
+                                    <p class="mt-3 text-sm font-black leading-5 text-gray-950">{{ $item->commitment }}</p>
+                                    <div class="mt-3 rounded bg-gray-50 p-3"><p class="text-[9px] font-black uppercase text-gray-400">Target terukur</p><p class="mt-1 text-xs font-semibold leading-5 text-gray-700">{{ $item->measurable_target }}</p></div>
+                                    @if($weeklyTarget)
+                                        <div class="mt-3 space-y-2 border-l-2 border-indigo-200 pl-3 text-xs">
+                                            <div><span class="font-black text-emerald-700">Mingguan</span><p class="mt-0.5 text-gray-700">{{ $weeklyTarget->title }}</p></div>
+                                            @if($monthlyTarget)<div><span class="font-black text-blue-700">Bulanan</span><p class="mt-0.5 text-gray-700">{{ $monthlyTarget->title }}</p></div>@endif
+                                            @if($annualTarget)<div><span class="font-black text-indigo-700">Tahunan</span><p class="mt-0.5 text-gray-700">{{ $annualTarget->title }}</p></div>@endif
+                                        </div>
+                                        @if($weeklyTarget->keyResult)
+                                            <div class="mt-3 rounded bg-indigo-50 p-3 text-[10px] leading-4 text-indigo-950">
+                                                <p><span class="font-black">Key Result:</span> {{ $weeklyTarget->keyResult->code }} · {{ $weeklyTarget->keyResult->title }}</p>
+                                                @if($weeklyTarget->keyResult->objective)<p class="mt-1"><span class="font-black">Objektif:</span> {{ $weeklyTarget->keyResult->objective->code }} · {{ $weeklyTarget->keyResult->objective->title }}</p>@endif
+                                            </div>
+                                        @endif
+                                    @else
+                                        <p class="mt-3 text-[10px] font-semibold text-amber-700">Komitmen ini belum dikaitkan dengan target OKR mingguan.</p>
+                                    @endif
+                                    @if($item->cross_unit_dependencies)<p class="mt-3 text-[10px] text-gray-600"><span class="font-black">Kolaborasi:</span> {{ $item->cross_unit_dependencies }}</p>@endif
+                                    @if($item->approval_needs)<p class="mt-1 text-[10px] text-gray-600"><span class="font-black">Persetujuan:</span> {{ $item->approval_needs }}</p>@endif
+                                </article>
+                            @endforeach
+                        </div>
+                    </section>
+
                     @if($canEditSelected && $report->status !== 'reviewed')
                         <form method="POST" action="{{ route('okr.weekly.evaluation', $report) }}" enctype="multipart/form-data" class="space-y-5 border-t border-gray-200 p-5">
                             @csrf
@@ -207,6 +264,48 @@
 
     @push('scripts')
         <script>
+            function weeklyPlanPicker(options, initialSelected) {
+                const normalizedOptions = Array.isArray(options) ? options : [];
+                const initialPlan = normalizedOptions.find(plan => String(plan.id) === String(initialSelected));
+
+                return {
+                    options: normalizedOptions,
+                    selected: initialPlan ? String(initialPlan.id) : '',
+                    search: initialPlan?.label ?? '',
+                    open: false,
+                    get selectedPlan() {
+                        return this.options.find(plan => String(plan.id) === String(this.selected)) ?? null;
+                    },
+                    get filteredPlans() {
+                        const keyword = this.search.trim().toLocaleLowerCase('id-ID');
+                        if (! keyword || this.selectedPlan?.label === this.search) {
+                            return this.options.slice(0, 30);
+                        }
+
+                        return this.options
+                            .filter(plan => `${plan.label} ${plan.search}`.toLocaleLowerCase('id-ID').includes(keyword))
+                            .slice(0, 30);
+                    },
+                    get hierarchyLevels() {
+                        return [
+                            { key: 'weekly', label: '1 · Mingguan', data: this.selectedPlan?.weekly, classes: 'border-emerald-100 bg-emerald-50 text-emerald-700' },
+                            { key: 'monthly', label: '2 · Bulanan', data: this.selectedPlan?.monthly, classes: 'border-blue-100 bg-blue-50 text-blue-700' },
+                            { key: 'annual', label: '3 · Tahunan', data: this.selectedPlan?.annual, classes: 'border-indigo-100 bg-indigo-50 text-indigo-700' },
+                        ];
+                    },
+                    choose(plan) {
+                        this.selected = String(plan.id);
+                        this.search = plan.label;
+                        this.open = false;
+                    },
+                    clear() {
+                        this.selected = '';
+                        this.search = '';
+                        this.open = false;
+                    },
+                };
+            }
+
             function weeklyOkrDashboard() {
                 return {
                     initCharts() {

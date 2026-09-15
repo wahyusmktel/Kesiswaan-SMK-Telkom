@@ -36,7 +36,12 @@ class OkrWeeklyReportController extends Controller
 
         $weekStart = $this->weekStart($request->input('week_start'));
         $weekEnd = $weekStart->addDays(4);
-        $reports = OkrWeeklyReport::with(['items.plan.keyResult', 'submitter:id,name', 'reviewer:id,name'])
+        $reports = OkrWeeklyReport::with([
+            'items.plan.keyResult.objective',
+            'items.plan.parent.parent',
+            'submitter:id,name',
+            'reviewer:id,name',
+        ])
             ->where('okr_period_id', $period->id)
             ->whereDate('week_start', $weekStart)
             ->get()
@@ -90,12 +95,13 @@ class OkrWeeklyReportController extends Controller
             ];
         });
 
-        $availablePlans = OkrPlan::with('keyResult:id,code,title')
+        $availablePlans = OkrPlan::with(['keyResult.objective', 'parent.parent'])
             ->where('okr_unit_id', $selectedUnit->id)
+            ->where('level', 'weekly')
             ->whereHas('keyResult.objective', fn ($query) => $query->where('okr_period_id', $period->id))
-            ->orderByRaw("CASE level WHEN 'annual' THEN 1 WHEN 'monthly' THEN 2 ELSE 3 END")
             ->orderBy('starts_at')
             ->get();
+        $availablePlanOptions = $availablePlans->map(fn (OkrPlan $plan) => $this->weeklyPlanOption($plan))->values();
 
         return view('pages.okr.weekly.index', [
             'period' => $period,
@@ -110,6 +116,7 @@ class OkrWeeklyReportController extends Controller
             'weekEnd' => $weekEnd,
             'report' => $report,
             'availablePlans' => $availablePlans,
+            'availablePlanOptions' => $availablePlanOptions,
             'unitSummaries' => $unitSummaries,
             'weeklyTrend' => $weeklyTrend,
             'carryForwardCount' => $carryForwardCount,
@@ -157,7 +164,7 @@ class OkrWeeklyReportController extends Controller
             if (blank($item['commitment'] ?? null) || blank($item['measurable_target'] ?? null)) {
                 throw ValidationException::withMessages(["items.{$index}.commitment" => 'Komitmen dan target terukur wajib diisi berpasangan.']);
             }
-            $this->ensurePlanBelongsToScope($item['okr_plan_id'] ?? null, $unit, $period);
+            $this->ensurePlanBelongsToScope($item['okr_plan_id'] ?? null, $unit, $period, 'weekly');
         }
 
         $report = DB::transaction(function () use ($request, $validated, $period, $unit, $weekStart, $items) {
@@ -419,7 +426,7 @@ class OkrWeeklyReportController extends Controller
             ->with('success', 'Progres OKR berhasil diperbarui dari laporan pekanan.');
     }
 
-    private function ensurePlanBelongsToScope(?int $planId, OkrUnit $unit, OkrPeriod $period): void
+    private function ensurePlanBelongsToScope(?int $planId, OkrUnit $unit, OkrPeriod $period, ?string $requiredLevel = null): void
     {
         if (! $planId) {
             return;
@@ -428,11 +435,57 @@ class OkrWeeklyReportController extends Controller
         abort_unless(
             OkrPlan::whereKey($planId)
                 ->where('okr_unit_id', $unit->id)
+                ->when($requiredLevel, fn ($query) => $query->where('level', $requiredLevel))
                 ->whereHas('keyResult.objective', fn ($query) => $query->where('okr_period_id', $period->id))
                 ->exists(),
             422,
-            'Target OKR yang dipilih tidak sesuai dengan unit atau periode.'
+            $requiredLevel === 'weekly'
+                ? 'Laporan pekanan hanya dapat dikaitkan dengan target OKR mingguan pada unit dan periode yang dipilih.'
+                : 'Target OKR yang dipilih tidak sesuai dengan unit atau periode.'
         );
+    }
+
+    private function weeklyPlanOption(OkrPlan $plan): array
+    {
+        $monthly = $plan->parent?->level === 'monthly' ? $plan->parent : null;
+        $annual = $monthly?->parent?->level === 'annual'
+            ? $monthly->parent
+            : ($plan->parent?->level === 'annual' ? $plan->parent : null);
+        $keyResult = $plan->keyResult;
+        $objective = $keyResult?->objective;
+
+        $summary = fn (?OkrPlan $target) => $target ? [
+            'title' => $target->title,
+            'period' => collect([$target->starts_at?->format('d M Y'), $target->ends_at?->format('d M Y')])->filter()->implode(' – '),
+            'progress' => (float) $target->progress_percent,
+            'indicator' => $target->success_indicator,
+        ] : null;
+
+        return [
+            'id' => (string) $plan->id,
+            'label' => trim(($keyResult?->code ? $keyResult->code.' · ' : '').$plan->title),
+            'search' => collect([
+                $plan->title,
+                $monthly?->title,
+                $annual?->title,
+                $keyResult?->code,
+                $keyResult?->title,
+                $objective?->code,
+                $objective?->title,
+            ])->filter()->implode(' '),
+            'weekly' => $summary($plan),
+            'monthly' => $summary($monthly),
+            'annual' => $summary($annual),
+            'key_result' => $keyResult ? [
+                'code' => $keyResult->code,
+                'title' => $keyResult->title,
+                'target' => trim((float) $keyResult->target_value.' '.($keyResult->metric_unit ?? '')),
+            ] : null,
+            'objective' => $objective ? [
+                'code' => $objective->code,
+                'title' => $objective->title,
+            ] : null,
+        ];
     }
 
     private function unfinishedItems(?OkrWeeklyReport $report)

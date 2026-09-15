@@ -123,6 +123,67 @@ class OkrWeeklyReportTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_weekly_planning_only_selects_weekly_targets_and_shows_the_full_readonly_hierarchy(): void
+    {
+        $period = $this->period();
+        $unit = $this->unit();
+        $curriculum = $this->userWithRole('Kurikulum');
+        [$annual, $monthly, $weekly] = $this->planHierarchy($period, $unit);
+
+        $this->actingAs($curriculum)
+            ->withSession(['active_role' => 'Kurikulum'])
+            ->get(route('okr.weekly.index', [
+                'period_id' => $period->id,
+                'unit_id' => $unit->id,
+                'week_start' => '2026-09-14',
+            ]))
+            ->assertOk()
+            ->assertViewHas('availablePlans', fn ($plans) => $plans->count() === 1
+                && $plans->first()->is($weekly)
+                && $plans->every(fn (OkrPlan $plan) => $plan->level === 'weekly'))
+            ->assertSee('data-weekly-okr-picker', false)
+            ->assertSee('Cari kode KR atau nama target mingguan')
+            ->assertSee($weekly->title)
+            ->assertSee($monthly->title)
+            ->assertSee($annual->title)
+            ->assertSee('Alur Target OKR · Readonly');
+
+        $planningPayload = [
+            'okr_period_id' => $period->id,
+            'okr_unit_id' => $unit->id,
+            'week_start' => '2026-09-14',
+            'weekly_focus' => 'Menuntaskan target prioritas kurikulum.',
+            'support_needed' => 'Persetujuan Kepala Sekolah.',
+            'items' => [[
+                'okr_plan_id' => $monthly->id,
+                'commitment' => 'Menuntaskan dokumen pembelajaran.',
+                'measurable_target' => 'Dokumen selesai Jumat.',
+            ]],
+        ];
+
+        $this->post(route('okr.weekly.planning'), $planningPayload)
+            ->assertStatus(422);
+
+        $planningPayload['items'][0]['okr_plan_id'] = $weekly->id;
+        $this->post(route('okr.weekly.planning'), $planningPayload)
+            ->assertRedirect();
+
+        $this->get(route('okr.weekly.index', [
+            'period_id' => $period->id,
+            'unit_id' => $unit->id,
+            'week_start' => '2026-09-14',
+        ]))
+            ->assertOk()
+            ->assertSee('data-weekly-plan-resume', false)
+            ->assertSee('Resume Rencana & Komitmen', false)
+            ->assertSee('Menuntaskan target prioritas kurikulum.')
+            ->assertSee('Menuntaskan dokumen pembelajaran.')
+            ->assertSee($weekly->title)
+            ->assertSee($monthly->title)
+            ->assertSee($annual->title)
+            ->assertSeeInOrder(['Resume Rencana', 'Evaluasi Jumat']);
+    }
+
     public function test_unit_can_copy_only_unfinished_commitments_from_previous_week(): void
     {
         $period = $this->period();
@@ -295,6 +356,61 @@ class OkrWeeklyReportTest extends TestCase
             'ends_at' => '2027-06-30',
             'status' => 'active',
         ]);
+    }
+
+    private function planHierarchy(OkrPeriod $period, OkrUnit $unit): array
+    {
+        $objective = OkrObjective::create([
+            'okr_period_id' => $period->id,
+            'code' => 'O1',
+            'title' => 'Pembelajaran bermutu dan relevan',
+            'sort_order' => 1,
+        ]);
+        $keyResult = OkrKeyResult::create([
+            'okr_objective_id' => $objective->id,
+            'code' => 'KR 1.1',
+            'title' => 'Perangkat ajar tersedia tepat waktu',
+            'description' => 'Memastikan seluruh perangkat ajar tersedia dan siap digunakan.',
+            'metric_type' => 'percentage',
+            'target_value' => 100,
+            'metric_unit' => '%',
+            'weight' => 1,
+            'sort_order' => 1,
+        ]);
+        $annual = OkrPlan::create([
+            'okr_key_result_id' => $keyResult->id,
+            'okr_unit_id' => $unit->id,
+            'level' => 'annual',
+            'title' => 'Target Tahunan Mutu Pembelajaran',
+            'starts_at' => '2026-07-01',
+            'ends_at' => '2027-06-30',
+            'progress_percent' => 10,
+            'status' => 'in_progress',
+        ]);
+        $monthly = OkrPlan::create([
+            'okr_key_result_id' => $keyResult->id,
+            'okr_unit_id' => $unit->id,
+            'parent_id' => $annual->id,
+            'level' => 'monthly',
+            'title' => 'Target Bulanan Perangkat Ajar September',
+            'starts_at' => '2026-09-01',
+            'ends_at' => '2026-09-30',
+            'progress_percent' => 25,
+            'status' => 'in_progress',
+        ]);
+        $weekly = OkrPlan::create([
+            'okr_key_result_id' => $keyResult->id,
+            'okr_unit_id' => $unit->id,
+            'parent_id' => $monthly->id,
+            'level' => 'weekly',
+            'title' => 'Target Mingguan Finalisasi Perangkat Ajar',
+            'starts_at' => '2026-09-14',
+            'ends_at' => '2026-09-18',
+            'progress_percent' => 0,
+            'status' => 'not_started',
+        ]);
+
+        return [$annual, $monthly, $weekly];
     }
 
     private function unit(): OkrUnit
