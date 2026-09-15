@@ -142,6 +142,7 @@ class OkrWeeklyReportTest extends TestCase
                 && $plans->first()->is($weekly)
                 && $plans->every(fn (OkrPlan $plan) => $plan->level === 'weekly'))
             ->assertSee('data-weekly-okr-picker', false)
+            ->assertSee('@click.outside="open = false"', false)
             ->assertSee('Cari kode KR atau nama target mingguan')
             ->assertSee($weekly->title)
             ->assertSee($monthly->title)

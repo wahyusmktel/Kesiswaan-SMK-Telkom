@@ -1,5 +1,6 @@
 <div
     x-data="weeklyPlanPicker(@js($availablePlanOptions), @js((string) ($selectedPlanId ?? '')))"
+    @click.outside="open = false"
     class="space-y-3"
     data-weekly-okr-picker
 >
@@ -21,7 +22,6 @@
             <div
                 x-cloak
                 x-show="open"
-                @click.outside="open = false"
                 class="absolute z-30 mt-1 max-h-64 w-full overflow-y-auto rounded-md border border-gray-200 bg-white p-1 shadow-xl"
             >
                 <button type="button" @mousedown.prevent="clear()" class="block w-full rounded px-3 py-2 text-left text-xs font-semibold text-gray-500 hover:bg-gray-50">Belum dikaitkan</button>
