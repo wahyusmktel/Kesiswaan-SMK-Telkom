@@ -5,7 +5,9 @@ namespace App\Http\Controllers\SDM;
 use App\Http\Controllers\Controller;
 use App\Models\AbsensiGuru;
 use App\Models\AppSetting;
+use App\Models\DigitalDocument;
 use App\Models\GuruIzin;
+use App\Models\User;
 use App\Services\TelegramLeaveNotificationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -183,6 +185,39 @@ class PersetujuanIzinGuruController extends Controller
         return redirect()->back()->with('info', 'Permohonan izin telah ditolak oleh KAUR SDM.');
     }
 
+    private function resolveDigitalSignatureQr(?User $user, string $documentType, string $roleTitle, GuruIzin $izin): ?string
+    {
+        if (! $user) {
+            return null;
+        }
+
+        // 1. Cek apakah dokumen digital sudah terdaftar dan valid
+        $doc = DigitalDocument::where('document_type', $documentType)
+            ->where('reference_id', $izin->id)
+            ->where('is_valid', true)
+            ->first();
+
+        // 2. Jika belum ada dokumen digital, cek apakah pegawai sudah setup tanda tangan digital
+        if (! $doc) {
+            $user->loadMissing(['digitalSignature', 'masterGuru.dapodikGuru']);
+            if ($user->digitalSignature && $user->digitalSignature->isReady()) {
+                $doc = DigitalDocument::autoSign(
+                    $user,
+                    $documentType,
+                    'Izin Guru (' . $roleTitle . ') - ' . ($izin->guru?->nama_lengkap ?? ''),
+                    $izin->id,
+                    [$documentType, (string) $izin->id, (string) $izin->master_guru_id, $izin->guru?->nama_lengkap ?? '']
+                );
+            }
+        }
+
+        if ($doc && $doc->token) {
+            return $this->generateQrBase64(route('verifikasi.dokumen', $doc->token));
+        }
+
+        return null;
+    }
+
     public function printPdf(GuruIzin $izin)
     {
         if (! $izin->isFullyApproved()) {
@@ -200,32 +235,44 @@ class PersetujuanIzinGuruController extends Controller
         }
 
         $izin->load([
-            'guru',
-            'piket',
-            'kurikulum',
-            'sdm',
-            'kepalaSekolah',
+            'guru.dapodikGuru',
+            'guru.user.digitalSignature',
+            'piket.masterGuru.dapodikGuru',
+            'piket.digitalSignature',
+            'kurikulum.masterGuru.dapodikGuru',
+            'kurikulum.digitalSignature',
+            'sdm.masterGuru.dapodikGuru',
+            'sdm.digitalSignature',
+            'kepalaSekolah.masterGuru.dapodikGuru',
+            'kepalaSekolah.digitalSignature',
             'jadwals.rombel.kelas',
             'jadwals.mataPelajaran',
         ]);
 
         $settings = AppSetting::first();
 
-        // Digital signature QR codes
-        $docPiket = \App\Models\DigitalDocument::where('document_type', 'IZIN_GURU_PIKET')->where('reference_id', $izin->id)->where('is_valid', true)->first();
-        $docKurikulum = \App\Models\DigitalDocument::where('document_type', 'IZIN_GURU_KURIKULUM')->where('reference_id', $izin->id)->where('is_valid', true)->first();
-        $docSdm = \App\Models\DigitalDocument::where('document_type', 'IZIN_GURU_SDM')->where('reference_id', $izin->id)->where('is_valid', true)->first();
+        // Logo sekolah
+        $logoPath = null;
+        if (!empty($settings?->logo) && file_exists(public_path('storage/' . $settings->logo))) {
+            $logoPath = public_path('storage/' . $settings->logo);
+        } elseif (file_exists(public_path('images/teaching-module/smk-telkom-lampung.png'))) {
+            $logoPath = public_path('images/teaching-module/smk-telkom-lampung.png');
+        }
+        $logoBase64 = $logoPath ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : null;
 
-        $qrPiketBase64 = $docPiket ? $this->generateQrBase64(route('verifikasi.dokumen', $docPiket->token)) : null;
-        $qrKurikulumBase64 = $docKurikulum ? $this->generateQrBase64(route('verifikasi.dokumen', $docKurikulum->token)) : null;
-        $qrSdmBase64 = $docSdm ? $this->generateQrBase64(route('verifikasi.dokumen', $docSdm->token)) : null;
+        // Digital signature QR codes
+        $qrPiketBase64 = $this->resolveDigitalSignatureQr($izin->piket, 'IZIN_GURU_PIKET', 'Guru Piket', $izin);
+        $qrKurikulumBase64 = $this->resolveDigitalSignatureQr($izin->kurikulum, 'IZIN_GURU_KURIKULUM', 'Waka Kurikulum', $izin);
+        $qrSdmBase64 = $this->resolveDigitalSignatureQr($izin->sdm, 'IZIN_GURU_SDM', 'KAUR SDM', $izin);
+        $qrKepalaSekolahBase64 = $this->resolveDigitalSignatureQr($izin->kepalaSekolah, 'IZIN_GURU_KEPALA_SEKOLAH', 'Kepala Sekolah', $izin);
 
         $pdf = Pdf::loadView('pdf.izin-guru', compact(
-            'izin', 'settings',
-            'docPiket', 'docKurikulum', 'docSdm',
-            'qrPiketBase64', 'qrKurikulumBase64', 'qrSdmBase64'
-        ));
+            'izin', 'settings', 'logoBase64',
+            'qrPiketBase64', 'qrKurikulumBase64', 'qrSdmBase64', 'qrKepalaSekolahBase64'
+        ))->setPaper('a4', 'portrait');
 
-        return $pdf->stream('Surat_Izin_Guru_'.str_replace(' ', '_', $izin->guru->nama_lengkap).'.pdf');
+        $filename = 'Surat_Izin_Guru_' . str_replace(' ', '_', $izin->guru?->nama_lengkap ?? 'Pegawai') . '.pdf';
+
+        return $pdf->stream($filename);
     }
 }

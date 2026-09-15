@@ -81,7 +81,7 @@ class DigitalDocument extends Model
             'hmac_signature' => $hmac,
             'signed_by'      => $user->id,
             'signer_name'    => $user->name,
-            'signer_nip'     => null,
+            'signer_nip'     => $user->nip ?? null,
             'signer_role'    => $user->getRoleNames()->first() ?? 'Staff',
             'signed_at'      => now(),
             'is_valid'       => true,

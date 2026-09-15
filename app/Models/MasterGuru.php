@@ -64,4 +64,9 @@ class MasterGuru extends Model
     {
         return $this->hasOne(DapodikGuruSubmission::class)->where('status', 'pending')->latest();
     }
+
+    public function getNipAttribute(): ?string
+    {
+        return $this->dapodikGuru?->nip ?? $this->nuptk;
+    }
 }

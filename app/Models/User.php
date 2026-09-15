@@ -222,4 +222,9 @@ class User extends Authenticatable implements WebAuthnAuthenticatableContract
 
         return $this->cctvCameras()->whereKey($camera->getKey())->exists();
     }
+
+    public function getNipAttribute(): ?string
+    {
+        return $this->masterGuru?->dapodikGuru?->nip ?? $this->masterGuru?->nip ?? $this->masterGuru?->nuptk;
+    }
 }
