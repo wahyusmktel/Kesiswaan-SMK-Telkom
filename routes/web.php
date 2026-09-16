@@ -1455,6 +1455,8 @@ Route::middleware(['auth', 'non.student'])->prefix('okr-sekolah')->name('okr.')-
     Route::post('/laporan-pekanan/rencana', [\App\Http\Controllers\OkrWeeklyReportController::class, 'savePlanning'])->name('weekly.planning');
     Route::post('/laporan-pekanan/salin-sebelumnya', [\App\Http\Controllers\OkrWeeklyReportController::class, 'copyPrevious'])->name('weekly.copy-previous');
     Route::post('/laporan-pekanan/{weeklyReport}/evaluasi', [\App\Http\Controllers\OkrWeeklyReportController::class, 'submitEvaluation'])->name('weekly.evaluation');
+    Route::post('/laporan-pekanan/{weeklyReport}/progres-pekan', [\App\Http\Controllers\OkrWeeklyReportController::class, 'updateWeeklyProgress'])->name('weekly.progress');
+    Route::get('/laporan-pekanan/{weeklyReport}/pdf', [\App\Http\Controllers\OkrWeeklyReportController::class, 'downloadPdf'])->name('weekly.pdf');
     Route::post('/laporan-pekanan/{weeklyReport}/tinjau', [\App\Http\Controllers\OkrWeeklyReportController::class, 'review'])->name('weekly.review');
     Route::post('/laporan-pekanan/{weeklyReport}/perbarui-progres', [\App\Http\Controllers\OkrWeeklyReportController::class, 'applyProgress'])->name('weekly.apply-progress');
     Route::post('/periods', [\App\Http\Controllers\OkrController::class, 'storePeriod'])->name('periods.store');

@@ -349,6 +349,112 @@ class OkrWeeklyReportTest extends TestCase
             ->assertStatus(422);
     }
 
+    public function test_unit_can_record_live_weekly_progress_and_headmaster_can_monitor_it(): void
+    {
+        $period = $this->period();
+        $unit = $this->unit();
+        $curriculum = $this->userWithRole('Kurikulum');
+        $report = OkrWeeklyReport::create([
+            'okr_period_id' => $period->id,
+            'okr_unit_id' => $unit->id,
+            'week_start' => '2026-09-14',
+            'week_end' => '2026-09-18',
+            'weekly_focus' => 'Finalisasi perangkat ajar.',
+            'status' => 'draft',
+            'created_by' => $curriculum->id,
+        ]);
+        $item = $report->items()->create([
+            'priority_order' => 1,
+            'commitment' => 'Validasi perangkat ajar seluruh guru.',
+            'measurable_target' => '100% tervalidasi pada Jumat.',
+        ]);
+
+        $this->actingAs($curriculum)
+            ->withSession(['active_role' => 'Kurikulum'])
+            ->post(route('okr.weekly.progress', $report), [
+                'item_id' => $item->id,
+                'progress_percent' => 65,
+                'status' => 'on_progress',
+                'note' => 'Sebagian besar perangkat ajar sudah tervalidasi.',
+                'blockers' => 'Dua guru belum mengunggah lampiran.',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('okr_weekly_progress_updates', [
+            'okr_weekly_report_item_id' => $item->id,
+            'progress_percent' => 65,
+            'status' => 'on_progress',
+            'recorded_by' => $curriculum->id,
+        ]);
+        $this->assertSame(65.0, (float) $item->fresh()->completion_percent);
+
+        $headmaster = $this->userWithRole('Kepala Sekolah');
+        $this->actingAs($headmaster)
+            ->withSession(['active_role' => 'Kepala Sekolah'])
+            ->get(route('okr.weekly.index', [
+                'period_id' => $period->id,
+                'unit_id' => $unit->id,
+                'week_start' => '2026-09-14',
+            ]))
+            ->assertOk()
+            ->assertSee('data-weekly-progress-monitor', false)
+            ->assertSee('Progres Pekan Berjalan')
+            ->assertSee('Resume Rencana & Komitmen', false)
+            ->assertSee('Sebagian besar perangkat ajar sudah tervalidasi.')
+            ->assertSee('65%')
+            ->assertDontSee('Simpan Update Progres');
+
+        $this->post(route('okr.weekly.progress', $report), [
+            'item_id' => $item->id,
+            'progress_percent' => 80,
+            'status' => 'on_progress',
+            'note' => 'Tidak boleh diedit Kepala Sekolah.',
+        ])->assertForbidden();
+    }
+
+    public function test_authorized_unit_and_headmaster_can_download_weekly_pdf_archive(): void
+    {
+        $period = $this->period();
+        $unit = $this->unit();
+        $curriculum = $this->userWithRole('Kurikulum');
+        $report = OkrWeeklyReport::create([
+            'okr_period_id' => $period->id,
+            'okr_unit_id' => $unit->id,
+            'week_start' => '2026-09-14',
+            'week_end' => '2026-09-18',
+            'weekly_focus' => 'Finalisasi perangkat ajar.',
+            'support_needed' => 'Arahan Kepala Sekolah.',
+            'status' => 'draft',
+            'created_by' => $curriculum->id,
+        ]);
+        $report->items()->create([
+            'priority_order' => 1,
+            'commitment' => 'Validasi perangkat ajar seluruh guru.',
+            'measurable_target' => '100% tervalidasi pada Jumat.',
+            'completion_percent' => 50,
+            'final_status' => 'on_progress',
+        ]);
+
+        $this->actingAs($curriculum)
+            ->withSession(['active_role' => 'Kurikulum'])
+            ->get(route('okr.weekly.pdf', $report))
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
+
+        $headmaster = $this->userWithRole('Kepala Sekolah');
+        $this->actingAs($headmaster)
+            ->withSession(['active_role' => 'Kepala Sekolah'])
+            ->get(route('okr.weekly.pdf', $report))
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
+
+        $security = $this->userWithRole('Security');
+        $this->actingAs($security)
+            ->withSession(['active_role' => 'Security'])
+            ->get(route('okr.weekly.pdf', $report))
+            ->assertForbidden();
+    }
+
     private function period(): OkrPeriod
     {
         return OkrPeriod::create([

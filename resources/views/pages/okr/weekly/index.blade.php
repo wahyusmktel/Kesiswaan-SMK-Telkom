@@ -13,6 +13,9 @@
         $planningItems = collect(range(0, 2))->map(fn ($index) => $report?->items->get($index));
         $previousWeek = $weekStart->subWeek()->format('Y-m-d');
         $nextWeek = $weekStart->addWeek()->format('Y-m-d');
+        $reportProgress = $report?->items->isNotEmpty() ? round((float) $report->items->avg('completion_percent'), 1) : 0;
+        $reportCompleted = $report?->items->where('final_status', 'completed')->count() ?? 0;
+        $reportBlocked = $report?->items->where('final_status', 'blocked')->count() ?? 0;
     @endphp
 
     <div class="min-h-screen bg-gray-50 py-6" x-data="weeklyOkrDashboard()" x-init="initCharts()">
@@ -88,7 +91,15 @@
             <section class="rounded-md border border-gray-200 bg-white shadow-sm">
                 <div class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-5 py-4">
                     <div><h3 class="font-black text-gray-900">Laporan {{ $selectedUnit->name }}</h3><p class="mt-1 text-xs text-gray-500">Pekan {{ $weekStart->translatedFormat('d M') }}–{{ $weekEnd->translatedFormat('d M Y') }}</p></div>
-                    <span class="rounded-full px-3 py-1.5 text-xs font-black {{ $statusColors[$report?->status ?? 'not_reported'] }}">{{ $statusLabels[$report?->status ?? 'not_reported'] }}</span>
+                    <div class="flex items-center gap-2">
+                        @if($report && ($canEditSelected || $canReview))
+                            <a href="{{ route('okr.weekly.pdf', $report) }}" class="inline-flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs font-black text-red-700 hover:bg-red-100">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0-3-3m3 3 3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                Unduh PDF Arsip
+                            </a>
+                        @endif
+                        <span class="rounded-full px-3 py-1.5 text-xs font-black {{ $statusColors[$report?->status ?? 'not_reported'] }}">{{ $statusLabels[$report?->status ?? 'not_reported'] }}</span>
+                    </div>
                 </div>
 
                 @if($canEditSelected && (!$report || $report->status === 'draft'))
@@ -190,6 +201,73 @@
                         </div>
                     </section>
 
+                    <section class="border-t border-cyan-200 bg-slate-950 p-5 text-white" data-weekly-progress-monitor>
+                        <div class="flex flex-wrap items-start justify-between gap-4">
+                            <div>
+                                <p class="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-300">Monitoring Langsung</p>
+                                <h4 class="mt-1 text-lg font-black">Progres Pekan Berjalan</h4>
+                                <p class="mt-1 max-w-2xl text-xs leading-5 text-slate-300">Unit memperbarui progres setiap komitmen selama pekan berjalan. Kepala Sekolah dapat memantau capaian, kendala, bukti, dan waktu pembaruan terbaru dari sini.</p>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2 text-center">
+                                <div class="rounded-md border border-white/10 bg-white/10 px-4 py-2"><p class="text-[9px] font-black uppercase text-slate-400">Rata-rata</p><p class="mt-1 text-xl font-black text-cyan-300">{{ $reportProgress }}%</p></div>
+                                <div class="rounded-md border border-white/10 bg-white/10 px-4 py-2"><p class="text-[9px] font-black uppercase text-slate-400">Selesai</p><p class="mt-1 text-xl font-black text-emerald-300">{{ $reportCompleted }}</p></div>
+                                <div class="rounded-md border border-white/10 bg-white/10 px-4 py-2"><p class="text-[9px] font-black uppercase text-slate-400">Terhambat</p><p class="mt-1 text-xl font-black text-rose-300">{{ $reportBlocked }}</p></div>
+                            </div>
+                        </div>
+
+                        <div class="mt-5 grid gap-4 xl:grid-cols-3">
+                            @foreach($report->items as $item)
+                                @php($latestProgress = $item->progressUpdates->first())
+                                <article class="overflow-hidden rounded-lg border border-white/10 bg-white text-gray-900 shadow-xl">
+                                    <div class="p-4">
+                                        <div class="flex items-start justify-between gap-3">
+                                            <div><p class="text-[10px] font-black uppercase text-indigo-600">Komitmen {{ $item->priority_order }}</p><p class="mt-1 text-sm font-black leading-5">{{ $item->commitment }}</p></div>
+                                            <span class="rounded-full px-2 py-1 text-[9px] font-black {{ $item->final_status === 'completed' ? 'bg-emerald-100 text-emerald-700' : ($item->final_status === 'blocked' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700') }}">{{ $itemStatusLabels[$item->final_status] }}</span>
+                                        </div>
+                                        <div class="mt-4 flex items-end justify-between"><span class="text-[10px] font-bold text-gray-500">Capaian terkini</span><span class="text-2xl font-black text-gray-950">{{ (float) $item->completion_percent }}%</span></div>
+                                        <div class="mt-2 h-2 overflow-hidden rounded-full bg-gray-100"><div class="h-full rounded-full {{ $item->final_status === 'blocked' ? 'bg-red-500' : 'bg-gradient-to-r from-cyan-500 to-indigo-600' }}" style="width: {{ min(100, (float) $item->completion_percent) }}%"></div></div>
+                                        @if($latestProgress)
+                                            <div class="mt-4 rounded-md bg-gray-50 p-3 text-xs leading-5">
+                                                <p class="font-semibold text-gray-800">{{ $latestProgress->note }}</p>
+                                                @if($latestProgress->blockers)<p class="mt-2 font-bold text-red-700">Kendala: {{ $latestProgress->blockers }}</p>@endif
+                                                <p class="mt-2 text-[10px] text-gray-500">{{ $latestProgress->recorder?->name ?? 'Pengguna' }} · {{ $latestProgress->recorded_at->translatedFormat('d M Y H:i') }}</p>
+                                                @if($latestProgress->evidence_path)<a href="{{ asset('storage/'.$latestProgress->evidence_path) }}" target="_blank" class="mt-2 inline-block font-black text-indigo-600">Lihat bukti progres</a>@endif
+                                            </div>
+                                        @else
+                                            <p class="mt-4 rounded-md bg-amber-50 p-3 text-xs font-semibold text-amber-800">Belum ada pembaruan progres pada pekan ini.</p>
+                                        @endif
+                                    </div>
+
+                                    @if($canEditSelected && $report->status === 'draft')
+                                        <form method="POST" action="{{ route('okr.weekly.progress', $report) }}" enctype="multipart/form-data" class="space-y-3 border-t border-gray-200 bg-gray-50 p-4">
+                                            @csrf
+                                            <input type="hidden" name="item_id" value="{{ $item->id }}">
+                                            <div class="grid grid-cols-2 gap-3">
+                                                <label><span class="mb-1 block text-[10px] font-black uppercase text-gray-500">Progres (%)</span><input type="number" name="progress_percent" min="0" max="100" step="1" value="{{ (float) $item->completion_percent }}" required class="w-full rounded-md border-gray-300 text-xs"></label>
+                                                <label><span class="mb-1 block text-[10px] font-black uppercase text-gray-500">Status</span><select name="status" class="w-full rounded-md border-gray-300 text-xs">@foreach($itemStatusLabels as $value => $label)<option value="{{ $value }}" @selected($item->final_status === $value)>{{ $label }}</option>@endforeach</select></label>
+                                            </div>
+                                            <label class="block"><span class="mb-1 block text-[10px] font-black uppercase text-gray-500">Pembaruan pekerjaan</span><textarea name="note" rows="2" required placeholder="Apa yang sudah dikerjakan atau dicapai?" class="w-full rounded-md border-gray-300 text-xs"></textarea></label>
+                                            <label class="block"><span class="mb-1 block text-[10px] font-black uppercase text-gray-500">Kendala <span class="normal-case font-normal">(opsional)</span></span><textarea name="blockers" rows="2" class="w-full rounded-md border-gray-300 text-xs"></textarea></label>
+                                            <label class="block"><span class="mb-1 block text-[10px] font-black uppercase text-gray-500">Bukti <span class="normal-case font-normal">(opsional)</span></span><input type="file" name="evidence" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx" class="w-full rounded-md border border-gray-300 bg-white p-2 text-[10px]"></label>
+                                            <button class="w-full rounded-md bg-indigo-600 px-4 py-2.5 text-xs font-black text-white hover:bg-indigo-500">Simpan Update Progres</button>
+                                        </form>
+                                    @endif
+                                </article>
+                            @endforeach
+                        </div>
+                    </section>
+
+                    @include('pages.okr.weekly._friday-resume', [
+                        'report' => $report,
+                        'selectedUnit' => $selectedUnit,
+                        'weekStart' => $weekStart,
+                        'weekEnd' => $weekEnd,
+                        'itemStatusLabels' => $itemStatusLabels,
+                        'reportProgress' => $reportProgress,
+                        'reportCompleted' => $reportCompleted,
+                        'reportBlocked' => $reportBlocked,
+                    ])
+
                     @if($canEditSelected && $report->status !== 'reviewed')
                         <form method="POST" action="{{ route('okr.weekly.evaluation', $report) }}" enctype="multipart/form-data" class="space-y-5 border-t border-gray-200 p-5">
                             @csrf
@@ -198,7 +276,7 @@
                                 <div class="rounded-md border border-gray-200 p-4">
                                     <p class="text-xs font-black text-indigo-700">Komitmen {{ $item->priority_order }}</p><p class="mt-1 text-sm font-bold text-gray-900">{{ $item->commitment }}</p><p class="mt-1 text-xs text-gray-500">Target: {{ $item->measurable_target }}</p>
                                     <div class="mt-4 grid gap-4 lg:grid-cols-2">
-                                        <label class="lg:col-span-2"><span class="mb-1 block text-xs font-bold">Capaian aktual</span><textarea name="items[{{ $item->id }}][actual_result]" rows="3" required class="w-full rounded-md border-gray-300 text-sm">{{ old("items.{$item->id}.actual_result", $item->actual_result) }}</textarea></label>
+                                        <label class="lg:col-span-2"><span class="mb-1 block text-xs font-bold">Capaian aktual</span><textarea name="items[{{ $item->id }}][actual_result]" rows="3" required class="w-full rounded-md border-gray-300 text-sm">{{ old("items.{$item->id}.actual_result", $item->actual_result ?: $item->progressUpdates->first()?->note) }}</textarea><span class="mt-1 block text-[10px] text-gray-500">Otomatis mengambil pembaruan progres terakhir dan tetap dapat disesuaikan.</span></label>
                                         <label><span class="mb-1 block text-xs font-bold">Status akhir</span><select name="items[{{ $item->id }}][final_status]" class="w-full rounded-md border-gray-300 text-sm">@foreach($itemStatusLabels as $value => $label)<option value="{{ $value }}" @selected(old("items.{$item->id}.final_status", $item->final_status) === $value)>{{ $label }}</option>@endforeach</select></label>
                                         <label><span class="mb-1 block text-xs font-bold">Capaian (%)</span><input type="number" name="items[{{ $item->id }}][completion_percent]" value="{{ old("items.{$item->id}.completion_percent", (float) $item->completion_percent) }}" min="0" max="100" step="1" required class="w-full rounded-md border-gray-300 text-sm"></label>
                                         <label><span class="mb-1 block text-xs font-bold">Kendala</span><textarea name="items[{{ $item->id }}][blockers]" rows="2" class="w-full rounded-md border-gray-300 text-sm">{{ old("items.{$item->id}.blockers", $item->blockers) }}</textarea></label>

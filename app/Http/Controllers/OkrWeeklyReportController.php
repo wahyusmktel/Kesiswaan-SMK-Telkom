@@ -6,9 +6,12 @@ use App\Models\OkrPeriod;
 use App\Models\OkrPlan;
 use App\Models\OkrProgressUpdate;
 use App\Models\OkrUnit;
+use App\Models\OkrWeeklyProgressUpdate;
 use App\Models\OkrWeeklyReport;
+use App\Models\OkrWeeklyReportItem;
 use App\Models\User;
 use App\Services\OkrProgressService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Http\RedirectResponse;
@@ -39,6 +42,7 @@ class OkrWeeklyReportController extends Controller
         $reports = OkrWeeklyReport::with([
             'items.plan.keyResult.objective',
             'items.plan.parent.parent',
+            'items.progressUpdates.recorder:id,name',
             'submitter:id,name',
             'reviewer:id,name',
         ])
@@ -330,6 +334,78 @@ class OkrWeeklyReportController extends Controller
             ->with('success', 'Evaluasi Jumat berhasil dikirim kepada Kepala Sekolah.');
     }
 
+    public function updateWeeklyProgress(Request $request, OkrWeeklyReport $weeklyReport): RedirectResponse
+    {
+        $this->ensureUnitEditor($request->user(), $weeklyReport->unit);
+        abort_unless($weeklyReport->status === 'draft', 422, 'Progres pekan berjalan hanya dapat diperbarui sebelum evaluasi Jumat dikirim.');
+
+        $validated = $request->validate([
+            'item_id' => ['required', 'integer', 'exists:okr_weekly_report_items,id'],
+            'progress_percent' => ['required', 'numeric', 'between:0,100'],
+            'status' => ['required', Rule::in(['not_started', 'on_progress', 'completed', 'blocked'])],
+            'note' => ['required', 'string', 'max:3000'],
+            'blockers' => ['nullable', 'string', 'max:3000'],
+            'evidence' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx', 'max:10240'],
+        ]);
+
+        $item = OkrWeeklyReportItem::where('okr_weekly_report_id', $weeklyReport->id)
+            ->findOrFail($validated['item_id']);
+        $status = $validated['status'];
+        $progressPercent = $status === 'completed' ? 100 : ($status === 'not_started' ? 0 : (float) $validated['progress_percent']);
+        $status = $progressPercent >= 100 ? 'completed' : $status;
+        $evidencePath = $request->file('evidence')?->store('okr-weekly-progress', 'public');
+
+        DB::transaction(function () use ($request, $validated, $item, $status, $progressPercent, $evidencePath) {
+            OkrWeeklyProgressUpdate::create([
+                'okr_weekly_report_item_id' => $item->id,
+                'progress_percent' => $progressPercent,
+                'status' => $status,
+                'note' => $validated['note'],
+                'blockers' => $validated['blockers'] ?? null,
+                'evidence_path' => $evidencePath,
+                'recorded_by' => $request->user()->id,
+                'recorded_at' => now(),
+            ]);
+
+            $item->update([
+                'completion_percent' => $progressPercent,
+                'final_status' => $status,
+                'blockers' => $validated['blockers'] ?? null,
+                'evidence_path' => $evidencePath ?: $item->evidence_path,
+            ]);
+        });
+
+        return redirect()->route('okr.weekly.index', $this->reportQuery($weeklyReport))
+            ->with('success', "Progres komitmen {$item->priority_order} berhasil diperbarui menjadi {$progressPercent}%.");
+    }
+
+    public function downloadPdf(Request $request, OkrWeeklyReport $weeklyReport)
+    {
+        $weeklyReport->load([
+            'period.academicYear',
+            'unit',
+            'items.plan.keyResult.objective',
+            'items.plan.parent.parent',
+            'items.progressUpdates.recorder:id,name',
+            'creator:id,name',
+            'submitter:id,name',
+            'reviewer:id,name',
+        ]);
+        $this->ensureUnitViewer($request->user(), $weeklyReport->unit);
+
+        $filename = sprintf(
+            'laporan-okr-%s-%s.pdf',
+            str($weeklyReport->unit->name)->slug(),
+            $weeklyReport->week_start->format('Y-m-d')
+        );
+
+        return Pdf::loadView('pdf.okr-weekly-report', [
+            'report' => $weeklyReport,
+            'generatedBy' => $request->user(),
+            'generatedAt' => now(),
+        ])->setPaper('a4', 'portrait')->download($filename);
+    }
+
     public function review(Request $request, OkrWeeklyReport $weeklyReport): RedirectResponse
     {
         abort_unless($this->canReview($request->user()), 403);
@@ -560,6 +636,15 @@ class OkrWeeklyReportController extends Controller
         abort_if($this->isExecutiveViewer($user), 403);
         abort_unless(
             $this->activeRole($user) === 'Super Admin'
+            || in_array($this->activeRole($user), $unit->role_names ?? [], true),
+            403
+        );
+    }
+
+    private function ensureUnitViewer(User $user, OkrUnit $unit): void
+    {
+        abort_unless(
+            in_array($this->activeRole($user), ['Super Admin', 'Kepala Sekolah'], true)
             || in_array($this->activeRole($user), $unit->role_names ?? [], true),
             403
         );

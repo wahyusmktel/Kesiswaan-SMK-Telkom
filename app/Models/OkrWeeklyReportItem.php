@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class OkrWeeklyReportItem extends Model
 {
@@ -37,5 +38,12 @@ class OkrWeeklyReportItem extends Model
     public function progressAppliedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'progress_applied_by');
+    }
+
+    public function progressUpdates(): HasMany
+    {
+        return $this->hasMany(OkrWeeklyProgressUpdate::class, 'okr_weekly_report_item_id')
+            ->orderByDesc('recorded_at')
+            ->orderByDesc('id');
     }
 }
