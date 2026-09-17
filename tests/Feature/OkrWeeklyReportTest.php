@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\AppSetting;
 use App\Models\OkrKeyResult;
 use App\Models\OkrObjective;
 use App\Models\OkrPeriod;
@@ -10,6 +11,7 @@ use App\Models\OkrUnit;
 use App\Models\OkrWeeklyReport;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -453,6 +455,94 @@ class OkrWeeklyReportTest extends TestCase
             ->withSession(['active_role' => 'Security'])
             ->get(route('okr.weekly.pdf', $report))
             ->assertForbidden();
+    }
+
+    public function test_stella_ai_generates_an_editable_weekly_evaluation_presentation(): void
+    {
+        $period = $this->period();
+        $unit = $this->unit();
+        $curriculum = $this->userWithRole('Kurikulum');
+        AppSetting::create([
+            'school_name' => 'SMK Telkom Lampung',
+            'stella_ai_enabled' => true,
+            'stella_ai_base_url' => 'https://ai.example.test/v1',
+            'stella_ai_api_key' => 'secret-test-key',
+            'stella_ai_chat_model' => 'stella-test',
+        ]);
+        $report = OkrWeeklyReport::create([
+            'okr_period_id' => $period->id,
+            'okr_unit_id' => $unit->id,
+            'week_start' => '2026-09-14',
+            'week_end' => '2026-09-18',
+            'weekly_focus' => 'Finalisasi perangkat ajar.',
+            'support_needed' => 'Arahan Kepala Sekolah.',
+            'status' => 'submitted',
+            'created_by' => $curriculum->id,
+            'submitted_by' => $curriculum->id,
+            'submitted_at' => now(),
+        ]);
+        $item = $report->items()->create([
+            'priority_order' => 1,
+            'commitment' => 'Validasi perangkat ajar seluruh guru.',
+            'measurable_target' => '100% tervalidasi pada Jumat.',
+            'actual_result' => 'Sebanyak 18 dari 20 dokumen sudah tervalidasi.',
+            'completion_percent' => 90,
+            'final_status' => 'on_progress',
+            'blockers' => 'Dua guru belum mengirim revisi.',
+            'next_follow_up' => 'Tuntaskan revisi Senin pagi.',
+        ]);
+        Http::fake([
+            'https://ai.example.test/v1/chat/completions' => Http::response([
+                'choices' => [[
+                    'message' => [
+                        'content' => json_encode([
+                            'judul_deck' => 'Evaluasi Pekanan Kurikulum',
+                            'ringkasan_pembuka' => 'Validasi perangkat ajar mencapai 90 persen pada pekan ini.',
+                            'kesimpulan_unit' => 'Dua revisi tersisa menjadi prioritas awal pekan berikutnya.',
+                            'komitmen' => [[
+                                'item_id' => $item->id,
+                                'judul_slide' => 'Validasi Perangkat Ajar',
+                                'headline' => 'Delapan belas dari dua puluh dokumen telah tervalidasi',
+                                'ringkasan_progres' => 'Pemeriksaan dokumen berjalan sesuai rencana.',
+                                'ringkasan_hasil' => 'Capaian akhir pekan berada pada 90 persen.',
+                                'ringkasan_kendala' => 'Dua guru belum mengirim revisi.',
+                                'tindak_lanjut' => 'Tuntaskan revisi Senin pagi.',
+                            ]],
+                        ]),
+                    ],
+                ]],
+            ]),
+        ]);
+
+        $this->actingAs($curriculum)
+            ->withSession(['active_role' => 'Kurikulum'])
+            ->get(route('okr.weekly.index', [
+                'period_id' => $period->id,
+                'unit_id' => $unit->id,
+                'week_start' => '2026-09-14',
+            ]))
+            ->assertOk()
+            ->assertSee('bg-gradient-to-br from-cyan-50 via-white to-indigo-50', false)
+            ->assertDontSee('bg-slate-950', false)
+            ->assertSee('Hasilkan Slide Presentasi');
+
+        $response = $this->actingAs($curriculum)
+            ->withSession(['active_role' => 'Kurikulum'])
+            ->post(route('okr.weekly.presentation', $report));
+
+        $response->assertOk()
+            ->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation')
+            ->assertDownload('presentasi-evaluasi-okr-kurikulum-2026-09-14.pptx');
+        $presentationContent = $response->streamedContent();
+        $this->assertStringStartsWith('PK', $presentationContent);
+        Http::assertSentCount(1);
+
+        $security = $this->userWithRole('Security');
+        $this->actingAs($security)
+            ->withSession(['active_role' => 'Security'])
+            ->post(route('okr.weekly.presentation', $report))
+            ->assertForbidden();
+        Http::assertSentCount(1);
     }
 
     private function period(): OkrPeriod

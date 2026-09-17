@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\OkrAiException;
 use App\Models\OkrPeriod;
 use App\Models\OkrPlan;
 use App\Models\OkrProgressUpdate;
@@ -11,18 +12,22 @@ use App\Models\OkrWeeklyReport;
 use App\Models\OkrWeeklyReportItem;
 use App\Models\User;
 use App\Services\OkrProgressService;
+use App\Services\OkrWeeklyPresentationAiService;
+use App\Services\OkrWeeklyPresentationBuilder;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class OkrWeeklyReportController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, OkrWeeklyPresentationAiService $presentationAi)
     {
         $periods = OkrPeriod::with('academicYear')->latest('id')->get();
         $period = $periods->firstWhere('id', (int) $request->integer('period_id'))
@@ -127,6 +132,7 @@ class OkrWeeklyReportController extends Controller
             'progressRecommendations' => $progressRecommendations,
             'linkedProgressCount' => $report?->items->whereNotNull('okr_plan_id')->count() ?? 0,
             'appliedProgressCount' => $report?->items->whereNotNull('progress_applied_at')->count() ?? 0,
+            'presentationAiReady' => $presentationAi->ready(),
             'stats' => [
                 'reported_units' => $scopeReports->whereIn('status', ['submitted', 'reviewed'])->count(),
                 'expected_units' => $this->isExecutiveViewer($request->user()) ? $units->count() : count($editableUnitIds),
@@ -404,6 +410,53 @@ class OkrWeeklyReportController extends Controller
             'generatedBy' => $request->user(),
             'generatedAt' => now(),
         ])->setPaper('a4', 'portrait')->download($filename);
+    }
+
+    public function downloadPresentation(
+        Request $request,
+        OkrWeeklyReport $weeklyReport,
+        OkrWeeklyPresentationAiService $ai,
+        OkrWeeklyPresentationBuilder $builder
+    ) {
+        $weeklyReport->load([
+            'unit',
+            'items.plan.keyResult.objective',
+            'items.plan.parent.parent',
+            'items.progressUpdates.recorder:id,name',
+            'reviewer:id,name',
+        ]);
+        $this->ensureUnitViewer($request->user(), $weeklyReport->unit);
+
+        if ($weeklyReport->status === 'draft') {
+            return response()->json([
+                'message' => 'Kirim Evaluasi Jumat terlebih dahulu agar Stella AI menggunakan hasil akhir yang sudah dikonfirmasi.',
+            ], 422);
+        }
+
+        try {
+            $narrative = $ai->generate($weeklyReport);
+            $path = $builder->build($weeklyReport, $narrative);
+        } catch (OkrAiException $exception) {
+            return response()->json(['message' => $exception->getMessage()], $exception->httpStatus);
+        } catch (\Throwable $exception) {
+            Log::error('Weekly OKR presentation generation failed.', [
+                'weekly_report_id' => $weeklyReport->id,
+                'user_id' => $request->user()->id,
+                'exception' => $exception,
+            ]);
+
+            return response()->json([
+                'message' => 'Slide presentasi belum dapat dibuat. Silakan coba kembali atau hubungi Super Admin.',
+            ], 500);
+        }
+
+        $filename = 'presentasi-evaluasi-okr-'
+            .Str::slug($weeklyReport->unit->name).'-'
+            .$weeklyReport->week_start->format('Y-m-d').'.pptx';
+
+        return response()->download($path, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        ])->deleteFileAfterSend(true);
     }
 
     public function review(Request $request, OkrWeeklyReport $weeklyReport): RedirectResponse

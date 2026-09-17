@@ -5,7 +5,29 @@
             <h4 class="mt-1 text-lg font-black text-gray-950">Resume Rencana & Komitmen</h4>
             <p class="mt-1 text-xs text-gray-600">Perbandingan rencana Senin dengan progres terkini {{ $selectedUnit->name }}.</p>
         </div>
-        <div class="flex gap-2">
+        <div class="flex flex-wrap items-start justify-end gap-2">
+            <div class="max-w-xs text-right">
+                <button
+                    type="button"
+                    @if($report->status !== 'draft' && $presentationAiReady)
+                        @click="generatePresentation('{{ route('okr.weekly.presentation', $report) }}', '{{ csrf_token() }}')"
+                    @endif
+                    @disabled($report->status === 'draft' || ! $presentationAiReady)
+                    class="inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2.5 text-xs font-black text-white shadow-sm hover:from-violet-500 hover:to-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                    <svg x-show="presentationLoading" x-cloak class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+                    <svg x-show="!presentationLoading" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                    <span x-text="presentationLoading ? 'Stella sedang menyusun slide...' : 'Hasilkan Slide Presentasi'"></span>
+                </button>
+                @if($report->status === 'draft')
+                    <p class="mt-1 text-[10px] font-semibold text-amber-700">Kirim Evaluasi Jumat terlebih dahulu.</p>
+                @elseif(! $presentationAiReady)
+                    <p class="mt-1 text-[10px] font-semibold text-amber-700">Stella AI belum aktif atau belum dikonfigurasi.</p>
+                @else
+                    <p class="mt-1 text-[10px] text-gray-500">Menghasilkan PowerPoint yang dapat diedit.</p>
+                @endif
+                <p x-show="presentationError" x-cloak x-text="presentationError" class="mt-2 text-[10px] font-bold text-red-600"></p>
+            </div>
             <div class="rounded-md border border-emerald-200 bg-white px-4 py-2 text-center"><p class="text-[9px] font-black uppercase text-gray-400">Capaian</p><p class="mt-1 text-xl font-black text-emerald-700">{{ $reportProgress }}%</p></div>
             <div class="rounded-md border border-emerald-200 bg-white px-4 py-2 text-center"><p class="text-[9px] font-black uppercase text-gray-400">Tercapai</p><p class="mt-1 text-xl font-black text-gray-900">{{ $reportCompleted }}/{{ $report->items->count() }}</p></div>
         </div>

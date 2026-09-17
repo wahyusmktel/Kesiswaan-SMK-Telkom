@@ -201,24 +201,24 @@
                         </div>
                     </section>
 
-                    <section class="border-t border-cyan-200 bg-slate-950 p-5 text-white" data-weekly-progress-monitor>
+                    <section class="border-t border-cyan-200 bg-gradient-to-br from-cyan-50 via-white to-indigo-50 p-5 text-gray-900" data-weekly-progress-monitor>
                         <div class="flex flex-wrap items-start justify-between gap-4">
                             <div>
-                                <p class="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-300">Monitoring Langsung</p>
+                                <p class="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-700">Monitoring Langsung</p>
                                 <h4 class="mt-1 text-lg font-black">Progres Pekan Berjalan</h4>
-                                <p class="mt-1 max-w-2xl text-xs leading-5 text-slate-300">Unit memperbarui progres setiap komitmen selama pekan berjalan. Kepala Sekolah dapat memantau capaian, kendala, bukti, dan waktu pembaruan terbaru dari sini.</p>
+                                <p class="mt-1 max-w-2xl text-xs leading-5 text-slate-600">Unit memperbarui progres setiap komitmen selama pekan berjalan. Kepala Sekolah dapat memantau capaian, kendala, bukti, dan waktu pembaruan terbaru dari sini.</p>
                             </div>
                             <div class="grid grid-cols-3 gap-2 text-center">
-                                <div class="rounded-md border border-white/10 bg-white/10 px-4 py-2"><p class="text-[9px] font-black uppercase text-slate-400">Rata-rata</p><p class="mt-1 text-xl font-black text-cyan-300">{{ $reportProgress }}%</p></div>
-                                <div class="rounded-md border border-white/10 bg-white/10 px-4 py-2"><p class="text-[9px] font-black uppercase text-slate-400">Selesai</p><p class="mt-1 text-xl font-black text-emerald-300">{{ $reportCompleted }}</p></div>
-                                <div class="rounded-md border border-white/10 bg-white/10 px-4 py-2"><p class="text-[9px] font-black uppercase text-slate-400">Terhambat</p><p class="mt-1 text-xl font-black text-rose-300">{{ $reportBlocked }}</p></div>
+                                <div class="rounded-md border border-cyan-100 bg-white px-4 py-2 shadow-sm"><p class="text-[9px] font-black uppercase text-slate-400">Rata-rata</p><p class="mt-1 text-xl font-black text-cyan-700">{{ $reportProgress }}%</p></div>
+                                <div class="rounded-md border border-emerald-100 bg-white px-4 py-2 shadow-sm"><p class="text-[9px] font-black uppercase text-slate-400">Selesai</p><p class="mt-1 text-xl font-black text-emerald-700">{{ $reportCompleted }}</p></div>
+                                <div class="rounded-md border border-rose-100 bg-white px-4 py-2 shadow-sm"><p class="text-[9px] font-black uppercase text-slate-400">Terhambat</p><p class="mt-1 text-xl font-black text-rose-700">{{ $reportBlocked }}</p></div>
                             </div>
                         </div>
 
                         <div class="mt-5 grid gap-4 xl:grid-cols-3">
                             @foreach($report->items as $item)
                                 @php($latestProgress = $item->progressUpdates->first())
-                                <article class="overflow-hidden rounded-lg border border-white/10 bg-white text-gray-900 shadow-xl">
+                                <article class="overflow-hidden rounded-lg border border-cyan-100 bg-white text-gray-900 shadow-sm">
                                     <div class="p-4">
                                         <div class="flex items-start justify-between gap-3">
                                             <div><p class="text-[10px] font-black uppercase text-indigo-600">Komitmen {{ $item->priority_order }}</p><p class="mt-1 text-sm font-black leading-5">{{ $item->commitment }}</p></div>
@@ -386,6 +386,45 @@
 
             function weeklyOkrDashboard() {
                 return {
+                    presentationLoading: false,
+                    presentationError: '',
+                    async generatePresentation(url, csrfToken) {
+                        if (this.presentationLoading) return;
+                        this.presentationLoading = true;
+                        this.presentationError = '';
+
+                        try {
+                            const response = await fetch(url, {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRF-TOKEN': csrfToken,
+                                    'Accept': 'application/json, application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                                },
+                            });
+                            if (! response.ok) {
+                                const error = await response.json().catch(() => ({}));
+                                throw new Error(error.message || 'Slide presentasi belum dapat dibuat.');
+                            }
+
+                            const blob = await response.blob();
+                            const disposition = response.headers.get('Content-Disposition') || '';
+                            const encodedName = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
+                            const simpleName = disposition.match(/filename="?([^";]+)"?/i)?.[1];
+                            const filename = encodedName ? decodeURIComponent(encodedName) : (simpleName || 'presentasi-evaluasi-okr.pptx');
+                            const downloadUrl = URL.createObjectURL(blob);
+                            const anchor = document.createElement('a');
+                            anchor.href = downloadUrl;
+                            anchor.download = filename;
+                            document.body.appendChild(anchor);
+                            anchor.click();
+                            anchor.remove();
+                            URL.revokeObjectURL(downloadUrl);
+                        } catch (error) {
+                            this.presentationError = error.message || 'Terjadi kesalahan saat membuat presentasi.';
+                        } finally {
+                            this.presentationLoading = false;
+                        }
+                    },
                     initCharts() {
                         this.$nextTick(() => {
                             if (typeof Chart === 'undefined') return;
