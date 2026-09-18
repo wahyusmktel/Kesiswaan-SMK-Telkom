@@ -14,7 +14,7 @@
                 <div class="mb-8 flex justify-between items-end">
                     <div>
                         <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Edit Survei</h1>
-                        <p class="text-slate-500 mt-1">Perbarui kuesioner Anda sebelum dipublikasikan.</p>
+                        <p class="text-slate-500 mt-1">{{ $survey->is_active ? 'Perbarui informasi dan kuesioner survei aktif.' : 'Perbarui kuesioner Anda sebelum dipublikasikan.' }}</p>
                     </div>
                     <div class="flex space-x-3">
                         <input type="hidden" name="is_active" id="is_active_input"
@@ -27,10 +27,22 @@
                         </button>
                         <button type="submit" @click="confirmPublish($event)"
                             class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-200 transition-all duration-200 transform hover:-translate-y-0.5">
-                            Publikasikan
+                            {{ $survey->is_active ? 'Simpan Perubahan' : 'Publikasikan' }}
                         </button>
                     </div>
                 </div>
+
+                @if(isset($responsesCount) && $responsesCount > 0)
+                    <div class="mb-6 p-4 bg-amber-50 border-l-4 border-amber-500 text-amber-800 rounded-xl flex items-start space-x-3 shadow-sm">
+                        <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div>
+                            <p class="font-bold text-sm">Survei ini sudah memiliki {{ $responsesCount }} respon</p>
+                            <p class="text-xs text-amber-700 mt-0.5">Pertanyaan yang telah dijawab responden dikunci agar tidak dapat dihapus demi menjaga integritas data statistik. Anda tetap dapat mengedit redaksi pertanyaan, menambah pertanyaan baru, memperbarui jadwal, atau menyesuaikan target responden.</p>
+                        </div>
+                    </div>
+                @endif
 
                 @if($errors->any())
                     <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-lg">
@@ -328,19 +340,28 @@
                     <template x-for="(question, index) in questions" :key="question.idx">
                         <div
                             class="bg-white rounded-2xl shadow-sm border border-slate-100 p-8 relative group hover:border-blue-200 transition-colors">
+                            <input type="hidden" :name="'questions['+index+'][id]'" :value="question.id || ''">
                             <div class="flex justify-between items-start mb-6">
                                 <div class="flex items-center">
                                     <span
                                         class="flex items-center justify-center w-8 h-8 bg-blue-50 text-blue-600 rounded-lg font-bold text-sm mr-4"
                                         x-text="index + 1"></span>
                                     <select x-model="question.type" :name="'questions['+index+'][type]'"
-                                        class="bg-transparent border-none font-bold text-slate-800 focus:ring-0 cursor-pointer hover:text-blue-600 transition-colors uppercase text-xs tracking-wider">
+                                        :disabled="question.answers_count > 0"
+                                        class="bg-transparent border-none font-bold text-slate-800 focus:ring-0 cursor-pointer hover:text-blue-600 transition-colors uppercase text-xs tracking-wider disabled:cursor-not-allowed disabled:text-slate-400">
                                         <option value="multiple_choice">Pilihan Ganda</option>
                                         <option value="essay">Esai / Jawaban Terbuka</option>
                                     </select>
+                                    <template x-if="question.answers_count > 0">
+                                        <span class="ml-2 px-2 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-700 rounded-full">
+                                            Terkunci (<span x-text="question.answers_count"></span> Respon)
+                                        </span>
+                                    </template>
                                 </div>
                                 <button type="button" @click="removeQuestion(index)"
-                                    class="p-2 text-slate-200 hover:text-red-500 transition-colors">
+                                    :disabled="question.answers_count > 0"
+                                    :class="question.answers_count > 0 ? 'p-2 text-slate-200 cursor-not-allowed' : 'p-2 text-slate-300 hover:text-red-500 transition-colors'"
+                                    :title="question.answers_count > 0 ? 'Pertanyaan sudah memiliki respon dan tidak dapat dihapus' : 'Hapus pertanyaan'">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -445,10 +466,12 @@
                 activeRombel: null,
 
                 questions: initialQuestions.map(q => ({
+                    id: q.id || null,
                     idx: q.id || Date.now() + Math.random(),
                     type: q.type,
                     question_text: q.question_text,
-                    options: q.options || ['', '']
+                    options: q.options || ['', ''],
+                    answers_count: q.answers_count || 0
                 })),
 
                 // Logic functions
@@ -499,12 +522,20 @@
                 },
                 confirmPublish(event) {
                     document.getElementById('is_active_input').value = '1';
+                    @if(!$survey->is_active)
                     if (!confirm('Apakah anda yakin akan mempublikasikan survei ini?')) event.preventDefault();
+                    @endif
                 },
                 addQuestion() {
-                    this.questions.push({ idx: Date.now() + Math.random(), type: 'multiple_choice', question_text: '', options: ['', ''] });
+                    this.questions.push({ id: null, idx: Date.now() + Math.random(), type: 'multiple_choice', question_text: '', options: ['', ''], answers_count: 0 });
                 },
-                removeQuestion(index) { this.questions.splice(index, 1); },
+                removeQuestion(index) {
+                    if (this.questions[index].answers_count > 0) {
+                        alert('Pertanyaan ini sudah memiliki jawaban respon dan tidak dapat dihapus.');
+                        return;
+                    }
+                    this.questions.splice(index, 1);
+                },
                 addOption(qIndex) { if (this.questions[qIndex].options.length < 5) this.questions[qIndex].options.push(''); },
                 removeOption(qIndex, optIndex) { this.questions[qIndex].options.splice(optIndex, 1); }
             };

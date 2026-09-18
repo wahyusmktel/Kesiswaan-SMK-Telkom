@@ -19,7 +19,30 @@
                 </div>
                 <p class="text-sm text-slate-500 ml-12">Analisis mendalam hasil feedback responden.</p>
             </div>
-            <div class="flex space-x-2 ml-12 md:ml-0">
+            <div class="flex flex-wrap items-center gap-2 ml-12 md:ml-0">
+                @php
+                    $canManage = $survey->created_by === auth()->id() || auth()->user()->hasRole(['Super Admin', 'Operator']);
+                @endphp
+                @if($canManage)
+                    <a href="{{ route('surveys.edit', $survey) }}"
+                        class="inline-flex items-center px-4 py-2 bg-amber-50 text-amber-700 font-bold rounded-xl border border-amber-200 hover:bg-amber-100 transition-colors text-sm">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5M16.243 3.757a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17.657 3.757z" />
+                        </svg>
+                        Edit Survei
+                    </a>
+                    <form action="{{ route('surveys.duplicate', $survey) }}" method="POST" class="inline"
+                        onsubmit="return confirm('Duplikat survei ini sebagai draft?')">
+                        @csrf
+                        <button type="submit"
+                            class="inline-flex items-center px-4 py-2 bg-indigo-50 text-indigo-700 font-bold rounded-xl border border-indigo-200 hover:bg-indigo-100 transition-colors text-sm">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            Duplikat
+                        </button>
+                    </form>
+                @endif
                 <a href="{{ route('surveys.export.excel', $survey) }}"
                     class="inline-flex items-center px-4 py-2 bg-emerald-50 text-emerald-700 font-bold rounded-xl border border-emerald-100 hover:bg-emerald-100 transition-colors text-sm">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

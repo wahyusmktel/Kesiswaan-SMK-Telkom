@@ -263,17 +263,55 @@ class SurveyController extends Controller
         return $pdf->download('hasil-survei-' . Str::slug($survey->title) . '.pdf');
     }
 
+    public function duplicate(Survey $survey)
+    {
+        $user = auth()->user();
+        if ($survey->created_by !== $user->id && !$user->hasRole(['Super Admin', 'Operator'])) {
+            abort(403, 'Anda tidak memiliki izin untuk menduplikasi survei ini.');
+        }
+
+        DB::beginTransaction();
+        try {
+            $newSurvey = Survey::create([
+                'title' => $survey->title . ' (Salinan)',
+                'description' => $survey->description,
+                'created_by' => $user->id,
+                'is_active' => false,
+                'start_at' => null,
+                'end_at' => null,
+            ]);
+
+            foreach ($survey->questions()->orderBy('order')->get() as $question) {
+                $newSurvey->questions()->create([
+                    'question_text' => $question->question_text,
+                    'type' => $question->type,
+                    'options' => $question->options,
+                    'order' => $question->order,
+                ]);
+            }
+
+            $targetUserIds = $survey->targets()->pluck('users.id')->toArray();
+            if (!empty($targetUserIds)) {
+                $newSurvey->targets()->sync($targetUserIds);
+            }
+
+            DB::commit();
+
+            return redirect()->route('surveys.index')->with('success', 'Survei "' . $survey->title . '" berhasil diduplikasi sebagai draft.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal menduplikasi survei: ' . $e->getMessage());
+        }
+    }
+
     public function edit(Survey $survey)
     {
-        if ($survey->created_by !== auth()->id()) {
+        $user = auth()->user();
+        if ($survey->created_by !== $user->id && !$user->hasRole(['Super Admin', 'Operator'])) {
             abort(403);
         }
 
-        if ($survey->is_active) {
-            return redirect()->route('surveys.index')->with('error', 'Survei yang sudah dipublikasikan tidak dapat diubah.');
-        }
-
-        $user = auth()->user();
+        $responsesCount = $survey->responses()->count();
         $isStudent = $user->hasRole('Siswa');
 
         $activeYear = TahunPelajaran::where('is_active', true)->first();
@@ -298,19 +336,21 @@ class SurveyController extends Controller
             $q->where('name', 'Siswa');
         })->get();
 
-        $survey->load(['questions', 'targets']);
+        $survey->load([
+            'questions' => function ($q) {
+                $q->withCount('answers')->orderBy('order');
+            },
+            'targets'
+        ]);
 
-        return view('pages.surveys.edit', compact('survey', 'isStudent', 'roles', 'rombels', 'guruKelas', 'nonStudentUsers', 'activeYear'));
+        return view('pages.surveys.edit', compact('survey', 'isStudent', 'roles', 'rombels', 'guruKelas', 'nonStudentUsers', 'activeYear', 'responsesCount'));
     }
 
     public function update(Request $request, Survey $survey)
     {
-        if ($survey->created_by !== auth()->id()) {
+        $user = auth()->user();
+        if ($survey->created_by !== $user->id && !$user->hasRole(['Super Admin', 'Operator'])) {
             abort(403);
-        }
-
-        if ($survey->is_active) {
-            return redirect()->route('surveys.index')->with('error', 'Survei yang sudah dipublikasikan tidak dapat diubah.');
         }
 
         $request->validate([
@@ -320,6 +360,7 @@ class SurveyController extends Controller
             'end_at' => 'nullable|date|after_or_equal:start_at',
             'is_active' => 'required|boolean',
             'questions' => 'required|array|min:1',
+            'questions.*.id' => 'nullable|integer',
             'questions.*.question_text' => 'required|string',
             'questions.*.type' => 'required|in:multiple_choice,essay',
             'questions.*.options' => 'nullable|array|max:5',
@@ -336,15 +377,47 @@ class SurveyController extends Controller
                 'is_active' => $request->is_active,
             ]);
 
-            // Refresh questions: simplest to delete and recreate for dynamic builders
-            $survey->questions()->delete();
-            foreach ($request->questions as $index => $q) {
-                $survey->questions()->create([
-                    'question_text' => $q['question_text'],
-                    'type' => $q['type'],
-                    'options' => $q['type'] === 'multiple_choice' ? ($q['options'] ?? []) : null,
-                    'order' => $index,
-                ]);
+            $responsesCount = $survey->responses()->count();
+
+            if ($responsesCount === 0) {
+                // No responses yet: delete and recreate questions cleanly
+                $survey->questions()->delete();
+                foreach ($request->questions as $index => $q) {
+                    $survey->questions()->create([
+                        'question_text' => $q['question_text'],
+                        'type' => $q['type'],
+                        'options' => $q['type'] === 'multiple_choice' ? ($q['options'] ?? []) : null,
+                        'order' => $index,
+                    ]);
+                }
+            } else {
+                // Survey already has responses: update existing questions by ID to preserve answers
+                $keptQuestionIds = [];
+                foreach ($request->questions as $index => $q) {
+                    if (!empty($q['id']) && ($existingQ = $survey->questions()->find($q['id']))) {
+                        $existingQ->update([
+                            'question_text' => $q['question_text'],
+                            'type' => $q['type'],
+                            'options' => $q['type'] === 'multiple_choice' ? ($q['options'] ?? []) : null,
+                            'order' => $index,
+                        ]);
+                        $keptQuestionIds[] = $existingQ->id;
+                    } else {
+                        $newQ = $survey->questions()->create([
+                            'question_text' => $q['question_text'],
+                            'type' => $q['type'],
+                            'options' => $q['type'] === 'multiple_choice' ? ($q['options'] ?? []) : null,
+                            'order' => $index,
+                        ]);
+                        $keptQuestionIds[] = $newQ->id;
+                    }
+                }
+
+                // Delete only questions that were removed and have NO answers
+                $survey->questions()
+                    ->whereNotIn('id', $keptQuestionIds)
+                    ->whereDoesntHave('answers')
+                    ->delete();
             }
 
             // Sync targets
@@ -354,7 +427,7 @@ class SurveyController extends Controller
             return redirect()->route('surveys.index')->with('success', 'Survei berhasil diperbarui.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Terjadi kesalahan saat memperbarui survei.')->withInput();
+            return back()->with('error', 'Terjadi kesalahan saat memperbarui survei: ' . $e->getMessage())->withInput();
         }
     }
 }

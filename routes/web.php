@@ -1264,6 +1264,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/{survey}/edit', [\App\Http\Controllers\Survey\SurveyController::class, 'edit'])->name('edit');
         Route::put('/{survey}', [\App\Http\Controllers\Survey\SurveyController::class, 'update'])->name('update');
         Route::delete('/{survey}', [\App\Http\Controllers\Survey\SurveyController::class, 'destroy'])->name('destroy');
+        Route::post('/{survey}/duplicate', [\App\Http\Controllers\Survey\SurveyController::class, 'duplicate'])->name('duplicate');
 
         // Survey Responding
         Route::get('/{survey}/take', [\App\Http\Controllers\Survey\SurveyController::class, 'show'])->name('show');

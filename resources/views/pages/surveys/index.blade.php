@@ -23,11 +23,22 @@
                 {{ session('success') }}
             </div>
         @endif
+        @if(session('error'))
+            <div class="mb-4 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-lg">
+                {{ session('error') }}
+            </div>
+        @endif
+        @if(session('info'))
+            <div class="mb-4 p-4 bg-blue-100 border-l-4 border-blue-500 text-blue-700 rounded-lg">
+                {{ session('info') }}
+            </div>
+        @endif
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             @forelse($surveys as $survey)
                 @php
                     $isCreator = $survey->created_by === auth()->id();
+                    $canManage = $isCreator || auth()->user()->hasRole(['Super Admin', 'Operator']);
                     $hasResponded = $survey->responses->isNotEmpty();
                     $scheduleStatus = $survey->schedule_status;
                     $isOpen = $survey->isOpen();
@@ -47,7 +58,7 @@
                                 @if($hasResponded)
                                     <span
                                         class="px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest rounded-full bg-green-100 text-green-700">Selesai</span>
-                                @elseif(!$isCreator)
+                                @elseif(!$canManage)
                                     @if($scheduleStatus === 'upcoming')
                                         <span class="px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest rounded-full bg-indigo-100 text-indigo-700">Akan Datang</span>
                                     @elseif($scheduleStatus === 'expired')
@@ -78,7 +89,7 @@
                     </div>
 
                     <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-                        @if($isCreator)
+                        @if($canManage)
                             <a href="{{ route('surveys.results', $survey) }}"
                                 class="text-blue-600 hover:text-blue-700 font-bold text-xs flex items-center">
                                 Lihat Hasil
@@ -87,12 +98,19 @@
                                         d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                 </svg>
                             </a>
-                            <div class="flex space-x-1">
-                                @if(!$survey->is_active)
-                                    <a href="{{ route('surveys.edit', $survey) }}" title="Edit Draft" class="p-1.5 text-slate-400 hover:text-amber-600 transition-colors">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5M16.243 3.757a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17.657 3.757z" /></svg>
-                                    </a>
-                                @endif
+                            <div class="flex items-center space-x-1">
+                                <a href="{{ route('surveys.edit', $survey) }}" title="Edit Survei" class="p-1.5 text-slate-400 hover:text-amber-600 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5M16.243 3.757a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17.657 3.757z" /></svg>
+                                </a>
+                                <form action="{{ route('surveys.duplicate', $survey) }}" method="POST" class="inline"
+                                    onsubmit="return confirm('Duplikat survei ini sebagai draft?')">
+                                    @csrf
+                                    <button type="submit" title="Duplikat Survei" class="p-1.5 text-slate-400 hover:text-emerald-600 transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                        </svg>
+                                    </button>
+                                </form>
                                 <a href="{{ route('surveys.show', $survey) }}" title="Link Survey"
                                     class="p-1.5 text-slate-400 hover:text-blue-600 transition-colors">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -103,7 +121,7 @@
                                 <form action="{{ route('surveys.destroy', $survey) }}" method="POST"
                                     onsubmit="return confirm('Hapus survei?')">
                                     @csrf @method('DELETE')
-                                    <button type="submit" class="p-1.5 text-slate-400 hover:text-red-600 transition-colors">
+                                    <button type="submit" class="p-1.5 text-slate-400 hover:text-red-600 transition-colors" title="Hapus Survei">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
