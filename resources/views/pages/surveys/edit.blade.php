@@ -208,9 +208,16 @@
                                     <input type="checkbox" x-model="targetCategories.siswa"
                                         class="w-5 h-5 text-blue-600 rounded-lg border-slate-300 focus:ring-blue-500">
                                     <div class="ml-3">
-                                        <p class="font-bold text-slate-700">Role Siswa</p>
+                                        <div class="flex items-center gap-2">
+                                            <p class="font-bold text-slate-700">Role Siswa</p>
+                                            @if(isset($activeYear) && $activeYear)
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                    TP Aktif: {{ $activeYear->tahun }} {{ $activeYear->semester ? '('.ucfirst($activeYear->semester).')' : '' }}
+                                                </span>
+                                            @endif
+                                        </div>
                                         <p class="text-[10px] text-slate-400 uppercase tracking-widest">Pilih
-                                            berdasarkan kelas atau individu siswa</p>
+                                            berdasarkan kelas pada tahun pelajaran aktif atau individu siswa</p>
                                     </div>
                                 </label>
                             </div>
@@ -239,6 +246,11 @@
 
                                 <div
                                     class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                                    <template x-if="filteredRombels.length === 0">
+                                        <div class="col-span-full py-8 text-center text-slate-400 text-xs">
+                                            Tidak ada kelas ditemukan untuk tahun pelajaran aktif saat ini.
+                                        </div>
+                                    </template>
                                     <template x-for="rombel in filteredRombels" :key="rombel.id">
                                         <div class="space-y-1">
                                             <div class="flex items-center p-3 bg-white rounded-xl border transition-all cursor-pointer group"

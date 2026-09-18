@@ -10,6 +10,7 @@ use App\Models\SurveyQuestion;
 use App\Models\SurveyResponse;
 use App\Models\User;
 use App\Models\Rombel;
+use App\Models\TahunPelajaran;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
@@ -48,14 +49,29 @@ class SurveyController extends Controller
         $user = auth()->user();
         $isStudent = $user->hasRole('Siswa');
 
+        $activeYear = TahunPelajaran::where('is_active', true)->first();
+
         $roles = Role::where('name', '!=', 'Siswa')->get();
-        $rombels = Rombel::with(['kelas', 'siswa.user'])->get();
+        $rombels = Rombel::with(['kelas', 'siswa.user'])
+            ->when($activeYear, function ($q) use ($activeYear) {
+                $q->where(function ($sub) use ($activeYear) {
+                    $sub->where('tahun_pelajaran_id', $activeYear->id)
+                        ->orWhere(function ($fallback) use ($activeYear) {
+                            $fallback->whereNull('tahun_pelajaran_id')
+                                ->where('tahun_ajaran', $activeYear->tahun);
+                        });
+                });
+            })
+            ->get()
+            ->sortBy('kelas.nama_kelas')
+            ->values();
+
         $guruKelas = User::role('Guru Kelas')->get();
         $nonStudentUsers = User::whereDoesntHave('roles', function ($q) {
             $q->where('name', 'Siswa');
         })->get();
 
-        return view('pages.surveys.create', compact('isStudent', 'roles', 'rombels', 'guruKelas', 'nonStudentUsers'));
+        return view('pages.surveys.create', compact('isStudent', 'roles', 'rombels', 'guruKelas', 'nonStudentUsers', 'activeYear'));
     }
 
     public function store(Request $request)
@@ -260,8 +276,23 @@ class SurveyController extends Controller
         $user = auth()->user();
         $isStudent = $user->hasRole('Siswa');
 
+        $activeYear = TahunPelajaran::where('is_active', true)->first();
+
         $roles = Role::where('name', '!=', 'Siswa')->get();
-        $rombels = Rombel::with(['kelas', 'siswa.user'])->get();
+        $rombels = Rombel::with(['kelas', 'siswa.user'])
+            ->when($activeYear, function ($q) use ($activeYear) {
+                $q->where(function ($sub) use ($activeYear) {
+                    $sub->where('tahun_pelajaran_id', $activeYear->id)
+                        ->orWhere(function ($fallback) use ($activeYear) {
+                            $fallback->whereNull('tahun_pelajaran_id')
+                                ->where('tahun_ajaran', $activeYear->tahun);
+                        });
+                });
+            })
+            ->get()
+            ->sortBy('kelas.nama_kelas')
+            ->values();
+
         $guruKelas = User::role('Guru Kelas')->get();
         $nonStudentUsers = User::whereDoesntHave('roles', function ($q) {
             $q->where('name', 'Siswa');
@@ -269,7 +300,7 @@ class SurveyController extends Controller
 
         $survey->load(['questions', 'targets']);
 
-        return view('pages.surveys.edit', compact('survey', 'isStudent', 'roles', 'rombels', 'guruKelas', 'nonStudentUsers'));
+        return view('pages.surveys.edit', compact('survey', 'isStudent', 'roles', 'rombels', 'guruKelas', 'nonStudentUsers', 'activeYear'));
     }
 
     public function update(Request $request, Survey $survey)
