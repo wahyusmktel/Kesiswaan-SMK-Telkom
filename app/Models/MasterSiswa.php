@@ -3,10 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 
 class MasterSiswa extends Model
 {
+    use SoftDeletes;
+
     protected $table = "master_siswa";
 
     // Jangan lupa tambahkan $fillable
@@ -20,6 +23,9 @@ class MasterSiswa extends Model
         'user_id',
         'last_synced_at',
         'status',
+        'deletion_reason',
+        'deletion_notes',
+        'deleted_by',
         'data_source',
         'is_data_verified',
         'graduated_at',
@@ -32,12 +38,18 @@ class MasterSiswa extends Model
         'last_synced_at' => 'datetime',
         'graduated_at' => 'date',
         'is_data_verified' => 'boolean',
+        'deleted_at' => 'datetime',
     ];
 
     // Relasi dari MasterSiswa ke akun loginnya
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function deletedBy()
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
     }
     // Relasi dari MasterSiswa ke banyak rombel (many-to-many)
     public function rombels()

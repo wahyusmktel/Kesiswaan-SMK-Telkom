@@ -388,6 +388,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('siswa/generate-akun-masal', [MasterSiswaController::class, 'generateAkunMasal'])->name('siswa.generate-akun-masal'); // <-- Route Generate Masal
         Route::post('siswa/{master_siswa}/generate-akun', [MasterSiswaController::class, 'generateAkun'])->name('siswa.generate-akun');
         Route::post('siswa/{master_siswa}/reset-password', [MasterSiswaController::class, 'resetPassword'])->name('siswa.reset-password'); // <-- Route Reset Password
+        Route::patch('siswa/{id}/restore', [MasterSiswaController::class, 'restore'])->name('siswa.restore');
         Route::resource('siswa', MasterSiswaController::class)->middleware('permission:manage siswa');
 
         // Dapodik Siswa Routes

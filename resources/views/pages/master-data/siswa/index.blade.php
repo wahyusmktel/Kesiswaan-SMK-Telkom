@@ -6,12 +6,33 @@
     <div class="py-6 w-full">
         <div class="w-full px-4 sm:px-6 lg:px-8">
 
+            <!-- Navigasi Tab Siswa Aktif vs Dikeluarkan -->
+            <div class="mb-4 border-b border-gray-200">
+                <nav class="-mb-px flex space-x-6" aria-label="Tabs">
+                    <a href="{{ route('master-data.siswa.index', ['tab' => 'aktif']) }}"
+                        class="{{ $tab !== 'keluar' ? 'border-red-600 text-red-600 font-semibold' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} whitespace-nowrap py-3 px-1 border-b-2 text-sm flex items-center gap-2 transition-colors">
+                        <span>Siswa Aktif</span>
+                        <span class="{{ $tab !== 'keluar' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600' }} py-0.5 px-2.5 rounded-full text-xs font-semibold">
+                            {{ number_format($activeCount) }}
+                        </span>
+                    </a>
+                    <a href="{{ route('master-data.siswa.index', ['tab' => 'keluar']) }}"
+                        class="{{ $tab === 'keluar' ? 'border-red-600 text-red-600 font-semibold' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} whitespace-nowrap py-3 px-1 border-b-2 text-sm flex items-center gap-2 transition-colors">
+                        <span>Siswa Dikeluarkan / Terhapus</span>
+                        <span class="{{ $tab === 'keluar' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600' }} py-0.5 px-2.5 rounded-full text-xs font-semibold">
+                            {{ number_format($trashedCount) }}
+                        </span>
+                    </a>
+                </nav>
+            </div>
+
             <div class="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
 
                 <div
                     class="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-gray-50/50">
 
                     <form action="{{ route('master-data.siswa.index') }}" method="GET" class="w-full sm:w-72 relative">
+                        <input type="hidden" name="tab" value="{{ $tab }}">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -20,189 +41,261 @@
                         </div>
                         <input type="text" name="search" value="{{ request('search') }}"
                             class="pl-10 block w-full rounded-lg border-gray-300 bg-white text-sm focus:border-red-500 focus:ring-red-500 shadow-sm"
-                            placeholder="Cari NIS atau Nama...">
+                            placeholder="{{ $tab === 'keluar' ? 'Cari NIS atau Nama Siswa Keluar...' : 'Cari NIS atau Nama...' }}">
                     </form>
 
                     <div class="flex items-center gap-2">
+                        @if ($tab !== 'keluar')
+                            @unlessrole('Waka Kesiswaan')
+                                <button @click="$dispatch('open-import-modal')"
+                                    class="inline-flex items-center px-4 py-2 bg-emerald-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-emerald-500 focus:outline-none shadow-sm transition ease-in-out duration-150 gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                    </svg>
+                                    Import Excel
+                                </button>
+                            @endunlessrole
 
-                        @unlessrole('Waka Kesiswaan')
-                            <button @click="$dispatch('open-import-modal')"
-                                class="inline-flex items-center px-4 py-2 bg-emerald-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-emerald-500 focus:outline-none shadow-sm transition ease-in-out duration-150 gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                </svg>
-                                Import Excel
-                            </button>
-                        @endunlessrole
+                            <form action="{{ route('master-data.siswa.generate-akun-masal') }}" method="POST"
+                                class="action-form">
+                                @csrf
+                                <button type="button"
+                                    onclick="confirmAction(this, 'Buat akun untuk semua siswa yang belum punya?', 'Ya, Generate!')"
+                                    class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 focus:outline-none shadow-sm transition ease-in-out duration-150 gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    Generate Masal
+                                </button>
+                            </form>
 
-                        <form action="{{ route('master-data.siswa.generate-akun-masal') }}" method="POST"
-                            class="action-form">
-                            @csrf
-                            <button type="button"
-                                onclick="confirmAction(this, 'Buat akun untuk semua siswa yang belum punya?', 'Ya, Generate!')"
-                                class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 focus:outline-none shadow-sm transition ease-in-out duration-150 gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 4v16m8-8H4" />
-                                </svg>
-                                Generate Masal
-                            </button>
-                        </form>
-
-                        @unlessrole('Waka Kesiswaan')
-                            <button @click="$dispatch('open-siswa-modal')"
-                                class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-500 focus:outline-none shadow-sm transition ease-in-out duration-150 gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                                </svg>
-                                Tambah Siswa
-                            </button>
-                        @endunlessrole
+                            @unlessrole('Waka Kesiswaan')
+                                <button @click="$dispatch('open-siswa-modal')"
+                                    class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-500 focus:outline-none shadow-sm transition ease-in-out duration-150 gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                                    </svg>
+                                    Tambah Siswa
+                                </button>
+                            @endunlessrole
+                        @endif
                     </div>
                 </div>
 
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm text-left text-gray-500">
                         <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-200">
-                            <tr>
-                                <th class="px-6 py-4 font-bold tracking-wider">NIS</th>
-                                <th class="px-6 py-4 font-bold tracking-wider">Nama Lengkap</th>
-                                <th class="px-6 py-4 font-bold tracking-wider">L/P</th>
-                                <th class="px-6 py-4 font-bold tracking-wider">Status Akun</th>
-                                <th class="px-6 py-4 font-bold tracking-wider">Last Sync</th>
-                                <th class="px-6 py-4 font-bold tracking-wider text-right">Aksi</th>
-                            </tr>
+                            @if ($tab === 'keluar')
+                                <tr>
+                                    <th class="px-6 py-4 font-bold tracking-wider">NIS</th>
+                                    <th class="px-6 py-4 font-bold tracking-wider">Nama Lengkap</th>
+                                    <th class="px-6 py-4 font-bold tracking-wider">L/P</th>
+                                    <th class="px-6 py-4 font-bold tracking-wider">Alasan & Catatan</th>
+                                    <th class="px-6 py-4 font-bold tracking-wider">Waktu Keluar</th>
+                                    <th class="px-6 py-4 font-bold tracking-wider">Petugas</th>
+                                    <th class="px-6 py-4 font-bold tracking-wider text-right">Aksi</th>
+                                </tr>
+                            @else
+                                <tr>
+                                    <th class="px-6 py-4 font-bold tracking-wider">NIS</th>
+                                    <th class="px-6 py-4 font-bold tracking-wider">Nama Lengkap</th>
+                                    <th class="px-6 py-4 font-bold tracking-wider">L/P</th>
+                                    <th class="px-6 py-4 font-bold tracking-wider">Status Akun</th>
+                                    <th class="px-6 py-4 font-bold tracking-wider">Last Sync</th>
+                                    <th class="px-6 py-4 font-bold tracking-wider text-right">Aksi</th>
+                                </tr>
+                            @endif
                         </thead>
                         <tbody class="divide-y divide-gray-100">
                             @forelse ($siswa as $item)
-                                <tr class="bg-white hover:bg-gray-50/80 transition-colors duration-200">
-                                    <td class="px-6 py-4 whitespace-nowrap font-mono text-gray-900">{{ $item->nis }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-semibold text-gray-900">{{ $item->nama_lengkap }}</div>
-                                        @if (!$item->is_data_verified)
-                                            <span class="mt-1 inline-flex rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-700">Data Sementara</span>
-                                        @endif
-                                        <div class="text-xs text-gray-500">
-                                            {{ \Carbon\Carbon::parse($item->tanggal_lahir)->translatedFormat('d F Y') }}
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span
-                                            class="inline-flex items-center justify-center w-6 h-6 rounded text-xs font-bold {{ $item->jenis_kelamin == 'L' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700' }}">
-                                            {{ $item->jenis_kelamin }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        @if ($item->user)
-                                            <span
-                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-100 ring-1 ring-green-600/20">
-                                                Aktif
+                                @if ($tab === 'keluar')
+                                    <tr class="bg-white hover:bg-gray-50/80 transition-colors duration-200">
+                                        <td class="px-6 py-4 whitespace-nowrap font-mono text-gray-900">{{ $item->nis }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-semibold text-gray-900">{{ $item->nama_lengkap }}</div>
+                                            <div class="text-xs text-gray-500">
+                                                {{ $item->tanggal_lahir ? \Carbon\Carbon::parse($item->tanggal_lahir)->translatedFormat('d F Y') : '-' }}
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center justify-center w-6 h-6 rounded text-xs font-bold {{ $item->jenis_kelamin == 'L' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700' }}">
+                                                {{ $item->jenis_kelamin }}
                                             </span>
-                                        @else
-                                            <span
-                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-50 text-gray-600 border border-gray-100 ring-1 ring-gray-600/20">
-                                                Belum Ada
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            @php
+                                                $reason = $item->deletion_reason ?? 'Dikeluarkan';
+                                                $badgeClass = match($reason) {
+                                                    'Pindah Sekolah' => 'bg-blue-50 text-blue-700 border-blue-200',
+                                                    'Salah Data' => 'bg-purple-50 text-purple-700 border-purple-200',
+                                                    'Mengundurkan Diri' => 'bg-amber-50 text-amber-700 border-amber-200',
+                                                    'Dikeluarkan' => 'bg-red-50 text-red-700 border-red-200',
+                                                    'Meninggal Dunia' => 'bg-gray-100 text-gray-700 border-gray-300',
+                                                    default => 'bg-gray-50 text-gray-700 border-gray-200',
+                                                };
+                                            @endphp
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border {{ $badgeClass }}">
+                                                {{ $reason }}
                                             </span>
-                                        @endif
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        @if ($item->last_synced_at)
-                                            <span class="text-xs text-gray-500" title="{{ $item->last_synced_at->format('d M Y H:i') }}">
-                                                {{ $item->last_synced_at->diffForHumans() }}
-                                            </span>
-                                        @else
-                                            <span class="text-xs text-gray-400">-</span>
-                                        @endif
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <div class="flex items-center justify-end gap-2">
-
-                                            @if ($item->user)
-                                                <form
-                                                    action="{{ route('master-data.siswa.reset-password', $item->id) }}"
-                                                    method="POST" class="action-form">
-                                                    @csrf
-                                                    <button type="button"
-                                                        onclick="confirmAction(this, 'Reset password siswa ini menjadi default?', 'Ya, Reset!')"
-                                                        class="inline-flex items-center px-2 py-1 bg-amber-50 text-amber-600 rounded hover:bg-amber-100 border border-amber-200 text-xs transition-colors"
-                                                        title="Reset Password">
-                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor"
-                                                            viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                                        </svg>
-                                                    </button>
-                                                </form>
-                                            @else
-                                                <form action="{{ route('master-data.siswa.generate-akun', $item->id) }}"
-                                                    method="POST" class="action-form">
-                                                    @csrf
-                                                    <button type="button"
-                                                        onclick="confirmAction(this, 'Buat akun login untuk siswa ini?', 'Ya, Buat!')"
-                                                        class="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 border border-blue-200 text-xs transition-colors"
-                                                        title="Generate Akun">
-                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor"
-                                                            viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                                                        </svg>
-                                                    </button>
-                                                </form>
+                                            @if ($item->deletion_notes)
+                                                <p class="text-xs text-gray-600 mt-1 max-w-xs break-words italic">"{{ $item->deletion_notes }}"</p>
                                             @endif
-
-                                            <a href="{{ route('master-data.siswa.dapodik.show', $item->id) }}"
-                                                class="inline-flex items-center px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors text-xs font-semibold border border-purple-200"
-                                                title="Lihat Data Dapodik">
-                                                <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                                </svg>
-                                                Dapodik
-                                            </a>
-
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-600">
+                                            {{ $item->deleted_at ? $item->deleted_at->translatedFormat('d M Y H:i') : '-' }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-600">
+                                            {{ $item->deletedBy?->name ?? 'Sistem' }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             @unlessrole('Waka Kesiswaan')
-                                                <button
-                                                    @click="$dispatch('edit-siswa', {
-                                                        id: '{{ $item->id }}',
-                                                        nis: '{{ $item->nis }}',
-                                                        nama_lengkap: '{{ addslashes($item->nama_lengkap) }}',
-                                                        jenis_kelamin: '{{ $item->jenis_kelamin }}',
-                                                        tanggal_lahir: '{{ $item->tanggal_lahir }}',
-                                                        alamat: '{{ addslashes($item->alamat) }}',
-                                                        updateUrl: '{{ route('master-data.siswa.update', $item->id) }}'
-                                                    })"
-                                                    class="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-xs font-semibold border border-gray-200">
-                                                    Edit
-                                                </button>
-
-                                                <form action="{{ route('master-data.siswa.destroy', $item->id) }}"
-                                                    method="POST" class="delete-form inline-block">
+                                                <form action="{{ route('master-data.siswa.restore', $item->id) }}" method="POST" class="inline-block">
                                                     @csrf
-                                                    @method('DELETE')
-                                                    <button type="button" onclick="confirmDelete(this)"
-                                                        class="inline-flex items-center px-3 py-1.5 bg-white text-red-600 rounded-lg hover:bg-red-50 hover:text-red-700 transition-colors text-xs font-semibold border border-red-200">
-                                                        Hapus
+                                                    @method('PATCH')
+                                                    <button type="button" onclick="confirmRestore(this, '{{ addslashes($item->nama_lengkap) }}')"
+                                                        class="inline-flex items-center px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors text-xs font-semibold border border-emerald-200 gap-1.5"
+                                                        title="Pulihkan Siswa">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                        </svg>
+                                                        Pulihkan
                                                     </button>
                                                 </form>
                                             @endunlessrole
-                                        </div>
-                                    </td>
-                                </tr>
+                                        </td>
+                                    </tr>
+                                @else
+                                    <tr class="bg-white hover:bg-gray-50/80 transition-colors duration-200">
+                                        <td class="px-6 py-4 whitespace-nowrap font-mono text-gray-900">{{ $item->nis }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-semibold text-gray-900">{{ $item->nama_lengkap }}</div>
+                                            @if (!$item->is_data_verified)
+                                                <span class="mt-1 inline-flex rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-700">Data Sementara</span>
+                                            @endif
+                                            <div class="text-xs text-gray-500">
+                                                {{ \Carbon\Carbon::parse($item->tanggal_lahir)->translatedFormat('d F Y') }}
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span
+                                                class="inline-flex items-center justify-center w-6 h-6 rounded text-xs font-bold {{ $item->jenis_kelamin == 'L' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700' }}">
+                                                {{ $item->jenis_kelamin }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            @if ($item->user)
+                                                <span
+                                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-100 ring-1 ring-green-600/20">
+                                                    Aktif
+                                                </span>
+                                            @else
+                                                <span
+                                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-50 text-gray-600 border border-gray-100 ring-1 ring-gray-600/20">
+                                                    Belum Ada
+                                                </span>
+                                            @endif
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            @if ($item->last_synced_at)
+                                                <span class="text-xs text-gray-500" title="{{ $item->last_synced_at->format('d M Y H:i') }}">
+                                                    {{ $item->last_synced_at->diffForHumans() }}
+                                                </span>
+                                            @else
+                                                <span class="text-xs text-gray-400">-</span>
+                                            @endif
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <div class="flex items-center justify-end gap-2">
+
+                                                @if ($item->user)
+                                                    <form
+                                                        action="{{ route('master-data.siswa.reset-password', $item->id) }}"
+                                                        method="POST" class="action-form">
+                                                        @csrf
+                                                        <button type="button"
+                                                            onclick="confirmAction(this, 'Reset password siswa ini menjadi default?', 'Ya, Reset!')"
+                                                            class="inline-flex items-center px-2 py-1 bg-amber-50 text-amber-600 rounded hover:bg-amber-100 border border-amber-200 text-xs transition-colors"
+                                                            title="Reset Password">
+                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor"
+                                                                viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2"
+                                                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                            </svg>
+                                                        </button>
+                                                    </form>
+                                                @else
+                                                    <form action="{{ route('master-data.siswa.generate-akun', $item->id) }}"
+                                                        method="POST" class="action-form">
+                                                        @csrf
+                                                        <button type="button"
+                                                            onclick="confirmAction(this, 'Buat akun login untuk siswa ini?', 'Ya, Buat!')"
+                                                            class="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 border border-blue-200 text-xs transition-colors"
+                                                            title="Generate Akun">
+                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor"
+                                                                viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2"
+                                                                    d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                                                            </svg>
+                                                        </button>
+                                                    </form>
+                                                @endif
+
+                                                <a href="{{ route('master-data.siswa.dapodik.show', $item->id) }}"
+                                                    class="inline-flex items-center px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors text-xs font-semibold border border-purple-200"
+                                                    title="Lihat Data Dapodik">
+                                                    <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                                    </svg>
+                                                    Dapodik
+                                                </a>
+
+                                                @unlessrole('Waka Kesiswaan')
+                                                    <button
+                                                        @click="$dispatch('edit-siswa', {
+                                                            id: '{{ $item->id }}',
+                                                            nis: '{{ $item->nis }}',
+                                                            nama_lengkap: '{{ addslashes($item->nama_lengkap) }}',
+                                                            jenis_kelamin: '{{ $item->jenis_kelamin }}',
+                                                            tanggal_lahir: '{{ $item->tanggal_lahir }}',
+                                                            alamat: '{{ addslashes($item->alamat) }}',
+                                                            updateUrl: '{{ route('master-data.siswa.update', $item->id) }}'
+                                                        })"
+                                                        class="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-xs font-semibold border border-gray-200">
+                                                        Edit
+                                                    </button>
+
+                                                    <form action="{{ route('master-data.siswa.destroy', $item->id) }}"
+                                                        method="POST" class="delete-form inline-block">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="button" onclick="confirmDelete(this, '{{ addslashes($item->nama_lengkap) }}', '{{ $item->nis }}')"
+                                                            class="inline-flex items-center px-3 py-1.5 bg-white text-red-600 rounded-lg hover:bg-red-50 hover:text-red-700 transition-colors text-xs font-semibold border border-red-200"
+                                                            title="Keluarkan / Hapus Siswa">
+                                                            Hapus
+                                                        </button>
+                                                    </form>
+                                                @endunlessrole
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endif
                             @empty
                                 <tr>
-                                    <td colspan="6" class="px-6 py-12 text-center text-gray-500 bg-gray-50/50">
+                                    <td colspan="{{ $tab === 'keluar' ? 7 : 6 }}" class="px-6 py-12 text-center text-gray-500 bg-gray-50/50">
                                         <div class="flex flex-col items-center justify-center">
                                             <svg class="w-12 h-12 text-gray-300 mb-3" fill="none"
                                                 stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                                             </svg>
-                                            <p class="text-base font-medium">Data siswa tidak ditemukan.</p>
+                                            <p class="text-base font-medium">Data siswa {{ $tab === 'keluar' ? 'dikeluarkan' : '' }} tidak ditemukan.</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -362,20 +455,93 @@
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
         <script>
-            // SweetAlert untuk Hapus Data (Destruktif Merah)
-            function confirmDelete(button) {
+            // SweetAlert untuk Hapus / Keluarkan Siswa (Soft Delete dengan Pilihan Alasan)
+            function confirmDelete(button, studentName, studentNis) {
                 Swal.fire({
-                    title: 'Apakah Anda yakin?',
-                    text: "Data siswa ini akan dihapus permanen!",
+                    title: 'Keluarkan / Hapus Siswa',
+                    html: `
+                        <div class="text-left text-sm space-y-3 pt-2">
+                            <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-xs">
+                                <p class="font-semibold">Perhatian:</p>
+                                <p>Siswa <strong>${studentName}</strong> (${studentNis}) akan dinonaktifkan dan dipindahkan ke daftar <strong>Siswa Dikeluarkan / Terhapus</strong> (Soft Delete). Riwayat data siswa tidak akan hilang permanen.</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">Alasan Pengeluaran / Penghapusan <span class="text-red-500">*</span></label>
+                                <select id="swal-deletion-reason" class="w-full text-sm rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500 p-2 border">
+                                    <option value="Pindah Sekolah">Pindah Sekolah</option>
+                                    <option value="Salah Data">Salah Data / Input Ganda</option>
+                                    <option value="Mengundurkan Diri">Mengundurkan Diri</option>
+                                    <option value="Dikeluarkan">Dikeluarkan (Pelanggaran / DO)</option>
+                                    <option value="Meninggal Dunia">Meninggal Dunia</option>
+                                    <option value="Lainnya">Lainnya</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">Catatan / Keterangan Tambahan (Opsional)</label>
+                                <textarea id="swal-deletion-notes" rows="2" class="w-full text-sm rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500 p-2 border" placeholder="Contoh: Pindah sekolah ke luar kota..."></textarea>
+                            </div>
+                        </div>
+                    `,
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#dc2626',
                     cancelButtonColor: '#6b7280',
-                    confirmButtonText: 'Ya, Hapus!',
+                    confirmButtonText: 'Keluarkan Siswa',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true,
+                    focusConfirm: false,
+                    preConfirm: () => {
+                        const reason = document.getElementById('swal-deletion-reason').value;
+                        const notes = document.getElementById('swal-deletion-notes').value;
+                        if (!reason) {
+                            Swal.showValidationMessage('Silakan pilih alasan pengeluaran!');
+                            return false;
+                        }
+                        return { reason, notes };
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const form = button.closest('form');
+
+                        // Hapus input tersembunyi sebelumnya jika ada
+                        const oldReason = form.querySelector('input[name="deletion_reason"]');
+                        if (oldReason) oldReason.remove();
+                        const oldNotes = form.querySelector('input[name="deletion_notes"]');
+                        if (oldNotes) oldNotes.remove();
+
+                        const inputReason = document.createElement('input');
+                        inputReason.type = 'hidden';
+                        inputReason.name = 'deletion_reason';
+                        inputReason.value = result.value.reason;
+                        form.appendChild(inputReason);
+
+                        const inputNotes = document.createElement('input');
+                        inputNotes.type = 'hidden';
+                        inputNotes.name = 'deletion_notes';
+                        inputNotes.value = result.value.notes;
+                        form.appendChild(inputNotes);
+
+                        button.disabled = true;
+                        form.submit();
+                    }
+                });
+            }
+
+            // SweetAlert untuk Pemulihan Siswa (Restore)
+            function confirmRestore(button, studentName) {
+                Swal.fire({
+                    title: 'Pulihkan Data Siswa?',
+                    text: `Data siswa ${studentName} akan dipulihkan kembali menjadi status Siswa Aktif.`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#059669', // Emerald-600
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: 'Ya, Pulihkan!',
                     cancelButtonText: 'Batal',
                     reverseButtons: true
                 }).then((result) => {
                     if (result.isConfirmed) {
+                        button.disabled = true;
                         button.closest('form').submit();
                     }
                 });

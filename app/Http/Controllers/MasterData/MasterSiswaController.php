@@ -17,7 +17,13 @@ class MasterSiswaController extends Controller
 {
     public function index(Request $request)
     {
-        $query = MasterSiswa::with('user')->active(); // Alumni dikelola pada halaman terpisah
+        $tab = $request->get('tab', 'aktif');
+
+        if ($tab === 'keluar') {
+            $query = MasterSiswa::onlyTrashed()->with(['user', 'deletedBy']);
+        } else {
+            $query = MasterSiswa::with('user')->active(); // Alumni dikelola pada halaman terpisah
+        }
 
         if ($request->filled('search')) {
             $search = trim((string) $request->search);
@@ -27,8 +33,11 @@ class MasterSiswaController extends Controller
             });
         }
 
-        $siswa = $query->latest()->paginate(10);
-        return view('pages.master-data.siswa.index', compact('siswa'));
+        $activeCount = MasterSiswa::active()->count();
+        $trashedCount = MasterSiswa::onlyTrashed()->count();
+
+        $siswa = $query->latest($tab === 'keluar' ? 'deleted_at' : 'id')->paginate(10);
+        return view('pages.master-data.siswa.index', compact('siswa', 'tab', 'activeCount', 'trashedCount'));
     }
 
     public function create()
@@ -91,19 +100,65 @@ class MasterSiswaController extends Controller
         }
     }
 
-    public function destroy(MasterSiswa $siswa)
+    public function destroy(Request $request, $siswa)
     {
         try {
-            // Hapus juga user akun jika ada
-            if ($siswa->user) {
-                $siswa->user->delete();
+            if (!$siswa instanceof MasterSiswa) {
+                $siswa = MasterSiswa::findOrFail($siswa);
+            } elseif (!$siswa->exists) {
+                $id = $request->route('siswa') ?? $request->route('id');
+                $siswa = MasterSiswa::findOrFail($id);
             }
-            $siswa->delete();
-            toast('Data siswa berhasil dihapus.', 'success');
-            return redirect()->route('master-data.siswa.index');
+
+            $reason = trim((string) $request->input('deletion_reason', 'Dikeluarkan'));
+            $notes = $request->input('deletion_notes') ? trim((string) $request->input('deletion_notes')) : null;
+
+            DB::transaction(function () use ($request, $siswa, $reason, $notes) {
+                // Hapus akun login jika ada agar tidak dapat login lagi
+                if ($siswa->user) {
+                    $siswa->user->delete();
+                }
+
+                $siswa->update([
+                    'status' => 'keluar',
+                    'deletion_reason' => $reason,
+                    'deletion_notes' => $notes,
+                    'deleted_by' => $request->user()?->id,
+                ]);
+
+                $siswa->delete(); // Soft delete via Eloquent trait
+            });
+
+            toast("Siswa {$siswa->nama_lengkap} berhasil dikeluarkan (soft delete).", 'success');
+            return redirect()->route('master-data.siswa.index', ['tab' => 'aktif']);
         } catch (\Exception $e) {
-            Log::error('Error deleting student: ' . $e->getMessage());
-            toast('Gagal menghapus data siswa.', 'error');
+            Log::error('Error soft-deleting student: ' . $e->getMessage());
+            toast('Gagal mengeluarkan siswa.', 'error');
+            return back();
+        }
+    }
+
+    public function restore($id)
+    {
+        try {
+            $siswa = MasterSiswa::onlyTrashed()->findOrFail($id);
+
+            DB::transaction(function () use ($siswa) {
+                $siswa->update([
+                    'status' => 'aktif',
+                    'deletion_reason' => null,
+                    'deletion_notes' => null,
+                    'deleted_by' => null,
+                ]);
+
+                $siswa->restore();
+            });
+
+            toast("Data siswa {$siswa->nama_lengkap} berhasil dipulihkan menjadi siswa aktif.", 'success');
+            return redirect()->route('master-data.siswa.index', ['tab' => 'keluar']);
+        } catch (\Exception $e) {
+            Log::error('Error restoring student: ' . $e->getMessage());
+            toast('Gagal memulihkan data siswa.', 'error');
             return back();
         }
     }
