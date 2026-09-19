@@ -472,6 +472,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('config', [\App\Http\Controllers\Operator\TranscriptConfigController::class, 'index'])->name('config.index');
             Route::put('config', [\App\Http\Controllers\Operator\TranscriptConfigController::class, 'update'])->name('config.update');
         });
+
+        // Kartu Pelajar
+        Route::prefix('kartu-pelajar')->name('kartu-pelajar.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Operator\KartuPelajarController::class, 'index'])->name('index');
+            Route::get('/preview/{siswa}', [\App\Http\Controllers\Operator\KartuPelajarController::class, 'preview'])->name('preview');
+            Route::get('/download-jpg/{siswa}', [\App\Http\Controllers\Operator\KartuPelajarController::class, 'downloadJpg'])->name('download-jpg');
+            Route::get('/cetak/{siswa}', [\App\Http\Controllers\Operator\KartuPelajarController::class, 'cetak'])->name('cetak');
+            Route::get('/cetak-kelas', [\App\Http\Controllers\Operator\KartuPelajarController::class, 'cetakKelas'])->name('cetak-kelas');
+            Route::get('/export-zip', [\App\Http\Controllers\Operator\KartuPelajarController::class, 'exportZip'])->name('export-zip');
+            Route::post('/upload-foto-masal', [\App\Http\Controllers\Operator\KartuPelajarController::class, 'uploadFotoMasal'])->name('upload-foto-masal');
+        });
     });
 
     // Grup Route untuk Kesiswaan

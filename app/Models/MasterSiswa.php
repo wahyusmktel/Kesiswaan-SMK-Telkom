@@ -20,6 +20,7 @@ class MasterSiswa extends Model
         'tanggal_lahir',
         'jenis_kelamin',
         'alamat',
+        'foto',
         'user_id',
         'last_synced_at',
         'status',
@@ -65,6 +66,19 @@ class MasterSiswa extends Model
     public function studentRegistration()
     {
         return $this->hasOne(StudentRegistration::class);
+    }
+
+    public function getFotoUrlAttribute(): ?string
+    {
+        if ($this->foto && \Illuminate\Support\Facades\Storage::disk('public')->exists($this->foto)) {
+            return \Illuminate\Support\Facades\Storage::url($this->foto);
+        }
+
+        if ($this->user?->avatar && \Illuminate\Support\Facades\Storage::disk('public')->exists($this->user->avatar)) {
+            return \Illuminate\Support\Facades\Storage::url($this->user->avatar);
+        }
+
+        return null;
     }
 
     public function scopeActive($query)
