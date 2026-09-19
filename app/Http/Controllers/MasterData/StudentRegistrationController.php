@@ -204,19 +204,33 @@ class StudentRegistrationController extends Controller
 
     public function searchDapodik(Request $request)
     {
-        $search = trim((string) $request->get('q'));
+        $search = trim((string) ($request->get('q') ?? $request->get('search') ?? $request->get('name') ?? $request->get('nama') ?? ''));
 
-        $records = DapodikSiswa::whereNull('master_siswa_id')
-            ->when($search, function ($query) use ($search) {
-                $query->where(function ($nested) use ($search) {
-                    $nested->where('nama', 'like', "%{$search}%")
-                        ->orWhere('nisn', 'like', "%{$search}%")
-                        ->orWhere('nipd', 'like', "%{$search}%");
-                });
-            })
-            ->orderBy('nama')
+        $query = DapodikSiswa::whereNull('master_siswa_id');
+
+        if ($search !== '') {
+            $cleanSearch = trim($search);
+            $lowerSearch = mb_strtolower($cleanSearch, 'UTF-8');
+
+            $query->where(function ($nested) use ($cleanSearch, $lowerSearch) {
+                $nested->where('nisn', 'like', "%{$cleanSearch}%")
+                    ->orWhere('nipd', 'like', "%{$cleanSearch}%")
+                    ->orWhereRaw('LOWER(nama) LIKE ?', ["%{$lowerSearch}%"]);
+
+                $words = array_filter(preg_split('/\s+/', $lowerSearch));
+                if (count($words) > 1) {
+                    $nested->orWhere(function ($wordQuery) use ($words) {
+                        foreach ($words as $word) {
+                            $wordQuery->whereRaw('LOWER(nama) LIKE ?', ["%{$word}%"]);
+                        }
+                    });
+                }
+            });
+        }
+
+        $records = $query->orderBy('nama')
             ->limit(25)
-            ->get(['id', 'nama', 'nipd', 'nisn', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin']);
+            ->get(['id', 'nama', 'nipd', 'nisn', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin', 'rombel_saat_ini']);
 
         return response()->json($records);
     }

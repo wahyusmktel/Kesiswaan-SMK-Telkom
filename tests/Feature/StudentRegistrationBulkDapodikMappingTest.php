@@ -227,4 +227,78 @@ class StudentRegistrationBulkDapodikMappingTest extends TestCase
         $this->assertEquals('Budi Santoso Resmi', $studentB->nama_lengkap);
         $this->assertEquals($studentB->id, $dapodik2->master_siswa_id);
     }
+
+    public function test_search_dapodik_supports_search_by_name_nisn_and_nipd(): void
+    {
+        $this->withoutMiddleware();
+        $user = User::factory()->create();
+
+        // Create Dapodik records (unmapped)
+        $dapodik1 = DapodikSiswa::create([
+            'nama' => 'MUHAMMAD RIZKY PRATAMA',
+            'nipd' => '2026101',
+            'nisn' => '0089123456',
+            'tempat_lahir' => 'Bandar Lampung',
+            'tanggal_lahir' => '2010-01-15',
+            'jenis_kelamin' => 'L',
+            'rombel_saat_ini' => 'X RPL 1',
+        ]);
+
+        $dapodik2 = DapodikSiswa::create([
+            'nama' => 'SITI AISYAH',
+            'nipd' => '2026102',
+            'nisn' => '0089654321',
+            'tempat_lahir' => 'Metro',
+            'tanggal_lahir' => '2010-03-20',
+            'jenis_kelamin' => 'P',
+            'rombel_saat_ini' => 'X TKJ 1',
+        ]);
+
+        // Already mapped Dapodik should not appear
+        $masterExisting = MasterSiswa::create([
+            'nama_lengkap' => 'Existing Student',
+            'nis' => '2026103',
+            'jenis_kelamin' => 'L',
+            'alamat' => 'Alamat',
+        ]);
+        DapodikSiswa::create([
+            'master_siswa_id' => $masterExisting->id,
+            'nama' => 'RIZKY ALREADY MAPPED',
+            'nipd' => '2026103',
+            'nisn' => '0089999999',
+            'tempat_lahir' => 'Bandar Lampung',
+            'tanggal_lahir' => '2010-01-01',
+            'jenis_kelamin' => 'L',
+        ]);
+
+        // 1. Search by exact lowercase name
+        $response = $this->actingAs($user)->getJson(route('master-data.student-registration.dapodik.search', ['q' => 'siti aisyah']));
+        $response->assertOk();
+        $response->assertJsonCount(1);
+        $response->assertJsonFragment(['nama' => 'SITI AISYAH', 'rombel_saat_ini' => 'X TKJ 1']);
+
+        // 2. Search by multi-word partial name with different case
+        $response = $this->actingAs($user)->getJson(route('master-data.student-registration.dapodik.search', ['q' => 'rizky pratama']));
+        $response->assertOk();
+        $response->assertJsonCount(1);
+        $response->assertJsonFragment(['nama' => 'MUHAMMAD RIZKY PRATAMA']);
+
+        // 3. Search by NISN
+        $response = $this->actingAs($user)->getJson(route('master-data.student-registration.dapodik.search', ['q' => '0089123456']));
+        $response->assertOk();
+        $response->assertJsonCount(1);
+        $response->assertJsonFragment(['nama' => 'MUHAMMAD RIZKY PRATAMA']);
+
+        // 4. Search by NIPD
+        $response = $this->actingAs($user)->getJson(route('master-data.student-registration.dapodik.search', ['q' => '2026102']));
+        $response->assertOk();
+        $response->assertJsonCount(1);
+        $response->assertJsonFragment(['nama' => 'SITI AISYAH']);
+
+        // 5. Search with name query param key
+        $response = $this->actingAs($user)->getJson(route('master-data.student-registration.dapodik.search', ['name' => 'MUHAMMAD']));
+        $response->assertOk();
+        $response->assertJsonCount(1);
+        $response->assertJsonFragment(['nama' => 'MUHAMMAD RIZKY PRATAMA']);
+    }
 }

@@ -231,16 +231,116 @@
     </div>
 
     <div x-data="dapodikMapping()" @open-dapodik-mapping.window="openModal($event.detail)" x-show="open" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
-        <div class="fixed inset-0 bg-gray-900/60" @click="open = false"></div>
-        <div class="flex min-h-full items-center justify-center p-4"><div class="relative w-full max-w-2xl rounded-lg bg-white shadow-xl">
-            <div class="border-b px-6 py-4"><h3 class="font-bold">Cocokkan dengan Data Dapodik</h3><p class="mt-1 text-sm text-gray-500"><span x-text="student.name"></span> · NISN <span x-text="student.nisn || '-'"></span> · Lahir <span x-text="student.birth"></span></p></div>
-            <form :action="student.url" method="POST">@csrf
-                <div class="p-6"><div class="flex gap-2"><input type="search" x-model="query" @keydown.enter.prevent="search()" class="min-w-0 flex-1 rounded-lg border-gray-300" placeholder="Cari nama, NIPD, atau NISN"><button type="button" @click="search()" class="rounded-lg bg-gray-900 px-4 text-sm font-bold text-white">Cari</button></div>
-                    <div class="mt-4 max-h-72 space-y-2 overflow-y-auto"><template x-if="loading"><p class="py-8 text-center text-sm text-gray-500">Mencari data...</p></template><template x-if="!loading && results.length === 0"><p class="py-8 text-center text-sm text-gray-500">Data Dapodik belum ditemukan.</p></template><template x-for="record in results" :key="record.id"><label class="flex cursor-pointer items-start gap-3 rounded-lg border p-3 hover:bg-blue-50" :class="selected == record.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'"><input type="radio" name="dapodik_siswa_id" :value="record.id" x-model="selected" required class="mt-1 text-blue-600"><span><span class="block font-bold text-gray-900" x-text="record.nama || '-'"></span><span class="block text-xs text-gray-500" x-text="`NIPD ${record.nipd || '-'} · NISN ${record.nisn || '-'} · ${record.tempat_lahir || '-'}, ${record.tanggal_lahir || '-'}`"></span></span></label></template></div>
+        <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" @click="open = false"></div>
+        <div class="flex min-h-full items-center justify-center p-4">
+            <div class="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl overflow-hidden" @click.stop>
+                <div class="border-b border-gray-200 bg-gray-50/70 px-6 py-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="font-bold text-gray-900 text-base">Cocokkan dengan Data Dapodik</h3>
+                            <p class="mt-1 text-xs text-gray-500">
+                                Calon Siswa: <strong class="text-gray-800" x-text="student.name"></strong> · 
+                                NISN: <span class="font-mono text-gray-700" x-text="student.nisn || '-'"></span> · 
+                                Lahir: <span class="text-gray-700" x-text="student.birth"></span>
+                            </p>
+                        </div>
+                        <button type="button" @click="open = false" class="rounded-full p-1.5 text-gray-400 hover:bg-gray-200 hover:text-gray-600 transition-colors">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
-                <div class="flex justify-end gap-2 border-t bg-gray-50 px-6 py-4"><button type="button" @click="open = false" class="rounded-lg border px-4 py-2 text-sm font-bold">Batal</button><button :disabled="!selected" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white disabled:bg-gray-300">Konfirmasi Pemetaan</button></div>
-            </form>
-        </div></div>
+
+                <form :action="student.url" method="POST">
+                    @csrf
+                    <div class="p-6">
+                        {{-- Search Input and Quick Actions --}}
+                        <div class="space-y-2">
+                            <div class="flex gap-2">
+                                <div class="relative flex-1">
+                                    <input type="search" x-model="query" @keydown.enter.prevent="search()" class="w-full rounded-lg border-gray-300 pl-9 pr-3 text-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Cari berdasarkan nama, NISN, atau NIPD...">
+                                    <svg class="h-4 w-4 text-gray-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                                    </svg>
+                                </div>
+                                <button type="button" @click="search()" class="rounded-lg bg-blue-600 px-5 text-sm font-bold text-white hover:bg-blue-500 transition-colors">Cari</button>
+                            </div>
+
+                            {{-- Quick Chips: Cari Nama & Cari NISN --}}
+                            <div class="flex flex-wrap items-center gap-1.5 pt-1 text-xs">
+                                <span class="text-gray-400 font-medium">Cari cepat:</span>
+                                <template x-if="student.name">
+                                    <button type="button" @click="searchBy(student.name)"
+                                        class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 font-medium transition-all"
+                                        :class="query.trim().toLowerCase() === (student.name || '').trim().toLowerCase() ? 'bg-blue-600 text-white font-bold shadow-sm' : 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200'">
+                                        <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                                        <span>Nama: <strong x-text="student.name"></strong></span>
+                                    </button>
+                                </template>
+                                <template x-if="student.nisn">
+                                    <button type="button" @click="searchBy(student.nisn)"
+                                        class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 font-medium transition-all"
+                                        :class="query.trim() === (student.nisn || '').trim() ? 'bg-emerald-600 text-white font-bold shadow-sm' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'">
+                                        <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" /></svg>
+                                        <span>NISN: <span class="font-mono font-bold" x-text="student.nisn"></span></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+
+                        {{-- Search Results List --}}
+                        <div class="mt-4 max-h-72 space-y-2 overflow-y-auto pr-1">
+                            <template x-if="loading">
+                                <div class="py-8 text-center text-sm text-gray-500">
+                                    <div class="inline-block h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent mb-2"></div>
+                                    <p>Mencari data Dapodik...</p>
+                                </div>
+                            </template>
+
+                            <template x-if="!loading && results.length === 0">
+                                <div class="rounded-xl border border-dashed border-gray-200 py-8 px-4 text-center">
+                                    <p class="text-sm font-semibold text-gray-600">Data Dapodik tidak ditemukan</p>
+                                    <p class="text-xs text-gray-400 mt-1">Tidak ada catatan yang cocok dengan "<span class="font-semibold" x-text="query"></span>".</p>
+                                    <template x-if="query !== student.name && student.name">
+                                        <button type="button" @click="searchBy(student.name)" class="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:underline">
+                                            <span>Coba cari menggunakan nama calon siswa ("<span x-text="student.name"></span>")</span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </template>
+
+                            <template x-for="record in results" :key="record.id">
+                                <label class="flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-all hover:bg-blue-50/60"
+                                    :class="selected == record.id ? 'border-blue-500 bg-blue-50 shadow-sm ring-1 ring-blue-500' : 'border-gray-200 bg-white'">
+                                    <input type="radio" name="dapodik_siswa_id" :value="record.id" x-model="selected" required class="mt-1 text-blue-600 focus:ring-blue-500">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center justify-between gap-2">
+                                            <span class="font-bold text-sm text-gray-900 truncate" x-text="record.nama || '-'"></span>
+                                            <template x-if="record.rombel_saat_ini">
+                                                <span class="rounded bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 border border-indigo-100 flex-shrink-0" x-text="record.rombel_saat_ini"></span>
+                                            </template>
+                                        </div>
+                                        <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-gray-500">
+                                            <span>NIPD: <strong class="text-gray-700" x-text="record.nipd || '-'"></strong></span>
+                                            <span>•</span>
+                                            <span>NISN: <strong class="text-gray-700 font-mono" x-text="record.nisn || '-'"></strong></span>
+                                            <span>•</span>
+                                            <span x-text="`${record.tempat_lahir || '-'}, ${formatDate(record.tanggal_lahir)}`"></span>
+                                        </div>
+                                    </div>
+                                </label>
+                            </template>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-2 border-t border-gray-200 bg-gray-50/70 px-6 py-4">
+                        <button type="button" @click="open = false" class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-100 transition-colors">Batal</button>
+                        <button type="submit" :disabled="!selected" class="rounded-lg bg-blue-600 px-5 py-2 text-sm font-bold text-white hover:bg-blue-500 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors">Konfirmasi Pemetaan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
     {{-- MODAL PENCOCOKAN DAPODIK MASSAL (PREVIEW & PETAKAN) --}}
@@ -854,7 +954,72 @@
         }
         function confirmApprove(button) { Swal.fire({title:'Setujui pendaftaran?',text:'Data siswa sementara akan dibuat.',icon:'question',showCancelButton:true,confirmButtonText:'Ya, setujui'}).then(r => { if(r.isConfirmed) button.closest('form').submit(); }); }
         function confirmReject(button) { Swal.fire({title:'Alasan penolakan',input:'textarea',inputPlaceholder:'Tuliskan data yang perlu diperbaiki',showCancelButton:true,confirmButtonColor:'#dc2626',confirmButtonText:'Tolak pendaftaran',preConfirm:value => { if(!value) Swal.showValidationMessage('Alasan wajib diisi'); return value; }}).then(r => { if(r.isConfirmed){ const form=button.closest('form'); form.querySelector('[name=notes]').value=r.value; form.submit(); }}); }
-        function dapodikMapping() { return { open:false, student:{}, query:'', results:[], selected:null, loading:false, openModal(data){ this.student=data; this.query=data.nisn || data.name; this.selected=null; this.open=true; this.search(); }, async search(){ this.loading=true; try { const url = @js(route('master-data.student-registration.dapodik.search')); const response=await fetch(`${url}?q=${encodeURIComponent(this.query)}`, {headers:{'Accept':'application/json'}}); this.results=await response.json(); } finally { this.loading=false; } } }; }
+        function dapodikMapping() {
+            return {
+                open: false,
+                student: {},
+                query: '',
+                results: [],
+                selected: null,
+                loading: false,
+                searchBy(val) {
+                    if (!val) return;
+                    this.query = val;
+                    this.selected = null;
+                    this.search();
+                },
+                formatDate(val) {
+                    if (!val) return '-';
+                    const clean = String(val).split('T')[0];
+                    const parts = clean.split('-');
+                    if (parts.length === 3) {
+                        return `${parts[2]}-${parts[1]}-${parts[0]}`;
+                    }
+                    return clean;
+                },
+                async openModal(data) {
+                    this.student = data || {};
+                    this.selected = null;
+                    this.results = [];
+                    this.open = true;
+
+                    if (this.student.nisn) {
+                        this.query = this.student.nisn;
+                        await this.search();
+                        // If no matches found by NISN, automatically fallback to searching by student name
+                        if (this.results.length === 0 && this.student.name) {
+                            this.query = this.student.name;
+                            await this.search();
+                        }
+                    } else if (this.student.name) {
+                        this.query = this.student.name;
+                        await this.search();
+                    } else {
+                        this.query = '';
+                    }
+                },
+                async search() {
+                    const q = (this.query || '').trim();
+                    this.loading = true;
+                    try {
+                        const url = @js(route('master-data.student-registration.dapodik.search'));
+                        const response = await fetch(`${url}?q=${encodeURIComponent(q)}`, {
+                            headers: { 'Accept': 'application/json' }
+                        });
+                        if (response.ok) {
+                            this.results = await response.json();
+                        } else {
+                            this.results = [];
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        this.results = [];
+                    } finally {
+                        this.loading = false;
+                    }
+                }
+            };
+        }
 
         function bulkDapodikMapping() {
             return {
