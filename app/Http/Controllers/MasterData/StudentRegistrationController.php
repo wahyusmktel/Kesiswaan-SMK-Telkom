@@ -202,6 +202,79 @@ class StudentRegistrationController extends Controller
         return back()->with('success', 'Pendaftaran ditolak dan alasan telah dicatat.');
     }
 
+    public function destroy(StudentRegistration $registration)
+    {
+        if (! $registration->exists) {
+            $id = request()->route('registration');
+            $registration = StudentRegistration::findOrFail(is_object($id) ? $id->id : $id);
+        }
+
+        $name = $registration->nama_lengkap;
+
+        DB::transaction(function () use ($registration) {
+            if ($registration->dapodik_siswa_id) {
+                DapodikSiswa::where('id', $registration->dapodik_siswa_id)
+                    ->update(['master_siswa_id' => null]);
+            }
+
+            if ($registration->master_siswa_id) {
+                $student = MasterSiswa::find($registration->master_siswa_id);
+                if ($student) {
+                    DapodikSiswa::where('master_siswa_id', $student->id)
+                        ->update(['master_siswa_id' => null]);
+
+                    if ($student->user) {
+                        $student->user->delete();
+                    }
+                    $student->delete();
+                }
+            }
+
+            $registration->delete();
+        });
+
+        return back()->with('success', "Data calon siswa {$name} dan siswa sementara berhasil dihapus.");
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        $validated = $request->validate([
+            'registration_ids' => 'required|array',
+            'registration_ids.*' => 'required|integer|exists:student_registrations,id',
+        ]);
+
+        $ids = $validated['registration_ids'];
+        $count = count($ids);
+
+        DB::transaction(function () use ($ids) {
+            $registrations = StudentRegistration::whereIn('id', $ids)->get();
+
+            foreach ($registrations as $registration) {
+                if ($registration->dapodik_siswa_id) {
+                    DapodikSiswa::where('id', $registration->dapodik_siswa_id)
+                        ->update(['master_siswa_id' => null]);
+                }
+
+                if ($registration->master_siswa_id) {
+                    $student = MasterSiswa::find($registration->master_siswa_id);
+                    if ($student) {
+                        DapodikSiswa::where('master_siswa_id', $student->id)
+                            ->update(['master_siswa_id' => null]);
+
+                        if ($student->user) {
+                            $student->user->delete();
+                        }
+                        $student->delete();
+                    }
+                }
+
+                $registration->delete();
+            }
+        });
+
+        return back()->with('success', "{$count} data calon siswa dan siswa sementara berhasil dihapus.");
+    }
+
     public function searchDapodik(Request $request)
     {
         $search = trim((string) ($request->get('q') ?? $request->get('search') ?? $request->get('name') ?? $request->get('nama') ?? ''));
@@ -520,7 +593,15 @@ class StudentRegistrationController extends Controller
 
     public function biodata(StudentRegistration $registration)
     {
-        return response()->json($registration);
+        $registration->load('masterSiswa', 'dapodikSiswa');
+        $data = $registration->toArray();
+        $data['approve_url'] = route('master-data.student-registration.approve', $registration);
+        $data['reject_url'] = route('master-data.student-registration.reject', $registration);
+        $data['map_url'] = route('master-data.student-registration.map', $registration);
+        $data['delete_url'] = route('master-data.student-registration.destroy', $registration);
+        $data['tanggal_lahir_formatted'] = $registration->tanggal_lahir?->format('d-m-Y');
+
+        return response()->json($data);
     }
 
     private function approveRegistration(StudentRegistration $registration, int $reviewerId): void

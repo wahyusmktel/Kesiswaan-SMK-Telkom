@@ -72,6 +72,13 @@
                                     </svg>
                                     <span>Cocokkan Dapodik Massal<template x-if="selected.length > 0"> (<span x-text="selected.length"></span>)</template></span>
                                 </button>
+                                <button type="button" @click="confirmBulkDelete()" :disabled="selected.length === 0"
+                                    class="inline-flex items-center justify-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                    </svg>
+                                    <span>Hapus Terpilih<template x-if="selected.length > 0"> (<span x-text="selected.length"></span>)</template></span>
+                                </button>
                             @endif
                             <form method="GET" class="flex gap-2">
                                 <input type="hidden" name="status" value="{{ $status }}">
@@ -122,6 +129,11 @@
                                                 <form method="POST" action="{{ route('master-data.student-registration.reject', $item) }}" class="reject-form">@csrf @method('PATCH')<input type="hidden" name="notes"><button type="button" onclick="confirmReject(this)" class="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50">Tolak</button></form>
                                             @elseif ($item->status === 'approved')
                                                 <button type="button" @click="$dispatch('open-dapodik-mapping', {{ Illuminate\Support\Js::from(['id' => $item->id, 'name' => $item->nama_lengkap, 'nisn' => $item->nisn, 'birth' => $item->tanggal_lahir->format('d-m-Y'), 'url' => route('master-data.student-registration.map', $item)]) }})" class="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-blue-500">Cocokkan Dapodik</button>
+                                                <form method="POST" action="{{ route('master-data.student-registration.destroy', $item) }}" class="inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="button" onclick="confirmDelete(this, '{{ addslashes($item->nama_lengkap) }}')" class="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 hover:border-red-300 transition-colors">Hapus</button>
+                                                </form>
                                             @elseif ($item->status === 'mapped')
                                                 <span class="inline-flex items-center gap-1 text-xs font-bold text-green-700"><span class="h-2 w-2 rounded-full bg-green-500"></span>{{ $item->dapodikSiswa?->nipd }}</span>
                                             @else
@@ -786,6 +798,19 @@
                                     </form>
                                 </div>
                             </template>
+                            <template x-if="student.data && student.data.status === 'approved'">
+                                <div class="flex gap-3">
+                                    <form :action="student.data.delete_url" method="POST" class="delete-form inline">
+                                        @csrf @method('DELETE')
+                                        <button type="button" @click="confirmDeleteFromModal($el, student.name)" class="rounded-lg border border-red-300 bg-white px-6 py-3 text-sm font-bold text-red-700 hover:bg-red-50">
+                                            Hapus Siswa Sementara
+                                        </button>
+                                    </form>
+                                    <button type="button" @click="open = false; $dispatch('open-dapodik-mapping', { id: student.id, name: student.name, nisn: student.data.nisn, birth: student.data.tanggal_lahir_formatted || student.data.tanggal_lahir, url: student.data.map_url })" class="rounded-lg bg-blue-600 px-6 py-3 text-sm font-bold text-white hover:bg-blue-700">
+                                        Cocokkan Dapodik
+                                    </button>
+                                </div>
+                            </template>
                         </div>
                     </div>
                 </div>
@@ -831,6 +856,48 @@
                         this.$root.querySelectorAll('input[name^="statements["]').forEach(input => {
                             input.checked = false;
                         });
+                    });
+                },
+                confirmBulkDelete() {
+                    if (this.selected.length === 0) return;
+                    const count = this.selected.length;
+                    Swal.fire({
+                        title: `Hapus ${count} calon siswa terpilih?`,
+                        text: 'Semua data pendaftaran dan data siswa sementara yang dipilih akan dihapus permanen.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#dc2626',
+                        confirmButtonText: 'Ya, hapus semua',
+                        cancelButtonText: 'Batal'
+                    }).then(r => {
+                        if (r.isConfirmed) {
+                            const form = document.createElement('form');
+                            form.method = 'POST';
+                            form.action = @js(route('master-data.student-registration.bulk-destroy'));
+
+                            const csrf = document.createElement('input');
+                            csrf.type = 'hidden';
+                            csrf.name = '_token';
+                            csrf.value = '{{ csrf_token() }}';
+                            form.appendChild(csrf);
+
+                            const method = document.createElement('input');
+                            method.type = 'hidden';
+                            method.name = '_method';
+                            method.value = 'DELETE';
+                            form.appendChild(method);
+
+                            this.selected.forEach(id => {
+                                const input = document.createElement('input');
+                                input.type = 'hidden';
+                                input.name = 'registration_ids[]';
+                                input.value = id;
+                                form.appendChild(input);
+                            });
+
+                            document.body.appendChild(form);
+                            form.submit();
+                        }
                     });
                 },
             };
@@ -954,6 +1021,22 @@
         }
         function confirmApprove(button) { Swal.fire({title:'Setujui pendaftaran?',text:'Data siswa sementara akan dibuat.',icon:'question',showCancelButton:true,confirmButtonText:'Ya, setujui'}).then(r => { if(r.isConfirmed) button.closest('form').submit(); }); }
         function confirmReject(button) { Swal.fire({title:'Alasan penolakan',input:'textarea',inputPlaceholder:'Tuliskan data yang perlu diperbaiki',showCancelButton:true,confirmButtonColor:'#dc2626',confirmButtonText:'Tolak pendaftaran',preConfirm:value => { if(!value) Swal.showValidationMessage('Alasan wajib diisi'); return value; }}).then(r => { if(r.isConfirmed){ const form=button.closest('form'); form.querySelector('[name=notes]').value=r.value; form.submit(); }}); }
+        function confirmDelete(button, name) {
+            Swal.fire({
+                title: 'Hapus calon siswa?',
+                text: `Data pendaftaran ${name} dan data siswa sementara akan dihapus permanen.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                confirmButtonText: 'Ya, hapus',
+                cancelButtonText: 'Batal'
+            }).then(r => {
+                if (r.isConfirmed) button.closest('form').submit();
+            });
+        }
+        function confirmDeleteFromModal(button, name) {
+            confirmDelete(button, name);
+        }
         function dapodikMapping() {
             return {
                 open: false,

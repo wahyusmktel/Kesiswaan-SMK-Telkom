@@ -301,4 +301,92 @@ class StudentRegistrationBulkDapodikMappingTest extends TestCase
         $response->assertJsonCount(1);
         $response->assertJsonFragment(['nama' => 'MUHAMMAD RIZKY PRATAMA']);
     }
+
+    public function test_destroy_deletes_registration_and_temporary_master_siswa(): void
+    {
+        $this->withoutMiddleware();
+        $user = User::factory()->create();
+
+        $student = MasterSiswa::create([
+            'nama_lengkap' => 'Duplikat Siswa',
+            'nis' => 'TMP-123456',
+            'jenis_kelamin' => 'L',
+            'tempat_lahir' => 'Bandar Lampung',
+            'tanggal_lahir' => '2010-02-20',
+            'alamat' => 'Jl. Urip No. 10',
+            'status' => 'aktif',
+            'data_source' => 'registrasi',
+            'is_data_verified' => false,
+        ]);
+
+        $reg = StudentRegistration::create([
+            'status' => 'approved',
+            'nama_lengkap' => 'Duplikat Siswa',
+            'nisn' => '0091234567',
+            'jenis_kelamin' => 'L',
+            'tempat_lahir' => 'Bandar Lampung',
+            'tanggal_lahir' => '2010-02-20',
+            'nomor_hp' => '081234567890',
+            'alamat' => 'Jl. Urip No. 10',
+            'master_siswa_id' => $student->id,
+        ]);
+
+        $response = $this->actingAs($user)->delete(route('master-data.student-registration.destroy', $reg));
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('student_registrations', ['id' => $reg->id]);
+        $this->assertDatabaseMissing('master_siswa', ['id' => $student->id]);
+    }
+
+    public function test_bulk_destroy_deletes_multiple_registrations_and_temporary_master_siswa(): void
+    {
+        $this->withoutMiddleware();
+        $user = User::factory()->create();
+
+        $student1 = MasterSiswa::create([
+            'nama_lengkap' => 'Siswa Gagal 1',
+            'nis' => 'TMP-101',
+            'jenis_kelamin' => 'L',
+            'alamat' => 'Alamat 1',
+        ]);
+        $reg1 = StudentRegistration::create([
+            'status' => 'approved',
+            'nama_lengkap' => 'Siswa Gagal 1',
+            'nisn' => '009101',
+            'jenis_kelamin' => 'L',
+            'tanggal_lahir' => '2010-01-01',
+            'nomor_hp' => '081200000001',
+            'alamat' => 'Alamat 1',
+            'master_siswa_id' => $student1->id,
+        ]);
+
+        $student2 = MasterSiswa::create([
+            'nama_lengkap' => 'Siswa Gagal 2',
+            'nis' => 'TMP-102',
+            'jenis_kelamin' => 'P',
+            'alamat' => 'Alamat 2',
+        ]);
+        $reg2 = StudentRegistration::create([
+            'status' => 'approved',
+            'nama_lengkap' => 'Siswa Gagal 2',
+            'nisn' => '009102',
+            'jenis_kelamin' => 'P',
+            'tanggal_lahir' => '2010-02-02',
+            'nomor_hp' => '081200000002',
+            'alamat' => 'Alamat 2',
+            'master_siswa_id' => $student2->id,
+        ]);
+
+        $response = $this->actingAs($user)->delete(route('master-data.student-registration.bulk-destroy'), [
+            'registration_ids' => [$reg1->id, $reg2->id],
+        ]);
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('student_registrations', ['id' => $reg1->id]);
+        $this->assertDatabaseMissing('student_registrations', ['id' => $reg2->id]);
+        $this->assertDatabaseMissing('master_siswa', ['id' => $student1->id]);
+        $this->assertDatabaseMissing('master_siswa', ['id' => $student2->id]);
+    }
 }

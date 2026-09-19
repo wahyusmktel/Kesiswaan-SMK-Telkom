@@ -418,6 +418,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('registrasi-siswa-baru/dapodik/search', [StudentRegistrationController::class, 'searchDapodik'])->name('student-registration.dapodik.search');
             Route::get('registrasi-siswa-baru/dapodik/bulk-match-preview', [StudentRegistrationController::class, 'bulkMatchPreview'])->name('student-registration.dapodik.bulk-match-preview');
             Route::post('registrasi-siswa-baru/dapodik/bulk-map', [StudentRegistrationController::class, 'bulkMap'])->name('student-registration.dapodik.bulk-map');
+            Route::delete('registrasi-siswa-baru/bulk-destroy', [StudentRegistrationController::class, 'bulkDestroy'])->name('student-registration.bulk-destroy');
+            Route::delete('registrasi-siswa-baru/{registration}', [StudentRegistrationController::class, 'destroy'])->name('student-registration.destroy');
             Route::post('registrasi-siswa-baru/{registration}/map', [StudentRegistrationController::class, 'map'])->name('student-registration.map');
             Route::get('registrasi-siswa-baru/{registration}/biodata', [StudentRegistrationController::class, 'biodata'])->name('student-registration.biodata');
         });
