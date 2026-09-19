@@ -8,7 +8,11 @@
                 <p class="text-sm text-gray-500 mt-1">{{ $siswa->nama_lengkap }} - {{ $siswa->nis }}</p>
             </div>
             <div class="flex gap-2">
-                @unlessrole('Waka Kesiswaan')
+                @php
+                    $activeRole = session('active_role') ?: (auth()->user()?->getRoleNames()->first() ?? '');
+                    $canManageSiswa = ($activeRole !== 'Waka Kesiswaan');
+                @endphp
+                @if ($canManageSiswa)
                 <a href="{{ route('master-data.siswa.dapodik.edit', $siswa) }}"
                     class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 transition">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -17,7 +21,7 @@
                     </svg>
                     Edit Data
                 </a>
-                @endunlessrole
+                @endif
                 <a href="{{ route('master-data.siswa.index') }}"
                     class="inline-flex items-center px-4 py-2 bg-gray-500 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-600 transition">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

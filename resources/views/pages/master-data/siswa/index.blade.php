@@ -3,6 +3,11 @@
         <h2 class="font-bold text-xl text-gray-800 leading-tight">Master Data Siswa</h2>
     </x-slot>
 
+    @php
+        $activeRole = session('active_role') ?: (auth()->user()?->getRoleNames()->first() ?? '');
+        $canManageSiswa = ($activeRole !== 'Waka Kesiswaan');
+    @endphp
+
     <div class="py-6 w-full">
         <div class="w-full px-4 sm:px-6 lg:px-8">
 
@@ -46,7 +51,7 @@
 
                     <div class="flex items-center gap-2">
                         @if ($tab !== 'keluar')
-                            @unlessrole('Waka Kesiswaan')
+                            @if ($canManageSiswa)
                                 <button @click="$dispatch('open-import-modal')"
                                     class="inline-flex items-center px-4 py-2 bg-emerald-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-emerald-500 focus:outline-none shadow-sm transition ease-in-out duration-150 gap-2">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,7 +60,7 @@
                                     </svg>
                                     Import Excel
                                 </button>
-                            @endunlessrole
+                            @endif
 
                             <form action="{{ route('master-data.siswa.generate-akun-masal') }}" method="POST"
                                 class="action-form">
@@ -71,7 +76,7 @@
                                 </button>
                             </form>
 
-                            @unlessrole('Waka Kesiswaan')
+                            @if ($canManageSiswa)
                                 <button @click="$dispatch('open-siswa-modal')"
                                     class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-500 focus:outline-none shadow-sm transition ease-in-out duration-150 gap-2">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -80,7 +85,7 @@
                                     </svg>
                                     Tambah Siswa
                                 </button>
-                            @endunlessrole
+                            @endif
                         @endif
                     </div>
                 </div>
@@ -151,7 +156,7 @@
                                             {{ $item->deletedBy?->name ?? 'Sistem' }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            @unlessrole('Waka Kesiswaan')
+                                            @if ($canManageSiswa)
                                                 <form action="{{ route('master-data.siswa.restore', $item->id) }}" method="POST" class="inline-block">
                                                     @csrf
                                                     @method('PATCH')
@@ -164,7 +169,7 @@
                                                         Pulihkan
                                                     </button>
                                                 </form>
-                                            @endunlessrole
+                                            @endif
                                         </td>
                                     </tr>
                                 @else
@@ -256,7 +261,7 @@
                                                     Dapodik
                                                 </a>
 
-                                                @unlessrole('Waka Kesiswaan')
+                                                @if ($canManageSiswa)
                                                     <button
                                                         @click="$dispatch('edit-siswa', {
                                                             id: '{{ $item->id }}',
@@ -281,7 +286,7 @@
                                                             Hapus
                                                         </button>
                                                     </form>
-                                                @endunlessrole
+                                                @endif
                                             </div>
                                         </td>
                                     </tr>
