@@ -416,6 +416,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::patch('registrasi-siswa-baru/{registration}/approve', [StudentRegistrationController::class, 'approve'])->name('student-registration.approve');
             Route::patch('registrasi-siswa-baru/{registration}/reject', [StudentRegistrationController::class, 'reject'])->name('student-registration.reject');
             Route::get('registrasi-siswa-baru/dapodik/search', [StudentRegistrationController::class, 'searchDapodik'])->name('student-registration.dapodik.search');
+            Route::get('registrasi-siswa-baru/dapodik/bulk-match-preview', [StudentRegistrationController::class, 'bulkMatchPreview'])->name('student-registration.dapodik.bulk-match-preview');
+            Route::post('registrasi-siswa-baru/dapodik/bulk-map', [StudentRegistrationController::class, 'bulkMap'])->name('student-registration.dapodik.bulk-map');
             Route::post('registrasi-siswa-baru/{registration}/map', [StudentRegistrationController::class, 'map'])->name('student-registration.map');
             Route::get('registrasi-siswa-baru/{registration}/biodata', [StudentRegistrationController::class, 'biodata'])->name('student-registration.biodata');
         });

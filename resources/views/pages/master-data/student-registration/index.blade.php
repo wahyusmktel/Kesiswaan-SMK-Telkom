@@ -64,6 +64,15 @@
                                     <span>Setujui Massal (<span x-text="selected.length">0</span>)</span>
                                 </button>
                             @endif
+                            @if ($status === 'approved')
+                                <button type="button" @click="$dispatch('open-bulk-dapodik-mapping', { ids: selected })"
+                                    class="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700 shadow-sm transition-all">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                                    </svg>
+                                    <span>Cocokkan Dapodik Massal<template x-if="selected.length > 0"> (<span x-text="selected.length"></span>)</template></span>
+                                </button>
+                            @endif
                             <form method="GET" class="flex gap-2">
                                 <input type="hidden" name="status" value="{{ $status }}">
                                 <input type="search" name="search" value="{{ request('search') }}" placeholder="Cari nama, NISN, nomor registrasi" class="w-72 rounded-lg border-gray-300 text-sm focus:border-red-500 focus:ring-red-500">
@@ -77,10 +86,10 @@
                     <table class="w-full text-left text-sm">
                         <thead class="border-b border-gray-200 bg-gray-50 text-xs uppercase text-gray-600">
                             <tr>
-                                @if ($status === 'pending')
+                                @if (in_array($status, ['pending', 'approved']))
                                     <th class="w-12 px-4 py-4 text-center">
                                         <input type="checkbox" :checked="allSelected" @change="toggleAll($event.target.checked)"
-                                            class="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                                            class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                             aria-label="Pilih semua data pada halaman ini">
                                     </th>
                                 @endif
@@ -94,10 +103,10 @@
                         <tbody class="divide-y divide-gray-100">
                             @forelse ($registrations as $item)
                                 <tr class="align-top hover:bg-gray-50">
-                                    @if ($status === 'pending')
+                                    @if (in_array($status, ['pending', 'approved']))
                                         <td class="px-4 py-4 text-center">
                                             <input type="checkbox" value="{{ $item->id }}" x-model="selected"
-                                                class="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                                                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                                 aria-label="Pilih {{ $item->nama_lengkap }}">
                                         </td>
                                     @endif
@@ -122,7 +131,7 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="{{ $status === 'pending' ? 6 : 5 }}" class="px-6 py-14 text-center text-gray-500">Tidak ada data pada status ini.</td></tr>
+                                <tr><td colspan="{{ in_array($status, ['pending', 'approved']) ? 6 : 5 }}" class="px-6 py-14 text-center text-gray-500">Tidak ada data pada status ini.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -232,6 +241,241 @@
                 <div class="flex justify-end gap-2 border-t bg-gray-50 px-6 py-4"><button type="button" @click="open = false" class="rounded-lg border px-4 py-2 text-sm font-bold">Batal</button><button :disabled="!selected" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white disabled:bg-gray-300">Konfirmasi Pemetaan</button></div>
             </form>
         </div></div>
+    </div>
+
+    {{-- MODAL PENCOCOKAN DAPODIK MASSAL (PREVIEW & PETAKAN) --}}
+    <div x-data="bulkDapodikMapping()" @open-bulk-dapodik-mapping.window="openModal($event.detail)" x-show="open" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
+        <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" @click="if(!submitting) open = false"></div>
+        <div class="flex min-h-full items-center justify-center p-4">
+            <div class="relative w-full max-w-5xl rounded-2xl bg-white shadow-2xl flex flex-col max-h-[90vh]" @click.stop>
+                
+                {{-- Header Modal --}}
+                <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4 rounded-t-2xl bg-white">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900">Pencocokan Massal Dapodik</h3>
+                            <p class="text-xs text-gray-500">Pratinjau deteksi otomatis calon siswa dengan data Dapodik sebelum dipetakan.</p>
+                        </div>
+                    </div>
+                    <button type="button" @click="open = false" :disabled="submitting" class="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                {{-- Loading State --}}
+                <template x-if="loading">
+                    <div class="flex flex-col items-center justify-center py-20 px-6">
+                        <div class="h-12 w-12 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600 mb-4"></div>
+                        <h4 class="text-base font-bold text-gray-800">Sedang Mencocokkan Data...</h4>
+                        <p class="text-sm text-gray-500 mt-1 text-center max-w-md">Sistem sedang membandingkan NISN, nama lengkap, dan tanggal lahir calon siswa dengan data Dapodik yang belum dipetakan.</p>
+                    </div>
+                </template>
+
+                {{-- Content Body --}}
+                <template x-if="!loading">
+                    <div class="flex flex-col flex-1 overflow-hidden">
+                        
+                        {{-- Stats Bar & Tabs --}}
+                        <div class="border-b border-gray-100 bg-gray-50/70 px-6 py-3">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                
+                                {{-- Tabs --}}
+                                <div class="flex gap-2">
+                                    <button type="button" @click="activeTab = 'matched'"
+                                        class="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-bold transition-all"
+                                        :class="activeTab === 'matched' ? 'bg-white text-blue-700 shadow-sm border border-blue-200' : 'text-gray-600 hover:text-gray-900'">
+                                        <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                                        <span>Cocok Otomatis</span>
+                                        <span class="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] text-blue-800" x-text="previewData.total_matched || 0"></span>
+                                    </button>
+                                    <button type="button" @click="activeTab = 'unmatched'"
+                                        class="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-bold transition-all"
+                                        :class="activeTab === 'unmatched' ? 'bg-white text-amber-700 shadow-sm border border-amber-200' : 'text-gray-600 hover:text-gray-900'">
+                                        <span class="h-2 w-2 rounded-full bg-amber-400"></span>
+                                        <span>Belum Ditemukan</span>
+                                        <span class="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] text-amber-800" x-text="previewData.total_unmatched || 0"></span>
+                                    </button>
+                                </div>
+
+                                {{-- Search & Stats Summary --}}
+                                <div class="flex items-center gap-3">
+                                    <div class="relative w-64">
+                                        <input type="search" x-model="searchQuery" placeholder="Filter nama / NISN / NIPD..."
+                                            class="w-full rounded-lg border-gray-300 py-1.5 pl-8 pr-3 text-xs focus:border-blue-500 focus:ring-blue-500">
+                                        <svg class="h-4 w-4 text-gray-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                                        </svg>
+                                    </div>
+                                    <span class="hidden md:inline-block text-xs text-gray-400">|</span>
+                                    <span class="hidden md:inline-block text-xs text-gray-500">Dapodik siap: <strong class="text-gray-700" x-text="previewData.available_dapodik_count || 0"></strong></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Table Area (Scrollable) --}}
+                        <div class="flex-1 overflow-y-auto p-6 max-h-[55vh]">
+                            
+                            {{-- TAB 1: Matched List --}}
+                            <div x-show="activeTab === 'matched'">
+                                <template x-if="filteredMatched.length === 0">
+                                    <div class="py-14 text-center">
+                                        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-400 mb-3">
+                                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+                                            </svg>
+                                        </div>
+                                        <h4 class="font-bold text-gray-800 text-sm">Tidak ada calon siswa yang cocok otomatis</h4>
+                                        <p class="text-xs text-gray-500 mt-1 max-w-sm mx-auto">Pastikan data Dapodik terbaru telah diimpor pada menu Manajemen Dapodik.</p>
+                                    </div>
+                                </template>
+
+                                <template x-if="filteredMatched.length > 0">
+                                    <div>
+                                        <div class="mb-3 flex items-center justify-between text-xs text-gray-500 px-1">
+                                            <label class="flex items-center gap-2 cursor-pointer select-none">
+                                                <input type="checkbox" :checked="allMatchedSelected" @change="toggleSelectAllMatched($event.target.checked)"
+                                                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                                <span class="font-bold text-gray-700">Pilih Semua (<span x-text="filteredMatched.length"></span>)</span>
+                                            </label>
+                                            <span>Klik baris untuk memilih / membatalkan pasangan yang akan dipetakan.</span>
+                                        </div>
+
+                                        <div class="space-y-3">
+                                            <template x-for="item in filteredMatched" :key="item.registration_id">
+                                                <div @click="toggleItem(item)"
+                                                    class="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-xl border p-4 transition-all cursor-pointer select-none"
+                                                    :class="selectedMappings[item.registration_id] ? 'border-blue-400 bg-blue-50/40 shadow-sm' : 'border-gray-200 bg-white opacity-70 hover:opacity-100 hover:border-gray-300'">
+                                                    
+                                                    {{-- Calon Siswa (Kiri) --}}
+                                                    <div class="flex items-start gap-3 flex-1 min-w-0">
+                                                        <input type="checkbox" :checked="!!selectedMappings[item.registration_id]" @click.stop="toggleItem(item)"
+                                                            class="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                                        <div class="min-w-0 flex-1">
+                                                            <div class="flex items-center gap-2">
+                                                                <span class="font-bold text-sm text-gray-900 truncate" x-text="item.student_name"></span>
+                                                                <span class="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-mono text-gray-600" x-text="item.registration_number"></span>
+                                                            </div>
+                                                            <div class="mt-1 text-xs text-gray-500 flex flex-wrap gap-x-3 gap-y-0.5">
+                                                                <span>NISN: <strong class="font-mono text-gray-700" x-text="item.student_nisn"></strong></span>
+                                                                <span>Lahir: <span x-text="item.student_birth"></span></span>
+                                                                <span>NIS Sem: <span class="font-mono" x-text="item.temp_nis"></span></span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {{-- Match Indicator (Tengah) --}}
+                                                    <div class="flex flex-col items-center justify-center px-2 flex-shrink-0">
+                                                        <div class="flex items-center gap-1.5 text-xs font-bold"
+                                                            :class="item.match_type === 'nisn' ? 'text-emerald-700' : 'text-blue-700'">
+                                                            <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                                                            </svg>
+                                                            <span class="rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wider font-extrabold"
+                                                                :class="item.match_type === 'nisn' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'"
+                                                                x-text="item.match_label"></span>
+                                                        </div>
+                                                    </div>
+
+                                                    {{-- Data Dapodik (Kanan) --}}
+                                                    <div class="rounded-lg bg-white/80 border border-gray-100 p-3 flex-1 min-w-0 shadow-xs">
+                                                        <div class="flex items-center justify-between gap-2">
+                                                            <span class="font-bold text-sm text-blue-900 truncate" x-text="item.dapodik_name"></span>
+                                                            <span class="inline-flex items-center gap-1 rounded bg-blue-50 px-2 py-0.5 text-xs font-mono font-black text-blue-700">
+                                                                NIPD: <span x-text="item.dapodik_nipd"></span>
+                                                            </span>
+                                                        </div>
+                                                        <div class="mt-1 text-xs text-gray-500 flex flex-wrap gap-x-3 gap-y-0.5">
+                                                            <span>NISN: <span class="font-mono" x-text="item.dapodik_nisn"></span></span>
+                                                            <span>Lahir: <span x-text="item.dapodik_birth"></span></span>
+                                                            <span>Rombel: <span class="text-gray-700 font-semibold" x-text="item.dapodik_rombel"></span></span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+
+                            {{-- TAB 2: Unmatched List --}}
+                            <div x-show="activeTab === 'unmatched'">
+                                <template x-if="filteredUnmatched.length === 0">
+                                    <div class="py-14 text-center">
+                                        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 mb-3">
+                                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m4.5 12.75 6 6 9-13.5" />
+                                            </svg>
+                                        </div>
+                                        <h4 class="font-bold text-gray-800 text-sm">Semua Calon Siswa Berhasil Dicocokkan!</h4>
+                                        <p class="text-xs text-gray-500 mt-1">Tidak ada calon siswa yang belum memiliki pasangan Dapodik.</p>
+                                    </div>
+                                </template>
+
+                                <template x-if="filteredUnmatched.length > 0">
+                                    <div class="space-y-2">
+                                        <div class="rounded-lg bg-amber-50 p-3 border border-amber-200 text-xs text-amber-800 mb-3">
+                                            Calon siswa di bawah ini tidak ditemukan padanannya di data Dapodik berdasarkan NISN maupun nama & tanggal lahir. Anda dapat melakukan pencarian manual jika terdapat perbedaan ejaan nama atau nomor NISN.
+                                        </div>
+                                        <template x-for="item in filteredUnmatched" :key="item.registration_id">
+                                            <div class="flex items-center justify-between p-3 rounded-lg border border-gray-200 bg-gray-50">
+                                                <div>
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="font-bold text-sm text-gray-900" x-text="item.student_name"></span>
+                                                        <span class="text-xs text-gray-400" x-text="`(${item.registration_number})`"></span>
+                                                    </div>
+                                                    <div class="text-xs text-gray-500 mt-0.5 flex gap-4">
+                                                        <span>NISN: <span class="font-mono text-gray-700" x-text="item.student_nisn"></span></span>
+                                                        <span>Lahir: <span x-text="item.student_birth"></span></span>
+                                                        <span>NIS Sem: <span class="font-mono" x-text="item.temp_nis"></span></span>
+                                                    </div>
+                                                </div>
+                                                <button type="button" @click="open = false; $dispatch('open-dapodik-mapping', { id: item.registration_id, name: item.student_name, nisn: item.student_nisn !== '-' ? item.student_nisn : '', birth: item.student_birth, url: `/master-data/registrasi-siswa-baru/${item.registration_id}/map` })"
+                                                    class="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-100 flex-shrink-0">
+                                                    Cari Manual
+                                                </button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+
+                        </div>
+
+                        {{-- Footer Modal --}}
+                        <div class="flex items-center justify-between border-t border-gray-200 bg-gray-50 px-6 py-4 rounded-b-2xl">
+                            <div>
+                                <span class="text-xs text-gray-600">Terpilih untuk dipetakan: <strong class="text-blue-700 font-extrabold text-sm" x-text="selectedCount"></strong> dari <span x-text="previewData.total_matched || 0"></span> data cocok</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button type="button" @click="open = false" :disabled="submitting"
+                                    class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-100 disabled:opacity-50">
+                                    Batal
+                                </button>
+                                <button type="button" @click="submitBulkMapping()" :disabled="submitting || selectedCount === 0"
+                                    class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-sm font-bold text-white hover:bg-blue-700 shadow-sm transition-all disabled:cursor-not-allowed disabled:bg-gray-300">
+                                    <template x-if="submitting">
+                                        <div class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                                    </template>
+                                    <svg x-show="!submitting" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m4.5 12.75 6 6 9-13.5" />
+                                    </svg>
+                                    <span>Petakan (<span x-text="selectedCount"></span>) Siswa</span>
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </template>
+
+            </div>
+        </div>
     </div>
 
     {{-- MODAL DETAIL BIODATA SISWA BARU --}}
@@ -611,6 +855,180 @@
         function confirmApprove(button) { Swal.fire({title:'Setujui pendaftaran?',text:'Data siswa sementara akan dibuat.',icon:'question',showCancelButton:true,confirmButtonText:'Ya, setujui'}).then(r => { if(r.isConfirmed) button.closest('form').submit(); }); }
         function confirmReject(button) { Swal.fire({title:'Alasan penolakan',input:'textarea',inputPlaceholder:'Tuliskan data yang perlu diperbaiki',showCancelButton:true,confirmButtonColor:'#dc2626',confirmButtonText:'Tolak pendaftaran',preConfirm:value => { if(!value) Swal.showValidationMessage('Alasan wajib diisi'); return value; }}).then(r => { if(r.isConfirmed){ const form=button.closest('form'); form.querySelector('[name=notes]').value=r.value; form.submit(); }}); }
         function dapodikMapping() { return { open:false, student:{}, query:'', results:[], selected:null, loading:false, openModal(data){ this.student=data; this.query=data.nisn || data.name; this.selected=null; this.open=true; this.search(); }, async search(){ this.loading=true; try { const url = @js(route('master-data.student-registration.dapodik.search')); const response=await fetch(`${url}?q=${encodeURIComponent(this.query)}`, {headers:{'Accept':'application/json'}}); this.results=await response.json(); } finally { this.loading=false; } } }; }
+
+        function bulkDapodikMapping() {
+            return {
+                open: false,
+                loading: false,
+                submitting: false,
+                activeTab: 'matched',
+                searchQuery: '',
+                targetIds: [],
+                previewData: {
+                    total_candidates: 0,
+                    total_matched: 0,
+                    total_unmatched: 0,
+                    available_dapodik_count: 0,
+                    matched: [],
+                    unmatched: []
+                },
+                selectedMappings: {},
+
+                async openModal(detail) {
+                    this.targetIds = detail && detail.ids ? detail.ids : [];
+                    this.open = true;
+                    this.activeTab = 'matched';
+                    this.searchQuery = '';
+                    await this.fetchPreview();
+                },
+
+                async fetchPreview() {
+                    this.loading = true;
+                    try {
+                        let url = @js(route('master-data.student-registration.dapodik.bulk-match-preview'));
+                        if (this.targetIds.length > 0) {
+                            url += `?ids=${encodeURIComponent(this.targetIds.join(','))}`;
+                        }
+                        const response = await fetch(url, {
+                            headers: { 'Accept': 'application/json' }
+                        });
+                        if (!response.ok) throw new Error('Gagal memuat preview pemetaan');
+                        const data = await response.json();
+                        this.previewData = data;
+
+                        this.selectedMappings = {};
+                        (data.matched || []).forEach(item => {
+                            this.selectedMappings[item.registration_id] = item.dapodik_id;
+                        });
+                    } catch (err) {
+                        console.error(err);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal Memuat Data',
+                            text: err.message || 'Terjadi kesalahan saat mencocokkan data Dapodik.'
+                        });
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                get matchedCount() {
+                    return this.previewData.total_matched || 0;
+                },
+
+                get selectedCount() {
+                    return Object.keys(this.selectedMappings).filter(k => !!this.selectedMappings[k]).length;
+                },
+
+                get allMatchedSelected() {
+                    return this.filteredMatched.length > 0 &&
+                        this.filteredMatched.every(item => !!this.selectedMappings[item.registration_id]);
+                },
+
+                toggleSelectAllMatched(checked) {
+                    this.filteredMatched.forEach(item => {
+                        if (checked) {
+                            this.selectedMappings[item.registration_id] = item.dapodik_id;
+                        } else {
+                            delete this.selectedMappings[item.registration_id];
+                        }
+                    });
+                },
+
+                toggleItem(item) {
+                    if (this.selectedMappings[item.registration_id]) {
+                        delete this.selectedMappings[item.registration_id];
+                    } else {
+                        this.selectedMappings[item.registration_id] = item.dapodik_id;
+                    }
+                },
+
+                get filteredMatched() {
+                    if (!this.searchQuery) return this.previewData.matched || [];
+                    const q = this.searchQuery.toLowerCase();
+                    return (this.previewData.matched || []).filter(item =>
+                        (item.student_name && item.student_name.toLowerCase().includes(q)) ||
+                        (item.dapodik_name && item.dapodik_name.toLowerCase().includes(q)) ||
+                        (item.dapodik_nipd && item.dapodik_nipd.toLowerCase().includes(q)) ||
+                        (item.student_nisn && item.student_nisn.toLowerCase().includes(q))
+                    );
+                },
+
+                get filteredUnmatched() {
+                    if (!this.searchQuery) return this.previewData.unmatched || [];
+                    const q = this.searchQuery.toLowerCase();
+                    return (this.previewData.unmatched || []).filter(item =>
+                        (item.student_name && item.student_name.toLowerCase().includes(q)) ||
+                        (item.student_nisn && item.student_nisn.toLowerCase().includes(q))
+                    );
+                },
+
+                async submitBulkMapping() {
+                    const pairs = [];
+                    for (const [regId, dapId] of Object.entries(this.selectedMappings)) {
+                        if (dapId) {
+                            pairs.push({
+                                registration_id: parseInt(regId),
+                                dapodik_siswa_id: parseInt(dapId)
+                            });
+                        }
+                    }
+
+                    if (pairs.length === 0) {
+                        Swal.fire('Pilih Data', 'Pilih minimal satu pasangan siswa yang akan dipetakan.', 'warning');
+                        return;
+                    }
+
+                    const result = await Swal.fire({
+                        title: `Petakan ${pairs.length} Siswa?`,
+                        text: 'Data siswa sementara akan diperbarui dengan data Dapodik resmi (NIPD, identitas terverifikasi).',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#2563eb',
+                        confirmButtonText: `Ya, Petakan Sekarang (${pairs.length})`,
+                        cancelButtonText: 'Batal'
+                    });
+
+                    if (!result.isConfirmed) return;
+
+                    this.submitting = true;
+                    try {
+                        const response = await fetch(@js(route('master-data.student-registration.dapodik.bulk-map')), {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({ mappings: pairs })
+                        });
+
+                        const resData = await response.json();
+
+                        if (response.ok && resData.success) {
+                            await Swal.fire({
+                                icon: 'success',
+                                title: 'Pemetaan Berhasil!',
+                                text: resData.message || `${pairs.length} siswa berhasil dipetakan ke Dapodik.`,
+                                confirmButtonColor: '#10b981'
+                            });
+                            window.location.reload();
+                        } else {
+                            throw new Error(resData.message || 'Gagal memproses pemetaan massal.');
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal Pemetaan',
+                            text: err.message || 'Terjadi kesalahan sistem saat memetakan data.'
+                        });
+                    } finally {
+                        this.submitting = false;
+                    }
+                }
+            };
+        }
 
         @if (session('pact_download_url'))
             document.addEventListener('DOMContentLoaded', () => {

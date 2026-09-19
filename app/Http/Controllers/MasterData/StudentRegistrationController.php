@@ -221,6 +221,214 @@ class StudentRegistrationController extends Controller
         return response()->json($records);
     }
 
+    public function bulkMatchPreview(Request $request)
+    {
+        $selectedIds = $request->input('ids');
+        if (is_string($selectedIds)) {
+            $selectedIds = array_filter(explode(',', $selectedIds));
+        }
+
+        $registrations = StudentRegistration::with('masterSiswa')
+            ->where('status', 'approved')
+            ->whereNotNull('master_siswa_id')
+            ->when(! empty($selectedIds), function ($query) use ($selectedIds) {
+                $query->whereIn('id', $selectedIds);
+            })
+            ->orderBy('nama_lengkap')
+            ->get();
+
+        $availableDapodik = DapodikSiswa::whereNull('master_siswa_id')
+            ->whereNotNull('nipd')
+            ->get();
+
+        $dapodikByNisn = [];
+        $dapodikByNameAndBirth = [];
+
+        foreach ($availableDapodik as $dapodik) {
+            $cleanNisn = trim((string) $dapodik->nisn);
+            if ($cleanNisn !== '') {
+                $dapodikByNisn[$cleanNisn][] = $dapodik;
+            }
+
+            $normName = preg_replace('/\s+/', ' ', strtolower(trim((string) $dapodik->nama)));
+            $birth = $dapodik->tanggal_lahir ? $dapodik->tanggal_lahir->format('Y-m-d') : '';
+            if ($normName !== '' && $birth !== '') {
+                $key = $normName . '|' . $birth;
+                $dapodikByNameAndBirth[$key][] = $dapodik;
+            }
+        }
+
+        $matched = [];
+        $unmatched = [];
+        $assignedDapodikIds = [];
+
+        foreach ($registrations as $reg) {
+            $cleanRegNisn = trim((string) $reg->nisn);
+            $normRegName = preg_replace('/\s+/', ' ', strtolower(trim((string) $reg->nama_lengkap)));
+            $regBirth = $reg->tanggal_lahir ? $reg->tanggal_lahir->format('Y-m-d') : '';
+
+            $matchedDapodik = null;
+            $matchType = null;
+            $matchLabel = null;
+
+            // Priority 1: Match by NISN
+            if ($cleanRegNisn !== '' && isset($dapodikByNisn[$cleanRegNisn])) {
+                foreach ($dapodikByNisn[$cleanRegNisn] as $cand) {
+                    if (! in_array($cand->id, $assignedDapodikIds, true)) {
+                        $matchedDapodik = $cand;
+                        $matchType = 'nisn';
+                        $matchLabel = 'NISN Cocok (100% Akurat)';
+                        break;
+                    }
+                }
+            }
+
+            // Priority 2: Match by Nama Lengkap & Tanggal Lahir (exact)
+            if (! $matchedDapodik && $normRegName !== '' && $regBirth !== '') {
+                $key = $normRegName . '|' . $regBirth;
+                if (isset($dapodikByNameAndBirth[$key])) {
+                    foreach ($dapodikByNameAndBirth[$key] as $cand) {
+                        if (! in_array($cand->id, $assignedDapodikIds, true)) {
+                            $matchedDapodik = $cand;
+                            $matchType = 'name_and_birth';
+                            $matchLabel = 'Nama & Tgl Lahir Cocok';
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Priority 3: Match by similar name & exact date of birth
+            if (! $matchedDapodik && $regBirth !== '') {
+                foreach ($availableDapodik as $cand) {
+                    if (in_array($cand->id, $assignedDapodikIds, true)) {
+                        continue;
+                    }
+                    $candBirth = $cand->tanggal_lahir ? $cand->tanggal_lahir->format('Y-m-d') : '';
+                    if ($candBirth === $regBirth) {
+                        $candName = preg_replace('/\s+/', ' ', strtolower(trim((string) $cand->nama)));
+                        similar_text($normRegName, $candName, $percent);
+                        if ($percent >= 85) {
+                            $matchedDapodik = $cand;
+                            $matchType = 'similar_name';
+                            $matchLabel = 'Nama Mirip (' . round($percent) . '%) & Tgl Lahir Cocok';
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if ($matchedDapodik) {
+                $assignedDapodikIds[] = $matchedDapodik->id;
+                $matched[] = [
+                    'registration_id' => $reg->id,
+                    'registration_number' => $reg->registration_number,
+                    'student_name' => $reg->nama_lengkap,
+                    'student_nisn' => $reg->nisn ?: '-',
+                    'student_birth' => ($reg->tempat_lahir ? $reg->tempat_lahir . ', ' : '') . ($reg->tanggal_lahir ? $reg->tanggal_lahir->format('d-m-Y') : '-'),
+                    'student_gender' => $reg->jenis_kelamin === 'L' ? 'Laki-laki' : ($reg->jenis_kelamin === 'P' ? 'Perempuan' : '-'),
+                    'temp_nis' => $reg->masterSiswa?->nis ?: '-',
+                    'dapodik_id' => $matchedDapodik->id,
+                    'dapodik_nipd' => $matchedDapodik->nipd,
+                    'dapodik_name' => $matchedDapodik->nama,
+                    'dapodik_nisn' => $matchedDapodik->nisn ?: '-',
+                    'dapodik_birth' => ($matchedDapodik->tempat_lahir ? $matchedDapodik->tempat_lahir . ', ' : '') . ($matchedDapodik->tanggal_lahir ? $matchedDapodik->tanggal_lahir->format('d-m-Y') : '-'),
+                    'dapodik_gender' => $matchedDapodik->jenis_kelamin === 'L' ? 'Laki-laki' : ($matchedDapodik->jenis_kelamin === 'P' ? 'Perempuan' : '-'),
+                    'dapodik_rombel' => $matchedDapodik->rombel_saat_ini ?: '-',
+                    'match_type' => $matchType,
+                    'match_label' => $matchLabel,
+                ];
+            } else {
+                $unmatched[] = [
+                    'registration_id' => $reg->id,
+                    'registration_number' => $reg->registration_number,
+                    'student_name' => $reg->nama_lengkap,
+                    'student_nisn' => $reg->nisn ?: '-',
+                    'student_birth' => ($reg->tempat_lahir ? $reg->tempat_lahir . ', ' : '') . ($reg->tanggal_lahir ? $reg->tanggal_lahir->format('d-m-Y') : '-'),
+                    'student_gender' => $reg->jenis_kelamin === 'L' ? 'Laki-laki' : ($reg->jenis_kelamin === 'P' ? 'Perempuan' : '-'),
+                    'temp_nis' => $reg->masterSiswa?->nis ?: '-',
+                ];
+            }
+        }
+
+        return response()->json([
+            'total_candidates' => $registrations->count(),
+            'total_matched' => count($matched),
+            'total_unmatched' => count($unmatched),
+            'available_dapodik_count' => $availableDapodik->count(),
+            'matched' => $matched,
+            'unmatched' => $unmatched,
+        ]);
+    }
+
+    public function bulkMap(Request $request)
+    {
+        $validated = $request->validate([
+            'mappings' => ['required', 'array', 'min:1'],
+            'mappings.*.registration_id' => ['required', 'integer'],
+            'mappings.*.dapodik_siswa_id' => ['required', 'integer'],
+        ]);
+
+        $successful = 0;
+        $errors = [];
+
+        try {
+            DB::transaction(function () use ($validated, $request, &$successful, &$errors) {
+                foreach ($validated['mappings'] as $item) {
+                    $registration = StudentRegistration::lockForUpdate()->find($item['registration_id']);
+                    $dapodik = DapodikSiswa::lockForUpdate()->find($item['dapodik_siswa_id']);
+
+                    if (! $registration || $registration->status !== 'approved' || ! $registration->master_siswa_id) {
+                        $errors[] = "Registrasi #{$item['registration_id']} tidak valid atau belum disetujui.";
+                        continue;
+                    }
+
+                    if (! $dapodik || $dapodik->master_siswa_id) {
+                        $errors[] = "Data Dapodik ({$dapodik?->nama}) sudah dipetakan ke siswa lain.";
+                        continue;
+                    }
+
+                    if (! $dapodik->nipd) {
+                        $errors[] = "Data Dapodik ({$dapodik->nama}) belum memiliki NIPD.";
+                        continue;
+                    }
+
+                    $this->performMapping($registration, $dapodik, $request->user()->id);
+                    $successful++;
+                }
+            });
+        } catch (\Throwable $exception) {
+            Log::error('Bulk student registration mapping failed: ' . $exception->getMessage(), [
+                'exception' => $exception,
+            ]);
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terjadi kesalahan sistem saat pemetaan massal: ' . $exception->getMessage(),
+                ], 500);
+            }
+
+            return back()->with('error', 'Terjadi kesalahan saat pemetaan massal: ' . $exception->getMessage());
+        }
+
+        $message = "Berhasil memetakan {$successful} siswa ke data Dapodik.";
+        if (! empty($errors)) {
+            $message .= ' (' . count($errors) . ' data dilewati)';
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'count' => $successful,
+                'errors' => $errors,
+            ]);
+        }
+
+        return back()->with('success', $message);
+    }
+
     public function map(Request $request, StudentRegistration $registration)
     {
         $validated = $request->validate([
@@ -238,46 +446,7 @@ class StudentRegistrationController extends Controller
             DB::transaction(function () use ($registration, $validated, $request) {
                 $registration = StudentRegistration::lockForUpdate()->findOrFail($registration->id);
                 $dapodik = DapodikSiswa::lockForUpdate()->findOrFail($validated['dapodik_siswa_id']);
-                $student = MasterSiswa::lockForUpdate()->findOrFail($registration->master_siswa_id);
-
-                if ($dapodik->master_siswa_id) {
-                    throw new \RuntimeException('Data Dapodik sudah dipetakan oleh pengguna lain.');
-                }
-                if (! $dapodik->nipd) {
-                    throw new \RuntimeException('Data Dapodik belum memiliki NIPD resmi.');
-                }
-                if (MasterSiswa::where('nis', $dapodik->nipd)->where('id', '!=', $student->id)->exists()) {
-                    throw new \RuntimeException('NIPD resmi sudah digunakan siswa lain. Periksa data sebelum memetakan.');
-                }
-
-                $student->update([
-                    'nis' => $dapodik->nipd,
-                    'nama_lengkap' => $dapodik->nama ?: $student->nama_lengkap,
-                    'jenis_kelamin' => $dapodik->jenis_kelamin ?: $student->jenis_kelamin,
-                    'tempat_lahir' => $dapodik->tempat_lahir ?: $student->tempat_lahir,
-                    'tanggal_lahir' => $dapodik->tanggal_lahir ?: $student->tanggal_lahir,
-                    'alamat' => $dapodik->alamat ?: $student->alamat,
-                    'data_source' => 'dapodik',
-                    'is_data_verified' => true,
-                    'last_synced_at' => now(),
-                ]);
-
-                $dapodik->update(['master_siswa_id' => $student->id]);
-                $registration->update([
-                    'status' => 'mapped',
-                    'dapodik_siswa_id' => $dapodik->id,
-                    'mapped_by' => $request->user()->id,
-                    'mapped_at' => now(),
-                ]);
-
-                if ($student->user) {
-                    $updates = ['name' => $student->nama_lengkap];
-                    $officialEmail = $student->nis.'@smktelkom-lpg.sch.id';
-                    if (! \App\Models\User::where('email', $officialEmail)->where('id', '!=', $student->user->id)->exists()) {
-                        $updates['email'] = $officialEmail;
-                    }
-                    $student->user->update($updates);
-                }
+                $this->performMapping($registration, $dapodik, $request->user()->id);
             });
         } catch (\Throwable $exception) {
             Log::warning('Student registration mapping failed', [
@@ -289,6 +458,50 @@ class StudentRegistrationController extends Controller
         }
 
         return back()->with('success', 'Pemetaan berhasil. Identitas sementara telah diperbarui menggunakan data resmi Dapodik.');
+    }
+
+    protected function performMapping(StudentRegistration $registration, DapodikSiswa $dapodik, int $userId): void
+    {
+        $student = MasterSiswa::lockForUpdate()->findOrFail($registration->master_siswa_id);
+
+        if ($dapodik->master_siswa_id) {
+            throw new \RuntimeException('Data Dapodik sudah dipetakan oleh pengguna lain.');
+        }
+        if (! $dapodik->nipd) {
+            throw new \RuntimeException('Data Dapodik belum memiliki NIPD resmi.');
+        }
+        if (MasterSiswa::where('nis', $dapodik->nipd)->where('id', '!=', $student->id)->exists()) {
+            throw new \RuntimeException('NIPD resmi sudah digunakan siswa lain. Periksa data sebelum memetakan.');
+        }
+
+        $student->update([
+            'nis' => $dapodik->nipd,
+            'nama_lengkap' => $dapodik->nama ?: $student->nama_lengkap,
+            'jenis_kelamin' => $dapodik->jenis_kelamin ?: $student->jenis_kelamin,
+            'tempat_lahir' => $dapodik->tempat_lahir ?: $student->tempat_lahir,
+            'tanggal_lahir' => $dapodik->tanggal_lahir ?: $student->tanggal_lahir,
+            'alamat' => $dapodik->alamat ?: $student->alamat,
+            'data_source' => 'dapodik',
+            'is_data_verified' => true,
+            'last_synced_at' => now(),
+        ]);
+
+        $dapodik->update(['master_siswa_id' => $student->id]);
+        $registration->update([
+            'status' => 'mapped',
+            'dapodik_siswa_id' => $dapodik->id,
+            'mapped_by' => $userId,
+            'mapped_at' => now(),
+        ]);
+
+        if ($student->user) {
+            $updates = ['name' => $student->nama_lengkap];
+            $officialEmail = $student->nis . '@smktelkom-lpg.sch.id';
+            if (! \App\Models\User::where('email', $officialEmail)->where('id', '!=', $student->user->id)->exists()) {
+                $updates['email'] = $officialEmail;
+            }
+            $student->user->update($updates);
+        }
     }
 
     public function biodata(StudentRegistration $registration)
