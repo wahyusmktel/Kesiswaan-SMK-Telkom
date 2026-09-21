@@ -346,7 +346,10 @@
                                     <span
                                         class="flex items-center justify-center w-8 h-8 bg-blue-50 text-blue-600 rounded-lg font-bold text-sm mr-4"
                                         x-text="index + 1"></span>
-                                    <select x-model="question.type" :name="'questions['+index+'][type]'"
+                                    <template x-if="question.answers_count > 0">
+                                        <input type="hidden" :name="'questions['+index+'][type]'" :value="question.type">
+                                    </template>
+                                    <select x-model="question.type" :name="question.answers_count > 0 ? null : 'questions['+index+'][type]'"
                                         :disabled="question.answers_count > 0"
                                         class="bg-transparent border-none font-bold text-slate-800 focus:ring-0 cursor-pointer hover:text-blue-600 transition-colors uppercase text-xs tracking-wider disabled:cursor-not-allowed disabled:text-slate-400">
                                         <option value="multiple_choice">Pilihan Ganda</option>

@@ -353,6 +353,25 @@ class SurveyController extends Controller
             abort(403);
         }
 
+        // Normalisasi field pertanyaan yang terkunci (disabled dari form input)
+        if ($request->has('questions') && is_array($request->questions)) {
+            $questions = $request->questions;
+            foreach ($questions as $idx => $q) {
+                if (!empty($q['id'])) {
+                    $existingQ = $survey->questions()->find($q['id']);
+                    if ($existingQ) {
+                        if (empty($q['type'])) {
+                            $questions[$idx]['type'] = $existingQ->type;
+                        }
+                        if ($existingQ->type === 'multiple_choice' && (empty($q['options']) || !is_array($q['options']))) {
+                            $questions[$idx]['options'] = $existingQ->options ?? [];
+                        }
+                    }
+                }
+            }
+            $request->merge(['questions' => $questions]);
+        }
+
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',

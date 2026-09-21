@@ -193,4 +193,80 @@ class SurveyDuplicateAndEditTest extends TestCase
         $this->assertCount(2, $survey->questions);
         $this->assertEquals('Apakah sarana dan prasarana memadai?', $survey->questions->where('id', $question->id)->first()->question_text);
     }
+
+    public function test_updating_survey_with_locked_questions_omitting_type_succeeds(): void
+    {
+        Role::firstOrCreate(['name' => 'Guru Kelas']);
+        $creator = User::factory()->create();
+        $respondent = User::factory()->create();
+
+        $survey = Survey::create([
+            'title' => 'Survei Evaluasi Tahunan',
+            'description' => 'Deskripsi evaluasi tahunan',
+            'created_by' => $creator->id,
+            'is_active' => true,
+        ]);
+
+        $question1 = $survey->questions()->create([
+            'question_text' => 'Bagaimana kepuasan Anda?',
+            'type' => 'multiple_choice',
+            'options' => ['Sangat Puas', 'Puas', 'Tidak Puas'],
+            'order' => 0,
+        ]);
+
+        $question2 = $survey->questions()->create([
+            'question_text' => 'Tulis kritik dan saran',
+            'type' => 'essay',
+            'options' => null,
+            'order' => 1,
+        ]);
+
+        $survey->targets()->attach($respondent->id);
+
+        // Submit response so questions become locked (answers_count > 0)
+        $response = $survey->responses()->create([
+            'user_id' => $respondent->id,
+        ]);
+        $response->answers()->create([
+            'question_id' => $question1->id,
+            'answer_value' => 'Sangat Puas',
+        ]);
+
+        // Simulating browser form submit where disabled fields (questions.*.type) are NOT sent in POST/PUT
+        $updateResponse = $this->actingAs($creator)->put(route('surveys.update', $survey), [
+            'title' => 'Survei Evaluasi Tahunan (Revisi)',
+            'description' => 'Deskripsi baru',
+            'start_at' => null,
+            'end_at' => null,
+            'is_active' => 1,
+            'questions' => [
+                [
+                    'id' => $question1->id,
+                    'question_text' => 'Bagaimana kepuasan Anda terhadap fasilitas?',
+                    // Notice: 'type' is omitted because the HTML field was disabled!
+                ],
+                [
+                    'id' => $question2->id,
+                    'question_text' => 'Tulis kritik dan saran perbaikan',
+                    // Notice: 'type' is omitted because the HTML field was disabled!
+                ],
+            ],
+            'target_users' => [$respondent->id],
+        ]);
+
+        $updateResponse->assertRedirect(route('surveys.index'));
+        $updateResponse->assertSessionHas('success');
+
+        $survey->refresh();
+        $this->assertEquals('Survei Evaluasi Tahunan (Revisi)', $survey->title);
+
+        $q1 = $survey->questions()->find($question1->id);
+        $this->assertEquals('Bagaimana kepuasan Anda terhadap fasilitas?', $q1->question_text);
+        $this->assertEquals('multiple_choice', $q1->type);
+        $this->assertEquals(['Sangat Puas', 'Puas', 'Tidak Puas'], $q1->options);
+
+        $q2 = $survey->questions()->find($question2->id);
+        $this->assertEquals('Tulis kritik dan saran perbaikan', $q2->question_text);
+        $this->assertEquals('essay', $q2->type);
+    }
 }

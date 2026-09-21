@@ -67,4 +67,44 @@ class Survey extends Model
     {
         return $this->belongsToMany(User::class, 'survey_targets');
     }
+
+    /**
+     * Scope untuk survei yang aktif dan dalam rentang waktu yang dibuka.
+     */
+    public function scopeOpen($query)
+    {
+        $now = now();
+
+        return $query->where('is_active', true)
+            ->where(function ($q) use ($now) {
+                $q->whereNull('start_at')->orWhere('start_at', '<=', $now);
+            })
+            ->where(function ($q) use ($now) {
+                $q->whereNull('end_at')->orWhere('end_at', '>=', $now);
+            });
+    }
+
+    /**
+     * Dapatkan daftar survei aktif yang ditargetkan kepada user dan belum diisi.
+     *
+     * @param \App\Models\User|null $user
+     * @return \Illuminate\Database\Eloquent\Collection<int, static>
+     */
+    public static function getPendingSurveysForUser(?User $user)
+    {
+        if (! $user) {
+            return collect();
+        }
+
+        return static::query()
+            ->open()
+            ->whereHas('targets', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })
+            ->whereDoesntHave('responses', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })
+            ->latest()
+            ->get();
+    }
 }

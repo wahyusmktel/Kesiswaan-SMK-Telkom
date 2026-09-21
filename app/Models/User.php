@@ -227,4 +227,12 @@ class User extends Authenticatable implements WebAuthnAuthenticatableContract
     {
         return $this->masterGuru?->dapodikGuru?->nip ?? $this->masterGuru?->nip ?? $this->masterGuru?->nuptk;
     }
+
+    /**
+     * Dapatkan daftar survei aktif yang ditargetkan kepada user ini dan belum diisi.
+     */
+    public function pendingSurveys()
+    {
+        return Survey::getPendingSurveysForUser($this);
+    }
 }
