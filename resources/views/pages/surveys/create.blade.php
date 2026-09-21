@@ -4,10 +4,15 @@
     </x-slot>
 
     <div class="p-6"
-        x-data="surveyBuilder({{ json_encode($isStudent) }}, {{ json_encode($roles) }}, {{ json_encode($rombels) }}, {{ json_encode($guruKelas) }}, {{ json_encode($nonStudentUsers) }})">
+        x-data="surveyBuilder({{ json_encode($isStudent) }}, {{ json_encode($roles) }}, {{ json_encode($rombels) }}, {{ json_encode($guruKelas) }}, {{ json_encode($nonStudentUsers) }}, {{ json_encode(array_map('intval', old('target_users', []))) }})">
         <div class="max-w-5xl mx-auto">
             <form action="{{ route('surveys.store') }}" method="POST">
                 @csrf
+
+                <!-- Hidden Persistent Inputs for All Selected Target Users -->
+                <template x-for="userId in selectedUsers" :key="userId">
+                    <input type="hidden" name="target_users[]" :value="userId">
+                </template>
 
                 <!-- Header Section -->
                 <div class="mb-8 flex justify-between items-end">
@@ -87,11 +92,17 @@
 
                 <!-- Section: Target Responden -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-8 mb-8">
-                    <h2 class="text-lg font-bold text-slate-800 mb-6 flex items-center">
-                        <span
-                            class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center mr-3 text-sm">3</span>
-                        Target Responden
-                    </h2>
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-lg font-bold text-slate-800 flex items-center">
+                            <span
+                                class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center mr-3 text-sm">3</span>
+                            Target Responden
+                        </h2>
+                        <span class="text-xs font-bold px-3 py-1 rounded-full transition-all"
+                            :class="selectedUsers.length > 0 ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-rose-50 text-rose-600 border border-rose-200'"
+                            x-text="selectedUsers.length + ' Responden Terpilih'">
+                        </span>
+                    </div>
 
                     <div class="space-y-8">
                         @if(!$isStudent)
@@ -101,6 +112,7 @@
                                     class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
                                     <label class="flex items-center cursor-pointer">
                                         <input type="checkbox" x-model="targetCategories.guruKelas"
+                                            @change="if (!$event.target.checked) toggleAllGuruKelas(false)"
                                             class="w-5 h-5 text-blue-600 rounded-lg border-slate-300 focus:ring-blue-500">
                                         <div class="ml-3">
                                             <p class="font-bold text-slate-700">Role Guru Kelas</p>
@@ -133,7 +145,7 @@
                                         <template x-for="guru in filteredGuruKelas" :key="guru.id">
                                             <label
                                                 class="flex items-center p-3 bg-white rounded-xl border border-slate-100 hover:border-blue-200 transition-colors cursor-pointer group">
-                                                <input type="checkbox" :value="guru.id" name="target_users[]"
+                                                <input type="checkbox" :value="Number(guru.id)"
                                                     x-model="selectedUsers"
                                                     class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
                                                 <span class="ml-3 text-xs font-medium text-slate-600 truncate"
@@ -150,6 +162,7 @@
                                     class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
                                     <label class="flex items-center cursor-pointer">
                                         <input type="checkbox" x-model="targetCategories.nonStudent"
+                                            @change="if (!$event.target.checked) toggleAllNonStudent(false)"
                                             class="w-5 h-5 text-blue-600 rounded-lg border-slate-300 focus:ring-blue-500">
                                         <div class="ml-3">
                                             <p class="font-bold text-slate-700">Semua Role Pengguna Selain Siswa</p>
@@ -182,7 +195,7 @@
                                         <template x-for="user in filteredNonStudent" :key="user.id">
                                             <label
                                                 class="flex items-center p-3 bg-white rounded-xl border border-slate-100 hover:border-blue-200 transition-colors cursor-pointer group">
-                                                <input type="checkbox" :value="user.id" name="target_users[]"
+                                                <input type="checkbox" :value="Number(user.id)"
                                                     x-model="selectedUsers"
                                                     class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
                                                 <span class="ml-3 text-xs font-medium text-slate-600 truncate"
@@ -199,6 +212,7 @@
                             <div class="flex justify-between items-center mb-4">
                                 <label class="flex items-center cursor-pointer">
                                     <input type="checkbox" x-model="targetCategories.siswa"
+                                        @change="if (!$event.target.checked) { toggleAllRombels(false); activeRombel = null; }"
                                         class="w-5 h-5 text-blue-600 rounded-lg border-slate-300 focus:ring-blue-500">
                                     <div class="ml-3">
                                         <div class="flex items-center gap-2">
@@ -258,8 +272,12 @@
                                                 <div class="ml-3 overflow-hidden">
                                                     <p class="text-xs font-bold text-slate-700 truncate"
                                                         x-text="rombel.kelas.nama_kelas"></p>
-                                                    <p class="text-[9px] text-slate-400 uppercase tracking-tighter"
-                                                        x-text="rombel.siswa.length + ' Siswa'"></p>
+                                                    <div class="flex items-center gap-1 text-[9px] text-slate-400 uppercase tracking-tighter">
+                                                        <span x-text="(rombel.siswa ? rombel.siswa.length : 0) + ' Siswa'"></span>
+                                                        <span x-show="getSelectedCountForRombel(rombel) > 0"
+                                                            class="text-blue-600 font-bold"
+                                                            x-text="'(' + getSelectedCountForRombel(rombel) + ' terpilih)'"></span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -294,16 +312,18 @@
                                     </div>
                                     <div
                                         class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-                                        <template x-for="item in currentStudents" :key="item.user.id">
-                                            <label
-                                                class="flex items-center p-2 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer group">
-                                                <input type="checkbox" :value="item.user.id" name="target_users[]"
-                                                    x-model="selectedUsers"
-                                                    class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
-                                                <span
-                                                    class="ml-3 text-xs text-slate-500 group-hover:text-blue-700 truncate"
-                                                    x-text="item.user.name"></span>
-                                            </label>
+                                        <template x-for="item in currentStudents" :key="item.user ? item.user.id : item.id">
+                                            <template x-if="item.user">
+                                                <label
+                                                    class="flex items-center p-2 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer group">
+                                                    <input type="checkbox" :value="Number(item.user.id)"
+                                                        x-model="selectedUsers"
+                                                        class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
+                                                    <span
+                                                        class="ml-3 text-xs text-slate-500 group-hover:text-blue-700 truncate"
+                                                        x-text="item.user.name"></span>
+                                                </label>
+                                            </template>
                                         </template>
                                     </div>
                                 </div>
@@ -421,18 +441,19 @@
     </style>
 
     <script>
-        function surveyBuilder(isStudent, roles, rombels, guruKelas, nonStudentUsers) {
+        function surveyBuilder(isStudent, roles, rombels, guruKelas, nonStudentUsers, initialTargets = []) {
+            const normalizedTargets = (initialTargets || []).map(Number);
             return {
                 isStudent: isStudent,
                 roles: roles,
-                rombels: rombels,
-                guruKelas: guruKelas,
-                nonStudentUsers: nonStudentUsers,
+                rombels: rombels || [],
+                guruKelas: guruKelas || [],
+                nonStudentUsers: nonStudentUsers || [],
 
                 targetCategories: {
-                    guruKelas: false,
-                    nonStudent: false,
-                    siswa: isStudent
+                    guruKelas: normalizedTargets.some(id => (guruKelas || []).some(g => Number(g.id) === id)),
+                    nonStudent: normalizedTargets.some(id => (nonStudentUsers || []).some(u => Number(u.id) === id)),
+                    siswa: normalizedTargets.some(id => (rombels || []).some(r => (r.siswa || []).some(s => s.user && Number(s.user.id) === id))) || isStudent
                 },
 
                 search: {
@@ -441,7 +462,7 @@
                     rombels: ''
                 },
 
-                selectedUsers: [],
+                selectedUsers: [...new Set(normalizedTargets)],
                 activeRombel: null,
 
                 questions: [
@@ -455,11 +476,12 @@
                 },
 
                 toggleAllGuruKelas(checked) {
-                    const ids = this.filteredGuruKelas.map(g => g.id);
+                    const ids = this.filteredGuruKelas.map(g => Number(g.id)).filter(Boolean);
+                    const current = this.selectedUsers.map(Number);
                     if (checked) {
-                        this.selectedUsers = [...new Set([...this.selectedUsers, ...ids])];
+                        this.selectedUsers = [...new Set([...current, ...ids])];
                     } else {
-                        this.selectedUsers = this.selectedUsers.filter(id => !ids.includes(id));
+                        this.selectedUsers = current.filter(id => !ids.includes(id));
                     }
                 },
 
@@ -470,11 +492,12 @@
                 },
 
                 toggleAllNonStudent(checked) {
-                    const ids = this.filteredNonStudent.map(u => u.id);
+                    const ids = this.filteredNonStudent.map(u => Number(u.id)).filter(Boolean);
+                    const current = this.selectedUsers.map(Number);
                     if (checked) {
-                        this.selectedUsers = [...new Set([...this.selectedUsers, ...ids])];
+                        this.selectedUsers = [...new Set([...current, ...ids])];
                     } else {
-                        this.selectedUsers = this.selectedUsers.filter(id => !ids.includes(id));
+                        this.selectedUsers = current.filter(id => !ids.includes(id));
                     }
                 },
 
@@ -490,27 +513,44 @@
                 },
 
                 isRombelSelected(rombel) {
-                    const ids = rombel.siswa.map(s => s.user.id);
-                    return ids.length > 0 && ids.every(id => this.selectedUsers.includes(id));
+                    const ids = (rombel.siswa || []).map(s => s.user && s.user.id ? Number(s.user.id) : null).filter(Boolean);
+                    if (ids.length === 0) return false;
+                    const current = this.selectedUsers.map(Number);
+                    return ids.every(id => current.includes(id));
+                },
+
+                getSelectedCountForRombel(rombel) {
+                    const ids = (rombel.siswa || []).map(s => s.user && s.user.id ? Number(s.user.id) : null).filter(Boolean);
+                    if (ids.length === 0) return 0;
+                    const current = this.selectedUsers.map(Number);
+                    return ids.filter(id => current.includes(id)).length;
                 },
 
                 toggleRombel(rombel, checked) {
-                    const ids = rombel.siswa.map(s => s.user.id);
+                    const ids = (rombel.siswa || []).map(s => s.user && s.user.id ? Number(s.user.id) : null).filter(Boolean);
+                    const current = this.selectedUsers.map(Number);
                     if (checked) {
-                        this.selectedUsers = [...new Set([...this.selectedUsers, ...ids])];
+                        this.selectedUsers = [...new Set([...current, ...ids])];
                     } else {
-                        this.selectedUsers = this.selectedUsers.filter(id => !ids.includes(id));
+                        this.selectedUsers = current.filter(id => !ids.includes(id));
                     }
                 },
 
                 toggleAllRombels(checked) {
-                    this.rombels.forEach(r => this.toggleRombel(r, checked));
+                    const rombelList = this.search.rombels ? this.filteredRombels : this.rombels;
+                    const allStudentIds = rombelList.flatMap(r => (r.siswa || []).map(s => s.user && s.user.id ? Number(s.user.id) : null).filter(Boolean));
+                    const current = this.selectedUsers.map(Number);
+                    if (checked) {
+                        this.selectedUsers = [...new Set([...current, ...allStudentIds])];
+                    } else {
+                        this.selectedUsers = current.filter(id => !allStudentIds.includes(id));
+                    }
                 },
 
                 toggleActiveRombelSiswa(checked) {
-                const rombel = this.rombels.find(r => r.id === this.activeRombel);
-                if (rombel) this.toggleRombel(rombel, checked);
-            },
+                    const rombel = this.rombels.find(r => r.id === this.activeRombel);
+                    if (rombel) this.toggleRombel(rombel, checked);
+                },
 
             // Form Submission Logic
             setDraft(event) {

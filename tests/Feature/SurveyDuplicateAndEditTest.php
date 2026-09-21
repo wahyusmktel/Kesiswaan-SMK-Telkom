@@ -269,4 +269,74 @@ class SurveyDuplicateAndEditTest extends TestCase
         $this->assertEquals('Tulis kritik dan saran perbaikan', $q2->question_text);
         $this->assertEquals('essay', $q2->type);
     }
+
+    public function test_updating_survey_with_student_targets_persists_targets_and_displays_in_edit_view(): void
+    {
+        Role::firstOrCreate(['name' => 'Guru Kelas']);
+        Role::firstOrCreate(['name' => 'Siswa']);
+        $creator = User::factory()->create();
+        $studentUser1 = User::factory()->create();
+        $studentUser1->assignRole('Siswa');
+        $studentUser2 = User::factory()->create();
+        $studentUser2->assignRole('Siswa');
+
+        $survey = Survey::create([
+            'title' => 'Survei Evaluasi Siswa',
+            'description' => 'Evaluasi Kesiswaan',
+            'created_by' => $creator->id,
+            'is_active' => true,
+        ]);
+
+        $survey->questions()->create([
+            'question_text' => 'Bagaimana pembelajaran?',
+            'type' => 'multiple_choice',
+            'options' => ['Bagus', 'Kurang'],
+            'order' => 0,
+        ]);
+
+        // Initially no targets or different targets
+        $survey->targets()->attach($creator->id);
+
+        // Update survey with student target users
+        $updateResponse = $this->actingAs($creator)->put(route('surveys.update', $survey), [
+            'title' => 'Survei Evaluasi Siswa (Updated)',
+            'description' => 'Evaluasi Kesiswaan',
+            'is_active' => 1,
+            'questions' => [
+                [
+                    'question_text' => 'Bagaimana pembelajaran?',
+                    'type' => 'multiple_choice',
+                    'options' => ['Bagus', 'Kurang'],
+                ],
+            ],
+            'target_users' => [$studentUser1->id, $studentUser2->id],
+        ]);
+
+        $updateResponse->assertRedirect(route('surveys.index'));
+        $updateResponse->assertSessionHas('success');
+
+        // Check survey_targets in database
+        $this->assertDatabaseHas('survey_targets', [
+            'survey_id' => $survey->id,
+            'user_id' => $studentUser1->id,
+        ]);
+        $this->assertDatabaseHas('survey_targets', [
+            'survey_id' => $survey->id,
+            'user_id' => $studentUser2->id,
+        ]);
+        $this->assertDatabaseMissing('survey_targets', [
+            'survey_id' => $survey->id,
+            'user_id' => $creator->id,
+        ]);
+
+        // Verify edit page displays both student user IDs in initialTargets
+        $editResponse = $this->actingAs($creator)->get(route('surveys.edit', $survey));
+        $editResponse->assertOk();
+        $editResponse->assertSee((string) $studentUser1->id);
+        $editResponse->assertSee((string) $studentUser2->id);
+
+        // Verify student gets pending survey notification
+        $pendingSurveys = Survey::getPendingSurveysForUser($studentUser1);
+        $this->assertTrue($pendingSurveys->contains('id', $survey->id));
+    }
 }
