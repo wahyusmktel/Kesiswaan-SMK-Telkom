@@ -400,6 +400,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('rombel/{rombel}/remove-siswa/{siswa}', [RombelController::class, 'removeSiswa'])->name('rombel.remove-siswa');
         Route::get('rombel-kenaikan-kelas', [ClassPromotionController::class, 'index'])->name('rombel.promotion.index');
         Route::post('rombel-kenaikan-kelas', [ClassPromotionController::class, 'store'])->name('rombel.promotion.store');
+        Route::get('rombel/download-accounts', [RombelController::class, 'downloadAccountsZip'])->name('rombel.download-accounts')->middleware('permission:manage rombel');
+        Route::get('rombel/{rombel}/download-account-pdf', [RombelController::class, 'downloadAccountPdf'])->name('rombel.download-account-pdf')->middleware('permission:manage rombel');
         Route::resource('rombel', RombelController::class)->middleware('permission:manage rombel');
         Route::post('/siswa/import', [MasterSiswaController::class, 'import'])->name('siswa.import');
 

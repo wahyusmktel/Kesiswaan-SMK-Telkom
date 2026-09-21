@@ -3,13 +3,18 @@
 namespace App\Http\Controllers\MasterData;
 
 use App\Http\Controllers\Controller;
+use App\Models\AppSetting;
 use App\Models\Kelas;
 use App\Models\MasterSiswa;
 use App\Models\Rombel;
 use App\Models\User;
+use App\Models\TahunPelajaran;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
-use App\Models\TahunPelajaran; // Pastikan Model ini di-import
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use ZipArchive;
 
 class RombelController extends Controller
 {
@@ -212,5 +217,151 @@ class RombelController extends Controller
             toast('Gagal mengeluarkan siswa.', 'error');
             return back();
         }
+    }
+
+    /**
+     * Unduh seluruh akun siswa dalam bentuk ZIP berisi PDF per rombel.
+     */
+    public function downloadAccountsZip(Request $request)
+    {
+        set_time_limit(300);
+        ini_set('memory_limit', '512M');
+
+        abort_unless(class_exists(ZipArchive::class), 500, 'Ekstensi PHP ZIP belum tersedia pada server.');
+
+        $activeYear = TahunPelajaran::where('is_active', true)->first();
+
+        $query = Rombel::with([
+            'kelas',
+            'waliKelas',
+            'tahunPelajaran',
+            'siswa' => function ($q) {
+                $q->with(['user', 'dapodik'])->orderBy('nama_lengkap');
+            }
+        ]);
+
+        if ($request->filled('tahun_pelajaran_id')) {
+            $query->where('tahun_pelajaran_id', $request->tahun_pelajaran_id);
+        } elseif ($activeYear) {
+            $query->where(function ($q) use ($activeYear) {
+                $q->where('tahun_pelajaran_id', $activeYear->id)
+                    ->orWhere(function ($fallback) use ($activeYear) {
+                        $fallback->whereNull('tahun_pelajaran_id')
+                            ->where('tahun_ajaran', $activeYear->tahun);
+                    });
+            });
+        }
+
+        $rombels = $query->get()->sortBy('kelas.nama_kelas')->values();
+        $rombelsWithStudents = $rombels->filter(fn($r) => $r->siswa->isNotEmpty());
+
+        // Jika tahun aktif kosong / belum ada rombel bersiswa, fallback ke semua rombel yang memiliki siswa
+        if ($rombelsWithStudents->isEmpty()) {
+            $rombelsWithStudents = Rombel::with([
+                'kelas',
+                'waliKelas',
+                'tahunPelajaran',
+                'siswa' => function ($q) {
+                    $q->with(['user', 'dapodik'])->orderBy('nama_lengkap');
+                }
+            ])->get()->filter(fn($r) => $r->siswa->isNotEmpty())->sortBy('kelas.nama_kelas')->values();
+        }
+
+        if ($rombelsWithStudents->isEmpty()) {
+            toast('Tidak ada data rombel dengan siswa untuk diunduh.', 'warning');
+            return back();
+        }
+
+        $schoolSetting = AppSetting::first();
+        $logoBase64 = null;
+        if ($schoolSetting?->logo && file_exists(public_path('storage/' . $schoolSetting->logo))) {
+            $logoPath = public_path('storage/' . $schoolSetting->logo);
+            $ext = pathinfo($logoPath, PATHINFO_EXTENSION);
+            $logoBase64 = 'data:image/' . $ext . ';base64,' . base64_encode(file_get_contents($logoPath));
+        }
+
+        $tempDir = storage_path('app/temp-zips');
+        File::ensureDirectoryExists($tempDir);
+
+        $academicYearSlug = $activeYear ? Str::slug($activeYear->tahun, '_') : 'semua_kelas';
+        $zipFilename = 'Akun_Siswa_Rombel_' . $academicYearSlug . '_' . date('Ymd_His') . '.zip';
+        $zipPath = $tempDir . DIRECTORY_SEPARATOR . $zipFilename;
+
+        $zip = new ZipArchive;
+        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+            toast('Gagal membuat berkas ZIP.', 'error');
+            return back();
+        }
+
+        try {
+            foreach ($rombelsWithStudents as $rombel) {
+                $students = $rombel->siswa;
+                $pdf = Pdf::loadView('pdf.rombel-student-accounts', [
+                    'rombel' => $rombel,
+                    'students' => $students,
+                    'schoolSetting' => $schoolSetting,
+                    'logoBase64' => $logoBase64,
+                ])->setPaper('a4', 'portrait');
+
+                $pdfContent = $pdf->output();
+
+                $className = Str::slug($rombel->kelas?->nama_kelas ?? ('Kelas_' . $rombel->id), '_');
+                $pdfFileName = 'Akun_Siswa_' . $className . '.pdf';
+
+                $zip->addFromString($pdfFileName, $pdfContent);
+            }
+
+            $zip->close();
+        } catch (\Throwable $e) {
+            if ($zip->filename) {
+                $zip->close();
+            }
+            File::delete($zipPath);
+            Log::error('Error creating student accounts zip: ' . $e->getMessage());
+            toast('Terjadi kesalahan saat menghasilkan berkas ZIP: ' . $e->getMessage(), 'error');
+            return back();
+        }
+
+        return response()->download($zipPath, $zipFilename)->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Unduh berkas PDF akun siswa untuk satu rombel tertentu.
+     */
+    public function downloadAccountPdf(Rombel $rombel)
+    {
+        $rombel->load([
+            'kelas',
+            'waliKelas',
+            'tahunPelajaran',
+            'siswa' => function ($q) {
+                $q->with(['user', 'dapodik'])->orderBy('nama_lengkap');
+            }
+        ]);
+
+        if ($rombel->siswa->isEmpty()) {
+            toast('Rombel ini belum memiliki siswa terdaftar.', 'warning');
+            return back();
+        }
+
+        $schoolSetting = AppSetting::first();
+        $logoBase64 = null;
+        if ($schoolSetting?->logo && file_exists(public_path('storage/' . $schoolSetting->logo))) {
+            $logoPath = public_path('storage/' . $schoolSetting->logo);
+            $ext = pathinfo($logoPath, PATHINFO_EXTENSION);
+            $logoBase64 = 'data:image/' . $ext . ';base64,' . base64_encode(file_get_contents($logoPath));
+        }
+
+        $pdf = Pdf::loadView('pdf.rombel-student-accounts', [
+            'rombel' => $rombel,
+            'students' => $rombel->siswa,
+            'schoolSetting' => $schoolSetting,
+            'logoBase64' => $logoBase64,
+        ])->setPaper('a4', 'portrait');
+
+        $className = Str::slug($rombel->kelas?->nama_kelas ?? ('Kelas_' . $rombel->id), '_');
+        $fileName = 'Akun_Siswa_' . $className . '.pdf';
+
+        return $pdf->download($fileName);
     }
 }
