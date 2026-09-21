@@ -610,6 +610,67 @@ class OkrWeeklyReportTest extends TestCase
         return [$annual, $monthly, $weekly];
     }
 
+    public function test_unit_can_plan_more_than_three_commitments_dynamically(): void
+    {
+        $period = $this->period();
+        $unit = $this->unit();
+        $curriculum = $this->userWithRole('Kurikulum');
+
+        $items = [
+            [
+                'commitment' => 'Komitmen pertama wajib.',
+                'measurable_target' => 'Target 1 selesai Selasa.',
+            ],
+            [
+                'commitment' => 'Komitmen kedua opsional.',
+                'measurable_target' => 'Target 2 selesai Rabu.',
+            ],
+            [
+                'commitment' => 'Komitmen ketiga opsional.',
+                'measurable_target' => 'Target 3 selesai Kamis.',
+            ],
+            [
+                'commitment' => 'Komitmen keempat tambahan.',
+                'measurable_target' => 'Target 4 selesai Jumat.',
+            ],
+            [
+                'commitment' => 'Komitmen kelima tambahan khusus unit.',
+                'measurable_target' => 'Target 5 selesai Sabtu.',
+            ],
+        ];
+
+        $this->actingAs($curriculum)
+            ->withSession(['active_role' => 'Kurikulum'])
+            ->post(route('okr.weekly.planning'), [
+                'okr_period_id' => $period->id,
+                'okr_unit_id' => $unit->id,
+                'week_start' => '2026-09-14',
+                'weekly_focus' => 'Pekan percepatan target unit lebih dari 3 komitmen.',
+                'support_needed' => 'Dukungan lintas divisi.',
+                'items' => $items,
+            ])
+            ->assertRedirect();
+
+        $report = OkrWeeklyReport::with('items')->where('okr_unit_id', $unit->id)->firstOrFail();
+        $this->assertCount(5, $report->items);
+        $this->assertEquals([1, 2, 3, 4, 5], $report->items->pluck('priority_order')->all());
+        $this->assertSame('Komitmen kelima tambahan khusus unit.', $report->items->last()->commitment);
+
+        $response = $this->actingAs($curriculum)
+            ->withSession(['active_role' => 'Kurikulum'])
+            ->get(route('okr.weekly.index', [
+                'period_id' => $period->id,
+                'unit_id' => $unit->id,
+                'week_start' => '2026-09-14',
+            ]))
+            ->assertOk();
+
+        $response->assertSee('Tambah Komitmen');
+        $response->assertSee('commitment-item-template');
+        $response->assertSee('Komitmen 5');
+        $response->assertSee('Komitmen kelima tambahan khusus unit.');
+    }
+
     private function unit(): OkrUnit
     {
         return OkrUnit::create([

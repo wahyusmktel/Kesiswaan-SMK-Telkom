@@ -10,7 +10,10 @@
         $statusLabels = ['not_reported' => 'Belum melapor', 'draft' => 'Draft Senin', 'submitted' => 'Menunggu tinjauan', 'reviewed' => 'Sudah ditinjau'];
         $statusColors = ['not_reported' => 'bg-gray-100 text-gray-600', 'draft' => 'bg-blue-100 text-blue-700', 'submitted' => 'bg-amber-100 text-amber-800', 'reviewed' => 'bg-emerald-100 text-emerald-700'];
         $itemStatusLabels = ['not_started' => 'Belum dimulai', 'on_progress' => 'Berjalan', 'completed' => 'Tercapai', 'blocked' => 'Terhambat'];
-        $planningItems = collect(range(0, 2))->map(fn ($index) => $report?->items->get($index));
+        $savedItemsCount = $report?->items?->count() ?? 0;
+        $oldItemsCount = is_array(old('items')) ? count(old('items')) : 0;
+        $initialCount = max(3, $savedItemsCount, $oldItemsCount);
+        $planningItems = collect(range(0, $initialCount - 1))->map(fn ($index) => $report?->items?->values()->get($index));
         $previousWeek = $weekStart->subWeek()->format('Y-m-d');
         $nextWeek = $weekStart->addWeek()->format('Y-m-d');
         $reportProgress = $report?->items->isNotEmpty() ? round((float) $report->items->avg('completion_percent'), 1) : 0;
@@ -31,7 +34,7 @@
                 <div class="flex flex-wrap items-center justify-between gap-4">
                     <div>
                         <p class="text-sm font-black text-indigo-950">Satu siklus laporan untuk satu pekan</p>
-                        <p class="mt-1 max-w-3xl text-xs leading-5 text-indigo-800">Kepala unit menyimpan maksimal tiga komitmen pada Senin, kemudian mengisi capaian aktual, kendala, dan tindak lanjut pada Jumat. Kepala Sekolah meninjau hasil seluruh unit dari halaman ini.</p>
+                        <p class="mt-1 max-w-3xl text-xs leading-5 text-indigo-800">Kepala unit menyimpan komitmen target pada Senin, kemudian mengisi capaian aktual, kendala, dan tindak lanjut pada Jumat. Kepala Sekolah meninjau hasil seluruh unit dari halaman ini.</p>
                     </div>
                     <a href="{{ route('okr.index', ['period_id' => $period->id, 'unit_id' => $selectedUnit->id]) }}" class="rounded-md border border-indigo-200 bg-white px-4 py-2 text-xs font-bold text-indigo-700 hover:bg-indigo-100">Kembali ke Matriks OKR</a>
                 </div>
@@ -114,14 +117,26 @@
                     <form method="POST" action="{{ route('okr.weekly.planning') }}" class="space-y-5 p-5">
                         @csrf
                         <input type="hidden" name="okr_period_id" value="{{ $period->id }}"><input type="hidden" name="okr_unit_id" value="{{ $selectedUnit->id }}"><input type="hidden" name="week_start" value="{{ $weekStart->format('Y-m-d') }}">
-                        <div class="border-l-4 border-blue-500 bg-blue-50 px-4 py-3"><p class="text-sm font-black text-blue-900">Rencana Senin</p><p class="mt-1 text-xs text-blue-700">Tentukan fokus dan maksimal tiga komitmen utama yang harus selesai atau bergerak signifikan minggu ini.</p></div>
+                        <div class="border-l-4 border-blue-500 bg-blue-50 px-4 py-3"><p class="text-sm font-black text-blue-900">Rencana Senin</p><p class="mt-1 text-xs text-blue-700">Tentukan fokus dan komitmen target yang harus selesai atau bergerak signifikan minggu ini.</p></div>
                         <label class="block"><span class="mb-1.5 block text-xs font-bold text-gray-700">Fokus OKR pekan ini</span><textarea name="weekly_focus" rows="3" required class="w-full rounded-md border-gray-300 text-sm">{{ old('weekly_focus', $report?->weekly_focus) }}</textarea></label>
                         <label class="block"><span class="mb-1.5 block text-xs font-bold text-gray-700">Dukungan yang dibutuhkan</span><textarea name="support_needed" rows="2" class="w-full rounded-md border-gray-300 text-sm">{{ old('support_needed', $report?->support_needed) }}</textarea></label>
 
-                        <div class="space-y-4">
+                        <div class="space-y-4" id="planning-items-container">
                             @foreach($planningItems as $index => $planningItem)
-                                <div class="rounded-md border border-gray-200 bg-gray-50 p-4">
-                                    <p class="mb-3 text-xs font-black uppercase text-gray-500">Komitmen {{ $index + 1 }}{{ $index === 0 ? ' · wajib' : ' · opsional' }}</p>
+                                <div class="planning-item rounded-md border border-gray-200 bg-gray-50 p-4" data-item-index="{{ $index }}">
+                                    <div class="mb-3 flex items-center justify-between">
+                                        <p class="commitment-title text-xs font-black uppercase text-gray-500">Komitmen {{ $index + 1 }}{{ $index === 0 ? ' · wajib' : ' · opsional' }}</p>
+                                        <button
+                                            type="button"
+                                            class="remove-commitment-btn inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 hover:text-red-700 transition {{ $index === 0 ? 'hidden' : '' }}"
+                                            title="Hapus komitmen ini"
+                                        >
+                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                            <span>Hapus</span>
+                                        </button>
+                                    </div>
                                     <div class="grid gap-4 lg:grid-cols-2">
                                         <div class="lg:col-span-2">
                                             @include('pages.okr.weekly._plan-picker', [
@@ -129,16 +144,63 @@
                                                 'selectedPlanId' => old("items.$index.okr_plan_id", $planningItem?->okr_plan_id),
                                             ])
                                         </div>
-                                        <label><span class="mb-1 block text-xs font-bold">Komitmen target</span><textarea name="items[{{ $index }}][commitment]" rows="3" @required($index === 0) class="w-full rounded-md border-gray-300 text-sm">{{ old("items.$index.commitment", $planningItem?->commitment) }}</textarea></label>
-                                        <label><span class="mb-1 block text-xs font-bold">Target terukur / batas waktu</span><textarea name="items[{{ $index }}][measurable_target]" rows="3" @required($index === 0) class="w-full rounded-md border-gray-300 text-sm">{{ old("items.$index.measurable_target", $planningItem?->measurable_target) }}</textarea></label>
+                                        <label><span class="mb-1 block text-xs font-bold">Komitmen target</span><textarea name="items[{{ $index }}][commitment]" rows="3" @required($index === 0) class="commitment-input w-full rounded-md border-gray-300 text-sm">{{ old("items.$index.commitment", $planningItem?->commitment) }}</textarea></label>
+                                        <label><span class="mb-1 block text-xs font-bold">Target terukur / batas waktu</span><textarea name="items[{{ $index }}][measurable_target]" rows="3" @required($index === 0) class="target-input w-full rounded-md border-gray-300 text-sm">{{ old("items.$index.measurable_target", $planningItem?->measurable_target) }}</textarea></label>
                                         <label><span class="mb-1 block text-xs font-bold">Ketergantungan lintas unit</span><textarea name="items[{{ $index }}][cross_unit_dependencies]" rows="2" class="w-full rounded-md border-gray-300 text-sm">{{ old("items.$index.cross_unit_dependencies", $planningItem?->cross_unit_dependencies) }}</textarea></label>
                                         <label><span class="mb-1 block text-xs font-bold">Anggaran/logistik yang membutuhkan persetujuan</span><textarea name="items[{{ $index }}][approval_needs]" rows="2" class="w-full rounded-md border-gray-300 text-sm">{{ old("items.$index.approval_needs", $planningItem?->approval_needs) }}</textarea></label>
                                     </div>
                                 </div>
                             @endforeach
                         </div>
-                        <div class="flex justify-end"><button class="rounded-md bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-500">Simpan Rencana Senin</button></div>
+
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 pt-3">
+                            <button
+                                type="button"
+                                id="btn-add-commitment"
+                                class="inline-flex items-center gap-2 rounded-md border-2 border-dashed border-blue-300 bg-blue-50 px-4 py-2.5 text-xs font-bold text-blue-700 hover:border-blue-500 hover:bg-blue-100 hover:text-blue-800 transition"
+                            >
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                </svg>
+                                <span>Tambah Komitmen</span>
+                            </button>
+                            <span class="text-xs text-gray-500">Minimal 1 komitmen wajib. Klik &quot;Tambah Komitmen&quot; jika unit memerlukan lebih dari 3 komitmen.</span>
+                        </div>
+
+                        <div class="flex justify-end pt-2">
+                            <button class="rounded-md bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-500">Simpan Rencana Senin</button>
+                        </div>
                     </form>
+
+                    <template id="commitment-item-template">
+                        <div class="planning-item rounded-md border border-gray-200 bg-gray-50 p-4" data-item-index="__INDEX__">
+                            <div class="mb-3 flex items-center justify-between">
+                                <p class="commitment-title text-xs font-black uppercase text-gray-500">Komitmen __ORDER__ · opsional</p>
+                                <button
+                                    type="button"
+                                    class="remove-commitment-btn inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 hover:text-red-700 transition"
+                                    title="Hapus komitmen ini"
+                                >
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                    <span>Hapus</span>
+                                </button>
+                            </div>
+                            <div class="grid gap-4 lg:grid-cols-2">
+                                <div class="lg:col-span-2">
+                                    @include('pages.okr.weekly._plan-picker', [
+                                        'fieldName' => 'items[__INDEX__][okr_plan_id]',
+                                        'selectedPlanId' => null,
+                                    ])
+                                </div>
+                                <label><span class="mb-1 block text-xs font-bold">Komitmen target</span><textarea name="items[__INDEX__][commitment]" rows="3" class="commitment-input w-full rounded-md border-gray-300 text-sm"></textarea></label>
+                                <label><span class="mb-1 block text-xs font-bold">Target terukur / batas waktu</span><textarea name="items[__INDEX__][measurable_target]" rows="3" class="target-input w-full rounded-md border-gray-300 text-sm"></textarea></label>
+                                <label><span class="mb-1 block text-xs font-bold">Ketergantungan lintas unit</span><textarea name="items[__INDEX__][cross_unit_dependencies]" rows="2" class="w-full rounded-md border-gray-300 text-sm"></textarea></label>
+                                <label><span class="mb-1 block text-xs font-bold">Anggaran/logistik yang membutuhkan persetujuan</span><textarea name="items[__INDEX__][approval_needs]" rows="2" class="w-full rounded-md border-gray-300 text-sm"></textarea></label>
+                            </div>
+                        </div>
+                    </template>
                 @elseif(!$report)
                     <div class="px-5 py-12 text-center text-sm text-gray-500">Unit ini belum membuat rencana pekanan.</div>
                 @endif
@@ -434,6 +496,104 @@
                         });
                     }
                 }
+            }
+
+            function initPlanningCommitmentsManager() {
+                const container = document.getElementById('planning-items-container');
+                const addBtn = document.getElementById('btn-add-commitment');
+                const template = document.getElementById('commitment-item-template');
+
+                if (! container || ! addBtn || ! template) return;
+
+                function updateItemIndices() {
+                    const items = container.querySelectorAll('.planning-item');
+                    items.forEach((item, index) => {
+                        item.setAttribute('data-item-index', index);
+
+                        const title = item.querySelector('.commitment-title');
+                        if (title) {
+                            title.textContent = `Komitmen ${index + 1}${index === 0 ? ' · wajib' : ' · opsional'}`;
+                        }
+
+                        const removeBtn = item.querySelector('.remove-commitment-btn');
+                        if (removeBtn) {
+                            if (index === 0) {
+                                removeBtn.classList.add('hidden');
+                            } else {
+                                removeBtn.classList.remove('hidden');
+                            }
+                        }
+
+                        const commitmentInput = item.querySelector('.commitment-input');
+                        const targetInput = item.querySelector('.target-input');
+                        if (commitmentInput) {
+                            if (index === 0) {
+                                commitmentInput.setAttribute('required', 'required');
+                            } else {
+                                commitmentInput.removeAttribute('required');
+                            }
+                        }
+                        if (targetInput) {
+                            if (index === 0) {
+                                targetInput.setAttribute('required', 'required');
+                            } else {
+                                targetInput.removeAttribute('required');
+                            }
+                        }
+
+                        const formElements = item.querySelectorAll('[name*="items["]');
+                        formElements.forEach(el => {
+                            el.name = el.name.replace(/items\[\d+\]/, `items[${index}]`);
+                        });
+                    });
+                }
+
+                addBtn.addEventListener('click', function () {
+                    const currentItems = container.querySelectorAll('.planning-item');
+                    const nextIndex = currentItems.length;
+                    const nextOrder = nextIndex + 1;
+
+                    let html = template.innerHTML
+                        .replace(/__INDEX__/g, nextIndex)
+                        .replace(/__ORDER__/g, nextOrder);
+
+                    const temp = document.createElement('div');
+                    temp.innerHTML = html.trim();
+                    const newItem = temp.firstElementChild;
+
+                    container.appendChild(newItem);
+
+                    if (window.Alpine) {
+                        window.Alpine.initTree(newItem);
+                    }
+
+                    updateItemIndices();
+
+                    const newCommitmentInput = newItem.querySelector('.commitment-input');
+                    if (newCommitmentInput) {
+                        newCommitmentInput.focus();
+                    }
+                });
+
+                container.addEventListener('click', function (e) {
+                    const removeBtn = e.target.closest('.remove-commitment-btn');
+                    if (! removeBtn) return;
+
+                    const item = removeBtn.closest('.planning-item');
+                    if (! item) return;
+
+                    const allItems = container.querySelectorAll('.planning-item');
+                    if (allItems.length <= 1) return;
+
+                    item.remove();
+                    updateItemIndices();
+                });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initPlanningCommitmentsManager);
+            } else {
+                initPlanningCommitmentsManager();
             }
         </script>
     @endpush

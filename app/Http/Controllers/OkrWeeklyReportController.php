@@ -151,7 +151,7 @@ class OkrWeeklyReportController extends Controller
             'week_start' => ['required', 'date'],
             'weekly_focus' => ['required', 'string', 'max:3000'],
             'support_needed' => ['nullable', 'string', 'max:3000'],
-            'items' => ['required', 'array', 'max:3'],
+            'items' => ['required', 'array', 'min:1'],
             'items.*.okr_plan_id' => ['nullable', 'integer', 'exists:okr_plans,id'],
             'items.*.commitment' => ['nullable', 'string', 'max:3000'],
             'items.*.measurable_target' => ['nullable', 'string', 'max:3000'],
