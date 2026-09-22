@@ -182,5 +182,103 @@ class SurveyResultsAndExcelTest extends TestCase
         $this->assertEquals('Ringkasan & Analisis', $sheets[0]->title());
         $this->assertEquals('Data Jawaban Responden', $sheets[1]->title());
         $this->assertEquals('Daftar Belum Mengisi', $sheets[2]->title());
+
+        $summaryRows = $sheets[0]->collection();
+
+        // 1. Verify school name is SMK TELKOM LAMPUNG
+        $this->assertEquals('SMK TELKOM LAMPUNG', $summaryRows[1][0]);
+
+        // 2. Verify participation stats numbers
+        $targetRow = $summaryRows->first(fn ($r) => $r[0] === 'Total Target Peserta');
+        $this->assertNotNull($targetRow);
+        $this->assertEquals(1, $targetRow[1]);
+        $this->assertEquals('100%', $targetRow[2]);
+
+        $submittedRow = $summaryRows->first(fn ($r) => $r[0] === 'Sudah Mengisi Survei');
+        $this->assertNotNull($submittedRow);
+        $this->assertEquals(1, $submittedRow[1]);
+        $this->assertEquals('100%', $submittedRow[2]);
+
+        $pendingRow = $summaryRows->first(fn ($r) => $r[0] === 'Belum Mengisi Survei');
+        $this->assertNotNull($pendingRow);
+        $this->assertEquals(0, $pendingRow[1]);
+        $this->assertEquals('0%', $pendingRow[2]);
+
+        // 3. Verify question answer breakdown numbers
+        $optYaRow = $summaryRows->first(fn ($r) => $r[0] === 'Ya');
+        $this->assertNotNull($optYaRow);
+        $this->assertEquals(1, $optYaRow[1]);
+        $this->assertEquals('100%', $optYaRow[2]);
+
+        $optTidakRow = $summaryRows->first(fn ($r) => $r[0] === 'Tidak');
+        $this->assertNotNull($optTidakRow);
+        $this->assertEquals(0, $optTidakRow[1]);
+        $this->assertEquals('0%', $optTidakRow[2]);
+
+        $totalResponRow = $summaryRows->first(fn ($r) => $r[0] === 'TOTAL RESPON');
+        $this->assertNotNull($totalResponRow);
+        $this->assertEquals(1, $totalResponRow[1]);
+    }
+
+    public function test_export_summary_handles_json_encoded_answers_and_multiple_targets(): void
+    {
+        $owner = User::factory()->create();
+        $target1 = User::factory()->create(['name' => 'Target 1']);
+        $target2 = User::factory()->create(['name' => 'Target 2']);
+
+        $survey = Survey::create([
+            'title' => 'Survei JSON Answer Test',
+            'created_by' => $owner->id,
+            'is_active' => true,
+        ]);
+
+        $q = $survey->questions()->create([
+            'question_text' => 'Fasilitas apa yang disukai?',
+            'type' => 'multiple_choice',
+            'options' => ['Lab Komputer', 'Perpustakaan', 'Kantin'],
+            'order' => 0,
+        ]);
+
+        $survey->targets()->sync([$target1->id, $target2->id]);
+
+        // Target 1 submits answer stored as JSON encoded string
+        $resp1 = $survey->responses()->create(['user_id' => $target1->id]);
+        $resp1->answers()->create([
+            'question_id' => $q->id,
+            'answer_value' => json_encode(['Lab Komputer']),
+        ]);
+
+        $sheet = new \App\Exports\Sheets\SurveySummarySheet($survey);
+        $rows = $sheet->collection();
+
+        // Check school name
+        $this->assertEquals('SMK TELKOM LAMPUNG', $rows[1][0]);
+
+        // Check participation metrics
+        $targetRow = $rows->first(fn ($r) => $r[0] === 'Total Target Peserta');
+        $this->assertEquals(2, $targetRow[1]);
+
+        $submittedRow = $rows->first(fn ($r) => $r[0] === 'Sudah Mengisi Survei');
+        $this->assertEquals(1, $submittedRow[1]);
+        $this->assertEquals('50%', $submittedRow[2]);
+
+        $pendingRow = $rows->first(fn ($r) => $r[0] === 'Belum Mengisi Survei');
+        $this->assertEquals(1, $pendingRow[1]);
+        $this->assertEquals('50%', $pendingRow[2]);
+
+        // Check option votes
+        $labRow = $rows->first(fn ($r) => $r[0] === 'Lab Komputer');
+        $this->assertNotNull($labRow);
+        $this->assertEquals(1, $labRow[1]);
+        $this->assertEquals('100%', $labRow[2]);
+
+        $perpusRow = $rows->first(fn ($r) => $r[0] === 'Perpustakaan');
+        $this->assertNotNull($perpusRow);
+        $this->assertEquals(0, $perpusRow[1]);
+        $this->assertEquals('0%', $perpusRow[2]);
+
+        $totalRow = $rows->first(fn ($r) => $r[0] === 'TOTAL RESPON');
+        $this->assertNotNull($totalRow);
+        $this->assertEquals(1, $totalRow[1]);
     }
 }
