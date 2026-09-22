@@ -116,7 +116,7 @@ class AbsensiGuruController extends Controller
 
         if ($existing) {
             toast('Absensi untuk jadwal ini sudah dicatat pada tanggal ' . $tanggal, 'warning');
-            return redirect()->back();
+            return redirect()->back()->with('last_jadwal_id', $request->jadwal_pelajaran_id);
         }
 
         AbsensiGuru::create([
@@ -129,7 +129,7 @@ class AbsensiGuruController extends Controller
         ]);
 
         toast('Absensi guru berhasil dicatat.', 'success');
-        return redirect()->back();
+        return redirect()->back()->with('last_jadwal_id', $request->jadwal_pelajaran_id);
     }
 
     public function update(Request $request, $id)

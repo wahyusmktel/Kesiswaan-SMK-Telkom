@@ -130,7 +130,7 @@
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 @foreach($jadwals as $jadwal)
-                                    <div class="border border-gray-200 rounded-xl p-4 hover:border-red-300 transition-colors">
+                                    <div class="border border-gray-200 rounded-xl p-4 hover:border-red-300 transition-colors" id="jadwal-card-{{ $jadwal->id }}" data-jadwal-id="{{ $jadwal->id }}">
                                         <div class="flex justify-between items-start mb-3">
                                             <div class="flex-1">
                                                 <div class="font-bold text-gray-900">{{ $jadwal->guru->nama_lengkap ?? 'Guru Tidak Tersedia' }}</div>
@@ -199,15 +199,17 @@
     @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            new TomSelect("#filterJamKe", {
-                create: false,
-                sortField: {
-                    field: "text",
-                    direction: "asc"
-                }
-            });
+    let tomSelectFilter = null;
+    document.addEventListener('DOMContentLoaded', function() {
+        tomSelectFilter = new TomSelect("#filterJamKe", {
+            create: false,
+            sortField: {
+                field: "text",
+                direction: "asc"
+            }
         });
+        restoreScrollPosition();
+    });
 
         const isPastDate = {{ $isPast ? 'true' : 'false' }};
 
@@ -362,10 +364,69 @@
         }
 
         function submitAbsensi(jadwalId, status, keterangan) {
+            // Simpan ID jadwal dan posisi scroll saat ini agar setelah submit tetap berada di tempat yang sama
+            sessionStorage.setItem('absensi_last_jadwal_id', jadwalId);
+            const scrollContainer = document.querySelector('main') || document.documentElement;
+            if (scrollContainer) {
+                sessionStorage.setItem('absensi_scroll_top', scrollContainer.scrollTop);
+            }
+            const filterJam = document.getElementById('filterJamKe');
+            if (filterJam) {
+                sessionStorage.setItem('absensi_filter_jam', filterJam.value || 'all');
+            }
+
             document.getElementById('jadwal_id').value = jadwalId;
             document.getElementById('status').value = status;
             document.getElementById('keterangan').value = keterangan;
             document.getElementById('absensiForm').submit();
+        }
+
+        function restoreScrollPosition() {
+            const serverLastJadwalId = @json(session('last_jadwal_id'));
+            const savedJadwalId = sessionStorage.getItem('absensi_last_jadwal_id') || serverLastJadwalId;
+            const savedScrollTop = sessionStorage.getItem('absensi_scroll_top');
+            const savedFilterJam = sessionStorage.getItem('absensi_filter_jam');
+
+            if (!savedJadwalId && savedScrollTop === null) return;
+
+            // Bersihkan storage agar tidak melompat pada navigasi baru/biasa
+            sessionStorage.removeItem('absensi_last_jadwal_id');
+            sessionStorage.removeItem('absensi_scroll_top');
+            sessionStorage.removeItem('absensi_filter_jam');
+
+            const applyRestore = () => {
+                // Pulihkan filter jam ke jika sebelumnya difilter
+                if (savedFilterJam && savedFilterJam !== 'all') {
+                    if (tomSelectFilter) {
+                        tomSelectFilter.setValue(savedFilterJam);
+                    } else {
+                        const filterSelect = document.getElementById('filterJamKe');
+                        if (filterSelect) {
+                            filterSelect.value = savedFilterJam;
+                        }
+                    }
+                    filterScheduleByJam(savedFilterJam);
+                }
+
+                const scrollContainer = document.querySelector('main') || document.documentElement;
+                const targetCard = savedJadwalId ? document.getElementById('jadwal-card-' + savedJadwalId) : null;
+
+                if (targetCard) {
+                    targetCard.scrollIntoView({ behavior: 'instant', block: 'center' });
+                    // Berikan feedback visual berupa highlight ring halus pada kartu yang baru saja diabsen
+                    targetCard.classList.add('ring-2', 'ring-emerald-500', 'ring-offset-2', 'transition-all', 'duration-300');
+                    setTimeout(() => {
+                        targetCard.classList.remove('ring-2', 'ring-emerald-500', 'ring-offset-2');
+                    }, 2500);
+                } else if (savedScrollTop !== null && scrollContainer) {
+                    scrollContainer.scrollTop = parseInt(savedScrollTop, 10);
+                }
+            };
+
+            // Jalankan segera dan beberapa tick singkat untuk mengantisipasi layout paint
+            applyRestore();
+            setTimeout(applyRestore, 50);
+            setTimeout(applyRestore, 150);
         }
 
         function filterScheduleByJam(selectedJam) {
