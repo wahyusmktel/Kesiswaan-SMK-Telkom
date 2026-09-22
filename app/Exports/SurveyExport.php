@@ -2,44 +2,41 @@
 
 namespace App\Exports;
 
-use App\Models\SurveyAnswer;
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithMapping;
+use App\Exports\Sheets\SurveyPendingSheet;
+use App\Exports\Sheets\SurveyResponsesSheet;
+use App\Exports\Sheets\SurveySummarySheet;
+use App\Models\Survey;
+use Maatwebsite\Excel\Concerns\Exportable;
+use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
-class SurveyExport implements FromCollection, WithHeadings, WithMapping
+class SurveyExport implements WithMultipleSheets
 {
-    protected $surveyId;
+    use Exportable;
 
-    public function __construct($surveyId)
+    protected Survey $survey;
+
+    public function __construct($survey)
     {
-        $this->surveyId = $surveyId;
+        if ($survey instanceof Survey) {
+            $this->survey = $survey;
+        } else {
+            $this->survey = Survey::with([
+                'creator',
+                'questions.answers',
+                'responses.respondent.masterSiswa.rombels.kelas',
+                'responses.respondent.roles',
+                'targets.masterSiswa.rombels.kelas',
+                'targets.roles',
+            ])->findOrFail($survey);
+        }
     }
 
-    public function collection()
-    {
-        return SurveyAnswer::whereHas('response', function ($query) {
-            $query->where('survey_id', $this->surveyId);
-        })->with(['response.respondent', 'question'])->get();
-    }
-
-    public function headings(): array
+    public function sheets(): array
     {
         return [
-            'Responden',
-            'Pertanyaan',
-            'Jawaban',
-            'Waktu Mengisi',
-        ];
-    }
-
-    public function map($answer): array
-    {
-        return [
-            $answer->response->respondent->name,
-            $answer->question->question_text,
-            $answer->answer_value,
-            $answer->created_at->format('d/m/Y H:i'),
+            new SurveySummarySheet($this->survey),
+            new SurveyResponsesSheet($this->survey),
+            new SurveyPendingSheet($this->survey),
         ];
     }
 }

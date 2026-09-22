@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\SurveyExport;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Str;
 
 class SurveyController extends Controller
@@ -192,11 +193,17 @@ class SurveyController extends Controller
         }
     }
 
-    public function results(Survey $survey)
+    public function results(Request $request, Survey $survey)
     {
         abort_unless($survey->canViewResults(auth()->user()), 403, 'Anda tidak memiliki izin untuk melihat hasil survei ini.');
 
-        $survey->load(['questions.answers', 'responses.respondent']);
+        $survey->load([
+            'questions.answers',
+            'responses.respondent.masterSiswa.rombels.kelas',
+            'responses.respondent.roles',
+            'targets.masterSiswa.rombels.kelas',
+            'targets.roles',
+        ]);
 
         $analysis = [];
         foreach ($survey->questions as $question) {
@@ -205,7 +212,7 @@ class SurveyController extends Controller
                 $counts = $answers->countBy();
 
                 $data = [];
-                foreach ($question->options as $option) {
+                foreach ($question->options ?? [] as $option) {
                     $data[$option] = $counts->get($option, 0);
                 }
                 $analysis[$question->id] = [
@@ -215,7 +222,111 @@ class SurveyController extends Controller
             }
         }
 
-        return view('pages.surveys.results', compact('survey', 'analysis'));
+        // Gabungkan seluruh target terdaftar dan responden yang telah mengisi
+        $targetUsers = $survey->targets;
+        $respondentUsers = $survey->responses->map->respondent->filter();
+        $allUsers = $targetUsers->concat($respondentUsers)->unique('id')->values();
+
+        $responsesByUserId = $survey->responses->keyBy('user_id');
+
+        $participants = $allUsers->map(function ($u) use ($responsesByUserId) {
+            $isStudent = $u->hasRole('Siswa') || $u->masterSiswa !== null;
+            $nis = $u->masterSiswa?->nis ?? '-';
+            $rombel = $u->masterSiswa?->rombels->first();
+            $kelas = $rombel?->kelas?->nama_kelas ?? ($isStudent ? 'Siswa' : ($u->roles->first()?->name ?? 'Pengguna'));
+            $response = $responsesByUserId->get($u->id);
+            $hasResponded = $response !== null;
+
+            return (object) [
+                'id' => $u->id,
+                'name' => $u->name,
+                'email' => $u->email,
+                'is_student' => $isStudent,
+                'nis' => $nis,
+                'kelas' => $kelas,
+                'has_responded' => $hasResponded,
+                'submitted_at' => $response?->created_at,
+            ];
+        });
+
+        // Widget Metrics
+        $totalTarget = $participants->count();
+        $totalSubmitted = $participants->where('has_responded', true)->count();
+        $totalPending = $participants->where('has_responded', false)->count();
+        $completionRate = $totalTarget > 0 ? round(($totalSubmitted / $totalTarget) * 100, 1) : 0;
+
+        // Daftar kelas untuk opsi filter
+        $availableClasses = $participants->pluck('kelas')->filter()->unique()->sort()->values();
+
+        // Filtering
+        $statusFilter = $request->input('status', 'all'); // 'all', 'pending', 'submitted'
+        $searchFilter = trim((string) $request->input('search', ''));
+        $kelasFilter = trim((string) $request->input('kelas', ''));
+
+        $filtered = $participants;
+
+        if ($statusFilter === 'pending') {
+            $filtered = $filtered->where('has_responded', false);
+        } elseif ($statusFilter === 'submitted') {
+            $filtered = $filtered->where('has_responded', true);
+        }
+
+        if ($kelasFilter !== '') {
+            $filtered = $filtered->where('kelas', $kelasFilter);
+        }
+
+        if ($searchFilter !== '') {
+            $s = strtolower($searchFilter);
+            $filtered = $filtered->filter(function ($p) use ($s) {
+                return str_contains(strtolower($p->name), $s)
+                    || str_contains(strtolower($p->nis), $s)
+                    || str_contains(strtolower($p->kelas), $s)
+                    || str_contains(strtolower((string) $p->email), $s);
+            });
+        }
+
+        // Sorting: Saat tab "Semua", letakkan yang belum mengisi di awal agar mudah dipantau
+        if ($statusFilter === 'all') {
+            $filtered = $filtered->sortBy(function ($p) {
+                return ($p->has_responded ? '1_' : '0_') . strtolower($p->name);
+            })->values();
+        } else {
+            $filtered = $filtered->sortBy(fn($p) => strtolower($p->name))->values();
+        }
+
+        // Paginasi: 10 item per halaman
+        $perPage = 10;
+        $page = (int) $request->input('page', 1);
+        if ($page < 1) {
+            $page = 1;
+        }
+
+        $pagedData = $filtered->slice(($page - 1) * $perPage, $perPage)->values();
+
+        $respondentsPaginator = new LengthAwarePaginator(
+            $pagedData,
+            $filtered->count(),
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]
+        );
+
+        return view('pages.surveys.results', compact(
+            'survey',
+            'analysis',
+            'respondentsPaginator',
+            'totalTarget',
+            'totalSubmitted',
+            'totalPending',
+            'completionRate',
+            'availableClasses',
+            'statusFilter',
+            'searchFilter',
+            'kelasFilter'
+        ));
     }
 
     public function destroy(Survey $survey)
