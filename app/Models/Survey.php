@@ -68,6 +68,81 @@ class Survey extends Model
         return $this->belongsToMany(User::class, 'survey_targets');
     }
 
+    public function shares()
+    {
+        return $this->hasMany(SurveyShare::class);
+    }
+
+    public function collaborators()
+    {
+        return $this->belongsToMany(User::class, 'survey_shares')
+            ->withPivot(['role', 'shared_by'])
+            ->withTimestamps();
+    }
+
+    public function isOwner(?User $user): bool
+    {
+        return $user && (int) $this->created_by === (int) $user->id;
+    }
+
+    public function canManageShares(?User $user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        return $this->isOwner($user) || $user->hasRole(['Super Admin', 'Operator']);
+    }
+
+    public function canEdit(?User $user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        if ($this->isOwner($user) || $user->hasRole(['Super Admin', 'Operator'])) {
+            return true;
+        }
+
+        return $this->shares()
+            ->where('user_id', $user->id)
+            ->where('role', 'editor')
+            ->exists();
+    }
+
+    public function canViewResults(?User $user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        if ($this->isOwner($user) || $user->hasRole(['Super Admin', 'Operator'])) {
+            return true;
+        }
+
+        return $this->shares()
+            ->where('user_id', $user->id)
+            ->whereIn('role', ['editor', 'viewer'])
+            ->exists();
+    }
+
+    public function getCollaboratorRole(?User $user): ?string
+    {
+        if (!$user) {
+            return null;
+        }
+
+        if ($this->isOwner($user)) {
+            return 'owner';
+        }
+
+        $share = $this->relationLoaded('shares')
+            ? $this->shares->firstWhere('user_id', $user->id)
+            : $this->shares()->where('user_id', $user->id)->first();
+
+        return $share?->role;
+    }
+
     /**
      * Scope untuk survei yang aktif dan dalam rentang waktu yang dibuka.
      */

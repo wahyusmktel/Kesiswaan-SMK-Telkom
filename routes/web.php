@@ -1292,6 +1292,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/{survey}/results', [\App\Http\Controllers\Survey\SurveyController::class, 'results'])->name('results');
         Route::get('/{survey}/export/excel', [\App\Http\Controllers\Survey\SurveyController::class, 'exportExcel'])->name('export.excel');
         Route::get('/{survey}/export/pdf', [\App\Http\Controllers\Survey\SurveyController::class, 'exportPdf'])->name('export.pdf');
+
+        // Survey Collaboration / Share
+        Route::get('/{survey}/shares', [\App\Http\Controllers\Survey\SurveyShareController::class, 'index'])->name('shares.index');
+        Route::post('/{survey}/shares', [\App\Http\Controllers\Survey\SurveyShareController::class, 'store'])->name('shares.store');
+        Route::patch('/{survey}/shares/{user}', [\App\Http\Controllers\Survey\SurveyShareController::class, 'update'])->name('shares.update');
+        Route::delete('/{survey}/shares/{user}', [\App\Http\Controllers\Survey\SurveyShareController::class, 'destroy'])->name('shares.destroy');
     });
 
     // Penilaian Kinerja / Kuesioner Semester

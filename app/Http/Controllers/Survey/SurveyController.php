@@ -25,6 +25,9 @@ class SurveyController extends Controller
         $user = auth()->user();
         $surveys = Survey::where(function ($query) use ($user) {
             $query->where('created_by', $user->id)
+                ->orWhereHas('shares', function ($sq) use ($user) {
+                    $sq->where('user_id', $user->id);
+                })
                 ->orWhere(function ($q) use ($user) {
                     $q->where('is_active', true)
                         ->whereHas('targets', function ($sq) use ($user) {
@@ -32,8 +35,10 @@ class SurveyController extends Controller
                         });
                 });
         })
-            ->withCount('responses')
+            ->withCount(['responses', 'shares'])
             ->with([
+                'creator:id,name,email',
+                'shares.user:id,name,email',
                 'responses' => function ($q) use ($user) {
                     $q->where('user_id', $user->id);
                 }
@@ -189,9 +194,7 @@ class SurveyController extends Controller
 
     public function results(Survey $survey)
     {
-        if ($survey->created_by !== auth()->id()) {
-            abort(403);
-        }
+        abort_unless($survey->canViewResults(auth()->user()), 403, 'Anda tidak memiliki izin untuk melihat hasil survei ini.');
 
         $survey->load(['questions.answers', 'responses.respondent']);
 
@@ -217,9 +220,12 @@ class SurveyController extends Controller
 
     public function destroy(Survey $survey)
     {
-        if ($survey->created_by !== auth()->id()) {
-            abort(403);
-        }
+        $user = auth()->user();
+        abort_unless(
+            $survey->isOwner($user) || $user->hasRole('Super Admin'),
+            403,
+            'Hanya pemilik survei atau Super Admin yang dapat menghapus survei ini.'
+        );
 
         $survey->delete();
         return redirect()->route('surveys.index')->with('success', 'Survei berhasil dihapus.');
@@ -227,18 +233,14 @@ class SurveyController extends Controller
 
     public function exportExcel(Survey $survey)
     {
-        if ($survey->created_by !== auth()->id()) {
-            abort(403);
-        }
+        abort_unless($survey->canViewResults(auth()->user()), 403, 'Anda tidak memiliki izin untuk mengunduh hasil survei ini.');
 
         return Excel::download(new SurveyExport($survey->id), 'hasil-survei-' . Str::slug($survey->title) . '.xlsx');
     }
 
     public function exportPdf(Survey $survey)
     {
-        if ($survey->created_by !== auth()->id()) {
-            abort(403);
-        }
+        abort_unless($survey->canViewResults(auth()->user()), 403, 'Anda tidak memiliki izin untuk mengunduh hasil survei ini.');
 
         $survey->load(['questions.answers', 'responses.respondent']);
 
@@ -266,9 +268,7 @@ class SurveyController extends Controller
     public function duplicate(Survey $survey)
     {
         $user = auth()->user();
-        if ($survey->created_by !== $user->id && !$user->hasRole(['Super Admin', 'Operator'])) {
-            abort(403, 'Anda tidak memiliki izin untuk menduplikasi survei ini.');
-        }
+        abort_unless($survey->canEdit($user), 403, 'Anda tidak memiliki izin untuk menduplikasi survei ini.');
 
         DB::beginTransaction();
         try {
@@ -307,9 +307,7 @@ class SurveyController extends Controller
     public function edit(Survey $survey)
     {
         $user = auth()->user();
-        if ($survey->created_by !== $user->id && !$user->hasRole(['Super Admin', 'Operator'])) {
-            abort(403);
-        }
+        abort_unless($survey->canEdit($user), 403, 'Anda tidak memiliki izin untuk mengedit survei ini.');
 
         $responsesCount = $survey->responses()->count();
         $isStudent = $user->hasRole('Siswa');
@@ -349,9 +347,7 @@ class SurveyController extends Controller
     public function update(Request $request, Survey $survey)
     {
         $user = auth()->user();
-        if ($survey->created_by !== $user->id && !$user->hasRole(['Super Admin', 'Operator'])) {
-            abort(403);
-        }
+        abort_unless($survey->canEdit($user), 403, 'Anda tidak memiliki izin untuk mengedit survei ini.');
 
         // Normalisasi field pertanyaan yang terkunci (disabled dari form input)
         if ($request->has('questions') && is_array($request->questions)) {

@@ -21,11 +21,21 @@
                         <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Edit Survei</h1>
                         <p class="text-slate-500 mt-1">{{ $survey->is_active ? 'Perbarui informasi dan kuesioner survei aktif.' : 'Perbarui kuesioner Anda sebelum dipublikasikan.' }}</p>
                     </div>
-                    <div class="flex space-x-3">
+                    <div class="flex items-center space-x-3">
                         <input type="hidden" name="is_active" id="is_active_input"
                             value="{{ $survey->is_active ? 1 : 0 }}">
                         <a href="{{ route('surveys.index') }}"
                             class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-800 transition-colors flex items-center">Batal</a>
+                        @if($survey->canManageShares(auth()->user()))
+                            <button type="button" @click="$dispatch('open-survey-share', { surveyId: {{ $survey->id }} })"
+                                class="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl border border-indigo-200 transition-all duration-200 flex items-center space-x-1.5 text-sm shadow-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                                </svg>
+                                <span>Bagikan</span>
+                            </button>
+                        @endif
                         <button type="submit" @click="setDraft($event)"
                             class="px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all duration-200">
                             Simpan Draft
@@ -580,4 +590,6 @@
             };
         }
     </script>
+
+    @include('pages.surveys.partials.share-modal')
 </x-app-layout>
