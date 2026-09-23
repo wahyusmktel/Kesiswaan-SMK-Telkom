@@ -450,6 +450,19 @@
 
     @if(session('active_role') == 'Super Admin')
     <li>
+        <a href="{{ route('hubin.industri.index') }}" title="Kelola Data Industri Kerjasama Sekolah"
+            class="nav-link {{ request()->routeIs('hubin.industri.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+            </div>
+            <span class="nav-text">Industri Kerjasama</span>
+            <span class="nav-badge bg-blue-100 text-blue-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">HUBIN</span>
+        </a>
+    </li>
+    <li>
         <a href="{{ route('super-admin.sso-applications.index') }}" title="Aplikasi SSO SISFO"
             class="nav-link {{ request()->routeIs('super-admin.sso-applications.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
             <div class="nav-icon-container">
@@ -3154,6 +3167,26 @@
     @endif
     @endrole
 @endcan
+
+{{-- ============================================================ --}}
+{{-- ROLE: HUBIN SINERGI UP DAN ALUMNI --}}
+{{-- ============================================================ --}}
+@if(session('active_role') == 'Hubin Sinergi UP dan Alumni')
+    <div class="section-title">Hubungan Industri</div>
+    <li>
+        <a href="{{ route('hubin.industri.index') }}" title="Kelola Data Industri Kerjasama Sekolah"
+            class="nav-link {{ request()->routeIs('hubin.industri.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+            </div>
+            <span class="nav-text">Industri Kerjasama</span>
+            <span class="nav-badge bg-emerald-100 text-emerald-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">MITRA</span>
+        </a>
+    </li>
+@endif
 
 {{-- ============================================================ --}}
 {{-- MENU UMUM --}}
