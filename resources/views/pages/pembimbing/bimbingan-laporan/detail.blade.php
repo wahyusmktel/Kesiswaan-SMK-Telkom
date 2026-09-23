@@ -92,7 +92,7 @@
                 <div class="border-t md:border-t-0 md:border-l border-gray-100 md:pl-6">
                     <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Periode Penempatan</div>
                     <div class="font-bold text-gray-900 text-sm mt-0.5">
-                        {{ $penempatan->tanggal_mulai?->translatedFormat('d M Y') ?? '-' }} s/d {{ $penempatan->tanggal_selesai?->translatedFormat('d M Y') ?? '-' }}
+                        {{ $penempatan->tanggal_mulai ? \Carbon\Carbon::parse($penempatan->tanggal_mulai)->translatedFormat('d M Y') : '-' }} s/d {{ $penempatan->tanggal_selesai ? \Carbon\Carbon::parse($penempatan->tanggal_selesai)->translatedFormat('d M Y') : '-' }}
                     </div>
                     <div class="text-xs text-emerald-600 font-semibold mt-0.5 uppercase tracking-wider">{{ $penempatan->status }}</div>
                 </div>
@@ -290,7 +290,7 @@
                                                 {{ $tahap->file_nama_asli ?? 'Dokumen PDF' }}
                                             </span>
                                             <span>Ukuran: {{ $tahap->file_size_formatted }}</span>
-                                            <span>Unggah: {{ $tahap->diunggah_at?->translatedFormat('d M Y H:i') }}</span>
+                                            <span>Unggah: {{ $tahap->diunggah_at ? \Carbon\Carbon::parse($tahap->diunggah_at)->translatedFormat('d M Y H:i') : '-' }}</span>
                                         @else
                                             <span class="text-gray-400 italic">Siswa belum mengunggah dokumen pada bab ini</span>
                                         @endif

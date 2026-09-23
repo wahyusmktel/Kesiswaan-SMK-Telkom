@@ -20,6 +20,27 @@ class PrakerinPenempatan extends Model
         'status',
     ];
 
+    protected $casts = [
+        'tanggal_mulai' => 'date',
+        'tanggal_selesai' => 'date',
+    ];
+
+    public function getTanggalMulaiFormattedAttribute(): string
+    {
+        if (! $this->tanggal_mulai) return '-';
+        return $this->tanggal_mulai instanceof \Carbon\Carbon
+            ? $this->tanggal_mulai->translatedFormat('d M Y')
+            : \Carbon\Carbon::parse($this->tanggal_mulai)->translatedFormat('d M Y');
+    }
+
+    public function getTanggalSelesaiFormattedAttribute(): string
+    {
+        if (! $this->tanggal_selesai) return '-';
+        return $this->tanggal_selesai instanceof \Carbon\Carbon
+            ? $this->tanggal_selesai->translatedFormat('d M Y')
+            : \Carbon\Carbon::parse($this->tanggal_selesai)->translatedFormat('d M Y');
+    }
+
     public function siswa()
     {
         return $this->belongsTo(MasterSiswa::class, 'master_siswa_id');

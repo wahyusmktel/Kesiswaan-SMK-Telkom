@@ -174,7 +174,7 @@
                         <div class="flex flex-wrap items-center gap-4 mt-4 text-xs text-gray-500">
                             <span class="flex items-center gap-1">
                                 <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                Disetujui pada: {{ $laporan->judul_disetujui_at?->translatedFormat('d F Y H:i') ?? '-' }}
+                                Disetujui pada: {{ $laporan->judul_disetujui_at ? \Carbon\Carbon::parse($laporan->judul_disetujui_at)->translatedFormat('d F Y H:i') : '-' }}
                             </span>
                             @if ($laporan->catatan_pembimbing)
                                 <span class="flex items-center gap-1 text-emerald-700 font-medium">
@@ -196,7 +196,7 @@
                                 Judul Sedang Dalam Proses Persetujuan
                             </span>
                             <span class="text-[11px] font-semibold text-amber-700 bg-amber-100/90 px-3 py-1 rounded-full w-fit">
-                                Diajukan pada: {{ $laporan->judul_diajukan_at?->translatedFormat('d F Y H:i') ?? '-' }}
+                                Diajukan pada: {{ $laporan->judul_diajukan_at ? \Carbon\Carbon::parse($laporan->judul_diajukan_at)->translatedFormat('d F Y H:i') : '-' }}
                             </span>
                         </div>
 

@@ -108,7 +108,7 @@
 
                     <div class="pt-3 border-t border-gray-100 text-[11px] text-gray-400 space-y-1">
                         <div>Pembimbing: <span class="font-semibold text-gray-700">{{ $tahap->reviewer?->name ?? 'Guru Pembimbing' }}</span></div>
-                        <div>Waktu Review: <span class="font-semibold text-gray-700">{{ $tahap->direview_at?->translatedFormat('d F Y, H:i') ?? '-' }}</span></div>
+                        <div>Waktu Review: <span class="font-semibold text-gray-700">{{ $tahap->direview_at ? \Carbon\Carbon::parse($tahap->direview_at)->translatedFormat('d F Y, H:i') : '-' }}</span></div>
                     </div>
                 </div>
 
