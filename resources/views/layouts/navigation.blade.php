@@ -476,6 +476,19 @@
         </a>
     </li>
     <li>
+        <a href="{{ route('monitoring.bimbingan-laporan.index') }}" title="Monitoring Bimbingan Laporan Prakerin"
+            class="nav-link {{ request()->routeIs('monitoring.bimbingan-laporan.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l3.414 3.414A1 1 0 0117 7.414V19a2 2 0 01-2 2z" />
+                </svg>
+            </div>
+            <span class="nav-text">Monitoring Bimbingan PKL</span>
+            <span class="nav-badge bg-blue-100 text-blue-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">PKL</span>
+        </a>
+    </li>
+    <li>
         <a href="{{ route('super-admin.sso-applications.index') }}" title="Aplikasi SSO SISFO"
             class="nav-link {{ request()->routeIs('super-admin.sso-applications.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
             <div class="nav-icon-container">
@@ -625,6 +638,19 @@
                 </svg>
             </div>
             <span class="nav-text">Perkembangan Unit</span>
+        </a>
+    </li>
+    <li>
+        <a href="{{ route('monitoring.bimbingan-laporan.index') }}" title="Monitoring Bimbingan Laporan Prakerin"
+            class="nav-link {{ request()->routeIs('monitoring.bimbingan-laporan.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l3.414 3.414A1 1 0 0117 7.414V19a2 2 0 01-2 2z" />
+                </svg>
+            </div>
+            <span class="nav-text">Monitoring Laporan Prakerin</span>
+            <span class="nav-badge bg-rose-100 text-rose-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">PKL</span>
         </a>
     </li>
 
@@ -782,7 +808,7 @@
         </a>
     </li>
 
-    @if (Auth::user()->masterSiswa?->penempatan()->where('status', 'aktif')->exists())
+    @if (Auth::user()->masterSiswa?->penempatan()->exists())
         <li>
             <a href="{{ route('siswa.jurnal-prakerin.index') }}"
                 class="nav-link {{ request()->routeIs("siswa.jurnal-prakerin.*") ? "nav-link-active" : "nav-link-inactive" }}">
@@ -801,6 +827,17 @@
                             d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 4v-4z" />
                     </svg></div>
                 <span class="nav-text">Konsultasi PKL</span>
+            </a>
+        </li>
+        <li>
+            <a href="{{ route('siswa.bimbingan-laporan.index') }}"
+                class="nav-link {{ request()->routeIs("siswa.bimbingan-laporan.*") ? "nav-link-active" : "nav-link-inactive" }}">
+                <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg></div>
+                <span class="nav-text">Bimbingan Laporan Prakerin</span>
+                <span class="nav-badge bg-rose-100 text-rose-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">PKL</span>
             </a>
         </li>
         <li>
@@ -948,6 +985,17 @@
             </a>
         </li>
     @endcan
+    <li>
+        <a href="{{ route('monitoring.bimbingan-laporan.index') }}" title="Monitoring Bimbingan Laporan Prakerin Siswa Binaan"
+            class="nav-link {{ request()->routeIs('monitoring.bimbingan-laporan.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l3.414 3.414A1 1 0 0117 7.414V19a2 2 0 01-2 2z" />
+                </svg></div>
+            <span class="nav-text">Monitoring Bimbingan PKL</span>
+            <span class="nav-badge bg-rose-100 text-rose-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">KELAS</span>
+        </a>
+    </li>
     @can('view coaching analytics')
         <li>
             <a href="{{ route('coaching-analytics.index') }}"
@@ -1167,6 +1215,17 @@
                                     d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z" />
                             </svg></div>
                         <span class="nav-text">Bimbingan Laporan</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('pembimbing-prakerin.bimbingan-laporan.index') }}"
+                        class="nav-link {{ request()->routeIs("pembimbing-prakerin.bimbingan-laporan.*") ? "nav-link-active" : "nav-link-inactive" }}">
+                        <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg></div>
+                        <span class="nav-text">Bimbingan Laporan Prakerin</span>
+                        <span class="nav-badge bg-rose-100 text-rose-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">PKL</span>
                     </a>
                 </li>
             @endif
@@ -1982,6 +2041,19 @@
                         <span class="nav-text">Pengumuman Kelulusan</span>
                     </a>
                 </li>
+                <li>
+                    <a href="{{ route('monitoring.bimbingan-laporan.index') }}" title="Monitoring Bimbingan Laporan Prakerin"
+                        class="nav-link {{ request()->routeIs('monitoring.bimbingan-laporan.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                        <div class="nav-icon-container">
+                            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l3.414 3.414A1 1 0 0117 7.414V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+                        <span class="nav-text">Monitoring Bimbingan PKL</span>
+                        <span class="nav-badge bg-rose-100 text-rose-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">PKL</span>
+                    </a>
+                </li>
     @endif
         @endrole
 @endcanany
@@ -2719,6 +2791,19 @@
                 <span class="nav-text">Kartu Pelajar</span>
             </a>
         </li>
+        <li>
+            <a href="{{ route('monitoring.bimbingan-laporan.index') }}" title="Monitoring Bimbingan Laporan Prakerin"
+                class="nav-link {{ request()->routeIs('monitoring.bimbingan-laporan.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                <div class="nav-icon-container">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l3.414 3.414A1 1 0 0117 7.414V19a2 2 0 01-2 2z" />
+                    </svg>
+                </div>
+                <span class="nav-text">Monitoring Bimbingan PKL</span>
+                <span class="nav-badge bg-rose-100 text-rose-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">PKL</span>
+            </a>
+        </li>
 
         {{-- Dropdown Transkrip Nilai --}}
         <li class="submenu-dropdown"
@@ -3209,6 +3294,19 @@
                 </svg>
             </div>
             <span class="nav-text">Rombel PKL</span>
+            <span class="nav-badge bg-emerald-100 text-emerald-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">PKL</span>
+        </a>
+    </li>
+    <li>
+        <a href="{{ route('monitoring.bimbingan-laporan.index') }}" title="Monitoring Bimbingan Laporan Prakerin"
+            class="nav-link {{ request()->routeIs('monitoring.bimbingan-laporan.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l3.414 3.414A1 1 0 0117 7.414V19a2 2 0 01-2 2z" />
+                </svg>
+            </div>
+            <span class="nav-text">Monitoring Bimbingan PKL</span>
             <span class="nav-badge bg-emerald-100 text-emerald-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">PKL</span>
         </a>
     </li>

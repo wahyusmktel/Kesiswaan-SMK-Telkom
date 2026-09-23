@@ -47,4 +47,9 @@ class PrakerinPenempatan extends Model
     {
         return $this->hasMany(PrakerinAbsensi::class);
     }
+
+    public function bimbinganLaporan()
+    {
+        return $this->hasOne(PrakerinBimbinganLaporan::class, 'prakerin_penempatan_id');
+    }
 }

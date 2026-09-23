@@ -601,6 +601,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/prakerin-laporan', [\App\Http\Controllers\Prakerin\LaporanBimbinganController::class, 'store'])->name('prakerin-laporan.store');
         Route::get('/prakerin-laporan/{laporan}/file', [\App\Http\Controllers\Prakerin\LaporanBimbinganController::class, 'file'])->name('prakerin-laporan.file');
 
+        // Route Bimbingan Laporan Prakerin Baru (Tahapan, Viewer & Berita Acara QR)
+        Route::prefix('bimbingan-laporan')->name('bimbingan-laporan.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Siswa\BimbinganLaporanController::class, 'index'])->name('index');
+            Route::post('/ajukan-judul', [\App\Http\Controllers\Siswa\BimbinganLaporanController::class, 'ajukanJudul'])->name('ajukan-judul');
+            Route::post('/tahap', [\App\Http\Controllers\Siswa\BimbinganLaporanController::class, 'tambahTahap'])->name('tambah-tahap');
+            Route::delete('/tahap/{tahap}', [\App\Http\Controllers\Siswa\BimbinganLaporanController::class, 'hapusTahap'])->name('hapus-tahap');
+            Route::post('/tahap/{tahap}/upload', [\App\Http\Controllers\Siswa\BimbinganLaporanController::class, 'uploadDokumen'])->name('upload-dokumen');
+            Route::get('/tahap/{tahap}/viewer', [\App\Http\Controllers\Siswa\BimbinganLaporanController::class, 'reviewViewer'])->name('viewer');
+            Route::get('/tahap/{tahap}/berita-acara', [\App\Http\Controllers\Siswa\BimbinganLaporanController::class, 'unduhBeritaAcara'])->name('berita-acara');
+            Route::get('/riwayat-pdf', [\App\Http\Controllers\Siswa\BimbinganLaporanController::class, 'unduhRiwayatPdf'])->name('riwayat-pdf');
+        });
+
         // Route BK Siswa
         Route::get('/bk', [\App\Http\Controllers\Siswa\BKController::class, 'index'])->name('bk.index');
         Route::post('/bk/jadwal', [\App\Http\Controllers\Siswa\BKController::class, 'storeJadwal'])->name('bk.jadwal.store');
@@ -1005,7 +1017,33 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/laporan', [\App\Http\Controllers\Prakerin\LaporanBimbinganController::class, 'index'])->name('laporan.index');
         Route::get('/laporan/{laporan}/file', [\App\Http\Controllers\Prakerin\LaporanBimbinganController::class, 'file'])->name('laporan.file');
         Route::patch('/laporan/{laporan}', [\App\Http\Controllers\Prakerin\LaporanBimbinganController::class, 'update'])->name('laporan.update');
+
+        // Bimbingan Laporan Prakerin Baru (Pembimbing: Validasi TTD Digital, Editor Anotasi, Berita Acara QR, ACC Final)
+        Route::prefix('bimbingan-laporan')->name('bimbingan-laporan.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'index'])->name('index');
+            Route::get('/detail/{laporan}', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'detailSiswa'])->name('detail');
+            Route::post('/review-judul/{laporan}', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'reviewJudul'])->name('review-judul');
+            Route::post('/tahap/{laporan}', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'tambahTahap'])->name('tambah-tahap');
+            Route::delete('/tahap/{tahap}', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'hapusTahap'])->name('hapus-tahap');
+            Route::get('/tahap/{tahap}/annotator', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'editorAnotasi'])->name('annotator');
+            Route::post('/tahap/{tahap}/anotasi', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'simpanAnotasi'])->name('simpan-anotasi');
+            Route::delete('/anotasi/{anotasi}', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'hapusAnotasi'])->name('hapus-anotasi');
+            Route::post('/tahap/{tahap}/selesaikan-review', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'selesaikanReview'])->name('selesaikan-review');
+            Route::post('/acc-final/{laporan}', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'accFinal'])->name('acc-final');
+            Route::get('/tahap/{tahap}/berita-acara', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'unduhBeritaAcara'])->name('berita-acara');
+            Route::get('/riwayat-pdf/{laporan}', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'unduhRiwayatPdf'])->name('riwayat-pdf');
+        });
     });
+
+    // Grup Route Monitoring Bimbingan Laporan Prakerin (Hubin, Super Admin, Operator, Wali Kelas, Kepala Sekolah, Kurikulum)
+    Route::middleware(['auth', 'role:Hubin Sinergi UP dan Alumni|Super Admin|Operator|Wali Kelas|Kepala Sekolah|Kurikulum'])
+        ->prefix('monitoring/bimbingan-laporan')
+        ->name('monitoring.bimbingan-laporan.')
+        ->group(function () {
+            Route::get('/', [\App\Http\Controllers\Monitoring\BimbinganLaporanMonitoringController::class, 'index'])->name('index');
+            Route::get('/review-terakhir/{laporan}', [\App\Http\Controllers\Monitoring\BimbinganLaporanMonitoringController::class, 'lihatReviewTerakhir'])->name('review-terakhir');
+            Route::get('/riwayat-pdf/{laporan}', [\App\Http\Controllers\Monitoring\BimbinganLaporanMonitoringController::class, 'unduhRiwayatPdf'])->name('riwayat-pdf');
+        });
 
     // Grup Route untuk Super Admin
     Route::middleware(['role:Super Admin'])->prefix('super-admin')->name('super-admin.')->group(function () {
