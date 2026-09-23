@@ -1,31 +1,8 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-            <div>
-                <div class="flex items-center gap-2">
-                    <span class="inline-flex items-center rounded-lg bg-red-100 px-2.5 py-0.5 text-xs font-bold text-red-700">
-                        HUBIN SINERGI UP & ALUMNI
-                    </span>
-                    <span class="inline-flex items-center rounded-lg bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">
-                        Kemitraan DUDI
-                    </span>
-                </div>
-                <h2 class="mt-1 text-2xl font-black text-slate-900 leading-tight">
-                    Data Industri Kerjasama
-                </h2>
-                <p class="text-xs text-slate-500">
-                    Kelola data kemitraan dunia usaha dan dunia industri (DUDI) yang bekerja sama dengan SMK Telkom Lampung.
-                </p>
-            </div>
-            <div class="flex items-center gap-3">
-                <button type="button" @click="$dispatch('open-create-modal')"
-                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm shadow-red-200 transition-all hover:bg-red-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500/20 active:scale-95">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
-                    </svg>
-                    Tambah Mitra Industri
-                </button>
-            </div>
+        <div>
+            <h2 class="font-bold text-base text-slate-800 leading-tight">Industri Kerjasama</h2>
+            <p class="text-xs text-slate-500">Kemitraan Dunia Usaha & Dunia Industri (DUDI)</p>
         </div>
     </x-slot>
 
@@ -44,6 +21,31 @@
         }
     }" @open-create-modal.window="createModalOpen = true">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
+
+            <!-- Page Title & Action Banner -->
+            <div class="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <div class="flex items-center gap-2 mb-1.5">
+                        <span class="inline-flex items-center rounded-lg bg-red-50 border border-red-100 px-2.5 py-0.5 text-xs font-bold text-red-700">
+                            HUBIN SINERGI UP & ALUMNI
+                        </span>
+                        <span class="inline-flex items-center rounded-lg bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">
+                            Kemitraan DUDI
+                        </span>
+                    </div>
+                    <h1 class="text-2xl font-black text-slate-900 tracking-tight">Data Industri Kerjasama</h1>
+                    <p class="text-xs text-slate-500 mt-0.5">Kelola data kemitraan dunia usaha dan dunia industri (DUDI) yang bekerja sama dengan SMK Telkom Lampung.</p>
+                </div>
+                <div class="flex-shrink-0">
+                    <button type="button" @click="createModalOpen = true"
+                        class="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm shadow-red-200 transition-all hover:bg-red-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500/20 active:scale-95">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Tambah Mitra Industri
+                    </button>
+                </div>
+            </div>
 
             <!-- Flash Alert -->
             @if(session('success'))
@@ -223,6 +225,11 @@
                         <h3 class="text-base font-bold text-slate-900">Daftar Mitra Industri Kerjasama</h3>
                         <p class="text-xs text-slate-500">Menampilkan {{ $industriList->firstItem() ?? 0 }} - {{ $industriList->lastItem() ?? 0 }} dari total {{ $industriList->total() }} industri mitra</p>
                     </div>
+                    <button type="button" @click="createModalOpen = true"
+                        class="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700 hover:bg-red-100 transition shadow-sm">
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                        + Tambah Mitra
+                    </button>
                 </div>
 
                 <div class="overflow-x-auto">
