@@ -102,6 +102,16 @@ class BimbinganLaporanController extends Controller
 
         $laporan = $this->getLaporanSiswa();
 
+        if ($laporan->status_judul === 'disetujui') {
+            Alert::warning('Judul Sudah Disetujui', 'Judul laporan sudah disetujui oleh pembimbing dan tidak dapat diubah lagi.');
+            return back();
+        }
+
+        if ($laporan->status_judul === 'diajukan') {
+            Alert::info('Sedang Dalam Proses', 'Judul laporan Anda saat ini sedang dalam proses persetujuan oleh guru pembimbing.');
+            return back();
+        }
+
         $laporan->update([
             'judul_laporan' => trim($validated['judul_laporan']),
             'deskripsi_judul' => $validated['deskripsi_judul'] ? trim($validated['deskripsi_judul']) : null,

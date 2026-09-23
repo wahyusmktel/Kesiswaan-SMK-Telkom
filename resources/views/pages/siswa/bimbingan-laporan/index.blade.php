@@ -103,7 +103,13 @@
                         @if (!$laporan || $laporan->judul_status === 'draft')
                             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">Belum Mengajukan Judul</span>
                         @elseif ($laporan->judul_status === 'diajukan')
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">Menunggu Review Judul</span>
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
+                                <span class="relative flex h-2 w-2">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                                </span>
+                                Proses Persetujuan Judul
+                            </span>
                         @elseif ($laporan->judul_status === 'ditolak')
                             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-800">Judul Perlu Revisi</span>
                         @elseif ($laporan->status === 'selesai')
@@ -136,8 +142,11 @@
                     </span>
                 @elseif ($laporan && $laporan->judul_status === 'diajukan')
                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
-                        <svg class="w-4 h-4 text-amber-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                        Menunggu Review Guru
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                        </span>
+                        Proses Persetujuan Pembimbing
                     </span>
                 @elseif ($laporan && $laporan->judul_status === 'ditolak')
                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800">
@@ -175,8 +184,53 @@
                             @endif
                         </div>
                     </div>
+                @elseif ($laporan && $laporan->judul_status === 'diajukan')
+                    {{-- Tampilan Saat Judul Sedang Dalam Proses Persetujuan Pembimbing --}}
+                    <div class="bg-gradient-to-r from-amber-50/80 via-orange-50/40 to-yellow-50/30 border border-amber-200 rounded-2xl p-6">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                            <span class="text-xs font-black text-amber-800 uppercase tracking-wider flex items-center gap-2">
+                                <span class="relative flex h-2.5 w-2.5">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+                                </span>
+                                Judul Sedang Dalam Proses Persetujuan
+                            </span>
+                            <span class="text-[11px] font-semibold text-amber-700 bg-amber-100/90 px-3 py-1 rounded-full w-fit">
+                                Diajukan pada: {{ $laporan->judul_diajukan_at?->translatedFormat('d F Y H:i') ?? '-' }}
+                            </span>
+                        </div>
+
+                        <div class="bg-white/90 p-4 rounded-xl border border-amber-200/70 shadow-xs">
+                            <div class="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Judul Laporan yang Diajukan:</div>
+                            <h4 class="font-black text-gray-900 text-lg leading-snug">"{{ $laporan->judul }}"</h4>
+                            @if ($laporan->abstrak_rencana)
+                                <div class="mt-2.5 pt-2.5 border-t border-gray-100 text-xs text-gray-600 leading-relaxed">
+                                    <span class="font-bold text-gray-700">Ringkasan / Rencana Penulisan:</span>
+                                    <p class="mt-0.5">{{ $laporan->abstrak_rencana }}</p>
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
+                            <div class="flex items-center gap-2 text-gray-600">
+                                <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                <span>Guru Pembimbing Internal: <strong class="text-gray-900">{{ $penempatan->guruPembimbing?->nama ?? 'Guru Pembimbing' }}</strong></span>
+                            </div>
+
+                            <button type="button" disabled
+                                class="cursor-not-allowed inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gray-100 border border-gray-200 text-gray-400 font-bold text-xs shadow-none">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                Judul Sedang Ditinjau Pembimbing
+                            </button>
+                        </div>
+
+                        <div class="mt-3.5 p-3 rounded-xl bg-amber-100/60 border border-amber-200/50 flex items-start gap-2.5 text-xs text-amber-900">
+                            <svg class="w-4 h-4 text-amber-700 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <span>Judul Anda telah masuk ke sistem antrean guru pembimbing. Form penyusunan dan pengunggahan bab laporan akan terbuka otomatis setelah judul disetujui.</span>
+                        </div>
+                    </div>
                 @else
-                    {{-- Form Ajukan / Perbaiki Judul --}}
+                    {{-- Form Ajukan / Perbaiki Judul (Saat Draft atau Ditolak) --}}
                     @if ($laporan && $laporan->judul_status === 'ditolak')
                         <div class="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800">
                             <div class="flex items-start gap-3">
@@ -214,12 +268,7 @@
                                 class="w-full text-sm rounded-xl border-gray-300 focus:border-rose-500 focus:ring-rose-500 shadow-sm transition">{{ old('abstrak_rencana', $laporan?->abstrak_rencana) }}</textarea>
                         </div>
 
-                        <div class="flex items-center justify-between pt-2">
-                            <div class="text-xs text-gray-500">
-                                @if ($laporan && $laporan->judul_status === 'diajukan')
-                                    <span class="text-amber-600 font-medium">Judul sedang dalam antrean review. Anda masih bisa mengedit jika diperlukan sebelum disetujui.</span>
-                                @endif
-                            </div>
+                        <div class="flex items-center justify-end pt-2">
                             <button type="submit"
                                 class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 text-white font-bold text-xs hover:bg-rose-700 shadow-md shadow-rose-200 transition">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>

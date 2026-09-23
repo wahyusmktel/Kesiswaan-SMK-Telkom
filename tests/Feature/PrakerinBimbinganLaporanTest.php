@@ -148,6 +148,28 @@ class PrakerinBimbinganLaporanTest extends TestCase
             'aksi' => 'ajukan_judul',
             'user_id' => $this->userSiswa->id,
         ]);
+
+        // Cek halaman siswa menampilkan status Proses Persetujuan dan tombol disabled
+        $indexResponse = $this->actingAs($this->userSiswa)
+            ->withSession(['active_role' => 'Siswa'])
+            ->get(route('siswa.bimbingan-laporan.index'));
+
+        $indexResponse->assertOk();
+        $indexResponse->assertSee('Proses Persetujuan');
+        $indexResponse->assertSee('Judul Sedang Ditinjau Pembimbing');
+        $indexResponse->assertDontSee('Laporan PKL');
+
+        // Pengajuan ulang saat status masih 'diajukan' tidak diperbolehkan
+        $reResponse = $this->actingAs($this->userSiswa)
+            ->withSession(['active_role' => 'Siswa'])
+            ->post(route('siswa.bimbingan-laporan.ajukan-judul'), [
+                'judul' => 'Judul Baru Yang Mau Ditimpa',
+            ]);
+
+        $reResponse->assertRedirect();
+        $this->assertDatabaseMissing('prakerin_bimbingan_laporans', [
+            'judul_laporan' => 'Judul Baru Yang Mau Ditimpa',
+        ]);
     }
 
     public function test_pembimbing_can_approve_and_reject_judul_with_mandatory_notes(): void

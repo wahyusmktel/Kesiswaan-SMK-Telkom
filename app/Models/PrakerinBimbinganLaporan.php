@@ -147,4 +147,14 @@ class PrakerinBimbinganLaporan extends Model
     {
         return $this->judul_reviewed_at;
     }
+
+    public function getJudulStatusAttribute(): string
+    {
+        return $this->attributes['status_judul'] ?? 'draft';
+    }
+
+    public function getStatusJudulAttribute($value): string
+    {
+        return $value ?? 'draft';
+    }
 }
