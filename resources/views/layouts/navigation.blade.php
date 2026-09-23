@@ -463,6 +463,19 @@
         </a>
     </li>
     <li>
+        <a href="{{ route('hubin.rombel-pkl.index') }}" title="Kelola Rombel PKL & Mapping Siswa"
+            class="nav-link {{ request()->routeIs('hubin.rombel-pkl.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+            </div>
+            <span class="nav-text">Rombel PKL</span>
+            <span class="nav-badge bg-blue-100 text-blue-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">PKL</span>
+        </a>
+    </li>
+    <li>
         <a href="{{ route('super-admin.sso-applications.index') }}" title="Aplikasi SSO SISFO"
             class="nav-link {{ request()->routeIs('super-admin.sso-applications.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
             <div class="nav-icon-container">
@@ -3184,6 +3197,19 @@
             </div>
             <span class="nav-text">Industri Kerjasama</span>
             <span class="nav-badge bg-emerald-100 text-emerald-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">MITRA</span>
+        </a>
+    </li>
+    <li>
+        <a href="{{ route('hubin.rombel-pkl.index') }}" title="Kelola Rombel PKL & Mapping Siswa"
+            class="nav-link {{ request()->routeIs('hubin.rombel-pkl.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+            </div>
+            <span class="nav-text">Rombel PKL</span>
+            <span class="nav-badge bg-emerald-100 text-emerald-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">PKL</span>
         </a>
     </li>
 @endif

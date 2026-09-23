@@ -985,6 +985,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware(['auth', 'role:Hubin Sinergi UP dan Alumni|Super Admin'])->prefix('hubin')->name('hubin.')->group(function () {
         Route::resource('industri', \App\Http\Controllers\Hubin\IndustriKerjasamaController::class)->except(['create', 'show', 'edit']);
         Route::get('industri/{industri}/mou-download', [\App\Http\Controllers\Hubin\IndustriKerjasamaController::class, 'downloadMou'])->name('industri.download-mou');
+
+        // Rombel PKL & Mapping Siswa Kelas XII
+        Route::resource('rombel-pkl', \App\Http\Controllers\Hubin\RombelPklController::class)
+            ->except(['create', 'show', 'edit'])
+            ->parameters(['rombel-pkl' => 'rombel']);
+        Route::get('rombel-pkl/{rombel}/mapping', [\App\Http\Controllers\Hubin\RombelPklController::class, 'mapping'])->name('rombel-pkl.mapping');
+        Route::post('rombel-pkl/{rombel}/mapping', [\App\Http\Controllers\Hubin\RombelPklController::class, 'storeMapping'])->name('rombel-pkl.mapping.store');
+        Route::delete('rombel-pkl/{rombel}/mapping/{penempatan}', [\App\Http\Controllers\Hubin\RombelPklController::class, 'removeMapping'])->name('rombel-pkl.mapping.destroy');
     });
 
     // Grup Route untuk Guru Pembimbing (bisa diakses Guru Kelas)
