@@ -8,6 +8,7 @@ use App\Models\PrakerinBimbinganAnotasi;
 use App\Models\PrakerinBimbinganLaporan;
 use App\Models\PrakerinBimbinganTahap;
 use App\Models\PrakerinPenempatan;
+use App\Models\PrakerinRombel;
 use App\Models\UserDigitalSignature;
 use App\Services\PrakerinBeritaAcaraService;
 use Illuminate\Http\Request;
@@ -65,6 +66,11 @@ class BimbinganLaporanController extends Controller
             });
         }
 
+        // Filter Rombel PKL
+        if ($request->filled('rombel_id')) {
+            $penempatanQuery->where('prakerin_rombel_id', $request->rombel_id);
+        }
+
         // Filter Status Judul
         if ($request->filled('status_judul') && $request->status_judul !== 'all') {
             $penempatanQuery->whereHas('bimbinganLaporan', function ($q) use ($request) {
@@ -80,6 +86,23 @@ class BimbinganLaporanController extends Controller
         }
 
         $penempatans = $penempatanQuery->latest()->paginate(12)->withQueryString();
+
+        // Ambil daftar Rombel PKL untuk dropdown filter
+        if ($isSuperAdmin) {
+            $rombels = PrakerinRombel::with('industri')->where('status', 'aktif')->orderBy('nama_rombel')->get();
+        } else {
+            $rombels = PrakerinRombel::with('industri')
+                ->where('status', 'aktif')
+                ->where(function ($q) use ($guru) {
+                    $q->where('pembimbing_internal_id', $guru->id)
+                        ->orWhereHas('pembimbingInternal', fn ($sub) => $sub->where('master_guru_id', $guru->id))
+                        ->orWhereIn('id', function ($sub) use ($guru) {
+                            $sub->select('prakerin_rombel_id')->from('prakerin_penempatans')->where('master_guru_id', $guru->id);
+                        });
+                })
+                ->orderBy('nama_rombel')
+                ->get();
+        }
 
         // Pastikan setiap penempatan memiliki record bimbingan laporan
         foreach ($penempatans as $penempatan) {
@@ -110,6 +133,7 @@ class BimbinganLaporanController extends Controller
 
         return view('pages.pembimbing.bimbingan-laporan.index', compact(
             'penempatans',
+            'rombels',
             'hasTtdDigital',
             'isSignatureReady',
             'sig',

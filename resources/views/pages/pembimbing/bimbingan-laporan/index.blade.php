@@ -145,7 +145,7 @@
                     <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Filter Rombel PKL</label>
                     <select name="rombel_id" class="w-full text-xs rounded-xl border-gray-300 focus:border-rose-500 focus:ring-rose-500 shadow-sm transition">
                         <option value="">Semua Rombel PKL Bimbingan</option>
-                        @foreach ($rombels as $r)
+                        @foreach (($rombels ?? []) as $r)
                             <option value="{{ $r->id }}" {{ request('rombel_id') == $r->id ? 'selected' : '' }}>
                                 {{ $r->nama_rombel }} ({{ $r->industri?->nama_industri }})
                             </option>
