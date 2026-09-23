@@ -48,7 +48,7 @@
         @endif
 
         {{-- Mandatory Warning if Pembimbing has not set up Digital Signature --}}
-        @if (!$hasTtdDigital)
+        @if (!($hasTtdDigital ?? false))
             <div class="rounded-2xl border-2 border-amber-300 bg-amber-50 p-5 shadow-sm flex items-center justify-between gap-4">
                 <div class="flex items-center gap-3">
                     <div class="p-2 bg-amber-200 rounded-xl text-amber-800">

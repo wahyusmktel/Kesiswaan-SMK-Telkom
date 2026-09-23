@@ -14,7 +14,7 @@
                 </div>
             </div>
 
-            @if (!$hasTtdDigital)
+            @if (!($hasTtdDigital ?? false))
                 <a href="{{ route('tanda-tangan.index') }}"
                     class="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl shadow-md shadow-amber-200 transition">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
@@ -49,7 +49,7 @@
         @endif
 
         {{-- Mandatory Warning Banner: TTD Digital Required --}}
-        @if (!$hasTtdDigital)
+        @if (!($hasTtdDigital ?? false))
             <div class="rounded-2xl border-2 border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 p-6 shadow-md shadow-amber-100/50">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div class="flex items-start gap-4">

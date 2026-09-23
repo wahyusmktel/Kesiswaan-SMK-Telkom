@@ -106,8 +106,11 @@ class BimbinganLaporanController extends Controller
         $totalPerluReview = (clone $penempatanQuery)->whereHas('bimbinganLaporan.tahaps', fn ($q) => $q->where('status', 'diajukan'))->count();
         $totalAccFinal = (clone $penempatanQuery)->whereHas('bimbinganLaporan', fn ($q) => $q->where('status_laporan', 'selesai_acc'))->count();
 
+        $hasTtdDigital = $isSignatureReady;
+
         return view('pages.pembimbing.bimbingan-laporan.index', compact(
             'penempatans',
+            'hasTtdDigital',
             'isSignatureReady',
             'sig',
             'totalSiswaBimbingan',
@@ -127,6 +130,7 @@ class BimbinganLaporanController extends Controller
         // Validasi prasyarat TTD digital
         $sig = UserDigitalSignature::where('user_id', Auth::id())->first();
         $isSignatureReady = $sig && $sig->isReady();
+        $hasTtdDigital = $isSignatureReady;
 
         $laporan->load([
             'penempatan.siswa.rombels.kelas',
@@ -139,7 +143,7 @@ class BimbinganLaporanController extends Controller
             'accBy',
         ]);
 
-        return view('pages.pembimbing.bimbingan-laporan.detail', compact('laporan', 'isSignatureReady', 'sig'));
+        return view('pages.pembimbing.bimbingan-laporan.detail', compact('laporan', 'hasTtdDigital', 'isSignatureReady', 'sig'));
     }
 
     /**
