@@ -1,4 +1,7 @@
 <x-app-layout>
+    @php
+        $penempatan = $penempatan ?? $laporan?->penempatan;
+    @endphp
     <x-slot name="header">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div class="flex items-center gap-3">

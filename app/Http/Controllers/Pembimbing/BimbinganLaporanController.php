@@ -167,7 +167,9 @@ class BimbinganLaporanController extends Controller
             'accBy',
         ]);
 
-        return view('pages.pembimbing.bimbingan-laporan.detail', compact('laporan', 'hasTtdDigital', 'isSignatureReady', 'sig'));
+        $penempatan = $laporan->penempatan;
+
+        return view('pages.pembimbing.bimbingan-laporan.detail', compact('laporan', 'penempatan', 'hasTtdDigital', 'isSignatureReady', 'sig'));
     }
 
     /**

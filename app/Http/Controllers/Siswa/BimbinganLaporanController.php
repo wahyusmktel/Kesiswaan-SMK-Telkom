@@ -36,7 +36,7 @@ class BimbinganLaporanController extends Controller
         }
 
         // Cek apakah siswa sudah dimapping ke rombel PKL aktif
-        $penempatan = PrakerinPenempatan::with(['industri', 'rombelPkl', 'guruPembimbing.user'])
+        $penempatan = PrakerinPenempatan::with(['industri', 'rombelPkl', 'guruPembimbing.user.digitalSignature'])
             ->where('master_siswa_id', $siswa->id)
             ->whereNotNull('prakerin_rombel_id')
             ->where('status', 'aktif')
@@ -74,10 +74,11 @@ class BimbinganLaporanController extends Controller
             'tahaps.anotasis',
             'tahaps.reviewer',
             'aktivitasLogs.user',
-            'penempatan.guruPembimbing.user.digitalSignature',
         ]);
 
-        return view('pages.siswa.bimbingan-laporan.index', compact('penempatan', 'laporan'));
+        $pembimbing = $penempatan->guruPembimbing;
+
+        return view('pages.siswa.bimbingan-laporan.index', compact('penempatan', 'laporan', 'pembimbing'));
     }
 
     /**

@@ -93,7 +93,7 @@
 
                 <div class="border-t md:border-t-0 md:border-l border-gray-100 md:pl-6">
                     <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Pembimbing Internal</div>
-                    <div class="font-bold text-gray-900 text-sm mt-0.5">{{ $pembimbing?->nama ?? $penempatan->guruPembimbing?->nama_lengkap ?? '-' }}</div>
+                    <div class="font-bold text-gray-900 text-sm mt-0.5">{{ ($pembimbing ?? null)?->nama ?? $penempatan->guruPembimbing?->nama_lengkap ?? '-' }}</div>
                     <div class="text-xs text-gray-500 mt-0.5">Guru Pembimbing Sekolah</div>
                 </div>
 
