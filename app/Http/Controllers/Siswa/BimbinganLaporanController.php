@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Siswa;
 
 use App\Http\Controllers\Controller;
 use App\Models\PrakerinBimbinganAktivitasLog;
+use App\Models\PrakerinBimbinganBeritaAcara;
 use App\Models\PrakerinBimbinganLaporan;
 use App\Models\PrakerinBimbinganTahap;
 use App\Models\PrakerinPenempatan;
@@ -72,6 +73,7 @@ class BimbinganLaporanController extends Controller
 
         $laporan->load([
             'tahaps.anotasis',
+            'tahaps.beritaAcaras',
             'tahaps.reviewer',
             'aktivitasLogs.user',
         ]);
@@ -269,10 +271,11 @@ class BimbinganLaporanController extends Controller
             return back();
         }
 
-        $tahap->load(['anotasis.user', 'reviewer']);
+        $tahap->load(['anotasis.user', 'beritaAcaras.pembimbing', 'reviewer']);
         $anotasis = $tahap->anotasis;
+        $beritaAcaras = $tahap->beritaAcaras;
 
-        return view('pages.siswa.bimbingan-laporan.viewer', compact('tahap', 'laporan', 'anotasis'));
+        return view('pages.siswa.bimbingan-laporan.viewer', compact('tahap', 'laporan', 'anotasis', 'beritaAcaras'));
     }
 
     /**
@@ -286,6 +289,21 @@ class BimbinganLaporanController extends Controller
         $pdf = $this->pdfService->generateBeritaAcaraPdf($tahap);
 
         return $pdf->stream('Berita-Acara-' . str_replace(' ', '-', $tahap->judul_tahap) . '.pdf');
+    }
+
+    /**
+     * Unduh Berita Acara spesifik berdasarkan ID Berita Acara (PDF).
+     */
+    public function unduhBeritaAcaraItem(PrakerinBimbinganBeritaAcara $beritaAcara)
+    {
+        $laporan = $this->getLaporanSiswa();
+        abort_unless($beritaAcara->prakerin_bimbingan_laporan_id === $laporan->id, 403);
+
+        $pdf = $this->pdfService->generateBeritaAcaraPdf($beritaAcara);
+
+        $filename = ($beritaAcara->jenis === 'disetujui' ? 'BA-ACC-' : 'BA-Revisi-' . ($beritaAcara->revisi_ke ? 'R' . $beritaAcara->revisi_ke . '-' : '')) . str_replace(' ', '-', $beritaAcara->judul_tahap) . '.pdf';
+
+        return $pdf->stream($filename);
     }
 
     /**

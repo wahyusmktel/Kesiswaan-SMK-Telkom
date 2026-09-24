@@ -610,6 +610,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/tahap/{tahap}/upload', [\App\Http\Controllers\Siswa\BimbinganLaporanController::class, 'uploadDokumen'])->name('upload-dokumen');
             Route::get('/tahap/{tahap}/viewer', [\App\Http\Controllers\Siswa\BimbinganLaporanController::class, 'reviewViewer'])->name('viewer');
             Route::get('/tahap/{tahap}/berita-acara', [\App\Http\Controllers\Siswa\BimbinganLaporanController::class, 'unduhBeritaAcara'])->name('berita-acara');
+            Route::get('/berita-acara-item/{beritaAcara}', [\App\Http\Controllers\Siswa\BimbinganLaporanController::class, 'unduhBeritaAcaraItem'])->name('berita-acara.item');
             Route::get('/riwayat-pdf', [\App\Http\Controllers\Siswa\BimbinganLaporanController::class, 'unduhRiwayatPdf'])->name('riwayat-pdf');
         });
 
@@ -1031,6 +1032,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/tahap/{tahap}/selesaikan-review', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'selesaikanReview'])->name('selesaikan-review');
             Route::post('/acc-final/{laporan}', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'accFinal'])->name('acc-final');
             Route::get('/tahap/{tahap}/berita-acara', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'unduhBeritaAcara'])->name('berita-acara');
+            Route::get('/berita-acara-item/{beritaAcara}', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'unduhBeritaAcaraItem'])->name('berita-acara.item');
             Route::get('/riwayat-pdf/{laporan}', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'unduhRiwayatPdf'])->name('riwayat-pdf');
         });
     });

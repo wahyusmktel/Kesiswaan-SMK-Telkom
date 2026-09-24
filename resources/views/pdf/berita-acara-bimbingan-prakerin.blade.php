@@ -188,12 +188,18 @@
 
     {{-- Judul Dokumen --}}
     <div class="doc-title-container">
-        <h3 class="doc-title">BERITA ACARA BIMBINGAN LAPORAN PRAKERIN</h3>
-        <p class="doc-number">Nomor: {{ $tahap->nomor_berita_acara ?? ('BA-PKL/' . str_pad($tahap->id, 5, '0', STR_PAD_LEFT) . '/' . date('Y')) }}</p>
+        <h3 class="doc-title">
+            @if($isAcc)
+                BERITA ACARA PENGESAHAN (ACC) BIMBINGAN LAPORAN PRAKERIN
+            @else
+                BERITA ACARA REVISI BIMBINGAN LAPORAN PRAKERIN
+            @endif
+        </h3>
+        <p class="doc-number">Nomor: {{ $nomorBeritaAcara }}</p>
     </div>
 
     <p style="margin-bottom: 12px; font-size: 9.5pt;">
-        Pada hari ini, <strong>{{ $tahap->reviewed_at ? $tahap->reviewed_at->isoFormat('dddd, D MMMM YYYY') : now()->isoFormat('dddd, D MMMM YYYY') }}</strong>, telah dilaksanakan sesi bimbingan dan pemeriksaan dokumen laporan Praktik Kerja Lapangan (Prakerin) untuk peserta didik:
+        Pada hari ini, <strong>{{ $tanggalReview ? $tanggalReview->isoFormat('dddd, D MMMM YYYY') : now()->isoFormat('dddd, D MMMM YYYY') }}</strong>, telah dilaksanakan sesi bimbingan dan pemeriksaan dokumen laporan Praktik Kerja Lapangan (Prakerin) untuk peserta didik:
     </p>
 
     {{-- Data Peserta Didik --}}
@@ -242,27 +248,25 @@
         <tr>
             <td class="info-label">Tanggal Pemeriksaan Pembimbing</td>
             <td class="info-colon">:</td>
-            <td class="info-value">{{ $tahap->reviewed_at?->isoFormat('D MMMM YYYY, HH:mm') ?? now()->isoFormat('D MMMM YYYY, HH:mm') }} WIB</td>
+            <td class="info-value">{{ $tanggalReview ? $tanggalReview->isoFormat('D MMMM YYYY, HH:mm') : now()->isoFormat('D MMMM YYYY, HH:mm') }} WIB</td>
         </tr>
         <tr>
             <td class="info-label">Status Keputusan</td>
             <td class="info-colon">:</td>
             <td>
-                @if($tahap->status === 'disetujui')
-                    <span class="status-badge status-disetujui">DISETUJUI (ACC BAB)</span>
-                @elseif($tahap->status === 'perlu_revisi')
-                    <span class="status-badge status-revisi">PERLU REVISI ({{ $anotasis->count() }} Poin Catatan)</span>
+                @if($isAcc)
+                    <span class="status-badge status-disetujui">DISETUJUI / DISAHKAN (ACC BAB)</span>
                 @else
-                    <span class="status-badge" style="background:#f3f4f6; color:#374151;">{{ strtoupper($tahap->status) }}</span>
+                    <span class="status-badge status-revisi">PERLU REVISI {{ $revisiKe ? '(Revisi ke-' . $revisiKe . ')' : '' }} - {{ $anotasis->count() }} Poin Catatan</span>
                 @endif
             </td>
         </tr>
-        @if($tahap->catatan_pembimbing)
+        @if($catatanPembimbing)
             <tr>
                 <td class="info-label">Catatan Umum Pembimbing</td>
                 <td class="info-colon">:</td>
                 <td class="info-value" style="font-weight: 500; font-style: italic;">
-                    "{{ $tahap->catatan_pembimbing }}"
+                    "{{ $catatanPembimbing }}"
                 </td>
             </tr>
         @endif

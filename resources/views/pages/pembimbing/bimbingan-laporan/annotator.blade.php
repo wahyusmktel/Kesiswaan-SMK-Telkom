@@ -12,11 +12,11 @@
         </div>
 
         <div class="flex items-center gap-2">
-            @if ($tahap->status === 'disetujui' || $tahap->nomor_berita_acara)
+            @if ((isset($beritaAcaras) && $beritaAcaras->isNotEmpty()) || $tahap->nomor_berita_acara)
                 <a href="{{ route('pembimbing-prakerin.bimbingan-laporan.berita-acara', $tahap) }}" target="_blank"
-                    class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition">
-                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z"/></svg>
-                    Berita Acara (PDF)
+                    class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl {{ $tahap->status === 'disetujui' ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200' : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200' }} transition">
+                    <svg class="w-4 h-4 {{ $tahap->status === 'disetujui' ? 'text-emerald-600' : 'text-rose-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z"/></svg>
+                    {{ $tahap->status === 'disetujui' ? 'Berita Acara ACC (PDF)' : 'Berita Acara Terakhir (PDF)' }}
                 </a>
             @endif
             <a href="{{ $tahap->file_url }}" target="_blank" download
@@ -115,41 +115,52 @@
 
             {{-- Right Sidebar: Annotations List & Final Review Form --}}
             <div class="lg:col-span-4 space-y-6 sticky top-4">
-                {{-- Form Selesaikan Review & Penerbitan Berita Acara Digital --}}
+                {{-- Form Keputusan & Penerbitan Berita Acara Digital --}}
                 <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
                     <div class="flex items-center gap-2 pb-3 border-b border-gray-100">
                         <div class="p-1.5 bg-rose-50 text-rose-600 rounded-lg">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z"/></svg>
                         </div>
-                        <h4 class="font-bold text-gray-900 text-sm">Selesaikan Bimbingan Bab</h4>
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm">Keputusan &amp; Berita Acara</h4>
+                            <p class="text-[11px] text-gray-500">Terbitkan Berita Acara resmi (Revisi atau ACC)</p>
+                        </div>
                     </div>
 
                     <form method="POST" action="{{ route('pembimbing-prakerin.bimbingan-laporan.selesaikan-review', $tahap) }}" class="space-y-4">
                         @csrf
                         <div>
                             <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-                                Keputusan Status Bab <span class="text-rose-500">*</span>
+                                Tindakan Keputusan <span class="text-rose-500">*</span>
                             </label>
                             <div class="grid grid-cols-2 gap-3">
-                                <label class="border-2 rounded-xl p-3 flex items-center gap-2 cursor-pointer transition has-[:checked]:border-rose-500 has-[:checked]:bg-rose-50/50">
-                                    <input type="radio" name="status" value="revisi" {{ $tahap->status === 'revisi' ? 'checked' : '' }} required
-                                        class="text-rose-600 focus:ring-rose-500">
-                                    <span class="text-xs font-bold text-gray-800">Perlu Revisi</span>
+                                <label class="border-2 rounded-xl p-3 flex flex-col gap-1 cursor-pointer transition has-[:checked]:border-rose-500 has-[:checked]:bg-rose-50/50">
+                                    <div class="flex items-center gap-2">
+                                        <input type="radio" name="status" value="revisi" id="radio-status-revisi"
+                                            {{ ($tahap->status === 'perlu_revisi' || $tahap->status === 'revisi' || $tahap->status !== 'disetujui') ? 'checked' : '' }} required
+                                            class="text-rose-600 focus:ring-rose-500" onchange="updateDecisionButtonState()">
+                                        <span class="text-xs font-bold text-gray-800">Perlu Revisi</span>
+                                    </div>
+                                    <span class="text-[10px] text-gray-500 pl-5">Terbitkan Berita Acara Revisi</span>
                                 </label>
-                                <label class="border-2 rounded-xl p-3 flex items-center gap-2 cursor-pointer transition has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50/50">
-                                    <input type="radio" name="status" value="disetujui" {{ $tahap->status === 'disetujui' ? 'checked' : '' }} required
-                                        class="text-emerald-600 focus:ring-emerald-500">
-                                    <span class="text-xs font-bold text-gray-800">Setujui (ACC)</span>
+                                <label class="border-2 rounded-xl p-3 flex flex-col gap-1 cursor-pointer transition has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50/50">
+                                    <div class="flex items-center gap-2">
+                                        <input type="radio" name="status" value="disetujui" id="radio-status-disetujui"
+                                            {{ $tahap->status === 'disetujui' ? 'checked' : '' }} required
+                                            class="text-emerald-600 focus:ring-emerald-500" onchange="updateDecisionButtonState()">
+                                        <span class="text-xs font-bold text-gray-800">Setujui (ACC)</span>
+                                    </div>
+                                    <span class="text-[10px] text-gray-500 pl-5">Terbitkan Berita Acara ACC</span>
                                 </label>
                             </div>
                         </div>
 
                         <div>
                             <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-                                Catatan Kesimpulan Pembimbing (Opsional)
+                                Catatan &amp; Arahan Pembimbing (Opsional)
                             </label>
                             <textarea name="catatan_pembimbing" rows="3" maxlength="1000"
-                                placeholder="Tuliskan rangkuman arahan atau poin pokok yang harus diperbaiki siswa..."
+                                placeholder="Tuliskan rangkuman poin arahan revisi atau apresiasi pengesahan..."
                                 class="w-full text-xs rounded-xl border-gray-300 focus:border-rose-500 focus:ring-rose-500 shadow-sm transition">{{ old('catatan_pembimbing', $tahap->catatan_pembimbing) }}</textarea>
                         </div>
 
@@ -159,16 +170,58 @@
                             </label>
                             <input type="password" name="pin" required maxlength="10" placeholder="6 digit PIN TTD Digital"
                                 class="w-full text-xs rounded-xl border-gray-300 focus:border-rose-500 focus:ring-rose-500 shadow-sm transition">
-                            <p class="text-[10px] text-gray-400 mt-1">Dibutuhkan untuk membubuhkan QR tanda tangan digital pada Berita Acara bimbingan resmi.</p>
+                            <p class="text-[10px] text-gray-400 mt-1">Dibutuhkan untuk membubuhkan QR tanda tangan digital pada Berita Acara resmi.</p>
                         </div>
 
-                        <button type="submit"
-                            class="w-full py-2.5 px-4 rounded-xl bg-gray-900 text-white font-bold text-xs hover:bg-gray-800 shadow-md transition flex items-center justify-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            Sahkan & Terbitkan Berita Acara
+                        <button type="submit" id="btn-submit-review"
+                            class="w-full py-2.5 px-4 rounded-xl text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z"/></svg>
+                            <span id="btn-submit-text">Terbitkan Berita Acara Revisi</span>
                         </button>
                     </form>
                 </div>
+
+                {{-- Riwayat Berita Acara yang Pernah Diterbitkan --}}
+                @if(isset($beritaAcaras) && $beritaAcaras->isNotEmpty())
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
+                        <div class="flex items-center justify-between pb-2 border-b border-gray-100">
+                            <h4 class="font-bold text-gray-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Riwayat Berita Acara ({{ $beritaAcaras->count() }})
+                            </h4>
+                        </div>
+                        <div class="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                            @foreach($beritaAcaras as $ba)
+                                <div class="p-2.5 rounded-xl border border-gray-200 bg-gray-50/70 hover:bg-white transition flex items-center justify-between gap-2 text-xs">
+                                    <div class="min-w-0">
+                                        <div class="flex items-center gap-1.5 flex-wrap">
+                                            @if($ba->jenis === 'disetujui')
+                                                <span class="px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-emerald-100 text-emerald-800">
+                                                    ACC / DISETUJUI
+                                                </span>
+                                            @else
+                                                <span class="px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-rose-100 text-rose-800">
+                                                    REVISI {{ $ba->revisi_ke ? '#' . $ba->revisi_ke : '' }}
+                                                </span>
+                                            @endif
+                                            <span class="text-[10px] text-gray-400">
+                                                {{ $ba->diterbitkan_at?->format('d/m/Y H:i') ?? $ba->created_at->format('d/m/Y H:i') }}
+                                            </span>
+                                        </div>
+                                        <p class="text-[11px] font-semibold text-gray-700 truncate mt-0.5">
+                                            {{ $ba->nomor_berita_acara }}
+                                        </p>
+                                    </div>
+                                    <a href="{{ route('pembimbing-prakerin.bimbingan-laporan.berita-acara.item', $ba) }}" target="_blank"
+                                        class="p-1.5 rounded-lg bg-white border border-gray-300 hover:border-emerald-500 hover:text-emerald-700 text-gray-600 transition shadow-sm flex-shrink-0"
+                                        title="Unduh PDF Berita Acara ini">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                    </a>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
 
                 {{-- Daftar Catatan & Navigasi Coretan --}}
                 <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
@@ -927,8 +980,27 @@
             });
         }
 
+        function updateDecisionButtonState() {
+            const radioAcc = document.getElementById('radio-status-disetujui');
+            const submitBtn = document.getElementById('btn-submit-review');
+            const submitText = document.getElementById('btn-submit-text');
+
+            if (!submitBtn || !submitText) return;
+
+            if (radioAcc && radioAcc.checked) {
+                submitBtn.classList.remove('bg-rose-600', 'hover:bg-rose-700');
+                submitBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+                submitText.textContent = 'Sahkan & Terbitkan Berita Acara (ACC)';
+            } else {
+                submitBtn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+                submitBtn.classList.add('bg-rose-600', 'hover:bg-rose-700');
+                submitText.textContent = 'Terbitkan Berita Acara Revisi';
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             initStudioViewer();
+            updateDecisionButtonState();
         });
     </script>
 </x-app-layout>

@@ -61,6 +61,16 @@ class PrakerinBimbinganTahap extends Model
         return $this->hasMany(PrakerinBimbinganAktivitasLog::class, 'prakerin_bimbingan_tahap_id')->latest();
     }
 
+    public function beritaAcaras()
+    {
+        return $this->hasMany(PrakerinBimbinganBeritaAcara::class, 'prakerin_bimbingan_tahap_id')->orderBy('id', 'desc');
+    }
+
+    public function latestBeritaAcara()
+    {
+        return $this->hasOne(PrakerinBimbinganBeritaAcara::class, 'prakerin_bimbingan_tahap_id')->latestOfMany();
+    }
+
     public function getFilePdfUrlAttribute(): ?string
     {
         if (! $this->file_pdf_path) {

@@ -15,12 +15,41 @@
             </div>
 
             <div class="flex items-center gap-2">
-                @if ($tahap->status === 'disetujui' || $tahap->nomor_berita_acara)
-                    <a href="{{ route('siswa.bimbingan-laporan.berita-acara', $tahap) }}" target="_blank"
-                        class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition">
-                        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z"/></svg>
-                        Berita Acara (PDF)
-                    </a>
+                @if ((isset($beritaAcaras) && $beritaAcaras->isNotEmpty()) || $tahap->nomor_berita_acara)
+                    @if (isset($beritaAcaras) && $beritaAcaras->count() > 1)
+                        <div class="relative inline-block text-left" x-data="{ open: false }">
+                            <button @click="open = !open" type="button"
+                                class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl {{ $tahap->status === 'disetujui' ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200' : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200' }} transition">
+                                <svg class="w-4 h-4 {{ $tahap->status === 'disetujui' ? 'text-emerald-600' : 'text-rose-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z"/></svg>
+                                Berita Acara ({{ $beritaAcaras->count() }})
+                                <svg class="w-3.5 h-3.5 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            <div x-show="open" @click.away="open = false" x-cloak
+                                class="origin-top-right absolute right-0 mt-2 w-64 rounded-xl shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-30 p-1 divide-y divide-gray-100">
+                                <div class="py-1">
+                                    <div class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400">Pilih Berita Acara:</div>
+                                    @foreach($beritaAcaras as $ba)
+                                        <a href="{{ route('siswa.bimbingan-laporan.berita-acara.item', $ba) }}" target="_blank"
+                                            class="flex items-center justify-between px-3 py-2 text-xs rounded-lg hover:bg-gray-50 transition group">
+                                            <div>
+                                                <span class="font-bold {{ $ba->jenis === 'disetujui' ? 'text-emerald-700' : 'text-rose-700' }}">
+                                                    {{ $ba->jenis === 'disetujui' ? 'Berita Acara ACC' : 'BA Revisi ' . ($ba->revisi_ke ? '#' . $ba->revisi_ke : '') }}
+                                                </span>
+                                                <span class="block text-[10px] text-gray-400">{{ $ba->diterbitkan_at?->format('d/m/Y H:i') }}</span>
+                                            </div>
+                                            <svg class="w-4 h-4 text-gray-400 group-hover:text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                        </a>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                    @else
+                        <a href="{{ route('siswa.bimbingan-laporan.berita-acara', $tahap) }}" target="_blank"
+                            class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl {{ $tahap->status === 'disetujui' ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200' : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200' }} transition">
+                            <svg class="w-4 h-4 {{ $tahap->status === 'disetujui' ? 'text-emerald-600' : 'text-rose-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z"/></svg>
+                            {{ $tahap->status === 'disetujui' ? 'Berita Acara ACC (PDF)' : 'Berita Acara Revisi (PDF)' }}
+                        </a>
+                    @endif
                 @endif
                 <a href="{{ $tahap->file_url }}" target="_blank" download
                     class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition shadow-sm">
@@ -117,6 +146,48 @@
                         <div>Waktu Review: <span class="font-semibold text-gray-700">{{ $tahap->direview_at ? \Carbon\Carbon::parse($tahap->direview_at)->translatedFormat('d F Y, H:i') : '-' }}</span></div>
                     </div>
                 </div>
+
+                {{-- Riwayat Berita Acara yang Diterbitkan --}}
+                @if(isset($beritaAcaras) && $beritaAcaras->isNotEmpty())
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
+                        <div class="flex items-center justify-between pb-2 border-b border-gray-100">
+                            <h4 class="font-bold text-gray-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Riwayat Berita Acara ({{ $beritaAcaras->count() }})
+                            </h4>
+                        </div>
+                        <div class="space-y-2 max-h-[200px] overflow-y-auto pr-1">
+                            @foreach($beritaAcaras as $ba)
+                                <div class="p-2.5 rounded-xl border border-gray-200 bg-gray-50/70 hover:bg-white transition flex items-center justify-between gap-2 text-xs">
+                                    <div class="min-w-0">
+                                        <div class="flex items-center gap-1.5 flex-wrap">
+                                            @if($ba->jenis === 'disetujui')
+                                                <span class="px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-emerald-100 text-emerald-800">
+                                                    ACC / DISETUJUI
+                                                </span>
+                                            @else
+                                                <span class="px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-rose-100 text-rose-800">
+                                                    REVISI {{ $ba->revisi_ke ? '#' . $ba->revisi_ke : '' }}
+                                                </span>
+                                            @endif
+                                            <span class="text-[10px] text-gray-400">
+                                                {{ $ba->diterbitkan_at?->format('d/m/Y H:i') ?? $ba->created_at->format('d/m/Y H:i') }}
+                                            </span>
+                                        </div>
+                                        <p class="text-[11px] font-semibold text-gray-700 truncate mt-0.5">
+                                            {{ $ba->nomor_berita_acara }}
+                                        </p>
+                                    </div>
+                                    <a href="{{ route('siswa.bimbingan-laporan.berita-acara.item', $ba) }}" target="_blank"
+                                        class="p-1.5 rounded-lg bg-white border border-gray-300 hover:border-emerald-500 hover:text-emerald-700 text-gray-600 transition shadow-sm flex-shrink-0"
+                                        title="Unduh PDF Berita Acara ini">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                    </a>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
 
                 {{-- Navigasi Catatan & Coretan Revisi --}}
                 <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">

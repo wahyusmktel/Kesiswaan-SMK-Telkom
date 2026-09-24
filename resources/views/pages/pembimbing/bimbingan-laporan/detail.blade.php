@@ -319,12 +319,41 @@
                                         {{ $tahap->status === 'disetujui' ? 'Lihat Coretan Dokumen' : 'Periksa & Buat Coretan Revisi' }}
                                     </a>
 
-                                    @if ($tahap->status === 'disetujui' || $tahap->nomor_berita_acara)
-                                        <a href="{{ route('pembimbing-prakerin.bimbingan-laporan.berita-acara', $tahap) }}" target="_blank"
-                                            class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition">
-                                            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z"/></svg>
-                                            Berita Acara (PDF)
-                                        </a>
+                                    @if ($tahap->beritaAcaras->isNotEmpty() || $tahap->nomor_berita_acara)
+                                        @if ($tahap->beritaAcaras->count() > 1)
+                                            <div class="relative inline-block text-left" x-data="{ open: false }">
+                                                <button @click="open = !open" type="button"
+                                                    class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl {{ $tahap->status === 'disetujui' ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200' : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200' }} transition">
+                                                    <svg class="w-4 h-4 {{ $tahap->status === 'disetujui' ? 'text-emerald-600' : 'text-rose-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z"/></svg>
+                                                    Berita Acara ({{ $tahap->beritaAcaras->count() }})
+                                                    <svg class="w-3.5 h-3.5 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                                </button>
+                                                <div x-show="open" @click.away="open = false" x-cloak
+                                                    class="origin-top-right absolute right-0 mt-2 w-64 rounded-xl shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-30 p-1 divide-y divide-gray-100">
+                                                    <div class="py-1">
+                                                        <div class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400">Pilih Berita Acara:</div>
+                                                        @foreach($tahap->beritaAcaras as $ba)
+                                                            <a href="{{ route('pembimbing-prakerin.bimbingan-laporan.berita-acara.item', $ba) }}" target="_blank"
+                                                                class="flex items-center justify-between px-3 py-2 text-xs rounded-lg hover:bg-gray-50 transition group">
+                                                                <div>
+                                                                    <span class="font-bold {{ $ba->jenis === 'disetujui' ? 'text-emerald-700' : 'text-rose-700' }}">
+                                                                        {{ $ba->jenis === 'disetujui' ? 'Berita Acara ACC' : 'BA Revisi ' . ($ba->revisi_ke ? '#' . $ba->revisi_ke : '') }}
+                                                                    </span>
+                                                                    <span class="block text-[10px] text-gray-400">{{ $ba->diterbitkan_at?->format('d/m/Y H:i') }}</span>
+                                                                </div>
+                                                                <svg class="w-4 h-4 text-gray-400 group-hover:text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                                            </a>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @else
+                                            <a href="{{ route('pembimbing-prakerin.bimbingan-laporan.berita-acara', $tahap) }}" target="_blank"
+                                                class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl {{ $tahap->status === 'disetujui' ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200' : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200' }} transition">
+                                                <svg class="w-4 h-4 {{ $tahap->status === 'disetujui' ? 'text-emerald-600' : 'text-rose-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z"/></svg>
+                                                {{ $tahap->status === 'disetujui' ? 'Berita Acara ACC (PDF)' : 'Berita Acara Revisi (PDF)' }}
+                                            </a>
+                                        @endif
                                     @endif
                                 @endif
 

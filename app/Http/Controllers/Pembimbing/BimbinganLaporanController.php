@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Pembimbing;
 use App\Http\Controllers\Controller;
 use App\Models\PrakerinBimbinganAktivitasLog;
 use App\Models\PrakerinBimbinganAnotasi;
+use App\Models\PrakerinBimbinganBeritaAcara;
 use App\Models\PrakerinBimbinganLaporan;
 use App\Models\PrakerinBimbinganTahap;
 use App\Models\PrakerinPenempatan;
@@ -162,6 +163,7 @@ class BimbinganLaporanController extends Controller
             'penempatan.rombelPkl',
             'penempatan.guruPembimbing',
             'tahaps.anotasis',
+            'tahaps.beritaAcaras',
             'tahaps.reviewer',
             'aktivitasLogs.user',
             'accBy',
@@ -308,13 +310,15 @@ class BimbinganLaporanController extends Controller
 
         $tahap->load([
             'anotasis.user',
+            'beritaAcaras.pembimbing',
             'laporan.penempatan.siswa.rombels.kelas',
             'laporan.penempatan.industri',
         ]);
 
         $anotasis = $tahap->anotasis;
+        $beritaAcaras = $tahap->beritaAcaras;
 
-        return view('pages.pembimbing.bimbingan-laporan.annotator', compact('tahap', 'laporan', 'sig', 'anotasis'));
+        return view('pages.pembimbing.bimbingan-laporan.annotator', compact('tahap', 'laporan', 'sig', 'anotasis', 'beritaAcaras'));
     }
 
     /**
@@ -453,17 +457,37 @@ class BimbinganLaporanController extends Controller
             return back()->withInput();
         }
 
-        $nomorBeritaAcara = $tahap->nomor_berita_acara;
-        if (! $nomorBeritaAcara) {
-            $nomorBeritaAcara = 'BA-PKL/' . date('Ymd') . '/' . str_pad($tahap->id, 4, '0', STR_PAD_LEFT);
+        $isAcc = $validated['status'] === 'disetujui';
+
+        if ($isAcc) {
+            $nomorBeritaAcara = 'BA-ACC/' . date('Ymd') . '/' . str_pad($tahap->id, 4, '0', STR_PAD_LEFT);
+            $revisiKe = null;
+        } else {
+            $jumlahRevisi = $tahap->beritaAcaras()->where('jenis', 'revisi')->count();
+            $revisiKe = $jumlahRevisi + 1;
+            $nomorBeritaAcara = 'BA-REV/' . date('Ymd') . '/' . str_pad($tahap->id, 4, '0', STR_PAD_LEFT) . '/R' . $revisiKe;
         }
+
+        // Terbitkan entri Berita Acara resmi ke tabel riwayat berita acara
+        $beritaAcara = $tahap->beritaAcaras()->create([
+            'prakerin_bimbingan_laporan_id' => $laporan->id,
+            'user_id' => Auth::id(),
+            'nomor_berita_acara' => $nomorBeritaAcara,
+            'jenis' => $isAcc ? 'disetujui' : 'revisi',
+            'revisi_ke' => $revisiKe,
+            'judul_tahap' => $tahap->judul_tahap,
+            'catatan_pembimbing' => $validated['catatan_pembimbing'] ? trim($validated['catatan_pembimbing']) : null,
+            'total_anotasi' => $tahap->anotasis()->count(),
+            'file_pdf_path' => $tahap->file_pdf_path,
+            'diterbitkan_at' => now(),
+        ]);
 
         $tahap->update([
             'status' => $validated['status'],
             'catatan_pembimbing' => $validated['catatan_pembimbing'] ? trim($validated['catatan_pembimbing']) : null,
             'reviewed_at' => now(),
             'reviewed_by' => Auth::id(),
-            'disetujui_at' => $validated['status'] === 'disetujui' ? now() : null,
+            'disetujui_at' => $isAcc ? now() : null,
             'nomor_berita_acara' => $nomorBeritaAcara,
             'berita_acara_at' => now(),
         ]);
@@ -476,14 +500,32 @@ class BimbinganLaporanController extends Controller
         PrakerinBimbinganAktivitasLog::catat(
             $laporan->id,
             Auth::id(),
-            $validated['status'] === 'disetujui' ? 'setujui_bab' : 'minta_revisi_bab',
-            'Guru pembimbing menetapkan ' . $tahap->judul_tahap . ' status: ' . strtoupper(str_replace('_', ' ', $validated['status'])),
+            $isAcc ? 'setujui_bab' : 'minta_revisi_bab',
+            'Guru pembimbing menerbitkan ' . ($isAcc ? 'Berita Acara Pengesahan (ACC)' : 'Berita Acara Revisi (Revisi ke-' . $revisiKe . ')') . ' untuk ' . $tahap->judul_tahap,
             $tahap->id
         );
 
-        Alert::success('Review Selesai', 'Pemeriksaan ' . $tahap->judul_tahap . ' berhasil disimpan sebagai ' . strtoupper(str_replace('_', ' ', $validated['status'])) . '.');
+        if ($isAcc) {
+            Alert::success('Berita Acara ACC Diterbitkan', 'Bab ' . $tahap->judul_tahap . ' berhasil disetujui (ACC) dan Berita Acara Pengesahan resmi telah diterbitkan.');
+        } else {
+            Alert::success('Berita Acara Revisi Diterbitkan', 'Berita Acara Revisi (Revisi ke-' . $revisiKe . ') untuk ' . $tahap->judul_tahap . ' berhasil diterbitkan.');
+        }
 
         return redirect()->route('pembimbing-prakerin.bimbingan-laporan.detail', $laporan->id);
+    }
+
+    /**
+     * Unduh Berita Acara spesifik berdasarkan ID Berita Acara (PDF).
+     */
+    public function unduhBeritaAcaraItem(PrakerinBimbinganBeritaAcara $beritaAcara)
+    {
+        $this->authorizeAccess($beritaAcara->laporan);
+
+        $pdf = $this->pdfService->generateBeritaAcaraPdf($beritaAcara);
+
+        $filename = ($beritaAcara->jenis === 'disetujui' ? 'BA-ACC-' : 'BA-Revisi-' . ($beritaAcara->revisi_ke ? 'R' . $beritaAcara->revisi_ke . '-' : '')) . str_replace(' ', '-', $beritaAcara->judul_tahap) . '.pdf';
+
+        return $pdf->stream($filename);
     }
 
     /**
