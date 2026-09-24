@@ -35,6 +35,12 @@ class PrakerinBimbinganAnotasi extends Model
         'drawing_data' => 'array',
     ];
 
+    protected $appends = [
+        'koordinat_x',
+        'koordinat_y',
+        'tipe',
+    ];
+
     public function tahap()
     {
         return $this->belongsTo(PrakerinBimbinganTahap::class, 'prakerin_bimbingan_tahap_id');

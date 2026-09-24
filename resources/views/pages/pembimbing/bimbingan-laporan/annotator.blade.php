@@ -235,7 +235,7 @@
             background: white;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
-            overflow: hidden;
+            overflow: visible !important;
         }
         .canvas-drawing-overlay {
             position: absolute;
@@ -251,39 +251,38 @@
             right: 0;
             bottom: 0;
             pointer-events: none;
-            z-index: 15;
+            z-index: 25;
         }
         .annotation-marker {
             position: absolute;
             pointer-events: auto;
             cursor: pointer;
-            transition: transform 0.15s ease;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
         }
         .annotation-marker:hover {
-            transform: scale(1.03);
-            z-index: 30;
+            transform: scale(1.02);
+            z-index: 35;
         }
         .annotation-tooltip {
             position: absolute;
-            bottom: 100%;
+            bottom: calc(100% + 8px);
             left: 50%;
-            transform: translateX(-50%) translateY(-6px);
-            background: #1e293b;
+            transform: translateX(-50%);
+            background: #0f172a;
             color: #ffffff;
-            font-size: 11px;
-            font-weight: 600;
-            padding: 6px 10px;
-            border-radius: 8px;
-            white-space: normal;
-            min-width: 140px;
-            max-width: 240px;
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+            padding: 8px 12px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
             opacity: 0;
             visibility: hidden;
             pointer-events: none;
-            transition: all 0.2s ease;
-            z-index: 40;
-            text-align: center;
+            transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+            z-index: 60;
+            min-width: 160px;
+            max-width: 300px;
+            text-align: left;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            white-space: normal;
         }
         .annotation-tooltip::after {
             content: '';
@@ -291,26 +290,37 @@
             top: 100%;
             left: 50%;
             transform: translateX(-50%);
-            border-width: 5px;
+            border-width: 6px;
             border-style: solid;
-            border-color: #1e293b transparent transparent transparent;
+            border-color: #0f172a transparent transparent transparent;
+        }
+        .annotation-tooltip.tooltip-bottom {
+            bottom: auto;
+            top: calc(100% + 8px);
+        }
+        .annotation-tooltip.tooltip-bottom::after {
+            top: auto;
+            bottom: 100%;
+            border-color: transparent transparent #0f172a transparent;
         }
         .annotation-marker:hover .annotation-tooltip,
         .annotation-marker.active-tooltip .annotation-tooltip {
-            opacity: 1;
-            visibility: visible;
+            opacity: 1 !important;
+            visibility: visible !important;
+            pointer-events: auto;
         }
         .pdf-annotation-highlight {
             animation: pulse-glow 1.5s infinite alternate;
+            z-index: 40 !important;
         }
         @keyframes pulse-glow {
             from {
-                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-                filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.8));
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8);
+                filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.9));
             }
             to {
-                box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
-                filter: drop-shadow(0 0 12px rgba(239, 68, 68, 1));
+                box-shadow: 0 0 0 12px rgba(239, 68, 68, 0);
+                filter: drop-shadow(0 0 14px rgba(239, 68, 68, 1));
             }
         }
     </style>
@@ -575,6 +585,13 @@
             }
         }
 
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
         function renderPageAnnotations(pageNum, layer) {
             layer.innerHTML = '';
             const pageAnnotations = existingAnnotations.filter(a => Number(a.halaman) === Number(pageNum));
@@ -584,61 +601,128 @@
                 el.className = 'annotation-marker';
                 el.id = `annotation-marker-${a.id}`;
 
-                const left = a.koordinat_x * scale;
-                const top = a.koordinat_y * scale;
-                const width = (a.lebar || 80) * scale;
-                const height = (a.tinggi || 40) * scale;
+                // Fallback resilient untuk koordinat dan tipe
+                const posX = Number(a.koordinat_x !== undefined ? a.koordinat_x : (a.posisi_x ?? 0));
+                const posY = Number(a.koordinat_y !== undefined ? a.koordinat_y : (a.posisi_y ?? 0));
+                const widthVal = Number(a.lebar ?? 80);
+                const heightVal = Number(a.tinggi ?? 40);
                 const color = a.warna || '#ef4444';
 
-                el.style.left = `${left}px`;
-                el.style.top = `${top}px`;
+                const rawType = String(a.tipe || a.tipe_anotasi || 'box').toLowerCase();
+                const type = (rawType === 'sorot_kotak' || rawType === 'box') ? 'box'
+                           : ((rawType === 'sorot_lingkaran' || rawType === 'circle') ? 'circle'
+                           : ((rawType === 'coretan_bebas' || rawType === 'drawing') ? 'drawing'
+                           : ((rawType === 'pin_catatan' || rawType === 'pin') ? 'pin' : 'box')));
 
-                if (a.tipe === 'box') {
-                    el.style.width = `${width}px`;
-                    el.style.height = `${height}px`;
-                    el.style.border = `2.5px solid ${color}`;
-                    el.style.backgroundColor = `${color}25`;
-                    el.style.borderRadius = '6px';
-                } else if (a.tipe === 'circle') {
-                    el.style.width = `${width}px`;
-                    el.style.height = `${height}px`;
-                    el.style.border = `2.5px solid ${color}`;
-                    el.style.backgroundColor = `${color}25`;
-                    el.style.borderRadius = '9999px';
-                } else if (a.tipe === 'pin') {
-                    el.style.width = '24px';
-                    el.style.height = '24px';
-                    el.innerHTML = `
-                        <div style="background:${color};width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;box-shadow:0 2px 6px rgba(0,0,0,0.3);font-size:11px;font-weight:bold;">
-                            !
-                        </div>
-                    `;
-                } else if (a.tipe === 'drawing' && a.drawing_data) {
+                const left = posX * scale;
+                const top = posY * scale;
+                const width = widthVal * scale;
+                const height = heightVal * scale;
+
+                const globalIndex = existingAnnotations.findIndex(x => x.id === a.id);
+                const badgeNum = globalIndex !== -1 ? (globalIndex + 1) : '';
+
+                if (type === 'drawing') {
+                    el.style.left = '0px';
+                    el.style.top = '0px';
+                    el.style.width = '100%';
+                    el.style.height = '100%';
+                    el.style.pointerEvents = 'none';
+
                     try {
-                        const paths = Array.isArray(a.drawing_data) ? a.drawing_data : JSON.parse(a.drawing_data);
-                        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-                        svg.setAttribute("width", width || 200);
-                        svg.setAttribute("height", height || 100);
-                        svg.style.overflow = "visible";
+                        const paths = Array.isArray(a.drawing_data) ? a.drawing_data : JSON.parse(a.drawing_data || '[]');
+                        if (paths && paths.length > 0) {
+                            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                            svg.style.width = "100%";
+                            svg.style.height = "100%";
+                            svg.style.overflow = "visible";
+                            svg.style.position = "absolute";
+                            svg.style.top = "0";
+                            svg.style.left = "0";
+                            svg.style.pointerEvents = "none";
 
-                        const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
-                        const pointsString = paths.map(p => `${p.x * scale},${p.y * scale}`).join(" ");
-                        polyline.setAttribute("points", pointsString);
-                        polyline.setAttribute("stroke", color);
-                        polyline.setAttribute("stroke-width", "3");
-                        polyline.setAttribute("fill", "none");
-                        polyline.setAttribute("stroke-linecap", "round");
-                        svg.appendChild(polyline);
-                        el.appendChild(svg);
-                    } catch(e) {}
+                            const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+                            const pointsString = paths.map(p => `${p.x * scale},${p.y * scale}`).join(" ");
+                            polyline.setAttribute("points", pointsString);
+                            polyline.setAttribute("stroke", color);
+                            polyline.setAttribute("stroke-width", "3.5");
+                            polyline.setAttribute("fill", "none");
+                            polyline.setAttribute("stroke-linecap", "round");
+                            polyline.setAttribute("stroke-linejoin", "round");
+                            polyline.style.pointerEvents = "stroke";
+                            polyline.style.cursor = "pointer";
+                            svg.appendChild(polyline);
+                            el.appendChild(svg);
+                        }
+                    } catch(e) {
+                        console.error("Error render SVG drawing:", e);
+                    }
+                } else {
+                    el.style.left = `${left}px`;
+                    el.style.top = `${top}px`;
+
+                    if (type === 'box') {
+                        el.style.width = `${width}px`;
+                        el.style.height = `${height}px`;
+                        el.style.border = `2.5px solid ${color}`;
+                        el.style.backgroundColor = `${color}25`;
+                        el.style.borderRadius = '6px';
+                        el.style.boxShadow = `0 0 0 1px rgba(255,255,255,0.7), 0 2px 8px ${color}33`;
+                    } else if (type === 'circle') {
+                        el.style.width = `${width}px`;
+                        el.style.height = `${height}px`;
+                        el.style.border = `2.5px solid ${color}`;
+                        el.style.backgroundColor = `${color}25`;
+                        el.style.borderRadius = '9999px';
+                        el.style.boxShadow = `0 0 0 1px rgba(255,255,255,0.7), 0 2px 8px ${color}33`;
+                    } else if (type === 'pin') {
+                        el.style.width = '28px';
+                        el.style.height = '28px';
+                        el.innerHTML = `
+                            <div style="background:${color};width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;box-shadow:0 3px 8px rgba(0,0,0,0.35);font-size:12px;font-weight:900;border:2px solid white;">
+                                !
+                            </div>
+                        `;
+                    }
+
+                    // Tambahkan badge nomor penanda di sudut kotak
+                    if (badgeNum) {
+                        const badge = document.createElement('span');
+                        badge.className = 'annotation-badge';
+                        badge.style.cssText = `position:absolute;top:-10px;left:-10px;background:${color};color:white;font-size:10px;font-weight:900;padding:1px 6px;border-radius:9999px;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.25);pointer-events:none;z-index:2;line-height:1.2;`;
+                        badge.textContent = `#${badgeNum}`;
+                        el.appendChild(badge);
+                    }
                 }
 
+                // Popup Tooltip Catatan Revisi
                 if (a.catatan) {
                     const tooltip = document.createElement('div');
-                    tooltip.className = 'annotation-tooltip';
-                    tooltip.textContent = a.catatan;
+                    tooltip.className = 'annotation-tooltip' + (top < 70 ? ' tooltip-bottom' : '');
+                    tooltip.innerHTML = `
+                        <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#f87171;margin-bottom:3px;display:flex;align-items:center;justify-content:space-between;">
+                            <span>Catatan Koreksi #${badgeNum}</span>
+                            <span style="color:#94a3b8;font-size:9px;">Hal. ${a.halaman}</span>
+                        </div>
+                        <div style="font-size:11px;font-weight:600;color:#ffffff;line-height:1.4;">
+                            ${escapeHtml(a.catatan)}
+                        </div>
+                    `;
                     el.appendChild(tooltip);
                 }
+
+                // Klik interaktif pada coretan di PDF
+                el.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    scrollToAnnotation(a.id, pageNum);
+
+                    const listItem = document.getElementById(`list-item-${a.id}`);
+                    if (listItem) {
+                        listItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        listItem.classList.add('ring-2', 'ring-rose-500', 'bg-rose-100');
+                        setTimeout(() => listItem.classList.remove('ring-2', 'ring-rose-500', 'bg-rose-100'), 2500);
+                    }
+                });
 
                 layer.appendChild(el);
             });
