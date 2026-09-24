@@ -45,7 +45,27 @@
         </section>
 
         <section class="rounded-2xl border bg-white p-6 shadow-sm">
-            <h3 class="font-bold">Akun Telegram Terhubung</h3><p class="mt-1 text-sm text-gray-500">Pegawai membuka bot, menekan Start, lalu membagikan nomor HP miliknya. Nomor harus sama dengan kolom HP Dapodik Guru, dan data guru harus sudah terhubung ke akun SISFO.</p>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-gray-100">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h3 class="font-bold text-lg text-gray-900">Akun Telegram Terhubung</h3>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800">
+                            {{ $links->total() }} Akun Terhubung
+                        </span>
+                    </div>
+                    <p class="mt-1 text-sm text-gray-500">Pegawai membuka bot, menekan Start, lalu membagikan nomor HP miliknya. Nomor harus sama dengan kolom HP Dapodik Guru, dan data guru harus sudah terhubung ke akun SISFO.</p>
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <a href="{{ route('super-admin.telegram-links.export') }}"
+                        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all hover:shadow-md"
+                        title="Unduh rekap data pegawai yang sudah dan belum terhubung ke bot Telegram">
+                        <svg class="w-4 h-4 text-emerald-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span>Export Excel Status Pegawai</span>
+                    </a>
+                </div>
+            </div>
             <div class="mt-4 overflow-x-auto"><table class="w-full text-left text-sm"><thead class="bg-gray-50"><tr><th class="p-3">Pegawai</th><th class="p-3">Bot</th><th class="p-3">Telegram</th><th class="p-3">Terhubung</th><th class="p-3">Aksi</th></tr></thead><tbody class="divide-y">
                 @forelse($links as $link)<tr><td class="p-3 font-semibold">{{ $link->user?->name }}</td><td class="p-3">{{ $link->bot?->name }}</td><td class="p-3">{{ $link->telegram_username ? '@'.$link->telegram_username : $link->telegram_name }}</td><td class="p-3">{{ $link->linked_at?->format('d/m/Y H:i') }}</td><td class="p-3"><div class="flex flex-wrap gap-3"><form method="POST" action="{{ route('super-admin.telegram-links.test', $link) }}">@csrf<button class="text-xs font-bold text-sky-700">Kirim Pesan Uji</button></form><form method="POST" action="{{ route('super-admin.telegram-links.destroy', $link) }}" onsubmit="return confirm('Lepas hubungan akun Telegram ini?');">@csrf @method('DELETE')<button class="text-xs font-bold text-red-700">Lepaskan</button></form></div></td></tr>@empty<tr><td colspan="5" class="p-6 text-center text-gray-500">Belum ada akun yang terhubung.</td></tr>@endforelse
             </tbody></table></div><div class="mt-4">{{ $links->links() }}</div>

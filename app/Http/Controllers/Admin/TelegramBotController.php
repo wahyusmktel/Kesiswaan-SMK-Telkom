@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\TelegramPegawaiLinkExport;
 use App\Http\Controllers\Controller;
 use App\Models\TelegramBot;
 use App\Models\TelegramLog;
@@ -10,6 +11,7 @@ use App\Services\TelegramService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Maatwebsite\Excel\Facades\Excel;
 
 class TelegramBotController extends Controller
 {
@@ -89,5 +91,14 @@ class TelegramBotController extends Controller
         $result = $telegram->sendTestNotification($telegramUserLink);
 
         return back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $botId = $request->filled('bot_id') ? (int) $request->bot_id : null;
+        $timestamp = now('Asia/Jakarta')->format('Ymd-His');
+        $fileName = 'Daftar-Pegawai-Telegram-SISFO-' . $timestamp . '.xlsx';
+
+        return Excel::download(new TelegramPegawaiLinkExport($botId), $fileName);
     }
 }

@@ -142,6 +142,11 @@ class User extends Authenticatable implements WebAuthnAuthenticatableContract
         return $this->hasMany(TelegramUserLink::class);
     }
 
+    public function telegramUserLinks()
+    {
+        return $this->telegramLinks();
+    }
+
     public function guruPiketSchedules()
     {
         return $this->hasMany(GuruPiketSchedule::class);
