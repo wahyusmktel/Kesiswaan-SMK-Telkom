@@ -32,7 +32,7 @@
             {{-- Studio Workspace: Toolbar & Canvas --}}
             <div class="lg:col-span-8 space-y-4">
                 {{-- Interactive Annotation Toolbar --}}
-                <div class="bg-white rounded-2xl border border-gray-200 p-3 shadow-sm sticky top-4 z-20 flex flex-wrap items-center justify-between gap-3">
+                <div class="bg-white rounded-2xl border border-gray-200 p-3 shadow-sm flex flex-wrap items-center justify-between gap-3">
                     {{-- Tool Selection --}}
                     <div class="flex items-center gap-1 bg-gray-100 p-1 rounded-xl">
                         <button type="button" class="tool-btn px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 active-tool bg-white text-gray-900 shadow-sm"
@@ -65,13 +65,32 @@
                         <button type="button" class="color-btn w-6 h-6 rounded-full border-2 border-white shadow-sm ring-1 ring-gray-300 bg-emerald-500 transition" data-color="#10b981" title="Hijau"></button>
                     </div>
 
-                    {{-- Zoom & Page Controls --}}
-                    <div class="flex items-center gap-2">
-                        <button type="button" id="zoom-out-btn" class="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition" title="Perkecil">
+                    {{-- Page Navigation & Quick Jump --}}
+                    <div class="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-xl px-2 py-1">
+                        <button type="button" id="prev-page-btn"
+                            class="p-1.5 rounded-lg hover:bg-white text-gray-600 hover:text-gray-900 transition disabled:opacity-40 disabled:cursor-not-allowed" title="Halaman Sebelumnya">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                        </button>
+                        <div class="flex items-center gap-1 text-xs font-medium text-gray-600">
+                            <span>Hal.</span>
+                            <input type="number" id="page-input" min="1" max="1" value="1"
+                                class="w-12 text-center text-xs font-bold bg-white border border-gray-300 rounded-lg py-1 px-1 text-gray-800 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 shadow-inner"
+                                title="Ketik nomor halaman lalu tekan Enter untuk berpindah cepat">
+                            <span>/ <span id="total-pages-num" class="font-bold text-gray-800">-</span></span>
+                        </div>
+                        <button type="button" id="next-page-btn"
+                            class="p-1.5 rounded-lg hover:bg-white text-gray-600 hover:text-gray-900 transition disabled:opacity-40 disabled:cursor-not-allowed" title="Halaman Selanjutnya">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        </button>
+                    </div>
+
+                    {{-- Zoom Controls --}}
+                    <div class="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-xl px-2 py-1">
+                        <button type="button" id="zoom-out-btn" class="p-1.5 rounded-lg hover:bg-white text-gray-600 hover:text-gray-900 transition" title="Perkecil">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
                         </button>
-                        <span id="zoom-level-text" class="text-xs font-bold text-gray-600 min-w-[45px] text-center">100%</span>
-                        <button type="button" id="zoom-in-btn" class="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition" title="Perbesar">
+                        <span id="zoom-level-text" class="text-xs font-bold text-gray-700 min-w-[45px] text-center">100%</span>
+                        <button type="button" id="zoom-in-btn" class="p-1.5 rounded-lg hover:bg-white text-gray-600 hover:text-gray-900 transition" title="Perbesar">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                         </button>
                     </div>
@@ -376,6 +395,70 @@
             });
         });
 
+        let currentPage = 1;
+        let pageObserver = null;
+
+        function updateNavigationState() {
+            const inputEl = document.getElementById('page-input');
+            if (inputEl && document.activeElement !== inputEl) {
+                inputEl.value = currentPage;
+            }
+            const prevBtn = document.getElementById('prev-page-btn');
+            const nextBtn = document.getElementById('next-page-btn');
+            if (prevBtn) prevBtn.disabled = (currentPage <= 1);
+            if (nextBtn) nextBtn.disabled = (currentPage >= totalPages);
+        }
+
+        function goToPage(target) {
+            let p = parseInt(target, 10);
+            if (isNaN(p) || p < 1) p = 1;
+            if (totalPages && p > totalPages) p = totalPages;
+            currentPage = p;
+
+            updateNavigationState();
+
+            const targetEl = document.getElementById(`page-wrapper-${currentPage}`);
+            if (targetEl) {
+                targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        function setupPageObserver() {
+            if (pageObserver) {
+                pageObserver.disconnect();
+            }
+
+            const options = {
+                root: null,
+                threshold: [0.1, 0.4, 0.7]
+            };
+
+            pageObserver = new IntersectionObserver((entries) => {
+                let bestEntry = null;
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        if (!bestEntry || entry.intersectionRatio > bestEntry.intersectionRatio) {
+                            bestEntry = entry;
+                        }
+                    }
+                });
+
+                if (bestEntry && bestEntry.target) {
+                    const id = bestEntry.target.id;
+                    const pageNum = parseInt(id.replace('page-wrapper-', ''), 10);
+                    if (!isNaN(pageNum) && pageNum !== currentPage) {
+                        currentPage = pageNum;
+                        updateNavigationState();
+                    }
+                }
+            }, options);
+
+            for (let i = 1; i <= totalPages; i++) {
+                const wrapper = document.getElementById(`page-wrapper-${i}`);
+                if (wrapper) pageObserver.observe(wrapper);
+            }
+        }
+
         async function initStudioViewer() {
             try {
                 const loadingTask = pdfjsLib.getDocument(pdfUrl);
@@ -383,12 +466,25 @@
                 totalPages = pdfDoc.numPages;
                 document.getElementById('pdf-loading-indicator')?.remove();
 
+                const totalPagesEl = document.getElementById('total-pages-num');
+                if (totalPagesEl) totalPagesEl.textContent = totalPages;
+
+                const pageInputEl = document.getElementById('page-input');
+                if (pageInputEl) {
+                    pageInputEl.max = totalPages;
+                    pageInputEl.value = currentPage;
+                }
+
+                updateNavigationState();
+
                 const container = document.getElementById('pdf-viewer-container');
                 container.innerHTML = '';
 
                 for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
                     await renderStudioPage(pageNum, container);
                 }
+
+                setupPageObserver();
             } catch (err) {
                 console.error("Gagal memuat PDF studio:", err);
             }
@@ -777,6 +873,9 @@
             } else if (pageWrapper) {
                 pageWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
+
+            currentPage = pageNum;
+            updateNavigationState();
         }
 
         // Zoom Controls
@@ -793,6 +892,40 @@
             document.getElementById('zoom-level-text').textContent = `${Math.round(scale * 100 / 1.15)}%`;
             initStudioViewer();
         });
+
+        // Page Navigation Event Listeners
+        const prevPageBtn = document.getElementById('prev-page-btn');
+        if (prevPageBtn) {
+            prevPageBtn.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    goToPage(currentPage - 1);
+                }
+            });
+        }
+
+        const nextPageBtn = document.getElementById('next-page-btn');
+        if (nextPageBtn) {
+            nextPageBtn.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    goToPage(currentPage + 1);
+                }
+            });
+        }
+
+        const pageInput = document.getElementById('page-input');
+        if (pageInput) {
+            pageInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    goToPage(pageInput.value);
+                    pageInput.blur();
+                }
+            });
+
+            pageInput.addEventListener('change', () => {
+                goToPage(pageInput.value);
+            });
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             initStudioViewer();
