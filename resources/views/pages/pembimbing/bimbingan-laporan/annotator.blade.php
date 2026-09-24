@@ -31,76 +31,122 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {{-- Studio Workspace: Toolbar & Canvas --}}
             <div class="lg:col-span-8 space-y-4">
-                {{-- Interactive Annotation Toolbar --}}
-                <div class="bg-white rounded-2xl border border-gray-200 p-3 shadow-sm flex flex-wrap items-center justify-between gap-3">
-                    {{-- Tool Selection --}}
-                    <div class="flex items-center gap-1 bg-gray-100 p-1 rounded-xl">
-                        <button type="button" class="tool-btn px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 active-tool bg-white text-gray-900 shadow-sm"
-                            data-tool="box" title="Kotak Penanda">
-                            <span class="w-3.5 h-3.5 border-2 border-current rounded-sm"></span>
-                            <span class="hidden sm:inline">Kotak</span>
-                        </button>
-                        <button type="button" class="tool-btn px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-600 hover:text-gray-900"
-                            data-tool="circle" title="Lingkaran Penanda">
-                            <span class="w-3.5 h-3.5 border-2 border-current rounded-full"></span>
-                            <span class="hidden sm:inline">Lingkaran</span>
-                        </button>
-                        <button type="button" class="tool-btn px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-600 hover:text-gray-900"
-                            data-tool="drawing" title="Coretan Bebas">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                            <span class="hidden sm:inline">Coretan</span>
-                        </button>
-                        <button type="button" class="tool-btn px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-600 hover:text-gray-900"
-                            data-tool="pin" title="Pin Titik">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                            <span class="hidden sm:inline">Pin</span>
-                        </button>
-                    </div>
-
-                    {{-- Color Palette --}}
-                    <div class="flex items-center gap-1.5">
-                        <button type="button" class="color-btn w-6 h-6 rounded-full border-2 border-white shadow-sm ring-2 ring-red-500 bg-red-500 transition" data-color="#ef4444" title="Merah"></button>
-                        <button type="button" class="color-btn w-6 h-6 rounded-full border-2 border-white shadow-sm ring-1 ring-gray-300 bg-blue-500 transition" data-color="#3b82f6" title="Biru"></button>
-                        <button type="button" class="color-btn w-6 h-6 rounded-full border-2 border-white shadow-sm ring-1 ring-gray-300 bg-amber-500 transition" data-color="#f59e0b" title="Kuning"></button>
-                        <button type="button" class="color-btn w-6 h-6 rounded-full border-2 border-white shadow-sm ring-1 ring-gray-300 bg-emerald-500 transition" data-color="#10b981" title="Hijau"></button>
-                    </div>
-
-                    {{-- Page Navigation & Quick Jump --}}
-                    <div class="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-xl px-2 py-1">
-                        <button type="button" id="prev-page-btn"
-                            class="p-1.5 rounded-lg hover:bg-white text-gray-600 hover:text-gray-900 transition disabled:opacity-40 disabled:cursor-not-allowed" title="Halaman Sebelumnya">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                        </button>
-                        <div class="flex items-center gap-1 text-xs font-medium text-gray-600">
-                            <span>Hal.</span>
-                            <input type="number" id="page-input" min="1" max="1" value="1"
-                                class="w-12 text-center text-xs font-bold bg-white border border-gray-300 rounded-lg py-1 px-1 text-gray-800 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 shadow-inner"
-                                title="Ketik nomor halaman lalu tekan Enter untuk berpindah cepat">
-                            <span>/ <span id="total-pages-num" class="font-bold text-gray-800">-</span></span>
+                {{-- Interactive Annotation Toolbar / Readonly Header --}}
+                @if($tahap->status === 'disetujui')
+                    <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            </span>
+                            <div>
+                                <h4 class="text-xs font-bold text-emerald-950">Tahap Telah Disahkan (ACC)</h4>
+                                <p class="text-[11px] text-emerald-700">Mode tinjauan arsip dokumen. Bab ini terkunci dan tidak dapat direvisi lagi.</p>
+                            </div>
                         </div>
-                        <button type="button" id="next-page-btn"
-                            class="p-1.5 rounded-lg hover:bg-white text-gray-600 hover:text-gray-900 transition disabled:opacity-40 disabled:cursor-not-allowed" title="Halaman Selanjutnya">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                        </button>
+
+                        <div class="flex items-center gap-2">
+                            {{-- Page Navigation & Quick Jump --}}
+                            <div class="flex items-center gap-1.5 bg-white border border-emerald-200 rounded-xl px-2 py-1 shadow-xs">
+                                <button type="button" id="prev-page-btn"
+                                    class="p-1.5 rounded-lg hover:bg-emerald-50 text-gray-600 hover:text-emerald-900 transition disabled:opacity-40 disabled:cursor-not-allowed" title="Halaman Sebelumnya">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                                </button>
+                                <div class="flex items-center gap-1 text-xs font-medium text-gray-600">
+                                    <span>Hal.</span>
+                                    <input type="number" id="page-input" min="1" max="1" value="1"
+                                        class="w-12 text-center text-xs font-bold bg-gray-50 border border-gray-300 rounded-lg py-1 px-1 text-gray-800 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-inner"
+                                        title="Ketik nomor halaman lalu tekan Enter untuk berpindah cepat">
+                                    <span>/ <span id="total-pages-num" class="font-bold text-gray-800">-</span></span>
+                                </div>
+                                <button type="button" id="next-page-btn"
+                                    class="p-1.5 rounded-lg hover:bg-emerald-50 text-gray-600 hover:text-emerald-900 transition disabled:opacity-40 disabled:cursor-not-allowed" title="Halaman Selanjutnya">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                </button>
+                            </div>
+
+                            {{-- Zoom Controls --}}
+                            <div class="flex items-center gap-1 bg-white border border-emerald-200 rounded-xl px-2 py-1 shadow-xs">
+                                <button type="button" id="zoom-out-btn" class="p-1.5 rounded-lg hover:bg-emerald-50 text-gray-600 hover:text-emerald-900 transition" title="Perkecil">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
+                                </button>
+                                <span id="zoom-level-text" class="text-xs font-bold text-gray-700 min-w-[45px] text-center">100%</span>
+                                <button type="button" id="zoom-in-btn" class="p-1.5 rounded-lg hover:bg-emerald-50 text-gray-600 hover:text-emerald-900 transition" title="Perbesar">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                @else
+                    <div class="bg-white rounded-2xl border border-gray-200 p-3 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                        {{-- Tool Selection --}}
+                        <div class="flex items-center gap-1 bg-gray-100 p-1 rounded-xl">
+                            <button type="button" class="tool-btn px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 active-tool bg-white text-gray-900 shadow-sm"
+                                data-tool="box" title="Kotak Penanda">
+                                <span class="w-3.5 h-3.5 border-2 border-current rounded-sm"></span>
+                                <span class="hidden sm:inline">Kotak</span>
+                            </button>
+                            <button type="button" class="tool-btn px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-600 hover:text-gray-900"
+                                data-tool="circle" title="Lingkaran Penanda">
+                                <span class="w-3.5 h-3.5 border-2 border-current rounded-full"></span>
+                                <span class="hidden sm:inline">Lingkaran</span>
+                            </button>
+                            <button type="button" class="tool-btn px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-600 hover:text-gray-900"
+                                data-tool="drawing" title="Coretan Bebas">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                <span class="hidden sm:inline">Coretan</span>
+                            </button>
+                            <button type="button" class="tool-btn px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-600 hover:text-gray-900"
+                                data-tool="pin" title="Pin Titik">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                <span class="hidden sm:inline">Pin</span>
+                            </button>
+                        </div>
+
+                        {{-- Color Palette --}}
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" class="color-btn w-6 h-6 rounded-full border-2 border-white shadow-sm ring-2 ring-red-500 bg-red-500 transition" data-color="#ef4444" title="Merah"></button>
+                            <button type="button" class="color-btn w-6 h-6 rounded-full border-2 border-white shadow-sm ring-1 ring-gray-300 bg-blue-500 transition" data-color="#3b82f6" title="Biru"></button>
+                            <button type="button" class="color-btn w-6 h-6 rounded-full border-2 border-white shadow-sm ring-1 ring-gray-300 bg-amber-500 transition" data-color="#f59e0b" title="Kuning"></button>
+                            <button type="button" class="color-btn w-6 h-6 rounded-full border-2 border-white shadow-sm ring-1 ring-gray-300 bg-emerald-500 transition" data-color="#10b981" title="Hijau"></button>
+                        </div>
+
+                        {{-- Page Navigation & Quick Jump --}}
+                        <div class="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-xl px-2 py-1">
+                            <button type="button" id="prev-page-btn"
+                                class="p-1.5 rounded-lg hover:bg-white text-gray-600 hover:text-gray-900 transition disabled:opacity-40 disabled:cursor-not-allowed" title="Halaman Sebelumnya">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                            </button>
+                            <div class="flex items-center gap-1 text-xs font-medium text-gray-600">
+                                <span>Hal.</span>
+                                <input type="number" id="page-input" min="1" max="1" value="1"
+                                    class="w-12 text-center text-xs font-bold bg-white border border-gray-300 rounded-lg py-1 px-1 text-gray-800 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 shadow-inner"
+                                    title="Ketik nomor halaman lalu tekan Enter untuk berpindah cepat">
+                                <span>/ <span id="total-pages-num" class="font-bold text-gray-800">-</span></span>
+                            </div>
+                            <button type="button" id="next-page-btn"
+                                class="p-1.5 rounded-lg hover:bg-white text-gray-600 hover:text-gray-900 transition disabled:opacity-40 disabled:cursor-not-allowed" title="Halaman Selanjutnya">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            </button>
+                        </div>
+
+                        {{-- Zoom Controls --}}
+                        <div class="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-xl px-2 py-1">
+                            <button type="button" id="zoom-out-btn" class="p-1.5 rounded-lg hover:bg-white text-gray-600 hover:text-gray-900 transition" title="Perkecil">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
+                            </button>
+                            <span id="zoom-level-text" class="text-xs font-bold text-gray-700 min-w-[45px] text-center">100%</span>
+                            <button type="button" id="zoom-in-btn" class="p-1.5 rounded-lg hover:bg-white text-gray-600 hover:text-gray-900 transition" title="Perbesar">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            </button>
+                        </div>
                     </div>
 
-                    {{-- Zoom Controls --}}
-                    <div class="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-xl px-2 py-1">
-                        <button type="button" id="zoom-out-btn" class="p-1.5 rounded-lg hover:bg-white text-gray-600 hover:text-gray-900 transition" title="Perkecil">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
-                        </button>
-                        <span id="zoom-level-text" class="text-xs font-bold text-gray-700 min-w-[45px] text-center">100%</span>
-                        <button type="button" id="zoom-in-btn" class="p-1.5 rounded-lg hover:bg-white text-gray-600 hover:text-gray-900 transition" title="Perbesar">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                        </button>
+                    {{-- Drawing Instruction Banner --}}
+                    <div class="p-3 bg-rose-50/80 border border-rose-200 rounded-xl text-xs text-rose-900 flex items-center gap-2 shadow-sm">
+                        <svg class="w-4 h-4 text-rose-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span><strong>Petunjuk:</strong> Klik dan seret (drag) mouse di atas dokumen PDF untuk menandai area koreksi (kotak/lingkaran/coretan). Jendela catatan revisi akan muncul otomatis saat Anda melepaskan mouse.</span>
                     </div>
-                </div>
-
-                {{-- Drawing Instruction Banner --}}
-                <div class="p-3 bg-rose-50/80 border border-rose-200 rounded-xl text-xs text-rose-900 flex items-center gap-2 shadow-sm">
-                    <svg class="w-4 h-4 text-rose-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <span><strong>Petunjuk:</strong> Klik dan seret (drag) mouse di atas dokumen PDF untuk menandai area koreksi (kotak/lingkaran/coretan). Jendela catatan revisi akan muncul otomatis saat Anda melepaskan mouse.</span>
-                </div>
+                @endif
 
                 {{-- PDF & Drawing Canvas Container --}}
                 <div id="pdf-viewer-container" class="bg-gray-200/70 rounded-2xl p-4 md:p-8 min-h-[600px] overflow-auto flex flex-col items-center gap-8 shadow-inner border border-gray-200 select-none">
@@ -115,71 +161,114 @@
 
             {{-- Right Sidebar: Annotations List & Final Review Form --}}
             <div class="lg:col-span-4 space-y-6 sticky top-4">
-                {{-- Form Keputusan & Penerbitan Berita Acara Digital --}}
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
-                    <div class="flex items-center gap-2 pb-3 border-b border-gray-100">
-                        <div class="p-1.5 bg-rose-50 text-rose-600 rounded-lg">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z"/></svg>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-gray-900 text-sm">Keputusan &amp; Berita Acara</h4>
-                            <p class="text-[11px] text-gray-500">Terbitkan Berita Acara resmi (Revisi atau ACC)</p>
-                        </div>
-                    </div>
-
-                    <form method="POST" action="{{ route('pembimbing-prakerin.bimbingan-laporan.selesaikan-review', $tahap) }}" class="space-y-4">
-                        @csrf
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-                                Tindakan Keputusan <span class="text-rose-500">*</span>
-                            </label>
-                            <div class="grid grid-cols-2 gap-3">
-                                <label class="border-2 rounded-xl p-3 flex flex-col gap-1 cursor-pointer transition has-[:checked]:border-rose-500 has-[:checked]:bg-rose-50/50">
-                                    <div class="flex items-center gap-2">
-                                        <input type="radio" name="status" value="revisi" id="radio-status-revisi"
-                                            {{ ($tahap->status === 'perlu_revisi' || $tahap->status === 'revisi' || $tahap->status !== 'disetujui') ? 'checked' : '' }} required
-                                            class="text-rose-600 focus:ring-rose-500" onchange="updateDecisionButtonState()">
-                                        <span class="text-xs font-bold text-gray-800">Perlu Revisi</span>
-                                    </div>
-                                    <span class="text-[10px] text-gray-500 pl-5">Terbitkan Berita Acara Revisi</span>
-                                </label>
-                                <label class="border-2 rounded-xl p-3 flex flex-col gap-1 cursor-pointer transition has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50/50">
-                                    <div class="flex items-center gap-2">
-                                        <input type="radio" name="status" value="disetujui" id="radio-status-disetujui"
-                                            {{ $tahap->status === 'disetujui' ? 'checked' : '' }} required
-                                            class="text-emerald-600 focus:ring-emerald-500" onchange="updateDecisionButtonState()">
-                                        <span class="text-xs font-bold text-gray-800">Setujui (ACC)</span>
-                                    </div>
-                                    <span class="text-[10px] text-gray-500 pl-5">Terbitkan Berita Acara ACC</span>
-                                </label>
+                {{-- Form Keputusan / Kartu Status Disetujui (ACC) --}}
+                @if($tahap->status === 'disetujui')
+                    <div class="bg-white rounded-2xl border-2 border-emerald-200 shadow-sm p-6 space-y-4">
+                        <div class="flex items-center gap-3 pb-3 border-b border-gray-100">
+                            <div class="p-2 bg-emerald-100 text-emerald-700 rounded-xl">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            <div>
+                                <h4 class="font-extrabold text-gray-900 text-sm">Tahap Ini Telah Disetujui (ACC)</h4>
+                                <p class="text-[11px] text-emerald-600 font-semibold">Status terkunci permanen. Bab ini tidak dapat direvisi lagi.</p>
                             </div>
                         </div>
 
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-                                Catatan &amp; Arahan Pembimbing (Opsional)
-                            </label>
-                            <textarea name="catatan_pembimbing" rows="3" maxlength="1000"
-                                placeholder="Tuliskan rangkuman poin arahan revisi atau apresiasi pengesahan..."
-                                class="w-full text-xs rounded-xl border-gray-300 focus:border-rose-500 focus:ring-rose-500 shadow-sm transition">{{ old('catatan_pembimbing', $tahap->catatan_pembimbing) }}</textarea>
+                        <div class="space-y-2.5 text-xs bg-emerald-50/60 rounded-xl p-3.5 border border-emerald-100">
+                            @if($tahap->nomor_berita_acara || ($tahap->latestBeritaAcara && $tahap->latestBeritaAcara->nomor_berita_acara))
+                                <div class="flex justify-between items-center text-[11px]">
+                                    <span class="text-gray-500 font-medium">Nomor Berita Acara:</span>
+                                    <span class="font-mono font-bold text-gray-900">{{ $tahap->latestBeritaAcara?->nomor_berita_acara ?? $tahap->nomor_berita_acara }}</span>
+                                </div>
+                            @endif
+                            @if($tahap->reviewed_at)
+                                <div class="flex justify-between items-center text-[11px]">
+                                    <span class="text-gray-500 font-medium">Disahkan Pada:</span>
+                                    <span class="font-semibold text-gray-800">{{ $tahap->reviewed_at->translatedFormat('d F Y H:i') }} WIB</span>
+                                </div>
+                            @endif
+                            @if($tahap->catatan_pembimbing)
+                                <div class="pt-2 border-t border-emerald-200/60">
+                                    <span class="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">Catatan Pengesahan:</span>
+                                    <p class="text-gray-700 italic mt-0.5 leading-relaxed">{{ $tahap->catatan_pembimbing }}</p>
+                                </div>
+                            @endif
                         </div>
 
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-                                PIN Tanda Tangan Digital <span class="text-rose-500">*</span>
-                            </label>
-                            <input type="password" name="pin" required maxlength="10" placeholder="6 digit PIN TTD Digital"
-                                class="w-full text-xs rounded-xl border-gray-300 focus:border-rose-500 focus:ring-rose-500 shadow-sm transition">
-                            <p class="text-[10px] text-gray-400 mt-1">Dibutuhkan untuk membubuhkan QR tanda tangan digital pada Berita Acara resmi.</p>
+                        <div class="pt-1">
+                            <a href="{{ route('pembimbing-prakerin.bimbingan-laporan.tahap.berita-acara', $tahap) }}" target="_blank"
+                                class="w-full py-2.5 px-4 rounded-xl text-white font-bold text-xs shadow-md bg-emerald-600 hover:bg-emerald-700 transition flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z"/></svg>
+                                <span>Unduh Berita Acara Pengesahan (PDF)</span>
+                            </a>
+                        </div>
+                    </div>
+                @else
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
+                        <div class="flex items-center gap-2 pb-3 border-b border-gray-100">
+                            <div class="p-1.5 bg-rose-50 text-rose-600 rounded-lg">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z"/></svg>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-900 text-sm">Keputusan &amp; Berita Acara</h4>
+                                <p class="text-[11px] text-gray-500">Terbitkan Berita Acara resmi (Revisi atau ACC)</p>
+                            </div>
                         </div>
 
-                        <button type="submit" id="btn-submit-review"
-                            class="w-full py-2.5 px-4 rounded-xl text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z"/></svg>
-                            <span id="btn-submit-text">Terbitkan Berita Acara Revisi</span>
-                        </button>
-                    </form>
-                </div>
+                        <form method="POST" action="{{ route('pembimbing-prakerin.bimbingan-laporan.selesaikan-review', $tahap) }}" class="space-y-4">
+                            @csrf
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                                    Tindakan Keputusan <span class="text-rose-500">*</span>
+                                </label>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <label class="border-2 rounded-xl p-3 flex flex-col gap-1 cursor-pointer transition has-[:checked]:border-rose-500 has-[:checked]:bg-rose-50/50">
+                                        <div class="flex items-center gap-2">
+                                            <input type="radio" name="status" value="revisi" id="radio-status-revisi"
+                                                {{ ($tahap->status === 'perlu_revisi' || $tahap->status === 'revisi' || $tahap->status !== 'disetujui') ? 'checked' : '' }} required
+                                                class="text-rose-600 focus:ring-rose-500" onchange="updateDecisionButtonState()">
+                                            <span class="text-xs font-bold text-gray-800">Perlu Revisi</span>
+                                        </div>
+                                        <span class="text-[10px] text-gray-500 pl-5">Terbitkan Berita Acara Revisi</span>
+                                    </label>
+                                    <label class="border-2 rounded-xl p-3 flex flex-col gap-1 cursor-pointer transition has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50/50">
+                                        <div class="flex items-center gap-2">
+                                            <input type="radio" name="status" value="disetujui" id="radio-status-disetujui"
+                                                {{ $tahap->status === 'disetujui' ? 'checked' : '' }} required
+                                                class="text-emerald-600 focus:ring-emerald-500" onchange="updateDecisionButtonState()">
+                                            <span class="text-xs font-bold text-gray-800">Setujui (ACC)</span>
+                                        </div>
+                                        <span class="text-[10px] text-gray-500 pl-5">Terbitkan Berita Acara ACC</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                                    Catatan &amp; Arahan Pembimbing (Opsional)
+                                </label>
+                                <textarea name="catatan_pembimbing" rows="3" maxlength="1000"
+                                    placeholder="Tuliskan rangkuman poin arahan revisi atau apresiasi pengesahan..."
+                                    class="w-full text-xs rounded-xl border-gray-300 focus:border-rose-500 focus:ring-rose-500 shadow-sm transition">{{ old('catatan_pembimbing', $tahap->catatan_pembimbing) }}</textarea>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                                    PIN Tanda Tangan Digital <span class="text-rose-500">*</span>
+                                </label>
+                                <input type="password" name="pin" required maxlength="10" placeholder="6 digit PIN TTD Digital"
+                                    class="w-full text-xs rounded-xl border-gray-300 focus:border-rose-500 focus:ring-rose-500 shadow-sm transition">
+                                <p class="text-[10px] text-gray-400 mt-1">Dibutuhkan untuk membubuhkan QR tanda tangan digital pada Berita Acara resmi.</p>
+                            </div>
+
+                            <button type="submit" id="btn-submit-review"
+                                class="w-full py-2.5 px-4 rounded-xl text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z"/></svg>
+                                <span id="btn-submit-text">Terbitkan Berita Acara Revisi</span>
+                            </button>
+                        </form>
+                    </div>
+                @endif
 
                 {{-- Riwayat Berita Acara yang Pernah Diterbitkan --}}
                 @if(isset($beritaAcaras) && $beritaAcaras->isNotEmpty())
@@ -245,14 +334,16 @@
                                     <span class="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 group-hover:bg-rose-200 group-hover:text-rose-800">
                                         #{{ $index + 1 }} • Hal. {{ $anotasi->halaman }}
                                     </span>
-                                    <form method="POST" action="{{ route('pembimbing-prakerin.bimbingan-laporan.hapus-anotasi', $anotasi) }}"
-                                        onsubmit="return confirm('Hapus coretan/catatan ini?')" onclick="event.stopPropagation();">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-gray-400 hover:text-rose-600 p-0.5" title="Hapus Coretan">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                        </button>
-                                    </form>
+                                    @if($tahap->status !== 'disetujui')
+                                        <form method="POST" action="{{ route('pembimbing-prakerin.bimbingan-laporan.hapus-anotasi', $anotasi) }}"
+                                            onsubmit="return confirm('Hapus coretan/catatan ini?')" onclick="event.stopPropagation();">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-gray-400 hover:text-rose-600 p-0.5" title="Hapus Coretan">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                                 <p class="text-xs text-gray-800 font-medium leading-snug">
                                     {{ $anotasi->catatan ?: '(Coretan penanda tanpa catatan teks)' }}
@@ -404,6 +495,7 @@
         const tahapId = @js($tahap->id);
         const storeAnnotationUrl = "{{ route('pembimbing-prakerin.bimbingan-laporan.simpan-anotasi', $tahap) }}";
         const csrfToken = "{{ csrf_token() }}";
+        const isReadOnly = @js($tahap->status === 'disetujui');
         let existingAnnotations = @js($anotasis);
 
         let pdfDoc = null;
@@ -583,6 +675,11 @@
         }
 
         function setupDrawingEvents(canvas, pageNum) {
+            if (isReadOnly) {
+                canvas.style.pointerEvents = 'none';
+                return;
+            }
+
             const ctx = canvas.getContext('2d');
 
             canvas.addEventListener('mousedown', (e) => {
@@ -891,18 +988,22 @@
 
             const deleteUrl = `{{ url('pembimbing-prakerin/bimbingan-laporan/anotasi') }}/${anotasi.id}`;
 
+            const deleteButtonHtml = isReadOnly ? '' : `
+                <form method="POST" action="${deleteUrl}" onsubmit="return confirm('Hapus coretan/catatan ini?')" onclick="event.stopPropagation();">
+                    <input type="hidden" name="_token" value="${csrfToken}">
+                    <input type="hidden" name="_method" value="DELETE">
+                    <button type="submit" class="text-gray-400 hover:text-rose-600 p-0.5" title="Hapus Coretan">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
+                </form>
+            `;
+
             item.innerHTML = `
                 <div class="flex items-center justify-between mb-1">
                     <span class="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 group-hover:bg-rose-200 group-hover:text-rose-800">
                         #${existingAnnotations.length} • Hal. ${anotasi.halaman}
                     </span>
-                    <form method="POST" action="${deleteUrl}" onsubmit="return confirm('Hapus coretan/catatan ini?')" onclick="event.stopPropagation();">
-                        <input type="hidden" name="_token" value="${csrfToken}">
-                        <input type="hidden" name="_method" value="DELETE">
-                        <button type="submit" class="text-gray-400 hover:text-rose-600 p-0.5" title="Hapus Coretan">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                        </button>
-                    </form>
+                    ${deleteButtonHtml}
                 </div>
                 <p class="text-xs text-gray-800 font-medium leading-snug">
                     ${anotasi.catatan || '(Coretan penanda tanpa catatan teks)'}

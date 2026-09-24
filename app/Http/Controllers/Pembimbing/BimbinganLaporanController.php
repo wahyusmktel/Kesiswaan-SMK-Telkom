@@ -329,6 +329,13 @@ class BimbinganLaporanController extends Controller
         $laporan = $tahap->laporan;
         $this->authorizeAccess($laporan);
 
+        if ($tahap->status === 'disetujui') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tahapan bimbingan ini telah disahkan (ACC) dan tidak dapat ditambahkan catatan koreksi lagi.',
+            ], 422);
+        }
+
         // Petakan tipe jika menggunakan nama alias ('box', 'circle', 'drawing', 'pin')
         $rawTipe = $request->input('tipe_anotasi') ?? $request->input('tipe', 'sorot_kotak');
         $tipeAnotasi = match ($rawTipe) {
@@ -408,6 +415,13 @@ class BimbinganLaporanController extends Controller
         $laporan = $tahap->laporan;
         $this->authorizeAccess($laporan);
 
+        if ($tahap->status === 'disetujui') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tahapan bimbingan ini telah disahkan (ACC) dan catatan revisi terkunci.',
+            ], 422);
+        }
+
         $anotasi->delete();
 
         PrakerinBimbinganAktivitasLog::catat(
@@ -431,6 +445,11 @@ class BimbinganLaporanController extends Controller
     {
         $laporan = $tahap->laporan;
         $this->authorizeAccess($laporan);
+
+        if ($tahap->status === 'disetujui') {
+            Alert::warning('Tahap Sudah Disetujui', 'Tahapan bimbingan ini telah disetujui (ACC) dan tidak dapat direvisi atau diubah lagi.');
+            return back();
+        }
 
         // Validasi prasyarat TTD digital
         $sig = UserDigitalSignature::where('user_id', Auth::id())->first();

@@ -496,4 +496,107 @@ class PrakerinBimbinganLaporanTest extends TestCase
         $responseHubin->assertSee($this->masterSiswa->nama_lengkap);
         $responseHubin->assertSee('Siswa Kelas Lain TKJ');
     }
+
+    public function test_approved_stage_cannot_be_revised_or_reuploaded(): void
+    {
+        UserDigitalSignature::create([
+            'user_id' => $this->userGuru->id,
+            'pin_hash' => Hash::make('123456'),
+            'is_active' => true,
+        ]);
+
+        $laporan = PrakerinBimbinganLaporan::create([
+            'prakerin_penempatan_id' => $this->penempatan->id,
+            'status_judul' => 'disetujui',
+            'status_laporan' => 'dalam_bimbingan',
+        ]);
+
+        $tahap = $laporan->tahaps()->create([
+            'judul_tahap' => 'Bab I Pendahuluan',
+            'urutan' => 1,
+            'status' => 'disetujui',
+            'file_pdf_path' => 'public/prakerin_laporan/dummy.pdf',
+        ]);
+
+        // 1. Pembimbing mencoba merevisi tahap yang sudah disetujui -> Ditolak / Dilarang
+        $responseReview = $this->actingAs($this->userGuru)
+            ->withSession(['active_role' => 'Guru Kelas'])
+            ->post(route('pembimbing-prakerin.bimbingan-laporan.selesaikan-review', $tahap), [
+                'status' => 'revisi',
+                'catatan_pembimbing' => 'Mencoba revisi setelah ACC',
+                'pin' => '123456',
+            ]);
+
+        $responseReview->assertRedirect();
+        $tahap->refresh();
+        $this->assertEquals('disetujui', $tahap->status);
+
+        // 2. Pembimbing mencoba menambah anotasi di tahap yang sudah disetujui -> 422 JSON
+        $responseAnotasi = $this->actingAs($this->userGuru)
+            ->withSession(['active_role' => 'Guru Kelas'])
+            ->postJson(route('pembimbing-prakerin.bimbingan-laporan.simpan-anotasi', $tahap), [
+                'halaman' => 1,
+                'posisi_x' => 10,
+                'posisi_y' => 10,
+                'tipe_anotasi' => 'sorot_kotak',
+            ]);
+
+        $responseAnotasi->assertStatus(422);
+
+        // 3. Siswa mencoba mengunggah ulang dokumen di tahap yang sudah disetujui -> Ditolak
+        $fakePdf = \Illuminate\Http\UploadedFile::fake()->create('revisi.pdf', 500, 'application/pdf');
+        $responseUpload = $this->actingAs($this->userSiswa)
+            ->withSession(['active_role' => 'Siswa'])
+            ->post(route('siswa.bimbingan-laporan.upload-dokumen', $tahap), [
+                'file_pdf' => $fakePdf,
+            ]);
+
+        $responseUpload->assertRedirect();
+        $tahap->refresh();
+        $this->assertEquals('disetujui', $tahap->status);
+    }
+
+    public function test_prakerin_digital_signature_verification_url(): void
+    {
+        $laporan = PrakerinBimbinganLaporan::create([
+            'prakerin_penempatan_id' => $this->penempatan->id,
+            'status_judul' => 'disetujui',
+            'status_laporan' => 'dalam_bimbingan',
+        ]);
+
+        $tahap = $laporan->tahaps()->create([
+            'judul_tahap' => 'Bab I Pendahuluan',
+            'urutan' => 1,
+            'status' => 'disetujui',
+            'nomor_berita_acara' => 'BA-ACC/20260924/0001',
+            'file_pdf_path' => 'public/dummy.pdf',
+        ]);
+
+        $beritaAcara = $tahap->beritaAcaras()->create([
+            'prakerin_bimbingan_laporan_id' => $laporan->id,
+            'user_id' => $this->userGuru->id,
+            'nomor_berita_acara' => 'BA-ACC/20260924/0001',
+            'jenis' => 'disetujui',
+            'judul_tahap' => $tahap->judul_tahap,
+            'total_anotasi' => 0,
+            'diterbitkan_at' => now(),
+        ]);
+
+        // Cek akses verifikasi via route bimbingan-prakerin payload
+        $payload = [
+            'doc' => 'BERITA_ACARA_ACC_BIMBINGAN_PRAKERIN',
+            'nomor' => $beritaAcara->nomor_berita_acara,
+            'siswa' => $this->masterSiswa->nama_lengkap,
+            'bab' => $tahap->judul_tahap,
+            'status' => 'disetujui',
+            'tanggal' => now()->format('d-m-Y H:i'),
+        ];
+
+        $verifyUrl = route('verifikasi.bimbingan-prakerin', base64_encode(json_encode($payload)));
+        $response = $this->get($verifyUrl);
+
+        $response->assertOk();
+        $response->assertSee('DOKUMEN SAH');
+        $response->assertSee('BERITA_ACARA_PRAKERIN');
+    }
 }

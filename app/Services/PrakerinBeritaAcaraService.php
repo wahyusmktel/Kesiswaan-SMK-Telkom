@@ -50,6 +50,29 @@ class PrakerinBeritaAcaraService
         $catatanPembimbing = $beritaAcara?->catatan_pembimbing ?? $tahap->catatan_pembimbing;
         $tanggalReview = $beritaAcara?->diterbitkan_at ?? $tahap->reviewed_at ?? now();
 
+        // Terbitkan / sinkronkan DigitalDocument resmi jika akun guru tersedia
+        $digDoc = null;
+        if ($guruUser) {
+            $docTitle = ($isAcc ? 'Berita Acara Pengesahan (ACC)' : ('Berita Acara Revisi' . ($revisiKe ? ' (Ke-' . $revisiKe . ')' : '')))
+                . ' — ' . $tahap->judul_tahap . ' (' . ($penempatan->siswa?->nama_lengkap ?? '-') . ')';
+            $refId = $beritaAcara ? $beritaAcara->id : $tahap->id;
+            $hashParts = [
+                'BERITA_ACARA_PRAKERIN',
+                (string) $refId,
+                $nomorBeritaAcara,
+                (string) ($penempatan->siswa?->nis ?? ''),
+                $isAcc ? 'ACC' : 'REVISI',
+                (string) $tanggalReview->timestamp,
+            ];
+            $digDoc = \App\Models\DigitalDocument::autoSign(
+                $guruUser,
+                'BERITA_ACARA_PRAKERIN',
+                $docTitle,
+                $refId,
+                $hashParts
+            );
+        }
+
         // QR Code Digital Verification URL
         $verifyData = [
             'doc' => $isAcc ? 'BERITA_ACARA_ACC_BIMBINGAN_PRAKERIN' : 'BERITA_ACARA_REVISI_BIMBINGAN_PRAKERIN',
@@ -63,7 +86,9 @@ class PrakerinBeritaAcaraService
             'tanggal' => $tanggalReview->format('d-m-Y H:i'),
         ];
 
-        $verifyPayload = url('/verifikasi/bimbingan-prakerin/' . base64_encode(json_encode($verifyData)));
+        $verifyPayload = $digDoc 
+            ? route('verifikasi.dokumen', $digDoc->token) 
+            : route('verifikasi.bimbingan-prakerin', base64_encode(json_encode($verifyData)));
 
         $qrCodeSvg = QrCode::format('svg')
             ->size(90)
@@ -117,6 +142,27 @@ class PrakerinBeritaAcaraService
 
         $sig = $guruUser ? UserDigitalSignature::where('user_id', $guruUser->id)->first() : null;
 
+        // Auto sign rekap riwayat bimbingan jika akun guru tersedia
+        $digDoc = null;
+        if ($guruUser) {
+            $docTitle = 'Rekap Riwayat Bimbingan Prakerin — ' . ($penempatan->siswa?->nama_lengkap ?? '-') . ' (' . ($laporan->judul_laporan ?? 'Laporan PKL') . ')';
+            $refId = $laporan->id;
+            $hashParts = [
+                'REKAP_BIMBINGAN_PRAKERIN',
+                (string) $refId,
+                (string) ($penempatan->siswa?->nis ?? ''),
+                (string) ($laporan->status_laporan),
+                (string) ($laporan->acc_at?->timestamp ?? time()),
+            ];
+            $digDoc = \App\Models\DigitalDocument::autoSign(
+                $guruUser,
+                'REKAP_BIMBINGAN_PRAKERIN',
+                $docTitle,
+                $refId,
+                $hashParts
+            );
+        }
+
         // QR Code untuk Pengesahan ACC Final atau Riwayat
         $verifyData = [
             'doc' => 'REKAP_RIWAYAT_BIMBINGAN_PRAKERIN',
@@ -129,7 +175,9 @@ class PrakerinBeritaAcaraService
             'acc_at' => $laporan->acc_at?->format('d-m-Y H:i') ?? '-',
         ];
 
-        $verifyPayload = url('/verifikasi/riwayat-bimbingan/' . base64_encode(json_encode($verifyData)));
+        $verifyPayload = $digDoc
+            ? route('verifikasi.dokumen', $digDoc->token)
+            : route('verifikasi.riwayat-bimbingan', base64_encode(json_encode($verifyData)));
 
         $qrCodeSvg = QrCode::format('svg')
             ->size(95)

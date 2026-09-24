@@ -1580,6 +1580,11 @@ Route::middleware(['auth', 'role:Guru Kelas|Guru Piket|Wali Kelas|Waka Kesiswaan
 // ============================================================
 // PUBLIC VERIFICATION FOR DIGITAL DOCUMENTS
 // ============================================================
+Route::get('/verifikasi/bimbingan-prakerin/{data}', [\App\Http\Controllers\VerifikasiDokumenController::class, 'bimbinganPrakerin'])
+    ->name('verifikasi.bimbingan-prakerin');
+Route::get('/verifikasi/riwayat-bimbingan/{data}', [\App\Http\Controllers\VerifikasiDokumenController::class, 'riwayatBimbingan'])
+    ->name('verifikasi.riwayat-bimbingan');
+
 Route::get('/verifikasi/{token}', [\App\Http\Controllers\VerifikasiDokumenController::class, 'show'])
     ->name('verifikasi.dokumen')
     ->where('token', '[0-9a-f\-]{36}');

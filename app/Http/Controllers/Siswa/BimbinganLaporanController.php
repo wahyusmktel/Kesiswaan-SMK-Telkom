@@ -180,6 +180,11 @@ class BimbinganLaporanController extends Controller
         $laporan = $this->getLaporanSiswa();
         abort_unless($tahap->prakerin_bimbingan_laporan_id === $laporan->id, 403);
 
+        if ($tahap->status === 'disetujui') {
+            Alert::warning('Tahap Sudah Disetujui', 'Tahapan yang telah disetujui (ACC) tidak dapat dihapus.');
+            return back();
+        }
+
         $judul = $tahap->judul_tahap;
         $tahap->delete();
 
@@ -206,6 +211,11 @@ class BimbinganLaporanController extends Controller
         // Validasi judul harus sudah disetujui
         if ($laporan->status_judul !== 'disetujui') {
             Alert::error('Judul Belum Disetujui', 'Anda baru bisa menyusun & mengunggah laporan setelah judul disetujui oleh pembimbing.');
+            return back();
+        }
+
+        if ($tahap->status === 'disetujui') {
+            Alert::warning('Tahap Sudah Disetujui', 'Bab ini telah disetujui (ACC) oleh pembimbing dan tidak dapat diunggah ulang.');
             return back();
         }
 
