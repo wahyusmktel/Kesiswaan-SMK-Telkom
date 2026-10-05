@@ -178,18 +178,33 @@ class OkrWeeklyReportController extends Controller
         }
 
         $report = DB::transaction(function () use ($request, $validated, $period, $unit, $weekStart, $items) {
-            $report = OkrWeeklyReport::firstOrCreate(
-                [
-                    'okr_period_id' => $period->id,
-                    'okr_unit_id' => $unit->id,
-                    'week_start' => $weekStart,
-                ],
-                [
-                    'week_end' => $weekStart->addDays(4),
-                    'status' => 'draft',
-                    'created_by' => $request->user()->id,
-                ]
-            );
+            $report = OkrWeeklyReport::query()
+                ->where('okr_period_id', $period->id)
+                ->where('okr_unit_id', $unit->id)
+                ->whereDate('week_start', $weekStart)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $report) {
+                try {
+                    $report = OkrWeeklyReport::create([
+                        'okr_period_id' => $period->id,
+                        'okr_unit_id' => $unit->id,
+                        'week_start' => $weekStart,
+                        'week_end' => $weekStart->addDays(4),
+                        'status' => 'draft',
+                        'created_by' => $request->user()->id,
+                    ]);
+                } catch (\Illuminate\Database\UniqueConstraintViolationException) {
+                    $report = OkrWeeklyReport::query()
+                        ->where('okr_period_id', $period->id)
+                        ->where('okr_unit_id', $unit->id)
+                        ->whereDate('week_start', $weekStart)
+                        ->lockForUpdate()
+                        ->firstOrFail();
+                }
+            }
+
             abort_if($report->status !== 'draft', 422, 'Laporan yang sudah dikirim tidak dapat mengubah rencana Senin.');
             $report->update([
                 'week_end' => $weekStart->addDays(4),
@@ -197,22 +212,31 @@ class OkrWeeklyReportController extends Controller
                 'support_needed' => $validated['support_needed'] ?? null,
             ]);
 
-            $orders = [];
+            $orders = range(1, $items->count());
+            $report->items()->whereNotIn('priority_order', $orders)->delete();
+
+            $existingItems = $report->items()->lockForUpdate()->get()->keyBy('priority_order');
+
             foreach ($items as $index => $item) {
                 $order = $index + 1;
-                $orders[] = $order;
-                $report->items()->updateOrCreate(
-                    ['priority_order' => $order],
-                    [
-                        'okr_plan_id' => $item['okr_plan_id'] ?? null,
-                        'commitment' => $item['commitment'],
-                        'measurable_target' => $item['measurable_target'],
-                        'cross_unit_dependencies' => $item['cross_unit_dependencies'] ?? null,
-                        'approval_needs' => $item['approval_needs'] ?? null,
-                    ]
-                );
+                $payload = [
+                    'okr_plan_id' => $item['okr_plan_id'] ?? null,
+                    'commitment' => $item['commitment'],
+                    'measurable_target' => $item['measurable_target'],
+                    'cross_unit_dependencies' => $item['cross_unit_dependencies'] ?? null,
+                    'approval_needs' => $item['approval_needs'] ?? null,
+                ];
+
+                if ($existingItem = $existingItems->get($order)) {
+                    $existingItem->update($payload);
+                } else {
+                    try {
+                        $report->items()->create(array_merge($payload, ['priority_order' => $order]));
+                    } catch (\Illuminate\Database\UniqueConstraintViolationException) {
+                        $report->items()->where('priority_order', $order)->update($payload);
+                    }
+                }
             }
-            $report->items()->whereNotIn('priority_order', $orders)->delete();
 
             return $report;
         });
@@ -256,33 +280,41 @@ class OkrWeeklyReportController extends Controller
 
         abort_if($unfinishedItems->isEmpty(), 422, 'Tidak ada komitmen pekan sebelumnya yang perlu dilanjutkan.');
 
-        DB::transaction(function () use ($request, $period, $unit, $weekStart, $previousReport, $unfinishedItems) {
-            $report = OkrWeeklyReport::create([
-                'okr_period_id' => $period->id,
-                'okr_unit_id' => $unit->id,
-                'week_start' => $weekStart,
-                'week_end' => $weekStart->addDays(4),
-                'weekly_focus' => 'Lanjutan: '.$previousReport->weekly_focus,
-                'support_needed' => $previousReport->support_needed,
-                'status' => 'draft',
-                'created_by' => $request->user()->id,
-            ]);
-
-            foreach ($unfinishedItems as $index => $sourceItem) {
-                $report->items()->create([
-                    'okr_plan_id' => $sourceItem->okr_plan_id,
-                    'priority_order' => $index + 1,
-                    'commitment' => filled($sourceItem->next_follow_up)
-                        ? $sourceItem->next_follow_up
-                        : $sourceItem->commitment,
-                    'measurable_target' => $sourceItem->measurable_target,
-                    'cross_unit_dependencies' => $sourceItem->cross_unit_dependencies,
-                    'approval_needs' => $sourceItem->approval_needs,
-                    'completion_percent' => 0,
-                    'final_status' => 'not_started',
+        try {
+            DB::transaction(function () use ($request, $period, $unit, $weekStart, $previousReport, $unfinishedItems) {
+                $report = OkrWeeklyReport::create([
+                    'okr_period_id' => $period->id,
+                    'okr_unit_id' => $unit->id,
+                    'week_start' => $weekStart,
+                    'week_end' => $weekStart->addDays(4),
+                    'weekly_focus' => 'Lanjutan: '.$previousReport->weekly_focus,
+                    'support_needed' => $previousReport->support_needed,
+                    'status' => 'draft',
+                    'created_by' => $request->user()->id,
                 ]);
-            }
-        });
+
+                foreach ($unfinishedItems as $index => $sourceItem) {
+                    $report->items()->create([
+                        'okr_plan_id' => $sourceItem->okr_plan_id,
+                        'priority_order' => $index + 1,
+                        'commitment' => filled($sourceItem->next_follow_up)
+                            ? $sourceItem->next_follow_up
+                            : $sourceItem->commitment,
+                        'measurable_target' => $sourceItem->measurable_target,
+                        'cross_unit_dependencies' => $sourceItem->cross_unit_dependencies,
+                        'approval_needs' => $sourceItem->approval_needs,
+                        'completion_percent' => 0,
+                        'final_status' => 'not_started',
+                    ]);
+                }
+            });
+        } catch (\Illuminate\Database\UniqueConstraintViolationException) {
+            return redirect()->route('okr.weekly.index', [
+                'period_id' => $period->id,
+                'unit_id' => $unit->id,
+                'week_start' => $weekStart->format('Y-m-d'),
+            ])->with('info', 'Rencana pekan ini sudah dibuat sebelumnya.');
+        }
 
         return redirect()->route('okr.weekly.index', [
             'period_id' => $period->id,

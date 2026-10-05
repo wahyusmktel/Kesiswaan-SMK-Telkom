@@ -110,11 +110,23 @@
                         <div class="border-b border-blue-200 bg-blue-50 px-5 py-4">
                             <div class="flex flex-wrap items-center justify-between gap-3">
                                 <div><p class="text-sm font-black text-blue-950">Ada {{ $carryForwardCount }} komitmen pekan lalu yang belum selesai</p><p class="mt-1 text-xs text-blue-700">Salin tindak lanjutnya sebagai draft pekan ini, lalu sesuaikan target sebelum disimpan.</p></div>
-                                <form method="POST" action="{{ route('okr.weekly.copy-previous') }}">@csrf<input type="hidden" name="okr_period_id" value="{{ $period->id }}"><input type="hidden" name="okr_unit_id" value="{{ $selectedUnit->id }}"><input type="hidden" name="week_start" value="{{ $weekStart->format('Y-m-d') }}"><button class="rounded-md bg-blue-700 px-4 py-2.5 text-xs font-black text-white hover:bg-blue-600">Salin yang Belum Selesai</button></form>
+                                <form method="POST" action="{{ route('okr.weekly.copy-previous') }}" x-data="{ copying: false }" @submit="if(copying) { $event.preventDefault(); return false; } copying = true;">
+                                    @csrf
+                                    <input type="hidden" name="okr_period_id" value="{{ $period->id }}">
+                                    <input type="hidden" name="okr_unit_id" value="{{ $selectedUnit->id }}">
+                                    <input type="hidden" name="week_start" value="{{ $weekStart->format('Y-m-d') }}">
+                                    <button type="submit" :disabled="copying" class="inline-flex items-center gap-2 rounded-md bg-blue-700 px-4 py-2.5 text-xs font-black text-white hover:bg-blue-600 disabled:opacity-60 disabled:cursor-not-allowed">
+                                        <svg x-show="copying" class="h-3.5 w-3.5 animate-spin text-white" fill="none" viewBox="0 0 24 24" style="display: none;">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                        </svg>
+                                        <span x-text="copying ? 'Menyalin...' : 'Salin yang Belum Selesai'">Salin yang Belum Selesai</span>
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     @endif
-                    <form method="POST" action="{{ route('okr.weekly.planning') }}" class="space-y-5 p-5">
+                    <form method="POST" action="{{ route('okr.weekly.planning') }}" class="space-y-5 p-5" x-data="{ submitting: false }" @submit="if(submitting) { $event.preventDefault(); return false; } submitting = true;">
                         @csrf
                         <input type="hidden" name="okr_period_id" value="{{ $period->id }}"><input type="hidden" name="okr_unit_id" value="{{ $selectedUnit->id }}"><input type="hidden" name="week_start" value="{{ $weekStart->format('Y-m-d') }}">
                         <div class="border-l-4 border-blue-500 bg-blue-50 px-4 py-3"><p class="text-sm font-black text-blue-900">Rencana Senin</p><p class="mt-1 text-xs text-blue-700">Tentukan fokus dan komitmen target yang harus selesai atau bergerak signifikan minggu ini.</p></div>
@@ -168,7 +180,13 @@
                         </div>
 
                         <div class="flex justify-end pt-2">
-                            <button class="rounded-md bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-500">Simpan Rencana Senin</button>
+                            <button type="submit" :disabled="submitting" class="inline-flex items-center gap-2 rounded-md bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-500 disabled:opacity-60 disabled:cursor-not-allowed">
+                                <svg x-show="submitting" class="h-4 w-4 animate-spin text-white" fill="none" viewBox="0 0 24 24" style="display: none;">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                </svg>
+                                <span x-text="submitting ? 'Menyimpan...' : 'Simpan Rencana Senin'">Simpan Rencana Senin</span>
+                            </button>
                         </div>
                     </form>
 
