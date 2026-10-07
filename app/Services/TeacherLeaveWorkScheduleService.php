@@ -15,8 +15,9 @@ class TeacherLeaveWorkScheduleService
         'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu', 'Sunday' => 'Minggu',
     ];
 
-    public function warnings(MasterGuru $guru, Carbon $start, Carbon $end): array
+    public function warnings(MasterGuru $guru, Carbon $start, ?Carbon $end = null): array
     {
+        $end = $end ?? $start->copy()->setTime(16, 0, 0);
         $guru->loadMissing('dapodikGuru');
         $status = EmploymentStatus::normalize($guru->dapodikGuru?->status_kepegawaian);
         $warnings = [];

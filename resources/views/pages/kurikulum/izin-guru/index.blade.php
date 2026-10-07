@@ -44,7 +44,10 @@
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="font-bold text-gray-700 text-xs text-center md:text-left">
-                                            @if($izin->tanggal_mulai->isSameDay($izin->tanggal_selesai))
+                                            @if(! $izin->tanggal_selesai)
+                                                <span class="block text-[10px] text-gray-600 font-normal leading-tight">{{ $izin->tanggal_mulai->translatedFormat('d/m/Y, H:i') }}</span>
+                                                <span class="block text-[10px] text-purple-600 font-bold leading-tight">s/d Masa Perawatan RS (Fleksibel)</span>
+                                            @elseif($izin->tanggal_mulai->isSameDay($izin->tanggal_selesai))
                                                 {{ $izin->tanggal_mulai->translatedFormat('d M Y') }}
                                                 <span class="block text-[10px] text-indigo-600 font-normal">{{ $izin->tanggal_mulai->format('H:i') }} - {{ $izin->tanggal_selesai->format('H:i') }}</span>
                                             @else

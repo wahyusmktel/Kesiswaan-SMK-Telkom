@@ -141,7 +141,7 @@ class SickLeaveEvidenceTest extends TestCase
             ->withSession(['active_role' => 'Guru Kelas'])
             ->post(route('guru.izin.store'), [
                 'tanggal_mulai' => '2026-10-10 07:00:00',
-                'tanggal_selesai' => '2026-10-15 16:00:00',
+                'tanggal_selesai' => null, // Sesuai revisi: tidak ada tanggal selesai untuk rawat inap
                 'jenis_izin' => 'Sakit',
                 'tipe_sakit' => 'rawat_inap',
                 'dokumen_eviden' => $image,
@@ -154,7 +154,9 @@ class SickLeaveEvidenceTest extends TestCase
         $izin = GuruIzin::where('master_guru_id', $teacher->id)->first();
         $this->assertNotNull($izin);
         $this->assertEquals('rawat_inap', $izin->tipe_sakit);
+        $this->assertNull($izin->tanggal_selesai);
         $this->assertTrue($izin->isEvidenImage());
         $this->assertFalse($izin->isEvidenPdf());
+        $this->assertEquals('Masa Perawatan RS (Fleksibel)', $izin->labelTanggalSelesai());
     }
 }

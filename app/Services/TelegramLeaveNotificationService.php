@@ -27,11 +27,12 @@ class TelegramLeaveNotificationService
             foreach ($this->employmentLinks($approver->id) as $link) {
                 $jenisText = $izin->jenis_izin . ($izin->tipe_sakit ? ' ('.$izin->tipeSakitLabel().')' : '');
                 $evidenText = $izin->dokumen_pdf ? "\nEviden: 📎 Surat Keterangan Terlampir" : '';
+                $waktuSelesai = $izin->tanggal_selesai ? $izin->tanggal_selesai->format('d-m-Y H:i') : 'Masa Perawatan RS (Fleksibel)';
                 $text = "🔔 PERSETUJUAN IZIN GURU\n\n"
                     .'Pemohon: '.($izin->guru?->nama_lengkap ?? '-')."\n"
                     .'Kategori: '.$izin->categoryLabel()."\n"
                     .'Jenis: '.$jenisText."\n"
-                    .'Waktu: '.$izin->tanggal_mulai->format('d-m-Y H:i').' s.d. '.$izin->tanggal_selesai->format('d-m-Y H:i')."\n"
+                    .'Waktu: '.$izin->tanggal_mulai->format('d-m-Y H:i').' s.d. '.$waktuSelesai."\n"
                     .'Alasan: '.$izin->deskripsi
                     .$evidenText."\n\n"
                     .'Anda menerima pesan ini karena bertugas sebagai Guru Piket hari ini.';
@@ -81,10 +82,11 @@ class TelegramLeaveNotificationService
             return;
         }
 
+        $waktuSelesai = $izin->tanggal_selesai ? $izin->tanggal_selesai->format('d-m-Y H:i') : 'Masa Perawatan RS (Fleksibel)';
         $text = "📌 PROGRES PENGAJUAN IZIN #{$izin->id}\n\n{$message}\n\n"
             .'Kategori: '.$izin->categoryLabel()."\n"
             .'Jenis: '.$izin->jenis_izin."\n"
-            .'Waktu: '.$izin->tanggal_mulai->format('d-m-Y H:i').' s.d. '.$izin->tanggal_selesai->format('d-m-Y H:i');
+            .'Waktu: '.$izin->tanggal_mulai->format('d-m-Y H:i').' s.d. '.$waktuSelesai;
 
         foreach ($this->employmentLinks($user->id) as $link) {
             $this->safeReply($link, $text);
@@ -107,12 +109,13 @@ class TelegramLeaveNotificationService
     {
         $jenisText = $izin->jenis_izin . ($izin->tipe_sakit ? ' ('.$izin->tipeSakitLabel().')' : '');
         $evidenText = $izin->dokumen_pdf ? "\nEviden: 📎 Surat Keterangan Terlampir" : '';
+        $waktuSelesai = $izin->tanggal_selesai ? $izin->tanggal_selesai->format('d-m-Y H:i') : 'Masa Perawatan RS (Fleksibel)';
 
         return "🔔 PERSETUJUAN IZIN — {$label}\n\n"
             .'Pemohon: '.($izin->guru?->nama_lengkap ?? '-')."\n"
             .'Kategori: '.$izin->categoryLabel()."\n"
             .'Jenis: '.$jenisText."\n"
-            .'Waktu: '.$izin->tanggal_mulai->format('d-m-Y H:i').' s.d. '.$izin->tanggal_selesai->format('d-m-Y H:i')."\n"
+            .'Waktu: '.$izin->tanggal_mulai->format('d-m-Y H:i').' s.d. '.$waktuSelesai."\n"
             .'Alasan: '.$izin->deskripsi
             .$evidenText;
     }

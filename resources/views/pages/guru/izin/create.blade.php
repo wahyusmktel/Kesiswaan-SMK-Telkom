@@ -101,12 +101,12 @@
                                         <div class="flex items-center gap-2 mb-1">
                                             <input type="radio" name="tipe_sakit" value="surat_dokter" x-model="tipeSakit" @change="handleTipeSakitChange()"
                                                 class="text-indigo-600 focus:ring-indigo-500">
-                                            <span class="text-xs font-bold text-gray-900">Surat Dokter</span>
+                                            <span class="text-xs font-bold text-gray-900">Surat Keterangan Dokter</span>
                                         </div>
                                         <p class="text-[11px] text-gray-500 pl-6 leading-relaxed">
-                                            Otomatis <strong>3 Hari</strong>. Wajib upload surat keterangan faskes/klinik.
+                                            Otomatis <strong>3 Hari</strong>. Wajib upload surat keterangan resmi faskes/klinik.
                                         </p>
-                                        <span class="mt-2 inline-block text-[10px] text-amber-600 font-bold pl-6">Wajib Surat Dokter</span>
+                                        <span class="mt-2 inline-block text-[10px] text-amber-600 font-bold pl-6">Wajib Surat Keterangan</span>
                                     </label>
 
                                     <label class="relative flex flex-col p-4 rounded-xl border cursor-pointer transition-all hover:bg-white"
@@ -117,7 +117,7 @@
                                             <span class="text-xs font-bold text-gray-900">Rawat Inap RS</span>
                                         </div>
                                         <p class="text-[11px] text-gray-500 pl-6 leading-relaxed">
-                                            Durasi <strong>fleksibel (>3 hari)</strong>. Wajib surat keterangan rawat inap RS.
+                                            Durasi <strong>fleksibel (terbuka)</strong> selama masa perawatan di RS.
                                         </p>
                                         <span class="mt-2 inline-block text-[10px] text-purple-600 font-bold pl-6">Wajib Surat RS</span>
                                     </label>
@@ -145,17 +145,33 @@
                                         </span>
                                     </template>
                                 </div>
-                                <input type="datetime-local" name="tanggal_selesai" required x-model="endDate" @change="fetchSchedules()"
-                                    :readonly="jenisIzin === 'Sakit' && tipeSakit === 'surat_dokter'"
-                                    :class="jenisIzin === 'Sakit' && tipeSakit === 'surat_dokter' ? 'bg-gray-100 cursor-not-allowed text-gray-600' : ''"
-                                    class="w-full rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500">
-                                @error('tanggal_selesai') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+
+                                {{-- Jika Rawat Inap RS: Durasi fleksibel, tidak ada input waktu selesai --}}
+                                <div x-show="jenisIzin === 'Sakit' && tipeSakit === 'rawat_inap'" class="rounded-xl border border-purple-200 bg-purple-50/70 p-3 text-purple-900">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-sm">🏥</span>
+                                        <span class="text-xs font-bold text-purple-800">Masa Perawatan RS (Fleksibel)</span>
+                                    </div>
+                                    <p class="text-[11px] text-purple-700 mt-1 leading-relaxed">
+                                        Tanggal selesai tidak dibatasi karena menyesuaikan kondisi pemulihan atau rawat inap di Rumah Sakit.
+                                    </p>
+                                </div>
+
+                                {{-- Jika bukan Rawat Inap RS: Tampilkan input tanggal selesai --}}
+                                <div x-show="!(jenisIzin === 'Sakit' && tipeSakit === 'rawat_inap')">
+                                    <input type="datetime-local" name="tanggal_selesai" x-model="endDate" @change="fetchSchedules()"
+                                        :required="!(jenisIzin === 'Sakit' && tipeSakit === 'rawat_inap')"
+                                        :readonly="jenisIzin === 'Sakit' && tipeSakit === 'surat_dokter'"
+                                        :class="jenisIzin === 'Sakit' && tipeSakit === 'surat_dokter' ? 'bg-gray-100 cursor-not-allowed text-gray-600' : ''"
+                                        class="w-full rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500">
+                                    @error('tanggal_selesai') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                </div>
                             </div>
 
                             {{-- Upload Eviden --}}
                             <div class="space-y-2 md:col-span-2">
                                 <label class="block text-sm font-bold text-gray-700 flex items-center gap-2">
-                                    <span x-text="jenisIzin === 'Sakit' ? (tipeSakit === 'ringan' ? 'Eviden Foto Obat / Keterangan Mandiri (Opsional)' : (tipeSakit === 'surat_dokter' ? 'Surat Keterangan Sakit Dokter / Faskes (Wajib)' : 'Surat Keterangan Rawat Inap RS (Wajib)')) : 'Eviden / Surat Pendukung (Opsional)'"></span>
+                                    <span x-text="jenisIzin === 'Sakit' ? (tipeSakit === 'ringan' ? 'Eviden Foto Obat / Keterangan Mandiri (Opsional)' : (tipeSakit === 'surat_dokter' ? 'Surat Keterangan Dokter / Faskes (Wajib)' : 'Surat Keterangan Rawat Inap RS (Wajib)')) : 'Eviden / Surat Pendukung (Opsional)'"></span>
                                     <span x-show="jenisIzin === 'Sakit' && (tipeSakit === 'surat_dokter' || tipeSakit === 'rawat_inap')" class="text-red-500 text-xs">*Wajib</span>
                                 </label>
                                 <input type="file" name="dokumen_eviden" x-ref="evidenceFile" @change="handleFileChange($event)"
@@ -347,6 +363,10 @@
                 },
 
                 handleSickDurationSync() {
+                    if (this.tipeSakit === 'rawat_inap') {
+                        this.endDate = '';
+                        return;
+                    }
                     if (!this.startDate) return;
                     const start = new Date(this.startDate);
                     if (isNaN(start.getTime())) return;
@@ -427,10 +447,10 @@
                 },
 
                 autoSelectOverlappingSchedules() {
-                    if (!this.startDate || !this.endDate) return;
+                    if (!this.startDate) return;
 
                     const permitStart = new Date(this.startDate);
-                    const permitEnd = new Date(this.endDate);
+                    const permitEnd = this.endDate ? new Date(this.endDate) : new Date(permitStart.getTime() + 10 * 60 * 60 * 1000);
                     
                     const pStartTime = permitStart.getHours().toString().padStart(2, '0') + ':' + permitStart.getMinutes().toString().padStart(2, '0');
                     const pEndTime = permitEnd.getHours().toString().padStart(2, '0') + ':' + permitEnd.getMinutes().toString().padStart(2, '0');
@@ -449,11 +469,13 @@
                 },
 
                 validateAndSubmit() {
+                    const isRawatInap = this.jenisIzin === 'Sakit' && this.tipeSakit === 'rawat_inap';
+
                     // Pre-validation checking if times are filled
-                    if (!this.startDate || !this.endDate) {
+                    if (!this.startDate || (!isRawatInap && !this.endDate)) {
                         Swal.fire({
                             title: 'Data Tidak Lengkap',
-                            text: 'Mohon lengkapi tanggal dan waktu mulai serta selesai izin Anda.',
+                            text: 'Mohon lengkapi tanggal dan waktu izin Anda.',
                             icon: 'warning',
                             confirmButtonColor: '#4f46e5'
                         });
@@ -469,8 +491,8 @@
                                 Swal.fire({
                                     title: 'Eviden Wajib Diunggah',
                                     text: this.tipeSakit === 'surat_dokter'
-                                        ? 'Untuk izin sakit 3 hari, Anda wajib mengunggah Surat Keterangan Sakit dari dokter atau fasilitas kesehatan setempat.'
-                                        : 'Untuk izin rawat inap / sakit berat, Anda wajib mengunggah Surat Keterangan Rawat Inap dari rumah sakit.',
+                                        ? 'Untuk pengajuan dengan Surat Keterangan Dokter (3 Hari), Anda wajib mengunggah surat keterangan resmi dari dokter atau faskes.'
+                                        : 'Untuk pengajuan Rawat Inap RS, Anda wajib mengunggah surat keterangan rawat inap dari Rumah Sakit.',
                                     icon: 'warning',
                                     confirmButtonColor: '#4f46e5'
                                 });

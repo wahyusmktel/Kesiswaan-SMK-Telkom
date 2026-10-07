@@ -63,7 +63,12 @@
                                 <tr class="hover:bg-gray-50 transition-colors">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="font-bold text-gray-900 text-xs">
-                                            @if($izin->tanggal_mulai->isSameDay($izin->tanggal_selesai))
+                                            @if(! $izin->tanggal_selesai)
+                                                <div class="flex flex-col">
+                                                    <span>{{ $izin->tanggal_mulai->translatedFormat('d M Y, H:i') }}</span>
+                                                    <span class="text-purple-600 font-bold text-[10px]">s/d Masa Perawatan RS (Fleksibel)</span>
+                                                </div>
+                                            @elseif($izin->tanggal_mulai->isSameDay($izin->tanggal_selesai))
                                                 {{ $izin->tanggal_mulai->translatedFormat('d F Y') }}
                                                 <div class="text-[10px] text-indigo-600">{{ $izin->tanggal_mulai->format('H:i') }} - {{ $izin->tanggal_selesai->format('H:i') }}</div>
                                             @else

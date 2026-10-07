@@ -19,7 +19,15 @@
                     @forelse($izins as $izin)
                         <tr class="align-top">
                             <td class="p-4"><p class="font-black text-gray-900">{{ $izin->guru?->nama_lengkap ?? '-' }}</p><p class="mt-1 text-xs text-gray-500">{{ $izin->guru?->dapodikGuru?->status_kepegawaian ?: 'Status tidak tersedia' }}</p></td>
-                            <td class="p-4 text-gray-700">{{ $izin->tanggal_mulai->translatedFormat('d M Y H:i') }}<br><span class="text-gray-400">s.d.</span> {{ $izin->tanggal_selesai->translatedFormat('d M Y H:i') }}</td>
+                            <td class="p-4 text-gray-700">
+                                {{ $izin->tanggal_mulai->translatedFormat('d M Y H:i') }}<br>
+                                <span class="text-gray-400">s.d.</span> 
+                                @if($izin->tanggal_selesai)
+                                    {{ $izin->tanggal_selesai->translatedFormat('d M Y H:i') }}
+                                @else
+                                    <span class="text-purple-600 font-bold">Masa Perawatan RS (Fleksibel)</span>
+                                @endif
+                            </td>
                             <td class="p-4">
                                 <div class="flex flex-wrap gap-1 items-center mb-1">
                                     <span class="rounded-full bg-violet-50 px-2 py-1 text-xs font-bold text-violet-700">{{ $izin->categoryLabel() }} · {{ $izin->jenis_izin }}</span>

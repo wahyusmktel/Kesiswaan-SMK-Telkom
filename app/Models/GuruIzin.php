@@ -96,10 +96,19 @@ class GuruIzin extends Model
     {
         return match ($this->tipe_sakit) {
             'ringan' => 'Sakit Ringan (1 Hari)',
-            'surat_dokter' => 'Sakit Surat Dokter (3 Hari)',
-            'rawat_inap' => 'Rawat Inap / Sakit Berat',
+            'surat_dokter' => 'Surat Keterangan Dokter (3 Hari)',
+            'rawat_inap' => 'Rawat Inap RS',
             default => null,
         };
+    }
+
+    public function labelTanggalSelesai(): string
+    {
+        if ($this->tipe_sakit === 'rawat_inap' && ! $this->tanggal_selesai) {
+            return 'Masa Perawatan RS (Fleksibel)';
+        }
+
+        return $this->tanggal_selesai ? $this->tanggal_selesai->translatedFormat('d M Y H:i') : '-';
     }
 
     public function getEvidenUrlAttribute(): ?string

@@ -32,7 +32,9 @@
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <p class="font-black text-gray-900">{{ $izin->guru->nama_lengkap }}</p>
                                         <div class="text-[10px] text-gray-500 mt-0.5">
-                                            @if($izin->tanggal_mulai->isSameDay($izin->tanggal_selesai))
+                                            @if(! $izin->tanggal_selesai)
+                                                {{ $izin->tanggal_mulai->translatedFormat('d M Y, H:i') }} s/d <span class="text-purple-600 font-bold">Masa Perawatan RS (Fleksibel)</span>
+                                            @elseif($izin->tanggal_mulai->isSameDay($izin->tanggal_selesai))
                                                 {{ $izin->tanggal_mulai->translatedFormat('d M Y') }} ({{ $izin->tanggal_mulai->format('H:i') }} - {{ $izin->tanggal_selesai->format('H:i') }})
                                             @else
                                                 {{ $izin->tanggal_mulai->translatedFormat('d M, H:i') }} s/d {{ $izin->tanggal_selesai->translatedFormat('d M Y, H:i') }}
@@ -418,7 +420,11 @@
                     }, 300);
                 },
                 formatDateTime(dateStr) {
-                    if (!dateStr) return '-';
+                    if (!dateStr) {
+                        return (this.selectedItem && this.selectedItem.tipe_sakit === 'rawat_inap')
+                            ? 'Masa Perawatan RS (Fleksibel)'
+                            : '-';
+                    }
                     const date = new Date(dateStr);
                     return date.toLocaleString('id-ID', { 
                         day: 'numeric', 

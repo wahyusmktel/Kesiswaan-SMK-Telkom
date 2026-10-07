@@ -332,7 +332,9 @@
                     <td class="label">Waktu Pelaksanaan</td>
                     <td class="separator">:</td>
                     <td class="value" style="color: #0f172a; font-weight: 600;">
-                        @if($izin->tanggal_mulai->isSameDay($izin->tanggal_selesai))
+                        @if(! $izin->tanggal_selesai)
+                            Mulai {{ $izin->tanggal_mulai->translatedFormat('l, d F Y, H:i') }} WIB &ndash; Masa Perawatan RS (Fleksibel)
+                        @elseif($izin->tanggal_mulai->isSameDay($izin->tanggal_selesai))
                             {{ $izin->tanggal_mulai->translatedFormat('l, d F Y') }}
                             <span style="color: #475569; font-weight: normal;">(Pukul {{ $izin->tanggal_mulai->format('H:i') }} &ndash; {{ $izin->tanggal_selesai->format('H:i') }} WIB)</span>
                         @else

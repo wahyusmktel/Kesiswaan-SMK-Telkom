@@ -96,9 +96,11 @@ class IzinGuruController extends Controller
 
     public function store(Request $request, TelegramLeaveNotificationService $telegramNotifications, TeacherLeaveWorkScheduleService $workSchedule)
     {
+        $isRawatInap = $request->jenis_izin === 'Sakit' && $request->tipe_sakit === 'rawat_inap';
+
         $request->validate([
             'tanggal_mulai' => 'required|date',
-            'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
+            'tanggal_selesai' => $isRawatInap ? 'nullable|date' : 'required|date|after_or_equal:tanggal_mulai',
             'jenis_izin' => 'required|string',
             'tipe_sakit' => 'nullable|required_if:jenis_izin,Sakit|in:ringan,surat_dokter,rawat_inap',
             'dokumen_eviden' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
@@ -123,13 +125,13 @@ class IzinGuruController extends Controller
 
         // Logic check: If there are schedules within the permit timeframe, at least one must be selected
         $startDate = \Carbon\Carbon::parse($request->tanggal_mulai);
-        $endDate = \Carbon\Carbon::parse($request->tanggal_selesai);
+        $endDate = $request->filled('tanggal_selesai') ? \Carbon\Carbon::parse($request->tanggal_selesai) : null;
 
         if ($request->jenis_izin === 'Sakit') {
             if ($request->tipe_sakit === 'ringan') {
-                if (! $startDate->isSameDay($endDate)) {
+                if (! $endDate || ! $startDate->isSameDay($endDate)) {
                     throw \Illuminate\Validation\ValidationException::withMessages([
-                        'tanggal_selesai' => 'Izin Sakit Ringan tanpa surat dokter hanya berlaku maksimal 1 hari. Untuk sakit lebih dari 1 hari, silakan pilih opsi Sakit Surat Dokter atau Rawat Inap.',
+                        'tanggal_selesai' => 'Izin Sakit Ringan tanpa surat dokter hanya berlaku maksimal 1 hari. Untuk sakit lebih dari 1 hari, silakan pilih opsi Surat Keterangan Dokter atau Rawat Inap RS.',
                     ]);
                 }
             } elseif ($request->tipe_sakit === 'surat_dokter') {
@@ -137,10 +139,11 @@ class IzinGuruController extends Controller
                 $endDate = $startDate->copy()->addDays(2)->setTime(16, 0, 0);
                 if (! $request->hasFile('dokumen_eviden')) {
                     throw \Illuminate\Validation\ValidationException::withMessages([
-                        'dokumen_eviden' => 'Izin Sakit 3 Hari wajib melampirkan eviden Surat Keterangan Sakit dari dokter atau faskes.',
+                        'dokumen_eviden' => 'Izin Surat Keterangan Dokter (3 Hari) wajib melampirkan Surat Keterangan Dokter atau Faskes.',
                     ]);
                 }
             } elseif ($request->tipe_sakit === 'rawat_inap') {
+                $endDate = null; // Fleksibel / terbuka selama masa rawat inap
                 if (! $request->hasFile('dokumen_eviden')) {
                     throw \Illuminate\Validation\ValidationException::withMessages([
                         'dokumen_eviden' => 'Izin Sakit Rawat Inap wajib melampirkan eviden Surat Keterangan Rawat Inap dari rumah sakit.',
@@ -150,7 +153,7 @@ class IzinGuruController extends Controller
         }
 
         $scheduleWarnings = $workSchedule->warnings($guru, $startDate, $endDate);
-        $warningToken = hash('sha256', $startDate->toIso8601String().'|'.$endDate->toIso8601String());
+        $warningToken = hash('sha256', $startDate->toIso8601String().'|'.($endDate ? $endDate->toIso8601String() : 'open'));
         $warningConfirmed = hash_equals($warningToken, (string) $request->input('confirm_work_schedule_warning'));
         if ($request->boolean('work_schedule_validation_enabled') && $scheduleWarnings && ! $warningConfirmed) {
             return redirect()->back()->withInput()->with('schedule_warnings', $scheduleWarnings)->with('schedule_warning_token', $warningToken);
@@ -163,7 +166,7 @@ class IzinGuruController extends Controller
 
         $hari = $hariMap[$startDate->format('l')];
         $startTime = $startDate->format('H:i:s');
-        $endTime = $endDate->format('H:i:s');
+        $endTime = $endDate ? $endDate->format('H:i:s') : '23:59:59';
 
         $availableSchedules = $guru->is_tpa
             ? collect()
@@ -212,8 +215,20 @@ class IzinGuruController extends Controller
         // Check for overlapping permits
         $overlap = GuruIzin::where('master_guru_id', $guru->id)
             ->where(function ($query) use ($startDate, $endDate) {
-                $query->where('tanggal_mulai', '<=', $endDate)
-                    ->where('tanggal_selesai', '>=', $startDate);
+                if ($endDate) {
+                    $query->where(function ($q) use ($startDate, $endDate) {
+                        $q->where(function ($sub) use ($endDate) {
+                            $sub->whereNotNull('tanggal_selesai')->where('tanggal_mulai', '<=', $endDate);
+                        })->where(function ($sub) use ($startDate) {
+                            $sub->whereNull('tanggal_selesai')->orWhere('tanggal_selesai', '>=', $startDate);
+                        });
+                    });
+                } else {
+                    $query->where(function ($q) use ($startDate) {
+                        $q->whereNull('tanggal_selesai')
+                            ->orWhere('tanggal_selesai', '>=', $startDate);
+                    });
+                }
             })
             ->where('status_piket', '!=', 'ditolak')
             ->where('status_kurikulum', '!=', 'ditolak')
@@ -234,7 +249,7 @@ class IzinGuruController extends Controller
         $izin = GuruIzin::create([
             'master_guru_id' => $guru->id,
             'tanggal_mulai' => $startDate->format('Y-m-d H:i:s'),
-            'tanggal_selesai' => $endDate->format('Y-m-d H:i:s'),
+            'tanggal_selesai' => $endDate ? $endDate->format('Y-m-d H:i:s') : null,
             'jenis_izin' => $request->jenis_izin,
             'tipe_sakit' => $request->jenis_izin === 'Sakit' ? $request->tipe_sakit : null,
             'kategori_penyetujuan' => $request->kategori_penyetujuan,

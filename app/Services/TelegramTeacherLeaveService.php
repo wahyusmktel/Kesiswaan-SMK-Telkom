@@ -187,12 +187,12 @@ class TelegramTeacherLeaveService
                 $chatId,
                 "Pilih kategori kondisi sakit:\n\n"
                 ."🟢 *Sakit Ringan (1 Hari)*\nMaks. 1 hari tanpa surat dokter (flu, demam, pusing).\n\n"
-                ."🟡 *Sakit Surat Dokter (3 Hari)*\nOtomatis terkunci 3 hari. Wajib upload Surat Dokter/Faskes.\n\n"
-                ."🔴 *Rawat Inap / Sakit Berat (> 3 Hari)*\nUntuk opname/sakit berat. Wajib upload Surat Keterangan RS.",
+                ."🟡 *Surat Keterangan Dokter (3 Hari)*\nOtomatis berlaku 3 hari kalender. Wajib kirimkan Surat Keterangan Dokter/Faskes.\n\n"
+                ."🔴 *Rawat Inap RS*\nDurasi fleksibel selama masa perawatan di Rumah Sakit. Wajib kirimkan Surat Keterangan Rawat Inap RS.",
                 $this->keyboard([
                     ['🟢 Sakit Ringan (1 Hari)'],
-                    ['🟡 Sakit Surat Dokter (3 Hari)'],
-                    ['🔴 Rawat Inap / Sakit Berat (> 3 Hari)'],
+                    ['🟡 Surat Keterangan Dokter (3 Hari)'],
+                    ['🔴 Rawat Inap RS'],
                     ['❌ Batalkan'],
                 ])
             );
@@ -207,9 +207,9 @@ class TelegramTeacherLeaveService
     private function receiveSickType(TelegramBot $bot, TelegramConversation $conversation, string $chatId, string $text): void
     {
         $tipeSakit = match ($text) {
-            '🟢 Sakit Ringan (1 Hari)', 'Sakit Ringan (1 Hari)', '1' => 'ringan',
-            '🟡 Sakit Surat Dokter (3 Hari)', 'Sakit Surat Dokter (3 Hari)', '2' => 'surat_dokter',
-            '🔴 Rawat Inap / Sakit Berat (> 3 Hari)', 'Rawat Inap / Sakit Berat (> 3 Hari)', '3' => 'rawat_inap',
+            '🟢 Sakit Ringan (1 Hari)', 'Sakit Ringan (1 Hari)', 'Sakit Ringan', '1' => 'ringan',
+            '🟡 Surat Keterangan Dokter (3 Hari)', 'Surat Keterangan Dokter (3 Hari)', 'Surat Keterangan Dokter', 'Surat Dokter', '🟡 Sakit Surat Dokter (3 Hari)', 'Sakit Surat Dokter (3 Hari)', '2' => 'surat_dokter',
+            '🔴 Rawat Inap RS', 'Rawat Inap RS', 'Rawat Inap / Sakit Berat (> 3 Hari)', 'Rawat Inap', '3' => 'rawat_inap',
             default => null,
         };
 
@@ -236,7 +236,7 @@ class TelegramTeacherLeaveService
             $this->telegram->reply(
                 $bot,
                 $chatId,
-                "Izin Sakit Surat Dokter otomatis berlaku 3 hari kalender.\nKetik tanggal mulai izin (Format: DD-MM-YYYY):\n\nContoh: 10-09-2026",
+                "Izin Surat Keterangan Dokter otomatis berlaku 3 hari kalender.\nKetik tanggal mulai izin (Format: DD-MM-YYYY):\n\nContoh: 10-09-2026",
                 ['remove_keyboard' => true]
             );
 
@@ -248,7 +248,7 @@ class TelegramTeacherLeaveService
             $this->telegram->reply(
                 $bot,
                 $chatId,
-                "Ketik tanggal dan waktu mulai rawat inap:\nFormat: DD-MM-YYYY HH:MM\n\nContoh: 10-09-2026 07:00",
+                "Izin Rawat Inap RS memiliki durasi fleksibel selama masa perawatan.\nKetik tanggal mulai rawat inap:\nFormat: DD-MM-YYYY HH:MM\n\nContoh: 10-09-2026 07:00",
                 ['remove_keyboard' => true]
             );
 
@@ -309,9 +309,29 @@ class TelegramTeacherLeaveService
             $this->telegram->reply(
                 $bot,
                 $chatId,
-                "📎 *Surat Keterangan Sakit Wajib Diunggah*\n\n"
+                "📎 *Surat Keterangan Dokter Wajib Diunggah*\n\n"
                 ."Waktu izin: {$start->format('d-m-Y')} s.d. {$end->format('d-m-Y')} (3 Hari).\n"
-                ."Sesuai regulasi, mohon kirimkan foto (kamera/galeri) atau dokumen file PDF/JPG Surat Keterangan Sakit dari dokter atau faskes:",
+                ."Sesuai regulasi, mohon kirimkan foto (kamera/galeri) atau dokumen file PDF/JPG Surat Keterangan Dokter dari klinik/faskes:",
+                $this->keyboard([['❌ Batalkan']])
+            );
+
+            return;
+        }
+
+        if ($tipeSakit === 'rawat_inap') {
+            $start = $date;
+            $this->advance($conversation, 'evidence', [
+                'start' => $start->format('Y-m-d H:i:s'),
+                'end' => null,
+            ]);
+
+            $this->telegram->reply(
+                $bot,
+                $chatId,
+                "📎 *Surat Keterangan Rawat Inap RS Wajib Diunggah*\n\n"
+                ."Tanggal mulai: {$start->format('d-m-Y H:i')}\n"
+                ."Waktu selesai: *Masa Perawatan RS (Fleksibel)*\n\n"
+                ."Silakan kirimkan foto atau dokumen file PDF/JPG Surat Keterangan Rawat Inap dari rumah sakit:",
                 $this->keyboard([['❌ Batalkan']])
             );
 
@@ -415,7 +435,7 @@ class TelegramTeacherLeaveService
 
         $payload = $conversation->payload;
         $start = Carbon::parse($payload['start']);
-        $end = Carbon::parse($payload['end']);
+        $end = ! empty($payload['end']) ? Carbon::parse($payload['end']) : null;
 
         $this->advance($conversation, 'evidence', [
             'dokumen_pdf' => $savedPath,
@@ -429,7 +449,7 @@ class TelegramTeacherLeaveService
             $this->telegram->reply(
                 $bot,
                 $chatId,
-                "✅ Eviden surat keterangan sakit berhasil diterima.\n\n⚠️ Peringatan Waktu Izin:\n• ".implode("\n• ", $warnings)."\n\nLanjutkan pengajuan dengan rentang tersebut?",
+                "✅ Dokumen surat keterangan berhasil diterima.\n\n⚠️ Peringatan Waktu Izin:\n• ".implode("\n• ", $warnings)."\n\nLanjutkan pengajuan dengan rentang tersebut?",
                 $this->keyboard([['✅ Tetap Lanjutkan'], ['❌ Batalkan']]),
             );
 
@@ -448,16 +468,15 @@ class TelegramTeacherLeaveService
         }
 
         $start = Carbon::parse($conversation->payload['start']);
-        $end = Carbon::parse($conversation->payload['end']);
+        $end = ! empty($conversation->payload['end']) ? Carbon::parse($conversation->payload['end']) : null;
         $this->continueAfterEnd($bot, $conversation, $chatId, $start, $end);
     }
 
-    private function continueAfterEnd(TelegramBot $bot, TelegramConversation $conversation, string $chatId, Carbon $start, Carbon $end): void
+    private function continueAfterEnd(TelegramBot $bot, TelegramConversation $conversation, string $chatId, Carbon $start, ?Carbon $end = null): void
     {
-
         $schedules = $this->affectedSchedules($conversation->link->user->masterGuru, $start, $end);
         $this->advance($conversation, $schedules->isEmpty() ? 'description' : 'schedule_resource', [
-            'end' => $end->format('Y-m-d H:i:s'),
+            'end' => $end ? $end->format('Y-m-d H:i:s') : null,
             'schedule_ids' => $schedules->pluck('id')->all(),
             'schedule_index' => 0,
             'shared_resource' => null,
@@ -696,16 +715,17 @@ class TelegramTeacherLeaveService
         $labels = ['sekolah' => 'Lingkungan Sekolah', 'luar' => 'Luar Sekolah', 'tidak_masuk' => 'Izin Tidak Masuk', 'terlambat' => 'Datang Terlambat'];
         $tipeSakitLabel = match ($payload['tipe_sakit'] ?? null) {
             'ringan' => ' (Sakit Ringan 1 Hari)',
-            'surat_dokter' => ' (Surat Dokter 3 Hari)',
+            'surat_dokter' => ' (Surat Keterangan Dokter 3 Hari)',
             'rawat_inap' => ' (Rawat Inap RS)',
             default => '',
         };
+        $selesaiText = ! empty($payload['end']) ? Carbon::parse($payload['end'])->format('d-m-Y H:i') : 'Masa Perawatan RS (Fleksibel)';
         $evidenText = ! empty($payload['dokumen_pdf']) ? "\nEviden: 📎 Surat Keterangan Terlampir" : '';
         $summary = "Periksa Pengajuan Izin\n\n"
             .'Kategori: '.$labels[$payload['category']]."\n"
             .'Jenis: '.$payload['type'].$tipeSakitLabel."\n"
             .'Mulai: '.Carbon::parse($payload['start'])->format('d-m-Y H:i')."\n"
-            .'Selesai: '.Carbon::parse($payload['end'])->format('d-m-Y H:i')."\n"
+            .'Selesai: '.$selesaiText."\n"
             .'Jadwal terdampak: '.count($payload['schedule_ids'] ?? [])."\n"
             .'Alasan: '.$payload['description']
             .$evidenText."\n\nKirim pengajuan ini?";
@@ -726,10 +746,24 @@ class TelegramTeacherLeaveService
         $payload = $conversation->payload;
         $guru = $link->user->masterGuru;
         $start = Carbon::parse($payload['start']);
-        $end = Carbon::parse($payload['end']);
+        $end = ! empty($payload['end']) ? Carbon::parse($payload['end']) : null;
         $overlap = GuruIzin::where('master_guru_id', $guru->id)
-            ->where('tanggal_mulai', '<=', $end)
-            ->where('tanggal_selesai', '>=', $start)
+            ->where(function ($query) use ($start, $end) {
+                if ($end) {
+                    $query->where(function ($q) use ($start, $end) {
+                        $q->where(function ($sub) use ($end) {
+                            $sub->whereNotNull('tanggal_selesai')->where('tanggal_mulai', '<=', $end);
+                        })->where(function ($sub) use ($start) {
+                            $sub->whereNull('tanggal_selesai')->orWhere('tanggal_selesai', '>=', $start);
+                        });
+                    });
+                } else {
+                    $query->where(function ($q) use ($start) {
+                        $q->whereNull('tanggal_selesai')
+                            ->orWhere('tanggal_selesai', '>=', $start);
+                    });
+                }
+            })
             ->where('status_piket', '!=', 'ditolak')
             ->where('status_kurikulum', '!=', 'ditolak')
             ->where('status_sdm', '!=', 'ditolak')
@@ -763,7 +797,7 @@ class TelegramTeacherLeaveService
             $izin = GuruIzin::create([
                 'master_guru_id' => $guru->id,
                 'tanggal_mulai' => $payload['start'],
-                'tanggal_selesai' => $payload['end'],
+                'tanggal_selesai' => ! empty($payload['end']) ? $payload['end'] : null,
                 'jenis_izin' => $payload['type'],
                 'tipe_sakit' => $payload['tipe_sakit'] ?? null,
                 'kategori_penyetujuan' => $payload['category'],
@@ -875,12 +909,13 @@ class TelegramTeacherLeaveService
         );
     }
 
-    private function affectedSchedules(MasterGuru $guru, Carbon $start, Carbon $end)
+    private function affectedSchedules(MasterGuru $guru, Carbon $start, ?Carbon $end = null)
     {
         if ($guru->is_tpa) {
             return collect();
         }
 
+        $end = $end ?? $start->copy()->setTime(17, 0, 0);
         $days = ['Sunday' => 'Minggu', 'Monday' => 'Senin', 'Tuesday' => 'Selasa', 'Wednesday' => 'Rabu', 'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu'];
 
         return JadwalPelajaran::where('master_guru_id', $guru->id)
