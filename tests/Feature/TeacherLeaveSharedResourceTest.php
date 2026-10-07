@@ -42,6 +42,7 @@ class TeacherLeaveSharedResourceTest extends TestCase
                 'tanggal_mulai' => '2026-09-11 07:00:00',
                 'tanggal_selesai' => '2026-09-11 11:00:00',
                 'jenis_izin' => 'Sakit',
+                'tipe_sakit' => 'ringan',
                 'kategori_penyetujuan' => 'luar',
                 'deskripsi' => 'Perlu beristirahat sesuai arahan dokter.',
                 'jadwal_ids' => $schedules->pluck('id')->all(),

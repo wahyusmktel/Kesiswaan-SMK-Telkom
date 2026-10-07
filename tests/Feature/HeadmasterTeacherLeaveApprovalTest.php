@@ -91,6 +91,7 @@ class HeadmasterTeacherLeaveApprovalTest extends TestCase
                 'tanggal_mulai' => '2026-09-12 07:00:00',
                 'tanggal_selesai' => '2026-09-12 16:00:00',
                 'jenis_izin' => 'Sakit',
+                'tipe_sakit' => 'ringan',
                 'kategori_penyetujuan' => 'tidak_masuk',
                 'deskripsi' => 'Perlu beristirahat di rumah.',
             ])->assertRedirect(route('guru.izin.index'));

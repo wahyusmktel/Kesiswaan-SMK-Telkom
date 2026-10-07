@@ -10,6 +10,7 @@ use App\Models\WhatsappTemplate;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 class TelegramService
@@ -332,6 +333,39 @@ class TelegramService
             $log->update(['status' => 'failed', 'error_message' => $error]);
 
             return ['success' => false, 'message' => 'Pesan uji gagal dikirim: '.$error];
+        }
+    }
+
+    public function downloadFile(TelegramBot $bot, string $fileId, string $targetDirectory = 'guru-izin/eviden'): ?string
+    {
+        try {
+            $fileInfoResponse = $this->request($bot, 'getFile', ['file_id' => $fileId]);
+            if (! $fileInfoResponse->successful() || ! $fileInfoResponse->json('ok')) {
+                return null;
+            }
+
+            $filePath = (string) $fileInfoResponse->json('result.file_path');
+            if (! $filePath) {
+                return null;
+            }
+
+            $downloadUrl = "https://api.telegram.org/file/bot{$bot->bot_token}/{$filePath}";
+            $downloadResponse = Http::timeout(30)->get($downloadUrl);
+            if (! $downloadResponse->successful()) {
+                return null;
+            }
+
+            $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION)) ?: 'jpg';
+            $fileName = 'eviden_' . uniqid() . '.' . $ext;
+            $relativePath = trim($targetDirectory, '/') . '/' . $fileName;
+
+            Storage::disk('public')->put($relativePath, $downloadResponse->body());
+
+            return $relativePath;
+        } catch (Throwable $e) {
+            Log::error('Gagal mengunduh file Telegram: ' . $e->getMessage());
+
+            return null;
         }
     }
 

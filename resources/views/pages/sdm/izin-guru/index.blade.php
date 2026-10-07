@@ -49,6 +49,14 @@
                                                 <span class="px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-100 text-[10px] font-black uppercase">Luar</span>
                                             @endif
                                             <span class="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] font-black uppercase">{{ $izin->jenis_izin }}</span>
+                                            @if($izin->tipe_sakit)
+                                                <span class="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 text-[10px] font-black uppercase">{{ $izin->tipeSakitLabel() }}</span>
+                                            @endif
+                                            @if($izin->dokumen_pdf)
+                                                <a href="{{ $izin->eviden_url }}" target="_blank" class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black uppercase hover:bg-emerald-100 flex items-center gap-1">
+                                                    📎 Eviden
+                                                </a>
+                                            @endif
                                         </div>
                                     </td>
                                     <td class="px-6 py-4">
@@ -287,6 +295,29 @@
                                     "<span x-text="selectedItem.deskripsi"></span>"
                                 </div>
                             </div>
+
+                            {{-- Eviden Surat Sakit / Dokumen Pendukung --}}
+                            <template x-if="selectedItem.dokumen_pdf">
+                                <div class="space-y-3">
+                                    <h5 class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Eviden / Dokumen Surat Keterangan</h5>
+                                    <div class="p-4 bg-indigo-50/70 rounded-2xl border border-indigo-100 flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
+                                            <div class="p-2.5 bg-indigo-600 text-white rounded-xl shadow-sm">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                            </div>
+                                            <div>
+                                                <p class="text-xs font-bold text-gray-900">Berkas Eviden Terlampir</p>
+                                                <p class="text-[10px] text-gray-500">Surat Keterangan Sakit / Medis dari faskes atau RS.</p>
+                                            </div>
+                                        </div>
+                                        <a :href="'/storage/' + selectedItem.dokumen_pdf" target="_blank"
+                                            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5">
+                                            <span>Buka Berkas</span>
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                        </a>
+                                    </div>
+                                </div>
+                            </template>
 
                             {{-- Jadwal Terkena Dampak --}}
                             <div class="space-y-4">

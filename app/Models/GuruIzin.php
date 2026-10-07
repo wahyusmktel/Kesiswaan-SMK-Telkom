@@ -19,6 +19,7 @@ class GuruIzin extends Model
         'tanggal_mulai',
         'tanggal_selesai',
         'jenis_izin',
+        'tipe_sakit',
         'kategori_penyetujuan',
         'deskripsi',
         'dokumen_pdf',
@@ -89,6 +90,41 @@ class GuruIzin extends Model
             self::CATEGORY_LATE => 'Datang Terlambat',
             default => 'Izin Guru',
         };
+    }
+
+    public function tipeSakitLabel(): ?string
+    {
+        return match ($this->tipe_sakit) {
+            'ringan' => 'Sakit Ringan (1 Hari)',
+            'surat_dokter' => 'Sakit Surat Dokter (3 Hari)',
+            'rawat_inap' => 'Rawat Inap / Sakit Berat',
+            default => null,
+        };
+    }
+
+    public function getEvidenUrlAttribute(): ?string
+    {
+        return $this->dokumen_pdf ? asset('storage/' . $this->dokumen_pdf) : null;
+    }
+
+    public function isEvidenImage(): bool
+    {
+        if (! $this->dokumen_pdf) {
+            return false;
+        }
+        $ext = strtolower(pathinfo($this->dokumen_pdf, PATHINFO_EXTENSION));
+
+        return in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif'], true);
+    }
+
+    public function isEvidenPdf(): bool
+    {
+        if (! $this->dokumen_pdf) {
+            return false;
+        }
+        $ext = strtolower(pathinfo($this->dokumen_pdf, PATHINFO_EXTENSION));
+
+        return $ext === 'pdf';
     }
 
     public function startsAtSdm(): bool

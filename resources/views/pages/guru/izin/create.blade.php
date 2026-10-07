@@ -6,7 +6,7 @@
     <div class="py-6 w-full" x-data="permitForm()" x-init="if (startDate) fetchSchedules()">
         <div class="w-full px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
             <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                <form x-ref="form" action="{{ route('guru.izin.store') }}" method="POST" @submit.prevent="validateAndSubmit()">
+                <form x-ref="form" action="{{ route('guru.izin.store') }}" method="POST" enctype="multipart/form-data" @submit.prevent="validateAndSubmit()">
                     @csrf
                     <input type="hidden" name="work_schedule_validation_enabled" value="1">
                     @if(session('schedule_warnings'))
@@ -44,22 +44,8 @@
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div class="space-y-2">
-                                <label class="block text-sm font-bold text-gray-700">Tanggal & Waktu Mulai</label>
-                                <input type="datetime-local" name="tanggal_mulai" required x-model="startDate" @change="fetchSchedules()"
-                                    class="w-full rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500">
-                                @error('tanggal_mulai') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                            </div>
-
-                            <div class="space-y-2">
-                                <label class="block text-sm font-bold text-gray-700">Tanggal & Waktu Selesai</label>
-                                <input type="datetime-local" name="tanggal_selesai" required x-model="endDate" @change="fetchSchedules()"
-                                    class="w-full rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500">
-                                @error('tanggal_selesai') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                            </div>
-
-                            <div class="space-y-2">
                                 <label class="block text-sm font-bold text-gray-700">Jenis Izin</label>
-                                <select name="jenis_izin" required
+                                <select name="jenis_izin" required x-model="jenisIzin" @change="handleJenisIzinChange()"
                                     class="w-full rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500">
                                     <option value="">Pilih Jenis</option>
                                     <option value="Sakit" {{ old('jenis_izin') === 'Sakit' ? 'selected' : '' }}>Sakit</option>
@@ -67,31 +53,126 @@
                                     <option value="Keperluan Pribadi" {{ old('jenis_izin') === 'Keperluan Pribadi' ? 'selected' : '' }}>Keperluan Pribadi</option>
                                     <option value="Lainnya" {{ old('jenis_izin') === 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
                                 </select>
+                                @error('jenis_izin') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                             </div>
 
                             <div class="space-y-2">
                                 <label class="block text-sm font-bold text-gray-700">Kategori Penyetujuan</label>
                                 <select name="kategori_penyetujuan" required
                                     class="w-full rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500">
+                                    <option value="tidak_masuk" {{ old('kategori_penyetujuan', 'tidak_masuk') === 'tidak_masuk' ? 'selected' : '' }}>Izin Tidak Masuk</option>
+                                    <option value="luar" {{ old('kategori_penyetujuan') === 'luar' ? 'selected' : '' }}>Luar Sekolah</option>
                                     <option value="sekolah" {{ old('kategori_penyetujuan') === 'sekolah' ? 'selected' : '' }}>Lingkungan Sekolah (Rapat, dsb)</option>
-                                    <option value="luar" {{ old('kategori_penyetujuan', 'luar') === 'luar' ? 'selected' : '' }}>Luar Sekolah</option>
-                                    <option value="tidak_masuk" {{ old('kategori_penyetujuan') === 'tidak_masuk' ? 'selected' : '' }}>Izin Tidak Masuk</option>
                                     <option value="terlambat" {{ old('kategori_penyetujuan') === 'terlambat' ? 'selected' : '' }}>Terlambat (Datang Terlambat)</option>
                                 </select>
                                 <p class="text-[10px] text-gray-500 mt-2">
+                                    * <strong>Izin Tidak Masuk</strong>: Langsung ke KAUR SDM (dan Kepsek bagi Pegawai Tetap).<br>
                                     * <strong>Sekolah</strong>: Hanya butuh persetujuan Piket.<br>
-                                    * <strong>Luar Sekolah</strong>: Piket → Kurikulum → SDM.<br>
-                                    * <strong>Izin Tidak Masuk</strong>: Langsung ke KAUR SDM.<br>
-                                    * <strong>Terlambat</strong>: Langsung ke KAUR SDM.<br>
-                                    * Khusus <strong>Pegawai Tetap</strong>, Luar Sekolah, Izin Tidak Masuk, dan Terlambat dilanjutkan ke Kepala Sekolah.
+                                    * <strong>Luar Sekolah</strong>: Piket → Kurikulum → SDM.
                                 </p>
+                            </div>
+
+                            {{-- Pilihan Kondisi Sakit Khusus Izin Sakit --}}
+                            <div x-show="jenisIzin === 'Sakit'" x-transition class="md:col-span-2 space-y-3 p-5 bg-indigo-50/50 rounded-2xl border border-indigo-100">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h4 class="text-sm font-bold text-gray-900">Kategori Kondisi Sakit</h4>
+                                        <p class="text-xs text-gray-500">Pilih kategori sakit sesuai kondisi riil dan dokumen medis Anda.</p>
+                                    </div>
+                                    <span class="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-full bg-indigo-100 text-indigo-700">Regulasi Medis</span>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <label class="relative flex flex-col p-4 rounded-xl border cursor-pointer transition-all hover:bg-white"
+                                        :class="tipeSakit === 'ringan' ? 'bg-white border-indigo-600 ring-2 ring-indigo-500/20 shadow-sm' : 'border-gray-200 bg-white/60'">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <input type="radio" name="tipe_sakit" value="ringan" x-model="tipeSakit" @change="handleTipeSakitChange()"
+                                                class="text-indigo-600 focus:ring-indigo-500">
+                                            <span class="text-xs font-bold text-gray-900">Sakit Ringan</span>
+                                        </div>
+                                        <p class="text-[11px] text-gray-500 pl-6 leading-relaxed">
+                                            Maks. <strong>1 Hari</strong> tanpa surat dokter (flu, demam, pusing).
+                                        </p>
+                                        <span class="mt-2 inline-block text-[10px] text-emerald-600 font-bold pl-6">Surat dokter opsional</span>
+                                    </label>
+
+                                    <label class="relative flex flex-col p-4 rounded-xl border cursor-pointer transition-all hover:bg-white"
+                                        :class="tipeSakit === 'surat_dokter' ? 'bg-white border-indigo-600 ring-2 ring-indigo-500/20 shadow-sm' : 'border-gray-200 bg-white/60'">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <input type="radio" name="tipe_sakit" value="surat_dokter" x-model="tipeSakit" @change="handleTipeSakitChange()"
+                                                class="text-indigo-600 focus:ring-indigo-500">
+                                            <span class="text-xs font-bold text-gray-900">Surat Dokter</span>
+                                        </div>
+                                        <p class="text-[11px] text-gray-500 pl-6 leading-relaxed">
+                                            Otomatis <strong>3 Hari</strong>. Wajib upload surat keterangan faskes/klinik.
+                                        </p>
+                                        <span class="mt-2 inline-block text-[10px] text-amber-600 font-bold pl-6">Wajib Surat Dokter</span>
+                                    </label>
+
+                                    <label class="relative flex flex-col p-4 rounded-xl border cursor-pointer transition-all hover:bg-white"
+                                        :class="tipeSakit === 'rawat_inap' ? 'bg-white border-indigo-600 ring-2 ring-indigo-500/20 shadow-sm' : 'border-gray-200 bg-white/60'">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <input type="radio" name="tipe_sakit" value="rawat_inap" x-model="tipeSakit" @change="handleTipeSakitChange()"
+                                                class="text-indigo-600 focus:ring-indigo-500">
+                                            <span class="text-xs font-bold text-gray-900">Rawat Inap RS</span>
+                                        </div>
+                                        <p class="text-[11px] text-gray-500 pl-6 leading-relaxed">
+                                            Durasi <strong>fleksibel (>3 hari)</strong>. Wajib surat keterangan rawat inap RS.
+                                        </p>
+                                        <span class="mt-2 inline-block text-[10px] text-purple-600 font-bold pl-6">Wajib Surat RS</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label class="block text-sm font-bold text-gray-700">Tanggal & Waktu Mulai</label>
+                                <input type="datetime-local" name="tanggal_mulai" required x-model="startDate" @change="handleStartDateChange()"
+                                    class="w-full rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500">
+                                @error('tanggal_mulai') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <label class="block text-sm font-bold text-gray-700">Tanggal & Waktu Selesai</label>
+                                    <template x-if="jenisIzin === 'Sakit' && tipeSakit === 'surat_dokter'">
+                                        <span class="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                                            🔒 Terkunci 3 Hari (Regulasi)
+                                        </span>
+                                    </template>
+                                    <template x-if="jenisIzin === 'Sakit' && tipeSakit === 'ringan'">
+                                        <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                                            Maksimal 1 Hari
+                                        </span>
+                                    </template>
+                                </div>
+                                <input type="datetime-local" name="tanggal_selesai" required x-model="endDate" @change="fetchSchedules()"
+                                    :readonly="jenisIzin === 'Sakit' && tipeSakit === 'surat_dokter'"
+                                    :class="jenisIzin === 'Sakit' && tipeSakit === 'surat_dokter' ? 'bg-gray-100 cursor-not-allowed text-gray-600' : ''"
+                                    class="w-full rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500">
+                                @error('tanggal_selesai') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                            </div>
+
+                            {{-- Upload Eviden --}}
+                            <div class="space-y-2 md:col-span-2">
+                                <label class="block text-sm font-bold text-gray-700 flex items-center gap-2">
+                                    <span x-text="jenisIzin === 'Sakit' ? (tipeSakit === 'ringan' ? 'Eviden Foto Obat / Keterangan Mandiri (Opsional)' : (tipeSakit === 'surat_dokter' ? 'Surat Keterangan Sakit Dokter / Faskes (Wajib)' : 'Surat Keterangan Rawat Inap RS (Wajib)')) : 'Eviden / Surat Pendukung (Opsional)'"></span>
+                                    <span x-show="jenisIzin === 'Sakit' && (tipeSakit === 'surat_dokter' || tipeSakit === 'rawat_inap')" class="text-red-500 text-xs">*Wajib</span>
+                                </label>
+                                <input type="file" name="dokumen_eviden" x-ref="evidenceFile" @change="handleFileChange($event)"
+                                    accept=".pdf,image/png,image/jpeg,image/jpg"
+                                    class="w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 border border-gray-200 rounded-xl p-2 cursor-pointer focus:outline-none focus:border-indigo-500 bg-white">
+                                <p class="text-[11px] text-gray-400">
+                                    Format berkas: <strong>PDF, JPG, JPEG, PNG</strong> (Ukuran maksimal 5MB).
+                                </p>
+                                @error('dokumen_eviden') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                             </div>
 
                             <div class="space-y-2 md:col-span-2">
                                 <label class="block text-sm font-bold text-gray-700">Alasan / Deskripsi</label>
                                 <textarea name="deskripsi" rows="3" required
                                     class="w-full rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
-                                    placeholder="Jelaskan alasan izin Anda...">{{ old('deskripsi') }}</textarea>
+                                    placeholder="Jelaskan alasan izin atau rincian keluhan sakit Anda...">{{ old('deskripsi') }}</textarea>
+                                @error('deskripsi') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                             </div>
                         </div>
 
@@ -228,6 +309,9 @@
             return {
                 startDate: @js(old('tanggal_mulai', '')),
                 endDate: @js(old('tanggal_selesai', '')),
+                jenisIzin: @js(old('jenis_izin', '')),
+                tipeSakit: @js(old('tipe_sakit', 'surat_dokter')),
+                hasEvidenceFile: false,
                 schedules: [],
                 selectedIds: [],
                 lmsData: { materials: [], assignments: [] },
@@ -237,6 +321,48 @@
                 lmsRequestNumber: 0,
                 loading: false,
                 lmsLoading: false,
+
+                formatLocalDateTime(date, timeString = '16:00') {
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    return `${year}-${month}-${day}T${timeString}`;
+                },
+
+                handleJenisIzinChange() {
+                    if (this.jenisIzin === 'Sakit') {
+                        this.handleSickDurationSync();
+                    }
+                },
+
+                handleTipeSakitChange() {
+                    this.handleSickDurationSync();
+                },
+
+                handleStartDateChange() {
+                    if (this.jenisIzin === 'Sakit') {
+                        this.handleSickDurationSync();
+                    }
+                    this.fetchSchedules();
+                },
+
+                handleSickDurationSync() {
+                    if (!this.startDate) return;
+                    const start = new Date(this.startDate);
+                    if (isNaN(start.getTime())) return;
+
+                    if (this.tipeSakit === 'ringan') {
+                        this.endDate = this.formatLocalDateTime(start, '16:00');
+                    } else if (this.tipeSakit === 'surat_dokter') {
+                        const end = new Date(start);
+                        end.setDate(end.getDate() + 2);
+                        this.endDate = this.formatLocalDateTime(end, '16:00');
+                    }
+                },
+
+                handleFileChange(event) {
+                    this.hasEvidenceFile = event.target.files && event.target.files.length > 0;
+                },
 
                 async fetchSchedules() {
                     if (!this.startDate) return;
@@ -332,6 +458,37 @@
                             confirmButtonColor: '#4f46e5'
                         });
                         return;
+                    }
+
+                    // Sick leave specific validation
+                    if (this.jenisIzin === 'Sakit') {
+                        if (this.tipeSakit === 'surat_dokter' || this.tipeSakit === 'rawat_inap') {
+                            const fileInput = this.$refs.evidenceFile;
+                            const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+                            if (!hasFile) {
+                                Swal.fire({
+                                    title: 'Eviden Wajib Diunggah',
+                                    text: this.tipeSakit === 'surat_dokter'
+                                        ? 'Untuk izin sakit 3 hari, Anda wajib mengunggah Surat Keterangan Sakit dari dokter atau fasilitas kesehatan setempat.'
+                                        : 'Untuk izin rawat inap / sakit berat, Anda wajib mengunggah Surat Keterangan Rawat Inap dari rumah sakit.',
+                                    icon: 'warning',
+                                    confirmButtonColor: '#4f46e5'
+                                });
+                                return;
+                            }
+                        } else if (this.tipeSakit === 'ringan') {
+                            const pStart = new Date(this.startDate);
+                            const pEnd = new Date(this.endDate);
+                            if (pStart.toDateString() !== pEnd.toDateString()) {
+                                Swal.fire({
+                                    title: 'Durasi Melebihi Batas',
+                                    text: 'Izin sakit ringan tanpa surat dokter hanya berlaku maksimal 1 hari pada hari yang sama.',
+                                    icon: 'warning',
+                                    confirmButtonColor: '#4f46e5'
+                                });
+                                return;
+                            }
+                        }
                     }
 
                     // Re-calculate overlapping count to be sure

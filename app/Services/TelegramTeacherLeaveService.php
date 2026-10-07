@@ -132,6 +132,8 @@ class TelegramTeacherLeaveService
         match ($conversation->step) {
             'category' => $this->receiveCategory($bot, $conversation, $chatId, $text),
             'type' => $this->receiveType($bot, $conversation, $chatId, $text),
+            'sick_type' => $this->receiveSickType($bot, $conversation, $chatId, $text),
+            'evidence' => $this->receiveEvidence($bot, $conversation, $chatId, $message),
             'start' => $this->receiveStart($bot, $conversation, $chatId, $text),
             'end' => $this->receiveEnd($bot, $conversation, $chatId, $text),
             'work_schedule_warning' => $this->receiveWorkScheduleWarning($bot, $conversation, $chatId, $text),
@@ -177,18 +179,145 @@ class TelegramTeacherLeaveService
 
             return;
         }
-        $this->advance($conversation, 'start', ['type' => $text]);
+
+        if ($text === 'Sakit') {
+            $this->advance($conversation, 'sick_type', ['type' => 'Sakit']);
+            $this->telegram->reply(
+                $bot,
+                $chatId,
+                "Pilih kategori kondisi sakit:\n\n"
+                ."🟢 *Sakit Ringan (1 Hari)*\nMaks. 1 hari tanpa surat dokter (flu, demam, pusing).\n\n"
+                ."🟡 *Sakit Surat Dokter (3 Hari)*\nOtomatis terkunci 3 hari. Wajib upload Surat Dokter/Faskes.\n\n"
+                ."🔴 *Rawat Inap / Sakit Berat (> 3 Hari)*\nUntuk opname/sakit berat. Wajib upload Surat Keterangan RS.",
+                $this->keyboard([
+                    ['🟢 Sakit Ringan (1 Hari)'],
+                    ['🟡 Sakit Surat Dokter (3 Hari)'],
+                    ['🔴 Rawat Inap / Sakit Berat (> 3 Hari)'],
+                    ['❌ Batalkan'],
+                ])
+            );
+
+            return;
+        }
+
+        $this->advance($conversation, 'start', ['type' => $text, 'tipe_sakit' => null]);
         $this->telegram->reply($bot, $chatId, "Ketik tanggal dan waktu mulai dengan format:\nDD-MM-YYYY HH:MM\n\nContoh: 10-09-2026 07:00", ['remove_keyboard' => true]);
+    }
+
+    private function receiveSickType(TelegramBot $bot, TelegramConversation $conversation, string $chatId, string $text): void
+    {
+        $tipeSakit = match ($text) {
+            '🟢 Sakit Ringan (1 Hari)', 'Sakit Ringan (1 Hari)', '1' => 'ringan',
+            '🟡 Sakit Surat Dokter (3 Hari)', 'Sakit Surat Dokter (3 Hari)', '2' => 'surat_dokter',
+            '🔴 Rawat Inap / Sakit Berat (> 3 Hari)', 'Rawat Inap / Sakit Berat (> 3 Hari)', '3' => 'rawat_inap',
+            default => null,
+        };
+
+        if (! $tipeSakit) {
+            $this->telegram->reply($bot, $chatId, 'Silakan pilih kategori kondisi sakit melalui tombol yang tersedia.');
+
+            return;
+        }
+
+        if ($tipeSakit === 'ringan') {
+            $this->advance($conversation, 'start', ['tipe_sakit' => 'ringan']);
+            $this->telegram->reply(
+                $bot,
+                $chatId,
+                "Izin Sakit Ringan berlaku 1 hari.\nKetik tanggal izin sakit (Format: DD-MM-YYYY):\n\nContoh: 10-09-2026",
+                ['remove_keyboard' => true]
+            );
+
+            return;
+        }
+
+        if ($tipeSakit === 'surat_dokter') {
+            $this->advance($conversation, 'start', ['tipe_sakit' => 'surat_dokter']);
+            $this->telegram->reply(
+                $bot,
+                $chatId,
+                "Izin Sakit Surat Dokter otomatis berlaku 3 hari kalender.\nKetik tanggal mulai izin (Format: DD-MM-YYYY):\n\nContoh: 10-09-2026",
+                ['remove_keyboard' => true]
+            );
+
+            return;
+        }
+
+        if ($tipeSakit === 'rawat_inap') {
+            $this->advance($conversation, 'start', ['tipe_sakit' => 'rawat_inap']);
+            $this->telegram->reply(
+                $bot,
+                $chatId,
+                "Ketik tanggal dan waktu mulai rawat inap:\nFormat: DD-MM-YYYY HH:MM\n\nContoh: 10-09-2026 07:00",
+                ['remove_keyboard' => true]
+            );
+
+            return;
+        }
     }
 
     private function receiveStart(TelegramBot $bot, TelegramConversation $conversation, string $chatId, string $text): void
     {
         $date = $this->parseDate($text);
         if (! $date) {
-            $this->telegram->reply($bot, $chatId, 'Format belum benar. Contoh waktu mulai: 10-09-2026 07:00');
+            $this->telegram->reply($bot, $chatId, 'Format tanggal belum benar. Contoh: 10-09-2026 atau 10-09-2026 07:00');
 
             return;
         }
+
+        $tipeSakit = $conversation->payload['tipe_sakit'] ?? null;
+
+        if ($tipeSakit === 'ringan') {
+            $start = $date->copy()->setTime(7, 0, 0);
+            $end = $date->copy()->setTime(16, 0, 0);
+
+            $this->advance($conversation, 'start', [
+                'start' => $start->format('Y-m-d H:i:s'),
+                'end' => $end->format('Y-m-d H:i:s'),
+            ]);
+
+            $warnings = $this->workSchedule->warnings($conversation->link->user->masterGuru, $start, $end);
+            if ($warnings) {
+                $this->advance($conversation, 'work_schedule_warning', [
+                    'work_schedule_warnings' => $warnings,
+                ]);
+                $this->telegram->reply(
+                    $bot,
+                    $chatId,
+                    "⚠️ Peringatan Waktu Izin\n\n• ".implode("\n• ", $warnings)."\n\nLanjutkan pengajuan dengan rentang tersebut?",
+                    $this->keyboard([['✅ Tetap Lanjutkan'], ['❌ Batalkan']]),
+                );
+
+                return;
+            }
+
+            $this->continueAfterEnd($bot, $conversation->fresh(), $chatId, $start, $end);
+
+            return;
+        }
+
+        if ($tipeSakit === 'surat_dokter') {
+            // Otomatis 3 hari mengunci: mulai hari H sampai H+2 (3 hari)
+            $start = $date->copy()->setTime(7, 0, 0);
+            $end = $date->copy()->addDays(2)->setTime(16, 0, 0);
+
+            $this->advance($conversation, 'evidence', [
+                'start' => $start->format('Y-m-d H:i:s'),
+                'end' => $end->format('Y-m-d H:i:s'),
+            ]);
+
+            $this->telegram->reply(
+                $bot,
+                $chatId,
+                "📎 *Surat Keterangan Sakit Wajib Diunggah*\n\n"
+                ."Waktu izin: {$start->format('d-m-Y')} s.d. {$end->format('d-m-Y')} (3 Hari).\n"
+                ."Sesuai regulasi, mohon kirimkan foto (kamera/galeri) atau dokumen file PDF/JPG Surat Keterangan Sakit dari dokter atau faskes:",
+                $this->keyboard([['❌ Batalkan']])
+            );
+
+            return;
+        }
+
         $this->advance($conversation, 'end', ['start' => $date->format('Y-m-d H:i:s')]);
         $this->telegram->reply($bot, $chatId, "Ketik tanggal dan waktu selesai dengan format:\nDD-MM-YYYY HH:MM\n\nContoh: 10-09-2026 16:00");
     }
@@ -204,6 +333,23 @@ class TelegramTeacherLeaveService
         }
         if ($end->lt($start)) {
             $this->telegram->reply($bot, $chatId, 'Waktu selesai tidak boleh sebelum waktu mulai. Silakan ketik ulang.');
+
+            return;
+        }
+
+        $tipeSakit = $conversation->payload['tipe_sakit'] ?? null;
+        if ($tipeSakit === 'rawat_inap') {
+            $this->advance($conversation, 'evidence', [
+                'end' => $end->format('Y-m-d H:i:s'),
+            ]);
+
+            $this->telegram->reply(
+                $bot,
+                $chatId,
+                "📎 *Surat Keterangan Rawat Inap RS Wajib Diunggah*\n\n"
+                ."Silakan kirimkan foto atau dokumen file PDF/JPG Surat Keterangan Rawat Inap dari rumah sakit:",
+                $this->keyboard([['❌ Batalkan']])
+            );
 
             return;
         }
@@ -225,6 +371,72 @@ class TelegramTeacherLeaveService
         }
 
         $this->continueAfterEnd($bot, $conversation, $chatId, $start, $end);
+    }
+
+    private function receiveEvidence(TelegramBot $bot, TelegramConversation $conversation, string $chatId, array $message): void
+    {
+        $fileId = null;
+        $photo = data_get($message, 'photo');
+        $document = data_get($message, 'document');
+
+        if (is_array($photo) && ! empty($photo)) {
+            $largest = end($photo);
+            $fileId = data_get($largest, 'file_id');
+        } elseif (is_array($document)) {
+            $mimeType = (string) data_get($document, 'mime_type', '');
+            $fileName = (string) data_get($document, 'file_name', '');
+            $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+
+            if (! in_array($ext, ['pdf', 'jpg', 'jpeg', 'png', 'webp'], true) && ! str_contains($mimeType, 'pdf') && ! str_contains($mimeType, 'image')) {
+                $this->telegram->reply($bot, $chatId, "Format dokumen tidak didukung.\nMohon kirimkan file berformat PDF, JPG, JPEG, atau PNG.");
+
+                return;
+            }
+            $fileId = data_get($document, 'file_id');
+        }
+
+        if (! $fileId) {
+            $this->telegram->reply(
+                $bot,
+                $chatId,
+                "Mohon kirimkan foto surat (dari kamera atau galeri) atau file dokumen PDF/JPG surat keterangan sakit.\n\nJika ingin membatalkan, tekan ❌ Batalkan.",
+                $this->keyboard([['❌ Batalkan']])
+            );
+
+            return;
+        }
+
+        $savedPath = $this->telegram->downloadFile($bot, $fileId, 'guru-izin/eviden');
+        if (! $savedPath) {
+            $this->telegram->reply($bot, $chatId, 'Gagal mengunduh file dari Telegram. Silakan coba kirim ulang foto atau dokumen.');
+
+            return;
+        }
+
+        $payload = $conversation->payload;
+        $start = Carbon::parse($payload['start']);
+        $end = Carbon::parse($payload['end']);
+
+        $this->advance($conversation, 'evidence', [
+            'dokumen_pdf' => $savedPath,
+        ]);
+
+        $warnings = $this->workSchedule->warnings($conversation->link->user->masterGuru, $start, $end);
+        if ($warnings) {
+            $this->advance($conversation, 'work_schedule_warning', [
+                'work_schedule_warnings' => $warnings,
+            ]);
+            $this->telegram->reply(
+                $bot,
+                $chatId,
+                "✅ Eviden surat keterangan sakit berhasil diterima.\n\n⚠️ Peringatan Waktu Izin:\n• ".implode("\n• ", $warnings)."\n\nLanjutkan pengajuan dengan rentang tersebut?",
+                $this->keyboard([['✅ Tetap Lanjutkan'], ['❌ Batalkan']]),
+            );
+
+            return;
+        }
+
+        $this->continueAfterEnd($bot, $conversation->fresh(), $chatId, $start, $end);
     }
 
     private function receiveWorkScheduleWarning(TelegramBot $bot, TelegramConversation $conversation, string $chatId, string $text): void
@@ -482,13 +694,21 @@ class TelegramTeacherLeaveService
         $this->advance($conversation, 'confirmation', ['description' => $text]);
         $payload = $conversation->fresh()->payload;
         $labels = ['sekolah' => 'Lingkungan Sekolah', 'luar' => 'Luar Sekolah', 'tidak_masuk' => 'Izin Tidak Masuk', 'terlambat' => 'Datang Terlambat'];
+        $tipeSakitLabel = match ($payload['tipe_sakit'] ?? null) {
+            'ringan' => ' (Sakit Ringan 1 Hari)',
+            'surat_dokter' => ' (Surat Dokter 3 Hari)',
+            'rawat_inap' => ' (Rawat Inap RS)',
+            default => '',
+        };
+        $evidenText = ! empty($payload['dokumen_pdf']) ? "\nEviden: 📎 Surat Keterangan Terlampir" : '';
         $summary = "Periksa Pengajuan Izin\n\n"
             .'Kategori: '.$labels[$payload['category']]."\n"
-            .'Jenis: '.$payload['type']."\n"
+            .'Jenis: '.$payload['type'].$tipeSakitLabel."\n"
             .'Mulai: '.Carbon::parse($payload['start'])->format('d-m-Y H:i')."\n"
             .'Selesai: '.Carbon::parse($payload['end'])->format('d-m-Y H:i')."\n"
             .'Jadwal terdampak: '.count($payload['schedule_ids'] ?? [])."\n"
-            .'Alasan: '.$payload['description']."\n\nKirim pengajuan ini?";
+            .'Alasan: '.$payload['description']
+            .$evidenText."\n\nKirim pengajuan ini?";
         $this->telegram->reply($bot, $chatId, $summary, $this->keyboard([
             ['✅ Kirim Pengajuan'],
             ['❌ Batalkan'],
@@ -545,8 +765,10 @@ class TelegramTeacherLeaveService
                 'tanggal_mulai' => $payload['start'],
                 'tanggal_selesai' => $payload['end'],
                 'jenis_izin' => $payload['type'],
+                'tipe_sakit' => $payload['tipe_sakit'] ?? null,
                 'kategori_penyetujuan' => $payload['category'],
                 'deskripsi' => $payload['description'],
+                'dokumen_pdf' => $payload['dokumen_pdf'] ?? null,
                 ...$approvalStatuses,
             ]);
 
@@ -751,10 +973,14 @@ class TelegramTeacherLeaveService
 
     private function parseDate(string $value): ?Carbon
     {
-        foreach (['d-m-Y H:i', 'Y-m-d H:i'] as $format) {
+        foreach (['d-m-Y H:i', 'Y-m-d H:i', 'd-m-Y', 'Y-m-d'] as $format) {
             try {
                 $date = Carbon::createFromFormat('!'.$format, $value);
                 if ($date && $date->format($format) === $value) {
+                    if (in_array($format, ['d-m-Y', 'Y-m-d'], true)) {
+                        $date->setTime(7, 0, 0);
+                    }
+
                     return $date;
                 }
             } catch (\Throwable) {

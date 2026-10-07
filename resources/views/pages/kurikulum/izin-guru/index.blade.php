@@ -53,6 +53,14 @@
                                             @endif
                                         </div>
                                         <span class="inline-block mt-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 text-[10px] font-black uppercase">{{ $izin->jenis_izin }}</span>
+                                        @if($izin->tipe_sakit)
+                                            <span class="inline-block mt-1 px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] font-black uppercase">{{ $izin->tipeSakitLabel() }}</span>
+                                        @endif
+                                        @if($izin->dokumen_pdf)
+                                            <a href="{{ $izin->eviden_url }}" target="_blank" class="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black uppercase hover:bg-emerald-100">
+                                                📎 Eviden
+                                            </a>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4 text-xs font-bold text-gray-600">
                                         @if($izin->jadwals->isNotEmpty())

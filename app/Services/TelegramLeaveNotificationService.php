@@ -25,12 +25,15 @@ class TelegramLeaveNotificationService
             $approver->notify(new PengajuanIzinGuruNotification($izin, 'pending_approval', $message, $url));
 
             foreach ($this->employmentLinks($approver->id) as $link) {
+                $jenisText = $izin->jenis_izin . ($izin->tipe_sakit ? ' ('.$izin->tipeSakitLabel().')' : '');
+                $evidenText = $izin->dokumen_pdf ? "\nEviden: 📎 Surat Keterangan Terlampir" : '';
                 $text = "🔔 PERSETUJUAN IZIN GURU\n\n"
                     .'Pemohon: '.($izin->guru?->nama_lengkap ?? '-')."\n"
                     .'Kategori: '.$izin->categoryLabel()."\n"
-                    .'Jenis: '.$izin->jenis_izin."\n"
+                    .'Jenis: '.$jenisText."\n"
                     .'Waktu: '.$izin->tanggal_mulai->format('d-m-Y H:i').' s.d. '.$izin->tanggal_selesai->format('d-m-Y H:i')."\n"
-                    .'Alasan: '.$izin->deskripsi."\n\n"
+                    .'Alasan: '.$izin->deskripsi
+                    .$evidenText."\n\n"
                     .'Anda menerima pesan ini karena bertugas sebagai Guru Piket hari ini.';
 
                 $this->safeReply($link, $text, [
@@ -102,12 +105,16 @@ class TelegramLeaveNotificationService
 
     private function approvalSummary(GuruIzin $izin, string $label): string
     {
+        $jenisText = $izin->jenis_izin . ($izin->tipe_sakit ? ' ('.$izin->tipeSakitLabel().')' : '');
+        $evidenText = $izin->dokumen_pdf ? "\nEviden: 📎 Surat Keterangan Terlampir" : '';
+
         return "🔔 PERSETUJUAN IZIN — {$label}\n\n"
             .'Pemohon: '.($izin->guru?->nama_lengkap ?? '-')."\n"
             .'Kategori: '.$izin->categoryLabel()."\n"
-            .'Jenis: '.$izin->jenis_izin."\n"
+            .'Jenis: '.$jenisText."\n"
             .'Waktu: '.$izin->tanggal_mulai->format('d-m-Y H:i').' s.d. '.$izin->tanggal_selesai->format('d-m-Y H:i')."\n"
-            .'Alasan: '.$izin->deskripsi;
+            .'Alasan: '.$izin->deskripsi
+            .$evidenText;
     }
 
     private function safeReply(TelegramUserLink $link, string $text, ?array $markup = null): void

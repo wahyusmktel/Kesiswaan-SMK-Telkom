@@ -100,6 +100,8 @@ class IzinGuruController extends Controller
             'tanggal_mulai' => 'required|date',
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
             'jenis_izin' => 'required|string',
+            'tipe_sakit' => 'nullable|required_if:jenis_izin,Sakit|in:ringan,surat_dokter,rawat_inap',
+            'dokumen_eviden' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
             'kategori_penyetujuan' => 'required|in:sekolah,luar,tidak_masuk,terlambat',
             'deskripsi' => 'required|string',
             'jadwal_ids' => 'nullable|array',
@@ -108,6 +110,10 @@ class IzinGuruController extends Controller
             'lms_assignment_id' => 'nullable|integer',
             'confirm_work_schedule_warning' => 'nullable|string|size:64',
             'work_schedule_validation_enabled' => 'nullable|boolean',
+        ], [
+            'tipe_sakit.required_if' => 'Silakan pilih kategori kondisi sakit Anda.',
+            'dokumen_eviden.mimes' => 'Format file eviden harus berupa PDF, JPG, JPEG, atau PNG.',
+            'dokumen_eviden.max' => 'Ukuran file eviden maksimal 5MB.',
         ]);
 
         $guru = Auth::user()->masterGuru;
@@ -118,6 +124,30 @@ class IzinGuruController extends Controller
         // Logic check: If there are schedules within the permit timeframe, at least one must be selected
         $startDate = \Carbon\Carbon::parse($request->tanggal_mulai);
         $endDate = \Carbon\Carbon::parse($request->tanggal_selesai);
+
+        if ($request->jenis_izin === 'Sakit') {
+            if ($request->tipe_sakit === 'ringan') {
+                if (! $startDate->isSameDay($endDate)) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'tanggal_selesai' => 'Izin Sakit Ringan tanpa surat dokter hanya berlaku maksimal 1 hari. Untuk sakit lebih dari 1 hari, silakan pilih opsi Sakit Surat Dokter atau Rawat Inap.',
+                    ]);
+                }
+            } elseif ($request->tipe_sakit === 'surat_dokter') {
+                // Otomatis 3 hari mengunci: mulai hari H sampai H+2 (total 3 hari)
+                $endDate = $startDate->copy()->addDays(2)->setTime(16, 0, 0);
+                if (! $request->hasFile('dokumen_eviden')) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'dokumen_eviden' => 'Izin Sakit 3 Hari wajib melampirkan eviden Surat Keterangan Sakit dari dokter atau faskes.',
+                    ]);
+                }
+            } elseif ($request->tipe_sakit === 'rawat_inap') {
+                if (! $request->hasFile('dokumen_eviden')) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'dokumen_eviden' => 'Izin Sakit Rawat Inap wajib melampirkan eviden Surat Keterangan Rawat Inap dari rumah sakit.',
+                    ]);
+                }
+            }
+        }
 
         $scheduleWarnings = $workSchedule->warnings($guru, $startDate, $endDate);
         $warningToken = hash('sha256', $startDate->toIso8601String().'|'.$endDate->toIso8601String());
@@ -194,15 +224,22 @@ class IzinGuruController extends Controller
             return redirect()->back()->withInput()->with('error', 'Anda sudah memiliki pengajuan izin pada rentang waktu tersebut yang sedang diproses atau sudah disetujui.');
         }
 
+        $dokumenPath = null;
+        if ($request->hasFile('dokumen_eviden')) {
+            $dokumenPath = $request->file('dokumen_eviden')->store('guru-izin/eviden', 'public');
+        }
+
         $approvalStatuses = GuruIzin::initialApprovalStatuses($guru, $request->kategori_penyetujuan);
 
         $izin = GuruIzin::create([
             'master_guru_id' => $guru->id,
-            'tanggal_mulai' => $request->tanggal_mulai,
-            'tanggal_selesai' => $request->tanggal_selesai,
+            'tanggal_mulai' => $startDate->format('Y-m-d H:i:s'),
+            'tanggal_selesai' => $endDate->format('Y-m-d H:i:s'),
             'jenis_izin' => $request->jenis_izin,
+            'tipe_sakit' => $request->jenis_izin === 'Sakit' ? $request->tipe_sakit : null,
             'kategori_penyetujuan' => $request->kategori_penyetujuan,
             'deskripsi' => $request->deskripsi,
+            'dokumen_pdf' => $dokumenPath,
             ...$approvalStatuses,
         ]);
 

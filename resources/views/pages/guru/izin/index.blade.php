@@ -76,23 +76,36 @@
                                         </div>
                                     </td>
                                     <td class="px-6 py-4">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200">
-                                            {{ $izin->jenis_izin }}
-                                        </span>
-                                        @if($izin->kategori_penyetujuan === 'sekolah')
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200 uppercase">
-                                                Sekolah
+                                        <div class="flex flex-col gap-1 items-start">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200">
+                                                {{ $izin->jenis_izin }}
                                             </span>
-                                        @elseif($izin->kategori_penyetujuan === 'luar')
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 text-orange-800 border border-orange-200 uppercase">Luar Sekolah</span>
-                                        @elseif($izin->kategori_penyetujuan === 'tidak_masuk')
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-800 border border-red-200 uppercase">Tidak Masuk</span>
-                                        @elseif($izin->kategori_penyetujuan === 'terlambat')
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 uppercase">Terlambat</span>
-                                        @endif
+                                            @if($izin->tipe_sakit)
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                                    {{ $izin->tipeSakitLabel() }}
+                                                </span>
+                                            @endif
+                                            @if($izin->kategori_penyetujuan === 'sekolah')
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200 uppercase">
+                                                    Sekolah
+                                                </span>
+                                            @elseif($izin->kategori_penyetujuan === 'luar')
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 text-orange-800 border border-orange-200 uppercase">Luar Sekolah</span>
+                                            @elseif($izin->kategori_penyetujuan === 'tidak_masuk')
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-800 border border-red-200 uppercase">Tidak Masuk</span>
+                                            @elseif($izin->kategori_penyetujuan === 'terlambat')
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 uppercase">Terlambat</span>
+                                            @endif
+                                        </div>
                                     </td>
-                                    <td class="px-6 py-4 max-w-xs truncate text-gray-600">
-                                        {{ $izin->deskripsi }}
+                                    <td class="px-6 py-4 max-w-xs text-gray-600">
+                                        <p class="truncate">{{ $izin->deskripsi }}</p>
+                                        @if($izin->dokumen_pdf)
+                                            <a href="{{ $izin->eviden_url }}" target="_blank" class="inline-flex items-center gap-1 mt-1 text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                                                Lihat Eviden
+                                            </a>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="flex items-center gap-2">

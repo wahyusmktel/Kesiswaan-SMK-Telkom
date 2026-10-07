@@ -20,7 +20,19 @@
                         <tr class="align-top">
                             <td class="p-4"><p class="font-black text-gray-900">{{ $izin->guru?->nama_lengkap ?? '-' }}</p><p class="mt-1 text-xs text-gray-500">{{ $izin->guru?->dapodikGuru?->status_kepegawaian ?: 'Status tidak tersedia' }}</p></td>
                             <td class="p-4 text-gray-700">{{ $izin->tanggal_mulai->translatedFormat('d M Y H:i') }}<br><span class="text-gray-400">s.d.</span> {{ $izin->tanggal_selesai->translatedFormat('d M Y H:i') }}</td>
-                            <td class="p-4"><span class="rounded-full bg-violet-50 px-2 py-1 text-xs font-bold text-violet-700">{{ $izin->categoryLabel() }} · {{ $izin->jenis_izin }}</span><p class="mt-2 max-w-sm whitespace-normal text-gray-600">{{ $izin->deskripsi }}</p>
+                            <td class="p-4">
+                                <div class="flex flex-wrap gap-1 items-center mb-1">
+                                    <span class="rounded-full bg-violet-50 px-2 py-1 text-xs font-bold text-violet-700">{{ $izin->categoryLabel() }} · {{ $izin->jenis_izin }}</span>
+                                    @if($izin->tipe_sakit)
+                                        <span class="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700 border border-blue-100">{{ $izin->tipeSakitLabel() }}</span>
+                                    @endif
+                                    @if($izin->dokumen_pdf)
+                                        <a href="{{ $izin->eviden_url }}" target="_blank" class="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700 border border-emerald-200 hover:bg-emerald-100 flex items-center gap-1">
+                                            📎 Eviden
+                                        </a>
+                                    @endif
+                                </div>
+                                <p class="mt-2 max-w-sm whitespace-normal text-gray-600">{{ $izin->deskripsi }}</p>
                                 <details class="mt-3"><summary class="cursor-pointer text-xs font-bold text-indigo-700">Jadwal yang ditinggalkan</summary>
                                     @forelse($izin->jadwals as $jadwal)<p class="mt-2 text-xs">{{ $jadwal->rombel?->kelas?->nama_kelas }} · {{ $jadwal->mataPelajaran?->nama_mapel }} · {{ $jadwal->jam_mulai }}–{{ $jadwal->jam_selesai }}</p>@empty<p class="mt-2 text-xs text-gray-500">Tidak ada jadwal terlampir.</p>@endforelse
                                 </details>
