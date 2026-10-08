@@ -83,78 +83,180 @@ body.stella-news-page {
 .article-reader.is-unsupported .article-reader__controls { background: #fff8e8; border-color: #f3d89b; }
 
 .article-layout { display: grid; grid-template-columns: minmax(0, 760px) 290px; gap: 72px; padding: 44px 0 88px; align-items: start; }
-.article-cover-frame {
+.article-cover-container {
     position: relative;
     width: 100%;
     margin-bottom: 38px;
-    border-radius: 20px;
-    background: #0f172a;
-    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 0;
     overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.1);
-}
-
-.article-cover-backdrop {
-    position: absolute;
-    inset: -35px;
-    background-size: cover;
-    background-position: center;
-    filter: blur(30px) saturate(1.4);
-    opacity: 0.28;
-    transform: scale(1.15);
-    pointer-events: none;
+    background: #000;
 }
 
 .article-cover {
-    position: relative;
-    z-index: 2;
     width: 100%;
     height: auto;
-    max-height: 620px;
-    object-fit: contain;
+    max-width: 100%;
     display: block;
-    margin: 0 auto;
+    border-radius: 0;
+    margin: 0;
+    cursor: zoom-in;
+    transition: opacity 0.2s ease;
 }
 
-.article-cover-expand {
+.article-cover:hover {
+    opacity: 0.96;
+}
+
+.article-cover-zoom-btn {
     position: absolute;
     bottom: 14px;
     right: 14px;
-    z-index: 3;
+    z-index: 2;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    background: rgba(15, 23, 42, 0.75);
+    gap: 7px;
+    padding: 7px 14px;
+    background: rgba(15, 23, 42, 0.82);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 999px;
-    font: 600 11px/1 "DM Sans", sans-serif;
-    text-decoration: none;
-    opacity: 0;
-    transform: translateY(4px);
-    transition: opacity 0.2s ease, transform 0.2s ease, background 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 0;
+    font: 700 12px/1 "DM Sans", sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
-.article-cover-frame:hover .article-cover-expand {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.article-cover-expand:hover {
+.article-cover-zoom-btn:hover {
     background: #dc2626;
-    border-color: rgba(255, 255, 255, 0.4);
+    border-color: #dc2626;
     color: #fff;
 }
 
-.article-cover-expand svg {
-    width: 13px;
-    height: 13px;
+.article-cover-zoom-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* Image Zoom Modal */
+.image-zoom-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    display: flex;
+    flex-direction: column;
+}
+
+.image-zoom-modal[hidden] {
+    display: none !important;
+}
+
+.image-zoom-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(8, 12, 22, 0.94);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    cursor: zoom-out;
+}
+
+.image-zoom-modal__toolbar {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: rgba(15, 23, 42, 0.92);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.image-zoom-modal__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.image-zoom-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 13px;
+    background: #1e293b;
+    color: #f8fafc;
+    border: 1px solid #334155;
+    border-radius: 0;
+    font: 700 12px/1 "DM Sans", sans-serif;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    user-select: none;
+}
+
+.image-zoom-btn:hover {
+    background: #334155;
+    border-color: #64748b;
+}
+
+.image-zoom-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.image-zoom-level {
+    font: 700 12px/1 "DM Sans", monospace, sans-serif;
+    color: #94a3b8;
+    min-width: 48px;
+    text-align: center;
+    user-select: none;
+}
+
+.image-zoom-close {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: #dc2626;
+    color: #fff;
+    border: none;
+    border-radius: 0;
+    font: 700 12px/1 "DM Sans", sans-serif;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.image-zoom-close:hover {
+    background: #b91c1c;
+}
+
+.image-zoom-close svg {
+    width: 16px;
+    height: 16px;
+}
+
+.image-zoom-modal__viewport {
+    position: relative;
+    z-index: 5;
+    flex: 1;
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.image-zoom-modal__img {
+    max-width: 90vw;
+    max-height: 85vh;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 0;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+    transition: transform 0.2s cubic-bezier(0.2, 0, 0.2, 1);
+    transform-origin: center center;
+    user-select: none;
+    cursor: grab;
 }
 .article-prose { color: #30343b; font-size: 17px; line-height: 1.85; overflow-wrap: anywhere; }
 .article-prose p, .article-prose ul, .article-prose ol, .article-prose blockquote { margin: 0 0 1.4em; }
@@ -243,9 +345,9 @@ body.stella-news-page {
     .article-reader__settings { grid-template-columns: 1fr; }
     .article-reader__stop { width: 100%; }
     .article-layout { padding-top: 28px; padding-bottom: 60px; }
-    .article-cover-frame { border-radius: 14px; margin-bottom: 26px; }
-    .article-cover { max-height: 480px; }
-    .article-cover-expand { opacity: 0.95; transform: translateY(0); padding: 5px 11px; font-size: 10px; bottom: 10px; right: 10px; }
+    .article-cover-container { margin-bottom: 26px; border-radius: 0; }
+    .article-cover { width: 100%; height: auto; border-radius: 0; }
+    .article-cover-zoom-btn { padding: 6px 12px; font-size: 11px; bottom: 10px; right: 10px; border-radius: 0; }
     .article-prose { font-size: 16px; }
     .article-prose h2 { font-size: 26px; }
     .code-editor { margin-inline: -14px; }

@@ -141,16 +141,18 @@
 
         <div class="news-shell article-layout">
             <article>
-                <figure class="article-cover-frame">
-                    <div class="article-cover-backdrop" style="background-image: url('{{ $coverUrl }}');"></div>
-                    <img class="article-cover" src="{{ $coverUrl }}" alt="{{ $berita->judul }}" loading="eager">
-                    <a href="{{ $coverUrl }}" target="_blank" rel="noopener noreferrer" class="article-cover-expand" title="Lihat gambar ukuran penuh">
+                <div class="article-cover-container">
+                    <img class="article-cover" src="{{ $coverUrl }}" alt="{{ $berita->judul }}" loading="eager" data-open-image-modal>
+                    <button type="button" class="article-cover-zoom-btn" data-open-image-modal title="Perbesar Gambar">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 3h6m0 0v6m0-6L14 10M9 21H3m0 0v-6m0 6l7-7" />
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            <line x1="11" y1="8" x2="11" y2="14"></line>
+                            <line x1="8" y1="11" x2="14" y2="11"></line>
                         </svg>
-                        <span>Ukuran Penuh</span>
-                    </a>
-                </figure>
+                        <span>Perbesar Gambar</span>
+                    </button>
+                </div>
                 <textarea data-article-source hidden>{{ $berita->konten }}</textarea>
                 <div class="article-prose" data-article-content>{!! nl2br(e($berita->konten)) !!}</div>
             </article>
@@ -263,5 +265,51 @@
             <div class="news-footer__statement">THE REAL INFORMATIC SCHOOLS</div>
         </div>
     </footer>
+
+    {{-- Modal Zoom Gambar Penuh --}}
+    <div id="image-zoom-modal" class="image-zoom-modal" hidden role="dialog" aria-modal="true" aria-label="Pratinjau Gambar Penuh">
+        <div class="image-zoom-modal__backdrop" data-close-modal></div>
+        
+        <div class="image-zoom-modal__toolbar">
+            <div class="image-zoom-modal__actions">
+                <button type="button" class="image-zoom-btn" data-zoom-in title="Perbesar (Zoom In)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        <line x1="11" y1="8" x2="11" y2="14"></line>
+                        <line x1="8" y1="11" x2="14" y2="11"></line>
+                    </svg>
+                    <span>Zoom In</span>
+                </button>
+                <span class="image-zoom-level" data-zoom-level>100%</span>
+                <button type="button" class="image-zoom-btn" data-zoom-out title="Perkecil (Zoom Out)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        <line x1="8" y1="11" x2="14" y2="11"></line>
+                    </svg>
+                    <span>Zoom Out</span>
+                </button>
+                <button type="button" class="image-zoom-btn" data-zoom-reset title="Reset Ukuran">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                        <path d="M3 3v5h5"></path>
+                    </svg>
+                    <span>Reset</span>
+                </button>
+            </div>
+            <button type="button" class="image-zoom-close" data-close-modal title="Tutup (Esc)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+                <span>Tutup</span>
+            </button>
+        </div>
+
+        <div class="image-zoom-modal__viewport" data-zoom-viewport>
+            <img class="image-zoom-modal__img" data-zoom-img src="{{ $coverUrl }}" alt="{{ $berita->judul }}">
+        </div>
+    </div>
 </body>
 </html>

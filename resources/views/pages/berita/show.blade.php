@@ -312,15 +312,21 @@
 
             {{-- Featured Image --}}
             @if ($berita->gambar)
-                <div class="glass rounded-[32px] overflow-hidden mb-12 border-white/10 relative flex items-center justify-center bg-slate-950/70 p-2 md:p-3 group">
-                    <div class="absolute inset-0 bg-cover bg-center filter blur-2xl opacity-25 scale-110 pointer-events-none" style="background-image: url('{{ Storage::url($berita->gambar) }}')"></div>
+                <div class="relative w-full mb-12 overflow-hidden bg-black">
                     <img src="{{ Storage::url($berita->gambar) }}" alt="{{ $berita->judul }}"
-                        class="relative z-10 w-full h-auto max-h-[640px] object-contain rounded-2xl shadow-2xl">
-                    <a href="{{ Storage::url($berita->gambar) }}" target="_blank" rel="noopener noreferrer"
-                        class="absolute bottom-5 right-5 z-20 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900/80 backdrop-blur border border-white/20 text-xs font-semibold text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 3h6m0 0v6m0-6L14 10M9 21H3m0 0v-6m0 6l7-7"/></svg>
-                        <span>Ukuran Penuh</span>
-                    </a>
+                        class="w-full h-auto block rounded-none cursor-zoom-in"
+                        data-open-image-modal>
+                    <button type="button"
+                        class="absolute bottom-4 right-4 z-20 inline-flex items-center gap-2 px-4 py-2 bg-slate-900/85 backdrop-blur border border-white/20 text-xs font-bold text-white hover:bg-red-600 transition-colors"
+                        data-open-image-modal title="Perbesar Gambar">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            <line x1="11" y1="8" x2="11" y2="14"></line>
+                            <line x1="8" y1="11" x2="14" y2="11"></line>
+                        </svg>
+                        <span>Perbesar Gambar</span>
+                    </button>
                 </div>
             @endif
 
@@ -421,6 +427,145 @@
             </div>
         </div>
     </footer>
+
+    @if ($berita->gambar)
+        {{-- Modal Zoom Gambar Penuh --}}
+        <div id="image-zoom-modal" class="image-zoom-modal" hidden role="dialog" aria-modal="true" aria-label="Pratinjau Gambar Penuh">
+            <div class="image-zoom-modal__backdrop" data-close-modal></div>
+            
+            <div class="image-zoom-modal__toolbar">
+                <div class="image-zoom-modal__actions">
+                    <button type="button" class="image-zoom-btn" data-zoom-in title="Perbesar (Zoom In)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            <line x1="11" y1="8" x2="11" y2="14"></line>
+                            <line x1="8" y1="11" x2="14" y2="11"></line>
+                        </svg>
+                        <span>Zoom In</span>
+                    </button>
+                    <span class="image-zoom-level" data-zoom-level>100%</span>
+                    <button type="button" class="image-zoom-btn" data-zoom-out title="Perkecil (Zoom Out)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            <line x1="8" y1="11" x2="14" y2="11"></line>
+                        </svg>
+                        <span>Zoom Out</span>
+                    </button>
+                    <button type="button" class="image-zoom-btn" data-zoom-reset title="Reset Ukuran">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                            <path d="M3 3v5h5"></path>
+                        </svg>
+                        <span>Reset</span>
+                    </button>
+                </div>
+                <button type="button" class="image-zoom-close" data-close-modal title="Tutup (Esc)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                    <span>Tutup</span>
+                </button>
+            </div>
+
+            <div class="image-zoom-modal__viewport" data-zoom-viewport>
+                <img class="image-zoom-modal__img" data-zoom-img src="{{ Storage::url($berita->gambar) }}" alt="{{ $berita->judul }}">
+            </div>
+        </div>
+
+        <style>
+            .image-zoom-modal { position: fixed; inset: 0; z-index: 999999; display: flex; flex-direction: column; }
+            .image-zoom-modal[hidden] { display: none !important; }
+            .image-zoom-modal__backdrop { position: absolute; inset: 0; background: rgba(8, 12, 22, 0.94); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); cursor: zoom-out; }
+            .image-zoom-modal__toolbar { position: relative; z-index: 10; display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; background: rgba(15, 23, 42, 0.92); border-bottom: 1px solid rgba(255, 255, 255, 0.1); color: #fff; }
+            .image-zoom-modal__actions { display: flex; align-items: center; gap: 8px; }
+            .image-zoom-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; background: #1e293b; color: #f8fafc; border: 1px solid #334155; border-radius: 0; font: 700 12px/1 sans-serif; cursor: pointer; user-select: none; transition: background 0.15s; }
+            .image-zoom-btn:hover { background: #334155; border-color: #64748b; }
+            .image-zoom-btn svg { width: 14px; height: 14px; }
+            .image-zoom-level { font: 700 12px/1 monospace, sans-serif; color: #94a3b8; min-width: 48px; text-align: center; user-select: none; }
+            .image-zoom-close { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; background: #dc2626; color: #fff; border: none; border-radius: 0; font: 700 12px/1 sans-serif; cursor: pointer; transition: background 0.15s; }
+            .image-zoom-close:hover { background: #b91c1c; }
+            .image-zoom-close svg { width: 16px; height: 16px; }
+            .image-zoom-modal__viewport { position: relative; z-index: 5; flex: 1; overflow: auto; display: flex; align-items: center; justify-content: center; padding: 24px; }
+            .image-zoom-modal__img { max-width: 90vw; max-height: 85vh; width: auto; height: auto; object-fit: contain; border-radius: 0; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6); transition: transform 0.2s cubic-bezier(0.2, 0, 0.2, 1); transform-origin: center center; user-select: none; cursor: grab; }
+        </style>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const modal = document.getElementById('image-zoom-modal');
+                if (!modal) return;
+
+                const zoomImg = modal.querySelector('[data-zoom-img]');
+                const zoomLevel = modal.querySelector('[data-zoom-level]');
+                const btnIn = modal.querySelector('[data-zoom-in]');
+                const btnOut = modal.querySelector('[data-zoom-out]');
+                const btnReset = modal.querySelector('[data-zoom-reset]');
+                const closeTriggers = modal.querySelectorAll('[data-close-modal]');
+                const openTriggers = document.querySelectorAll('[data-open-image-modal], .article-cover');
+
+                let currentScale = 1.0;
+                const minScale = 0.5;
+                const maxScale = 3.5;
+                const step = 0.25;
+
+                const applyZoom = () => {
+                    if (!zoomImg) return;
+                    zoomImg.style.transform = `scale(${currentScale})`;
+                    if (zoomLevel) zoomLevel.textContent = `${Math.round(currentScale * 100)}%`;
+                };
+
+                const openModal = () => {
+                    currentScale = 1.0;
+                    applyZoom();
+                    modal.removeAttribute('hidden');
+                    document.body.style.overflow = 'hidden';
+                };
+
+                const closeModal = () => {
+                    modal.setAttribute('hidden', '');
+                    document.body.style.overflow = '';
+                    currentScale = 1.0;
+                    applyZoom();
+                };
+
+                openTriggers.forEach((t) => t.addEventListener('click', (e) => { e.preventDefault(); openModal(); }));
+                closeTriggers.forEach((b) => b.addEventListener('click', () => closeModal()));
+
+                if (btnIn) btnIn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    currentScale = Math.min(maxScale, Number((currentScale + step).toFixed(2)));
+                    applyZoom();
+                });
+                if (btnOut) btnOut.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    currentScale = Math.max(minScale, Number((currentScale - step).toFixed(2)));
+                    applyZoom();
+                });
+                if (btnReset) btnReset.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    currentScale = 1.0;
+                    applyZoom();
+                });
+
+                modal.addEventListener('wheel', (e) => {
+                    if (modal.hasAttribute('hidden')) return;
+                    e.preventDefault();
+                    if (e.deltaY < 0) {
+                        currentScale = Math.min(maxScale, Number((currentScale + step).toFixed(2)));
+                    } else {
+                        currentScale = Math.max(minScale, Number((currentScale - step).toFixed(2)));
+                    }
+                    applyZoom();
+                }, { passive: false });
+
+                window.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && !modal.hasAttribute('hidden')) closeModal();
+                });
+            });
+        </script>
+    @endif
 </body>
 
 </html>

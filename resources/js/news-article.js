@@ -383,11 +383,104 @@ const initializeArticleReader = () => {
     });
 };
 
+const initializeImageZoomModal = () => {
+    const modal = document.getElementById('image-zoom-modal');
+    if (!modal) return;
+
+    const zoomImg = modal.querySelector('[data-zoom-img]');
+    const zoomLevel = modal.querySelector('[data-zoom-level]');
+    const btnIn = modal.querySelector('[data-zoom-in]');
+    const btnOut = modal.querySelector('[data-zoom-out]');
+    const btnReset = modal.querySelector('[data-zoom-reset]');
+    const closeTriggers = modal.querySelectorAll('[data-close-modal]');
+    const openTriggers = document.querySelectorAll('[data-open-image-modal], .article-cover');
+
+    let currentScale = 1.0;
+    const minScale = 0.5;
+    const maxScale = 3.5;
+    const step = 0.25;
+
+    const applyZoom = () => {
+        if (!zoomImg) return;
+        zoomImg.style.transform = `scale(${currentScale})`;
+        if (zoomLevel) {
+            zoomLevel.textContent = `${Math.round(currentScale * 100)}%`;
+        }
+    };
+
+    const openModal = () => {
+        currentScale = 1.0;
+        applyZoom();
+        modal.removeAttribute('hidden');
+        document.body.style.overflow = 'hidden';
+    };
+
+    const closeModal = () => {
+        modal.setAttribute('hidden', '');
+        document.body.style.overflow = '';
+        currentScale = 1.0;
+        applyZoom();
+    };
+
+    openTriggers.forEach((trigger) => {
+        trigger.addEventListener('click', (e) => {
+            e.preventDefault();
+            openModal();
+        });
+    });
+
+    closeTriggers.forEach((btn) => {
+        btn.addEventListener('click', () => closeModal());
+    });
+
+    if (btnIn) {
+        btnIn.addEventListener('click', (e) => {
+            e.preventDefault();
+            currentScale = Math.min(maxScale, Number((currentScale + step).toFixed(2)));
+            applyZoom();
+        });
+    }
+
+    if (btnOut) {
+        btnOut.addEventListener('click', (e) => {
+            e.preventDefault();
+            currentScale = Math.max(minScale, Number((currentScale - step).toFixed(2)));
+            applyZoom();
+        });
+    }
+
+    if (btnReset) {
+        btnReset.addEventListener('click', (e) => {
+            e.preventDefault();
+            currentScale = 1.0;
+            applyZoom();
+        });
+    }
+
+    modal.addEventListener('wheel', (e) => {
+        if (modal.hasAttribute('hidden')) return;
+        e.preventDefault();
+        if (e.deltaY < 0) {
+            currentScale = Math.min(maxScale, Number((currentScale + step).toFixed(2)));
+        } else {
+            currentScale = Math.max(minScale, Number((currentScale - step).toFixed(2)));
+        }
+        applyZoom();
+    }, { passive: false });
+
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !modal.hasAttribute('hidden')) {
+            closeModal();
+        }
+    });
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     renderArticle();
     initializeNavigation();
     initializeReplies();
     initializeArticleReader();
+    initializeImageZoomModal();
 
     document.addEventListener('click', (event) => {
         const copyButton = event.target.closest('[data-copy-code]');
