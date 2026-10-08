@@ -248,6 +248,121 @@ class NewsArticleAiTest extends TestCase
             ->assertSee('Berita Pengujian');
     }
 
+    public function test_super_admin_can_extract_social_media_content_from_instagram_url(): void
+    {
+        $fakeHtml = <<<'HTML'
+<!DOCTYPE html>
+<html>
+<head>
+    <meta property="og:title" content='SMK Telkom Lampung di Instagram: "Selamat kepada Tim Robotik SMK Telkom Lampung meraih Juara 1 Nasional!"' />
+    <meta property="og:description" content='100 likes, 5 comments - smktelkom: "Selamat kepada Tim Robotik SMK Telkom Lampung meraih Juara 1 Nasional!"' />
+    <meta property="og:image" content="https://example.com/robotik.jpg" />
+    <meta property="og:site_name" content="Instagram" />
+</head>
+<body></body>
+</html>
+HTML;
+
+        Http::fake([
+            'https://www.instagram.com/p/test12345/*' => Http::response($fakeHtml, 200),
+            'https://www.instagram.com/p/test12345' => Http::response($fakeHtml, 200),
+        ]);
+
+        $user = $this->superAdmin();
+
+        $response = $this->actingAs($user)
+            ->withSession(['active_role' => 'Super Admin'])
+            ->postJson(route('super-admin.berita.extract-social'), [
+                'url' => 'https://www.instagram.com/p/test12345',
+            ]);
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.platform', 'Instagram')
+            ->assertJsonPath('data.image_url', 'https://example.com/robotik.jpg')
+            ->assertJsonPath('data.author', 'SMK Telkom Lampung');
+        $this->assertStringContainsString('Selamat kepada Tim Robotik', $response->json('data.caption'));
+    }
+
+    public function test_super_admin_can_generate_an_article_from_social_media_source(): void
+    {
+        Http::fake([
+            'https://ai.example/v1/chat/completions' => Http::response([
+                'choices' => [[
+                    'message' => [
+                        'content' => json_encode([
+                            'title' => 'Tim Robotik SMK Telkom Lampung Raih Juara 1 Nasional',
+                            'summary' => 'Prestasi membanggakan kembali diraih siswa SMK Telkom Lampung di ajang kompetisi robotik nasional.',
+                            'content' => "Tim Robotik SMK Telkom Lampung berhasil menorehkan prestasi gemilang dengan meraih Juara 1 Nasional.\n\nKeberhasilan ini membuktikan komitmen sekolah dalam membina potensi teknologi generasi muda.",
+                            'seo_title' => 'Juara 1 Nasional Tim Robotik SMK Telkom Lampung',
+                            'seo_description' => 'Simak keberhasilan tim robotik SMK Telkom Lampung meraih juara 1 nasional.',
+                            'focus_keyword' => 'juara robotik SMK Telkom Lampung',
+                            'seo_keywords' => ['robotik', 'prestasi', 'SMK Telkom Lampung'],
+                            'paragraph_count' => 2,
+                            'sentences_per_paragraph' => 2,
+                        ]),
+                    ],
+                ]],
+            ]),
+        ]);
+
+        $this->configureAi();
+        $user = $this->superAdmin();
+
+        $response = $this->actingAs($user)
+            ->withSession(['active_role' => 'Super Admin'])
+            ->postJson(route('super-admin.berita.generate-ai'), [
+                'kategori' => 'Prestasi',
+                'use_ai_recommendation' => true,
+                'include_code_snippets' => false,
+                'source_url' => 'https://www.instagram.com/p/test12345',
+                'source_content' => 'Selamat kepada Tim Robotik SMK Telkom Lampung meraih Juara 1 Nasional!',
+                'instructions' => 'Fokuskan pada apresiasi kepala sekolah.',
+            ]);
+
+        $response->assertOk()
+            ->assertJsonPath('article.title', 'Tim Robotik SMK Telkom Lampung Raih Juara 1 Nasional')
+            ->assertJsonPath('article.focus_keyword', 'juara robotik SMK Telkom Lampung');
+
+        Http::assertSent(function ($request) {
+            $prompt = $request['messages'][1]['content'];
+            return str_contains($prompt, 'https://www.instagram.com/p/test12345')
+                && str_contains($prompt, 'Selamat kepada Tim Robotik')
+                && str_contains($prompt, 'Fokuskan pada apresiasi kepala sekolah');
+        });
+    }
+
+    public function test_super_admin_can_store_article_with_social_cover_image_url(): void
+    {
+        $fakeImageBytes = '%PDF-dummy-or-image-bytes';
+        Http::fake([
+            'https://example.com/robotik.jpg' => Http::response($fakeImageBytes, 200, [
+                'Content-Type' => 'image/jpeg',
+            ]),
+        ]);
+
+        $user = $this->superAdmin();
+
+        $response = $this->actingAs($user)
+            ->withSession(['active_role' => 'Super Admin'])
+            ->post(route('super-admin.berita.store'), [
+                'judul' => 'Prestasi Hebat Siswa SMK Telkom',
+                'ringkasan' => 'Ringkasan prestasi siswa.',
+                'konten' => 'Isi berita lengkap.',
+                'kategori' => 'Prestasi',
+                'status' => 'published',
+                'cover_image_url' => 'https://example.com/robotik.jpg',
+            ]);
+
+        $response->assertRedirect(route('super-admin.berita.index'));
+
+        $berita = Berita::where('judul', 'Prestasi Hebat Siswa SMK Telkom')->first();
+        $this->assertNotNull($berita);
+        $this->assertNotNull($berita->gambar);
+        $this->assertStringStartsWith('berita/', $berita->gambar);
+        \Illuminate\Support\Facades\Storage::disk('public')->assertExists($berita->gambar);
+    }
+
     private function configureAi(): void
     {
         AppSetting::create([

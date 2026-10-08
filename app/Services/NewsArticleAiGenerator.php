@@ -18,6 +18,8 @@ class NewsArticleAiGenerator
         ?int $sentencesPerParagraph = null,
         ?string $instructions = null,
         bool $includeCodeSnippets = false,
+        ?string $sourceUrl = null,
+        ?string $sourceContent = null,
     ): array {
         $setting = AppSetting::first();
         if (! $this->isReady($setting)) {
@@ -41,6 +43,8 @@ class NewsArticleAiGenerator
                         $sentencesPerParagraph,
                         $instructions,
                         $includeCodeSnippets,
+                        $sourceUrl,
+                        $sourceContent,
                     ),
                 ],
             ],
@@ -137,21 +141,36 @@ class NewsArticleAiGenerator
         ?int $sentencesPerParagraph,
         ?string $instructions,
         bool $includeCodeSnippets,
+        ?string $sourceUrl = null,
+        ?string $sourceContent = null,
     ): string {
         $lengthInstruction = $useAiRecommendation
             ? 'Tentukan panjang terbaik berdasarkan kategori. Gunakan 3-7 paragraf dan 2-5 kalimat per paragraf.'
             : "Buat tepat {$paragraphCount} paragraf dengan sekitar {$sentencesPerParagraph} kalimat pada setiap paragraf.";
 
+        $sourceInstruction = '';
+        if (filled($sourceContent) || filled($sourceUrl)) {
+            $sourceInstruction = "Materi Sumber Asli (Postingan Media Sosial / Web):\n"
+                .(filled($sourceUrl) ? "- Tautan Sumber: {$sourceUrl}\n" : '')
+                ."- Teks / Caption Sumber:\n\"\"\"\n".trim((string) $sourceContent)."\n\"\"\"\n\n"
+                ."Instruksi Pengolahan Sumber:\n"
+                ."1. Olah materi sumber di atas menjadi artikel berita resmi {$schoolName} yang lengkap, kaya informasi, dan bernada positif serta inspiratif.\n"
+                ."2. Ubah format ringkas media sosial menjadi narasi berita jurnalistik utuh dengan struktur piramida terbalik (lead 5W+1H yang memikat, detail pencapaian/kegiatan/peristiwa, kutipan atau apresiasi yang relevan, serta pesan penutup yang membangun).\n"
+                ."3. Pertahankan fakta-fakta spesifik yang ada pada sumber (seperti nama siswa, cabang lomba, kategori, tempat, tanggal, penghargaan). Jangan mengubah atau mengarang data faktual di luar apa yang ada pada sumber atau instruksi tambahan.\n"
+                ."4. Buat judul berita jurnalistik yang menarik, lugas, dan resmi (hindari hashtag atau format status media sosial).\n\n";
+        }
+
         $topicInstruction = filled($instructions)
-            ? "Instruksi redaksi pengguna:\n".trim($instructions)
-            : 'Tentukan topik yang relevan dengan kategori tanpa membuat klaim faktual yang tidak diberikan.';
+            ? (filled($sourceInstruction) ? "Instruksi redaksi tambahan:\n".trim($instructions) : "Instruksi redaksi pengguna:\n".trim($instructions))
+            : (filled($sourceInstruction) ? '' : 'Tentukan topik yang relevan dengan kategori tanpa membuat klaim faktual yang tidak diberikan.');
         $codeInstruction = $includeCodeSnippets
             ? 'Sertakan contoh kode yang relevan dan siap dipelajari. Gunakan fenced code block Markdown dengan nama bahasa pada setiap blok, lalu jelaskan cara kerjanya dan praktik aman yang perlu diperhatikan.'
             : 'Jangan memaksakan contoh kode kecuali diminta secara eksplisit dalam instruksi redaksi.';
 
         return "Buat satu draf artikel untuk situs resmi {$schoolName}.\n"
             ."Kategori: {$category}.\n"
-            ."{$topicInstruction}\n"
+            ."{$sourceInstruction}"
+            .(filled($topicInstruction) ? "{$topicInstruction}\n" : '')
             ."{$lengthInstruction}\n"
             ."{$codeInstruction}\n"
             ."Optimalkan secara wajar untuk pencarian: judul deskriptif dan tidak sensasional, satu fokus keyword yang sesuai niat pembaca, struktur heading H2/H3 yang jelas, pembuka langsung menjawab kebutuhan, serta keyword yang digunakan alami tanpa pengulangan berlebihan. Ringkasan maksimal 2 kalimat. Konten harus orisinal, bermanfaat, dan memakai Markdown. Jangan menambahkan salam atau penutup redaksional.\n\n"

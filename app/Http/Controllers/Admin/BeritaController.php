@@ -8,9 +8,12 @@ use App\Models\AppSetting;
 use App\Models\Berita;
 use App\Models\BeritaComment;
 use App\Services\NewsArticleAiGenerator;
+use App\Services\SocialMediaContentExtractor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -58,6 +61,29 @@ class BeritaController extends Controller
         return view('pages.admin.berita.create', compact('aiReady'));
     }
 
+    public function extractSocialUrl(Request $request, SocialMediaContentExtractor $extractor)
+    {
+        $validated = $request->validate([
+            'url' => 'required|url|max:2000',
+        ]);
+
+        $result = $extractor->extract($validated['url']);
+
+        if (! ($result['success'] ?? false)) {
+            return response()->json([
+                'success' => false,
+                'message' => $result['message'] ?? 'Gagal mengekstrak konten dari tautan tersebut.',
+                'platform' => $result['platform'] ?? 'Website',
+                'source_url' => $validated['url'],
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $result,
+        ]);
+    }
+
     public function generateWithAi(Request $request, NewsArticleAiGenerator $generator)
     {
         $validated = $request->validate([
@@ -79,6 +105,8 @@ class BeritaController extends Controller
             ],
             'instructions' => 'nullable|string|max:3000',
             'include_code_snippets' => 'required|boolean',
+            'source_url' => 'nullable|url|max:2000',
+            'source_content' => 'nullable|string|max:10000',
         ]);
 
         try {
@@ -89,6 +117,8 @@ class BeritaController extends Controller
                 isset($validated['sentences_per_paragraph']) ? (int) $validated['sentences_per_paragraph'] : null,
                 $validated['instructions'] ?? null,
                 (bool) $validated['include_code_snippets'],
+                $validated['source_url'] ?? null,
+                $validated['source_content'] ?? null,
             );
         } catch (NewsArticleAiException $exception) {
             return response()->json([
@@ -116,16 +146,22 @@ class BeritaController extends Controller
             'seo_keywords' => 'nullable|string|max:2000',
             'konten' => 'required|string',
             'gambar' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+            'cover_image_url' => 'nullable|url|max:2000',
             'kategori' => 'required|in:Akademik,Kesiswaan,Kegiatan,Prestasi,Pengumuman,Lainnya',
             'status' => 'required|in:draft,published',
         ]);
 
-        $data = $request->except('gambar');
+        $data = $request->except(['gambar', 'cover_image_url']);
         $data['user_id'] = Auth::id();
         $data['slug'] = Str::slug($request->judul).'-'.Str::random(5);
 
         if ($request->hasFile('gambar')) {
             $data['gambar'] = $request->file('gambar')->store('berita', 'public');
+        } elseif ($request->filled('cover_image_url')) {
+            $downloadedPath = $this->downloadCoverImage($request->cover_image_url);
+            if ($downloadedPath) {
+                $data['gambar'] = $downloadedPath;
+            }
         }
 
         if ($request->status === 'published') {
@@ -281,5 +317,35 @@ class BeritaController extends Controller
             'token' => $token,
             'question' => "{$left} + {$right} =",
         ];
+    }
+
+    protected function downloadCoverImage(string $url): ?string
+    {
+        try {
+            $response = Http::withoutVerifying()
+                ->timeout(15)
+                ->get($url);
+
+            if (! $response->successful() || strlen($response->body()) < 10) {
+                return null;
+            }
+
+            $contentType = strtolower($response->header('Content-Type') ?? '');
+            $extension = match (true) {
+                str_contains($contentType, 'image/jpeg') => 'jpg',
+                str_contains($contentType, 'image/png') => 'png',
+                str_contains($contentType, 'image/webp') => 'webp',
+                str_contains($contentType, 'image/gif') => 'gif',
+                default => 'jpg',
+            };
+
+            $filename = 'berita/' . Str::uuid() . '.' . $extension;
+            Storage::disk('public')->put($filename, $response->body());
+
+            return $filename;
+        } catch (\Throwable $e) {
+            Log::warning('Gagal mengunduh gambar cover dari URL: ' . $e->getMessage(), ['url' => $url]);
+            return null;
+        }
     }
 }
