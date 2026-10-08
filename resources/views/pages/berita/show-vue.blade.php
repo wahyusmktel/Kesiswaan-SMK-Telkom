@@ -141,7 +141,16 @@
 
         <div class="news-shell article-layout">
             <article>
-                <img class="article-cover" src="{{ $coverUrl }}" alt="{{ $berita->judul }}">
+                <figure class="article-cover-frame">
+                    <div class="article-cover-backdrop" style="background-image: url('{{ $coverUrl }}');"></div>
+                    <img class="article-cover" src="{{ $coverUrl }}" alt="{{ $berita->judul }}" loading="eager">
+                    <a href="{{ $coverUrl }}" target="_blank" rel="noopener noreferrer" class="article-cover-expand" title="Lihat gambar ukuran penuh">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 3h6m0 0v6m0-6L14 10M9 21H3m0 0v-6m0 6l7-7" />
+                        </svg>
+                        <span>Ukuran Penuh</span>
+                    </a>
+                </figure>
                 <textarea data-article-source hidden>{{ $berita->konten }}</textarea>
                 <div class="article-prose" data-article-content>{!! nl2br(e($berita->konten)) !!}</div>
             </article>

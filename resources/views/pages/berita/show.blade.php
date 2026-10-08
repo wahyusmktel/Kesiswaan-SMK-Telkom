@@ -312,9 +312,15 @@
 
             {{-- Featured Image --}}
             @if ($berita->gambar)
-                <div class="glass rounded-[32px] overflow-hidden mb-12 border-white/10">
+                <div class="glass rounded-[32px] overflow-hidden mb-12 border-white/10 relative flex items-center justify-center bg-slate-950/70 p-2 md:p-3 group">
+                    <div class="absolute inset-0 bg-cover bg-center filter blur-2xl opacity-25 scale-110 pointer-events-none" style="background-image: url('{{ Storage::url($berita->gambar) }}')"></div>
                     <img src="{{ Storage::url($berita->gambar) }}" alt="{{ $berita->judul }}"
-                        class="w-full aspect-video object-cover">
+                        class="relative z-10 w-full h-auto max-h-[640px] object-contain rounded-2xl shadow-2xl">
+                    <a href="{{ Storage::url($berita->gambar) }}" target="_blank" rel="noopener noreferrer"
+                        class="absolute bottom-5 right-5 z-20 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900/80 backdrop-blur border border-white/20 text-xs font-semibold text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 3h6m0 0v6m0-6L14 10M9 21H3m0 0v-6m0 6l7-7"/></svg>
+                        <span>Ukuran Penuh</span>
+                    </a>
                 </div>
             @endif
 
