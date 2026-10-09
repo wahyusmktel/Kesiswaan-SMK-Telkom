@@ -516,6 +516,28 @@ class OkrWeeklyReportController extends Controller
             ->with('success', $message);
     }
 
+    public function unreview(Request $request, OkrWeeklyReport $weeklyReport): RedirectResponse
+    {
+        abort_unless($this->canReview($request->user()), 403);
+        abort_unless($weeklyReport->status === 'reviewed', 422, 'Hanya laporan yang sudah ditinjau yang dapat dibatalkan peninjauannya.');
+
+        // Jangan izinkan pembatalan bila unit sudah mengaplikasikan progres target OKR dari laporan ini
+        $hasAppliedProgress = $weeklyReport->items()->whereNotNull('progress_applied_at')->exists();
+        if ($hasAppliedProgress) {
+            return redirect()->route('okr.weekly.index', $this->reportQuery($weeklyReport))
+                ->with('error', 'Peninjauan tidak dapat dibatalkan karena progres target OKR sudah diperbarui dari laporan ini.');
+        }
+
+        $weeklyReport->update([
+            'status' => 'submitted',
+            'reviewed_by' => null,
+            'reviewed_at' => null,
+        ]);
+
+        return redirect()->route('okr.weekly.index', $this->reportQuery($weeklyReport))
+            ->with('success', 'Peninjauan laporan pekanan berhasil dibatalkan. Status laporan kembali ke menunggu tinjauan.');
+    }
+
     public function applyProgress(
         Request $request,
         OkrWeeklyReport $weeklyReport,

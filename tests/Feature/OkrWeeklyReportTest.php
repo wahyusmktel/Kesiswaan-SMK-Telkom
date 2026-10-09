@@ -124,6 +124,22 @@ class OkrWeeklyReportTest extends TestCase
         // Plain text legacy with newlines formats with br safely
         $report->review_notes = "Baris 1\nBaris 2";
         $this->assertStringContainsString('Baris 1<br />', $report->formatted_review_notes);
+
+        // Headmaster can cancel review, returning status to submitted
+        $report->review_notes = $formattedHtmlNotes;
+        $report->save();
+
+        $this->actingAs($headmaster)
+            ->withSession(['active_role' => 'Kepala Sekolah'])
+            ->post(route('okr.weekly.unreview', $report))
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('okr_weekly_reports', [
+            'id' => $report->id,
+            'status' => 'submitted',
+            'reviewed_by' => null,
+            'reviewed_at' => null,
+        ]);
     }
 
     public function test_unrelated_role_cannot_submit_a_curriculum_weekly_report(): void

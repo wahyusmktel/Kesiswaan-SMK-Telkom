@@ -109,6 +109,9 @@
             @if(session('success'))
                 <div class="border-l-4 border-emerald-500 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">{{ session('success') }}</div>
             @endif
+            @if(session('error'))
+                <div class="border-l-4 border-red-500 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">{{ session('error') }}</div>
+            @endif
             @if($errors->any())
                 <div class="border-l-4 border-red-500 bg-red-50 px-4 py-3 text-sm text-red-800"><p class="font-black">Data belum dapat disimpan.</p><p class="mt-1">{{ $errors->first() }}</p></div>
             @endif
@@ -486,15 +489,32 @@
                                     Ditinjau oleh {{ $report->reviewer?->name ?? 'Kepala Sekolah' }} · {{ $report->reviewed_at?->translatedFormat('d M Y H:i') }}
                                 </p>
                                 @if($canReview)
-                                    <button 
-                                        type="button" 
-                                        x-show="!editing" 
-                                        @click="editing = true; $nextTick(() => initQuillEditor('review-notes-quill-edit', 'review_notes_input_edit'))"
-                                        class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-white px-2.5 py-1 text-xs font-bold text-emerald-800 shadow-sm hover:bg-emerald-100 transition"
-                                    >
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                        <span>Edit Catatan</span>
-                                    </button>
+                                    <div class="flex items-center gap-2">
+                                        <form method="POST" action="{{ route('okr.weekly.unreview', $report) }}" onsubmit="return confirm('Apakah Anda yakin ingin membatalkan peninjauan laporan ini? Status laporan akan kembali menjadi menunggu tinjauan.')" class="inline">
+                                            @csrf
+                                            <button 
+                                                type="submit" 
+                                                x-show="!editing" 
+                                                class="inline-flex items-center gap-1.5 rounded-lg border border-rose-300 bg-white px-2.5 py-1 text-xs font-bold text-rose-700 shadow-sm hover:bg-rose-50 hover:border-rose-400 transition"
+                                                title="Batalkan status peninjauan dan kembalikan ke menunggu tinjauan"
+                                            >
+                                                <svg class="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <span>Batalkan Peninjauan</span>
+                                            </button>
+                                        </form>
+
+                                        <button 
+                                            type="button" 
+                                            x-show="!editing" 
+                                            @click="editing = true; $nextTick(() => initQuillEditor('review-notes-quill-edit', 'review_notes_input_edit'))"
+                                            class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-white px-2.5 py-1 text-xs font-bold text-emerald-800 shadow-sm hover:bg-emerald-100 transition"
+                                        >
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                            <span>Edit Catatan</span>
+                                        </button>
+                                    </div>
                                 @endif
                             </div>
 
