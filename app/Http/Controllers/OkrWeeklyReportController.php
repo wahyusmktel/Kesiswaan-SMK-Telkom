@@ -112,6 +112,33 @@ class OkrWeeklyReportController extends Controller
             ->get();
         $availablePlanOptions = $availablePlans->map(fn (OkrPlan $plan) => $this->weeklyPlanOption($plan))->values();
 
+        $unlinkedScopeUnitIds = $this->isExecutiveViewer($request->user()) || $this->canReview($request->user())
+            ? $units->pluck('id')->all()
+            : $editableUnitIds;
+
+        $unlinkedCommitments = OkrWeeklyReportItem::query()
+            ->with(['report.unit', 'report.period'])
+            ->whereNull('okr_plan_id')
+            ->whereHas('report', function ($query) use ($period, $unlinkedScopeUnitIds) {
+                $query->where('okr_period_id', $period->id)
+                    ->whereIn('okr_unit_id', $unlinkedScopeUnitIds);
+            })
+            ->join('okr_weekly_reports', 'okr_weekly_reports.id', '=', 'okr_weekly_report_items.okr_weekly_report_id')
+            ->orderBy('okr_weekly_reports.week_start', 'desc')
+            ->orderBy('okr_weekly_reports.okr_unit_id')
+            ->orderBy('okr_weekly_report_items.priority_order')
+            ->select('okr_weekly_report_items.*')
+            ->get();
+
+        $weeklyPlansByUnit = OkrPlan::query()
+            ->with(['keyResult.objective'])
+            ->whereIn('okr_unit_id', $unlinkedScopeUnitIds)
+            ->where('level', 'weekly')
+            ->whereHas('keyResult.objective', fn ($query) => $query->where('okr_period_id', $period->id))
+            ->orderBy('starts_at')
+            ->get()
+            ->groupBy('okr_unit_id');
+
         return view('pages.okr.weekly.index', [
             'period' => $period,
             'periods' => $periods,
@@ -126,6 +153,8 @@ class OkrWeeklyReportController extends Controller
             'report' => $report,
             'availablePlans' => $availablePlans,
             'availablePlanOptions' => $availablePlanOptions,
+            'unlinkedCommitments' => $unlinkedCommitments,
+            'weeklyPlansByUnit' => $weeklyPlansByUnit,
             'unitSummaries' => $unitSummaries,
             'weeklyTrend' => $weeklyTrend,
             'carryForwardCount' => $carryForwardCount,
@@ -567,6 +596,53 @@ class OkrWeeklyReportController extends Controller
 
         return redirect()->route('okr.weekly.index', $this->reportQuery($weeklyReport))
             ->with('success', 'Komitmen berhasil ditautkan ke Target OKR Mingguan.');
+    }
+
+    public function linkAllCommitments(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'items' => ['required', 'array'],
+            'items.*.okr_plan_id' => ['nullable', 'integer', 'exists:okr_plans,id'],
+            'period_id' => ['nullable', 'exists:okr_periods,id'],
+            'unit_id' => ['nullable', 'exists:okr_units,id'],
+            'week_start' => ['nullable', 'date'],
+        ]);
+
+        $updatedCount = 0;
+
+        foreach ($validated['items'] as $itemId => $data) {
+            if (empty($data['okr_plan_id'])) {
+                continue;
+            }
+
+            $item = OkrWeeklyReportItem::with(['report.unit', 'report.period'])->find($itemId);
+            if (! $item || ! $item->report) {
+                continue;
+            }
+
+            $report = $item->report;
+            $canManage = $this->canReview($request->user()) || in_array($this->activeRole($request->user()), $report->unit->role_names ?? [], true);
+            if (! $canManage) {
+                continue;
+            }
+
+            $planId = (int) $data['okr_plan_id'];
+            $this->ensurePlanBelongsToScope($planId, $report->unit, $report->period, 'weekly');
+
+            $item->update(['okr_plan_id' => $planId]);
+            $updatedCount++;
+        }
+
+        $query = array_filter([
+            'period_id' => $request->input('period_id'),
+            'unit_id' => $request->input('unit_id'),
+            'week_start' => $request->input('week_start'),
+        ]);
+
+        return redirect()->route('okr.weekly.index', $query)
+            ->with('success', $updatedCount > 0
+                ? "{$updatedCount} komitmen berhasil ditautkan ke Target OKR Mingguan."
+                : 'Tidak ada komitmen yang ditautkan.');
     }
 
     public function applyProgress(
