@@ -174,6 +174,9 @@ class OkrWeeklyReportController extends Controller
             if (blank($item['commitment'] ?? null) || blank($item['measurable_target'] ?? null)) {
                 throw ValidationException::withMessages(["items.{$index}.commitment" => 'Komitmen dan target terukur wajib diisi berpasangan.']);
             }
+            if (blank($item['okr_plan_id'] ?? null)) {
+                throw ValidationException::withMessages(["items.{$index}.okr_plan_id" => 'Target OKR mingguan pada Komitmen ' . ($index + 1) . ' wajib dipilih agar progres dapat dihitung otomatis.']);
+            }
             $this->ensurePlanBelongsToScope($item['okr_plan_id'] ?? null, $unit, $period, 'weekly');
         }
 
@@ -536,6 +539,34 @@ class OkrWeeklyReportController extends Controller
 
         return redirect()->route('okr.weekly.index', $this->reportQuery($weeklyReport))
             ->with('success', 'Peninjauan laporan pekanan berhasil dibatalkan. Status laporan kembali ke menunggu tinjauan.');
+    }
+
+    public function linkCommitments(Request $request, OkrWeeklyReport $weeklyReport): RedirectResponse
+    {
+        abort_unless(
+            $this->canReview($request->user()) || in_array($this->activeRole($request->user()), $weeklyReport->unit->role_names ?? [], true),
+            403
+        );
+
+        $validated = $request->validate([
+            'items' => ['required', 'array'],
+            'items.*.okr_plan_id' => ['required', 'integer', 'exists:okr_plans,id'],
+        ]);
+
+        foreach ($validated['items'] as $itemId => $data) {
+            $item = $weeklyReport->items()->find($itemId);
+            if (! $item) {
+                continue;
+            }
+
+            $planId = (int) $data['okr_plan_id'];
+            $this->ensurePlanBelongsToScope($planId, $weeklyReport->unit, $weeklyReport->period, 'weekly');
+
+            $item->update(['okr_plan_id' => $planId]);
+        }
+
+        return redirect()->route('okr.weekly.index', $this->reportQuery($weeklyReport))
+            ->with('success', 'Komitmen berhasil ditautkan ke Target OKR Mingguan.');
     }
 
     public function applyProgress(

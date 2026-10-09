@@ -24,6 +24,7 @@ class OkrWeeklyReportTest extends TestCase
         $period = $this->period();
         $unit = $this->unit();
         $curriculum = $this->userWithRole('Kurikulum');
+        [$annual, $monthly, $weekly] = $this->planHierarchy($period, $unit);
 
         $this->actingAs($curriculum)
             ->withSession(['active_role' => 'Kurikulum'])
@@ -35,12 +36,14 @@ class OkrWeeklyReportTest extends TestCase
                 'support_needed' => 'Arahan pemilihan mitra dari Kepala Sekolah.',
                 'items' => [
                     [
+                        'okr_plan_id' => $weekly->id,
                         'commitment' => 'Membandingkan penawaran tiga calon mitra.',
                         'measurable_target' => 'Rekomendasi mitra selesai Jumat.',
                         'cross_unit_dependencies' => 'BK dan Hubin',
                         'approval_needs' => 'Persetujuan Kepala Sekolah',
                     ],
                     [
+                        'okr_plan_id' => $weekly->id,
                         'commitment' => 'Menindaklanjuti proposal Al Faiz.',
                         'measurable_target' => 'Proposal diterima dan dikaji Kamis.',
                     ],
@@ -653,25 +656,31 @@ class OkrWeeklyReportTest extends TestCase
         $period = $this->period();
         $unit = $this->unit();
         $curriculum = $this->userWithRole('Kurikulum');
+        [$annual, $monthly, $weekly] = $this->planHierarchy($period, $unit);
 
         $items = [
             [
+                'okr_plan_id' => $weekly->id,
                 'commitment' => 'Komitmen pertama wajib.',
                 'measurable_target' => 'Target 1 selesai Selasa.',
             ],
             [
+                'okr_plan_id' => $weekly->id,
                 'commitment' => 'Komitmen kedua opsional.',
                 'measurable_target' => 'Target 2 selesai Rabu.',
             ],
             [
+                'okr_plan_id' => $weekly->id,
                 'commitment' => 'Komitmen ketiga opsional.',
                 'measurable_target' => 'Target 3 selesai Kamis.',
             ],
             [
+                'okr_plan_id' => $weekly->id,
                 'commitment' => 'Komitmen keempat tambahan.',
                 'measurable_target' => 'Target 4 selesai Jumat.',
             ],
             [
+                'okr_plan_id' => $weekly->id,
                 'commitment' => 'Komitmen kelima tambahan khusus unit.',
                 'measurable_target' => 'Target 5 selesai Sabtu.',
             ],
@@ -707,6 +716,66 @@ class OkrWeeklyReportTest extends TestCase
         $response->assertSee('commitment-item-template');
         $response->assertSee('Komitmen 5');
         $response->assertSee('Komitmen kelima tambahan khusus unit.');
+    }
+
+    public function test_user_can_link_unlinked_commitments_from_urgency_table(): void
+    {
+        $period = $this->period();
+        $unit = $this->unit();
+        $curriculum = $this->userWithRole('Kurikulum');
+        [$annual, $monthly, $weekly] = $this->planHierarchy($period, $unit);
+
+        $report = OkrWeeklyReport::create([
+            'okr_period_id' => $period->id,
+            'okr_unit_id' => $unit->id,
+            'week_start' => '2026-09-07',
+            'week_end' => '2026-09-11',
+            'weekly_focus' => 'Fokus pekan',
+            'status' => 'submitted',
+            'created_by' => $curriculum->id,
+            'submitted_by' => $curriculum->id,
+            'submitted_at' => now(),
+        ]);
+
+        $item = $report->items()->create([
+            'priority_order' => 1,
+            'commitment' => 'Komitmen lama belum tertaut.',
+            'measurable_target' => 'Target selesai Jumat.',
+            'okr_plan_id' => null,
+        ]);
+
+        $this->actingAs($curriculum)
+            ->withSession(['active_role' => 'Kurikulum'])
+            ->get(route('okr.weekly.index', [
+                'period_id' => $period->id,
+                'unit_id' => $unit->id,
+                'week_start' => '2026-09-07',
+            ]))
+            ->assertOk()
+            ->assertSee('Komitmen yang Belum Dikaitkan dengan Target OKR')
+            ->assertSee('Komitmen lama belum tertaut.');
+
+        $this->actingAs($curriculum)
+            ->withSession(['active_role' => 'Kurikulum'])
+            ->post(route('okr.weekly.link-commitments', $report), [
+                'items' => [
+                    $item->id => ['okr_plan_id' => $weekly->id],
+                ],
+            ])
+            ->assertRedirect();
+
+        $item->refresh();
+        $this->assertSame($weekly->id, $item->okr_plan_id);
+
+        $this->actingAs($curriculum)
+            ->withSession(['active_role' => 'Kurikulum'])
+            ->get(route('okr.weekly.index', [
+                'period_id' => $period->id,
+                'unit_id' => $unit->id,
+                'week_start' => '2026-09-07',
+            ]))
+            ->assertOk()
+            ->assertDontSee('Komitmen yang Belum Dikaitkan dengan Target OKR');
     }
 
     private function unit(): OkrUnit

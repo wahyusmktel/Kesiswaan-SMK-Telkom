@@ -126,6 +126,108 @@
                 </div>
             </section>
 
+            @php
+                $unlinkedItems = $report?->items?->whereNull('okr_plan_id') ?? collect();
+            @endphp
+
+            @if($unlinkedItems->isNotEmpty())
+                <div class="rounded-xl border-2 border-amber-300 bg-gradient-to-r from-amber-50 via-amber-50/80 to-amber-100/50 p-5 shadow-sm space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                        <div class="flex items-start gap-3">
+                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white shadow-md shadow-amber-500/20">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-black text-amber-950 flex flex-wrap items-center gap-2">
+                                    <span>Terdapat {{ $unlinkedItems->count() }} Komitmen yang Belum Dikaitkan dengan Target OKR</span>
+                                    <span class="rounded-full bg-amber-200 px-2.5 py-0.5 text-[10px] font-black uppercase text-amber-900 tracking-wide">Urgensi Penautan</span>
+                                </h3>
+                                <p class="mt-1 text-xs text-amber-800 leading-relaxed max-w-4xl">
+                                    Komitmen berikut belum terhubung ke target OKR mingguan. Silakan pilih target OKR yang sesuai pada tabel di bawah ini dan klik <strong>Tautkan Target OKR</strong> agar sistem dapat menghitung capaian dan mengalirkan rekomendasi kenaikan progres ke Matriks OKR secara otomatis.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if($canEditSelected || $canReview)
+                        <form method="POST" action="{{ route('okr.weekly.link-commitments', $report) }}" class="space-y-3">
+                            @csrf
+                            <div class="overflow-x-auto rounded-lg border border-amber-200 bg-white shadow-sm">
+                                <table class="w-full text-left text-xs">
+                                    <thead class="bg-amber-100/70 font-black text-amber-950 uppercase tracking-wider text-[11px] border-b border-amber-200">
+                                        <tr>
+                                            <th class="px-4 py-3 w-14 text-center">No</th>
+                                            <th class="px-4 py-3 w-1/3">Komitmen Target</th>
+                                            <th class="px-4 py-3 w-1/4">Target Terukur</th>
+                                            <th class="px-4 py-3">Pilih Target OKR Mingguan</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-amber-100">
+                                        @foreach($unlinkedItems as $unlinkedItem)
+                                            <tr class="hover:bg-amber-50/50 transition">
+                                                <td class="px-4 py-3 text-center font-black text-amber-900">
+                                                    {{ $unlinkedItem->priority_order }}
+                                                </td>
+                                                <td class="px-4 py-3">
+                                                    <p class="font-bold text-gray-900">{{ $unlinkedItem->commitment }}</p>
+                                                </td>
+                                                <td class="px-4 py-3 text-gray-600">
+                                                    {{ $unlinkedItem->measurable_target }}
+                                                </td>
+                                                <td class="px-4 py-3">
+                                                    @if($availablePlans->isNotEmpty())
+                                                        <select 
+                                                            name="items[{{ $unlinkedItem->id }}][okr_plan_id]" 
+                                                            class="w-full rounded-md border-amber-300 bg-amber-50/30 text-xs text-gray-800 focus:border-amber-500 focus:ring-amber-500 py-1.5 font-medium"
+                                                            required
+                                                        >
+                                                            <option value="">-- Pilih Target OKR Mingguan --</option>
+                                                            @foreach($availablePlans as $plan)
+                                                                <option value="{{ $plan->id }}">
+                                                                    [{{ $plan->keyResult?->code ?? 'KR' }}] {{ $plan->title }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    @else
+                                                        <span class="text-xs text-red-600 font-bold italic">
+                                                            Unit belum memiliki target mingguan di Matriks OKR.
+                                                        </span>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+                                <span class="text-[11px] text-amber-800">
+                                    Setelah seluruh komitmen berhasil ditautkan, bagian peringatan ini akan hilang secara otomatis.
+                                </span>
+                                @if($availablePlans->isNotEmpty())
+                                    <button 
+                                        type="submit" 
+                                        class="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-5 py-2.5 text-xs font-black text-white hover:bg-amber-700 shadow-sm transition"
+                                    >
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                                        <span>Tautkan Target OKR ke Komitmen</span>
+                                    </button>
+                                @else
+                                    <a 
+                                        href="{{ route('okr.index', ['period_id' => $period->id, 'unit_id' => $selectedUnit->id]) }}" 
+                                        class="inline-flex items-center gap-1.5 text-xs font-bold text-amber-900 underline hover:text-amber-700"
+                                    >
+                                        Buat Target Mingguan di Matriks OKR Terlebih Dahulu &rarr;
+                                    </a>
+                                @endif
+                            </div>
+                        </form>
+                    @endif
+                </div>
+            @endif
+
             <section class="border-y border-gray-200 bg-white px-5 py-4">
                 <form method="GET" class="grid gap-3 lg:grid-cols-[minmax(220px,1fr)_minmax(200px,1fr)_170px_auto_auto_auto] lg:items-end">
                     <label><span class="mb-1.5 block text-[11px] font-black uppercase text-gray-500">Periode OKR</span><select name="period_id" class="w-full rounded-md border-gray-300 text-sm">@foreach($periods as $periodOption)<option value="{{ $periodOption->id }}" @selected($periodOption->id === $period->id)>{{ $periodOption->title }}</option>@endforeach</select></label>

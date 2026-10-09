@@ -5,7 +5,7 @@
     data-weekly-okr-picker
 >
     <label class="block">
-        <span class="mb-1 block text-xs font-bold">Terkait target OKR mingguan</span>
+        <span class="mb-1 block text-xs font-bold">Terkait target OKR mingguan <span class="text-red-500 font-black">*</span></span>
         <input type="hidden" name="{{ $fieldName }}" :value="selected">
         <div class="relative">
             <input
@@ -18,13 +18,12 @@
                 autocomplete="off"
                 class="w-full rounded-md border-gray-300 pr-20 text-sm focus:border-blue-500 focus:ring-blue-500"
             >
-            <button x-show="search" type="button" @click="clear()" class="absolute inset-y-0 right-2 px-2 text-[10px] font-black uppercase text-gray-400 hover:text-red-600">Hapus</button>
+            <button x-show="search" type="button" @click="clear()" class="absolute inset-y-0 right-2 px-2 text-[10px] font-black uppercase text-gray-400 hover:text-red-600">Ganti</button>
             <div
                 x-cloak
                 x-show="open"
                 class="absolute z-30 mt-1 max-h-64 w-full overflow-y-auto rounded-md border border-gray-200 bg-white p-1 shadow-xl"
             >
-                <button type="button" @mousedown.prevent="clear()" class="block w-full rounded px-3 py-2 text-left text-xs font-semibold text-gray-500 hover:bg-gray-50">Belum dikaitkan</button>
                 <template x-for="plan in filteredPlans" :key="plan.id">
                     <button type="button" @mousedown.prevent="choose(plan)" class="block w-full rounded px-3 py-2.5 text-left hover:bg-blue-50">
                         <span class="block text-[10px] font-black uppercase text-emerald-600">Target Mingguan</span>
@@ -34,7 +33,7 @@
                 <p x-show="filteredPlans.length === 0" class="px-3 py-5 text-center text-xs text-gray-500">Target mingguan tidak ditemukan.</p>
             </div>
         </div>
-        <span class="mt-1 block text-[10px] text-gray-500">Ketik kata kunci untuk mencari. Target bulanan dan tahunan ditampilkan sebagai informasi setelah target mingguan dipilih.</span>
+        <span class="mt-1 block text-[10px] text-gray-500"><strong class="text-red-600">Wajib dipilih.</strong> Ketik kata kunci untuk mencari target OKR mingguan unit ini.</span>
     </label>
 
     <template x-if="selectedPlan">
