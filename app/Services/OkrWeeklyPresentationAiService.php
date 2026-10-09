@@ -92,7 +92,7 @@ class OkrWeeklyPresentationAiService
             'fokus' => $report->weekly_focus,
             'dukungan' => $report->support_needed,
             'status_laporan' => $report->status,
-            'catatan_kepala_sekolah' => $report->review_notes,
+            'catatan_kepala_sekolah' => $report->review_notes ? strip_tags($report->review_notes) : null,
             'komitmen' => $report->items->map(function ($item) {
                 $latest = $item->progressUpdates->first();
 
@@ -135,7 +135,7 @@ class OkrWeeklyPresentationAiService
         return [
             'title' => $this->clean($decoded['judul_deck'] ?? null, 'Evaluasi Pekanan OKR '.$report->unit->name, 80),
             'opening_summary' => $this->clean($decoded['ringkasan_pembuka'] ?? null, $report->weekly_focus, 220),
-            'unit_conclusion' => $this->clean($decoded['kesimpulan_unit'] ?? null, $report->review_notes ?: 'Evaluasi menjadi dasar tindak lanjut pekan berikutnya.', 220),
+            'unit_conclusion' => $this->clean($decoded['kesimpulan_unit'] ?? null, strip_tags((string) $report->review_notes) ?: 'Evaluasi menjadi dasar tindak lanjut pekan berikutnya.', 220),
             'items' => $report->items->map(function ($item) use ($aiItems) {
                 $ai = $aiItems->get((string) $item->id, []);
                 $latest = $item->progressUpdates->first();

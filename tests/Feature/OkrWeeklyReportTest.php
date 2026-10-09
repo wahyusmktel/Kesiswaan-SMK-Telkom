@@ -102,6 +102,28 @@ class OkrWeeklyReportTest extends TestCase
             'reviewed_by' => $headmaster->id,
             'review_notes' => 'Lanjutkan negosiasi dengan mitra prioritas.',
         ]);
+
+        // Headmaster can also update the review notes with formatted rich text when already reviewed
+        $formattedHtmlNotes = '<p><strong>Apresiasi:</strong></p><ol><li>Poin satu</li><li>Poin dua</li></ol>';
+        $this->actingAs($headmaster)
+            ->withSession(['active_role' => 'Kepala Sekolah'])
+            ->post(route('okr.weekly.review', $report), [
+                'review_notes' => $formattedHtmlNotes,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('okr_weekly_reports', [
+            'id' => $report->id,
+            'status' => 'reviewed',
+            'review_notes' => $formattedHtmlNotes,
+        ]);
+
+        $report->refresh();
+        $this->assertSame($formattedHtmlNotes, $report->formatted_review_notes);
+
+        // Plain text legacy with newlines formats with br safely
+        $report->review_notes = "Baris 1\nBaris 2";
+        $this->assertStringContainsString('Baris 1<br />', $report->formatted_review_notes);
     }
 
     public function test_unrelated_role_cannot_submit_a_curriculum_weekly_report(): void

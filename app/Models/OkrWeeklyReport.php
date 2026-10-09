@@ -49,4 +49,27 @@ class OkrWeeklyReport extends Model
     {
         return $this->belongsTo(User::class, 'reviewed_by');
     }
+
+    public function getFormattedReviewNotesAttribute(): ?string
+    {
+        if (empty($this->review_notes)) {
+            return null;
+        }
+
+        $raw = (string) $this->review_notes;
+        $hasHtml = $raw !== strip_tags($raw);
+
+        if ($hasHtml) {
+            $allowed = '<p><br><b><strong><i><em><u><s><ul><ol><li><blockquote><h1><h2><h3><h4><h5><h6><a><span><div>';
+            $cleaned = strip_tags($raw, $allowed);
+            $cleaned = preg_replace('/\s+on\w+="[^"]*"/i', '', $cleaned);
+            $cleaned = preg_replace('/\s+on\w+=\'[^\']*\'/i', '', $cleaned);
+            $cleaned = preg_replace('/href="javascript:[^"]*"/i', 'href="#"', $cleaned);
+            $cleaned = preg_replace('/href=\'javascript:[^\']*\'/i', 'href="#"', $cleaned);
+
+            return $cleaned;
+        }
+
+        return nl2br(e($raw));
+    }
 }

@@ -46,6 +46,13 @@
         .status { display: inline-block; margin-top: 3px; padding: 2px 6px; border-radius: 8px; background: #e0f2fe; color: #075985; font-size: 6.5px; font-weight: bold; text-transform: uppercase; }
         .evaluation { margin-top: 8px; padding: 9px; border: 1px solid #bbf7d0; background: #f0fdf4; }
         .review { margin-top: 10px; padding: 10px 12px; border: 1px solid #fde68a; background: #fffbeb; border-radius: 5px; page-break-inside: avoid; }
+        .review-notes-body { margin-top: 4px; font-size: 8.5px; line-height: 1.45; }
+        .review-notes-body p { margin: 2px 0; }
+        .review-notes-body ol, .review-notes-body ul { margin: 2px 0 2px 14px; padding-left: 0; }
+        .review-notes-body li { margin-bottom: 2px; }
+        .review-notes-body strong, .review-notes-body b { font-weight: bold; color: #78350f; }
+        .review-notes-body h2, .review-notes-body h3 { font-size: 9px; font-weight: bold; margin: 4px 0 2px; color: #78350f; }
+        .review-notes-body blockquote { margin: 3px 0; padding-left: 6px; border-left: 2px solid #d97706; font-style: italic; color: #92400e; }
         .footer { position: fixed; bottom: -23px; left: 0; right: 0; color: #94a3b8; font-size: 7px; text-align: center; }
         .page-number:after { content: counter(page); }
     </style>
@@ -141,8 +148,14 @@
 
     <div class="review">
         <div class="label" style="color:#b45309;">Tinjauan Kepala Sekolah</div>
-        <p style="margin:4px 0 0;font-size:9px;">{{ $report->review_notes ?: 'Belum ada catatan tinjauan Kepala Sekolah.' }}</p>
-        @if($report->reviewed_at)<p style="margin:4px 0 0;color:#64748b;font-size:7px;">Ditinjau oleh {{ $report->reviewer?->name ?? 'Kepala Sekolah' }} pada {{ $report->reviewed_at->translatedFormat('d M Y H:i') }}</p>@endif
+        <div class="review-notes-body">
+            @if($report->review_notes)
+                {!! $report->formatted_review_notes !!}
+            @else
+                <p style="margin:0;color:#64748b;">Belum ada catatan tinjauan Kepala Sekolah.</p>
+            @endif
+        </div>
+        @if($report->reviewed_at)<p style="margin:5px 0 0;color:#64748b;font-size:7px;">Ditinjau oleh {{ $report->reviewer?->name ?? 'Kepala Sekolah' }} pada {{ $report->reviewed_at->translatedFormat('d M Y H:i') }}</p>@endif
     </div>
 
     <p style="margin-top:12px;color:#94a3b8;font-size:7px;">Dokumen diunduh oleh {{ $generatedBy->name }}. Data pada dokumen ini mengikuti kondisi laporan saat arsip dibuat.</p>

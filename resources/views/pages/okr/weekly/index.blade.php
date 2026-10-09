@@ -21,6 +21,89 @@
         $reportBlocked = $report?->items->where('final_status', 'blocked')->count() ?? 0;
     @endphp
 
+    @push('styles')
+        <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
+        <style>
+            .ql-toolbar.ql-snow {
+                border-color: #fcd34d !important;
+                background-color: #fef3c7 !important;
+                border-top-left-radius: 0.5rem;
+                border-top-right-radius: 0.5rem;
+                padding: 6px 10px !important;
+            }
+            .ql-container.ql-snow {
+                border-color: #fcd34d !important;
+                border-bottom-left-radius: 0.5rem;
+                border-bottom-right-radius: 0.5rem;
+                background-color: #ffffff;
+                font-family: inherit;
+                font-size: 0.875rem;
+            }
+            .ql-editor {
+                min-height: 120px;
+                max-height: 320px;
+                overflow-y: auto;
+                line-height: 1.6;
+                padding: 12px 14px;
+            }
+            .ql-editor.ql-blank::before {
+                color: #9ca3af;
+                font-style: normal;
+                font-size: 0.875rem;
+            }
+            .okr-review-content {
+                line-height: 1.7;
+            }
+            .okr-review-content p {
+                margin-bottom: 0.65rem;
+            }
+            .okr-review-content p:last-child {
+                margin-bottom: 0;
+            }
+            .okr-review-content ol {
+                list-style-type: decimal !important;
+                padding-left: 1.35rem !important;
+                margin-top: 0.4rem !important;
+                margin-bottom: 0.65rem !important;
+            }
+            .okr-review-content ul {
+                list-style-type: disc !important;
+                padding-left: 1.35rem !important;
+                margin-top: 0.4rem !important;
+                margin-bottom: 0.65rem !important;
+            }
+            .okr-review-content li {
+                margin-bottom: 0.35rem !important;
+            }
+            .okr-review-content li:last-child {
+                margin-bottom: 0 !important;
+            }
+            .okr-review-content h1,
+            .okr-review-content h2,
+            .okr-review-content h3 {
+                font-weight: 800;
+                margin-top: 0.75rem;
+                margin-bottom: 0.35rem;
+                color: #064e3b;
+            }
+            .okr-review-content h1 { font-size: 1.15rem; }
+            .okr-review-content h2 { font-size: 1.05rem; }
+            .okr-review-content h3 { font-size: 0.95rem; }
+            .okr-review-content strong,
+            .okr-review-content b {
+                font-weight: 700;
+                color: #064e3b;
+            }
+            .okr-review-content blockquote {
+                border-left: 3px solid #10b981;
+                padding-left: 0.75rem;
+                margin: 0.5rem 0;
+                color: #047857;
+                font-style: italic;
+            }
+        </style>
+    @endpush
+
     <div class="min-h-screen bg-gray-50 py-6" x-data="weeklyOkrDashboard()" x-init="initCharts()">
         <div class="mx-auto max-w-[1600px] space-y-5 px-4 sm:px-6 lg:px-8">
             @if(session('success'))
@@ -376,9 +459,86 @@
                     @endif
 
                     @if($canReview && $report->status === 'submitted')
-                        <form method="POST" action="{{ route('okr.weekly.review', $report) }}" class="border-t border-gray-200 bg-amber-50 p-5">@csrf<label class="block"><span class="mb-1.5 block text-xs font-black text-amber-900">Catatan Kepala Sekolah</span><textarea name="review_notes" rows="3" class="w-full rounded-md border-amber-200 text-sm" placeholder="Apresiasi, arahan, atau tindak lanjut yang perlu dilakukan..."></textarea></label><div class="mt-3 flex justify-end"><button class="rounded-md bg-gray-900 px-5 py-2.5 text-sm font-bold text-white">Tandai Sudah Ditinjau</button></div></form>
+                        <form method="POST" action="{{ route('okr.weekly.review', $report) }}" class="border-t border-amber-200 bg-amber-50/70 p-5 space-y-3">
+                            @csrf
+                            <div>
+                                <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                                    <span class="block text-xs font-black text-amber-950 uppercase tracking-wider">Catatan & Arahan Kepala Sekolah</span>
+                                    <span class="text-[11px] font-semibold text-amber-700">Tersedia formatting teks (bold, nomor 1, 2, 3, poin, heading)</span>
+                                </div>
+                                <div class="rounded-lg shadow-sm">
+                                    <div id="review-notes-quill" class="min-h-[130px] text-sm text-gray-800"></div>
+                                </div>
+                                <input type="hidden" name="review_notes" id="review_notes_input" value="{{ old('review_notes', $report->review_notes) }}">
+                            </div>
+                            <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+                                <p class="text-xs text-amber-800">Menandai laporan akan mengunci evaluasi pekan ini dan membuka pembaruan progres OKR bagi unit terkait.</p>
+                                <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-bold text-white hover:bg-gray-800 shadow-sm transition">
+                                    <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                    <span>Tandai Sudah Ditinjau</span>
+                                </button>
+                            </div>
+                        </form>
                     @elseif($report->status === 'reviewed')
-                        <div class="border-t border-emerald-200 bg-emerald-50 px-5 py-4"><p class="text-xs font-black text-emerald-900">Ditinjau oleh {{ $report->reviewer?->name ?? 'Kepala Sekolah' }} · {{ $report->reviewed_at?->translatedFormat('d M Y H:i') }}</p>@if($report->review_notes)<p class="mt-2 text-sm text-emerald-800">{{ $report->review_notes }}</p>@endif</div>
+                        <div class="border-t border-emerald-200 bg-emerald-50/80 px-5 py-4" x-data="{ editing: false }">
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                <p class="text-xs font-black text-emerald-900">
+                                    Ditinjau oleh {{ $report->reviewer?->name ?? 'Kepala Sekolah' }} · {{ $report->reviewed_at?->translatedFormat('d M Y H:i') }}
+                                </p>
+                                @if($canReview)
+                                    <button 
+                                        type="button" 
+                                        x-show="!editing" 
+                                        @click="editing = true; $nextTick(() => initQuillEditor('review-notes-quill-edit', 'review_notes_input_edit'))"
+                                        class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-white px-2.5 py-1 text-xs font-bold text-emerald-800 shadow-sm hover:bg-emerald-100 transition"
+                                    >
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                        <span>Edit Catatan</span>
+                                    </button>
+                                @endif
+                            </div>
+
+                            <div x-show="!editing" class="mt-2.5">
+                                @if($report->review_notes)
+                                    <div class="okr-review-content rounded-xl border border-emerald-200/90 bg-white/90 p-4 text-sm text-emerald-950 shadow-sm">
+                                        {!! $report->formatted_review_notes !!}
+                                    </div>
+                                @else
+                                    <p class="text-xs italic text-emerald-700">Tidak ada catatan tertulis dari Kepala Sekolah.</p>
+                                @endif
+                            </div>
+
+                            @if($canReview)
+                                <div x-show="editing" x-cloak class="mt-3 space-y-3">
+                                    <form method="POST" action="{{ route('okr.weekly.review', $report) }}" class="space-y-3">
+                                        @csrf
+                                        <div>
+                                            <label class="mb-1.5 block text-xs font-bold text-emerald-950">Sunting Catatan & Arahan Kepala Sekolah</label>
+                                            <div class="rounded-lg shadow-sm">
+                                                <div id="review-notes-quill-edit" class="min-h-[130px] text-sm text-gray-800"></div>
+                                            </div>
+                                            <input type="hidden" name="review_notes" id="review_notes_input_edit" value="{{ old('review_notes', $report->review_notes) }}">
+                                        </div>
+                                        <div class="flex items-center justify-end gap-2">
+                                            <button 
+                                                type="button" 
+                                                @click="editing = false" 
+                                                class="rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 transition"
+                                            >
+                                                Batal
+                                            </button>
+                                            <button 
+                                                type="submit" 
+                                                class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-800 shadow-sm transition"
+                                            >
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                                <span>Simpan Perubahan Catatan</span>
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            @endif
+                        </div>
                     @endif
 
                     @if($report->status === 'reviewed' && $progressRecommendations->isNotEmpty())
@@ -612,6 +772,56 @@
                 document.addEventListener('DOMContentLoaded', initPlanningCommitmentsManager);
             } else {
                 initPlanningCommitmentsManager();
+            }
+        </script>
+        <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+        <script>
+            function initQuillEditor(containerId, inputId) {
+                const editorEl = document.getElementById(containerId);
+                const hiddenInput = document.getElementById(inputId);
+                if (!editorEl || editorEl.__quill || typeof Quill === 'undefined') return;
+
+                const quill = new Quill(editorEl, {
+                    theme: 'snow',
+                    placeholder: 'Apresiasi, arahan, atau tindak lanjut yang perlu dilakukan...',
+                    modules: {
+                        toolbar: [
+                            ['bold', 'italic', 'underline'],
+                            [{ 'header': [2, 3, false] }],
+                            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                            ['blockquote', 'clean']
+                        ]
+                    }
+                });
+                editorEl.__quill = quill;
+
+                if (hiddenInput && hiddenInput.value) {
+                    const val = hiddenInput.value;
+                    if (val.includes('<') && val.includes('>')) {
+                        quill.clipboard.dangerouslyPasteHTML(val);
+                    } else {
+                        quill.setText(val);
+                    }
+                }
+
+                const form = editorEl.closest('form');
+                if (form) {
+                    form.addEventListener('submit', function () {
+                        if (quill.getText().trim().length === 0) {
+                            hiddenInput.value = '';
+                        } else {
+                            hiddenInput.value = quill.root.innerHTML;
+                        }
+                    });
+                }
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function () {
+                    initQuillEditor('review-notes-quill', 'review_notes_input');
+                });
+            } else {
+                initQuillEditor('review-notes-quill', 'review_notes_input');
             }
         </script>
     @endpush

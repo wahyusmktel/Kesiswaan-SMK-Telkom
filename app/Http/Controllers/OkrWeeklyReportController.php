@@ -494,20 +494,26 @@ class OkrWeeklyReportController extends Controller
     public function review(Request $request, OkrWeeklyReport $weeklyReport): RedirectResponse
     {
         abort_unless($this->canReview($request->user()), 403);
-        abort_unless($weeklyReport->status === 'submitted', 422, 'Hanya laporan yang sudah dikirim yang dapat ditinjau.');
+        abort_unless(in_array($weeklyReport->status, ['submitted', 'reviewed'], true), 422, 'Hanya laporan yang sudah dikirim atau ditinjau yang dapat diproses.');
         $validated = $request->validate([
-            'review_notes' => ['nullable', 'string', 'max:4000'],
+            'review_notes' => ['nullable', 'string', 'max:10000'],
         ]);
+
+        $isAlreadyReviewed = $weeklyReport->status === 'reviewed';
 
         $weeklyReport->update([
             'status' => 'reviewed',
-            'reviewed_by' => $request->user()->id,
-            'reviewed_at' => now(),
+            'reviewed_by' => $weeklyReport->reviewed_by ?? $request->user()->id,
+            'reviewed_at' => $weeklyReport->reviewed_at ?? now(),
             'review_notes' => $validated['review_notes'] ?? null,
         ]);
 
+        $message = $isAlreadyReviewed
+            ? 'Catatan tinjauan Kepala Sekolah berhasil diperbarui.'
+            : 'Laporan pekanan telah ditinjau.';
+
         return redirect()->route('okr.weekly.index', $this->reportQuery($weeklyReport))
-            ->with('success', 'Laporan pekanan telah ditinjau.');
+            ->with('success', $message);
     }
 
     public function applyProgress(
