@@ -139,6 +139,56 @@ class OkrWeeklyReportController extends Controller
             ->get()
             ->groupBy('okr_unit_id');
 
+        $incompleteCommitments = OkrWeeklyReportItem::query()
+            ->with([
+                'report.unit',
+                'report.period',
+                'plan.keyResult.objective',
+                'progressUpdates' => fn ($query) => $query->latest('recorded_at')->with('recorder:id,name'),
+            ])
+            ->where(function ($query) {
+                $query->where('completion_percent', '<', 100)
+                    ->orWhere('final_status', '!=', 'completed');
+            })
+            ->whereHas('report', function ($query) use ($period, $unlinkedScopeUnitIds) {
+                $query->where('okr_period_id', $period->id)
+                    ->whereIn('okr_unit_id', $unlinkedScopeUnitIds);
+            })
+            ->join('okr_weekly_reports', 'okr_weekly_reports.id', '=', 'okr_weekly_report_items.okr_weekly_report_id')
+            ->orderBy('okr_weekly_reports.week_start', 'desc')
+            ->orderBy('okr_weekly_reports.okr_unit_id')
+            ->orderBy('okr_weekly_report_items.priority_order')
+            ->select('okr_weekly_report_items.*')
+            ->get()
+            ->sort(function (OkrWeeklyReportItem $a, OkrWeeklyReportItem $b) {
+                $rank = fn (OkrWeeklyReportItem $item) => match (true) {
+                    $item->final_status === 'blocked' => 1,
+                    (float) $item->completion_percent == 0 => 2,
+                    default => 3,
+                };
+                $rankA = $rank($a);
+                $rankB = $rank($b);
+                if ($rankA !== $rankB) {
+                    return $rankA <=> $rankB;
+                }
+
+                $dateA = $a->report->week_start?->timestamp ?? 0;
+                $dateB = $b->report->week_start?->timestamp ?? 0;
+                if ($dateA !== $dateB) {
+                    return $dateB <=> $dateA;
+                }
+
+                return $a->priority_order <=> $b->priority_order;
+            })
+            ->values();
+
+        $incompleteStats = [
+            'total' => $incompleteCommitments->count(),
+            'zero' => $incompleteCommitments->where('completion_percent', 0)->count(),
+            'blocked' => $incompleteCommitments->where('final_status', 'blocked')->count(),
+            'in_progress' => $incompleteCommitments->filter(fn ($item) => (float) $item->completion_percent > 0 && (float) $item->completion_percent < 100 && $item->final_status !== 'blocked')->count(),
+        ];
+
         return view('pages.okr.weekly.index', [
             'period' => $period,
             'periods' => $periods,
@@ -154,6 +204,8 @@ class OkrWeeklyReportController extends Controller
             'availablePlans' => $availablePlans,
             'availablePlanOptions' => $availablePlanOptions,
             'unlinkedCommitments' => $unlinkedCommitments,
+            'incompleteCommitments' => $incompleteCommitments,
+            'incompleteStats' => $incompleteStats,
             'weeklyPlansByUnit' => $weeklyPlansByUnit,
             'unitSummaries' => $unitSummaries,
             'weeklyTrend' => $weeklyTrend,

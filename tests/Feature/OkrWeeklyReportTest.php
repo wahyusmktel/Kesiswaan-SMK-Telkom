@@ -778,6 +778,69 @@ class OkrWeeklyReportTest extends TestCase
             ->assertDontSee('Komitmen yang Belum Dikaitkan dengan Target OKR');
     }
 
+    public function test_incomplete_and_stagnant_commitments_are_monitored_and_can_be_updated(): void
+    {
+        $period = $this->period();
+        $unit = $this->unit();
+        $curriculum = $this->userWithRole('Kurikulum');
+
+        $report = OkrWeeklyReport::create([
+            'okr_period_id' => $period->id,
+            'okr_unit_id' => $unit->id,
+            'week_start' => '2026-09-07',
+            'week_end' => '2026-09-11',
+            'weekly_focus' => 'Pekan perdana semester.',
+            'status' => 'draft',
+            'created_by' => $curriculum->id,
+        ]);
+
+        $item = $report->items()->create([
+            'priority_order' => 1,
+            'commitment' => 'Penyusunan modul ajar matematika mandek.',
+            'measurable_target' => '5 modul selesai.',
+            'completion_percent' => 0,
+            'final_status' => 'not_started',
+        ]);
+
+        $this->actingAs($curriculum)
+            ->withSession(['active_role' => 'Kurikulum'])
+            ->get(route('okr.weekly.index', [
+                'period_id' => $period->id,
+                'unit_id' => $unit->id,
+                'week_start' => '2026-09-07',
+            ]))
+            ->assertOk()
+            ->assertSee('Monitoring Komitmen Belum Selesai dan Mandek')
+            ->assertSee('Penyusunan modul ajar matematika mandek.')
+            ->assertSee('Belum Ada Progres / 0%')
+            ->assertSee('Update Progres');
+
+        // Update progress to 100% completed
+        $this->actingAs($curriculum)
+            ->withSession(['active_role' => 'Kurikulum'])
+            ->post(route('okr.weekly.progress', $report), [
+                'item_id' => $item->id,
+                'progress_percent' => 100,
+                'status' => 'completed',
+                'note' => 'Semua modul selesai disusun.',
+            ])
+            ->assertRedirect();
+
+        $this->assertSame(100.0, (float) $item->fresh()->completion_percent);
+        $this->assertSame('completed', $item->fresh()->final_status);
+
+        // After completion, the monitoring table automatically hides
+        $this->actingAs($curriculum)
+            ->withSession(['active_role' => 'Kurikulum'])
+            ->get(route('okr.weekly.index', [
+                'period_id' => $period->id,
+                'unit_id' => $unit->id,
+                'week_start' => '2026-09-07',
+            ]))
+            ->assertOk()
+            ->assertDontSee('Monitoring Komitmen Belum Selesai dan Mandek');
+    }
+
     private function unit(): OkrUnit
     {
         return OkrUnit::create([
