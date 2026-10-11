@@ -69,4 +69,9 @@ class MasterGuru extends Model
     {
         return $this->dapodikGuru?->nip ?? $this->nuptk;
     }
+
+    public function teacherProfile()
+    {
+        return $this->hasOne(TeacherProfile::class);
+    }
 }

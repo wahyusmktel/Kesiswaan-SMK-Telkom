@@ -233,6 +233,7 @@
             <div class="hidden items-center gap-7 text-sm font-bold text-slate-600 md:flex">
                 <a href="#showcase" class="hover:text-red-600">Showcase</a>
                 <a href="#industry" class="hover:text-red-600">Ekosistem</a>
+                <a href="{{ route('pegawai.index') }}" class="hover:text-red-600">Pegawai</a>
                 <a href="{{ route('gallery-photo.index') }}" class="hover:text-red-600">Galeri</a>
                 <a href="{{ route('forum-stella.index') }}" class="hover:text-red-600">Forum</a>
             </div>

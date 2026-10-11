@@ -122,6 +122,11 @@ class User extends Authenticatable implements WebAuthnAuthenticatableContract
         return $this->hasOne(MasterGuru::class);
     }
 
+    public function teacherProfile()
+    {
+        return $this->hasOne(TeacherProfile::class);
+    }
+
     public function digitalSignature()
     {
         return $this->hasOne(UserDigitalSignature::class);

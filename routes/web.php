@@ -226,6 +226,19 @@ Route::prefix('showcase')->name('public.showcase.')->group(function () {
     Route::get('/', [\App\Http\Controllers\PublicShowcaseController::class, 'index'])->name('index');
     Route::get('/{id}', [\App\Http\Controllers\PublicShowcaseController::class, 'show'])->name('show');
 });
+
+// Dynamic XML Sitemap for Google Search Indexing
+Route::get('/sitemap.xml', [\App\Http\Controllers\Public\SitemapController::class, 'index'])->name('sitemap');
+
+// Public Teacher & Employee Directory & Portfolio (SEO Optimized)
+Route::prefix('pegawai')->name('pegawai.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Public\PublicTeacherDirectoryController::class, 'index'])->name('index');
+    Route::get('/{slug}', [\App\Http\Controllers\Public\PublicTeacherDirectoryController::class, 'show'])->name('show');
+});
+// English URL Aliases for Employee Directory
+Route::get('/employee', fn () => redirect()->route('pegawai.index', request()->query()));
+Route::get('/employees', fn () => redirect()->route('pegawai.index', request()->query()));
+Route::get('/employee/{slug}', fn ($slug) => redirect()->route('pegawai.show', $slug));
 // Happiness Meter (Public API)
 Route::prefix('api/happiness')->name('happiness.')->group(function () {
     Route::post('/check', [App\Http\Controllers\HappinessMetricController::class, 'checkStatus'])->name('check');
@@ -1198,6 +1211,15 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar.update');
     Route::patch('/profile/face', [ProfileController::class, 'updateFaceId'])->name('profile.face.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Teacher Public Portfolio Self-Service Management
+    Route::get('/profile/portfolio', [\App\Http\Controllers\Teacher\TeacherPortfolioManagementController::class, 'edit'])->name('teacher.portfolio.edit');
+    Route::put('/profile/portfolio', [\App\Http\Controllers\Teacher\TeacherPortfolioManagementController::class, 'updateProfile'])->name('teacher.portfolio.update');
+    Route::put('/profile/portfolio/profile', [\App\Http\Controllers\Teacher\TeacherPortfolioManagementController::class, 'updateProfile'])->name('teacher.portfolio.profile.update');
+    Route::post('/profile/portfolio/items', [\App\Http\Controllers\Teacher\TeacherPortfolioManagementController::class, 'storePortfolio'])->name('teacher.portfolio.items.store');
+    Route::post('/profile/portfolio/projects', [\App\Http\Controllers\Teacher\TeacherPortfolioManagementController::class, 'storePortfolio'])->name('teacher.portfolio.project.store');
+    Route::delete('/profile/portfolio/items/{portfolio}', [\App\Http\Controllers\Teacher\TeacherPortfolioManagementController::class, 'destroyPortfolio'])->name('teacher.portfolio.items.destroy');
+    Route::delete('/profile/portfolio/projects/{portfolio}', [\App\Http\Controllers\Teacher\TeacherPortfolioManagementController::class, 'destroyPortfolio'])->name('teacher.portfolio.project.destroy');
 
     // Manajemen Pegawai (Operator & KAUR SDM)
     Route::middleware(['role:Operator|KAUR SDM'])->group(function () {

@@ -116,6 +116,7 @@
                 <a href="#modules" class="hover:text-red-500">Modules</a>
                 <a href="#architecture" class="hover:text-red-500">Architecture</a>
                 <a href="#news" class="hover:text-red-500">Berita</a>
+                <a href="{{ route('pegawai.index') }}" class="hover:text-red-500">Pegawai</a>
             </div>
             @auth
                 <a href="{{ url('/dashboard') }}" class="rounded-xl bg-red-600 px-4 py-2 text-xs font-black text-white shadow-lg shadow-red-600/20">Dashboard</a>
