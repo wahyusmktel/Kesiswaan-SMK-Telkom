@@ -105,12 +105,23 @@
             min-height: 100vh;
         }
 
+        /* Default (Di atas Hero / Belum Scroll): Menyatu transparan dengan Hero */
         .landing-nav-capsule {
-            background: rgba(15, 23, 42, 0.92);
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Ketika di-scroll: Sedikit border dengan background putih transparan, border putih, isi konten teks merah */
+        .landing-nav-capsule.scrolled {
+            background: rgba(255, 255, 255, 0.92);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+            border: 1.5px solid rgba(255, 255, 255, 0.95);
+            box-shadow: 0 16px 36px -12px rgba(226, 31, 38, 0.15), 0 4px 12px rgba(0, 0, 0, 0.05);
         }
 
         .btn-primary {
@@ -136,16 +147,19 @@
         }
     </style>
 </head>
-<body class="min-h-screen antialiased flex flex-col justify-between" x-data="{ copied: false, copyLink() { navigator.clipboard.writeText(window.location.href); this.copied = true; setTimeout(() => this.copied = false, 2500); } }">
+<body class="min-h-screen antialiased flex flex-col justify-between" x-data="{ copied: false, scrolled: false, copyLink() { navigator.clipboard.writeText(window.location.href); this.copied = true; setTimeout(() => this.copied = false, 2500); } }" @scroll.window="scrolled = (window.pageYOffset > 50)">
 
     <div>
-        <!-- Navigation (Persis Sama dengan Screenshot Landing Page) -->
-        <nav class="fixed left-0 right-0 z-50 px-4 sm:px-6 py-4 transition-all duration-300 ease-out top-0">
-            <div class="max-w-7xl mx-auto flex items-center justify-between landing-nav-capsule py-2.5 px-5 sm:px-6 rounded-2xl">
+        <!-- Navigation (Menyatu dengan Hero, Transparan -> Background Putih, Border Putih, Teks Merah saat Scroll) -->
+        <nav class="fixed left-0 right-0 z-50 px-4 sm:px-6 py-4 transition-all duration-500 ease-out top-0">
+            <div 
+                class="max-w-7xl mx-auto flex items-center justify-between landing-nav-capsule py-2.5 px-5 sm:px-6 rounded-2xl"
+                :class="{ 'scrolled': scrolled }"
+            >
                 {{-- Logo Kiri --}}
                 <div class="flex items-center gap-3">
                     <a href="{{ route('welcome') }}" class="flex items-center gap-3 group">
-                        <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center overflow-hidden p-1 shadow-lg shrink-0">
+                        <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center overflow-hidden p-1 shadow-lg shrink-0 border border-slate-100">
                             @if($setting?->logo)
                                 <img src="{{ Storage::url($setting->logo) }}" alt="Logo" class="object-contain w-full h-full">
                             @else
@@ -153,61 +167,105 @@
                             @endif
                         </div>
                         <div class="flex flex-col leading-none hidden sm:flex text-left">
-                            <span class="font-outfit font-black text-base tracking-tight text-white leading-none">SISFO</span>
+                            <span 
+                                class="font-outfit font-black text-base tracking-tight transition-colors duration-400 leading-none"
+                                :class="scrolled ? 'text-red-600' : 'text-white'"
+                            >SISFO</span>
                             <span class="font-outfit font-black text-sm tracking-tight text-red-500 leading-none mt-0.5">TS</span>
                         </div>
                     </a>
                 </div>
 
-                {{-- Menu Desktop (Sama Persis dengan Screenshot) --}}
-                <div class="hidden md:flex items-center gap-5 lg:gap-7 font-jakarta text-xs font-medium">
-                    <a href="{{ route('welcome') }}#features" class="nav-link text-slate-300 hover:text-white transition-colors leading-tight text-left">
-                        Ekosistem<br>Digital
+                {{-- Menu Desktop (1 Baris, Menyesuaikan Warna Saat Scroll dengan Animasi Halus) --}}
+                <div class="hidden md:flex items-center gap-5 lg:gap-7 font-jakarta text-xs font-semibold whitespace-nowrap">
+                    <a 
+                        href="{{ route('welcome') }}#features" 
+                        class="nav-link transition-colors duration-300"
+                        :class="scrolled ? 'text-red-700 hover:text-red-900' : 'text-slate-300 hover:text-white'"
+                    >
+                        Ekosistem Digital
                     </a>
-                    <a href="{{ route('pengaduan.create') }}" class="nav-link text-slate-300 hover:text-white transition-colors leading-tight text-left">
-                        Layanan<br>Aduan
+                    <a 
+                        href="{{ route('pengaduan.create') }}" 
+                        class="nav-link transition-colors duration-300"
+                        :class="scrolled ? 'text-red-700 hover:text-red-900' : 'text-slate-300 hover:text-white'"
+                    >
+                        Layanan Aduan
                     </a>
-                    <a href="{{ route('digireligi') }}" target="_blank" class="nav-link text-slate-300 hover:text-emerald-400 flex items-center gap-1.5 transition-colors">
+                    <a 
+                        href="{{ route('digireligi') }}" 
+                        target="_blank" 
+                        class="nav-link flex items-center gap-1.5 transition-colors duration-300"
+                        :class="scrolled ? 'text-red-700 hover:text-red-900' : 'text-slate-300 hover:text-emerald-400'"
+                    >
                         <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
                         <span>DigiReligi</span>
                     </a>
-                    <a href="{{ route('gallery-photo.index') }}" class="nav-link text-slate-300 hover:text-red-400 flex items-center gap-1.5 transition-colors leading-tight text-left">
+                    <a 
+                        href="{{ route('gallery-photo.index') }}" 
+                        class="nav-link flex items-center gap-1.5 transition-colors duration-300"
+                        :class="scrolled ? 'text-red-700 hover:text-red-900' : 'text-slate-300 hover:text-red-400'"
+                    >
                         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2 1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                        <span>Galery<br>Photo</span>
+                        <span>Galery Photo</span>
                     </a>
-                    <a href="{{ route('forum-stella.index') }}" class="nav-link text-slate-300 hover:text-cyan-300 flex items-center gap-1.5 transition-colors leading-tight text-left">
+                    <a 
+                        href="{{ route('forum-stella.index') }}" 
+                        class="nav-link flex items-center gap-1.5 transition-colors duration-300"
+                        :class="scrolled ? 'text-red-700 hover:text-red-900' : 'text-slate-300 hover:text-cyan-300'"
+                    >
                         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
-                        <span>Forum<br>Stella</span>
+                        <span>Forum Stella</span>
                     </a>
-                    <a href="{{ route('public.showcase.index') }}" class="nav-link text-slate-300 hover:text-purple-400 flex items-center gap-1.5 transition-colors leading-tight text-left">
+                    <a 
+                        href="{{ route('public.showcase.index') }}" 
+                        class="nav-link flex items-center gap-1.5 transition-colors duration-300"
+                        :class="scrolled ? 'text-red-700 hover:text-red-900' : 'text-slate-300 hover:text-purple-400'"
+                    >
                         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
-                        <span>Showcase<br>Siswa</span>
+                        <span>Showcase Siswa</span>
                     </a>
-                    <a href="{{ route('pegawai.index') }}" class="nav-link text-amber-400 font-bold flex items-center gap-1.5 transition-colors">
-                        <svg class="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                    <a 
+                        href="{{ route('pegawai.index') }}" 
+                        class="nav-link font-bold flex items-center gap-1.5 transition-colors duration-300"
+                        :class="scrolled ? 'text-red-600 hover:text-red-800' : 'text-amber-400 hover:text-amber-300'"
+                    >
+                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                         <span>Pegawai</span>
                     </a>
                     @auth
-                        <a href="{{ url('/dashboard') }}" class="btn-primary px-5 py-2 rounded-xl font-bold text-xs shadow-xl text-white text-center leading-tight">
-                            Dashboard<br>Utama
+                        <a href="{{ url('/dashboard') }}" class="btn-primary px-5 py-2.5 rounded-xl font-bold text-xs shadow-xl text-white text-center whitespace-nowrap">
+                            Dashboard Utama
                         </a>
                     @else
-                        <a href="{{ route('login') }}" class="text-white hover:text-slate-300 transition-colors font-medium text-xs">
+                        <a 
+                            href="{{ route('login') }}" 
+                            class="transition-colors duration-300 font-medium text-xs"
+                            :class="scrolled ? 'text-red-700 hover:text-red-900 font-bold' : 'text-white hover:text-slate-300'"
+                        >
                             Masuk
                         </a>
-                        <a href="{{ route('register') }}" class="btn-primary px-4 py-2 rounded-xl font-bold text-xs shadow-xl text-white text-center leading-tight">
-                            Daftar<br>Akun
+                        <a href="{{ route('register') }}" class="btn-primary px-4 py-2.5 rounded-xl font-bold text-xs shadow-xl text-white text-center whitespace-nowrap">
+                            Daftar Akun
                         </a>
                     @endauth
                 </div>
 
                 {{-- Mobile Menu (Persis Sama dengan Landing Page) --}}
                 <div class="md:hidden flex items-center gap-2">
-                    <a href="{{ route('pegawai.index') }}" class="text-xs font-bold text-amber-400 flex items-center gap-1 transition-colors mr-2">
+                    <a 
+                        href="{{ route('pegawai.index') }}" 
+                        class="text-xs font-bold flex items-center gap-1 transition-colors duration-300 mr-2"
+                        :class="scrolled ? 'text-red-600' : 'text-amber-400'"
+                    >
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                         Pegawai
                     </a>
-                    <a href="{{ route('public.showcase.index') }}" class="text-xs font-bold text-slate-300 hover:text-purple-400 flex items-center gap-1 transition-colors mr-2">
+                    <a 
+                        href="{{ route('public.showcase.index') }}" 
+                        class="text-xs font-bold flex items-center gap-1 transition-colors duration-300 mr-2"
+                        :class="scrolled ? 'text-red-700 hover:text-red-900' : 'text-slate-300 hover:text-purple-400'"
+                    >
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
                         Showcase
                     </a>
