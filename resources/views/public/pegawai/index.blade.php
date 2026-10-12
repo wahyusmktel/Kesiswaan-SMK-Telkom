@@ -64,23 +64,20 @@
             min-height: 100vh;
         }
 
-        /* Default (Di atas Hero / Belum Scroll): Menyatu transparan dengan Hero */
-        .landing-nav-capsule {
-            background: rgba(15, 23, 42, 0.45);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3);
+        /* Header Full-Width Navigation */
+        .landing-navbar-bar {
+            background: transparent;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* Ketika di-scroll: Sedikit border dengan background putih transparan, border putih, isi konten teks merah */
-        .landing-nav-capsule.scrolled {
-            background: rgba(255, 255, 255, 0.92);
+        /* Ketika di-scroll: Full width, background putih, border bawah putih/halus, bayangan halus */
+        .landing-navbar-bar.scrolled {
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border: 1.5px solid rgba(255, 255, 255, 0.95);
-            box-shadow: 0 16px 36px -12px rgba(226, 31, 38, 0.15), 0 4px 12px rgba(0, 0, 0, 0.05);
+            border-bottom: 1.5px solid rgba(255, 255, 255, 1);
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.06), 0 2px 6px -1px rgba(226, 31, 38, 0.08);
         }
 
         .btn-primary {
@@ -102,16 +99,16 @@
 <body class="min-h-screen antialiased flex flex-col justify-between" x-data="{ scrolled: false }" @scroll.window="scrolled = (window.pageYOffset > 50)">
 
     <div>
-        <!-- Navigation (Menyatu dengan Hero, Transparan -> Background Putih, Border Putih, Teks Merah saat Scroll) -->
-        <nav class="fixed left-0 right-0 z-50 px-4 sm:px-6 py-4 transition-all duration-500 ease-out top-0">
-            <div 
-                class="max-w-7xl mx-auto flex items-center justify-between landing-nav-capsule py-2.5 px-5 sm:px-6 rounded-2xl"
-                :class="{ 'scrolled': scrolled }"
-            >
+        <!-- Navigation (Full Page / Full Width Edge-to-Edge, Menyatu Transparan dengan Hero -> Background Putih & Teks Merah saat Scroll) -->
+        <header 
+            class="fixed top-0 left-0 right-0 w-full z-50 landing-navbar-bar px-4 sm:px-8 lg:px-12 py-3.5 transition-all duration-500 ease-out"
+            :class="{ 'scrolled': scrolled }"
+        >
+            <div class="w-full flex items-center justify-between">
                 {{-- Logo Kiri --}}
                 <div class="flex items-center gap-3">
                     <a href="{{ route('welcome') }}" class="flex items-center gap-3 group">
-                        <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center overflow-hidden p-1 shadow-lg shrink-0 border border-slate-100">
+                        <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center overflow-hidden p-1 shadow-md shrink-0 border border-slate-100">
                             @if($setting?->logo)
                                 <img src="{{ Storage::url($setting->logo) }}" alt="Logo" class="object-contain w-full h-full">
                             @else
@@ -228,7 +225,7 @@
                     @endauth
                 </div>
             </div>
-        </nav>
+        </header>
 
         {{-- Hero Header Section: Menggunakan Background Foto yang Diunggah --}}
         <section class="relative pt-36 pb-24 px-4 sm:px-6 lg:px-8 overflow-hidden bg-cover bg-center" style="background-image: url('{{ asset('images/pegawai-hero.jpg') }}');">
