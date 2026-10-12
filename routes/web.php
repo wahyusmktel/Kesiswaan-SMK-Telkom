@@ -235,6 +235,13 @@ Route::prefix('pegawai')->name('pegawai.')->group(function () {
     Route::get('/', [\App\Http\Controllers\Public\PublicTeacherDirectoryController::class, 'index'])->name('index');
     Route::get('/{slug}', [\App\Http\Controllers\Public\PublicTeacherDirectoryController::class, 'show'])->name('show');
 });
+// Teacher & Pegawai Portfolio Self-Service Direct Routes
+Route::middleware('auth')->group(function () {
+    Route::get('/teacher/portfolio', [\App\Http\Controllers\Teacher\TeacherPortfolioManagementController::class, 'edit'])->name('teacher.portfolio');
+    Route::get('/pegawai/kelola-profil', [\App\Http\Controllers\Teacher\TeacherPortfolioManagementController::class, 'edit'])->name('pegawai.portfolio');
+    Route::get('/guru/portfolio', [\App\Http\Controllers\Teacher\TeacherPortfolioManagementController::class, 'edit']);
+});
+
 // English URL Aliases for Employee Directory
 Route::get('/employee', fn () => redirect()->route('pegawai.index', request()->query()));
 Route::get('/employees', fn () => redirect()->route('pegawai.index', request()->query()));
