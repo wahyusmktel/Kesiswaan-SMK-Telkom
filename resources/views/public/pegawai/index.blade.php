@@ -105,7 +105,7 @@
             :class="{ 'scrolled': scrolled }"
         >
             <div class="w-full flex items-center justify-between">
-                {{-- Logo Kiri --}}
+                {{-- Logo Kiri (Persis Sama dengan Landing Page) --}}
                 <div class="flex items-center gap-3">
                     <a href="{{ route('welcome') }}" class="flex items-center gap-3 group">
                         <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center overflow-hidden p-1 shadow-md shrink-0 border border-slate-100">
@@ -115,12 +115,15 @@
                                 <img src="https://upload.wikimedia.org/wikipedia/id/d/dc/Logo_SMK_Telkom_Malang.png" alt="Logo" class="object-contain w-full h-full">
                             @endif
                         </div>
-                        <div class="flex flex-col leading-none hidden sm:flex text-left">
+                        <div class="flex flex-col leading-tight hidden sm:flex text-left">
                             <span 
-                                class="font-outfit font-black text-base tracking-tight transition-colors duration-400 leading-none"
-                                :class="scrolled ? 'text-red-600' : 'text-white'"
-                            >SISFO</span>
-                            <span class="font-outfit font-black text-sm tracking-tight text-red-500 leading-none mt-0.5">TS</span>
+                                class="font-outfit font-black text-lg tracking-tight transition-colors duration-400 leading-none"
+                                :class="scrolled ? 'text-slate-900' : 'text-white'"
+                            >SISFO <span class="text-red-500">TS</span></span>
+                            <span 
+                                class="text-[10px] font-semibold tracking-tight leading-none mt-1 transition-colors duration-400"
+                                :class="scrolled ? 'text-slate-500' : 'text-slate-300'"
+                            >{{ $schoolName }}</span>
                         </div>
                     </a>
                 </div>

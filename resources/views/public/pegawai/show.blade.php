@@ -152,7 +152,7 @@
             :class="{ 'scrolled': scrolled }"
         >
             <div class="w-full flex items-center justify-between">
-                {{-- Logo Kiri --}}
+                {{-- Logo Kiri (Persis Sama dengan Landing Page) --}}
                 <div class="flex items-center gap-3">
                     <a href="{{ route('welcome') }}" class="flex items-center gap-3 group">
                         <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center overflow-hidden p-1 shadow-md shrink-0 border border-slate-200">
@@ -162,9 +162,9 @@
                                 <img src="https://upload.wikimedia.org/wikipedia/id/d/dc/Logo_SMK_Telkom_Malang.png" alt="Logo" class="object-contain w-full h-full">
                             @endif
                         </div>
-                        <div class="flex flex-col leading-none hidden sm:flex text-left">
-                            <span class="font-outfit font-black text-base tracking-tight text-slate-900 leading-none">SISFO</span>
-                            <span class="font-outfit font-black text-sm tracking-tight text-red-600 leading-none mt-0.5">TS</span>
+                        <div class="flex flex-col leading-tight hidden sm:flex text-left">
+                            <span class="font-outfit font-black text-lg tracking-tight text-slate-900 leading-none">SISFO <span class="text-red-600">TS</span></span>
+                            <span class="text-[10px] font-semibold text-slate-500 tracking-tight leading-none mt-1">{{ $schoolName }}</span>
                         </div>
                     </a>
                 </div>
@@ -261,11 +261,8 @@
             </div>
         </header>
 
-        {{-- Top Spacer for Fixed Header --}}
-        <div class="h-16 sm:h-20"></div>
-
-        {{-- Breadcrumb Nav (Soft Gray Background, Teks Berada di Tengah Area) --}}
-        <nav aria-label="Breadcrumb" class="bg-slate-100/90 border-y border-slate-200/80 text-xs py-3.5 transition-colors">
+        {{-- Breadcrumb Nav (Mepet Bersambung dengan Header, Soft Gray Background, Teks Berada di Tengah Area) --}}
+        <nav aria-label="Breadcrumb" class="mt-[61px] bg-slate-100/95 border-b border-slate-200/90 text-xs py-3 transition-colors">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between text-slate-500 min-h-[1.75rem]">
                 <div class="flex items-center gap-2 flex-wrap">
                     <a href="{{ route('welcome') }}" class="hover:text-red-600 transition font-medium">Beranda</a>
@@ -281,14 +278,24 @@
             </div>
         </nav>
 
-        {{-- Profile Hero Banner --}}
-        <section class="profile-banner text-white pt-10 pb-20 relative overflow-hidden">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
-                    {{-- Left: Photo + Name + Details --}}
-                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+        {{-- Profile Hero Banner (Mendukung Foto Sampul / Cover Kustomisasi, Tengah Vertikal & Responsif Mobile Center) --}}
+        <section 
+            class="profile-banner text-white py-12 sm:py-16 relative overflow-hidden bg-cover bg-center"
+            @if($teacher->cover_url)
+                style="background-image: url('{{ $teacher->cover_url }}');"
+            @endif
+        >
+            {{-- Dark Overlay agar teks selalu terbaca kontras jika ada foto sampul --}}
+            @if($teacher->cover_url)
+                <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-[2px]"></div>
+            @endif
+
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 flex flex-col justify-center min-h-[220px]">
+                <div class="flex flex-col lg:flex-row items-center justify-between gap-8 text-center sm:text-left">
+                    {{-- Left: Photo + Name + Details (Mobile: Center, Desktop: Flex-row) --}}
+                    <div class="flex flex-col sm:flex-row items-center gap-6 w-full lg:w-auto">
                         {{-- Photo --}}
-                        <div class="relative w-32 h-32 sm:w-40 sm:h-40 rounded-3xl bg-white p-1.5 shadow-2xl border-4 border-slate-700/60 overflow-hidden shrink-0">
+                        <div class="relative w-32 h-32 sm:w-36 sm:h-36 rounded-3xl bg-white p-1.5 shadow-2xl border-4 border-slate-700/60 overflow-hidden shrink-0 mx-auto sm:mx-0">
                             @if($teacher->photo_url)
                                 <img src="{{ $teacher->photo_url }}" alt="{{ $teacher->display_name }}" class="w-full h-full object-cover rounded-2xl">
                             @else
@@ -296,14 +303,14 @@
                                     {{ strtoupper(substr($teacher->nama_lengkap, 0, 2)) }}
                                 </div>
                             @endif
-                            <div class="absolute bottom-3 right-3 bg-emerald-500 text-white p-1 rounded-full shadow-lg" title="Pendidik Terverifikasi">
+                            <div class="absolute bottom-2.5 right-2.5 bg-emerald-500 text-white p-1 rounded-full shadow-lg" title="Pendidik Terverifikasi">
                                 <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
                             </div>
                         </div>
 
-                        {{-- Main Titles in Roboto --}}
-                        <div>
-                            <div class="flex flex-wrap items-center gap-2 mb-2">
+                        {{-- Main Titles (Mobile: Items-center / text-center, Desktop: Items-start / text-left) --}}
+                        <div class="flex flex-col items-center sm:items-start text-center sm:text-left">
+                            <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-2">
                                 <span class="rounded-full bg-red-500/20 text-red-400 border border-red-500/30 px-3 py-0.5 text-xs font-bold uppercase tracking-wider">
                                     {{ $teacher->kategori_label }}
                                 </span>
@@ -315,15 +322,15 @@
                                 @endif
                             </div>
 
-                            <h1 class="font-roboto text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
+                            <h1 class="font-roboto text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight">
                                 {{ $teacher->display_name }}
                             </h1>
 
-                            <p class="mt-2 text-sm sm:text-base font-bold text-red-400">
+                            <p class="mt-1.5 text-sm sm:text-base font-bold text-red-400">
                                 {{ $teacher->jabatan ?: ($teacher->bidang_studi ? 'Guru ' . $teacher->bidang_studi : 'Tenaga Pendidik') }}
                             </p>
 
-                            <p class="mt-1 text-xs text-slate-300 flex items-center gap-2">
+                            <p class="mt-1 text-xs text-slate-300 flex items-center justify-center sm:justify-start gap-2">
                                 <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                                 <span>{{ $schoolName }}</span>
                                 @if($teacher->nuptk)
@@ -334,34 +341,34 @@
                         </div>
                     </div>
 
-                    {{-- Right: Quick Action & Share Buttons --}}
-                    <div class="flex flex-col sm:flex-row lg:flex-col gap-3 w-full lg:w-auto shrink-0">
+                    {{-- Right: Quick Action & Share Buttons (Mobile: Center) --}}
+                    <div class="flex flex-col sm:flex-row lg:flex-col items-center sm:items-start lg:items-end gap-3 w-full lg:w-auto shrink-0 justify-center">
                         {{-- Social Profiles --}}
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center justify-center gap-2">
                             @if(!empty($teacher->sosial_media['linkedin']))
-                                <a href="{{ $teacher->sosial_media['linkedin'] }}" target="_blank" rel="noopener noreferrer" class="p-2.5 rounded-xl bg-slate-800 hover:bg-blue-600 text-white transition-colors shadow-sm" title="Profil LinkedIn">
+                                <a href="{{ $teacher->sosial_media['linkedin'] }}" target="_blank" rel="noopener noreferrer" class="p-2.5 rounded-xl bg-slate-800/80 hover:bg-blue-600 text-white transition-colors shadow-sm" title="Profil LinkedIn">
                                     <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
                                 </a>
                             @endif
                             @if(!empty($teacher->sosial_media['github']))
-                                <a href="{{ $teacher->sosial_media['github'] }}" target="_blank" rel="noopener noreferrer" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white transition-colors shadow-sm" title="Profil GitHub">
+                                <a href="{{ $teacher->sosial_media['github'] }}" target="_blank" rel="noopener noreferrer" class="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-white transition-colors shadow-sm" title="Profil GitHub">
                                     <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
                                 </a>
                             @endif
                             @if(!empty($teacher->sosial_media['instagram']))
-                                <a href="{{ $teacher->sosial_media['instagram'] }}" target="_blank" rel="noopener noreferrer" class="p-2.5 rounded-xl bg-slate-800 hover:bg-pink-600 text-white transition-colors shadow-sm" title="Instagram">
+                                <a href="{{ $teacher->sosial_media['instagram'] }}" target="_blank" rel="noopener noreferrer" class="p-2.5 rounded-xl bg-slate-800/80 hover:bg-pink-600 text-white transition-colors shadow-sm" title="Instagram">
                                     <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
                                 </a>
                             @endif
                             @if(!empty($teacher->sosial_media['website']))
-                                <a href="{{ $teacher->sosial_media['website'] }}" target="_blank" rel="noopener noreferrer" class="p-2.5 rounded-xl bg-slate-800 hover:bg-emerald-600 text-white transition-colors shadow-sm" title="Website Pribadi">
+                                <a href="{{ $teacher->sosial_media['website'] }}" target="_blank" rel="noopener noreferrer" class="p-2.5 rounded-xl bg-slate-800/80 hover:bg-emerald-600 text-white transition-colors shadow-sm" title="Website Pribadi">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
                                 </a>
                             @endif
                         </div>
 
                         {{-- Quick Share Actions --}}
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center justify-center gap-2">
                             <a 
                                 href="https://api.whatsapp.com/send?text={{ urlencode('Lihat profil dan portofolio guru ' . $teacher->display_name . ' di ' . $schoolName . ': ' . $canonicalUrl) }}" 
                                 target="_blank" 
@@ -374,7 +381,7 @@
                             <button 
                                 type="button" 
                                 @click="copyLink()" 
-                                class="inline-flex items-center gap-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3.5 py-2 text-xs font-bold transition"
+                                class="inline-flex items-center gap-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3.5 py-2 text-xs font-bold transition"
                             >
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
                                 <span x-text="copied ? 'Tersalin!' : 'Salin Link'"></span>
@@ -385,8 +392,8 @@
 
                 {{-- Teaching Philosophy Quote Banner --}}
                 @if($teacher->filosofi_mengajar)
-                    <div class="mt-8 rounded-2xl bg-white/5 border border-white/10 p-5 backdrop-blur-md max-w-4xl">
-                        <div class="flex items-start gap-3">
+                    <div class="mt-8 rounded-2xl bg-white/5 border border-white/10 p-5 backdrop-blur-md max-w-4xl mx-auto sm:mx-0 text-center sm:text-left">
+                        <div class="flex items-start justify-center sm:justify-start gap-3">
                             <span class="text-3xl font-serif text-amber-400 leading-none">“</span>
                             <blockquote class="text-sm sm:text-base italic text-slate-200 font-medium leading-relaxed">
                                 {{ $teacher->filosofi_mengajar }}

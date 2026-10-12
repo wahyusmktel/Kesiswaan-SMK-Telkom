@@ -164,20 +164,40 @@
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-                            {{-- Foto Profil --}}
-                            <div class="md:col-span-4 flex flex-col items-center text-center p-6 rounded-2xl bg-slate-50 border border-slate-100">
-                                <div class="w-32 h-32 rounded-3xl overflow-hidden bg-slate-200 shadow-md mb-4 relative group">
-                                    @if($profile->foto_url)
-                                        <img src="{{ $profile->foto_url }}" alt="{{ $profile->nama_lengkap }}" class="w-full h-full object-cover">
-                                    @else
-                                        <div class="w-full h-full flex items-center justify-center font-outfit font-black text-3xl text-slate-400">
-                                            {{ strtoupper(substr($profile->nama_lengkap, 0, 2)) }}
+                            {{-- Foto Profil & Foto Sampul --}}
+                            <div class="md:col-span-4 space-y-4">
+                                <div class="flex flex-col items-center text-center p-5 rounded-2xl bg-slate-50 border border-slate-100">
+                                    <div class="w-28 h-28 rounded-2xl overflow-hidden bg-slate-200 shadow-md mb-3 relative group">
+                                        @if($profile->foto_url)
+                                            <img src="{{ $profile->foto_url }}" alt="{{ $profile->nama_lengkap }}" class="w-full h-full object-cover">
+                                        @else
+                                            <div class="w-full h-full flex items-center justify-center font-outfit font-black text-2xl text-slate-400">
+                                                {{ strtoupper(substr($profile->nama_lengkap, 0, 2)) }}
+                                            </div>
+                                        @endif
+                                    </div>
+                                    <label class="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1.5">Foto Profil</label>
+                                    <input type="file" name="foto" accept="image/*" class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-2.5 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-red-50 file:text-red-700 hover:file:bg-red-100 cursor-pointer">
+                                    <p class="text-[10px] text-slate-400 mt-1.5 font-medium">Disarankan foto portrait formal rasio 1:1.</p>
+                                </div>
+
+                                {{-- Foto Sampul / Cover --}}
+                                <div class="p-5 rounded-2xl bg-slate-50 border border-slate-100 text-left">
+                                    <label class="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1.5">Foto Sampul / Banner Header</label>
+                                    @if($profile->cover_url)
+                                        <div class="w-full h-20 rounded-xl overflow-hidden mb-2 border border-slate-200 shadow-xs relative">
+                                            <img src="{{ $profile->cover_url }}" alt="Sampul Header" class="w-full h-full object-cover">
+                                        </div>
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <label class="inline-flex items-center gap-1.5 text-xs text-red-600 font-semibold cursor-pointer">
+                                                <input type="checkbox" name="hapus_foto_sampul" value="1" class="rounded border-slate-300 text-red-600 focus:ring-red-500">
+                                                <span>Hapus Foto Sampul</span>
+                                            </label>
                                         </div>
                                     @endif
+                                    <input type="file" name="foto_sampul" accept="image/*" class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-2.5 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-slate-200 file:text-slate-800 hover:file:bg-slate-300 cursor-pointer">
+                                    <p class="text-[10px] text-slate-400 mt-1.5 font-medium">Format: JPG, PNG, WEBP. Maks 6MB. Rasio landscape (contoh: 1920x600 px).</p>
                                 </div>
-                                <label class="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">Unggah Foto Resmi</label>
-                                <input type="file" name="foto" accept="image/*" class="text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-red-50 file:text-red-700 hover:file:bg-red-100 cursor-pointer">
-                                <p class="text-[11px] text-slate-400 mt-2 font-medium">Format: JPG, PNG, WEBP. Maks 4MB. Disarankan foto portrait formal.</p>
                             </div>
 
                             {{-- Form Fields --}}

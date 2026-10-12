@@ -40,6 +40,7 @@ class TeacherProfile extends Model
         'bio',
         'filosofi_mengajar',
         'foto',
+        'foto_sampul',
         'keahlian',
         'riwayat_pendidikan',
         'sertifikasi',
@@ -113,6 +114,15 @@ class TeacherProfile extends Model
 
         if ($this->user?->avatar) {
             return Storage::url($this->user->avatar);
+        }
+
+        return null;
+    }
+
+    public function getCoverUrlAttribute(): ?string
+    {
+        if ($this->foto_sampul) {
+            return Storage::url($this->foto_sampul);
         }
 
         return null;

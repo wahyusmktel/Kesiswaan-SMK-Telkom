@@ -44,6 +44,8 @@ class TeacherPortfolioManagementController extends Controller
             'filosofi_mengajar' => ['nullable', 'string', 'max:500'],
             'keahlian' => ['nullable', 'string'], // Comma-separated string from input
             'foto' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:4096'],
+            'foto_sampul' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:6144'],
+            'hapus_foto_sampul' => ['nullable', 'boolean'],
             'is_published' => ['nullable', 'boolean'],
             'sosial_media.linkedin' => ['nullable', 'url', 'max:255'],
             'sosial_media.github' => ['nullable', 'url', 'max:255'],
@@ -66,6 +68,19 @@ class TeacherPortfolioManagementController extends Controller
                 Storage::disk('public')->delete($profile->foto);
             }
             $profile->foto = $request->file('foto')->store('teacher-profiles', 'public');
+        }
+
+        // Process foto sampul / cover upload or delete
+        if ($request->boolean('hapus_foto_sampul')) {
+            if ($profile->foto_sampul && Storage::disk('public')->exists($profile->foto_sampul)) {
+                Storage::disk('public')->delete($profile->foto_sampul);
+            }
+            $profile->foto_sampul = null;
+        } elseif ($request->hasFile('foto_sampul')) {
+            if ($profile->foto_sampul && Storage::disk('public')->exists($profile->foto_sampul)) {
+                Storage::disk('public')->delete($profile->foto_sampul);
+            }
+            $profile->foto_sampul = $request->file('foto_sampul')->store('teacher-covers', 'public');
         }
 
         // Process keahlian (parse comma-separated to clean array)
