@@ -275,17 +275,20 @@
             </div>
         </header>
 
-        {{-- Breadcrumb Nav --}}
-        <nav aria-label="Breadcrumb" class="pt-28 pb-3 bg-slate-900 border-b border-slate-800 text-xs">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between text-slate-400">
-                <div class="flex items-center gap-2">
-                    <a href="{{ route('welcome') }}" class="hover:text-white transition">Beranda</a>
-                    <svg class="w-3.5 h-3.5 text-slate-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
-                    <a href="{{ route('pegawai.index') }}" class="hover:text-white transition">Pegawai</a>
-                    <svg class="w-3.5 h-3.5 text-slate-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
-                    <span class="text-slate-200 font-bold truncate">{{ $teacher->display_name }}</span>
+        {{-- Top Spacer for Fixed Header --}}
+        <div class="h-16 sm:h-20"></div>
+
+        {{-- Breadcrumb Nav (Soft Gray Background, Teks Berada di Tengah Area) --}}
+        <nav aria-label="Breadcrumb" class="bg-slate-100/90 border-y border-slate-200/80 text-xs py-3.5 transition-colors">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between text-slate-500 min-h-[1.75rem]">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <a href="{{ route('welcome') }}" class="hover:text-red-600 transition font-medium">Beranda</a>
+                    <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                    <a href="{{ route('pegawai.index') }}" class="hover:text-red-600 transition font-medium">Pegawai</a>
+                    <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                    <span class="text-slate-900 font-bold truncate">{{ $teacher->display_name }}</span>
                 </div>
-                <a href="{{ route('pegawai.index') }}" class="hidden sm:inline-flex items-center gap-1.5 text-red-400 hover:text-red-300 font-bold text-xs">
+                <a href="{{ route('pegawai.index') }}" class="hidden sm:inline-flex items-center gap-1.5 text-red-600 hover:text-red-700 font-bold text-xs transition shrink-0 ml-4">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                     <span>Kembali ke Direktori</span>
                 </a>
