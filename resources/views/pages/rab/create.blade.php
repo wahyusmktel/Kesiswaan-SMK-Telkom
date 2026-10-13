@@ -1,5 +1,5 @@
 <x-app-layout>
-<div class="space-y-6" x-data="rabForm({
+<div class="max-w-6xl mx-auto space-y-6" x-data="rabForm({
     aiEndpoint: '{{ route('rab.ai-generate') }}',
     csrfToken: '{{ csrf_token() }}',
     initialData: {
@@ -35,7 +35,6 @@
         ])) }}
     }
 })">
-    <div class="max-w-6xl mx-auto space-y-6">
 
         {{-- Header Bar --}}
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
@@ -465,7 +464,6 @@
         </div>
 
     </div>
-</div>
 
 <script>
 function rabForm(config) {
