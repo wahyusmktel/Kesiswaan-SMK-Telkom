@@ -1,7 +1,5 @@
-@extends('layouts.app')
-
-@section('content')
-<div class="min-h-screen bg-slate-50/70 p-4 sm:p-6 lg:p-8" x-data="rabForm({
+<x-app-layout>
+<div class="space-y-6" x-data="rabForm({
     aiEndpoint: '{{ route('rab.ai-generate') }}',
     csrfToken: '{{ csrf_token() }}',
     initialData: {
@@ -558,4 +556,4 @@ function rabForm(config) {
     };
 }
 </script>
-@endsection
+</x-app-layout>

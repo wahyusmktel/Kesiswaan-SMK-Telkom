@@ -1,8 +1,5 @@
-@extends('layouts.app')
-
-@section('content')
-<div class="min-h-screen bg-slate-50/70 p-4 sm:p-6 lg:p-8">
-    <div class="max-w-7xl mx-auto space-y-6">
+<x-app-layout>
+<div class="space-y-6">
 
         {{-- Top Header --}}
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
@@ -300,4 +297,4 @@
 
     </div>
 </div>
-@endsection
+</x-app-layout>

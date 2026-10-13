@@ -513,7 +513,8 @@
             <main class="flex-1 overflow-y-auto bg-gray-50 p-4 sm:p-6 lg:p-8">
                 @include('shared.survey-notification-card')
 
-                {{ $slot }}
+                {{ $slot ?? '' }}
+                @yield('content')
             </main>
 
             <footer class="flex-shrink-0 bg-white border-t border-gray-200">
