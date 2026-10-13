@@ -486,8 +486,6 @@
             <a href="{{ route('super-admin.system-update.index') }}" class="submenu-item {{ request()->routeIs('super-admin.system-update.*') ? 'submenu-item-active' : '' }}">System Update (Git)</a>
         </div>
     </li>
-    @endif
-
 @endif
 @endrole
 
