@@ -3,6 +3,7 @@
     aiEndpoint: '{{ route('rab.ai-generate') }}',
     csrfToken: '{{ csrf_token() }}',
     initialData: {
+        jenis_pengajuan: '{{ old('jenis_pengajuan', $defaults['jenis_pengajuan'] ?? 'rab') }}',
         judul_pengajuan: '{{ old('judul_pengajuan', $defaults['judul_pengajuan']) }}',
         tahun_anggaran: '{{ old('tahun_anggaran', $defaults['tahun_anggaran']) }}',
         nomor_akun: '{{ old('nomor_akun', $defaults['nomor_akun']) }}',
@@ -93,6 +94,48 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                    {{-- Opsi Pilihan: RAB vs Reimburse --}}
+                    <div class="md:col-span-12">
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                            Pilih Jenis Pengajuan <span class="text-red-500">*</span>
+                        </label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {{-- Opsi 1: RAB --}}
+                            <label :class="formData.jenis_pengajuan === 'rab' ? 'border-red-600 bg-red-50/40 ring-2 ring-red-500/20' : 'border-slate-200 bg-white hover:border-slate-300'"
+                                class="relative flex items-center p-3.5 rounded-2xl border-2 cursor-pointer transition-all">
+                                <input type="radio" name="jenis_pengajuan" value="rab" x-model="formData.jenis_pengajuan" class="sr-only">
+                                <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center mr-3 shrink-0"
+                                    :class="formData.jenis_pengajuan === 'rab' ? 'border-red-600 bg-red-600' : 'border-slate-300'">
+                                    <div class="w-2 h-2 rounded-full bg-white" x-show="formData.jenis_pengajuan === 'rab'"></div>
+                                </div>
+                                <div>
+                                    <div class="font-extrabold text-sm text-slate-900 flex items-center gap-2">
+                                        <span>Rencana Anggaran Biaya (RAB)</span>
+                                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">RAB</span>
+                                    </div>
+                                    <p class="text-xs text-slate-500 mt-0.5">Pengajuan rencana pengadaan anggaran sebelum kegiatan belanja dilaksanakan.</p>
+                                </div>
+                            </label>
+
+                            {{-- Opsi 2: Reimburse --}}
+                            <label :class="formData.jenis_pengajuan === 'reimburse' ? 'border-amber-600 bg-amber-50/40 ring-2 ring-amber-500/20' : 'border-slate-200 bg-white hover:border-slate-300'"
+                                class="relative flex items-center p-3.5 rounded-2xl border-2 cursor-pointer transition-all">
+                                <input type="radio" name="jenis_pengajuan" value="reimburse" x-model="formData.jenis_pengajuan" class="sr-only">
+                                <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center mr-3 shrink-0"
+                                    :class="formData.jenis_pengajuan === 'reimburse' ? 'border-amber-600 bg-amber-600' : 'border-slate-300'">
+                                    <div class="w-2 h-2 rounded-full bg-white" x-show="formData.jenis_pengajuan === 'reimburse'"></div>
+                                </div>
+                                <div>
+                                    <div class="font-extrabold text-sm text-slate-900 flex items-center gap-2">
+                                        <span>Pengajuan Reimburse</span>
+                                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">REIMBURSE</span>
+                                    </div>
+                                    <p class="text-xs text-slate-500 mt-0.5">Pengajuan penggantian biaya/dana yang telah ditalangi sebelumnya.</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
                     {{-- Judul Pengajuan --}}
                     <div class="md:col-span-8">
                         <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">

@@ -16,6 +16,7 @@ class RabSubmission extends Model
     protected $fillable = [
         'user_id',
         'nomor_pengajuan',
+        'jenis_pengajuan',
         'judul_pengajuan',
         'tahun_anggaran',
         'nomor_akun',
@@ -71,6 +72,7 @@ class RabSubmission extends Model
                 $table->id();
                 $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
                 $table->string('nomor_pengajuan')->nullable();
+                $table->string('jenis_pengajuan', 30)->default('rab'); // 'rab' atau 'reimburse'
                 $table->string('judul_pengajuan');
                 $table->string('tahun_anggaran', 20)->default(date('Y'));
                 $table->string('nomor_akun', 50)->nullable();
@@ -100,6 +102,10 @@ class RabSubmission extends Model
                 $table->text('catatan')->nullable();
 
                 $table->timestamps();
+            });
+        } elseif (!Schema::hasColumn('rab_submissions', 'jenis_pengajuan')) {
+            Schema::table('rab_submissions', function (Blueprint $table) {
+                $table->string('jenis_pengajuan', 30)->default('rab')->after('nomor_pengajuan');
             });
         }
 

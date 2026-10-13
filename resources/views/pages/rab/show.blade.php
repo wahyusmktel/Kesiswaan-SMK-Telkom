@@ -12,8 +12,17 @@
                 </a>
                 <div class="flex items-center gap-2">
                     <h1 class="text-2xl font-black text-slate-900 tracking-tight">
-                        Dokumen RAB
+                        Dokumen {{ ($rab->jenis_pengajuan ?? 'rab') === 'reimburse' ? 'Reimburse' : 'RAB' }}
                     </h1>
+                    @if(($rab->jenis_pengajuan ?? 'rab') === 'reimburse')
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border bg-amber-50 text-amber-700 border-amber-200 uppercase">
+                            Reimburse
+                        </span>
+                    @else
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border bg-blue-50 text-blue-700 border-blue-200 uppercase">
+                            RAB
+                        </span>
+                    @endif
                     @php
                         $badgeClass = match($rab->status) {
                             'disetujui' => 'bg-emerald-100 text-emerald-800 border-emerald-200',
@@ -27,7 +36,7 @@
                     </span>
                 </div>
                 <p class="text-xs text-slate-400 mt-0.5 font-semibold">
-                    {{ $rab->nomor_pengajuan ?: '-' }} • Dibuat oleh {{ $rab->pembuat_nama ?: ($rab->user?->name ?: '-') }}
+                    {{ $rab->nomor_pengajuan ?: '-' }} • Diajukan oleh {{ $rab->pembuat_nama ?: ($rab->user?->name ?: '-') }}
                 </p>
             </div>
 
@@ -86,27 +95,37 @@
         {{-- Preview Document Card (Styled identical to PDF print layout) --}}
         <div class="bg-white rounded-3xl p-8 sm:p-12 border border-slate-200 shadow-xl overflow-hidden relative font-sans">
             {{-- Top Kop Surat --}}
-            <div class="flex items-center gap-6 border-b-4 border-red-700 pb-4 mb-6">
-                <div class="w-24 shrink-0 flex flex-col items-center justify-center text-center">
-                    <img src="{{ asset('images/teaching-module/smk-telkom-lampung.png') }}"
-                        alt="Logo SMK Telkom"
-                        class="w-20 h-auto object-contain"
-                        onerror="this.style.display='none'">
+            @if(!empty($kopBase64))
+                <div class="-mx-8 sm:-mx-12 -mt-8 sm:-mt-12 mb-6">
+                    <img src="{{ $kopBase64 }}" alt="Kop Surat" class="w-full h-auto block">
                 </div>
-                <div class="flex-1 text-center text-slate-900">
-                    <h3 class="font-bold text-sm tracking-wider uppercase text-slate-800">YAYASAN PENDIDIKAN TELKOM</h3>
-                    <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-950 my-0.5">SMK Telkom Lampung</h2>
-                    <p class="text-[11px] italic text-slate-600">Kompetensi Keahlian :</p>
-                    <p class="text-[10px] text-slate-600">(1) Teknik Jaringan Akses Telekomunikasi (2) Rekayasa Perangkat Lunak (3) Teknik Komputer Dan Jaringan (4) Animasi</p>
-                    <p class="text-[10px] text-slate-600">Alamat: Jl. Raya Gadingrejo, Kec. Gading Rejo, Kabupaten Pringsewu, Lampung 35372 - Telp/Faks : 0721 5621 547</p>
-                    <p class="text-[10px] font-bold text-slate-800">NPSN : 69944770</p>
-                    <p class="text-[10px] text-slate-600">w: www.smktelkom-lpg.sch.id e: smktelkom9914@gmail.com / telkomschool@smktelkom-lpg.sch.id</p>
+            @else
+                <div class="flex items-center gap-6 border-b-4 border-red-700 pb-4 mb-6">
+                    <div class="w-24 shrink-0 flex flex-col items-center justify-center text-center">
+                        <img src="{{ asset('images/teaching-module/smk-telkom-lampung.png') }}"
+                            alt="Logo SMK Telkom"
+                            class="w-20 h-auto object-contain"
+                            onerror="this.style.display='none'">
+                    </div>
+                    <div class="flex-1 text-center text-slate-900">
+                        <h3 class="font-bold text-sm tracking-wider uppercase text-slate-800">YAYASAN PENDIDIKAN TELKOM</h3>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-950 my-0.5">SMK Telkom Lampung</h2>
+                        <p class="text-[11px] italic text-slate-600">Kompetensi Keahlian :</p>
+                        <p class="text-[10px] text-slate-600">(1) Teknik Jaringan Akses Telekomunikasi (2) Rekayasa Perangkat Lunak (3) Teknik Komputer Dan Jaringan (4) Animasi</p>
+                        <p class="text-[10px] text-slate-600">Alamat: Jl. Raya Gadingrejo, Kec. Gading Rejo, Kabupaten Pringsewu, Lampung 35372 - Telp/Faks : 0721 5621 547</p>
+                        <p class="text-[10px] font-bold text-slate-800">NPSN : 69944770</p>
+                        <p class="text-[10px] text-slate-600">w: www.smktelkom-lpg.sch.id e: smktelkom9914@gmail.com / telkomschool@smktelkom-lpg.sch.id</p>
+                    </div>
                 </div>
-            </div>
+            @endif
 
             {{-- Document Title --}}
             <div class="text-center my-6 space-y-1">
-                <h2 class="text-base sm:text-lg font-black text-slate-900 tracking-wide uppercase">RENCANA ANGGARAN BIAYA (RAB)</h2>
+                @if(($rab->jenis_pengajuan ?? 'rab') === 'reimburse')
+                    <h2 class="text-base sm:text-lg font-black text-slate-900 tracking-wide uppercase">PENGAJUAN REIMBURSEMENT</h2>
+                @else
+                    <h2 class="text-base sm:text-lg font-black text-slate-900 tracking-wide uppercase">RENCANA ANGGARAN BIAYA (RAB)</h2>
+                @endif
                 <h3 class="text-sm sm:text-base font-bold text-slate-900 uppercase">{{ $rab->judul_pengajuan }}</h3>
                 <h4 class="text-sm sm:text-base font-bold text-slate-900 uppercase">TAHUN ANGGARAN {{ $rab->tahun_anggaran }}</h4>
             </div>
@@ -163,7 +182,7 @@
                         @endforeach
                         <tr class="font-bold border-t-2 border-black bg-slate-50">
                             <td colspan="6" class="border-r border-black p-2.5 text-right uppercase tracking-wider font-bold">
-                                TOTAL ANGGARAN
+                                {{ ($rab->jenis_pengajuan ?? 'rab') === 'reimburse' ? 'TOTAL REIMBURSEMENT' : 'TOTAL ANGGARAN' }}
                             </td>
                             <td class="p-2.5 text-right font-black text-sm whitespace-nowrap">
                                 Rp {{ number_format($rab->total_anggaran, 0, ',', '.') }}
@@ -186,9 +205,9 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-black">
-                        {{-- Dibuat oleh --}}
+                        {{-- Dibuat / Diajukan oleh --}}
                         <tr>
-                            <td class="border-r border-black p-2 font-medium">Dibuat oleh</td>
+                            <td class="border-r border-black p-2 font-medium">{{ ($rab->jenis_pengajuan ?? 'rab') === 'reimburse' ? 'Diajukan oleh' : 'Dibuat oleh' }}</td>
                             <td class="border-r border-black p-2 text-center">{{ $rab->pembuat_nama }}{{ $rab->pembuat_nik ? ' / ' . $rab->pembuat_nik : '' }}</td>
                             <td class="border-r border-black p-2 text-center">{{ $rab->pembuat_jabatan ?: '-' }}</td>
                             <td class="border-r border-black p-2 text-center whitespace-nowrap">{{ $rab->tanggal_dibuat ? $rab->tanggal_dibuat->format('d-M-y') : '-' }}</td>

@@ -10,6 +10,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class RabController extends Controller
@@ -34,6 +35,11 @@ class RabController extends Controller
         RabSubmission::ensureTableExists();
 
         $query = RabSubmission::query()->with(['items', 'user']);
+
+        // Filter Jenis Pengajuan (RAB vs Reimburse)
+        if ($request->filled('jenis') && in_array($request->jenis, ['rab', 'reimburse'])) {
+            $query->where('jenis_pengajuan', $request->jenis);
+        }
 
         // Filter Pencarian
         $search = trim((string) $request->input('search'));
@@ -63,6 +69,8 @@ class RabController extends Controller
         // Ringkasan Statistik
         $stats = [
             'total_dokumen' => RabSubmission::count(),
+            'total_rab' => RabSubmission::where('jenis_pengajuan', 'rab')->count(),
+            'total_reimburse' => RabSubmission::where('jenis_pengajuan', 'reimburse')->count(),
             'total_nominal' => RabSubmission::sum('total_anggaran'),
             'draft' => RabSubmission::where('status', 'draft')->count(),
             'diajukan' => RabSubmission::where('status', 'diajukan')->count(),
@@ -98,6 +106,7 @@ class RabController extends Controller
 
         // Nilai Default Cerdas
         $defaults = [
+            'jenis_pengajuan' => 'rab',
             'judul_pengajuan' => '',
             'tahun_anggaran' => date('Y'),
             'nomor_akun' => '5611104',
@@ -142,6 +151,7 @@ class RabController extends Controller
         RabSubmission::ensureTableExists();
 
         $validated = $request->validate([
+            'jenis_pengajuan' => 'required|in:rab,reimburse',
             'judul_pengajuan' => 'required|string|max:255',
             'tahun_anggaran' => 'required|string|max:20',
             'nomor_akun' => 'required|string|max:50',
@@ -178,12 +188,17 @@ class RabController extends Controller
             'items.*.harga_satuan' => 'required|numeric|min:0',
         ]);
 
-        $nextNumber = RabSubmission::where('tahun_anggaran', $validated['tahun_anggaran'])->count() + 1;
-        $nomorPengajuan = sprintf("RAB/%s/%03d", $validated['tahun_anggaran'], $nextNumber);
+        $jenis = $validated['jenis_pengajuan'] ?? 'rab';
+        $prefix = $jenis === 'reimburse' ? 'RMB' : 'RAB';
+        $nextNumber = RabSubmission::where('tahun_anggaran', $validated['tahun_anggaran'])
+            ->where('jenis_pengajuan', $jenis)
+            ->count() + 1;
+        $nomorPengajuan = sprintf("%s/%s/%03d", $prefix, $validated['tahun_anggaran'], $nextNumber);
 
         $rab = RabSubmission::create([
             'user_id' => Auth::id(),
             'nomor_pengajuan' => $nomorPengajuan,
+            'jenis_pengajuan' => $jenis,
             'judul_pengajuan' => strtoupper(trim($validated['judul_pengajuan'])),
             'tahun_anggaran' => $validated['tahun_anggaran'],
             'nomor_akun' => $validated['nomor_akun'],
@@ -229,7 +244,8 @@ class RabController extends Controller
 
         $rab->recalculateTotal();
 
-        return redirect()->route('rab.show', $rab)->with('success', 'Rencana Anggaran Biaya (RAB) berhasil dibuat.');
+        $label = $jenis === 'reimburse' ? 'Pengajuan Reimburse' : 'Rencana Anggaran Biaya (RAB)';
+        return redirect()->route('rab.show', $rab)->with('success', "{$label} berhasil dibuat.");
     }
 
     /**
@@ -240,7 +256,10 @@ class RabController extends Controller
         $this->ensureNotSiswa();
         $rab->loadMissing(['items', 'user']);
 
-        return view('pages.rab.show', compact('rab'));
+        $kopBase64 = $this->getKopBase64();
+        $settings = AppSetting::first();
+
+        return view('pages.rab.show', compact('rab', 'kopBase64', 'settings'));
     }
 
     /**
@@ -262,6 +281,7 @@ class RabController extends Controller
         $this->ensureNotSiswa();
 
         $validated = $request->validate([
+            'jenis_pengajuan' => 'required|in:rab,reimburse',
             'judul_pengajuan' => 'required|string|max:255',
             'tahun_anggaran' => 'required|string|max:20',
             'nomor_akun' => 'required|string|max:50',
@@ -298,6 +318,7 @@ class RabController extends Controller
         ]);
 
         $rab->update([
+            'jenis_pengajuan' => $validated['jenis_pengajuan'],
             'judul_pengajuan' => strtoupper(trim($validated['judul_pengajuan'])),
             'tahun_anggaran' => $validated['tahun_anggaran'],
             'nomor_akun' => $validated['nomor_akun'],
@@ -345,7 +366,8 @@ class RabController extends Controller
 
         $rab->recalculateTotal();
 
-        return redirect()->route('rab.show', $rab)->with('success', 'Perubahan Dokumen RAB berhasil disimpan.');
+        $label = $rab->jenis_pengajuan === 'reimburse' ? 'Pengajuan Reimburse' : 'Dokumen RAB';
+        return redirect()->route('rab.show', $rab)->with('success', "Perubahan {$label} berhasil disimpan.");
     }
 
     /**
@@ -356,7 +378,7 @@ class RabController extends Controller
         $this->ensureNotSiswa();
         $rab->delete();
 
-        return redirect()->route('rab.index')->with('success', 'Dokumen RAB berhasil dihapus.');
+        return redirect()->route('rab.index')->with('success', 'Dokumen berhasil dihapus.');
     }
 
     /**
@@ -378,7 +400,7 @@ class RabController extends Controller
             'catatan' => $validated['catatan'] ?? $rab->catatan,
         ]);
 
-        return back()->with('success', 'Status dokumen RAB berhasil diperbarui.');
+        return back()->with('success', 'Status dokumen berhasil diperbarui.');
     }
 
     /**
@@ -416,7 +438,8 @@ class RabController extends Controller
         $rab->loadMissing('items');
 
         $pdf = $this->buildPdf($rab);
-        $filename = 'RAB_' . Str::slug($rab->judul_pengajuan) . '_' . ($rab->tahun_anggaran ?? date('Y')) . '.pdf';
+        $prefix = $rab->jenis_pengajuan === 'reimburse' ? 'Reimburse' : 'RAB';
+        $filename = $prefix . '_' . Str::slug($rab->judul_pengajuan) . '_' . ($rab->tahun_anggaran ?? date('Y')) . '.pdf';
 
         if ($request->query('view') === 'stream') {
             return $pdf->stream($filename);
@@ -433,10 +456,12 @@ class RabController extends Controller
         $this->ensureNotSiswa();
         $rab->loadMissing('items');
 
+        $kopBase64 = $this->getKopBase64();
         $logoDataUri = $this->imageDataUri(public_path('images/teaching-module/smk-telkom-lampung.png'));
         $ribbonDataUri = $this->imageDataUri(public_path('images/teaching-module/header-ribbon.png'));
+        $settings = AppSetting::first();
 
-        return view('pages.rab.print', compact('rab', 'logoDataUri', 'ribbonDataUri'));
+        return view('pages.rab.print', compact('rab', 'kopBase64', 'logoDataUri', 'ribbonDataUri', 'settings'));
     }
 
     /**
@@ -444,11 +469,13 @@ class RabController extends Controller
      */
     private function buildPdf(RabSubmission $rab)
     {
+        $kopBase64 = $this->getKopBase64();
         $logoDataUri = $this->imageDataUri(public_path('images/teaching-module/smk-telkom-lampung.png'));
         $ribbonDataUri = $this->imageDataUri(public_path('images/teaching-module/header-ribbon.png'));
 
         return Pdf::loadView('pages.rab.pdf', [
             'rab' => $rab,
+            'kopBase64' => $kopBase64,
             'logoDataUri' => $logoDataUri,
             'ribbonDataUri' => $ribbonDataUri,
             'settings' => AppSetting::first(),
@@ -456,6 +483,21 @@ class RabController extends Controller
             ->setPaper('a4', 'portrait')
             ->setOption('defaultFont', 'Arial')
             ->setOption('isRemoteEnabled', true);
+    }
+
+    /**
+     * Ambil Base64 Data URI untuk gambar Kop Surat Penilaian UKK dari App Settings.
+     */
+    private function getKopBase64(): ?string
+    {
+        $settings = AppSetting::first();
+        $kopPath = $settings->kop_surat_ukk ?? null;
+        if ($kopPath && Storage::disk('public')->exists($kopPath)) {
+            $kopData = Storage::disk('public')->get($kopPath);
+            $kopMime = Storage::disk('public')->mimeType($kopPath);
+            return 'data:' . $kopMime . ';base64,' . base64_encode($kopData);
+        }
+        return null;
     }
 
     /**

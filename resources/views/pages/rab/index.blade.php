@@ -13,10 +13,10 @@
                     </span>
                 </div>
                 <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
-                    Rencana Anggaran Biaya (RAB)
+                    RAB & Pengajuan Reimburse
                 </h1>
                 <p class="text-sm text-slate-500 mt-0.5">
-                    Kelola pengadaan, rincian biaya anggaran, integrasi AI, dan cetak dokumen resmi Telkom Schools.
+                    Kelola rencana anggaran biaya, pengajuan reimburse, verifikasi keuangan, dan cetak dokumen resmi Telkom Schools.
                 </p>
             </div>
 
@@ -26,7 +26,7 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
-                    <span>Buat Pengajuan RAB</span>
+                    <span>Buat Pengajuan Baru</span>
                 </a>
             </div>
         </div>
@@ -54,6 +54,7 @@
                 <div>
                     <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Dokumen</p>
                     <h3 class="text-2xl font-black text-slate-900 mt-0.5">{{ number_format($stats['total_dokumen']) }}</h3>
+                    <p class="text-[11px] text-slate-400 mt-0.5">{{ $stats['total_rab'] }} RAB • {{ $stats['total_reimburse'] }} Reimburse</p>
                 </div>
             </div>
 
@@ -64,7 +65,7 @@
                     </svg>
                 </div>
                 <div>
-                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Anggaran</p>
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Nominal</p>
                     <h3 class="text-xl sm:text-2xl font-black text-emerald-600 mt-0.5">
                         Rp {{ number_format($stats['total_nominal'], 0, ',', '.') }}
                     </h3>
@@ -101,7 +102,7 @@
         {{-- Filters & Search --}}
         <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
             <form method="GET" action="{{ route('rab.index') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
-                <div class="lg:col-span-5 relative">
+                <div class="lg:col-span-4 relative">
                     <input type="text" name="search" value="{{ $search }}"
                         placeholder="Cari judul pengajuan, nomor akun, DRK, pembuat..."
                         class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-red-500 focus:ring-red-500/20">
@@ -110,7 +111,16 @@
                     </svg>
                 </div>
 
-                <div class="lg:col-span-3">
+                {{-- Filter Jenis Pengajuan --}}
+                <div class="lg:col-span-2">
+                    <select name="jenis" class="w-full py-2.5 px-3 rounded-xl border border-slate-200 text-sm focus:border-red-500 focus:ring-red-500/20">
+                        <option value="">Semua Jenis</option>
+                        <option value="rab" {{ request('jenis') === 'rab' ? 'selected' : '' }}>RAB</option>
+                        <option value="reimburse" {{ request('jenis') === 'reimburse' ? 'selected' : '' }}>Reimburse</option>
+                    </select>
+                </div>
+
+                <div class="lg:col-span-2">
                     <select name="status" class="w-full py-2.5 px-3 rounded-xl border border-slate-200 text-sm focus:border-red-500 focus:ring-red-500/20">
                         <option value="">Semua Status</option>
                         <option value="draft" {{ request('status') === 'draft' ? 'selected' : '' }}>Draft</option>
@@ -134,7 +144,7 @@
                         class="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold rounded-xl transition-colors">
                         Filter
                     </button>
-                    @if(request()->hasAny(['search', 'status', 'tahun']))
+                    @if(request()->hasAny(['search', 'jenis', 'status', 'tahun']))
                         <a href="{{ route('rab.index') }}"
                             class="p-2.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors" title="Reset Filter">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -164,14 +174,26 @@
                         @forelse($rabs as $rab)
                             <tr class="hover:bg-slate-50/60 transition-colors">
                                 <td class="py-4 px-5">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        @if(($rab->jenis_pengajuan ?? 'rab') === 'reimburse')
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-200">
+                                                Reimburse
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-blue-100 text-blue-800 border border-blue-200">
+                                                RAB
+                                            </span>
+                                        @endif
+                                        <span class="text-xs font-semibold text-slate-400">
+                                            {{ $rab->nomor_pengajuan ?: '-' }}
+                                        </span>
+                                    </div>
                                     <div class="font-bold text-slate-900 text-base leading-tight">
                                         <a href="{{ route('rab.show', $rab) }}" class="hover:text-red-600 transition-colors">
                                             {{ $rab->judul_pengajuan }}
                                         </a>
                                     </div>
                                     <div class="text-xs font-semibold text-slate-400 mt-1 flex items-center gap-2">
-                                        <span>{{ $rab->nomor_pengajuan ?: '-' }}</span>
-                                        <span>•</span>
                                         <span class="text-red-600 font-bold">TA {{ $rab->tahun_anggaran }}</span>
                                     </div>
                                 </td>

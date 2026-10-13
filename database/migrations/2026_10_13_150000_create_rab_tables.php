@@ -16,6 +16,7 @@ return new class extends Migration
                 $table->id();
                 $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
                 $table->string('nomor_pengajuan')->nullable();
+                $table->string('jenis_pengajuan', 30)->default('rab'); // rab, reimburse
                 $table->string('judul_pengajuan');
                 $table->string('tahun_anggaran', 20)->default(date('Y'));
                 $table->string('nomor_akun', 50)->nullable();

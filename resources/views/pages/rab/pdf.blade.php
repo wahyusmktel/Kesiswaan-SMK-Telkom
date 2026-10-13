@@ -2,11 +2,11 @@
 <html lang="id">
 <head>
     <meta charset="utf-8">
-    <title>RAB - {{ $rab->judul_pengajuan }}</title>
+    <title>{{ ($rab->jenis_pengajuan ?? 'rab') === 'reimburse' ? 'Reimburse' : 'RAB' }} - {{ $rab->judul_pengajuan }}</title>
     <style>
         @page {
             size: A4 portrait;
-            margin: 15mm 18mm 15mm 18mm;
+            margin: 0;
         }
 
         * {
@@ -15,24 +15,36 @@
 
         body {
             font-family: Arial, Helvetica, sans-serif;
-            font-size: 9pt;
+            font-size: 8.8pt;
             color: #000000;
             line-height: 1.3;
             margin: 0;
             padding: 0;
+            background: #ffffff;
         }
 
-        /* Top-right decorative ribbon */
-        .header-ribbon {
-            position: fixed;
-            top: -15mm;
-            right: -18mm;
-            width: 145px;
-            height: auto;
-            z-index: 10;
+        /* ── KOP SURAT UKK (NO MARGIN) ── */
+        .kop-banner {
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            line-height: 0;
         }
 
-        /* Kop Surat */
+        .kop-banner img {
+            width: 100%;
+            display: block;
+            margin: 0;
+            padding: 0;
+            border: 0;
+        }
+
+        /* Fallback Kop Surat Text (hanya jika kop belum diupload di settings) */
+        .kop-fallback-wrap {
+            padding: 10mm 12mm 0 12mm;
+            position: relative;
+        }
+
         .kop-table {
             width: 100%;
             border-collapse: collapse;
@@ -67,7 +79,7 @@
         }
 
         .kop-yayasan {
-            font-size: 11.5pt;
+            font-size: 11pt;
             font-weight: bold;
             letter-spacing: 0.8px;
             color: #111111;
@@ -76,7 +88,7 @@
         }
 
         .kop-sekolah {
-            font-size: 21pt;
+            font-size: 20pt;
             font-weight: 800;
             color: #000000;
             margin: 1px 0 2px 0;
@@ -84,61 +96,65 @@
         }
 
         .kop-keahlian-title {
-            font-size: 8pt;
+            font-size: 7.8pt;
             font-style: italic;
             color: #222222;
             margin: 0;
         }
 
         .kop-keahlian-list {
-            font-size: 7.2pt;
+            font-size: 7pt;
             color: #222222;
             margin: 1px 0;
         }
 
         .kop-alamat {
-            font-size: 7.2pt;
+            font-size: 7pt;
             color: #222222;
             margin: 1px 0;
         }
 
         .kop-npsn {
-            font-size: 7.2pt;
+            font-size: 7pt;
             font-weight: bold;
             color: #222222;
             margin: 1px 0;
         }
 
         .kop-kontak {
-            font-size: 7.2pt;
+            font-size: 7pt;
             color: #222222;
             margin: 1px 0;
         }
 
-        /* Red Divider Line */
         .red-divider {
             width: 100%;
             height: 2.2pt;
             background-color: #b91c1c;
             margin-top: 4px;
-            margin-bottom: 14px;
+            margin-bottom: 8px;
+        }
+
+        /* ── DOKUMEN KONTEN (MARGIN SEMPIT) ── */
+        .doc-content {
+            padding: 5mm 12mm 10mm 12mm; /* Sempitkan padding agar tabel lebih lega */
         }
 
         /* Document Title */
         .doc-title-container {
             text-align: center;
-            margin-bottom: 14px;
+            margin-bottom: 12px;
         }
 
         .doc-title-main {
-            font-size: 12.5pt;
+            font-size: 12pt;
             font-weight: bold;
             margin: 0 0 2px 0;
-            letter-spacing: 0.3px;
+            letter-spacing: 0.4px;
         }
 
         .doc-title-subject {
-            font-size: 11.5pt;
+            font-size: 11pt;
             font-weight: bold;
             margin: 0 0 2px 0;
             text-transform: uppercase;
@@ -146,7 +162,7 @@
         }
 
         .doc-title-year {
-            font-size: 11.5pt;
+            font-size: 11pt;
             font-weight: bold;
             margin: 0;
             text-transform: uppercase;
@@ -157,8 +173,8 @@
         .meta-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 12px;
-            font-size: 8.8pt;
+            margin-bottom: 10px;
+            font-size: 8.5pt;
         }
 
         .meta-table td {
@@ -186,14 +202,14 @@
         .items-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 12px;
-            font-size: 8.5pt;
+            margin-bottom: 10px;
+            font-size: 8.2pt;
         }
 
         .items-table th,
         .items-table td {
             border: 0.75pt solid #000000;
-            padding: 4.5px 5px;
+            padding: 4px 5px;
             vertical-align: middle;
         }
 
@@ -202,7 +218,7 @@
             font-weight: bold;
             text-transform: uppercase;
             background-color: #ffffff;
-            font-size: 8.2pt;
+            font-size: 8pt;
         }
 
         .items-table td.col-no {
@@ -244,7 +260,7 @@
 
         .items-table .row-total td {
             font-weight: bold;
-            font-size: 8.5pt;
+            font-size: 8.4pt;
         }
 
         .items-table .total-label {
@@ -257,14 +273,14 @@
         .approval-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 8.2pt;
-            margin-bottom: 8px;
+            font-size: 8pt;
+            margin-bottom: 7px;
         }
 
         .approval-table th,
         .approval-table td {
             border: 0.75pt solid #000000;
-            padding: 4px 6px;
+            padding: 3.5px 5px;
             vertical-align: middle;
         }
 
@@ -299,24 +315,24 @@
         .approval-table .col-ttd {
             width: 14%;
             text-align: center;
-            height: 44px;
+            height: 42px;
         }
 
         .approval-table .catatan-anggaran-cell {
-            padding: 5px 8px;
-            font-size: 8.2pt;
+            padding: 4px 6px;
+            font-size: 8pt;
             vertical-align: top;
-            height: 38px;
+            height: 34px;
         }
 
         /* Catatan Penutup Box */
         .catatan-box {
             width: 100%;
             border: 0.75pt dotted #333333;
-            padding: 5px 8px;
-            font-size: 8.2pt;
-            line-height: 1.35;
-            min-height: 35px;
+            padding: 4px 6px;
+            font-size: 8pt;
+            line-height: 1.3;
+            min-height: 30px;
         }
 
         .catatan-title {
@@ -329,157 +345,170 @@
 </head>
 <body>
 
-    {{-- Top-Right Decorative Ribbon --}}
-    @if(!empty($ribbonDataUri))
-        <img src="{{ $ribbonDataUri }}" alt="Header Ribbon" class="header-ribbon">
+    {{-- KOP SURAT (NO MARGIN) --}}
+    @if(!empty($kopBase64))
+        <div class="kop-banner">
+            <img src="{{ $kopBase64 }}" alt="Kop Surat">
+        </div>
+    @else
+        {{-- Fallback: Kop Surat Teks SMK Telkom Lampung --}}
+        <div class="kop-fallback-wrap">
+            <table class="kop-table">
+                <tr>
+                    <td class="kop-logo-cell">
+                        @if(!empty($logoDataUri))
+                            <img src="{{ $logoDataUri }}" alt="Logo SMK Telkom" class="kop-logo-img">
+                        @else
+                            <div style="font-size: 20pt; font-weight: bold; color: #b91c1c;">TS</div>
+                            <div class="kop-logo-caption">Telkom Schools</div>
+                        @endif
+                    </td>
+                    <td class="kop-text-cell">
+                        <div class="kop-yayasan">YAYASAN PENDIDIKAN TELKOM</div>
+                        <div class="kop-sekolah">SMK Telkom Lampung</div>
+                        <div class="kop-keahlian-title">Kompetensi Keahlian :</div>
+                        <div class="kop-keahlian-list">(1) Teknik Jaringan Akses Telekomunikasi (2) Rekayasa Perangkat Lunak (3) Teknik Komputer Dan Jaringan (4) Animasi</div>
+                        <div class="kop-alamat">Alamat: Jl. Raya Gadingrejo, Kec. Gading Rejo, Kabupaten Pringsewu, Lampung 35372 - Telp/Faks : 0721 5621 547</div>
+                        <div class="kop-npsn">NPSN : 69944770</div>
+                        <div class="kop-kontak">w: www.smktelkom-lpg.sch.id e: smktelkom9914@gmail.com / telkomschool@smktelkom-lpg.sch.id</div>
+                    </td>
+                </tr>
+            </table>
+            <div class="red-divider"></div>
+        </div>
     @endif
 
-    {{-- Kop Surat --}}
-    <table class="kop-table">
-        <tr>
-            <td class="kop-logo-cell">
-                @if(!empty($logoDataUri))
-                    <img src="{{ $logoDataUri }}" alt="Logo SMK Telkom" class="kop-logo-img">
-                @else
-                    <div style="font-size: 20pt; font-weight: bold; color: #b91c1c;">TS</div>
-                    <div class="kop-logo-caption">Telkom Schools</div>
-                @endif
-            </td>
-            <td class="kop-text-cell">
-                <div class="kop-yayasan">YAYASAN PENDIDIKAN TELKOM</div>
-                <div class="kop-sekolah">SMK Telkom Lampung</div>
-                <div class="kop-keahlian-title">Kompetensi Keahlian :</div>
-                <div class="kop-keahlian-list">(1) Teknik Jaringan Akses Telekomunikasi (2) Rekayasa Perangkat Lunak (3) Teknik Komputer Dan Jaringan (4) Animasi</div>
-                <div class="kop-alamat">Alamat: Jl. Raya Gadingrejo, Kec. Gading Rejo, Kabupaten Pringsewu, Lampung 35372 - Telp/Faks : 0721 5621 547</div>
-                <div class="kop-npsn">NPSN : 69944770</div>
-                <div class="kop-kontak">w: www.smktelkom-lpg.sch.id e: smktelkom9914@gmail.com / telkomschool@smktelkom-lpg.sch.id</div>
-            </td>
-        </tr>
-    </table>
+    {{-- DOKUMEN KONTEN --}}
+    <div class="doc-content">
 
-    {{-- Red Divider Line --}}
-    <div class="red-divider"></div>
+        {{-- Document Title --}}
+        <div class="doc-title-container">
+            @if(($rab->jenis_pengajuan ?? 'rab') === 'reimburse')
+                <div class="doc-title-main">PENGAJUAN REIMBURSEMENT</div>
+            @else
+                <div class="doc-title-main">RENCANA ANGGARAN BIAYA (RAB)</div>
+            @endif
+            <div class="doc-title-subject">{{ strtoupper($rab->judul_pengajuan) }}</div>
+            <div class="doc-title-year">TAHUN ANGGARAN {{ $rab->tahun_anggaran }}</div>
+        </div>
 
-    {{-- Document Title --}}
-    <div class="doc-title-container">
-        <div class="doc-title-main">RENCANA ANGGARAN BIAYA (RAB)</div>
-        <div class="doc-title-subject">{{ strtoupper($rab->judul_pengajuan) }}</div>
-        <div class="doc-title-year">TAHUN ANGGARAN {{ $rab->tahun_anggaran }}</div>
-    </div>
-
-    {{-- Metadata Anggaran --}}
-    <table class="meta-table">
-        <tr>
-            <td class="meta-label">NOMOR AKUN</td>
-            <td class="meta-colon">:</td>
-            <td class="meta-value">{{ $rab->nomor_akun }}</td>
-        </tr>
-        <tr>
-            <td class="meta-label">NAMA AKUN</td>
-            <td class="meta-colon">:</td>
-            <td class="meta-value">{{ $rab->nama_akun }}</td>
-        </tr>
-        <tr>
-            <td class="meta-label">DRK</td>
-            <td class="meta-colon">:</td>
-            <td class="meta-value">{{ $rab->drk }}</td>
-        </tr>
-        <tr>
-            <td class="meta-label">KEBUTUHAN WAKTU</td>
-            <td class="meta-colon">:</td>
-            <td class="meta-value">{{ $rab->kebutuhan_waktu }}</td>
-        </tr>
-    </table>
-
-    {{-- Items Table --}}
-    <table class="items-table">
-        <thead>
+        {{-- Metadata Anggaran --}}
+        <table class="meta-table">
             <tr>
-                <th style="width: 5%;">NO</th>
-                <th style="width: 32%;">URAIAN KEGIATAN</th>
-                <th style="width: 22%;">SPESIFIKASI</th>
-                <th style="width: 9%;">SATUAN</th>
-                <th style="width: 6%;">VOL</th>
-                <th style="width: 13%;">HARGA</th>
-                <th style="width: 13%;">JUMLAH</th>
+                <td class="meta-label">NOMOR AKUN</td>
+                <td class="meta-colon">:</td>
+                <td class="meta-value">{{ $rab->nomor_akun }}</td>
             </tr>
-        </thead>
-        <tbody>
-            @forelse($rab->items as $index => $item)
+            <tr>
+                <td class="meta-label">NAMA AKUN</td>
+                <td class="meta-colon">:</td>
+                <td class="meta-value">{{ $rab->nama_akun }}</td>
+            </tr>
+            <tr>
+                <td class="meta-label">DRK</td>
+                <td class="meta-colon">:</td>
+                <td class="meta-value">{{ $rab->drk }}</td>
+            </tr>
+            <tr>
+                <td class="meta-label">KEBUTUHAN WAKTU</td>
+                <td class="meta-colon">:</td>
+                <td class="meta-value">{{ $rab->kebutuhan_waktu }}</td>
+            </tr>
+        </table>
+
+        {{-- Items Table --}}
+        <table class="items-table">
+            <thead>
                 <tr>
-                    <td class="col-no">{{ $index + 1 }}</td>
-                    <td class="col-uraian">{{ $item->uraian_kegiatan }}</td>
-                    <td class="col-spesifikasi">{{ $item->spesifikasi ?: '-' }}</td>
-                    <td class="col-satuan">{{ $item->satuan }}</td>
-                    <td class="col-vol">{{ $item->volume == intval($item->volume) ? intval($item->volume) : number_format($item->volume, 1) }}</td>
-                    <td class="col-harga">Rp {{ number_format($item->harga_satuan, 0, ',', '.') }}</td>
-                    <td class="col-jumlah">Rp {{ number_format($item->jumlah, 0, ',', '.') }}</td>
+                    <th style="width: 5%;">NO</th>
+                    <th style="width: 32%;">URAIAN KEGIATAN</th>
+                    <th style="width: 22%;">SPESIFIKASI</th>
+                    <th style="width: 9%;">SATUAN</th>
+                    <th style="width: 6%;">VOL</th>
+                    <th style="width: 13%;">HARGA</th>
+                    <th style="width: 13%;">JUMLAH</th>
                 </tr>
-            @empty
+            </thead>
+            <tbody>
+                @forelse($rab->items as $index => $item)
+                    <tr>
+                        <td class="col-no">{{ $index + 1 }}</td>
+                        <td class="col-uraian">{{ $item->uraian_kegiatan }}</td>
+                        <td class="col-spesifikasi">{{ $item->spesifikasi ?: '-' }}</td>
+                        <td class="col-satuan">{{ $item->satuan }}</td>
+                        <td class="col-vol">{{ $item->volume == intval($item->volume) ? intval($item->volume) : number_format($item->volume, 1) }}</td>
+                        <td class="col-harga">Rp {{ number_format($item->harga_satuan, 0, ',', '.') }}</td>
+                        <td class="col-jumlah">Rp {{ number_format($item->jumlah, 0, ',', '.') }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 10px;">Belum ada item rincian anggaran.</td>
+                    </tr>
+                @endforelse
+                <tr class="row-total">
+                    <td colspan="6" class="total-label">
+                        {{ ($rab->jenis_pengajuan ?? 'rab') === 'reimburse' ? 'TOTAL REIMBURSEMENT' : 'TOTAL ANGGARAN' }}
+                    </td>
+                    <td class="col-jumlah">Rp {{ number_format($rab->total_anggaran, 0, ',', '.') }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        {{-- Approval Table --}}
+        <table class="approval-table">
+            <thead>
                 <tr>
-                    <td colspan="7" style="text-align: center; padding: 10px;">Belum ada item rincian anggaran.</td>
+                    <th class="col-role"></th>
+                    <th class="col-name">NAMA / NIK</th>
+                    <th class="col-jabatan">JABATAN</th>
+                    <th class="col-tanggal">TANGGAL</th>
+                    <th class="col-ttd">TANDA TANGAN</th>
                 </tr>
-            @endforelse
-            <tr class="row-total">
-                <td colspan="6" class="total-label">TOTAL ANGGARAN</td>
-                <td class="col-jumlah">Rp {{ number_format($rab->total_anggaran, 0, ',', '.') }}</td>
-            </tr>
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                {{-- Dibuat / Diajukan oleh --}}
+                <tr>
+                    <td class="col-role">{{ ($rab->jenis_pengajuan ?? 'rab') === 'reimburse' ? 'Diajukan oleh' : 'Dibuat oleh' }}</td>
+                    <td class="col-name">{{ $rab->pembuat_nama }}{{ $rab->pembuat_nik ? ' / ' . $rab->pembuat_nik : '' }}</td>
+                    <td class="col-jabatan">{{ $rab->pembuat_jabatan ?: '-' }}</td>
+                    <td class="col-tanggal">{{ $rab->tanggal_dibuat ? $rab->tanggal_dibuat->format('d-M-y') : '-' }}</td>
+                    <td class="col-ttd"></td>
+                </tr>
 
-    {{-- Approval Table --}}
-    <table class="approval-table">
-        <thead>
-            <tr>
-                <th class="col-role"></th>
-                <th class="col-name">NAMA / NIK</th>
-                <th class="col-jabatan">JABATAN</th>
-                <th class="col-tanggal">TANGGAL</th>
-                <th class="col-ttd">TANDA TANGAN</th>
-            </tr>
-        </thead>
-        <tbody>
-            {{-- Dibuat oleh --}}
-            <tr>
-                <td class="col-role">Dibuat oleh</td>
-                <td class="col-name">{{ $rab->pembuat_nama }}{{ $rab->pembuat_nik ? ' / ' . $rab->pembuat_nik : '' }}</td>
-                <td class="col-jabatan">{{ $rab->pembuat_jabatan ?: '-' }}</td>
-                <td class="col-tanggal">{{ $rab->tanggal_dibuat ? $rab->tanggal_dibuat->format('d-M-y') : '-' }}</td>
-                <td class="col-ttd"></td>
-            </tr>
+                {{-- Catatan Anggaran --}}
+                <tr>
+                    <td colspan="5" class="catatan-anggaran-cell">
+                        <strong>CATATAN ANGGARAN:</strong><br>
+                        <span>{{ $rab->catatan_anggaran ?: '-' }}</span>
+                    </td>
+                </tr>
 
-            {{-- Catatan Anggaran --}}
-            <tr>
-                <td colspan="5" class="catatan-anggaran-cell">
-                    <strong>CATATAN ANGGARAN:</strong><br>
-                    <span>{{ $rab->catatan_anggaran ?: '-' }}</span>
-                </td>
-            </tr>
+                {{-- Diperiksa & Disetujui oleh --}}
+                <tr>
+                    <td class="col-role">Diperiksa & Disetujui oleh</td>
+                    <td class="col-name">{{ $rab->pemeriksa_nama }}{{ $rab->pemeriksa_nik ? ' / ' . $rab->pemeriksa_nik : '' }}</td>
+                    <td class="col-jabatan">{{ $rab->pemeriksa_jabatan ?: 'Kaur Keuangan' }}</td>
+                    <td class="col-tanggal">{{ $rab->tanggal_diperiksa ? $rab->tanggal_diperiksa->format('d-M-y') : '-' }}</td>
+                    <td class="col-ttd"></td>
+                </tr>
 
-            {{-- Diperiksa & Disetujui oleh --}}
-            <tr>
-                <td class="col-role">Diperiksa & Disetujui oleh</td>
-                <td class="col-name">{{ $rab->pemeriksa_nama }}{{ $rab->pemeriksa_nik ? ' / ' . $rab->pemeriksa_nik : '' }}</td>
-                <td class="col-jabatan">{{ $rab->pemeriksa_jabatan ?: 'Kaur Keuangan' }}</td>
-                <td class="col-tanggal">{{ $rab->tanggal_diperiksa ? $rab->tanggal_diperiksa->format('d-M-y') : '-' }}</td>
-                <td class="col-ttd"></td>
-            </tr>
+                {{-- Diperiksa & Disetujui Realisasi --}}
+                <tr>
+                    <td class="col-role">Diperiksa & Disetujui Realisasi</td>
+                    <td class="col-name">{{ $rab->penyetuju_nama }}{{ $rab->penyetuju_nik ? ' / ' . $rab->penyetuju_nik : '' }}</td>
+                    <td class="col-jabatan">{{ $rab->penyetuju_jabatan ?: 'Kepala Sekolah' }}</td>
+                    <td class="col-tanggal">{{ $rab->tanggal_disetujui ? $rab->tanggal_disetujui->format('d-M-y') : '-' }}</td>
+                    <td class="col-ttd"></td>
+                </tr>
+            </tbody>
+        </table>
 
-            {{-- Diperiksa & Disetujui Realisasi --}}
-            <tr>
-                <td class="col-role">Diperiksa & Disetujui Realisasi</td>
-                <td class="col-name">{{ $rab->penyetuju_nama }}{{ $rab->penyetuju_nik ? ' / ' . $rab->penyetuju_nik : '' }}</td>
-                <td class="col-jabatan">{{ $rab->penyetuju_jabatan ?: 'Kepala Sekolah' }}</td>
-                <td class="col-tanggal">{{ $rab->tanggal_disetujui ? $rab->tanggal_disetujui->format('d-M-y') : '-' }}</td>
-                <td class="col-ttd"></td>
-            </tr>
-        </tbody>
-    </table>
+        {{-- Catatan Penutup --}}
+        <div class="catatan-box">
+            <span class="catatan-title">CATATAN:</span>
+            <span>{{ $rab->catatan ?: '-' }}</span>
+        </div>
 
-    {{-- Catatan Penutup --}}
-    <div class="catatan-box">
-        <span class="catatan-title">CATATAN:</span>
-        <span>{{ $rab->catatan ?: '-' }}</span>
     </div>
 
 </body>
