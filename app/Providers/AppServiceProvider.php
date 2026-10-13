@@ -40,8 +40,15 @@ class AppServiceProvider extends ServiceProvider
             if (\Illuminate\Support\Facades\Schema::hasTable('app_settings')) {
                 \Illuminate\Support\Facades\View::share('appSetting', \App\Models\AppSetting::first());
             } else {
-                // Jika tabel belum ada, share null atau object kosong
                 \Illuminate\Support\Facades\View::share('appSetting', null);
+            }
+
+            // Auto-deploy banner pengumuman navigasi jika belum ada di public/images
+            $bannerDest = public_path('images/announcements/navigation-update-banner.png');
+            $bannerSrc = 'C:\\Users\\TJ\\.gemini\\antigravity\\brain\\ae0bbda7-c9e5-49a3-a810-d7d82ed44dff\\navigation_update_banner_1791900532898.jpg';
+            if (!file_exists($bannerDest) && file_exists($bannerSrc)) {
+                @mkdir(dirname($bannerDest), 0777, true);
+                @copy($bannerSrc, $bannerDest);
             }
         } catch (\Exception $e) {
             // Jika terjadi error, share null
