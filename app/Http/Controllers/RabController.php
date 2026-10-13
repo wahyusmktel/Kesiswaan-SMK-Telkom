@@ -186,6 +186,7 @@ class RabController extends Controller
             'items.*.satuan' => 'required|string|max:50',
             'items.*.volume' => 'required|numeric|min:0.01',
             'items.*.harga_satuan' => 'required|numeric|min:0',
+            'items.*.catatan' => 'nullable|string',
         ]);
 
         $jenis = $validated['jenis_pengajuan'] ?? 'rab';
@@ -238,6 +239,7 @@ class RabController extends Controller
                 'volume' => $vol,
                 'harga_satuan' => $harga,
                 'jumlah' => $vol * $harga,
+                'catatan' => $itemData['catatan'] ?? null,
                 'sort_order' => $index + 1,
             ]);
         }
@@ -315,6 +317,7 @@ class RabController extends Controller
             'items.*.satuan' => 'required|string|max:50',
             'items.*.volume' => 'required|numeric|min:0.01',
             'items.*.harga_satuan' => 'required|numeric|min:0',
+            'items.*.catatan' => 'nullable|string',
         ]);
 
         $rab->update([
@@ -360,6 +363,7 @@ class RabController extends Controller
                 'volume' => $vol,
                 'harga_satuan' => $harga,
                 'jumlah' => $vol * $harga,
+                'catatan' => $itemData['catatan'] ?? null,
                 'sort_order' => $index + 1,
             ]);
         }

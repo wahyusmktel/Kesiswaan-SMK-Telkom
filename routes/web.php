@@ -1604,6 +1604,28 @@ Route::middleware(['auth', 'non.student'])->prefix('rab')->name('rab.')->group(f
     Route::get('/{rab}/pdf', [\App\Http\Controllers\RabController::class, 'exportPdf'])->name('pdf');
     Route::get('/{rab}/print', [\App\Http\Controllers\RabController::class, 'printView'])->name('print');
     Route::patch('/{rab}/status', [\App\Http\Controllers\RabController::class, 'updateStatus'])->name('status');
+
+    // Laporan Realisasi Penggunaan Anggaran (Khusus jenis RAB)
+    Route::get('/{rab}/realisasi', [\App\Http\Controllers\RabRealisasiController::class, 'show'])->name('realisasi');
+    Route::prefix('{rab}/realisasi')->name('realisasi.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\RabRealisasiController::class, 'show'])->name('show');
+        Route::get('/kelola', [\App\Http\Controllers\RabRealisasiController::class, 'edit'])->name('edit');
+        Route::put('/', [\App\Http\Controllers\RabRealisasiController::class, 'update'])->name('update');
+        Route::post('/evidences', [\App\Http\Controllers\RabRealisasiController::class, 'storeEvidence'])->name('evidence.store');
+        Route::delete('/evidences/{evidence}', [\App\Http\Controllers\RabRealisasiController::class, 'destroyEvidence'])->name('evidence.destroy');
+        Route::get('/pdf', [\App\Http\Controllers\RabRealisasiController::class, 'exportPdf'])->name('pdf');
+        Route::get('/print', [\App\Http\Controllers\RabRealisasiController::class, 'printView'])->name('print');
+        Route::patch('/status', [\App\Http\Controllers\RabRealisasiController::class, 'updateStatus'])->name('status');
+    });
+});
+
+// ============================================================
+// PORTAL KEUANGAN & AUDIT ANGGARAN
+// ============================================================
+Route::middleware(['auth', 'non.student'])->prefix('keuangan')->name('keuangan.')->group(function () {
+    Route::get('/verifikasi-anggaran', [\App\Http\Controllers\KeuanganRabController::class, 'index'])->name('rab.index');
+    Route::patch('/rab/{rab}/status', [\App\Http\Controllers\KeuanganRabController::class, 'updateRabStatus'])->name('rab.status');
+    Route::patch('/realisasi/{realisasi}/status', [\App\Http\Controllers\KeuanganRabController::class, 'updateRealisasiStatus'])->name('realisasi.status');
 });
 
 // ============================================================

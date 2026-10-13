@@ -31,7 +31,8 @@
                 'spesifikasi' => '',
                 'satuan' => 'unit',
                 'volume' => 1,
-                'harga_satuan' => 0
+                'harga_satuan' => 0,
+                'catatan' => ''
             ]
         ])) }}
     }
@@ -221,13 +222,14 @@
                         <thead class="bg-slate-100/70 text-[11px] uppercase tracking-wider text-slate-600 font-bold border-b border-slate-200">
                             <tr>
                                 <th class="p-3 text-center w-12">NO</th>
-                                <th class="p-3 w-1/3">URAIAN KEGIATAN</th>
-                                <th class="p-3 w-1/4">SPESIFIKASI</th>
-                                <th class="p-3 w-24 text-center">SATUAN</th>
-                                <th class="p-3 w-20 text-center">VOL</th>
-                                <th class="p-3 w-36 text-right">HARGA (RP)</th>
-                                <th class="p-3 w-36 text-right">JUMLAH (RP)</th>
-                                <th class="p-3 w-12 text-center"></th>
+                                <th class="p-3 w-1/4">URAIAN KEGIATAN</th>
+                                <th class="p-3 w-1/5">SPESIFIKASI</th>
+                                <th class="p-3 w-20 text-center">SATUAN</th>
+                                <th class="p-3 w-16 text-center">VOL</th>
+                                <th class="p-3 w-32 text-right">HARGA (RP)</th>
+                                <th class="p-3 w-32 text-right">JUMLAH (RP)</th>
+                                <th class="p-3 w-32">CATATAN</th>
+                                <th class="p-3 w-10 text-center"></th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-200">
@@ -273,6 +275,13 @@
                                         <span x-text="formatRupiah((item.volume || 0) * (item.harga_satuan || 0))"></span>
                                     </td>
 
+                                    {{-- Catatan --}}
+                                    <td class="p-2.5">
+                                        <input type="text" :name="`items[${index}][catatan]`" x-model="item.catatan"
+                                            placeholder="Catatan / keterangan"
+                                            class="w-full p-2 text-xs rounded-lg border border-slate-200 focus:border-red-500 focus:ring-red-500/20">
+                                    </td>
+
                                     {{-- Remove Button --}}
                                     <td class="p-2.5 text-center">
                                         <button type="button" @click="removeItem(index)" x-show="formData.items.length > 1"
@@ -293,7 +302,7 @@
                                 <td class="p-3 text-right font-black text-base text-red-600">
                                     <span x-text="formatRupiah(totalAnggaran)"></span>
                                 </td>
-                                <td></td>
+                                <td colspan="2"></td>
                             </tr>
                         </tfoot>
                     </table>
@@ -531,7 +540,8 @@ function rabForm(config) {
                 spesifikasi: '',
                 satuan: 'unit',
                 volume: 1,
-                harga_satuan: 0
+                harga_satuan: 0,
+                catatan: ''
             });
         },
 

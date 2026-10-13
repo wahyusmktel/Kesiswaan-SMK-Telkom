@@ -19,6 +19,7 @@ class RabItem extends Model
         'volume',
         'harga_satuan',
         'jumlah',
+        'catatan',
         'sort_order',
     ];
 

@@ -21,6 +21,21 @@
             </div>
 
             <div class="flex items-center gap-3">
+                @php
+                    $userRoleCurrent = strtolower((string) (session('active_role') ?: (auth()->user()?->getRoleNames()->first() ?? '')));
+                    $isRoleKeuangan = in_array($userRoleCurrent, ['kaur keuangan', 'keuangan', 'bendahara', 'super admin', 'kepala sekolah'], true)
+                        || (auth()->check() && auth()->user()->hasAnyRole(['Super Admin', 'Kepala Sekolah', 'Kaur Keuangan']));
+                @endphp
+                @if($isRoleKeuangan)
+                    <a href="{{ route('keuangan.rab.index') }}"
+                        class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-700 font-bold text-sm hover:bg-indigo-100 transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                        </svg>
+                        <span>Portal Keuangan</span>
+                    </a>
+                @endif
+
                 <a href="{{ route('rab.create') }}"
                     class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 text-white font-bold text-sm shadow-lg shadow-red-500/25 hover:shadow-red-500/40 hover:from-red-700 hover:to-rose-700 transition-all duration-200">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -248,6 +263,17 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                             </svg>
                                         </a>
+
+                                        {{-- Laporan Realisasi (Khusus RAB) --}}
+                                        @if(($rab->jenis_pengajuan ?? 'rab') === 'rab')
+                                            <a href="{{ route('rab.realisasi.show', $rab) }}"
+                                                class="p-2 text-emerald-600 hover:text-emerald-900 hover:bg-emerald-50 rounded-lg transition-colors"
+                                                title="Laporan Realisasi & Bukti Eviden">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                                </svg>
+                                            </a>
+                                        @endif
 
                                         {{-- Print Browser --}}
                                         <a href="{{ route('rab.print', $rab) }}" target="_blank"

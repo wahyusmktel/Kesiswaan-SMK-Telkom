@@ -278,39 +278,45 @@
 
         .items-table td.col-no {
             text-align: center;
-            width: 5%;
+            width: 4%;
         }
 
         .items-table td.col-uraian {
             text-align: left;
-            width: 32%;
+            width: 27%;
         }
 
         .items-table td.col-spesifikasi {
             text-align: center;
-            width: 22%;
+            width: 19%;
         }
 
         .items-table td.col-satuan {
             text-align: center;
-            width: 9%;
+            width: 8%;
         }
 
         .items-table td.col-vol {
             text-align: center;
-            width: 6%;
+            width: 5%;
         }
 
         .items-table td.col-harga {
             text-align: right;
-            width: 13%;
+            width: 12%;
             white-space: nowrap;
         }
 
         .items-table td.col-jumlah {
             text-align: right;
-            width: 13%;
+            width: 12%;
             white-space: nowrap;
+        }
+
+        .items-table td.col-catatan {
+            text-align: left;
+            width: 13%;
+            font-size: 7.8pt;
         }
 
         .items-table .row-total td {
@@ -516,13 +522,14 @@
             <table class="items-table">
                 <thead>
                     <tr>
-                        <th style="width: 5%;">NO</th>
-                        <th style="width: 32%;">URAIAN KEGIATAN</th>
-                        <th style="width: 22%;">SPESIFIKASI</th>
-                        <th style="width: 9%;">SATUAN</th>
-                        <th style="width: 6%;">VOL</th>
-                        <th style="width: 13%;">HARGA</th>
-                        <th style="width: 13%;">JUMLAH</th>
+                        <th style="width: 4%;">NO</th>
+                        <th style="width: 27%;">URAIAN KEGIATAN</th>
+                        <th style="width: 19%;">SPESIFIKASI</th>
+                        <th style="width: 8%;">SATUAN</th>
+                        <th style="width: 5%;">VOL</th>
+                        <th style="width: 12%;">HARGA</th>
+                        <th style="width: 12%;">JUMLAH</th>
+                        <th style="width: 13%;">CATATAN</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -535,10 +542,11 @@
                             <td class="col-vol">{{ $item->volume == intval($item->volume) ? intval($item->volume) : number_format($item->volume, 1) }}</td>
                             <td class="col-harga">Rp {{ number_format($item->harga_satuan, 0, ',', '.') }}</td>
                             <td class="col-jumlah">Rp {{ number_format($item->jumlah, 0, ',', '.') }}</td>
+                            <td class="col-catatan">{{ !empty(trim($item->catatan ?? '')) ? $item->catatan : '( - )' }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" style="text-align: center; padding: 10px;">Belum ada item rincian anggaran.</td>
+                            <td colspan="8" style="text-align: center; padding: 10px;">Belum ada item rincian anggaran.</td>
                         </tr>
                     @endforelse
                     <tr class="row-total">
@@ -546,6 +554,16 @@
                             {{ ($rab->jenis_pengajuan ?? 'rab') === 'reimburse' ? 'TOTAL REIMBURSEMENT' : 'TOTAL ANGGARAN' }}
                         </td>
                         <td class="col-jumlah">Rp {{ number_format($rab->total_anggaran, 0, ',', '.') }}</td>
+                        <td class="col-catatan" style="text-align: center;">-</td>
+                    </tr>
+                    {{-- Kolom Terbilang di bawah total --}}
+                    <tr class="row-terbilang">
+                        <td colspan="8" style="padding: 4px 6px; font-size: 8pt; background-color: #f8fafc; border: 0.75pt solid #000000;">
+                            <strong>TERBILANG:</strong>
+                            <span style="font-style: italic; font-weight: bold; text-transform: capitalize;">
+                                {{ \App\Helpers\TerbilangHelper::terbilangRupiah($rab->total_anggaran) }}
+                            </span>
+                        </td>
                     </tr>
                 </tbody>
             </table>

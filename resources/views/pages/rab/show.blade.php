@@ -42,6 +42,17 @@
 
             {{-- Actions --}}
             <div class="flex flex-wrap items-center gap-2">
+                {{-- Laporan Realisasi Anggaran (Hanya untuk Jenis RAB) --}}
+                @if(($rab->jenis_pengajuan ?? 'rab') === 'rab')
+                    <a href="{{ route('rab.realisasi.show', $rab) }}"
+                        class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold shadow-sm shadow-emerald-500/20 transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span>{{ $rab->realisasi ? 'Lihat Laporan Realisasi' : 'Susun Realisasi Anggaran' }}</span>
+                    </a>
+                @endif
+
                 {{-- Print View --}}
                 <a href="{{ route('rab.print', $rab) }}" target="_blank"
                     class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-sm transition-all">
@@ -165,7 +176,8 @@
                             <th class="border-r border-black p-2 w-20">SATUAN</th>
                             <th class="border-r border-black p-2 w-14">VOL</th>
                             <th class="border-r border-black p-2 w-28 text-right">HARGA</th>
-                            <th class="p-2 w-32 text-right">JUMLAH</th>
+                            <th class="border-r border-black p-2 w-32 text-right">JUMLAH</th>
+                            <th class="p-2 w-32">CATATAN</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-black">
@@ -177,15 +189,26 @@
                                 <td class="border-r border-black p-2 text-center">{{ $item->satuan }}</td>
                                 <td class="border-r border-black p-2 text-center">{{ $item->volume == intval($item->volume) ? intval($item->volume) : number_format($item->volume, 1) }}</td>
                                 <td class="border-r border-black p-2 text-right whitespace-nowrap">Rp {{ number_format($item->harga_satuan, 0, ',', '.') }}</td>
-                                <td class="p-2 text-right font-semibold whitespace-nowrap">Rp {{ number_format($item->jumlah, 0, ',', '.') }}</td>
+                                <td class="border-r border-black p-2 text-right font-semibold whitespace-nowrap">Rp {{ number_format($item->jumlah, 0, ',', '.') }}</td>
+                                <td class="p-2 text-center text-slate-600">{{ !empty(trim($item->catatan ?? '')) ? $item->catatan : '( - )' }}</td>
                             </tr>
                         @endforeach
                         <tr class="font-bold border-t-2 border-black bg-slate-50">
                             <td colspan="6" class="border-r border-black p-2.5 text-right uppercase tracking-wider font-bold">
                                 {{ ($rab->jenis_pengajuan ?? 'rab') === 'reimburse' ? 'TOTAL REIMBURSEMENT' : 'TOTAL ANGGARAN' }}
                             </td>
-                            <td class="p-2.5 text-right font-black text-sm whitespace-nowrap">
+                            <td class="border-r border-black p-2.5 text-right font-black text-sm whitespace-nowrap">
                                 Rp {{ number_format($rab->total_anggaran, 0, ',', '.') }}
+                            </td>
+                            <td class="p-2.5 text-center font-bold text-slate-400">-</td>
+                        </tr>
+                        {{-- Kolom Terbilang di bawah total --}}
+                        <tr class="bg-slate-50/70 border-t border-black">
+                            <td colspan="8" class="p-2.5 text-left text-xs font-semibold">
+                                <span class="font-bold uppercase tracking-wider text-slate-700">TERBILANG:</span>
+                                <span class="italic capitalize text-slate-900 ml-1">
+                                    {{ \App\Helpers\TerbilangHelper::terbilangRupiah($rab->total_anggaran) }}
+                                </span>
                             </td>
                         </tr>
                     </tbody>

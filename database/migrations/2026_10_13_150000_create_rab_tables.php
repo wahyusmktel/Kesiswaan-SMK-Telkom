@@ -60,7 +60,68 @@ return new class extends Migration
                 $table->decimal('volume', 10, 2)->default(1);
                 $table->decimal('harga_satuan', 15, 2)->default(0);
                 $table->decimal('jumlah', 15, 2)->default(0);
+                $table->text('catatan')->nullable();
                 $table->integer('sort_order')->default(0);
+                $table->timestamps();
+            });
+        }
+
+        if (!Schema::hasTable('rab_realisasis')) {
+            Schema::create('rab_realisasis', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('rab_submission_id')->constrained('rab_submissions')->cascadeOnDelete();
+                $table->string('nomor_realisasi')->nullable();
+                $table->string('status', 30)->default('draft');
+                $table->decimal('total_penerimaan', 15, 2)->default(0);
+                $table->decimal('total_pengeluaran', 15, 2)->default(0);
+                $table->decimal('saldo_akhir', 15, 2)->default(0);
+
+                $table->string('pembuat_nama')->nullable();
+                $table->string('pembuat_nik', 50)->nullable();
+                $table->string('pembuat_jabatan')->nullable();
+                $table->date('tanggal_dibuat')->nullable();
+
+                $table->string('pemeriksa_nama')->nullable();
+                $table->string('pemeriksa_nik', 50)->nullable();
+                $table->string('pemeriksa_jabatan')->nullable();
+                $table->date('tanggal_diperiksa')->nullable();
+
+                $table->string('penyetuju_nama')->nullable();
+                $table->string('penyetuju_nik', 50)->nullable();
+                $table->string('penyetuju_jabatan')->nullable();
+                $table->date('tanggal_disetujui')->nullable();
+
+                $table->text('catatan')->nullable();
+                $table->text('catatan_keuangan')->nullable();
+                $table->timestamps();
+            });
+        }
+
+        if (!Schema::hasTable('rab_realisasi_items')) {
+            Schema::create('rab_realisasi_items', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('rab_realisasi_id')->constrained('rab_realisasis')->cascadeOnDelete();
+                $table->date('tanggal');
+                $table->text('uraian');
+                $table->decimal('penerimaan', 15, 2)->default(0);
+                $table->decimal('pengeluaran', 15, 2)->default(0);
+                $table->decimal('saldo', 15, 2)->default(0);
+                $table->text('keterangan')->nullable();
+                $table->integer('sort_order')->default(0);
+                $table->timestamps();
+            });
+        }
+
+        if (!Schema::hasTable('rab_realisasi_evidences')) {
+            Schema::create('rab_realisasi_evidences', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('rab_realisasi_id')->constrained('rab_realisasis')->cascadeOnDelete();
+                $table->string('judul');
+                $table->string('file_path');
+                $table->string('file_name');
+                $table->string('file_type', 100)->nullable();
+                $table->unsignedBigInteger('file_size')->default(0);
+                $table->text('keterangan')->nullable();
                 $table->timestamps();
             });
         }
@@ -71,6 +132,9 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('rab_realisasi_evidences');
+        Schema::dropIfExists('rab_realisasi_items');
+        Schema::dropIfExists('rab_realisasis');
         Schema::dropIfExists('rab_items');
         Schema::dropIfExists('rab_submissions');
     }

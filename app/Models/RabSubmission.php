@@ -58,6 +58,16 @@ class RabSubmission extends Model
         return $this->hasMany(RabItem::class, 'rab_submission_id')->orderBy('sort_order')->orderBy('id');
     }
 
+    public function realisasi()
+    {
+        return $this->hasOne(RabRealisasi::class, 'rab_submission_id');
+    }
+
+    public function getTerbilangAttribute(): string
+    {
+        return \App\Helpers\TerbilangHelper::terbilangRupiah($this->total_anggaran);
+    }
+
     public function recalculateTotal(): self
     {
         $this->total_anggaran = $this->items()->sum('jumlah');
@@ -119,9 +129,16 @@ class RabSubmission extends Model
                 $table->decimal('volume', 10, 2)->default(1);
                 $table->decimal('harga_satuan', 15, 2)->default(0);
                 $table->decimal('jumlah', 15, 2)->default(0);
+                $table->text('catatan')->nullable();
                 $table->integer('sort_order')->default(0);
                 $table->timestamps();
             });
+        } elseif (!Schema::hasColumn('rab_items', 'catatan')) {
+            Schema::table('rab_items', function (Blueprint $table) {
+                $table->text('catatan')->nullable()->after('jumlah');
+            });
         }
+
+        RabRealisasi::ensureTableExists();
     }
 }
