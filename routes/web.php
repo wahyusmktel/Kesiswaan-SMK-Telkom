@@ -1590,6 +1590,23 @@ Route::middleware(['auth', 'non.student'])->prefix('okr-sekolah')->name('okr.')-
 });
 
 // ============================================================
+// RENCANA ANGGARAN BIAYA / RAB (Semua role kecuali siswa)
+// ============================================================
+Route::middleware(['auth', 'non.student'])->prefix('rab')->name('rab.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\RabController::class, 'index'])->name('index');
+    Route::get('/buat', [\App\Http\Controllers\RabController::class, 'create'])->name('create');
+    Route::post('/', [\App\Http\Controllers\RabController::class, 'store'])->name('store');
+    Route::post('/ai-generate', [\App\Http\Controllers\RabController::class, 'aiGenerate'])->name('ai-generate');
+    Route::get('/{rab}', [\App\Http\Controllers\RabController::class, 'show'])->name('show');
+    Route::get('/{rab}/edit', [\App\Http\Controllers\RabController::class, 'edit'])->name('edit');
+    Route::put('/{rab}', [\App\Http\Controllers\RabController::class, 'update'])->name('update');
+    Route::delete('/{rab}', [\App\Http\Controllers\RabController::class, 'destroy'])->name('destroy');
+    Route::get('/{rab}/pdf', [\App\Http\Controllers\RabController::class, 'exportPdf'])->name('pdf');
+    Route::get('/{rab}/print', [\App\Http\Controllers\RabController::class, 'printView'])->name('print');
+    Route::patch('/{rab}/status', [\App\Http\Controllers\RabController::class, 'updateStatus'])->name('status');
+});
+
+// ============================================================
 // TANDA TANGAN DIGITAL (Guru, Waka Kurikulum, Waka Kesiswaan, Kaur SDM)
 // ============================================================
 Route::middleware(['auth', 'role:Guru Kelas|Guru Piket|Wali Kelas|Waka Kesiswaan|Kurikulum|KAUR SDM|KAUR SARPRA|Kepala Sekolah|Super Admin|Petugas UKS'])

@@ -3794,6 +3794,28 @@
     @endif
 @endif
 
+{{-- ============================================================ --}}
+{{-- MENU: RENCANA ANGGARAN BIAYA (RAB) - SEMUA ROLE KECUALI SISWA --}}
+{{-- ============================================================ --}}
+@unlessrole('Siswa|siswa')
+    @if(session('active_role') !== 'Siswa' && !is_null(session('active_role')))
+        <div class="section-title">Anggaran & Pengadaan</div>
+        <li>
+            <a href="{{ route('rab.index') }}" title="Rencana Anggaran Biaya (RAB)"
+                class="nav-link {{ request()->routeIs('rab.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                <div class="nav-icon-container">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <span class="nav-text">Rencana Anggaran (RAB)</span>
+                <span class="nav-badge ml-auto rounded-full bg-purple-100 px-1.5 py-0.5 text-[10px] font-black text-purple-700">AI</span>
+            </a>
+        </li>
+    @endif
+@endunlessrole
+
 {{-- SEPARATOR & PROFILE MENU (Always Visible) --}}
 <li class="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent mx-6 my-4"></li>
 <div class="section-title">Akun</div>
