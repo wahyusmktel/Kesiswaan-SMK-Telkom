@@ -1015,7 +1015,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Grup Route untuk Hubin Sinergi UP dan Alumni & Super Admin
-    Route::middleware(['auth', 'role:Hubin Sinergi UP dan Alumni|Super Admin'])->prefix('hubin')->name('hubin.')->group(function () {
+    Route::middleware(['auth', 'role:Hubin Sinergi UP dan Alumni|Super Admin|adminup'])->prefix('hubin')->name('hubin.')->group(function () {
         Route::resource('industri', \App\Http\Controllers\Hubin\IndustriKerjasamaController::class)->except(['create', 'show', 'edit']);
         Route::get('industri/{industri}/mou-download', [\App\Http\Controllers\Hubin\IndustriKerjasamaController::class, 'downloadMou'])->name('industri.download-mou');
 

@@ -3199,9 +3199,9 @@
 @endcan
 
 {{-- ============================================================ --}}
-{{-- ROLE: HUBIN SINERGI UP DAN ALUMNI --}}
+{{-- ROLE: HUBIN SINERGI UP DAN ALUMNI & ADMINUP --}}
 {{-- ============================================================ --}}
-@if(session('active_role') == 'Hubin Sinergi UP dan Alumni')
+@if(in_array(session('active_role'), ['Hubin Sinergi UP dan Alumni', 'adminup']))
     <div class="section-title">Hubungan Industri</div>
     <li>
         <a href="{{ route('hubin.industri.index') }}" title="Kelola Data Industri Kerjasama Sekolah"

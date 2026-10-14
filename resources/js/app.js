@@ -22,6 +22,19 @@ window.Alpine = Alpine;
 
 Alpine.plugin(collapse);
 
+Alpine.store('detailModal', {
+    on: false,
+    data: {},
+    open(item) {
+        this.data = item || {};
+        this.on = true;
+    },
+    close() {
+        this.on = false;
+        this.data = {};
+    },
+});
+
 window.eraporReferenceCombobox = (config) => ({
     open: false,
     query: '',

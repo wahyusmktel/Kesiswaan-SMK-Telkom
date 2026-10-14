@@ -13,6 +13,25 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
 
+    <script>
+        document.addEventListener('alpine:init', () => {
+            if (window.Alpine && !window.Alpine.store('detailModal')) {
+                window.Alpine.store('detailModal', {
+                    on: false,
+                    data: {},
+                    open(item) {
+                        this.data = item || {};
+                        this.on = true;
+                    },
+                    close() {
+                        this.on = false;
+                        this.data = {};
+                    }
+                });
+            }
+        });
+    </script>
+
     @vite(['resources/css/app.css', 'resources/css/authentication.css', 'resources/js/app.js'])
     <style>
         [x-cloak] {
