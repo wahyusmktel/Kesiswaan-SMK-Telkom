@@ -1097,6 +1097,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Permission Management
         Route::get('/permissions', [PermissionManagementController::class, 'index'])->name('permissions.index');
+        Route::post('/permissions', [PermissionManagementController::class, 'store'])->name('permissions.store');
+        Route::delete('/permissions/{permission}', [PermissionManagementController::class, 'destroy'])->name('permissions.destroy');
         Route::get('/permissions/{role}', [PermissionManagementController::class, 'getRolePermissions'])->name('permissions.get');
         Route::post('/permissions/{role}', [PermissionManagementController::class, 'syncPermissions'])->name('permissions.sync');
 

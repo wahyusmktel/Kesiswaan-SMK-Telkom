@@ -120,6 +120,40 @@ class PermissionSeeder extends Seeder
             'view guru kelas dashboard',
             'manage pengaduan ortu',
             'view executive dashboard',
+
+            // Tata Usaha (TU) & Persuratan
+            'view tu dashboard',
+            'manage tu letter codes',
+            'manage tu incoming letters',
+            'manage tu outgoing letters',
+            'manage tu letter requests',
+
+            // Kantin Sekolah
+            'view kantin dashboard',
+            'manage kantin menu',
+            'manage kantin orders',
+
+            // Hubungan Industri, UP & PKL
+            'manage hubin industri',
+            'manage hubin rombel pkl',
+
+            // Anggaran (RAB) & Keuangan
+            'manage rab',
+            'manage realisasi rab',
+            'verify rab keuangan',
+
+            // Sarana, Prasarana & CCTV
+            'view asset report qr',
+            'manage cctv cameras',
+
+            // OKR & Kinerja Sekolah
+            'manage okr',
+
+            // UKK & Sertifikasi (Kaprodi)
+            'manage ukk',
+
+            // Survei & Layanan
+            'manage surveys',
         ];
 
         foreach ($permissions as $permission) {
@@ -295,6 +329,57 @@ class PermissionSeeder extends Seeder
             $kepalaSekolahRole->syncPermissions([
                 'view executive dashboard',
                 'view erapor',
+            ]);
+        }
+
+        // Default permissions for Tata Usaha
+        $tuRole = Role::where('name', 'Tata Usaha')->first();
+        if ($tuRole) {
+            $tuRole->syncPermissions([
+                'view tu dashboard',
+                'manage tu letter codes',
+                'manage tu incoming letters',
+                'manage tu outgoing letters',
+                'manage tu letter requests',
+            ]);
+        }
+
+        // Default permissions for Kantin
+        $kantinRole = Role::where('name', 'Kantin')->first();
+        if ($kantinRole) {
+            $kantinRole->syncPermissions([
+                'view kantin dashboard',
+                'manage kantin menu',
+                'manage kantin orders',
+            ]);
+        }
+
+        // Default permissions for Hubin / UP
+        foreach (['Hubin Sinergi UP dan Alumni', 'adminup'] as $hubinRoleName) {
+            $hubRole = Role::where('name', $hubinRoleName)->first();
+            if ($hubRole) {
+                $hubRole->syncPermissions([
+                    'manage hubin industri',
+                    'manage hubin rombel pkl',
+                    'monitor prakerin',
+                ]);
+            }
+        }
+
+        // Default permissions for Kaprodi
+        $kaprodiRole = Role::where('name', 'Kaprodi')->first();
+        if ($kaprodiRole) {
+            $kaprodiRole->syncPermissions([
+                'manage ukk',
+            ]);
+        }
+
+        // Default permissions for KAUR SARPRA
+        $sarpraRole = Role::where('name', 'KAUR SARPRA')->first();
+        if ($sarpraRole) {
+            $sarpraRole->syncPermissions([
+                'view asset report qr',
+                'manage cctv cameras',
             ]);
         }
     }

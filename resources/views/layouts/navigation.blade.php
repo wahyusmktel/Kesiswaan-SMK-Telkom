@@ -203,8 +203,15 @@
     }
 </style>
 
-@can('view erapor')
-@if((session('active_role') ?: auth()->user()?->getRoleNames()->first()) !== 'Kepala Sekolah')
+@php
+    $navActiveRoleName = session('active_role') ?: auth()->user()?->getRoleNames()->first();
+    $activeRoleCanViewErapor = false;
+    if ($navActiveRoleName && auth()->check()) {
+        $activeRoleModel = \Spatie\Permission\Models\Role::where('name', $navActiveRoleName)->first();
+        $activeRoleCanViewErapor = $activeRoleModel ? $activeRoleModel->hasPermissionTo('view erapor') : false;
+    }
+@endphp
+@if($activeRoleCanViewErapor && $navActiveRoleName !== 'Kepala Sekolah')
     <div class="section-title">e-Rapor</div>
     <li>
         <a href="{{ route('erapor.index') }}" title="e-Rapor SISFO"
@@ -219,7 +226,6 @@
         </a>
     </li>
 @endif
-@endcan
 
 {{-- ============================================================ --}}
 {{-- MODUL LINTAS PERAN: ANGGARAN (RAB) & KEUANGAN --}}
