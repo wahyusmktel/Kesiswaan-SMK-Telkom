@@ -38,7 +38,7 @@
                    type="text"
                    placeholder="Cari menu... (Ctrl+K)"
                    autocomplete="off"
-                   class="w-full bg-black/25 hover:bg-black/35 focus:bg-white text-white focus:text-slate-900 placeholder-white/60 focus:placeholder-slate-400 border border-white/20 focus:border-white rounded-xl text-xs py-2 pl-9 pr-8 outline-none transition-all duration-200 shadow-inner focus:shadow-md" />
+                   class="w-full bg-black/25 text-white placeholder-white/60 border border-white/20 rounded-xl text-xs py-2 pl-9 pr-8 outline-none focus:outline-none focus:ring-0 focus:border-white/20 focus:bg-black/25 shadow-inner" />
 
             <!-- Tombol Clear (X) saat ada teks -->
             <div class="absolute inset-y-0 right-0 pr-2 flex items-center">
@@ -46,7 +46,7 @@
                         x-cloak
                         @click="clearSearch()"
                         type="button"
-                        class="text-white/70 hover:text-white focus:text-slate-900 p-1 rounded-full hover:bg-black/20 transition-colors"
+                        class="text-white/70 hover:text-white focus:text-white p-1 rounded-full hover:bg-black/20 transition-colors"
                         title="Hapus pencarian (Esc)">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
