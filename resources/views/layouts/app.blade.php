@@ -133,6 +133,7 @@
 
             <!-- Navigation Area -->
             <div class="flex-1 overflow-hidden flex flex-col" x-data="globalNotificationSystem()" x-init="init()">
+                @include('layouts.navigation-search')
                 <nav class="px-4 space-y-1 overflow-y-auto flex-1 sidebar-scroll">
                     @php($roleMenuSettings = app(\App\Services\RoleMenuService::class)->settingsForActiveRole())
                     <ul id="role-navigation" class="space-y-1 font-medium"
