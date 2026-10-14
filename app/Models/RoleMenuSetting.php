@@ -11,6 +11,7 @@ class RoleMenuSetting extends Model
     protected $fillable = [
         'role_id',
         'menu_key',
+        'parent_key',
         'is_visible',
         'sort_order',
     ];

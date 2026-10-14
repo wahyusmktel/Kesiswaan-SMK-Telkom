@@ -31,6 +31,7 @@ class RoleMenuController extends Controller
         $validated = $request->validate([
             'menus' => ['required', 'array', 'max:500'],
             'menus.*.key' => ['required', 'string', 'distinct', Rule::in($knownKeys)],
+            'menus.*.parent_key' => ['nullable', 'string', 'max:255'],
             'menus.*.visible' => ['required', 'boolean'],
             'menus.*.order' => ['required', 'integer', 'min:0'],
         ]);
@@ -44,6 +45,7 @@ class RoleMenuController extends Controller
                 RoleMenuSetting::query()->create([
                     'role_id' => $role->getKey(),
                     'menu_key' => $menu['key'],
+                    'parent_key' => !empty($menu['parent_key']) ? (string) $menu['parent_key'] : null,
                     'is_visible' => $lockedKeys->contains($menu['key']) ? true : (bool) $menu['visible'],
                     'sort_order' => (int) $menu['order'],
                 ]);

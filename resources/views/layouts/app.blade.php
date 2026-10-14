@@ -146,6 +146,11 @@
                             if (!navigation) return;
 
                             const settings = {{ Illuminate\Support\Js::from($roleMenuSettings) }};
+                            if (!settings || Object.keys(settings).length === 0) {
+                                navigation.style.visibility = 'visible';
+                                return;
+                            }
+
                             const slug = value => String(value || '')
                                 .normalize('NFD')
                                 .replace(/[\u0300-\u036f]/g, '')
@@ -157,38 +162,197 @@
                             try {
                                 let section = 'Menu';
                                 const occurrences = {};
+                                const allElements = new Map();
                                 const groups = [];
-                                let group = { title: null, items: [] };
-                                groups.push(group);
+                                let currentGroup = { title: null, items: [] };
+                                groups.push(currentGroup);
 
+                                // 1. Scan semua node di role-navigation
                                 Array.from(navigation.children).forEach((node, defaultOrder) => {
                                     if (node.classList?.contains('section-title')) {
                                         section = node.textContent.trim() || 'Menu';
-                                        group = { title: node, items: [] };
-                                        groups.push(group);
+                                        currentGroup = { title: node, items: [] };
+                                        groups.push(currentGroup);
                                         return;
                                     }
 
                                     if (node.tagName !== 'LI') return;
+
+                                    // Dropdown Menu
+                                    if (node.classList?.contains('submenu-dropdown')) {
+                                        const labelNode = node.querySelector('button .nav-text');
+                                        if (labelNode) {
+                                            const label = labelNode.textContent.trim();
+                                            const base = slug(`${section} ${label}`);
+                                            occurrences[base] = (occurrences[base] || 0) + 1;
+                                            const key = occurrences[base] > 1 ? `${base}-${occurrences[base]}` : base;
+                                            const configured = settings[key];
+
+                                            node.dataset.menuKey = key;
+                                            node.dataset.menuSection = section;
+                                            node.hidden = configured?.visible === false;
+                                            allElements.set(key, {
+                                                node,
+                                                key,
+                                                label,
+                                                section,
+                                                isDropdown: true,
+                                                order: Number.isFinite(Number(configured?.order)) ? Number(configured.order) : defaultOrder,
+                                                parent_key: configured?.parent_key || null,
+                                                defaultOrder
+                                            });
+                                            currentGroup.items.push(allElements.get(key));
+
+                                            // Scan child submenu-item
+                                            const subLinks = node.querySelectorAll('.submenu-card a.submenu-item');
+                                            subLinks.forEach((subA, subIdx) => {
+                                                const subClone = subA.cloneNode(true);
+                                                subClone.querySelectorAll('.submenu-dot, .nav-badge').forEach(el => el.remove());
+                                                const subLabel = subClone.textContent.trim();
+                                                if (!subLabel) return;
+
+                                                const subBase = slug(`${section} ${subLabel}`);
+                                                occurrences[subBase] = (occurrences[subBase] || 0) + 1;
+                                                const subKey = occurrences[subBase] > 1 ? `${subBase}-${occurrences[subBase]}` : subBase;
+                                                const subConf = settings[subKey];
+
+                                                subA.dataset.menuKey = subKey;
+                                                subA.dataset.parentKey = subConf?.parent_key !== undefined ? subConf.parent_key : key;
+                                                if (subConf?.visible === false) {
+                                                    subA.hidden = true;
+                                                    subA.style.display = 'none';
+                                                }
+
+                                                allElements.set(subKey, {
+                                                    node: subA,
+                                                    key: subKey,
+                                                    label: subLabel,
+                                                    section,
+                                                    isSubItem: true,
+                                                    originalParent: node,
+                                                    order: Number.isFinite(Number(subConf?.order)) ? Number(subConf.order) : defaultOrder + (subIdx * 0.01),
+                                                    parent_key: subConf?.parent_key !== undefined ? subConf.parent_key : key,
+                                                    defaultOrder: defaultOrder + (subIdx * 0.01)
+                                                });
+                                            });
+                                        }
+                                        return;
+                                    }
+
+                                    // Standalone Menu
                                     const labelNode = node.querySelector('.nav-text');
-                                    if (!labelNode) return;
+                                    if (labelNode) {
+                                        const label = labelNode.textContent.trim();
+                                        const base = slug(`${section} ${label}`);
+                                        occurrences[base] = (occurrences[base] || 0) + 1;
+                                        const key = occurrences[base] > 1 ? `${base}-${occurrences[base]}` : base;
+                                        const configured = settings[key];
 
-                                    const label = labelNode.textContent.trim();
-                                    const base = slug(`${section} ${label}`);
-                                    occurrences[base] = (occurrences[base] || 0) + 1;
-                                    const key = occurrences[base] > 1 ? `${base}-${occurrences[base]}` : base;
-                                    const configured = settings[key];
-
-                                    node.dataset.menuKey = key;
-                                    node.dataset.menuSection = section;
-                                    node.hidden = configured?.visible === false;
-                                    group.items.push({
-                                        node,
-                                        order: Number.isFinite(Number(configured?.order)) ? Number(configured.order) : defaultOrder,
-                                        defaultOrder,
-                                    });
+                                        node.dataset.menuKey = key;
+                                        node.dataset.menuSection = section;
+                                        node.hidden = configured?.visible === false;
+                                        allElements.set(key, {
+                                            node,
+                                            key,
+                                            label,
+                                            section,
+                                            isStandalone: true,
+                                            order: Number.isFinite(Number(configured?.order)) ? Number(configured.order) : defaultOrder,
+                                            parent_key: configured?.parent_key || null,
+                                            defaultOrder
+                                        });
+                                        currentGroup.items.push(allElements.get(key));
+                                    }
                                 });
 
+                                // 2. Terapkan Parent-Child Relocation (WordPress Sub-menu Engine)
+                                allElements.forEach((item, key) => {
+                                    if (item.parent_key) {
+                                        const parentItem = allElements.get(item.parent_key);
+                                        if (parentItem && parentItem.node !== item.node) {
+                                            let card = parentItem.node.querySelector('.submenu-card');
+                                            if (!card) {
+                                                // Konversi standalone parent jadi accordion
+                                                parentItem.node.classList.add('submenu-dropdown');
+                                                const existingLink = parentItem.node.querySelector('a.nav-link');
+                                                if (existingLink) {
+                                                    const iconHtml = existingLink.querySelector('.nav-icon-container')?.outerHTML || '';
+                                                    const labelText = existingLink.querySelector('.nav-text')?.textContent || parentItem.label;
+                                                    parentItem.node.innerHTML = `
+                                                        <button class="nav-link w-full nav-link-inactive">
+                                                            <div class="flex items-center">
+                                                                ${iconHtml}
+                                                                <span class="nav-text">${labelText}</span>
+                                                            </div>
+                                                            <svg class="dropdown-arrow w-4 h-4 ml-auto text-white/60 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                                        </button>
+                                                        <div class="submenu-card"></div>
+                                                    `;
+                                                    card = parentItem.node.querySelector('.submenu-card');
+                                                    const btn = parentItem.node.querySelector('button');
+                                                    btn.addEventListener('click', () => {
+                                                        const isExp = card.style.display !== 'none';
+                                                        card.style.display = isExp ? 'none' : 'block';
+                                                        btn.querySelector('.dropdown-arrow')?.classList.toggle('rotate-180', !isExp);
+                                                    });
+                                                }
+                                            }
+
+                                            // Masukkan item ke dalam .submenu-card parent
+                                            if (card) {
+                                                if (item.isSubItem) {
+                                                    card.appendChild(item.node);
+                                                } else if (item.node.tagName === 'LI') {
+                                                    const link = item.node.querySelector('a.nav-link');
+                                                    if (link) {
+                                                        const href = link.getAttribute('href');
+                                                        const subA = document.createElement('a');
+                                                        subA.href = href;
+                                                        subA.className = 'submenu-item';
+                                                        subA.dataset.menuKey = item.key;
+                                                        subA.innerHTML = `<span class="submenu-dot"></span>${item.label}`;
+                                                        if (item.node.hidden) {
+                                                            subA.hidden = true;
+                                                            subA.style.display = 'none';
+                                                        }
+                                                        card.appendChild(subA);
+                                                        item.node.remove();
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    } else if (item.isSubItem && !item.parent_key) {
+                                        // Menu anak yang dijadikan Menu Utama (outdent)
+                                        const href = item.node.getAttribute('href');
+                                        const li = document.createElement('li');
+                                        li.className = 'nav-item';
+                                        li.dataset.menuKey = item.key;
+                                        li.dataset.menuSection = item.section;
+                                        li.hidden = item.node.hidden;
+                                        li.innerHTML = `
+                                            <a href="${href}" class="nav-link nav-link-inactive">
+                                                <div class="nav-icon-container">
+                                                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                                    </svg>
+                                                </div>
+                                                <span class="nav-text">${item.label}</span>
+                                            </a>
+                                        `;
+                                        item.node.remove();
+                                        currentGroup.items.push({
+                                            node: li,
+                                            key: item.key,
+                                            label: item.label,
+                                            section: item.section,
+                                            order: item.order,
+                                            defaultOrder: item.defaultOrder
+                                        });
+                                        navigation.appendChild(li);
+                                    }
+                                });
+
+                                // 3. Urutkan item pada tiap section
                                 groups.forEach(current => {
                                     if (!current.items.length) {
                                         if (current.title) current.title.hidden = true;
@@ -198,17 +362,33 @@
                                     const sorted = [...current.items].sort((a, b) =>
                                         (a.order - b.order) || (a.defaultOrder - b.defaultOrder));
                                     const marker = document.createComment('role-menu-order');
-                                    const first = current.items[0].node;
-                                    first.parentNode.insertBefore(marker, first);
-                                    sorted.forEach(item => marker.parentNode.insertBefore(item.node, marker));
-                                    marker.remove();
+                                    const first = current.items[0]?.node?.parentNode ? current.items[0].node : null;
+                                    if (first && first.parentNode) {
+                                        first.parentNode.insertBefore(marker, first);
+                                        sorted.forEach(item => {
+                                            if (item.node && item.node.parentNode) {
+                                                marker.parentNode.insertBefore(item.node, marker);
+                                            }
+                                        });
+                                        marker.remove();
+                                    }
+
+                                    // Sembunyikan dropdown jika semua anaknya hidden
+                                    sorted.forEach(item => {
+                                        if (item.node && item.node.classList?.contains('submenu-dropdown')) {
+                                            const subLinks = Array.from(item.node.querySelectorAll('.submenu-card a.submenu-item'));
+                                            if (subLinks.length > 0 && subLinks.every(s => s.hidden || s.style.display === 'none')) {
+                                                item.node.hidden = true;
+                                            }
+                                        }
+                                    });
 
                                     if (current.title) {
-                                        current.title.hidden = current.items.every(item => item.node.hidden);
+                                        current.title.hidden = current.items.every(item => item.node.hidden || item.node.style.display === 'none');
                                     }
                                 });
                             } catch (error) {
-                                console.warn('Pengaturan menu tidak dapat diterapkan.', error);
+                                console.warn('Pengaturan menu hierarki tidak dapat diterapkan.', error);
                             } finally {
                                 navigation.style.visibility = 'visible';
                             }

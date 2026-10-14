@@ -176,6 +176,7 @@
                     }
 
                     if (node.tagName !== 'LI') return;
+                    if (node.hidden || node.style.display === 'none') return;
 
                     // Menu Accordion / Dropdown
                     if (node.classList?.contains('submenu-dropdown')) {

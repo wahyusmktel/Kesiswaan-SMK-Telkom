@@ -43,19 +43,19 @@ class RoleMenuService
         return Cache::remember($this->cacheKey($role), now()->addMinutes(10), fn () => RoleMenuSetting::query()
             ->where('role_id', $role->getKey())
             ->orderBy('sort_order')
-            ->get(['menu_key', 'is_visible', 'sort_order'])
+            ->get(['menu_key', 'parent_key', 'is_visible', 'sort_order'])
             ->mapWithKeys(fn (RoleMenuSetting $setting) => [
                 $setting->menu_key => [
-                    'visible' => $setting->is_visible,
-                    'order' => $setting->sort_order,
+                    'visible' => (bool) $setting->is_visible,
+                    'order' => (int) $setting->sort_order,
+                    'parent_key' => $setting->parent_key,
                 ],
             ])->all());
     }
 
     /**
      * Render the real navigation as a representative user of the selected role,
-     * then discover its top-level feature menus. This keeps the management page
-     * in sync with conditional Blade menus without maintaining a second catalog.
+     * then discover its top-level feature menus and submenus.
      */
     public function discoverForRole(Role $role): array
     {
@@ -73,7 +73,11 @@ class RoleMenuService
 
             $html = view('layouts.navigation')->render();
         } finally {
-            Auth::setUser($originalUser);
+            if ($originalUser) {
+                Auth::setUser($originalUser);
+            } else {
+                Auth::forgetUser();
+            }
 
             if ($hadActiveRole) {
                 session(['active_role' => $originalActiveRole]);
@@ -100,7 +104,7 @@ class RoleMenuService
     private function extractMenus(string $html, Role $role): array
     {
         preg_match_all(
-            '/<div\b[^>]*class=["\'][^"\']*\bsection-title\b[^"\']*["\'][^>]*>(.*?)<\/div>|<li\b[^>]*>(.*?)<\/li>/is',
+            '/<div\b[^>]*class=["\'][^"\']*\bsection-title\b[^"\']*["\'][^>]*>(.*?)<\/div>|<li\b[^>]*class=["\'][^"\']*\bsubmenu-dropdown\b[^"\']*["\'][^>]*>(.*?)<\/li>|<li\b[^>]*>(.*?)<\/li>/is',
             $html,
             $tokens,
             PREG_SET_ORDER,
@@ -114,40 +118,96 @@ class RoleMenuService
         $settings = $this->settingsForRole($role);
 
         foreach ($tokens as $token) {
-            if (($token[1] ?? '') !== '') {
+            // 1. Section Title
+            if (! empty($token[1])) {
                 $section = $this->plainText($token[1]) ?: 'Menu';
                 $sectionPosition++;
-
                 continue;
             }
 
-            $itemHtml = $token[2] ?? '';
-            if (! preg_match('/<[^>]*class=["\'][^"\']*\bnav-text\b[^"\']*["\'][^>]*>(.*?)<\//is', $itemHtml, $labelMatch)) {
+            // 2. Dropdown Parent dengan Sub-menu
+            if (! empty($token[2])) {
+                $itemHtml = $token[2];
+                if (preg_match('/<[^>]*class=["\'][^"\']*\bnav-text\b[^"\']*["\'][^>]*>(.*?)<\//is', $itemHtml, $labelMatch)) {
+                    $parentLabel = $this->plainText($labelMatch[1]);
+                    $base = Str::slug($section.' '.$parentLabel);
+                    $occurrences[$base] = ($occurrences[$base] ?? 0) + 1;
+                    $parentKey = $this->menuKey($section, $parentLabel, $occurrences[$base]);
+                    $parentSetting = $settings[$parentKey] ?? null;
+
+                    $menus[] = [
+                        'key' => $parentKey,
+                        'label' => $parentLabel,
+                        'section' => $section,
+                        'parent_key' => array_key_exists('parent_key', (array) $parentSetting) ? $parentSetting['parent_key'] : null,
+                        'is_parent' => true,
+                        'visible' => $parentSetting['visible'] ?? true,
+                        'order' => $parentSetting['order'] ?? $position,
+                        'default_order' => $position,
+                        'section_order' => $sectionPosition,
+                        'locked' => in_array($parentLabel, ['Profile', 'Keluar'], true)
+                            || ($role->name === 'Super Admin' && $parentLabel === 'Pengaturan Menu'),
+                    ];
+                    $position++;
+
+                    // Ekstrak child items di dalam .submenu-card
+                    if (preg_match('/<div\b[^>]*class=["\'][^"\']*\bsubmenu-card\b[^"\']*["\'][^>]*>(.*?)<\/div>/is', $itemHtml, $cardMatch)) {
+                        preg_match_all('/<a\b[^>]*class=["\'][^"\']*\bsubmenu-item\b[^"\']*["\'][^>]*>(.*?)<\/a>/is', $cardMatch[1], $subs);
+                        foreach ($subs[1] as $subHtml) {
+                            $childLabel = $this->plainText($subHtml);
+                            if ($childLabel === '') continue;
+                            $childBase = Str::slug($section.' '.$childLabel);
+                            $occurrences[$childBase] = ($occurrences[$childBase] ?? 0) + 1;
+                            $childKey = $this->menuKey($section, $childLabel, $occurrences[$childBase]);
+                            $childSetting = $settings[$childKey] ?? null;
+
+                            $menus[] = [
+                                'key' => $childKey,
+                                'label' => $childLabel,
+                                'section' => $section,
+                                'parent_key' => array_key_exists('parent_key', (array) $childSetting) ? $childSetting['parent_key'] : $parentKey,
+                                'is_parent' => false,
+                                'visible' => $childSetting['visible'] ?? true,
+                                'order' => $childSetting['order'] ?? $position,
+                                'default_order' => $position,
+                                'section_order' => $sectionPosition,
+                                'locked' => in_array($childLabel, ['Profile', 'Keluar'], true)
+                                    || ($role->name === 'Super Admin' && $childLabel === 'Pengaturan Menu'),
+                            ];
+                            $position++;
+                        }
+                    }
+                }
                 continue;
             }
 
-            $label = $this->plainText($labelMatch[1]);
-            if ($label === '') {
-                continue;
+            // 3. Standalone Direct Menu Item
+            if (! empty($token[3])) {
+                $itemHtml = $token[3];
+                if (preg_match('/<[^>]*class=["\'][^"\']*\bnav-text\b[^"\']*["\'][^>]*>(.*?)<\//is', $itemHtml, $labelMatch)) {
+                    $label = $this->plainText($labelMatch[1]);
+                    if ($label === '') continue;
+                    $base = Str::slug($section.' '.$label);
+                    $occurrences[$base] = ($occurrences[$base] ?? 0) + 1;
+                    $key = $this->menuKey($section, $label, $occurrences[$base]);
+                    $setting = $settings[$key] ?? null;
+
+                    $menus[] = [
+                        'key' => $key,
+                        'label' => $label,
+                        'section' => $section,
+                        'parent_key' => array_key_exists('parent_key', (array) $setting) ? $setting['parent_key'] : null,
+                        'is_parent' => false,
+                        'visible' => $setting['visible'] ?? true,
+                        'order' => $setting['order'] ?? $position,
+                        'default_order' => $position,
+                        'section_order' => $sectionPosition,
+                        'locked' => in_array($label, ['Profile', 'Keluar'], true)
+                            || ($role->name === 'Super Admin' && $label === 'Pengaturan Menu'),
+                    ];
+                    $position++;
+                }
             }
-
-            $base = Str::slug($section.' '.$label);
-            $occurrences[$base] = ($occurrences[$base] ?? 0) + 1;
-            $key = $this->menuKey($section, $label, $occurrences[$base]);
-            $setting = $settings[$key] ?? null;
-
-            $menus[] = [
-                'key' => $key,
-                'label' => $label,
-                'section' => $section,
-                'visible' => $setting['visible'] ?? true,
-                'order' => $setting['order'] ?? $position,
-                'default_order' => $position,
-                'section_order' => $sectionPosition,
-                'locked' => in_array($label, ['Profile', 'Keluar'], true)
-                    || ($role->name === 'Super Admin' && $label === 'Pengaturan Menu'),
-            ];
-            $position++;
         }
 
         usort($menus, fn (array $a, array $b) => [$a['section_order'], $a['order'], $a['default_order']]
