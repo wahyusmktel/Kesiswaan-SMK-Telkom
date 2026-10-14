@@ -180,10 +180,10 @@ class KeuanganRabController extends Controller
         $activeRole = session('active_role') ?: $user->getRoleNames()->first();
         $roleName = Str::lower((string) $activeRole);
 
-        $allowedRoles = ['kaur keuangan', 'keuangan', 'bendahara', 'super admin', 'kepala sekolah'];
+        $allowedRoles = ['keuangan', 'kaur keuangan', 'bendahara', 'super admin'];
 
-        if (!in_array($roleName, $allowedRoles, true) && !$user->hasAnyRole(['Super Admin', 'Kepala Sekolah', 'Kaur Keuangan'])) {
-            abort(403, 'Akses terbatas untuk Bagian Keuangan dan Pimpinan.');
+        if (!in_array($roleName, $allowedRoles, true) && !$user->hasAnyRole(['Super Admin', 'Keuangan', 'Kaur Keuangan', 'Bendahara'])) {
+            abort(403, 'Akses terbatas hanya untuk Bagian Keuangan dan Super Admin.');
         }
     }
 }

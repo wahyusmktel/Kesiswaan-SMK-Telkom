@@ -1,34 +1,16 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-                <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-indigo-600">
-                    <a href="{{ route('rab.index') }}" class="hover:underline">Anggaran & Pengadaan</a>
-                    <span>/</span>
-                    <span>Portal Keuangan</span>
-                </div>
-                <h1 class="mt-1 text-2xl font-black tracking-tight text-slate-900">
-                    Verifikasi Anggaran & Laporan Realisasi
-                </h1>
-                <p class="text-sm text-slate-500">
-                    Pusat kendali bagian keuangan untuk memantau usulan RAB, pengajuan reimburse, audit realisasi, dan arsip bukti eviden.
-                </p>
-            </div>
-
-            <div class="flex items-center gap-2">
-                <a href="{{ route('rab.index') }}"
-                   class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                    </svg>
-                    Halaman Utama RAB
-                </a>
-                <a href="{{ route('rab.create') }}"
-                   class="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-red-700">
-                    + Buat Pengajuan Baru
-                </a>
-            </div>
+        <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-indigo-600">
+            <a href="{{ route('rab.index') }}" class="hover:underline">Anggaran & Pengadaan</a>
+            <span>/</span>
+            <span>Portal Keuangan</span>
         </div>
+        <h1 class="mt-1 text-2xl font-black tracking-tight text-slate-900">
+            Verifikasi Anggaran & Realisasi
+        </h1>
+        <p class="mt-0.5 text-xs text-slate-500">
+            Verifikasi pengajuan RAB, reimburse, dan audit laporan realisasi belanja.
+        </p>
     </x-slot>
 
     <div class="py-8" x-data="{
@@ -86,34 +68,54 @@
                 </div>
             </div>
 
-            {{-- Navigasi Tab --}}
-            <div class="flex items-center gap-2 border-b border-slate-200">
-                <a href="{{ route('keuangan.rab.index', array_merge(request()->query(), ['tab' => 'usulan'])) }}"
-                   class="inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition {{ $activeTab === 'usulan' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800' }}">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Usulan Anggaran (RAB & Reimburse)
-                    <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">{{ $usulans->total() }}</span>
-                </a>
+            {{-- Navigasi Tab & Aksi Cepat --}}
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 border-b border-slate-200 pb-2 lg:pb-0">
+                <div class="flex items-center gap-2 overflow-x-auto">
+                    <a href="{{ route('keuangan.rab.index', array_merge(request()->query(), ['tab' => 'usulan'])) }}"
+                       class="inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition whitespace-nowrap {{ $activeTab === 'usulan' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800' }}">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <span>Usulan Anggaran (RAB & Reimburse)</span>
+                        <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">{{ $usulans->total() }}</span>
+                    </a>
 
-                <a href="{{ route('keuangan.rab.index', array_merge(request()->query(), ['tab' => 'realisasi'])) }}"
-                   class="inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition {{ $activeTab === 'realisasi' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800' }}">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Laporan Realisasi Anggaran
-                    <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">{{ $realisasis->total() }}</span>
-                </a>
+                    <a href="{{ route('keuangan.rab.index', array_merge(request()->query(), ['tab' => 'realisasi'])) }}"
+                       class="inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition whitespace-nowrap {{ $activeTab === 'realisasi' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800' }}">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <span>Laporan Realisasi Anggaran</span>
+                        <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">{{ $realisasis->total() }}</span>
+                    </a>
 
-                <a href="{{ route('keuangan.rab.index', array_merge(request()->query(), ['tab' => 'eviden'])) }}"
-                   class="inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition {{ $activeTab === 'eviden' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800' }}">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    Arsip Bukti Eviden Transaksi
-                    <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">{{ $evidences->total() }}</span>
-                </a>
+                    <a href="{{ route('keuangan.rab.index', array_merge(request()->query(), ['tab' => 'eviden'])) }}"
+                       class="inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition whitespace-nowrap {{ $activeTab === 'eviden' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800' }}">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span>Arsip Bukti Eviden Transaksi</span>
+                        <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">{{ $evidences->total() }}</span>
+                    </a>
+                </div>
+
+                {{-- Tombol Aksi (Dipindahkan dari Header) --}}
+                <div class="flex items-center gap-2 shrink-0 py-1">
+                    <a href="{{ route('rab.index') }}"
+                       class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300">
+                        <svg class="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        <span>Halaman Utama RAB</span>
+                    </a>
+                    <a href="{{ route('rab.create') }}"
+                       class="inline-flex items-center gap-1.5 rounded-xl bg-red-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-red-700">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        <span>Buat Pengajuan Baru</span>
+                    </a>
+                </div>
             </div>
 
             {{-- Filter & Pencarian Bar --}}

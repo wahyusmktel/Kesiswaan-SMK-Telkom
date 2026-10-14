@@ -242,16 +242,21 @@
             </div>
             <svg :class="expanded ? 'rotate-180' : ''" class="dropdown-arrow w-4 h-4 transition-transform text-white/60 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
         </button>
+        @php
+            $userActiveRole = strtolower(session('active_role') ?: (auth()->user()?->getRoleNames()->first() ?? ''));
+            $isKeuanganOrSuperAdmin = in_array($userActiveRole, ['super admin', 'keuangan', 'kaur keuangan', 'bendahara'])
+                || (auth()->user() && auth()->user()->hasAnyRole(['Super Admin', 'Keuangan', 'Kaur Keuangan', 'Bendahara']));
+        @endphp
         <div x-show="expanded" x-collapse class="submenu-card">
             <a href="{{ route('rab.index') }}" class="submenu-item {{ request()->routeIs('rab.index', 'rab.create', 'rab.edit', 'rab.show', 'rab.realisasi.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Usulan RAB &amp; Realisasi</a>
-            @if(auth()->user()->hasAnyRole(['Super Admin', 'Keuangan', 'Kepala Sekolah', 'Tata Usaha']))
+            @if($isKeuanganOrSuperAdmin)
                 <a href="{{ route('keuangan.rab.index') }}" class="submenu-item {{ request()->routeIs('keuangan.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Verifikasi Keuangan</a>
             @endif
         </div>
         <div class="submenu-flyout" :style="'top: ' + flyoutTop + 'px'">
             <div class="submenu-flyout-title">Anggaran (RAB)</div>
             <a href="{{ route('rab.index') }}" class="submenu-item {{ request()->routeIs('rab.index', 'rab.create', 'rab.edit', 'rab.show', 'rab.realisasi.*') ? 'submenu-item-active' : '' }}">Usulan RAB &amp; Realisasi</a>
-            @if(auth()->user()->hasAnyRole(['Super Admin', 'Keuangan', 'Kepala Sekolah', 'Tata Usaha']))
+            @if($isKeuanganOrSuperAdmin)
                 <a href="{{ route('keuangan.rab.index') }}" class="submenu-item {{ request()->routeIs('keuangan.*') ? 'submenu-item-active' : '' }}">Verifikasi Keuangan</a>
             @endif
         </div>
