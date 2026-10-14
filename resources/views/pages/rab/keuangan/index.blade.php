@@ -1,16 +1,8 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-indigo-600">
-            <a href="{{ route('rab.index') }}" class="hover:underline">Anggaran & Pengadaan</a>
-            <span>/</span>
-            <span>Portal Keuangan</span>
-        </div>
-        <h1 class="mt-1 text-2xl font-black tracking-tight text-slate-900">
+        <h1 class="text-xl font-black tracking-tight text-slate-900">
             Verifikasi Anggaran & Realisasi
         </h1>
-        <p class="mt-0.5 text-xs text-slate-500">
-            Verifikasi pengajuan RAB, reimburse, dan audit laporan realisasi belanja.
-        </p>
     </x-slot>
 
     <div class="py-8" x-data="{
