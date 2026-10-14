@@ -91,8 +91,8 @@ return new class extends Migration
         if (! Schema::hasTable('prakerin_bimbingan_aktivitas_logs')) {
             Schema::create('prakerin_bimbingan_aktivitas_logs', function (Blueprint $table) {
                 $table->id();
-                $table->foreignId('prakerin_bimbingan_laporan_id')->constrained('prakerin_bimbingan_laporans')->cascadeOnDelete();
-                $table->foreignId('prakerin_bimbingan_tahap_id')->nullable()->constrained('prakerin_bimbingan_tahaps')->nullOnDelete();
+                $table->foreignId('prakerin_bimbingan_laporan_id')->constrained('prakerin_bimbingan_laporans', 'id', 'pbal_laporan_fk')->cascadeOnDelete();
+                $table->foreignId('prakerin_bimbingan_tahap_id')->nullable()->constrained('prakerin_bimbingan_tahaps', 'id', 'pbal_tahap_fk')->nullOnDelete();
                 $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
                 $table->string('aksi'); // e.g. 'ajukan_judul', 'setujui_judul', 'tolak_judul', 'tambah_bab', dll
                 $table->text('keterangan');
