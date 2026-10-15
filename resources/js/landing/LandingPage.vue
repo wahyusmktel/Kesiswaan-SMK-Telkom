@@ -163,14 +163,11 @@ function closeMobileMenu() {
     mobileMenuOpen.value = false;
 }
 
-function moduleIllustrationStyle(index) {
-    const column = (index % 3) * 50;
-    const row = Math.floor(index / 3) * 50;
-
-    return {
-        backgroundImage: `url("${props.payload.assets.serviceModules}")`,
-        backgroundPosition: `${column}% ${row}%`,
-    };
+function getModuleImage(index) {
+    if (props.payload?.assets?.serviceModuleImages?.[index]) {
+        return props.payload.assets.serviceModuleImages[index];
+    }
+    return `/images/landing-vue/modules/module-${String(index + 1).padStart(2, '0')}.webp`;
 }
 
 function initializeWorldCanvas() {
@@ -424,11 +421,19 @@ onBeforeUnmount(() => {
                     <div class="module-track-viewport">
                         <div ref="moduleTrack" class="module-track" :style="{ transform: `translate3d(${-moduleOffset}px, 0, 0)` }">
                             <article v-for="(module, index) in modules" :key="module.number" class="module-card">
-                                <div class="module-card-media" :style="moduleIllustrationStyle(index)" role="img" :aria-label="`Ilustrasi ${module.title}`">
+                                <div class="module-card-media">
                                     <div class="module-card-top">
                                         <span>{{ module.number }}</span>
-                                        <component :is="module.icon" :size="24" />
+                                        <component :is="module.icon" :size="20" />
                                     </div>
+                                    <img
+                                        :src="getModuleImage(index)"
+                                        :alt="`Ilustrasi ${module.title}`"
+                                        class="module-card-img"
+                                        loading="lazy"
+                                        width="418"
+                                        height="418"
+                                    />
                                 </div>
                                 <div class="module-card-copy">
                                     <h3>{{ module.title }}</h3>

@@ -156,6 +156,17 @@ class LandingPageController extends Controller
             'assets' => [
                 'modules' => asset('images/landing-vue/integrated-modules.png'),
                 'serviceModules' => asset('images/landing-vue/service-modules-atlas.webp'),
+                'serviceModuleImages' => [
+                    asset('images/landing-vue/modules/module-01.webp'),
+                    asset('images/landing-vue/modules/module-02.webp'),
+                    asset('images/landing-vue/modules/module-03.webp'),
+                    asset('images/landing-vue/modules/module-04.webp'),
+                    asset('images/landing-vue/modules/module-05.webp'),
+                    asset('images/landing-vue/modules/module-06.webp'),
+                    asset('images/landing-vue/modules/module-07.webp'),
+                    asset('images/landing-vue/modules/module-08.webp'),
+                    asset('images/landing-vue/modules/module-09.webp'),
+                ],
             ],
         ];
 
