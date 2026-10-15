@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Masuk — SISFO SMK Telkom Lampung</title>
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
@@ -87,10 +88,21 @@
 
         .form-input {
             @apply w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 transition-all duration-300 form-input-focus;
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+        }
+
+        .form-input::placeholder {
+            color: #94a3b8 !important;
         }
 
         .form-input:hover {
             @apply border-red-400;
+        }
+
+        .form-input:focus {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
         }
 
         .btn-login {

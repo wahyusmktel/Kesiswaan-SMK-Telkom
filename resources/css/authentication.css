@@ -477,19 +477,20 @@
     }
 }
 
-/* Dark Mode Support (Optional) */
-@media (prefers-color-scheme: dark) {
-    .form-input {
-        background-color: #1f2937;
-        color: #f3f4f6;
-        border-color: #374151;
-    }
+/* Light Mode Enforcement & Autofill Fix */
+.form-input {
+    background-color: #ffffff !important;
+    color: #111827 !important;
+}
 
-    .form-input::placeholder {
-        color: #6b7280;
-    }
+.form-input::placeholder {
+    color: #9ca3af !important;
+}
 
-    .form-input:hover {
-        border-color: #9f1239;
-    }
+.form-input:-webkit-autofill,
+.form-input:-webkit-autofill:hover,
+.form-input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
+    -webkit-text-fill-color: #111827 !important;
+    transition: background-color 5000s ease-in-out 0s;
 }
