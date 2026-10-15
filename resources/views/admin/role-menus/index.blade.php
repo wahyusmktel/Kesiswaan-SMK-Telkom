@@ -23,7 +23,7 @@
         </div>
     </x-slot>
 
-    <div class="mx-auto max-w-7xl space-y-6" x-data="roleMenuManager({{ Illuminate\Support\Js::from($menus) }})">
+    <div class="mx-auto max-w-7xl space-y-6" x-data="roleMenuManager({{ Illuminate\Support\Js::from($menus) }})" @keydown.escape.window="if (isMaximized) toggleMaximize()">
         @if(session('success'))
             <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-semibold text-emerald-800 shadow-sm flex items-center justify-between">
                 <div class="flex items-center gap-3">
@@ -33,7 +33,7 @@
             </div>
         @endif
 
-        <section class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <section :class="{ 'overflow-visible': isMaximized, 'overflow-hidden': !isMaximized }" class="rounded-3xl border border-slate-200 bg-white shadow-sm transition-all">
             {{-- Header & Role Switcher Bar --}}
             <div class="border-b border-slate-100 bg-slate-50/50 p-6">
                 <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
@@ -86,7 +86,7 @@
             </div>
 
             @if($selectedRole)
-                <form method="POST" action="{{ route('super-admin.role-menus.update', $selectedRole) }}">
+                <form id="role-menu-form" method="POST" action="{{ route('super-admin.role-menus.update', $selectedRole) }}">
                     @csrf
                     @method('PUT')
 
@@ -158,19 +158,102 @@
                         </aside>
 
                         {{-- Sisi Kanan: Daftar Kartu Menu Interaktif dengan Indentasi Sub-menu --}}
-                        <div class="p-6">
-                            <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
-                                <div>
-                                    <div class="text-xs font-black uppercase tracking-wider text-slate-400">Struktur Hierarki Menu</div>
-                                    <p class="mt-0.5 text-xs text-slate-500">Tampilan urutan dan pengelompokan menu untuk role {{ $selectedRole->name }}.</p>
+                        <div :class="isMaximized 
+                            ? 'fixed inset-0 z-50 flex flex-col bg-slate-100 p-4 sm:p-6 lg:p-8 overflow-hidden shadow-2xl animate-in fade-in duration-200' 
+                            : 'p-6 flex flex-col'">
+                            
+                            {{-- Header Kotak Struktur Hierarki Menu --}}
+                            <div class="mb-5 flex flex-wrap items-center justify-between gap-3 shrink-0"
+                                 :class="{ 'border-b border-slate-200/80 pb-4 bg-white/95 backdrop-blur rounded-2xl px-5 py-3.5 shadow-sm max-w-5xl mx-auto w-full': isMaximized }">
+                                <div class="flex items-center gap-3">
+                                    <template x-if="isMaximized">
+                                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-red-600 to-rose-600 text-white shadow-md shadow-red-500/30 shrink-0">
+                                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h10"/></svg>
+                                        </div>
+                                    </template>
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <div class="text-xs font-black uppercase tracking-wider text-slate-400">Struktur Hierarki Menu</div>
+                                            <template x-if="isMaximized">
+                                                <span class="rounded-full bg-red-100 px-2.5 py-0.5 text-[10px] font-black text-red-700 uppercase tracking-wider">
+                                                    Mode Fokus Maksimal
+                                                </span>
+                                            </template>
+                                        </div>
+                                        <p class="mt-0.5 text-xs text-slate-500">
+                                            Tampilan urutan dan pengelompokan menu untuk role <span class="font-bold text-slate-700">{{ $selectedRole->name }}</span>.
+                                        </p>
+                                    </div>
                                 </div>
-                                <div class="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm">
-                                    <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                                    <span>Mode Hirarki WordPress Aktif</span>
+
+                                <div class="flex flex-wrap items-center gap-2.5">
+                                    {{-- Search Box di Mode Maximize --}}
+                                    <template x-if="isMaximized">
+                                        <div class="relative w-56 sm:w-72">
+                                            <svg class="absolute left-3 top-2.5 h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.35-4.35m1.35-5.65a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
+                                            </svg>
+                                            <input x-model="search" type="search" placeholder="Cari nama menu..."
+                                                class="w-full rounded-xl border-slate-200 bg-white py-2 pl-9 pr-7 text-xs font-medium focus:border-red-500 focus:ring-red-500 shadow-sm">
+                                            <button type="button" x-show="search" @click="search = ''" class="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 text-xs font-bold">✕</button>
+                                        </div>
+                                    </template>
+
+                                    {{-- Quick Actions di Mode Maximize --}}
+                                    <template x-if="isMaximized">
+                                        <div class="hidden sm:flex items-center gap-1.5">
+                                            <button type="button" @click="setAll(true)"
+                                                class="inline-flex items-center gap-1 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700 hover:bg-emerald-100 shadow-sm transition">
+                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                <span>Tampil Semua</span>
+                                            </button>
+                                            <button type="button" @click="setAll(false)"
+                                                class="inline-flex items-center gap-1 rounded-xl border border-slate-300 bg-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-300 shadow-sm transition">
+                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"/></svg>
+                                                <span>Sembunyi Semua</span>
+                                            </button>
+                                        </div>
+                                    </template>
+
+                                    {{-- Save Button di Header Mode Maximize --}}
+                                    <template x-if="isMaximized">
+                                        <button type="submit" form="role-menu-form"
+                                            class="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 px-4 py-2 text-xs font-black text-white shadow-md shadow-red-500/25 hover:from-red-700 hover:to-rose-700 transition">
+                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                            <span>Simpan</span>
+                                        </button>
+                                    </template>
+
+                                    <div x-show="!isMaximized" class="hidden sm:flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm">
+                                        <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        <span>Mode Hirarki WordPress</span>
+                                    </div>
+
+                                    {{-- Tombol Maximize / Minimize --}}
+                                    <button type="button" @click="toggleMaximize()"
+                                        :class="isMaximized 
+                                            ? 'bg-slate-900 text-white border-slate-800 hover:bg-slate-800 shadow-md ring-2 ring-slate-900/10' 
+                                            : 'bg-white text-slate-700 border-slate-200 hover:border-red-300 hover:bg-red-50 hover:text-red-700 shadow-sm'"
+                                        class="inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-1.5 text-xs font-extrabold transition active:scale-95"
+                                        :title="isMaximized ? 'Kembalikan ke ukuran normal (Esc)' : 'Perbesar kotak ini ke mode layar penuh untuk fokus mengatur hierarki menu (Maximize)'">
+                                        <template x-if="!isMaximized">
+                                            <svg class="h-3.5 w-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                                            </svg>
+                                        </template>
+                                        <template x-if="isMaximized">
+                                            <svg class="h-3.5 w-3.5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 4H5a1 1 0 0 0-1 1v4m5-5-5 5m0 0h4M15 4h4a1 1 0 0 1 1 1v4m-5-5 5 5m0 0h-4M9 20H5a1 1 0 0 1-1-1v-4m5 5-5-5m0 0h4m10 5h4a1 1 0 0 0 1-1v-4m-5 5 5-5m0 0h-4" />
+                                            </svg>
+                                        </template>
+                                        <span x-text="isMaximized ? 'Kecilkan (Esc)' : 'Maximize'"></span>
+                                    </button>
                                 </div>
                             </div>
 
-                            <div class="max-h-[680px] space-y-6 overflow-y-auto pr-2 sidebar-scroll">
+                            <div :class="isMaximized 
+                                ? 'flex-1 overflow-y-auto pr-3 space-y-6 sidebar-scroll w-full max-w-5xl mx-auto py-2' 
+                                : 'max-h-[680px] space-y-6 overflow-y-auto pr-2 sidebar-scroll'">
                                 <template x-for="section in sections" :key="section">
                                     <section x-show="sectionItems(section).some(item => matchesSearch(item))" class="space-y-2.5">
                                         {{-- Header Section / Kelompok Menu --}}
@@ -325,6 +408,27 @@
                                     Tidak ada menu yang sesuai dengan kata kunci pencarian.
                                 </div>
                             </div>
+
+                            {{-- Floating Bottom Bar di Mode Maximize --}}
+                            <template x-if="isMaximized">
+                                <div class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/90 bg-white/95 backdrop-blur px-5 py-3 shadow-md shrink-0 max-w-5xl mx-auto w-full">
+                                    <div class="flex items-center gap-2 text-xs text-slate-600">
+                                        <span class="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        <span>Mode Fokus Aktif &bull; Tekan tombol <kbd class="rounded bg-slate-100 border border-slate-300 px-1.5 py-0.5 font-mono text-[10px] text-slate-700 font-bold">Esc</kbd> untuk keluar.</span>
+                                    </div>
+                                    <div class="flex items-center gap-2.5">
+                                        <button type="button" @click="toggleMaximize()"
+                                            class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 hover:text-slate-800 transition shadow-sm">
+                                            Tutup Mode Fokus
+                                        </button>
+                                        <button type="submit" form="role-menu-form"
+                                            class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 px-5 py-2 text-xs font-black text-white shadow-lg shadow-red-500/25 hover:from-red-700 hover:to-rose-700 transition">
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                            <span>Simpan Pengaturan Menu</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
                         </div>
                     </div>
 
@@ -366,6 +470,16 @@
                 search: '',
                 draggedKey: null,
                 dragOverKey: null,
+                isMaximized: false,
+
+                toggleMaximize() {
+                    this.isMaximized = !this.isMaximized;
+                    if (this.isMaximized) {
+                        document.body.classList.add('overflow-hidden');
+                    } else {
+                        document.body.classList.remove('overflow-hidden');
+                    }
+                },
 
                 get visibleCount() {
                     return this.items.filter(item => item.visible).length;
