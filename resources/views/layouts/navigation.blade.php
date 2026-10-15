@@ -230,7 +230,7 @@
 {{-- ============================================================ --}}
 {{-- MODUL LINTAS PERAN: ANGGARAN (RAB) & KEUANGAN --}}
 {{-- ============================================================ --}}
-@if(auth()->user() && !auth()->user()->hasRole('Siswa'))
+@if(auth()->check() && strtolower((string)($navActiveRoleName ?? '')) !== 'siswa')
     <li class="submenu-dropdown"
         x-data="{ expanded: {{ request()->routeIs('rab.*', 'keuangan.*') ? 'true' : 'false' }}, flyoutTop: 0, updateFlyoutPosition(){ const r=this.$el.querySelector('button').getBoundingClientRect(); this.flyoutTop=r.top; } }"
         @mouseenter="updateFlyoutPosition()">
@@ -249,9 +249,8 @@
             <svg :class="expanded ? 'rotate-180' : ''" class="dropdown-arrow w-4 h-4 transition-transform text-white/60 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
         </button>
         @php
-            $userActiveRole = strtolower(session('active_role') ?: (auth()->user()?->getRoleNames()->first() ?? ''));
-            $isKeuanganOrSuperAdmin = in_array($userActiveRole, ['super admin', 'keuangan', 'kaur keuangan', 'bendahara'])
-                || (auth()->user() && auth()->user()->hasAnyRole(['Super Admin', 'Keuangan', 'Kaur Keuangan', 'Bendahara']));
+            $userActiveRole = strtolower((string)($navActiveRoleName ?? ''));
+            $isKeuanganOrSuperAdmin = in_array($userActiveRole, ['super admin', 'keuangan', 'kaur keuangan', 'bendahara', 'kepala sekolah'], true);
         @endphp
         <div x-show="expanded" x-collapse class="submenu-card">
             <a href="{{ route('rab.index') }}" class="submenu-item {{ request()->routeIs('rab.index', 'rab.create', 'rab.edit', 'rab.show', 'rab.realisasi.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Usulan RAB &amp; Realisasi</a>
@@ -3258,7 +3257,7 @@
     $canViewCctv = false;
     if (!in_array(\Illuminate\Support\Str::lower((string) $activeNavigationRole), ['siswa', 'student'], true)
         && \Illuminate\Support\Facades\Schema::hasTable('cctv_cameras')) {
-        $canViewCctv = auth()->user()?->hasRole('Super Admin')
+        $canViewCctv = (strtolower((string) $activeNavigationRole) === 'super admin')
             || auth()->user()?->cctvCameras()->where('is_active', true)->exists();
     }
 @endphp
@@ -3467,50 +3466,48 @@
 {{-- ============================================================ --}}
 {{-- MENU: INVENTARIS ASET (Semua Role kecuali Siswa)            --}}
 {{-- ============================================================ --}}
-@unlessrole('Siswa|siswa')
-    @if(session('active_role') !== 'Siswa' && !is_null(session('active_role')))
-        <div class="section-title">Integrasi</div>
-        <li>
-            <a href="{{ route('inventaris-aset.index') }}" title="Inventaris Aset"
-                class="nav-link {{ request()->routeIs('inventaris-aset.index') ? 'nav-link-active' : 'nav-link-inactive' }}">
-                <div class="nav-icon-container">
-                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                    </svg>
-                </div>
-                <span class="nav-text">Inventaris Aset</span>
-                <span class="nav-badge bg-orange-100 text-orange-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">API</span>
-            </a>
-        </li>
-        <li>
-            <a href="{{ route('inventaris-aset.borrow-history') }}" title="Riwayat Peminjaman Aset"
-                class="nav-link {{ request()->routeIs('inventaris-aset.borrow-history') ? 'nav-link-active' : 'nav-link-inactive' }}">
-                <div class="nav-icon-container">
-                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                </div>
-                <span class="nav-text">Riwayat Peminjaman</span>
-            </a>
-        </li>
-    @endif
-@endunlessrole
-
-@can('manage tu letter requests')
-    <div class="section-title">Layanan Persuratan</div>
+@if(!in_array(strtolower((string)($navActiveRoleName ?? '')), ['siswa', 'student'], true))
+    <div class="section-title">Integrasi</div>
     <li>
-        <a href="{{ route('correspondence.request') }}"
-            class="nav-link {{ request()->routeIs('correspondence.request') ? 'nav-link-active' : 'nav-link-inactive' }}">
-            <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <a href="{{ route('inventaris-aset.index') }}" title="Inventaris Aset"
+            class="nav-link {{ request()->routeIs('inventaris-aset.index') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg></div>
-            <span class="nav-text">Permohonan Nomor</span>
+                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+            </div>
+            <span class="nav-text">Inventaris Aset</span>
+            <span class="nav-badge bg-orange-100 text-orange-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">API</span>
         </a>
     </li>
-@endcan
+    <li>
+        <a href="{{ route('inventaris-aset.borrow-history') }}" title="Riwayat Peminjaman Aset"
+            class="nav-link {{ request()->routeIs('inventaris-aset.borrow-history') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <span class="nav-text">Riwayat Peminjaman</span>
+        </a>
+    </li>
+
+    @can('manage tu letter requests')
+        <div class="section-title">Layanan Persuratan</div>
+        <li>
+            <a href="{{ route('correspondence.request') }}"
+                class="nav-link {{ request()->routeIs('correspondence.request') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                <div class="nav-icon-container"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg></div>
+                <span class="nav-text">Permohonan Nomor</span>
+            </a>
+        </li>
+    @endcan
+@endif
 
 {{-- ============================================================ --}}
 {{-- ROLE: KANTIN --}}
@@ -3742,47 +3739,7 @@
     @endif
 @endif
 
-{{-- ============================================================ --}}
-{{-- MENU: RENCANA ANGGARAN BIAYA (RAB) - SEMUA ROLE KECUALI SISWA --}}
-{{-- ============================================================ --}}
-@unlessrole('Siswa|siswa')
-    @if(session('active_role') !== 'Siswa' && !is_null(session('active_role')))
-        @php
-            $userActiveRoleName = strtolower((string) (session('active_role') ?: (auth()->user()?->getRoleNames()->first() ?? '')));
-            $canAccessKeuanganMenu = in_array($userActiveRoleName, ['kaur keuangan', 'keuangan', 'bendahara', 'super admin', 'kepala sekolah'], true)
-                || (auth()->check() && auth()->user()->hasAnyRole(['Super Admin', 'Kepala Sekolah', 'Kaur Keuangan']));
-        @endphp
-        <div class="section-title">Anggaran & Pengadaan</div>
-        <li>
-            <a href="{{ route('rab.index') }}" title="Rencana Anggaran Biaya (RAB)"
-                class="nav-link {{ request()->routeIs('rab.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
-                <div class="nav-icon-container">
-                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                </div>
-                <span class="nav-text">Rencana Anggaran (RAB)</span>
-                <span class="nav-badge ml-auto rounded-full bg-purple-100 px-1.5 py-0.5 text-[10px] font-black text-purple-700">AI</span>
-            </a>
-        </li>
-        @if($canAccessKeuanganMenu)
-            <li>
-                <a href="{{ route('keuangan.rab.index') }}" title="Verifikasi & Portal Keuangan"
-                    class="nav-link {{ request()->routeIs('keuangan.rab.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
-                    <div class="nav-icon-container">
-                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                        </svg>
-                    </div>
-                    <span class="nav-text">Verifikasi Keuangan</span>
-                    <span class="nav-badge ml-auto rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-black text-emerald-700">Audit</span>
-                </a>
-            </li>
-        @endif
-    @endif
-@endunlessrole
+
 
 {{-- SEPARATOR & PROFILE MENU (Always Visible) --}}
 <li class="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent mx-6 my-4"></li>
