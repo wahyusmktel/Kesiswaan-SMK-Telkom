@@ -20,8 +20,8 @@
                     📢
                 </span>
                 <div>
-                    <h3 class="text-xs font-black uppercase tracking-wider">Pemberitahuan Sistem SISFO</h3>
-                    <p class="text-[10px] text-white/80">SMK Telkom Lampung &bull; Pembaruan Navigasi & Menu Baru</p>
+                    <h3 class="text-xs font-black uppercase tracking-wider">{{ $appSetting?->system_announcement_title ?: 'Pemberitahuan Sistem SISFO' }}</h3>
+                    <p class="text-[10px] text-white/80">{{ $appSetting?->system_announcement_subtitle ?: 'SMK Telkom Lampung • Pembaruan Navigasi & Menu Baru' }}</p>
                 </div>
             </div>
 
@@ -149,7 +149,7 @@
             timeLeft: 30,
             timer: null,
             dontShowAgain: false,
-            storageKey: 'sisfo_nav_announcement_v1',
+            storageKey: 'sisfo_nav_announcement_{{ $appSetting?->system_announcement_version ?: 'v1' }}',
 
             init() {
                 // Periksa apakah pengguna sudah pernah memilih 'Jangan tampilkan lagi'

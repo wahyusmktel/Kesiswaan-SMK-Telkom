@@ -32,7 +32,7 @@ class OkrController extends Controller
         $activePeriod = $templates->ensureForActiveAcademicYear($request->user());
         $periods = OkrPeriod::with('academicYear')->latest('id')->get();
         $period = $periods->firstWhere('id', (int) $request->integer('period_id')) ?? $activePeriod;
-        $units = OkrUnit::where('is_active', true)->orderBy('sort_order')->get();
+        $units = OkrUnit::with('parent')->where('is_active', true)->orderBy('sort_order')->get();
         $editableUnitIds = $this->editableUnitIds($request->user(), $units);
         $selectedUnit = $units->firstWhere('id', (int) $request->integer('unit_id'))
             ?? $units->first(fn (OkrUnit $unit) => in_array($unit->id, $editableUnitIds, true))
@@ -41,44 +41,86 @@ class OkrController extends Controller
         $period->load([
             'academicYear',
             'objectives.keyResults' => fn ($query) => $query->orderBy('sort_order'),
-            'objectives.keyResults.plans' => fn ($query) => $query
-                ->where('okr_unit_id', $selectedUnit?->id)
-                ->whereNull('parent_id')
-                ->with([
-                    'owner:id,name',
-                    'updates.user:id,name',
-                    'children' => fn ($child) => $child->with([
+            'objectives.keyResults.plans' => function ($query) use ($selectedUnit) {
+                if ($selectedUnit?->parent_id) {
+                    // Jika unit terpilih adalah anak (misal Kaprodi di bawah Kurikulum),
+                    // tampilkan target tahunan milik unit induk (Kurikulum) serta target tahunan unit jika ada
+                    $query->where(function ($q) use ($selectedUnit) {
+                        $q->where(function ($sub) use ($selectedUnit) {
+                            $sub->where('okr_unit_id', $selectedUnit->parent_id)
+                                ->where('level', 'annual');
+                        })->orWhere(function ($sub) use ($selectedUnit) {
+                            $sub->where('okr_unit_id', $selectedUnit->id)
+                                ->whereNull('parent_id');
+                        });
+                    })
+                    ->with([
                         'owner:id,name',
+                        'unit:id,name,code',
                         'updates.user:id,name',
-                        'children' => fn ($grandChild) => $grandChild->with(['owner:id,name', 'updates.user:id,name']),
-                    ])->orderBy('starts_at'),
-                ])
-                ->orderBy('starts_at'),
+                        'children' => fn ($child) => $child
+                            ->where('okr_unit_id', $selectedUnit->id)
+                            ->with([
+                                'owner:id,name',
+                                'unit:id,name,code',
+                                'updates.user:id,name',
+                                'children' => fn ($grandChild) => $grandChild
+                                    ->where('okr_unit_id', $selectedUnit->id)
+                                    ->with(['owner:id,name', 'unit:id,name,code', 'updates.user:id,name']),
+                            ])->orderBy('starts_at'),
+                    ])
+                    ->orderBy('starts_at');
+                } else {
+                    // Unit mandiri atau unit induk (misal Kurikulum):
+                    // Tampilkan target tahunannya beserta seluruh target turunan (baik milik induk maupun anak)
+                    $query->where('okr_unit_id', $selectedUnit?->id)
+                        ->whereNull('parent_id')
+                        ->with([
+                            'owner:id,name',
+                            'unit:id,name,code',
+                            'updates.user:id,name',
+                            'children' => fn ($child) => $child->with([
+                                'owner:id,name',
+                                'unit:id,name,code',
+                                'updates.user:id,name',
+                                'children' => fn ($grandChild) => $grandChild->with([
+                                    'owner:id,name',
+                                    'unit:id,name,code',
+                                    'updates.user:id,name',
+                                ]),
+                            ])->orderBy('starts_at'),
+                        ])
+                        ->orderBy('starts_at');
+                }
+            },
         ]);
 
         $selectedPlans = $this->plansForPeriod($period)
             ->where('okr_unit_id', $selectedUnit?->id)
-            ->with(['keyResult.objective', 'owner:id,name'])
+            ->with(['keyResult.objective', 'owner:id,name', 'unit:id,name,code'])
             ->get();
-        $topPlans = $selectedPlans->whereNull('parent_id');
+
+        $topPlans = $selectedUnit?->parent_id
+            ? $selectedPlans->where('level', 'monthly')
+            : $selectedPlans->whereNull('parent_id');
 
         $stats = [
-            'progress' => round((float) $topPlans->avg('progress_percent'), 1),
+            'progress' => round((float) ($topPlans->isNotEmpty() ? $topPlans->avg('progress_percent') : 0), 1),
             'total' => $selectedPlans->count(),
             'completed' => $selectedPlans->where('status', 'completed')->count(),
             'at_risk' => $selectedPlans->where('status', 'at_risk')->count(),
         ];
 
         $unitStats = $units->map(function (OkrUnit $unit) use ($period) {
-            $plans = $this->plansForPeriod($period)
-                ->where('okr_unit_id', $unit->id)
-                ->whereNull('parent_id')
-                ->get();
+            $plansQuery = $this->plansForPeriod($period)->where('okr_unit_id', $unit->id);
+            $plans = $unit->parent_id
+                ? $plansQuery->where('level', 'monthly')->get()
+                : $plansQuery->whereNull('parent_id')->get();
 
             return [
                 'id' => $unit->id,
                 'name' => $unit->name,
-                'progress' => round((float) $plans->avg('progress_percent'), 1),
+                'progress' => round((float) ($plans->isNotEmpty() ? $plans->avg('progress_percent') : 0), 1),
                 'plans' => $plans->count(),
             ];
         });
@@ -93,7 +135,7 @@ class OkrController extends Controller
 
             return [
                 'label' => $month->translatedFormat('M Y'),
-                'progress' => round((float) $updates->avg('progress_after'), 1),
+                'progress' => round((float) ($updates->isNotEmpty() ? $updates->avg('progress_after') : 0), 1),
             ];
         });
 
@@ -109,6 +151,23 @@ class OkrController extends Controller
             ->get(['id', 'name']);
         $setting = AppSetting::first();
 
+        // Siapkan parentPlans untuk dropdown formulir Alpine (tahunan & bulanan)
+        $parentUnitIds = array_filter([$selectedUnit?->id, $selectedUnit?->parent_id]);
+        $parentPlans = $this->plansForPeriod($period)
+            ->whereIn('okr_unit_id', $parentUnitIds)
+            ->whereIn('level', ['annual', 'monthly'])
+            ->with('unit:id,name,code')
+            ->get(['id', 'okr_key_result_id', 'okr_unit_id', 'level', 'title'])
+            ->map(fn ($p) => [
+                'id' => $p->id,
+                'okr_key_result_id' => $p->okr_key_result_id,
+                'okr_unit_id' => $p->okr_unit_id,
+                'unit_name' => $p->unit?->name,
+                'level' => $p->level,
+                'title' => ($p->okr_unit_id !== $selectedUnit?->id ? "[{$p->unit?->name}] " : '') . $p->title,
+            ])
+            ->values();
+
         return view('pages.okr.index', [
             'period' => $period,
             'periods' => $periods,
@@ -118,12 +177,13 @@ class OkrController extends Controller
             'canManageAll' => $this->canManageAll($request->user()),
             'canManageMatrix' => $this->canManageMatrix($request->user()),
             'canEditSelected' => $selectedUnit && in_array($selectedUnit->id, $editableUnitIds, true),
+            'parentPlans' => $parentPlans,
             'stats' => $stats,
             'unitStats' => $unitStats,
             'monthlyTrend' => $monthlyTrend,
             'recentUpdates' => $recentUpdates,
             'owners' => $owners,
-            'aiReady' => (bool) ($setting?->stella_ai_enabled && $setting->stella_ai_api_key && $setting->stella_ai_chat_model),
+            'aiReady' => (bool) ($setting?->stella_ai_enabled && $setting->stella_ai_chat_model),
             'academicYears' => TahunPelajaran::orderByDesc('tahun')->orderBy('semester')->get(),
         ]);
     }
@@ -350,9 +410,9 @@ class OkrController extends Controller
             ->orderByRaw("CASE level WHEN 'annual' THEN 1 WHEN 'monthly' THEN 2 ELSE 3 END")
             ->orderBy('starts_at')
             ->get();
-        $topPlans = $plans->whereNull('parent_id');
+        $topPlans = ($unit && $unit->parent_id) ? $plans->where('level', 'monthly') : $plans->whereNull('parent_id');
         $summary = [
-            'progress' => round((float) $topPlans->avg('progress_percent'), 1),
+            'progress' => round((float) ($topPlans->isNotEmpty() ? $topPlans->avg('progress_percent') : 0), 1),
             'total' => $plans->count(),
             'completed' => $plans->where('status', 'completed')->count(),
             'at_risk' => $plans->where('status', 'at_risk')->count(),
@@ -419,6 +479,17 @@ class OkrController extends Controller
 
     private function normalizeAndValidatePlanParent(array $validated, ?OkrPlan $currentPlan = null): array
     {
+        $targetUnit = OkrUnit::find($validated['okr_unit_id']);
+
+        // Jika unit berada di bawah naungan unit lain (misal Kaprodi di bawah naungan Kurikulum),
+        // target tahunan wajib menggunakan target induk Kurikulum, Kaprodi hanya membuat target bulanan & mingguan.
+        if ($targetUnit?->parent_id && $validated['level'] === 'annual') {
+            $parentName = $targetUnit->parent?->name ?? 'Kurikulum';
+            throw ValidationException::withMessages([
+                'level' => "Unit {$targetUnit->name} berada di bawah naungan {$parentName}. Target tahunan menggunakan target induk {$parentName}, silakan buat target tingkat Bulanan atau Mingguan.",
+            ]);
+        }
+
         $expectedParentLevel = ['annual' => null, 'monthly' => 'annual', 'weekly' => 'monthly'][$validated['level']];
         if ($expectedParentLevel === null) {
             if (filled($validated['parent_id'] ?? null)) {
@@ -444,10 +515,17 @@ class OkrController extends Controller
         }
 
         $parent = OkrPlan::find($validated['parent_id'] ?? null);
+
+        // Unit induk yang diizinkan: unit itu sendiri, atau parent_id dari unit tersebut (misal Kurikulum bagi Kaprodi)
+        $allowedParentUnitIds = [(int) $validated['okr_unit_id']];
+        if ($targetUnit?->parent_id) {
+            $allowedParentUnitIds[] = (int) $targetUnit->parent_id;
+        }
+
         if (
             ! $parent
             || $parent->level !== $expectedParentLevel
-            || $parent->okr_unit_id !== (int) $validated['okr_unit_id']
+            || ! in_array($parent->okr_unit_id, $allowedParentUnitIds, true)
             || $parent->id === $currentPlan?->id
         ) {
             throw ValidationException::withMessages([

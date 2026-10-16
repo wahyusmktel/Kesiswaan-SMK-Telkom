@@ -231,6 +231,61 @@
                                 </label>
                                 <p class="mt-1 text-xs text-gray-500">Jika dinonaktifkan, halaman pendaftaran akan menampilkan pesan bahwa pendaftaran ditutup.</p>
                             </div>
+
+                            <!-- Popup Pemberitahuan Sistem SISFO -->
+                            <div class="col-span-1 md:col-span-2 pt-6 border-t border-gray-100">
+                                <div class="rounded-2xl border border-rose-100 bg-rose-50/40 p-5 space-y-4">
+                                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                        <div class="flex items-center gap-3">
+                                            <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-red-600 text-white shadow-sm font-black text-lg">
+                                                📢
+                                            </span>
+                                            <div>
+                                                <h3 class="text-sm font-black text-gray-900 uppercase tracking-wider">Popup Pemberitahuan Sistem SISFO</h3>
+                                                <p class="text-xs text-gray-500 mt-0.5">Atur apakah popup pengumuman pembaruan sistem/navigasi ditampilkan ke pengguna saat membuka dashboard.</p>
+                                            </div>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                                            <input type="checkbox" name="system_announcement_enabled" value="1" class="sr-only peer"
+                                                {{ old('system_announcement_enabled', $setting->system_announcement_enabled ?? true) ? 'checked' : '' }}>
+                                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                                            <span class="ml-3 text-sm font-bold text-gray-700">Tampilkan Popup</span>
+                                        </label>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-rose-100">
+                                        <div>
+                                            <label for="system_announcement_title" class="block text-xs font-bold text-gray-700">Judul Pengumuman</label>
+                                            <input type="text" name="system_announcement_title" id="system_announcement_title"
+                                                value="{{ old('system_announcement_title', $setting->system_announcement_title ?? 'Pemberitahuan Sistem SISFO') }}"
+                                                placeholder="Pemberitahuan Sistem SISFO"
+                                                class="mt-1.5 block w-full rounded-lg border-gray-300 text-xs shadow-sm focus:border-red-500 focus:ring-red-500">
+                                            @error('system_announcement_title') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                                        </div>
+
+                                        <div>
+                                            <label for="system_announcement_subtitle" class="block text-xs font-bold text-gray-700">Subjudul / Topik</label>
+                                            <input type="text" name="system_announcement_subtitle" id="system_announcement_subtitle"
+                                                value="{{ old('system_announcement_subtitle', $setting->system_announcement_subtitle ?? 'SMK Telkom Lampung • Pembaruan Navigasi & Menu Baru') }}"
+                                                placeholder="SMK Telkom Lampung • Pembaruan Navigasi & Menu Baru"
+                                                class="mt-1.5 block w-full rounded-lg border-gray-300 text-xs shadow-sm focus:border-red-500 focus:ring-red-500">
+                                            @error('system_announcement_subtitle') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                                        </div>
+                                    </div>
+
+                                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-3 border-t border-rose-100 text-xs text-gray-600">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-gray-500">Versi penyimpanan aktif:</span>
+                                            <span class="font-mono font-bold bg-white px-2.5 py-0.5 rounded-md border border-rose-200 text-gray-800">{{ $setting->system_announcement_version ?? 'v1' }}</span>
+                                        </div>
+                                        <label class="inline-flex items-center gap-2 cursor-pointer font-semibold text-red-700 hover:text-red-800 select-none">
+                                            <input type="checkbox" name="reset_system_announcement_version" value="1"
+                                                class="rounded border-gray-300 text-red-600 focus:ring-red-500 h-4 w-4">
+                                            <span>Tampilkan ulang ke semua pengguna (Reset status "Jangan tampilkan lagi")</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 

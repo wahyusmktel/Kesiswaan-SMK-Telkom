@@ -711,7 +711,9 @@
             </header>
 
             <main class="flex-1 overflow-y-auto bg-gray-50 p-4 sm:p-6 lg:p-8">
-                @include('shared.navigation-update-modal')
+                @if($appSetting?->system_announcement_enabled ?? true)
+                    @include('shared.navigation-update-modal')
+                @endif
                 @include('shared.survey-notification-card')
 
                 {{ $slot ?? '' }}

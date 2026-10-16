@@ -19,6 +19,21 @@
                 description: @js(old('landing_popup_description', $setting->landing_popup_description ?? 'Registrasikan data calon siswa baru melalui layanan SISFO SMK Telkom Lampung. Prosesnya cepat, aman, dan dapat dipantau secara daring.')),
                 ctaText: @js(old('landing_popup_cta_text', $setting->landing_popup_cta_text ?? 'Registrasi Sekarang'))
             }">
+
+            {{-- Quick Nav Pills --}}
+            <div class="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white p-2 shadow-sm">
+                <div class="flex items-center gap-1.5">
+                    <span class="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-xs font-bold text-white shadow-sm">
+                        🌐 Popup Landing Page (Publik)
+                    </span>
+                    <a href="{{ route('super-admin.settings') }}"
+                       class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition">
+                        📢 Popup Pemberitahuan SISFO (Dashboard) &rarr;
+                    </a>
+                </div>
+                <span class="px-3 text-xs text-gray-400 hidden sm:inline">Kelola pop-up sistem dan landing page</span>
+            </div>
+
             <form action="{{ route('super-admin.landing-popup.update') }}" method="POST">
                 @csrf
                 @method('PUT')

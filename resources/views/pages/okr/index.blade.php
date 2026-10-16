@@ -66,7 +66,7 @@
                         <select name="unit_id" class="w-full rounded-md border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
                             @foreach($units as $unit)
                                 <option value="{{ $unit->id }}" @selected($unit->id === $selectedUnit?->id)>
-                                    {{ $unit->name }}{{ in_array($unit->id, $editableUnitIds, true) ? ' · dapat dikelola' : '' }}
+                                    {{ $unit->parent_id ? '↳ ' : '' }}{{ $unit->name }}{{ $unit->parent ? ' (Di bawah '.$unit->parent->name.')' : '' }}{{ in_array($unit->id, $editableUnitIds, true) ? ' · dapat dikelola' : '' }}
                                 </option>
                             @endforeach
                         </select>
@@ -113,6 +113,16 @@
                     <div class="h-72"><canvas x-ref="trendChart"></canvas></div>
                 </div>
             </section>
+
+            @if($selectedUnit?->parent)
+                <div class="flex items-start gap-3 rounded-md border border-indigo-200 bg-indigo-50/80 p-4 text-xs text-indigo-950 shadow-sm">
+                    <svg class="h-5 w-5 shrink-0 text-indigo-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <div class="leading-relaxed">
+                        <strong class="font-bold text-indigo-900">Hierarki Unit OKR:</strong>
+                        Unit <strong>{{ $selectedUnit->name }}</strong> berada di bawah naungan <strong>{{ $selectedUnit->parent->name }}</strong>. Target tahunan menggunakan target induk Kurikulum. Silakan susun <strong>Target Bulanan</strong> dan <strong>Mingguan</strong> Anda yang ditautkan ke target tahunan Kurikulum terkait.
+                    </div>
+                </div>
+            @endif
 
             <section class="bg-white border-y border-gray-200">
                 <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
@@ -221,22 +231,33 @@
                                             <div class="text-xs text-gray-500">
                                                 <span class="block font-semibold">Target sekolah</span>
                                                 <strong class="mt-1 block text-sm text-gray-900">
-                                                    {{ $keyResult->metric_type === 'currency' ? 'Rp'.number_format((float) $keyResult->target_value, 0, ',', '.') : number_format((float) $keyResult->target_value, 0, ',', '.').' '.$keyResult->metric_unit }}
+                                                     {{ $keyResult->metric_type === 'currency' ? 'Rp'.number_format((float) $keyResult->target_value, 0, ',', '.') : number_format((float) $keyResult->target_value, 0, ',', '.').' '.$keyResult->metric_unit }}
                                                 </strong>
                                             </div>
                                             @if($canEditSelected)
-                                                <button type="button" @click="openPlan({{ $keyResult->id }})" class="inline-flex items-center justify-center gap-1.5 rounded-md bg-indigo-600 px-3 py-2 text-xs font-bold text-white hover:bg-indigo-500">
+                                                <button type="button" @click="openPlan({{ $keyResult->id }}, null, { level: '{{ $selectedUnit?->parent_id ? 'monthly' : 'annual' }}' })" class="inline-flex items-center justify-center gap-1.5 rounded-md bg-indigo-600 px-3 py-2 text-xs font-bold text-white hover:bg-indigo-500">
                                                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                                                    Tambah Rencana
+                                                    {{ $selectedUnit?->parent_id ? 'Tambah Target Bulanan' : 'Tambah Rencana' }}
                                                 </button>
                                             @endif
                                         </div>
 
                                         @forelse($keyResult->plans as $plan)
-                                            @include('pages.okr._plan-row', ['plan' => $plan, 'depth' => 0, 'canEditSelected' => $canEditSelected])
+                                            @include('pages.okr._plan-row', [
+                                                'plan' => $plan,
+                                                'depth' => 0,
+                                                'canEditSelected' => $canEditSelected,
+                                                'selectedUnit' => $selectedUnit,
+                                                'editableUnitIds' => $editableUnitIds ?? [],
+                                                'canManageAll' => $canManageAll ?? false,
+                                            ])
                                         @empty
                                             <div class="border-t border-dashed border-gray-200 px-5 py-4 text-center text-xs text-gray-400">
-                                                Unit ini belum menjabarkan rencana untuk {{ $keyResult->code }}.
+                                                @if($selectedUnit?->parent_id)
+                                                    Unit induk ({{ $selectedUnit->parent?->name ?? 'Kurikulum' }}) belum menjabarkan target tahunan untuk {{ $keyResult->code }}.
+                                                @else
+                                                    Unit ini belum menjabarkan rencana untuk {{ $keyResult->code }}.
+                                                @endif
                                             </div>
                                         @endforelse
                                     </div>
@@ -295,8 +316,28 @@
                     <input type="hidden" name="okr_key_result_id" x-model="plan.okr_key_result_id">
                     <input type="hidden" name="okr_unit_id" value="{{ $selectedUnit?->id }}">
                     <div class="grid gap-4 md:grid-cols-2">
-                        <label><span class="mb-1.5 block text-xs font-bold text-gray-700">Tingkat target</span><select name="level" x-model="plan.level" @change="plan.parent_id = ''" class="w-full rounded-md border-gray-300 text-sm"><option value="annual">Tahunan</option><option value="monthly">Bulanan</option><option value="weekly">Mingguan</option></select></label>
-                        <label x-show="plan.level !== 'annual'"><span class="mb-1.5 block text-xs font-bold text-gray-700">Target induk</span><select name="parent_id" x-model="plan.parent_id" :required="plan.level !== 'annual'" class="w-full rounded-md border-gray-300 text-sm"><option value="">Pilih target induk</option><template x-for="parent in eligibleParents" :key="parent.id"><option :value="parent.id" x-text="parent.title"></option></template></select></label>
+                        <label>
+                            <span class="mb-1.5 block text-xs font-bold text-gray-700">Tingkat target</span>
+                            <select name="level" x-model="plan.level" @change="plan.parent_id = ''" class="w-full rounded-md border-gray-300 text-sm">
+                                @if(!$selectedUnit?->parent_id)
+                                    <option value="annual">Tahunan</option>
+                                @endif
+                                <option value="monthly">Bulanan</option>
+                                <option value="weekly">Mingguan</option>
+                            </select>
+                            @if($selectedUnit?->parent_id)
+                                <p class="mt-1 text-[11px] text-indigo-600 font-medium">Unit ini menggunakan target tahunan induk {{ $selectedUnit->parent?->name ?? 'Kurikulum' }}.</p>
+                            @endif
+                        </label>
+                        <label x-show="plan.level !== 'annual'">
+                            <span class="mb-1.5 block text-xs font-bold text-gray-700">Target induk</span>
+                            <select name="parent_id" x-model="plan.parent_id" :required="plan.level !== 'annual'" class="w-full rounded-md border-gray-300 text-sm">
+                                <option value="">Pilih target induk</option>
+                                <template x-for="parent in eligibleParents" :key="parent.id">
+                                    <option :value="parent.id" x-text="parent.title"></option>
+                                </template>
+                            </select>
+                        </label>
                     </div>
 
                     @if($aiReady)
@@ -415,18 +456,25 @@
                 },
                 get eligibleParents() {
                     const requiredLevel = this.plan.level === 'monthly' ? 'annual' : 'monthly';
-                    return this.parents.filter(parent =>
+                    const allowedUnitIds = [
+                        {{ (int) $selectedUnit?->id }},
+                        @if($selectedUnit?->parent_id) {{ (int) $selectedUnit->parent_id }} @endif
+                    ];
+                    return (this.parents || []).filter(parent =>
                         parent.okr_key_result_id == this.plan.okr_key_result_id
-                        && parent.okr_unit_id == {{ (int) $selectedUnit?->id }}
+                        && allowedUnitIds.includes(Number(parent.okr_unit_id))
                         && parent.level === requiredLevel
                         && parent.id != this.plan.id
                     );
                 },
                 emptyPlan(keyResultId) {
-                    return { id: null, okr_key_result_id: keyResultId, parent_id: '', owner_id: '', level: 'annual', title: '', description: '', starts_at: '{{ $period->starts_at?->format('Y-m-d') }}', ends_at: '{{ $period->ends_at?->format('Y-m-d') }}', target_value: 100, metric_unit: '%', weight: 1, success_indicator: '' };
+                    const defaultLevel = '{{ $selectedUnit?->parent_id ? 'monthly' : 'annual' }}';
+                    return { id: null, okr_key_result_id: keyResultId, parent_id: '', owner_id: '', level: defaultLevel, title: '', description: '', starts_at: '{{ $period->starts_at?->format('Y-m-d') }}', ends_at: '{{ $period->ends_at?->format('Y-m-d') }}', target_value: 100, metric_unit: '%', weight: 1, success_indicator: '' };
                 },
-                openPlan(keyResultId, existing = null) {
-                    this.plan = existing ? { ...existing, parent_id: existing.parent_id || '', owner_id: existing.owner_id || '' } : this.emptyPlan(keyResultId);
+                openPlan(keyResultId, existing = null, presets = {}) {
+                    this.plan = existing
+                        ? { ...existing, parent_id: existing.parent_id || '', owner_id: existing.owner_id || '' }
+                        : { ...this.emptyPlan(keyResultId), ...presets };
                     this.aiSuggestions = [];
                     this.aiError = '';
                     this.aiContext = '';

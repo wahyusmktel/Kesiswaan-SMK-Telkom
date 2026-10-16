@@ -33,11 +33,20 @@ class SuperAdminController extends Controller
             'transformasi_slider_images.*' => 'image|mimes:jpeg,png,jpg,webp|max:4096',
             'delete_transformasi_slider_images' => 'nullable|array',
             'delete_transformasi_slider_images.*' => 'string',
+            'system_announcement_enabled' => 'nullable|boolean',
+            'system_announcement_title' => 'nullable|string|max:120',
+            'system_announcement_subtitle' => 'nullable|string|max:255',
+            'reset_system_announcement_version' => 'nullable|boolean',
         ]);
 
         $setting = AppSetting::first() ?? new AppSetting();
-        $data = $request->except(['logo', 'kop_surat_ukk', 'favicon', 'transformasi_slider_images', 'delete_transformasi_slider_images']);
+        $data = $request->except(['logo', 'kop_surat_ukk', 'favicon', 'transformasi_slider_images', 'delete_transformasi_slider_images', 'reset_system_announcement_version']);
         $data['allow_registration'] = $request->has('allow_registration');
+        $data['system_announcement_enabled'] = $request->boolean('system_announcement_enabled');
+
+        if ($request->boolean('reset_system_announcement_version')) {
+            $data['system_announcement_version'] = 'v' . time();
+        }
 
         if ($request->hasFile('logo')) {
             if ($setting->logo) {

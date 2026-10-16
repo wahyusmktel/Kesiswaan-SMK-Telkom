@@ -19,6 +19,10 @@
         'completed' => 'bg-emerald-100 text-emerald-700',
         'cancelled' => 'bg-red-100 text-red-700',
     ];
+    $isOwnUnit = ($plan->okr_unit_id === ($selectedUnit?->id ?? null));
+    $isParentUnitPlan = ($selectedUnit?->parent_id && $plan->okr_unit_id === $selectedUnit->parent_id);
+    $canEditThisPlan = $isOwnUnit ? ($canEditSelected ?? false) : (in_array($plan->okr_unit_id, $editableUnitIds ?? [], true) || ($canManageAll ?? false));
+
     $planPayload = [
         'id' => $plan->id,
         'okr_key_result_id' => $plan->okr_key_result_id,
@@ -45,17 +49,27 @@
     ];
 @endphp
 
-<div class="relative border-t border-gray-100 px-4 py-4 hover:bg-gray-50/70 transition-colors"
+<div class="relative border-t border-gray-100 px-4 py-4 hover:bg-gray-50/70 transition-colors {{ $isParentUnitPlan ? 'bg-indigo-50/20' : '' }}"
     style="padding-left: {{ 1 + ($depth * 1.5) }}rem">
     @if($depth > 0)
         <span class="absolute top-0 bottom-0 border-l border-dashed border-gray-300" style="left: {{ .75 + (($depth - 1) * 1.5) }}rem"></span>
     @endif
-    <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_180px_170px] lg:items-center">
+    <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_180px_auto] lg:items-center">
         <div class="min-w-0">
             <div class="flex flex-wrap items-center gap-2">
                 <span class="inline-flex rounded border px-2 py-0.5 text-[10px] font-black uppercase {{ $levelColors[$plan->level] }}">
                     {{ $levelLabels[$plan->level] }}
                 </span>
+                @if($isParentUnitPlan)
+                    <span class="inline-flex items-center gap-1 rounded border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-black uppercase text-indigo-700">
+                        <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                        Induk: {{ $plan->unit?->name ?? 'Kurikulum' }}
+                    </span>
+                @elseif(!$isOwnUnit && $plan->unit)
+                    <span class="inline-flex rounded border border-purple-200 bg-purple-50 px-2 py-0.5 text-[10px] font-bold text-purple-700">
+                        {{ $plan->unit->name }}
+                    </span>
+                @endif
                 <span class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold {{ $statusColors[$plan->status] }}">
                     {{ $statusLabels[$plan->status] }}
                 </span>
@@ -94,21 +108,39 @@
         </div>
 
         <div class="flex items-center justify-end gap-1.5">
-            @if($canEditSelected)
+            @if($isParentUnitPlan && ($canEditSelected ?? false))
+                {{-- Tombol untuk Kaprodi menjabarkan target bulanan di bawah target tahunan Kurikulum --}}
+                <button type="button" @click="openPlan({{ $plan->okr_key_result_id }}, null, { level: 'monthly', parent_id: {{ $plan->id }} })"
+                    class="inline-flex items-center gap-1 rounded-md border border-indigo-200 bg-indigo-50 px-2.5 py-1.5 text-xs font-bold text-indigo-700 hover:bg-indigo-100 shadow-sm"
+                    title="Jabarkan target bulanan di bawah target tahunan Kurikulum ini">
+                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    + Target Bulanan
+                </button>
+            @endif
+
+            @if($canEditThisPlan)
+                @if($plan->level === 'monthly' && $isOwnUnit)
+                    <button type="button" @click="openPlan({{ $plan->okr_key_result_id }}, null, { level: 'weekly', parent_id: {{ $plan->id }} })"
+                        class="inline-flex items-center gap-1 rounded-md border border-sky-200 bg-sky-50 px-2 py-1 text-xs font-bold text-sky-700 hover:bg-sky-100"
+                        title="Tambah target mingguan di bawah target bulanan ini">
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        Mingguan
+                    </button>
+                @endif
                 <button type="button" @click="openProgress(@js($progressPayload))"
-                    class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-600 hover:border-emerald-300 hover:text-emerald-600"
-                    title="Catat evaluasi">
+                    class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-600 hover:border-emerald-300 hover:text-emerald-600 shadow-sm"
+                    title="Catat evaluasi / progres">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
                 </button>
                 <button type="button" @click="openPlan({{ $plan->okr_key_result_id }}, @js($planPayload))"
-                    class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-600 hover:border-indigo-300 hover:text-indigo-600"
+                    class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-600 hover:border-indigo-300 hover:text-indigo-600 shadow-sm"
                     title="Edit target">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                 </button>
                 <form method="POST" action="{{ route('okr.plans.destroy', $plan) }}" onsubmit="return confirm('Hapus target ini beserta seluruh target turunannya?')">
                     @csrf
                     @method('DELETE')
-                    <button class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 hover:border-red-300 hover:text-red-600" title="Hapus target">
+                    <button class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 hover:border-red-300 hover:text-red-600 shadow-sm" title="Hapus target">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3M4 7h16"/></svg>
                     </button>
                 </form>
@@ -118,5 +150,12 @@
 </div>
 
 @foreach($plan->children as $child)
-    @include('pages.okr._plan-row', ['plan' => $child, 'depth' => $depth + 1, 'canEditSelected' => $canEditSelected])
+    @include('pages.okr._plan-row', [
+        'plan' => $child,
+        'depth' => $depth + 1,
+        'canEditSelected' => $canEditSelected,
+        'selectedUnit' => $selectedUnit,
+        'editableUnitIds' => $editableUnitIds ?? [],
+        'canManageAll' => $canManageAll ?? false,
+    ])
 @endforeach
