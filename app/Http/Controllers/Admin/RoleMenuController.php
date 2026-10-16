@@ -32,6 +32,8 @@ class RoleMenuController extends Controller
             'menus' => ['required', 'array', 'max:500'],
             'menus.*.key' => ['required', 'string', 'distinct', Rule::in($knownKeys)],
             'menus.*.parent_key' => ['nullable', 'string', 'max:255'],
+            'menus.*.custom_label' => ['nullable', 'string', 'max:255'],
+            'menus.*.custom_section' => ['nullable', 'string', 'max:255'],
             'menus.*.visible' => ['required', 'boolean'],
             'menus.*.order' => ['required', 'integer', 'min:0'],
         ]);
@@ -46,6 +48,8 @@ class RoleMenuController extends Controller
                     'role_id' => $role->getKey(),
                     'menu_key' => $menu['key'],
                     'parent_key' => !empty($menu['parent_key']) ? (string) $menu['parent_key'] : null,
+                    'custom_label' => !empty($menu['custom_label']) ? trim((string) $menu['custom_label']) : null,
+                    'custom_section' => !empty($menu['custom_section']) ? trim((string) $menu['custom_section']) : null,
                     'is_visible' => $lockedKeys->contains($menu['key']) ? true : (bool) $menu['visible'],
                     'sort_order' => (int) $menu['order'],
                 ]);

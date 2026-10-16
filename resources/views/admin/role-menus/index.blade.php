@@ -8,18 +8,9 @@
                     <span>Tata Kelola Navigasi</span>
                 </div>
                 <h1 class="mt-1 text-2xl font-black tracking-tight text-slate-900">
-                    Manajemen & Grouping Menu Sidebar (Hierarki WordPress)
+                    Pengaturan Menu Sidebar
                 </h1>
-                <p class="mt-0.5 text-xs text-slate-500">
-                    Atur urutan menu (geser atas-bawah), buat grouping sub-menu bertingkat, serta sembunyikan atau tampilkan menu untuk setiap role pengguna.
-                </p>
             </div>
-            @if($selectedRole)
-                <div class="hidden sm:flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3.5 py-2 shadow-sm">
-                    <span class="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span class="text-xs font-bold text-slate-700">Role Aktif: <span class="text-red-600">{{ $selectedRole->name }}</span></span>
-                </div>
-            @endif
         </div>
     </x-slot>
 
@@ -38,9 +29,17 @@
             <div class="border-b border-slate-100 bg-slate-50/50 p-6">
                 <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
                     <div>
-                        <label for="role-selector" class="mb-2 block text-xs font-black uppercase tracking-wider text-slate-500">
-                            Pilih Role Pengguna yang Akan Diatur:
-                        </label>
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
+                            <label for="role-selector" class="block text-xs font-black uppercase tracking-wider text-slate-500">
+                                Pilih Role Pengguna yang Akan Diatur:
+                            </label>
+                            @if($selectedRole)
+                                <div class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1 shadow-sm">
+                                    <span class="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    <span class="text-xs font-bold text-slate-700">Role Aktif: <span class="text-red-600">{{ $selectedRole->name }}</span></span>
+                                </div>
+                            @endif
+                        </div>
                         <select id="role-selector"
                             class="w-full rounded-2xl border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 shadow-sm transition focus:border-red-500 focus:ring-red-500"
                             onchange="window.location.href = '{{ route('super-admin.role-menus.index') }}?role=' + this.value">
@@ -95,6 +94,8 @@
                         <div>
                             <input type="hidden" :name="`menus[${index}][key]`" :value="item.key">
                             <input type="hidden" :name="`menus[${index}][parent_key]`" :value="item.parent_key || ''">
+                            <input type="hidden" :name="`menus[${index}][custom_label]`" :value="item.custom_label || ''">
+                            <input type="hidden" :name="`menus[${index}][custom_section]`" :value="item.custom_section || ''">
                             <input type="hidden" :name="`menus[${index}][visible]`" :value="item.visible ? 1 : 0">
                             <input type="hidden" :name="`menus[${index}][order]`" :value="index">
                         </div>
@@ -256,11 +257,36 @@
                                 : 'max-h-[680px] space-y-6 overflow-y-auto pr-2 sidebar-scroll'">
                                 <template x-for="section in sections" :key="section">
                                     <section x-show="sectionItems(section).some(item => matchesSearch(item))" class="space-y-2.5">
-                                        {{-- Header Section / Kelompok Menu --}}
-                                        <div class="flex items-center gap-3 pt-2">
-                                            <span class="rounded-lg bg-slate-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-slate-600 border border-slate-200" x-text="section"></span>
-                                            <span class="h-px flex-1 bg-slate-200"></span>
-                                            <span class="text-[10px] font-bold text-slate-400" x-text="sectionItems(section).filter(i => i.visible).length + '/' + sectionItems(section).length + ' menu'"></span>
+                                        {{-- Header Section / Kelompok Menu Dinamis --}}
+                                        <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-b border-slate-100 pb-1.5">
+                                            <div class="flex items-center gap-2">
+                                                {{-- Tampilan Normal / Non-Edit Section --}}
+                                                <div x-show="editingSection !== section" class="flex items-center gap-2 group/section">
+                                                    <span class="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-black uppercase tracking-wider text-slate-700 border border-slate-200 shadow-sm" x-text="section"></span>
+                                                    <button type="button" @click="startEditSection(section)"
+                                                        class="opacity-70 group-hover/section:opacity-100 p-1 text-slate-400 hover:text-red-600 hover:bg-slate-200/60 rounded-lg transition"
+                                                        title="Ubah Nama Kelompok / Grup Ini">
+                                                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                                    </button>
+                                                </div>
+
+                                                {{-- Mode Edit Nama Section --}}
+                                                <div x-show="editingSection === section" class="flex items-center gap-1.5" @click.outside="cancelEditSection()">
+                                                    <input type="text" x-model="tempSectionName" @keydown.enter.prevent="saveSection(section)" @keydown.escape.prevent="cancelEditSection()"
+                                                        class="rounded-lg border border-red-400 bg-white px-2.5 py-1 text-xs font-bold text-slate-800 shadow-sm focus:border-red-600 focus:ring-1 focus:ring-red-600 w-48 sm:w-64"
+                                                        placeholder="Nama kelompok baru...">
+                                                    <button type="button" @click="saveSection(section)" class="p-1 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-bold shadow-sm" title="Simpan Nama Kelompok">
+                                                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                                    </button>
+                                                    <button type="button" @click="cancelEditSection()" class="p-1 rounded-lg bg-slate-200 text-slate-600 hover:bg-slate-300 text-xs font-bold" title="Batal">
+                                                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-[10px] font-bold text-slate-400" x-text="sectionItems(section).filter(i => i.visible).length + '/' + sectionItems(section).length + ' menu'"></span>
+                                            </div>
                                         </div>
 
                                         {{-- Container Kartu Menu dengan Dukungan Indentasi --}}
@@ -327,14 +353,43 @@
 
                                                         {{-- Detail Menu & Indikator Level --}}
                                                         <div class="min-w-0 flex-1">
-                                                            <div class="flex items-center gap-2">
+                                                            {{-- Tampilan Normal / Non-Edit Label --}}
+                                                            <div x-show="editingItemKey !== item.key" class="flex items-center gap-2 group/title">
                                                                 <div class="truncate text-sm transition-colors"
                                                                      :class="item.visible ? 'font-extrabold text-slate-800' : 'font-semibold text-slate-500 italic'"
-                                                                     x-text="item.label">
+                                                                     x-text="item.custom_label || item.label">
                                                                 </div>
+                                                                <template x-if="item.custom_label && item.custom_label !== item.label">
+                                                                    <span class="text-[9px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded" :title="'Nama asli bawaan: ' + item.label">
+                                                                        Kustom
+                                                                    </span>
+                                                                </template>
+                                                                <button type="button" @click="startEditItem(item)"
+                                                                    class="opacity-60 group-hover/title:opacity-100 p-1 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition"
+                                                                    title="Kustomisasi Nama Menu / Judul Parent">
+                                                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                                                </button>
                                                                 <span x-show="item.locked" class="text-[9px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
                                                                     Wajib
                                                                 </span>
+                                                            </div>
+
+                                                            {{-- Mode Edit Label Menu --}}
+                                                            <div x-show="editingItemKey === item.key" class="flex items-center gap-1.5 my-0.5" @click.outside="cancelEditItem()">
+                                                                <input type="text" x-model="tempItemLabel" @keydown.enter.prevent="saveItemLabel(item)" @keydown.escape.prevent="cancelEditItem()"
+                                                                    class="rounded-lg border border-indigo-400 bg-white px-2.5 py-1 text-xs font-bold text-slate-800 shadow-sm focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 w-44 sm:w-60"
+                                                                    :placeholder="item.label">
+                                                                <button type="button" @click="saveItemLabel(item)" class="p-1 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 text-xs font-bold shadow-sm" title="Terapkan Nama Kustom">
+                                                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                                                </button>
+                                                                <template x-if="item.custom_label">
+                                                                    <button type="button" @click="resetItemLabel(item)" class="p-1 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 text-xs font-bold" title="Kembalikan ke nama asli bawaan">
+                                                                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                                                    </button>
+                                                                </template>
+                                                                <button type="button" @click="cancelEditItem()" class="p-1 rounded-lg bg-slate-200 text-slate-600 hover:bg-slate-300 text-xs font-bold" title="Batal">
+                                                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                                </button>
                                                             </div>
 
                                                             <div class="mt-1 flex flex-wrap items-center gap-1.5">
@@ -348,14 +403,19 @@
                                                                     <span x-text="item.visible ? 'Ditampilkan' : 'Disembunyikan (Gray Muda)'"></span>
                                                                 </span>
 
-                                                                {{-- Badge Hierarki (Menu Utama vs Sub-menu) --}}
+                                                                {{-- Badge Hierarki (Menu Utama vs Sub-menu vs Parent Dekorasi) --}}
                                                                 <template x-if="item.parent_key">
                                                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
                                                                         <span>↳ Sub-menu dari:</span>
                                                                         <strong class="text-indigo-900" x-text="getParentLabel(item.parent_key)"></strong>
                                                                     </span>
                                                                 </template>
-                                                                <template x-if="!item.parent_key">
+                                                                <template x-if="!item.parent_key && hasChildren(item)">
+                                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200" title="Menu ini berfungsi sebagai induk dropdown (dekorasi) yang membuka sub-menu di bawahnya">
+                                                                        <span>↳ Induk Dropdown (Dekorasi)</span>
+                                                                    </span>
+                                                                </template>
+                                                                <template x-if="!item.parent_key && !hasChildren(item)">
                                                                     <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
                                                                         Menu Utama
                                                                     </span>
@@ -471,6 +531,65 @@
                 draggedKey: null,
                 dragOverKey: null,
                 isMaximized: false,
+                editingSection: null,
+                tempSectionName: '',
+                editingItemKey: null,
+                tempItemLabel: '',
+
+                startEditSection(section) {
+                    this.editingSection = section;
+                    this.tempSectionName = section;
+                },
+
+                cancelEditSection() {
+                    this.editingSection = null;
+                    this.tempSectionName = '';
+                },
+
+                saveSection(oldSection) {
+                    const newName = this.tempSectionName.trim();
+                    if (newName && newName !== oldSection) {
+                        this.items.forEach(item => {
+                            if (item.section === oldSection) {
+                                item.section = newName;
+                                item.custom_section = newName;
+                            }
+                        });
+                    }
+                    this.editingSection = null;
+                    this.tempSectionName = '';
+                },
+
+                startEditItem(item) {
+                    this.editingItemKey = item.key;
+                    this.tempItemLabel = item.custom_label || item.label;
+                },
+
+                cancelEditItem() {
+                    this.editingItemKey = null;
+                    this.tempItemLabel = '';
+                },
+
+                saveItemLabel(item) {
+                    const newLabel = this.tempItemLabel.trim();
+                    if (newLabel && newLabel !== item.label) {
+                        item.custom_label = newLabel;
+                    } else if (newLabel === item.label) {
+                        item.custom_label = null;
+                    }
+                    this.editingItemKey = null;
+                    this.tempItemLabel = '';
+                },
+
+                resetItemLabel(item) {
+                    item.custom_label = null;
+                    this.editingItemKey = null;
+                    this.tempItemLabel = '';
+                },
+
+                hasChildren(item) {
+                    return this.items.some(i => i.parent_key === item.key);
+                },
 
                 toggleMaximize() {
                     this.isMaximized = !this.isMaximized;
@@ -503,13 +622,17 @@
 
                 matchesSearch(item) {
                     const query = this.search.trim().toLowerCase();
-                    return !query || `${item.label} ${item.section}`.toLowerCase().includes(query);
+                    if (!query) return true;
+                    const label = (item.custom_label || item.label || '').toLowerCase();
+                    const orig = (item.label || '').toLowerCase();
+                    const section = (item.section || '').toLowerCase();
+                    return label.includes(query) || orig.includes(query) || section.includes(query);
                 },
 
                 getParentLabel(parentKey) {
                     if (!parentKey) return '';
                     const parent = this.items.find(i => i.key === parentKey);
-                    return parent ? parent.label : parentKey;
+                    return parent ? (parent.custom_label || parent.label) : parentKey;
                 },
 
                 toggle(item) {

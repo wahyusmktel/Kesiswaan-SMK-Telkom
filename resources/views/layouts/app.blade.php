@@ -210,11 +210,16 @@
                                             node.dataset.menuKey = key;
                                             node.dataset.menuSection = section;
                                             node.hidden = configured?.visible === false;
+                                            if (configured?.custom_label) {
+                                                labelNode.textContent = configured.custom_label;
+                                            }
                                             allElements.set(key, {
                                                 node,
                                                 key,
-                                                label,
-                                                section,
+                                                label: configured?.custom_label || label,
+                                                section: configured?.custom_section || section,
+                                                custom_label: configured?.custom_label || null,
+                                                custom_section: configured?.custom_section || null,
                                                 isDropdown: true,
                                                 order: Number.isFinite(Number(configured?.order)) ? Number(configured.order) : defaultOrder,
                                                 parent_key: configured?.parent_key || null,
@@ -241,12 +246,22 @@
                                                     subA.hidden = true;
                                                     subA.style.display = 'none';
                                                 }
+                                                if (subConf?.custom_label) {
+                                                    const dot = subA.querySelector('.submenu-dot');
+                                                    const badge = subA.querySelector('.nav-badge');
+                                                    subA.textContent = '';
+                                                    if (dot) subA.appendChild(dot);
+                                                    subA.appendChild(document.createTextNode(subConf.custom_label));
+                                                    if (badge) subA.appendChild(badge);
+                                                }
 
                                                 allElements.set(subKey, {
                                                     node: subA,
                                                     key: subKey,
-                                                    label: subLabel,
-                                                    section,
+                                                    label: subConf?.custom_label || subLabel,
+                                                    section: subConf?.custom_section || section,
+                                                    custom_label: subConf?.custom_label || null,
+                                                    custom_section: subConf?.custom_section || null,
                                                     isSubItem: true,
                                                     originalParent: node,
                                                     order: Number.isFinite(Number(subConf?.order)) ? Number(subConf.order) : defaultOrder + (subIdx * 0.01),
@@ -270,11 +285,16 @@
                                         node.dataset.menuKey = key;
                                         node.dataset.menuSection = section;
                                         node.hidden = configured?.visible === false;
+                                        if (configured?.custom_label) {
+                                            labelNode.textContent = configured.custom_label;
+                                        }
                                         allElements.set(key, {
                                             node,
                                             key,
-                                            label,
-                                            section,
+                                            label: configured?.custom_label || label,
+                                            section: configured?.custom_section || section,
+                                            custom_label: configured?.custom_label || null,
+                                            custom_section: configured?.custom_section || null,
                                             isStandalone: true,
                                             order: Number.isFinite(Number(configured?.order)) ? Number(configured.order) : defaultOrder,
                                             parent_key: configured?.parent_key || null,
@@ -296,7 +316,7 @@
                                                 const existingLink = parentItem.node.querySelector('a.nav-link');
                                                 if (existingLink) {
                                                     const iconHtml = existingLink.querySelector('.nav-icon-container')?.outerHTML || '';
-                                                    const labelText = existingLink.querySelector('.nav-text')?.textContent || parentItem.label;
+                                                    const labelText = parentItem.custom_label || existingLink.querySelector('.nav-text')?.textContent || parentItem.label;
                                                     parentItem.node.innerHTML = `
                                                         <button class="nav-link w-full nav-link-inactive">
                                                             <div class="flex items-center">
@@ -329,7 +349,8 @@
                                                         subA.href = href;
                                                         subA.className = 'submenu-item';
                                                         subA.dataset.menuKey = item.key;
-                                                        subA.innerHTML = `<span class="submenu-dot"></span>${item.label}`;
+                                                        const effectiveLabel = item.custom_label || item.label;
+                                                        subA.innerHTML = `<span class="submenu-dot"></span>${effectiveLabel}`;
                                                         if (item.node.hidden) {
                                                             subA.hidden = true;
                                                             subA.style.display = 'none';
@@ -348,6 +369,7 @@
                                         li.dataset.menuKey = item.key;
                                         li.dataset.menuSection = item.section;
                                         li.hidden = item.node.hidden;
+                                        const effectiveLabel = item.custom_label || item.label;
                                         li.innerHTML = `
                                             <a href="${href}" class="nav-link nav-link-inactive">
                                                 <div class="nav-icon-container">
@@ -355,14 +377,14 @@
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                                                     </svg>
                                                 </div>
-                                                <span class="nav-text">${item.label}</span>
+                                                <span class="nav-text">${effectiveLabel}</span>
                                             </a>
                                         `;
                                         item.node.remove();
                                         currentGroup.items.push({
                                             node: li,
                                             key: item.key,
-                                            label: item.label,
+                                            label: effectiveLabel,
                                             section: item.section,
                                             order: item.order,
                                             defaultOrder: item.defaultOrder
@@ -403,6 +425,10 @@
                                     });
 
                                     if (current.title) {
+                                        const groupCustomSection = current.items.map(i => i.custom_section).find(Boolean);
+                                        if (groupCustomSection) {
+                                            current.title.textContent = groupCustomSection;
+                                        }
                                         current.title.hidden = current.items.every(item => item.node.hidden || item.node.style.display === 'none');
                                     }
                                 });

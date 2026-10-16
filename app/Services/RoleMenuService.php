@@ -43,12 +43,14 @@ class RoleMenuService
         return Cache::remember($this->cacheKey($role), now()->addMinutes(10), fn () => RoleMenuSetting::query()
             ->where('role_id', $role->getKey())
             ->orderBy('sort_order')
-            ->get(['menu_key', 'parent_key', 'is_visible', 'sort_order'])
+            ->get(['menu_key', 'parent_key', 'custom_label', 'custom_section', 'is_visible', 'sort_order'])
             ->mapWithKeys(fn (RoleMenuSetting $setting) => [
                 $setting->menu_key => [
                     'visible' => (bool) $setting->is_visible,
                     'order' => (int) $setting->sort_order,
                     'parent_key' => $setting->parent_key,
+                    'custom_label' => $setting->custom_label,
+                    'custom_section' => $setting->custom_section,
                 ],
             ])->all());
     }
@@ -138,7 +140,9 @@ class RoleMenuService
                     $menus[] = [
                         'key' => $parentKey,
                         'label' => $parentLabel,
-                        'section' => $section,
+                        'custom_label' => $parentSetting['custom_label'] ?? null,
+                        'section' => !empty($parentSetting['custom_section']) ? $parentSetting['custom_section'] : $section,
+                        'custom_section' => $parentSetting['custom_section'] ?? null,
                         'parent_key' => array_key_exists('parent_key', (array) $parentSetting) ? $parentSetting['parent_key'] : null,
                         'is_parent' => true,
                         'visible' => $parentSetting['visible'] ?? true,
@@ -164,7 +168,9 @@ class RoleMenuService
                             $menus[] = [
                                 'key' => $childKey,
                                 'label' => $childLabel,
-                                'section' => $section,
+                                'custom_label' => $childSetting['custom_label'] ?? null,
+                                'section' => !empty($childSetting['custom_section']) ? $childSetting['custom_section'] : $section,
+                                'custom_section' => $childSetting['custom_section'] ?? null,
                                 'parent_key' => array_key_exists('parent_key', (array) $childSetting) ? $childSetting['parent_key'] : $parentKey,
                                 'is_parent' => false,
                                 'visible' => $childSetting['visible'] ?? true,
@@ -195,7 +201,9 @@ class RoleMenuService
                     $menus[] = [
                         'key' => $key,
                         'label' => $label,
-                        'section' => $section,
+                        'custom_label' => $setting['custom_label'] ?? null,
+                        'section' => !empty($setting['custom_section']) ? $setting['custom_section'] : $section,
+                        'custom_section' => $setting['custom_section'] ?? null,
                         'parent_key' => array_key_exists('parent_key', (array) $setting) ? $setting['parent_key'] : null,
                         'is_parent' => false,
                         'visible' => $setting['visible'] ?? true,

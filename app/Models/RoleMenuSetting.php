@@ -12,6 +12,8 @@ class RoleMenuSetting extends Model
         'role_id',
         'menu_key',
         'parent_key',
+        'custom_label',
+        'custom_section',
         'is_visible',
         'sort_order',
     ];
