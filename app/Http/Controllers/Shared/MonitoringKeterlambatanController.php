@@ -103,7 +103,7 @@ class MonitoringKeterlambatanController extends Controller
             }
 
             $data = $query->latest('waktu_dicatat_security')->get();
-            $pdf = Pdf::loadView('pdf.rekap-keterlambatan', compact('data', 'filters'));
+            $pdf = Pdf::loadView('pdf.rekap-keterlambatan', compact('data', 'filters'))->setPaper('a4', 'landscape');
             return $pdf->download($fileName . '.pdf');
         }
         
