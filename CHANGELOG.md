@@ -32,7 +32,7 @@ Dokumen ini diperbarui secara berkelanjutan sebagai bukti riwayat pengembangan s
 
 ### Changed
 - **Penyederhanaan Tampilan Halaman Log / Changelog**:
-  - Judul header diringkas menjadi **"Log"** dengan deskripsi **"Log pengembangan sisfo"**.
+  - Header diringkas secara minimalis hanya menyisakan judul **"Log"** (menghapus teks sub-deskripsi).
   - Tombol aksi **Unduh CHANGELOG.md** dan **Salin Markdown** dipindahkan dari area header ke area toolbar konten agar tata letak halaman lebih proporsional dan nyaman diakses di perangkat mobile maupun desktop.
 
 ### Fixed

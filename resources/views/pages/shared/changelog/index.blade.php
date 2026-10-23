@@ -7,7 +7,6 @@
                 </span>
                 Log
             </h2>
-            <p class="text-xs text-gray-500 mt-1 font-medium">Log pengembangan sisfo</p>
         </div>
     </x-slot>
 
