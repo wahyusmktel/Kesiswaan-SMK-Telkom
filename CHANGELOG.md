@@ -30,6 +30,11 @@ Dokumen ini diperbarui secara berkelanjutan sebagai bukti riwayat pengembangan s
   - 4 Kartu KPI Ringkasan Eksekutif (Total Catatan, Siswa Unik, Selesai, Menunggu/Proses BK).
   - Kolom tanda tangan resmi 3 pihak (Waka Kesiswaan, Koordinator Guru BK, dan Koordinator Guru Piket).
 
+### Changed
+- **Penyederhanaan Tampilan Halaman Log / Changelog**:
+  - Judul header diringkas menjadi **"Log"** dengan deskripsi **"Log pengembangan sisfo"**.
+  - Tombol aksi **Unduh CHANGELOG.md** dan **Salin Markdown** dipindahkan dari area header ke area toolbar konten agar tata letak halaman lebih proporsional dan nyaman diakses di perangkat mobile maupun desktop.
+
 ### Fixed
 - **Penanganan Siswa Soft-Deleted pada Ekspor Keterlambatan**:
   - Menambahkan relasi `->withTrashed()` pada model `Keterlambatan` ke `MasterSiswa` sehingga data riwayat siswa yang diarsipkan/terhapus tetap terbaca utuh.
