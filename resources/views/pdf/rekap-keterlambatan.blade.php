@@ -6,16 +6,14 @@
     <style>
         @page {
             size: a4 landscape;
-            margin: 18mm 22mm 18mm 22mm;
+            margin: 14mm 16mm 14mm 16mm;
         }
 
         * {
             box-sizing: border-box;
         }
 
-        html, body {
-            margin: 0;
-            padding: 0;
+        body {
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
             font-size: 8.5pt;
             color: #1e293b;

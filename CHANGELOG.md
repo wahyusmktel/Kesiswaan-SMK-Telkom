@@ -36,6 +36,9 @@ Dokumen ini diperbarui secara berkelanjutan sebagai bukti riwayat pengembangan s
   - Tombol aksi **Unduh CHANGELOG.md** dan **Salin Markdown** dipindahkan dari area header ke area toolbar konten agar tata letak halaman lebih proporsional dan nyaman diakses di perangkat mobile maupun desktop.
 
 ### Fixed
+- **Margin Halaman Ekspor PDF Keterlambatan**:
+  - Menghapus deklarasi reset `margin: 0; padding: 0;` pada `html, body` di template PDF yang memicu engine Dompdf menimpa konfigurasi `@page margin`.
+  - Menerapkan padding dan margin konsisten (14mm vertikal, 16mm horizontal) di seluruh sisi kertas (atas, bawah, kanan, kiri) sehingga dokumen tidak lagi menempel ke tepi kertas saat dicetak maupun disimpan sebagai PDF.
 - **Penanganan Siswa Soft-Deleted pada Ekspor Keterlambatan**:
   - Menambahkan relasi `->withTrashed()` pada model `Keterlambatan` ke `MasterSiswa` sehingga data riwayat siswa yang diarsipkan/terhapus tetap terbaca utuh.
   - Menambahkan operator null-safe `?->` dan fallback `'Siswa Tidak Ditemukan'` pada `KeterlambatanExport.php` dan `rekap-keterlambatan.blade.php` untuk mencegah `ErrorException: Attempt to read property 'nama_lengkap' on null`.
