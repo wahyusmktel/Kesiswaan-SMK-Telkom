@@ -46,7 +46,7 @@ class Keterlambatan extends Model
 
     public function siswa()
     {
-        return $this->belongsTo(MasterSiswa::class, 'master_siswa_id');
+        return $this->belongsTo(MasterSiswa::class, 'master_siswa_id')->withTrashed();
     }
     public function security()
     {

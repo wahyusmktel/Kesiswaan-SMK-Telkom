@@ -23,7 +23,7 @@ class KeterlambatanExport implements FromQuery, WithHeadings, WithMapping
     {
         $query = Keterlambatan::with(['siswa.rombels.kelas', 'security', 'guruPiket']);
 
-        if (isset($this->filters['start_date']) && isset($this->filters['end_date'])) {
+        if (!empty($this->filters['start_date']) && !empty($this->filters['end_date'])) {
             $query->whereBetween('waktu_dicatat_security', [$this->filters['start_date'] . ' 00:00:00', $this->filters['end_date'] . ' 23:59:59']);
         }
 
@@ -71,12 +71,12 @@ class KeterlambatanExport implements FromQuery, WithHeadings, WithMapping
 
         return [
             $no,
-            $late->siswa->nama_lengkap,
-            $late->siswa->nis,
-            $late->siswa->rombels->first()?->kelas?->nama_kelas ?? 'N/A',
-            $late->waktu_dicatat_security->format('d/m/Y H:i'),
-            $late->alasan_siswa,
-            str_replace('_', ' ', strtoupper($late->status)),
+            $late->siswa?->nama_lengkap ?? 'Siswa Tidak Ditemukan',
+            $late->siswa?->nis ?? '-',
+            $late->siswa?->rombels->first()?->kelas?->nama_kelas ?? 'N/A',
+            $late->waktu_dicatat_security ? $late->waktu_dicatat_security->format('d/m/Y H:i') : '-',
+            $late->alasan_siswa ?? '-',
+            str_replace('_', ' ', strtoupper($late->status ?? '-')),
             $late->security?->name ?? 'N/A',
             $late->guruPiket?->name ?? '-',
             $late->waktu_verifikasi_piket ? $late->waktu_verifikasi_piket->format('d/m/Y H:i') : '-',

@@ -18,11 +18,11 @@
 <body>
     <div class="header">
         <h2>Rekap Keterlambatan Siswa</h2>
-        <p>SMK Telkom Jakarta</p>
+        <p>SMK Telkom Lampung</p>
     </div>
 
     <div class="filter-info">
-        Periode: {{ $filters['start_date'] ?? '-' }} s/d {{ $filters['end_date'] ?? '-' }} <br>
+        Periode: {{ !empty($filters['start_date']) ? $filters['start_date'] : '-' }} s/d {{ !empty($filters['end_date']) ? $filters['end_date'] : '-' }} <br>
         Dicetak pada: {{ now()->format('d/m/Y H:i') }}
     </div>
 
@@ -39,25 +39,29 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($data as $index => $late)
+            @forelse($data as $index => $late)
                 <tr>
                     <td>{{ $index + 1 }}</td>
                     <td>
-                        <strong>{{ $late->siswa->nama_lengkap }}</strong><br>
-                        NIS: {{ $late->siswa->nis }}
+                        <strong>{{ $late->siswa?->nama_lengkap ?? 'Siswa Tidak Ditemukan' }}</strong><br>
+                        NIS: {{ $late->siswa?->nis ?? '-' }}
                     </td>
-                    <td>{{ $late->siswa->rombels->first()?->kelas->nama_kelas ?? '-' }}</td>
-                    <td>{{ $late->waktu_dicatat_security->format('d/m/Y H:i') }}</td>
-                    <td>{{ $late->alasan_siswa }}</td>
-                    <td class="status">{{ str_replace('_', ' ', $late->status) }}</td>
+                    <td>{{ $late->siswa?->rombels->first()?->kelas?->nama_kelas ?? '-' }}</td>
+                    <td>{{ $late->waktu_dicatat_security ? $late->waktu_dicatat_security->format('d/m/Y H:i') : '-' }}</td>
+                    <td>{{ $late->alasan_siswa ?? '-' }}</td>
+                    <td class="status">{{ str_replace('_', ' ', $late->status ?? '-') }}</td>
                     <td>
-                        Sec: {{ $late->security->name }}<br>
+                        Sec: {{ $late->security?->name ?? '-' }}<br>
                         @if($late->guruPiket)
                             Pikt: {{ $late->guruPiket->name }}
                         @endif
                     </td>
                 </tr>
-            @endforeach
+            @empty
+                <tr>
+                    <td colspan="7" style="text-align: center; color: #888; padding: 15px;">Tidak ada data keterlambatan pada periode ini.</td>
+                </tr>
+            @endforelse
         </tbody>
     </table>
 

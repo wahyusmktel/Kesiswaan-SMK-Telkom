@@ -17,10 +17,10 @@
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-2xl border border-gray-200">
                         <div class="p-8 text-center border-b border-gray-100 bg-gray-50/50">
                             <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-red-100 text-red-600 mb-4 border-4 border-white shadow-sm">
-                                <span class="text-3xl font-black">{{ substr($keterlambatan->siswa->nama_lengkap, 0, 1) }}</span>
+                                <span class="text-3xl font-black">{{ substr($keterlambatan->siswa?->nama_lengkap ?? '?', 0, 1) }}</span>
                             </div>
-                            <h3 class="text-xl font-black text-gray-900 leading-tight">{{ $keterlambatan->siswa->nama_lengkap }}</h3>
-                            <p class="text-sm text-gray-500 font-medium">NIS: {{ $keterlambatan->siswa->nis }}</p>
+                            <h3 class="text-xl font-black text-gray-900 leading-tight">{{ $keterlambatan->siswa?->nama_lengkap ?? 'Siswa Tidak Ditemukan' }}</h3>
+                            <p class="text-sm text-gray-500 font-medium">NIS: {{ $keterlambatan->siswa?->nis ?? '-' }}</p>
                             <div class="mt-4 inline-flex items-center px-3 py-1 bg-red-50 text-red-700 rounded-full text-xs font-black uppercase tracking-wider border border-red-100 italic">
                                 Terlambat
                             </div>
@@ -28,11 +28,11 @@
                         <div class="p-6 space-y-4">
                             <div class="flex justify-between items-center py-2 border-b border-gray-50">
                                 <span class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none">Kelas</span>
-                                <span class="text-sm font-black text-gray-700 leading-none">{{ $keterlambatan->siswa->rombels->first()?->kelas->nama_kelas ?? 'N/A' }}</span>
+                                <span class="text-sm font-black text-gray-700 leading-none">{{ $keterlambatan->siswa?->rombels->first()?->kelas?->nama_kelas ?? 'N/A' }}</span>
                             </div>
                             <div class="flex justify-between items-center py-2 border-b border-gray-50">
                                 <span class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none">Wali Kelas</span>
-                                <span class="text-sm font-black text-gray-700 leading-none text-right">{{ $keterlambatan->siswa->rombels->first()?->waliKelas->name ?? '-' }}</span>
+                                <span class="text-sm font-black text-gray-700 leading-none text-right">{{ $keterlambatan->siswa?->rombels->first()?->waliKelas?->name ?? '-' }}</span>
                             </div>
                             <div class="flex justify-between items-center py-2">
                                 <span class="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none">Total Terlambat</span>
@@ -158,7 +158,7 @@
                                         </div>
                                         @if($keterlambatan->waktu_pendampingan_wali_kelas)
                                             <div class="bg-purple-50/30 rounded-2xl p-6 border border-purple-100">
-                                                <p class="text-sm font-black text-gray-900 leading-none">Wali Kelas: {{ $keterlambatan->siswa->rombels->first()?->waliKelas->name ?? '-' }}</p>
+                                                <p class="text-sm font-black text-gray-900 leading-none">Wali Kelas: {{ $keterlambatan->siswa?->rombels->first()?->waliKelas?->name ?? '-' }}</p>
                                                 <div class="mt-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                                                     <div>
                                                         <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Catatan Coaching:</span>

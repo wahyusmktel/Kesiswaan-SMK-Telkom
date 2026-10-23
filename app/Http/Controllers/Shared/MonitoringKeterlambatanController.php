@@ -81,7 +81,7 @@ class MonitoringKeterlambatanController extends Controller
         if ($type === 'pdf') {
             $query = Keterlambatan::with(['siswa.rombels.kelas', 'security', 'guruPiket']);
 
-            if (isset($filters['start_date']) && isset($filters['end_date'])) {
+            if (!empty($filters['start_date']) && !empty($filters['end_date'])) {
                 $query->whereBetween('waktu_dicatat_security', [$filters['start_date'] . ' 00:00:00', $filters['end_date'] . ' 23:59:59']);
             }
 
