@@ -133,7 +133,7 @@
                                         <span>📄</span> Redesain PDF Rekap Keterlambatan (Landscape)
                                     </h5>
                                     <p class="text-xs text-gray-600 mt-1 leading-relaxed">
-                                        Konversi dokumen PDF ke orientasi A4 Landscape lega dengan kop resmi Yayasan Pendidikan Telkom, 4 kartu KPI ringkasan eksekutif, zebra striping, dan 3 kolom tanda tangan pejabat sekolah.
+                                        Konversi dokumen PDF ke orientasi A4 Landscape lega dengan margin cetak aman (tidak mentok kertas), widget ringkasan KPI kotak datar (tanpa border radius & tanpa border kiri-kanan), kop resmi Yayasan Pendidikan Telkom, zebra striping, dan 3 kolom tanda tangan pejabat sekolah.
                                     </p>
                                 </div>
                             </div>

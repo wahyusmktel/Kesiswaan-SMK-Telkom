@@ -24,6 +24,8 @@ Dokumen ini diperbarui secara berkelanjutan sebagai bukti riwayat pengembangan s
   - Baris footer ringkasan total catatan keterlambatan.
 - **Format PDF Landscape Rekap Keterlambatan**:
   - Konfigurasi orientasi A4 Landscape (lebar 297 mm) untuk ruang tabel yang lega dan proporsional.
+  - Perbaikan margin cetak halaman (`18mm 22mm`) agar dokumen memiliki padding aman sisi atas, bawah, kanan, dan kiri tanpa mentok kertas.
+  - Redesain widget KPI ringkasan menjadi kotak datar modern (*clean flat border*) tanpa sudut lengkung (*zero border-radius*) dan tanpa border sisi kiri/kanan.
   - Kop surat resmi Yayasan Pendidikan Telkom & SMK Telkom Lampung.
   - 4 Kartu KPI Ringkasan Eksekutif (Total Catatan, Siswa Unik, Selesai, Menunggu/Proses BK).
   - Kolom tanda tangan resmi 3 pihak (Waka Kesiswaan, Koordinator Guru BK, dan Koordinator Guru Piket).
