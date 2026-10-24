@@ -31,6 +31,9 @@ Dokumen ini diperbarui secara berkelanjutan sebagai bukti riwayat pengembangan s
   - Kolom tanda tangan resmi 3 pihak (Waka Kesiswaan, Koordinator Guru BK, dan Koordinator Guru Piket).
 
 ### Changed
+- **Penyesuaian Kolom Tanda Tangan PDF Rekap Keterlambatan**:
+  - Mengosongkan nama penandatangan (disediakan format titik-titik kosong `( .................................... )` untuk pengisian fisik/manual).
+  - Menghapus sebutan kata "Koordinator" sehingga judul pihak penandatangan menjadi **Guru BK** dan **Guru Piket**, dengan jabatan **Wakil Kepala Sekolah Bid. Kesiswaan** tetap dipertahankan.
 - **Penyederhanaan Tampilan Halaman Log / Changelog**:
   - Header diringkas secara minimalis hanya menyisakan judul **"Log"** (menghapus teks sub-deskripsi).
   - Tombol aksi **Unduh CHANGELOG.md** dan **Salin Markdown** dipindahkan dari area header ke area toolbar konten agar tata letak halaman lebih proporsional dan nyaman diakses di perangkat mobile maupun desktop.

@@ -278,7 +278,6 @@
 
         .signature-name {
             font-weight: 700;
-            text-decoration: underline;
             color: #0f172a;
         }
 
@@ -445,22 +444,22 @@
                     Mengetahui,<br>
                     <strong>Wakil Kepala Sekolah Bid. Kesiswaan</strong>
                     <div class="signature-space"></div>
-                    <div class="signature-name">Waka Kesiswaan, S.Pd.</div>
-                    <div class="signature-nip">NIP. ........................................</div>
+                    <div class="signature-name">( .................................................... )</div>
+                    <div class="signature-nip">NIP. ....................................................</div>
                 </td>
                 <td>
                     Mengetahui / Memeriksa,<br>
-                    <strong>Koordinator Guru BK</strong>
+                    <strong>Guru BK</strong>
                     <div class="signature-space"></div>
-                    <div class="signature-name">Guru Bimbingan Konseling, S.Psi.</div>
-                    <div class="signature-nip">NIP. ........................................</div>
+                    <div class="signature-name">( .................................................... )</div>
+                    <div class="signature-nip">NIP. ....................................................</div>
                 </td>
                 <td>
                     Pringsewu, {{ now()->translatedFormat('d F Y') }}<br>
-                    <strong>Koordinator Guru Piket Harian</strong>
+                    <strong>Guru Piket</strong>
                     <div class="signature-space"></div>
-                    <div class="signature-name">Guru Piket Harian, S.Pd.</div>
-                    <div class="signature-nip">NIP. ........................................</div>
+                    <div class="signature-name">( .................................................... )</div>
+                    <div class="signature-nip">NIP. ....................................................</div>
                 </td>
             </tr>
         </table>
