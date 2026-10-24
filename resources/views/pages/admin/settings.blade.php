@@ -222,6 +222,8 @@
                                 @error('transformasi_slider_images.*') <p class="mt-2 text-xs text-red-600">{{ $message }}</p> @enderror
                             </div>
 
+                            @include('pages.admin.partials.login-theme-settings')
+
                             <!-- Registration Toggle -->
                             <div class="col-span-1 md:col-span-2 pt-4 border-t border-gray-100">
                                 <label class="relative inline-flex items-center cursor-pointer">

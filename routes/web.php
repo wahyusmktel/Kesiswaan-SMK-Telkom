@@ -1077,6 +1077,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/aplikasi-sso/{ssoApplication}', [\App\Http\Controllers\Admin\SsoApplicationController::class, 'destroy'])->name('sso-applications.destroy');
         Route::get('/dashboard', [\App\Http\Controllers\Admin\SuperAdminDashboardController::class, 'index'])->name('dashboard.index');
         Route::get('/settings', [SuperAdminController::class, 'settings'])->name('settings');
+        Route::get('/settings/login-preview', [SuperAdminController::class, 'previewLogin'])->name('settings.login-preview');
         Route::post('/settings', [SuperAdminController::class, 'updateSettings'])->name('settings.update');
         Route::post('/roles/kaur-sarpra/provision', \App\Http\Controllers\Admin\KaurSarpraRoleProvisioningController::class)
             ->name('roles.kaur-sarpra.provision');

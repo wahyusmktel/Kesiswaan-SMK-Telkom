@@ -1,3 +1,9 @@
+@php
+    $loginTheme = $loginThemeOverride ?? ($appSetting?->login_theme ?? 'classic');
+    $owlTheme = $loginTheme === 'owl';
+    $loginBackground = $appSetting?->login_background ? Storage::disk('public')->url($appSetting->login_background) : asset('images/login/sisfo-owl-background.png');
+    $loginLogo = $appSetting?->login_logo ? Storage::disk('public')->url($appSetting->login_logo) : asset('images/login/sisfo-logo.png');
+@endphp
 <!DOCTYPE html>
 <html lang="id">
 
@@ -7,8 +13,13 @@
     <meta name="color-scheme" content="light">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Masuk — SISFO SMK Telkom Lampung</title>
-    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    @unless($owlTheme)
+        <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    @endunless
     @vite(['resources/css/app.css', 'resources/css/authentication.css', 'resources/js/app.js'])
+    @if($owlTheme)
+        @include('auth.partials.owl-theme-styles')
+    @endif
     <style>
         @keyframes fadeInDown {
             from {
@@ -295,9 +306,16 @@
     </style>
 </head>
 
-<body class="bg-gray-50">
-    <div class="flex h-screen">
+<body class="bg-gray-50 {{ $owlTheme ? 'login-owl' : '' }}" data-login-theme="{{ $owlTheme ? 'owl' : 'classic' }}">
+    @if($owlTheme)
+        <img class="login-backdrop" src="{{ $loginBackground }}" alt="" fetchpriority="high" aria-hidden="true">
+    @endif
+    @if($loginPreview ?? false)
+        <aside class="fixed inset-x-0 top-0 z-50 bg-gray-900 px-4 py-2 text-center text-xs text-white">Pratinjau tema login · Perubahan hanya aktif setelah disimpan. <a href="{{ route('super-admin.settings') }}" class="font-bold underline">Kembali ke pengaturan</a></aside>
+    @endif
+    <div class="flex h-screen login-shell">
         <!-- Hero Section -->
+        @unless($owlTheme)
         <div class="hidden lg:flex lg:w-1/2 hero-gradient relative flex-col justify-center items-center p-12">
             <div id="particles-js"></div>
             <div class="floating-shape shape-1 w-64 h-64 rounded-full"></div>
@@ -324,14 +342,21 @@
             </div>
         </div>
 
+        @endunless
         <!-- Login Form Section -->
-        <div class="w-full lg:w-1/2 flex flex-col justify-center items-center px-6 py-12 sm:px-12 lg:px-16">
-            <div class="w-full max-w-md animate-fade-in-up">
+        <main class="login-form-panel w-full lg:w-1/2 flex flex-col justify-center items-center px-6 py-12 sm:px-12 lg:px-16">
+            <div class="login-card w-full max-w-md animate-fade-in-up">
+                @if($owlTheme)
+                    <a href="{{ url('/') }}" class="login-brand" aria-label="Beranda SISFO">
+                        <img src="{{ $loginLogo }}" alt="SISFO — Sistem Informasi SMK Telkom Lampung" width="1280" height="1280">
+                    </a>
+                    <p class="login-eyebrow">YOUR CONNECTED SCHOOL</p>
+                @endif
                 <!-- Header -->
-                <div class="text-center mb-8">
-                    <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2 tracking-tight">Selamat Datang
+                <div class="login-heading text-center mb-8">
+                    <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2 tracking-tight">{{ $owlTheme ? ($appSetting?->login_heading ?: 'Senang bertemu lagi!') : 'Selamat Datang' }}
                     </h2>
-                    <p class="text-gray-600 font-medium">Silakan masuk ke akun SISFO Anda</p>
+                    <p class="text-gray-600 font-medium">{{ $owlTheme ? ($appSetting?->login_description ?: 'Satu akun untuk terhubung dengan seluruh aktivitas sekolah.') : 'Silakan masuk ke akun SISFO Anda' }}</p>
                 </div>
 
                 <!-- Session Status -->
@@ -347,7 +372,7 @@
                 @endif
 
                 <!-- Login Form -->
-                <form method="POST" action="{{ route('login') }}" class="space-y-6">
+                <form method="POST" action="{{ route('login') }}" class="space-y-6" @if($loginPreview ?? false) onsubmit="event.preventDefault()" @endif>
                     @csrf
 
                     <!-- Email -->
@@ -541,6 +566,9 @@
                 </a>
             </div>
 
+            @if($owlTheme)
+                <footer class="login-footer">&copy; {{ date('Y') }} SISFO · SMK Telkom Lampung<br><span>Connecting education through technology.</span></footer>
+            @else
             <!-- Mobile Logo -->
             <div class="lg:hidden mt-12 text-center">
                 <div
@@ -553,10 +581,11 @@
                 <p class="text-gray-500 text-[10px] font-bold uppercase tracking-widest">SISFO TS &copy; {{ date('Y') }}
                 </p>
             </div>
-        </div>
+            @endif
+        </main>
     </div>
     <script>
-        particlesJS("particles-js", {
+        if (typeof particlesJS === 'function' && document.getElementById('particles-js')) particlesJS("particles-js", {
             "particles": {
                 "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
                 "color": { "value": "#ffffff" },

@@ -29,6 +29,13 @@ class SuperAdminController extends Controller
             'address'        => 'nullable|string',
             'allow_registration' => 'nullable|boolean',
             'theme'          => 'nullable|string|in:default,light-red,tech-red,campus-flow,telkom-corporate,transformasi,ajaran-baru,stella-vue',
+            'login_theme' => 'sometimes|required|in:classic,owl',
+            'login_background' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:8192|dimensions:max_width=8000,max_height=8000',
+            'login_logo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096|dimensions:max_width=8000,max_height=8000',
+            'login_heading' => 'nullable|string|max:100',
+            'login_description' => 'nullable|string|max:255',
+            'reset_login_background' => 'nullable|boolean',
+            'reset_login_logo' => 'nullable|boolean',
             'transformasi_slider_images' => 'nullable|array|max:8',
             'transformasi_slider_images.*' => 'image|mimes:jpeg,png,jpg,webp|max:4096',
             'delete_transformasi_slider_images' => 'nullable|array',
@@ -40,7 +47,14 @@ class SuperAdminController extends Controller
         ]);
 
         $setting = AppSetting::first() ?? new AppSetting();
-        $data = $request->except(['logo', 'kop_surat_ukk', 'favicon', 'transformasi_slider_images', 'delete_transformasi_slider_images', 'reset_system_announcement_version']);
+        $data = $request->except(['logo', 'kop_surat_ukk', 'favicon', 'transformasi_slider_images', 'delete_transformasi_slider_images', 'reset_system_announcement_version', 'login_background', 'login_logo', 'reset_login_background', 'reset_login_logo']);
+        foreach (['login_background', 'login_logo'] as $field) {
+            if ($request->hasFile($field)) {
+                $data[$field] = $request->file($field)->store('settings/login', 'public');
+            } elseif ($request->boolean('reset_'.$field)) {
+                $data[$field] = null;
+            }
+        }
         $data['allow_registration'] = $request->has('allow_registration');
         $data['system_announcement_enabled'] = $request->boolean('system_announcement_enabled');
 
@@ -94,5 +108,16 @@ class SuperAdminController extends Controller
 
         toast('Konfigurasi aplikasi berhasil diperbarui.', 'success');
         return redirect()->back();
+    }
+
+    public function previewLogin(Request $request)
+    {
+        $validated = $request->validate(['theme' => 'required|in:classic,owl']);
+
+        return response()->view('auth.login', [
+            'appSetting' => AppSetting::first(),
+            'loginThemeOverride' => $validated['theme'],
+            'loginPreview' => true,
+        ])->header('Cache-Control', 'no-store, private');
     }
 }
