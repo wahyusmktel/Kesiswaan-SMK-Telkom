@@ -1,6 +1,6 @@
 @php
     $loginTheme = $loginThemeOverride ?? ($appSetting?->login_theme ?? 'classic');
-    $owlTheme = $loginTheme === 'owl';
+    $owlTheme = in_array($loginTheme, ['owl', 'owl-focus', 'owl-panorama'], true);
     $loginBackground = $appSetting?->login_background ? Storage::disk('public')->url($appSetting->login_background) : asset('images/login/sisfo-owl-background.png');
     $loginLogo = $appSetting?->login_logo ? Storage::disk('public')->url($appSetting->login_logo) : asset('images/login/sisfo-logo.png');
 @endphp
@@ -306,7 +306,7 @@
     </style>
 </head>
 
-<body class="bg-gray-50 {{ $owlTheme ? 'login-owl' : '' }}" data-login-theme="{{ $owlTheme ? 'owl' : 'classic' }}">
+<body class="bg-gray-50 {{ $owlTheme ? 'login-owl login-'.$loginTheme : '' }}" data-login-theme="{{ $owlTheme ? $loginTheme : 'classic' }}">
     @if($owlTheme)
         <img class="login-backdrop" src="{{ $loginBackground }}" alt="" fetchpriority="high" aria-hidden="true">
     @endif
@@ -512,7 +512,8 @@
                 @endif
 
                 <!-- Google Login Button -->
-                <a href="{{ route('auth.google') }}"
+                @if($owlTheme)<div class="login-methods" aria-label="Pilihan cara masuk lainnya">@endif
+                <a href="{{ route('auth.google') }}" aria-label="Masuk dengan Google"
                     class="flex items-center justify-center gap-3 w-full py-3 px-4 bg-white border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 mb-3">
                     <svg class="w-5 h-5" viewBox="0 0 24 24">
                         <path
@@ -528,27 +529,28 @@
                             d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                             fill="#EA4335" />
                     </svg>
-                    <span>Masuk dengan Google</span>
+                    <span>{{ $owlTheme ? 'Google' : 'Masuk dengan Google' }}</span>
                 </a>
 
                 <!-- Stella Access Card Button -->
-                <a href="{{ route('stella-login') }}"
+                <a href="{{ route('stella-login') }}" aria-label="Masuk dengan Stella Access Card"
                     class="flex items-center justify-center gap-3 w-full py-3 px-4 bg-red-600 border border-transparent rounded-lg font-bold text-white hover:bg-red-700 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 mb-6">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
                     </svg>
-                    <span>Masuk dengan Stella Access Card</span>
+                    <span>{{ $owlTheme ? 'Stella Card' : 'Masuk dengan Stella Access Card' }}</span>
                 </a>
 
                 <!-- Face ID Login Button -->
-                <button type="button" id="btn-face-login"
+                <button type="button" id="btn-face-login" aria-label="Masuk dengan Face ID"
                     class="flex items-center justify-center gap-3 w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 border border-transparent rounded-lg font-bold text-white hover:from-purple-700 hover:to-indigo-700 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 mb-6">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
                     </svg>
-                    <span>Masuk dengan Face ID</span>
+                    <span>{{ $owlTheme ? 'Face ID' : 'Masuk dengan Face ID' }}</span>
                 </button>
+                @if($owlTheme)</div>@endif
 
                 {{-- Pendaftaran akun umum dinonaktifkan sementara.
                 <!-- Register Link -->

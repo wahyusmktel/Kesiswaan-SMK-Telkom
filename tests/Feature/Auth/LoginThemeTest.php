@@ -65,6 +65,17 @@ class LoginThemeTest extends TestCase
         $this->get(route('super-admin.settings.login-preview', ['theme' => 'owl']))
             ->assertOk()->assertSee('Halo, warga sekolah!')->assertSee('Mari terhubung bersama SISFO.');
 
+        foreach (['owl-focus', 'owl-panorama'] as $theme) {
+            $this->post(route('super-admin.settings.update'), [
+                'school_name' => 'SMK Telkom Lampung',
+                'login_theme' => $theme,
+            ])->assertSessionHasNoErrors()->assertRedirect();
+            $this->assertSame($theme, $setting->fresh()->login_theme);
+            $this->get(route('super-admin.settings.login-preview', ['theme' => $theme]))
+                ->assertOk()->assertSee('data-login-theme="'.$theme.'"', false)
+                ->assertSee('class="login-methods"', false);
+        }
+
         $this->post(route('super-admin.settings.update'), [
             'school_name' => 'SMK Telkom Lampung',
             'login_theme' => 'classic',

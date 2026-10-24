@@ -19,21 +19,31 @@
             </div>
             <div class="flex items-center gap-3 p-4"><input type="radio" name="login_theme" value="owl" x-model="loginTheme" @checked(old('login_theme', $setting->login_theme ?? 'classic') === 'owl') class="text-red-600 focus:ring-red-500"><span><strong class="block text-sm text-gray-900">SISFO Owl</strong><span class="text-xs text-gray-500">Latar ilustrasi dan kartu login modern.</span></span></div>
         </label>
+        @foreach(['owl-focus' => ['Owl Focus', 'Kartu ringkas di tengah, background memenuhi layar.'], 'owl-panorama' => ['Owl Panorama', 'Kartu di kiri dengan ilustrasi layar penuh.']] as $themeKey => [$themeName, $themeDescription])
+            <label class="cursor-pointer overflow-hidden rounded-xl border-2 bg-white transition-colors" :class="loginTheme === '{{ $themeKey }}' ? 'border-red-500' : 'border-gray-200'">
+                <div class="relative flex h-36 items-center overflow-hidden bg-gray-100 {{ $themeKey === 'owl-focus' ? 'justify-center' : 'justify-start px-4' }}" aria-hidden="true">
+                    <img src="{{ $setting->login_background ? Storage::disk('public')->url($setting->login_background) : asset('images/login/sisfo-owl-background.png') }}" class="absolute inset-0 h-full w-full object-cover" style="object-position: center 52%" alt="">
+                    <div class="absolute inset-0 bg-white/30"></div>
+                    <div class="relative flex w-2/5 flex-col gap-1.5 rounded-xl border border-white bg-white/95 p-3 shadow-sm"><img src="{{ $setting->login_logo ? Storage::disk('public')->url($setting->login_logo) : asset('images/login/sisfo-logo.png') }}" class="mx-auto h-7 w-7 object-contain" alt=""><div class="h-3 rounded border bg-gray-50"></div><div class="h-3 rounded border bg-gray-50"></div><div class="h-3 rounded bg-red-600"></div><div class="grid grid-cols-3 gap-1"><div class="h-2 rounded bg-gray-200"></div><div class="h-2 rounded bg-gray-200"></div><div class="h-2 rounded bg-gray-200"></div></div></div>
+                </div>
+                <div class="flex items-center gap-3 p-4"><input type="radio" name="login_theme" value="{{ $themeKey }}" x-model="loginTheme" @checked(old('login_theme', $setting->login_theme ?? 'classic') === $themeKey) class="text-red-600 focus:ring-red-500"><span><strong class="block text-sm text-gray-900">{{ $themeName }}{{ $themeKey === 'owl-focus' ? ' · Rekomendasi' : '' }}</strong><span class="text-xs text-gray-500">{{ $themeDescription }}</span></span></div>
+            </label>
+        @endforeach
     </div>
     @error('login_theme') <p class="mt-2 text-xs text-red-600">{{ $message }}</p> @enderror
     <div class="mt-3 flex flex-wrap items-center justify-between gap-2">
-        <p class="text-xs text-gray-500">Tema aktif: <strong>{{ ($setting->login_theme ?? 'classic') === 'owl' ? 'SISFO Owl' : 'Klasik SISFO' }}</strong></p>
+        <p class="text-xs text-gray-500">Tema aktif: <strong>{{ ['classic' => 'Klasik SISFO', 'owl' => 'SISFO Owl', 'owl-focus' => 'Owl Focus', 'owl-panorama' => 'Owl Panorama'][$setting->login_theme ?? 'classic'] ?? 'Klasik SISFO' }}</strong></p>
         <a href="{{ route('super-admin.settings.login-preview', ['theme' => old('login_theme', $setting->login_theme ?? 'classic')]) }}"
             :href="@js(route('super-admin.settings.login-preview')) + '?theme=' + loginTheme"
             target="_blank" rel="noopener" class="rounded-lg border border-gray-200 bg-white px-4 py-2 text-xs font-bold text-red-700 hover:bg-red-50">Pratinjau tema ↗</a>
     </div>
-    <div x-show="loginTheme === 'owl'" class="mt-5 grid gap-4 rounded-xl border border-red-100 bg-red-50/40 p-4 sm:grid-cols-2">
+    <div x-show="['owl', 'owl-focus', 'owl-panorama'].includes(loginTheme)" class="mt-5 grid gap-4 rounded-xl border border-red-100 bg-red-50/40 p-4 sm:grid-cols-2">
         <div class="sm:col-span-2 text-xs leading-5 text-gray-600">Gambar dan logo bawaan sudah tersedia. Unggah gambar sendiri untuk menggantinya. Pratinjau menggunakan gambar dan teks yang terakhir disimpan.</div>
         @foreach(['login_background' => 'Background layar penuh', 'login_logo' => 'Logo SISFO'] as $field => $label)
             <div>
                 <label for="{{ $field }}" class="block text-xs font-bold text-gray-700">{{ $label }}</label>
                 <input type="file" id="{{ $field }}" name="{{ $field }}" accept="image/png,image/jpeg,image/webp" class="mt-2 block w-full text-xs text-gray-600">
-                <p class="mt-2 text-[11px] text-gray-500">PNG, JPG, atau WebP. Maksimal {{ $field === 'login_background' ? '8' : '4' }} MB. {{ $field === 'login_background' ? 'Ilustrasi vertikal ditampilkan utuh di sisi kiri.' : 'PNG transparan disarankan.' }}</p>
+                <p class="mt-2 text-[11px] text-gray-500">PNG, JPG, atau WebP. Maksimal {{ $field === 'login_background' ? '8' : '4' }} MB. {{ $field === 'login_background' ? 'Gambar menyesuaikan layar; sebagian tepi dapat terpotong. Landscape cocok untuk Focus dan Panorama.' : 'PNG transparan disarankan.' }}</p>
                 @if($setting->$field)
                     <label class="mt-2 flex items-center gap-2 text-xs text-gray-600"><input type="checkbox" name="reset_{{ $field }}" value="1" class="rounded text-red-600">Gunakan kembali gambar bawaan</label>
                 @endif

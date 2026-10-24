@@ -29,7 +29,7 @@ class SuperAdminController extends Controller
             'address'        => 'nullable|string',
             'allow_registration' => 'nullable|boolean',
             'theme'          => 'nullable|string|in:default,light-red,tech-red,campus-flow,telkom-corporate,transformasi,ajaran-baru,stella-vue',
-            'login_theme' => 'sometimes|required|in:classic,owl',
+            'login_theme' => 'sometimes|required|in:classic,owl,owl-focus,owl-panorama',
             'login_background' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:8192|dimensions:max_width=8000,max_height=8000',
             'login_logo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096|dimensions:max_width=8000,max_height=8000',
             'login_heading' => 'nullable|string|max:100',
@@ -112,7 +112,7 @@ class SuperAdminController extends Controller
 
     public function previewLogin(Request $request)
     {
-        $validated = $request->validate(['theme' => 'required|in:classic,owl']);
+        $validated = $request->validate(['theme' => 'required|in:classic,owl,owl-focus,owl-panorama']);
 
         return response()->view('auth.login', [
             'appSetting' => AppSetting::first(),
