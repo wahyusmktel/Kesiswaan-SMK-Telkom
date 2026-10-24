@@ -24,6 +24,22 @@
             width: 100%;
         }
 
+        /* Kop Surat Banner Full Sisi (Edge-to-Edge Tanpa Margin) */
+        .kop-full-banner {
+            margin-top: -14mm;
+            margin-left: -16mm;
+            margin-right: -16mm;
+            margin-bottom: 12px;
+            width: auto;
+        }
+
+        .kop-full-banner img {
+            width: 100%;
+            height: auto;
+            max-height: 105px;
+            display: block;
+        }
+
         /* Kop Surat */
         .kop-table {
             width: 100%;
@@ -324,23 +340,47 @@
         $periodeStr = ($startDateFormatted && $endDateFormatted) 
             ? "Periode: {$startDateFormatted} s/d {$endDateFormatted}"
             : "Periode: Seluruh Riwayat Keterlambatan";
+
+        // Load Kop Surat UKK dari AppSetting jika belum dikirim controller
+        if (!isset($kopBase64)) {
+            $settings = $settings ?? \App\Models\AppSetting::first();
+            $kopPath = $settings->kop_surat_ukk ?? null;
+            $kopBase64 = null;
+            if ($kopPath && \Illuminate\Support\Facades\Storage::disk('public')->exists($kopPath)) {
+                $kopData = \Illuminate\Support\Facades\Storage::disk('public')->get($kopPath);
+                $kopMime = \Illuminate\Support\Facades\Storage::disk('public')->mimeType($kopPath) ?: 'image/png';
+                $kopBase64 = 'data:' . $kopMime . ';base64,' . base64_encode($kopData);
+            } elseif ($kopPath && file_exists(storage_path('app/public/' . $kopPath))) {
+                $fullPath = storage_path('app/public/' . $kopPath);
+                $kopData = file_get_contents($fullPath);
+                $kopMime = mime_content_type($fullPath) ?: 'image/png';
+                $kopBase64 = 'data:' . $kopMime . ';base64,' . base64_encode($kopData);
+            }
+        }
     @endphp
 
     <div class="page-container">
-        <!-- Kop Surat Resmi -->
-        <table class="kop-table">
-            <tr>
-                <td class="kop-logo">
-                    <div class="kop-logo-box">T</div>
-                </td>
-                <td class="kop-text">
-                    <div class="kop-institution">YAYASAN PENDIDIKAN TELKOM</div>
-                    <div class="kop-school">SMK TELKOM LAMPUNG</div>
-                    <div class="kop-address">Jl. Raya Gadingrejo No. 88, Pringsewu, Lampung • Website: smktelkom-lpg.sch.id • Email: info@smktelkom-lpg.sch.id</div>
-                </td>
-                <td style="width: 52px;"></td>
-            </tr>
-        </table>
+        @if(!empty($kopBase64))
+            <!-- Kop Surat Full Sisi dari Super Admin App Setting -->
+            <div class="kop-full-banner">
+                <img src="{{ $kopBase64 }}" alt="Kop Surat">
+            </div>
+        @else
+            <!-- Kop Surat Resmi Cadangan -->
+            <table class="kop-table">
+                <tr>
+                    <td class="kop-logo">
+                        <div class="kop-logo-box">T</div>
+                    </td>
+                    <td class="kop-text">
+                        <div class="kop-institution">YAYASAN PENDIDIKAN TELKOM</div>
+                        <div class="kop-school">SMK TELKOM LAMPUNG</div>
+                        <div class="kop-address">Jl. Raya Gadingrejo No. 88, Pringsewu, Lampung • Website: smktelkom-lpg.sch.id • Email: info@smktelkom-lpg.sch.id</div>
+                    </td>
+                    <td style="width: 52px;"></td>
+                </tr>
+            </table>
+        @endif
 
         <!-- Judul Dokumen -->
         <div class="doc-title-container">

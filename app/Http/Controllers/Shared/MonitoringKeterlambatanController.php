@@ -7,6 +7,8 @@ use App\Models\Keterlambatan;
 use App\Models\Kelas;
 use App\Models\Rombel;
 use App\Exports\KeterlambatanExport;
+use App\Models\AppSetting;
+use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -103,7 +105,23 @@ class MonitoringKeterlambatanController extends Controller
             }
 
             $data = $query->latest('waktu_dicatat_security')->get();
-            $pdf = Pdf::loadView('pdf.rekap-keterlambatan', compact('data', 'filters'))->setPaper('a4', 'landscape');
+            
+            // Ambil Kop Surat UKK dari AppSetting
+            $settings = AppSetting::first();
+            $kopBase64 = null;
+            $kopPath = $settings->kop_surat_ukk ?? null;
+            if ($kopPath && Storage::disk('public')->exists($kopPath)) {
+                $kopData = Storage::disk('public')->get($kopPath);
+                $kopMime = Storage::disk('public')->mimeType($kopPath) ?: 'image/png';
+                $kopBase64 = 'data:' . $kopMime . ';base64,' . base64_encode($kopData);
+            } elseif ($kopPath && file_exists(storage_path('app/public/' . $kopPath))) {
+                $fullPath = storage_path('app/public/' . $kopPath);
+                $kopData = file_get_contents($fullPath);
+                $kopMime = mime_content_type($fullPath) ?: 'image/png';
+                $kopBase64 = 'data:' . $kopMime . ';base64,' . base64_encode($kopData);
+            }
+
+            $pdf = Pdf::loadView('pdf.rekap-keterlambatan', compact('data', 'filters', 'settings', 'kopBase64'))->setPaper('a4', 'landscape');
             return $pdf->download($fileName . '.pdf');
         }
         

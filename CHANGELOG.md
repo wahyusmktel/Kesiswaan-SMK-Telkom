@@ -8,6 +8,9 @@ Dokumen ini diperbarui secara berkelanjutan sebagai bukti riwayat pengembangan s
 
 ## [2.4.0] - 2026-10-24
 ### Added
+- **Integrasi Gambar Kop Surat Resmi (Full Sisi) pada PDF Keterlambatan**:
+  - Mengintegrasikan banner gambar kop surat sekolah yang diunggah melalui menu konfigurasi aplikasi Super Admin (`kop_surat_ukk` pada `AppSetting`).
+  - Menerapkan tata letak tanpa margin (*full sisi / edge-to-edge*) pada gambar banner kop surat di halaman pertama dokumen PDF sehingga terbentang penuh dari ujung ke ujung kertas landscape, dengan tetap mempertahankan margin aman untuk tabel dan halaman-halaman berikutnya.
 - **Sistem Dokumentasi Changelog Terintegrasi**: Halaman `/changelog` kini membaca dan menampilkan riwayat perubahan langsung dari file `CHANGELOG.md` untuk keperluan audit dan transparansi tim IT.
 - **Modern Redesigned Debug Error Inspector**:
   - Tampilan baru halaman error (`resources/views/errors/debug-simple.blade.php`) dengan Dark IDE Theme.
