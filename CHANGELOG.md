@@ -22,6 +22,11 @@ Dokumen ini diperbarui secara berkelanjutan sebagai bukti riwayat pengembangan s
   - Mengelompokkan keempat tombol aksi ke dalam *segmented button group* terpadu dengan border-radius modern sedikit kotak (`rounded-md`).
   - Desain responsif optimal untuk perangkat mobile, di mana tombol meregang secara proporsional (*flex-1*) tanpa berantakan.
 
+### Fixed
+- **Navigasi Jump to Page pada Paginasi**:
+  - Memperbaiki error JavaScript `Uncaught TypeError: URL is not a constructor` pada input lompat halaman akibat penimpaan objek global `URL` oleh atribut string bawaan `document.URL` di *scope inline event handler*.
+  - Mengisolasi pemrosesan navigasi ke dalam fungsi `window.jumpToPaginationPage` dengan *fallback* manipulasi parameter URL yang aman dan kompatibel.
+
 ---
 
 ## [2.4.0] - 2026-10-24

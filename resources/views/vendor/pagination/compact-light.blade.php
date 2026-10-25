@@ -72,11 +72,36 @@
                 <span class="text-xs text-gray-500 whitespace-nowrap">Ke Hal:</span>
                 <input type="number" min="1" max="{{ $last }}"
                     value="{{ $current }}"
-                    onkeydown="if(event.key==='Enter'){event.preventDefault(); let val=parseInt(this.value); if(!val||val<1)val=1; if(val>{{ $last }})val={{ $last }}; let u=new URL(window.location.href); u.searchParams.set('page', val); window.location.href=u.toString();}"
+                    onkeydown="if(event.key==='Enter'){event.preventDefault(); jumpToPaginationPage(this, {{ $last }});}"
                     class="w-12 h-8 px-1 text-center text-xs font-bold text-gray-800 bg-white border border-gray-300 rounded-md focus:ring-1 focus:ring-red-500 focus:border-red-500 shadow-sm"
                     title="Ketik nomor halaman lalu tekan Enter untuk lompat">
                 <span class="text-xs text-gray-400 whitespace-nowrap">/ {{ $last }}</span>
             </div>
         </div>
     </nav>
+
+    <script>
+        if (typeof window.jumpToPaginationPage !== 'function') {
+            window.jumpToPaginationPage = function(input, maxPage) {
+                var val = parseInt(input.value, 10);
+                if (isNaN(val) || val < 1) val = 1;
+                if (val > maxPage) val = maxPage;
+                
+                try {
+                    var u = new (window.URL || URL)(window.location.href);
+                    u.searchParams.set('page', val);
+                    window.location.href = u.toString();
+                } catch (e) {
+                    var cur = window.location.href;
+                    var regex = /([?&])page=\d+/i;
+                    if (regex.test(cur)) {
+                        window.location.href = cur.replace(regex, function(m, p1) { return p1 + 'page=' + val; });
+                    } else {
+                        var sep = cur.indexOf('?') !== -1 ? '&' : '?';
+                        window.location.href = cur + sep + 'page=' + val;
+                    }
+                }
+            };
+        }
+    </script>
 @endif
