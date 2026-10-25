@@ -6,6 +6,24 @@ Dokumen ini diperbarui secara berkelanjutan sebagai bukti riwayat pengembangan s
 
 ---
 
+## [2.5.0] - 2026-10-25
+### Added
+- **Searchable Dropdown Filter Kelas (Alpine.js)**:
+  - Mengubah dropdown filter kelas pada halaman Monitoring Keterlambatan menjadi komponen interaktif yang dilengkapi kolom pencarian real-time untuk mempermudah pencarian nama kelas.
+- **Kolom Nomor Urutan Data pada Tabel Keterlambatan**:
+  - Menambahkan kolom `No` di sisi paling kiri tabel keterlambatan (sebelah kiri kolom Siswa) dengan perhitungan nomor urut berbasis paginasi aktif.
+- **Paginasi Ringkas Bertema Light & Fitur Jump to Page**:
+  - Tampilan navigasi paginasi baru bertema terang (*light theme*), modern, dan bersudut kotak tegas (`rounded-md`).
+  - Menyingkat tampilan angka halaman menjadi maksimal 4 angka berurutan (*compact sliding window* 1, 2, 3, 4) dengan navigasi `Prev` dan `Next`.
+  - Fitur **Lompat Halaman (*Jump to Page*)**: input angka halaman langsung yang melompat ketika ditekan tombol **Enter** dengan tetap mempertahankan seluruh parameter filter aktif.
+
+### Changed
+- **Penyatuan dan Responsivitas 4 Tombol Aksi (Filter, Reset, Excel, PDF)**:
+  - Mengelompokkan keempat tombol aksi ke dalam *segmented button group* terpadu dengan border-radius modern sedikit kotak (`rounded-md`).
+  - Desain responsif optimal untuk perangkat mobile, di mana tombol meregang secara proporsional (*flex-1*) tanpa berantakan.
+
+---
+
 ## [2.4.0] - 2026-10-24
 ### Added
 - **Integrasi Gambar Kop Surat Resmi (Full Sisi) pada PDF Keterlambatan**:
