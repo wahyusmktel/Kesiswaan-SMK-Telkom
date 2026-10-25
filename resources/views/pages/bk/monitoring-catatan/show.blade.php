@@ -11,7 +11,10 @@
                     </a>
                     <div>
                         <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight">{{ $siswa->nama_lengkap }}</h2>
-                        <p class="text-gray-500 font-medium">Monitoring Kedisiplinan Siswa</p>
+                        <p class="text-sm font-semibold text-gray-600 flex items-center gap-1.5 mt-0.5">
+                            <span class="text-gray-400 font-normal">Wali Kelas:</span>
+                            <span class="text-indigo-600 font-bold">{{ $siswa->rombels->first()?->waliKelas?->name ?? 'Belum Ditentukan' }}</span>
+                        </p>
                     </div>
                 </div>
 

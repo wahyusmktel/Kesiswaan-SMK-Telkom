@@ -8,6 +8,12 @@ Dokumen ini diperbarui secara berkelanjutan sebagai bukti riwayat pengembangan s
 
 ## [2.5.0] - 2026-10-25
 ### Added
+- **Modernisasi Halaman Monitoring Catatan Siswa (`/bk/monitoring-catatan`)**:
+  - Menerapkan dropdown filter kelas interaktif dengan kolom pencarian *real-time* (*searchable select* berbasis Alpine.js).
+  - Menambahkan kolom penomoran urutan `No` di sisi paling kiri tabel catatan kedisiplinan siswa dengan kalkulasi halaman aktif.
+  - Menerapkan komponen paginasi ringkas bertema terang (*light theme*) dengan fitur *Jump to Page* dan tombol aksi bersudut kotak modern (`rounded-md`).
+- **Identifikasi Wali Kelas pada Detail Kedisiplinan (`/bk/monitoring-catatan/{siswa}`)**:
+  - Mengganti teks sub-judul generic *"Monitoring Kedisiplinan Siswa"* di bawah nama siswa dengan informasi nama **Wali Kelas** secara dinamis untuk mempermudah identifikasi dan koordinasi Guru BK.
 - **Modernisasi Halaman Monitoring Izin Guru BK (`/bk/monitoring-izin`)**:
   - Menerapkan dropdown filter kelas interaktif dengan kolom pencarian *real-time* (*searchable select* berbasis Alpine.js).
   - Menambahkan kolom penomoran urutan `No` di sisi paling kiri tabel perizinan siswa dengan kalkulasi halaman paginasi aktif.

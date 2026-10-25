@@ -24,18 +24,21 @@ class MonitoringCatatanController extends Controller
         }
 
         if ($request->filled('search')) {
-            $query->where('nama_lengkap', 'like', '%' . $request->search . '%')
-                  ->orWhere('nis', 'like', '%' . $request->search . '%');
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_lengkap', 'like', '%' . $search . '%')
+                  ->orWhere('nis', 'like', '%' . $search . '%');
+            });
         }
 
-        $siswas = $query->paginate(15);
+        $siswas = $query->paginate(15)->withQueryString();
 
         return view('pages.bk.monitoring-catatan.index', compact('siswas', 'kelas'));
     }
 
     public function show(MasterSiswa $siswa)
     {
-        $siswa->load(['rombels.kelas', 'user']);
+        $siswa->load(['rombels.kelas', 'rombels.waliKelas', 'user']);
         
         $pelanggarans = $siswa->pelanggarans()
             ->with(['peraturan', 'pelapor'])
