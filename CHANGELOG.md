@@ -8,6 +8,12 @@ Dokumen ini diperbarui secara berkelanjutan sebagai bukti riwayat pengembangan s
 
 ## [2.5.0] - 2026-10-25
 ### Added
+- **Modernisasi Halaman Monitoring Izin Guru BK (`/bk/monitoring-izin`)**:
+  - Menerapkan dropdown filter kelas interaktif dengan kolom pencarian *real-time* (*searchable select* berbasis Alpine.js).
+  - Menambahkan kolom penomoran urutan `No` di sisi paling kiri tabel perizinan siswa dengan kalkulasi halaman paginasi aktif.
+  - Menyatukan tombol aksi *Filter* dan *Reset* ke dalam *segmented button group* modern sedikit kotak (`rounded-md`) yang responsif di perangkat mobile.
+  - Menerapkan sistem paginasi ringkas bertema terang (*light theme*, 1-4 digit window) lengkap dengan fitur *Jump to Page* via tombol Enter.
+  - Memperbarui format tampilan pada kolom **Tanggal Izin** menjadi bahasa Indonesia resmi (contoh: `11 Agustus 2026`).
 - **Searchable Dropdown Filter Kelas (Alpine.js)**:
   - Mengubah dropdown filter kelas pada halaman Monitoring Keterlambatan menjadi komponen interaktif yang dilengkapi kolom pencarian real-time untuk mempermudah pencarian nama kelas.
 - **Kolom Nomor Urutan Data pada Tabel Keterlambatan**:
