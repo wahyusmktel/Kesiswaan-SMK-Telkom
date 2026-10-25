@@ -8,6 +8,9 @@ Dokumen ini diperbarui secara berkelanjutan sebagai bukti riwayat pengembangan s
 
 ## [2.5.0] - 2026-10-25
 ### Added
+- **Filter Siswa Aktif pada Monitoring Pelanggaran & Keterlambatan (`/bk/monitoring-catatan`)**:
+  - Membatasi kueri data siswa pada halaman monitoring kedisiplinan hanya untuk siswa berstatus aktif yang belum lulus (`active()` & `whereNull('graduated_at')`), sehingga data alumni/siswa yang sudah lulus tidak lagi dimunculkan.
+  - Mengaitkan data rombel dan wali kelas berdasarkan tahun pelajaran aktif agar nama kelas dan wali kelas yang tampil selalu akurat sesuai tahun ajaran berjalan.
 - **Modernisasi Halaman Monitoring Catatan Siswa (`/bk/monitoring-catatan`)**:
   - Menerapkan dropdown filter kelas interaktif dengan kolom pencarian *real-time* (*searchable select* berbasis Alpine.js).
   - Menambahkan kolom penomoran urutan `No` di sisi paling kiri tabel catatan kedisiplinan siswa dengan kalkulasi halaman aktif.

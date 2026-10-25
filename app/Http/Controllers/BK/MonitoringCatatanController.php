@@ -5,6 +5,7 @@ namespace App\Http\Controllers\BK;
 use App\Http\Controllers\Controller;
 use App\Models\Kelas;
 use App\Models\MasterSiswa;
+use App\Models\TahunPelajaran;
 use App\Models\SiswaPelanggaran;
 use App\Models\Keterlambatan;
 use Illuminate\Http\Request;
@@ -13,13 +14,27 @@ class MonitoringCatatanController extends Controller
 {
     public function index(Request $request)
     {
+        $tahunAktif = TahunPelajaran::where('is_active', true)->first();
         $kelas = Kelas::orderBy('nama_kelas')->get();
         
-        $query = MasterSiswa::with(['rombels.kelas', 'user']);
+        $query = MasterSiswa::active()
+            ->whereNull('graduated_at')
+            ->with([
+                'rombels' => function ($q) use ($tahunAktif) {
+                    if ($tahunAktif) {
+                        $q->orderByRaw("CASE WHEN tahun_pelajaran_id = {$tahunAktif->id} THEN 0 ELSE 1 END");
+                    }
+                    $q->orderByDesc('tahun_pelajaran_id')->with(['kelas', 'waliKelas']);
+                },
+                'user'
+            ]);
 
         if ($request->filled('kelas_id')) {
-            $query->whereHas('rombels', function($q) use ($request) {
+            $query->whereHas('rombels', function($q) use ($request, $tahunAktif) {
                 $q->where('kelas_id', $request->kelas_id);
+                if ($tahunAktif) {
+                    $q->where('tahun_pelajaran_id', $tahunAktif->id);
+                }
             });
         }
 
@@ -38,7 +53,16 @@ class MonitoringCatatanController extends Controller
 
     public function show(MasterSiswa $siswa)
     {
-        $siswa->load(['rombels.kelas', 'rombels.waliKelas', 'user']);
+        $tahunAktif = TahunPelajaran::where('is_active', true)->first();
+        $siswa->load([
+            'rombels' => function ($q) use ($tahunAktif) {
+                if ($tahunAktif) {
+                    $q->orderByRaw("CASE WHEN tahun_pelajaran_id = {$tahunAktif->id} THEN 0 ELSE 1 END");
+                }
+                $q->orderByDesc('tahun_pelajaran_id')->with(['kelas', 'waliKelas']);
+            },
+            'user'
+        ]);
         
         $pelanggarans = $siswa->pelanggarans()
             ->with(['peraturan', 'pelapor'])
