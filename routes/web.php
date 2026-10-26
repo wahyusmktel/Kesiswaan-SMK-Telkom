@@ -670,6 +670,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Kartu Pelajar Digital
         Route::get('/kartu-pelajar', [\App\Http\Controllers\Siswa\KartuPelajarController::class, 'index'])->name('kartu-pelajar.index');
+        Route::get('/kartu-pelajar/cetak', [\App\Http\Controllers\Siswa\KartuPelajarController::class, 'cetak'])->name('kartu-pelajar.cetak');
 
         // Data Dapodik
         Route::get('/dapodik', [\App\Http\Controllers\Siswa\DapodikSiswaController::class, 'index'])->name('dapodik.index');
