@@ -9,7 +9,8 @@ Dokumen ini diperbarui secara berkelanjutan sebagai bukti riwayat pengembangan s
 ## [2.6.0] - 2026-10-26
 ### Added
 - **Modernisasi Tampilan Verifikasi Keterlambatan Guru Piket (`/piket/verifikasi-terlambat`)**:
-  - Mengubah tampilan antrian siswa terlambat yang sebelumnya berbentuk *card grid* menjadi **list tabel** yang rapi, padat, dan mudah dipindai secara visual.
+  - Mengubah tampilan antrian siswa terlambat yang sebelumnya berbentuk *card grid* menjadi **list tabel** yang rapi, padat, dan mudah dipindai secara visual dengan judul tabel **Menunggu Verifikasi Guru Piket**.
+  - Mengubah format waktu relatif kedatangan siswa pada kolom Waktu Datang menjadi bahasa Indonesia resmi (contoh: *2 minggu yang lalu*, *15 menit yang lalu*).
   - Memindahkan tombol aksi **Verifikasi Semua** dari header halaman ke toolbar area konten utama di atas tabel.
   - Menambahkan tombol navigasi **Catat Terlambat Manual** (mengarah ke `/piket/penanganan-terlambat`) tepat sebelum tombol *Verifikasi Semua* sebagai solusi cepat apabila terdapat siswa terlambat yang belum sempat tercatat oleh Security.
   - Mengoptimalkan kueri data keterlambatan agar mengaitkan rombel tahun pelajaran aktif.

@@ -176,7 +176,7 @@
                 <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
                         <div class="flex items-center gap-2.5">
-                            <h3 class="font-bold text-gray-800 text-base leading-none">Menunggu Verifikasi Piket</h3>
+                            <h3 class="font-bold text-gray-800 text-base leading-none">Menunggu Verifikasi Guru Piket</h3>
                             <span class="px-2.5 py-0.5 bg-rose-100 text-rose-700 border border-rose-200 rounded-full text-xs font-black">
                                 {{ $daftarSiswaTerlambat->count() }} Siswa
                             </span>
@@ -259,7 +259,7 @@
                                             {{ \Carbon\Carbon::parse($item->waktu_dicatat_security)->format('H:i') }} WIB
                                         </div>
                                         <div class="text-[11px] text-gray-400 mt-0.5">
-                                            {{ \Carbon\Carbon::parse($item->waktu_dicatat_security)->diffForHumans() }}
+                                            {{ \Carbon\Carbon::parse($item->waktu_dicatat_security)->locale('id')->diffForHumans() }}
                                         </div>
                                     </td>
                                     <td class="px-6 py-4">
