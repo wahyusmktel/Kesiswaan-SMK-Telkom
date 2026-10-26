@@ -59,8 +59,9 @@
                 <form method="POST" action="{{ route('sso.login.store') }}" class="mt-7 space-y-5">
                     @csrf
                     <div>
-                        <label for="email" class="mb-2 block text-sm font-bold">Email SISFO</label>
-                        <input id="email" name="email" type="email" value="{{ old('email') }}" required autofocus autocomplete="username"
+                        <label for="email" class="mb-2 block text-sm font-bold">Email atau NIS SISFO</label>
+                        <input id="email" name="email" type="text" value="{{ old('email') }}" required autofocus autocomplete="username"
+                            placeholder="Email atau NIS siswa"
                             class="h-12 w-full border bg-white px-3 text-sm outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100 {{ $errors->has('email') ? 'border-red-500' : 'border-slate-300' }}">
                         @error('email')<p class="mt-1.5 text-xs font-semibold text-red-600">{{ $message }}</p>@enderror
                     </div>

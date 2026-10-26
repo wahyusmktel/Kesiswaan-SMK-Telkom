@@ -6,6 +6,15 @@ Dokumen ini diperbarui secara berkelanjutan sebagai bukti riwayat pengembangan s
 
 ---
 
+## [2.6.0] - 2026-10-26
+### Added
+- **Login Universal Menggunakan Email atau NIS Siswa**:
+  - Memperbarui mekanisme autentikasi pada `LoginRequest` dan `SsoProviderLoginController` agar mendukung input fleksibel berupa **Email** atau **NIS (Nomor Induk Siswa)**.
+  - Sistem secara otomatis mendeteksi input NIS dan menghubungkannya dengan akun pengguna terkait (`MasterSiswa` -> `User`), sehingga siswa tidak perlu lagi mengetikkan format email sekolah yang panjang.
+  - Memperbarui antarmuka login (`resources/views/auth/login.blade.php` dan `resources/views/auth/sso/login.blade.php`) dengan label `"Email atau NIS"`, tipe input teks bebas validasi HTML5, ikon identitas pengguna, serta placeholder yang jelas dan intuitif bagi siswa.
+- **Pembaruan Kartu Pelajar Standar TS Dua Sisi**:
+  - Implementasi kartu pelajar standar Telkom Schools dua sisi (depan & belakang) lengkap dengan modal pratinjau *fullscreen landscape* untuk kemudahan akses siswa dan kesiswaan.
+
 ## [2.5.0] - 2026-10-25
 ### Added
 - **Filter Siswa Aktif pada Monitoring Pelanggaran & Keterlambatan (`/bk/monitoring-catatan`)**:

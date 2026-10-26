@@ -30,16 +30,31 @@ class SsoProviderLoginController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $credentials = $request->validate([
-            'email' => ['required', 'string', 'email'],
+        $loginData = $request->validate([
+            'email' => ['required', 'string'],
             'password' => ['required', 'string'],
         ], [
-            'email.required' => 'Email akun SISFO wajib diisi.',
-            'email.email' => 'Format email tidak valid.',
+            'email.required' => 'Email atau NIS akun SISFO wajib diisi.',
             'password.required' => 'Kata sandi wajib diisi.',
         ]);
 
-        $key = 'sso-login:'.Str::lower($credentials['email']).'|'.$request->ip();
+        $loginInput = trim((string) $loginData['email']);
+        $resolvedEmail = $loginInput;
+
+        if (! filter_var($loginInput, FILTER_VALIDATE_EMAIL)) {
+            $siswa = \App\Models\MasterSiswa::active()->where('nis', $loginInput)->first()
+                ?? \App\Models\MasterSiswa::where('nis', $loginInput)->first();
+            if ($siswa && $siswa->user) {
+                $resolvedEmail = $siswa->user->email;
+            }
+        }
+
+        $credentials = [
+            'email' => $resolvedEmail,
+            'password' => $loginData['password'],
+        ];
+
+        $key = 'sso-login:'.Str::lower($loginInput).'|'.$request->ip();
 
         if (RateLimiter::tooManyAttempts($key, 5)) {
             throw ValidationException::withMessages([
@@ -51,7 +66,7 @@ class SsoProviderLoginController extends Controller
             RateLimiter::hit($key, 60);
 
             throw ValidationException::withMessages([
-                'email' => 'Email atau kata sandi SISFO tidak sesuai.',
+                'email' => 'Email/NIS atau kata sandi SISFO tidak sesuai.',
             ]);
         }
 

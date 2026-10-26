@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\MasterSiswa;
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -27,8 +29,21 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            'email' => ['required', 'string'],
             'password' => ['required', 'string'],
+        ];
+    }
+
+    /**
+     * Get custom messages for validator errors.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'email.required' => 'Email atau NIS wajib diisi.',
+            'password.required' => 'Password wajib diisi.',
         ];
     }
 
@@ -41,7 +56,30 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        $loginInput = trim((string) $this->input('email'));
+        $password = (string) $this->input('password');
+        $remember = $this->boolean('remember');
+
+        // Resolve email if user entered a NIS instead of email
+        $resolvedEmail = $loginInput;
+
+        if (! filter_var($loginInput, FILTER_VALIDATE_EMAIL)) {
+            // Prioritize active student with matching NIS, fallback to any student record
+            $siswa = MasterSiswa::active()->where('nis', $loginInput)->first()
+                ?? MasterSiswa::where('nis', $loginInput)->first();
+
+            if ($siswa && $siswa->user) {
+                $resolvedEmail = $siswa->user->email;
+            } else {
+                // If not found in MasterSiswa, check direct User email match as fallback
+                $matchedUser = User::where('email', $loginInput)->first();
+                if ($matchedUser) {
+                    $resolvedEmail = $matchedUser->email;
+                }
+            }
+        }
+
+        if (! Auth::attempt(['email' => $resolvedEmail, 'password' => $password], $remember)) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
