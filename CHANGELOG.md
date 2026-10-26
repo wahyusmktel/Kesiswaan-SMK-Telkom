@@ -8,6 +8,11 @@ Dokumen ini diperbarui secara berkelanjutan sebagai bukti riwayat pengembangan s
 
 ## [2.6.0] - 2026-10-26
 ### Added
+- **Modernisasi Tampilan Verifikasi Keterlambatan Guru Piket (`/piket/verifikasi-terlambat`)**:
+  - Mengubah tampilan antrian siswa terlambat yang sebelumnya berbentuk *card grid* menjadi **list tabel** yang rapi, padat, dan mudah dipindai secara visual.
+  - Memindahkan tombol aksi **Verifikasi Semua** dari header halaman ke toolbar area konten utama di atas tabel.
+  - Menambahkan tombol navigasi **Catat Terlambat Manual** (mengarah ke `/piket/penanganan-terlambat`) tepat sebelum tombol *Verifikasi Semua* sebagai solusi cepat apabila terdapat siswa terlambat yang belum sempat tercatat oleh Security.
+  - Mengoptimalkan kueri data keterlambatan agar mengaitkan rombel tahun pelajaran aktif.
 - **Peningkatan Halaman Penanganan Keterlambatan Guru Piket (`/piket/penanganan-terlambat`)**:
   - Merapikan tata letak grid dan menyelaraskan posisi horizontal bagian atas (*header baseline*) antara kartu **1. Cari Siswa** dan **2. Proses Keterlambatan** agar simetris dan rapi di semua resolusi layar.
   - Menambahkan opsi **Scan Barcode** langsung pada bagian pencarian siswa yang terhubung dengan modul kamera berbasis `Html5Qrcode`.

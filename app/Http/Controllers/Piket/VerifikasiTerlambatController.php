@@ -8,6 +8,7 @@ use App\Models\Keterlambatan;
 use App\Models\PoinCategory;
 use App\Models\PoinPeraturan;
 use App\Models\SiswaPelanggaran;
+use App\Models\TahunPelajaran;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -20,7 +21,18 @@ class VerifikasiTerlambatController extends Controller
     // Menampilkan daftar siswa yang perlu diverifikasi
     public function index()
     {
-        $daftarSiswaTerlambat = Keterlambatan::with('siswa.rombels.kelas', 'security')
+        $tahunAktif = TahunPelajaran::where('is_active', true)->first();
+
+        $daftarSiswaTerlambat = Keterlambatan::with([
+            'siswa.user',
+            'siswa.rombels' => function ($q) use ($tahunAktif) {
+                if ($tahunAktif) {
+                    $q->orderByRaw("CASE WHEN tahun_pelajaran_id = {$tahunAktif->id} THEN 0 ELSE 1 END");
+                }
+                $q->orderByDesc('tahun_pelajaran_id')->with('kelas');
+            },
+            'security'
+        ])
             ->where('status', 'dicatat_security')
             ->latest('waktu_dicatat_security')
             ->get();
