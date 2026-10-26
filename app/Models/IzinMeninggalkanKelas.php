@@ -20,6 +20,7 @@ class IzinMeninggalkanKelas extends Model
         'jenis_izin',
         'tujuan',
         'keterangan',
+        'foto',
         'estimasi_kembali',
         'waktu_keluar_sebenarnya',
         'waktu_kembali_sebenarnya',

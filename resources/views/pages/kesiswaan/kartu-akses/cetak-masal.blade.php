@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cetak Masal - Stella Access Card - {{ $rombel->kelas->nama_kelas ?? 'Semua Kelas' }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -26,6 +28,10 @@
             body {
                 background: white;
                 padding: 0;
+            }
+            .card-wrapper {
+                box-shadow: none !important;
+                border-radius: 0 !important;
             }
         }
 
@@ -273,19 +279,42 @@
     </style>
 </head>
 <body>
+    @php
+        $side = request('side', 'front');
+    @endphp
+
     <div class="print-header">
         <h1>🎫 Stella Access Card - Cetak Masal</h1>
         <p>Kelas: {{ $rombel->kelas->nama_kelas ?? 'N/A' }} | Total: {{ $siswaList->count() }} kartu</p>
     </div>
 
     <div class="info-bar">
-        <span>📋 {{ $siswaList->count() }} kartu akan dicetak</span>
+        <span>📋 {{ $siswaList->count() }} kartu ({{ $side === 'back' ? 'Sisi Belakang' : 'Sisi Depan' }})</span>
         <span>📄 {{ ceil($siswaList->count() / ($design === 'minimalist' ? 14 : 8)) }} halaman A4</span>
+        @if($design === 'standar_ts')
+            <div style="display: flex; gap: 8px;">
+                <a href="{{ request()->fullUrlWithQuery(['side' => 'front']) }}" style="padding: 4px 10px; border-radius: 6px; text-decoration: none; font-size: 11px; font-weight: 600; {{ $side !== 'back' ? 'background: #4f46e5; color: white;' : 'background: #e2e8f0; color: #475569;' }}">Sisi Depan (Biodata)</a>
+                <a href="{{ request()->fullUrlWithQuery(['side' => 'back']) }}" style="padding: 4px 10px; border-radius: 6px; text-decoration: none; font-size: 11px; font-weight: 600; {{ $side === 'back' ? 'background: #4f46e5; color: white;' : 'background: #e2e8f0; color: #475569;' }}">Sisi Belakang (Format Dupleks)</a>
+            </div>
+        @endif
     </div>
 
     <div class="cards-grid">
         @foreach($siswaList as $index => $siswa)
-            @if($design === 'minimalist')
+            @if($design === 'standar_ts')
+                <div class="card-wrapper" style="width: 85.6mm; height: 54mm; page-break-inside: avoid; break-inside: avoid; border-radius: 4px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                    @if($side === 'back')
+                        @include('pages.kesiswaan.kartu-akses.partials.card-standar-ts-back')
+                    @else
+                        @include('pages.kesiswaan.kartu-akses.partials.card-standar-ts', [
+                            'siswa' => $siswa,
+                            'barcode' => $barcodes[$siswa->id] ?? null,
+                            'kepsekData' => $kepsekData,
+                            'qrCodeKepsek' => $qrCodesKepsek[$siswa->id] ?? null
+                        ])
+                    @endif
+                </div>
+            @elseif($design === 'minimalist')
                 <div class="card" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 4px;">
                     <div class="barcode-section" style="margin: 0; padding: 0; width: 100%;">
                         <img src="data:image/png;base64,{{ $barcodes[$siswa->id] }}" alt="Barcode" style="height: 45px; width: 100%; object-fit: contain;">

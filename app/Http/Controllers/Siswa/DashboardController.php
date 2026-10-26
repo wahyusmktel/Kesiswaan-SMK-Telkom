@@ -22,6 +22,7 @@ class DashboardController extends Controller
         
         $siswa = Auth::user()->masterSiswa;
         $totalPanggilan = $siswa ? $siswa->panggilans()->count() : 0;
+        $totalKeterlambatan = $siswa ? $siswa->keterlambatans()->count() : 0;
 
         // 2. Data untuk Pie Chart
         $statusData = Perizinan::where('user_id', $userId)
@@ -100,6 +101,7 @@ class DashboardController extends Controller
             'totalDiajukan',
             'totalDisetujui',
             'totalDitolak',
+            'totalKeterlambatan',
             'totalPanggilan',
             'statusChartData',
             'poinData',

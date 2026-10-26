@@ -43,6 +43,7 @@
                         <select name="design" x-model="design" class="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
                             <option value="standard">Standard (Full ID Card)</option>
                             <option value="minimalist">Minimalist (Short & Barcode Only)</option>
+                            <option value="standar_ts">Standar TS (Desain Resmi SMK Telkom)</option>
                         </select>
                     </div>
                     <div class="flex gap-2">
@@ -115,7 +116,7 @@
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="flex items-center justify-center gap-2">
-                                        <a href="{{ route('kesiswaan.kartu-akses.show', $s) }}" 
+                                        <a :href="'{{ route('kesiswaan.kartu-akses.show', $s) }}?design=' + design" 
                                             class="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Preview">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />

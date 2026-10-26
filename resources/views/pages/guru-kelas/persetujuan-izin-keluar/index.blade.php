@@ -63,6 +63,26 @@
                                                 <p class="text-gray-600 text-xs italic">"{{ $izin->keterangan }}"</p>
                                             </div>
                                         @endif
+
+                                        @if ($izin->foto)
+                                            <div class="mt-2">
+                                                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
+                                                    Foto Selfie / Kondisi
+                                                </p>
+                                                <a href="{{ asset('storage/' . $izin->foto) }}" target="_blank"
+                                                    class="block relative rounded-xl overflow-hidden border border-gray-200 group/img shadow-sm hover:shadow transition-all">
+                                                    <img src="{{ asset('storage/' . $izin->foto) }}" alt="Foto Izin"
+                                                        class="w-full h-36 object-cover group-hover/img:scale-105 transition-transform duration-200">
+                                                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center text-white text-xs font-bold gap-1 transition-opacity">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                        </svg>
+                                                        Lihat Ukuran Penuh
+                                                    </div>
+                                                </a>
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
 

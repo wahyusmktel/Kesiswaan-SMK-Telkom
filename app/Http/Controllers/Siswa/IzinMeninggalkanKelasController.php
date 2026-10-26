@@ -51,8 +51,20 @@ class IzinMeninggalkanKelasController extends Controller
         $request->validate([
             'jenis_izin' => 'required|in:keluar_sekolah,dalam_lingkungan',
             'tujuan' => 'required|string|max:255',
-            'keterangan' => 'nullable|string',
+            'keterangan' => 'required|string|min:5|max:1000',
+            'foto' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120',
             'estimasi_kembali' => 'required|date_format:H:i',
+        ], [
+            'jenis_izin.required' => 'Pilih jenis izin terlebih dahulu.',
+            'tujuan.required' => 'Tujuan / keperluan izin wajib diisi.',
+            'keterangan.required' => 'Keterangan alasan izin wajib diisi.',
+            'keterangan.min' => 'Keterangan alasan izin minimal 5 karakter.',
+            'foto.required' => 'Foto selfie atau kondisi saat ini wajib diunggah.',
+            'foto.image' => 'File unggahan harus berupa gambar/foto.',
+            'foto.mimes' => 'Format foto harus berupa JPG, JPEG, PNG, atau WEBP.',
+            'foto.max' => 'Ukuran file foto maksimal 5MB.',
+            'estimasi_kembali.required' => 'Perkiraan jam kembali wajib diisi.',
+            'estimasi_kembali.date_format' => 'Format perkiraan kembali tidak valid (HH:MM).',
         ]);
 
         try {
@@ -73,6 +85,11 @@ class IzinMeninggalkanKelasController extends Controller
                 return back();
             }
 
+            $fotoPath = null;
+            if ($request->hasFile('foto')) {
+                $fotoPath = $request->file('foto')->store('izin_keluar_kelas', 'public');
+            }
+
             IzinMeninggalkanKelas::create([
                 'user_id' => $user->id,
                 'rombel_id' => $rombelAktif->id,
@@ -80,6 +97,7 @@ class IzinMeninggalkanKelasController extends Controller
                 'jenis_izin' => $request->jenis_izin,
                 'tujuan' => $request->tujuan,
                 'keterangan' => $request->keterangan,
+                'foto' => $fotoPath,
                 'estimasi_kembali' => now()->setTimeFromTimeString($request->estimasi_kembali),
                 'status' => 'diajukan',
             ]);

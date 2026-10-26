@@ -19,7 +19,8 @@ class IzinController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = Perizinan::where('user_id', Auth::id());
+            $user = Auth::user();
+            $query = Perizinan::where('user_id', $user->id);
 
             // Logika Pencarian
             if ($request->has('search') && $request->search != '') {
@@ -28,7 +29,21 @@ class IzinController extends Controller
 
             $perizinan = $query->latest()->paginate(10);
 
-            return view('pages.izin.index', compact('perizinan'));
+            // Data Siswa, Kelas & Wali Kelas untuk header readonly form modal
+            $siswa = $user->masterSiswa;
+            $tahunAktif = TahunPelajaran::where('is_active', true)->first();
+            $rombel = null;
+            if ($siswa) {
+                if ($tahunAktif) {
+                    $rombel = $siswa->rombels()->where('tahun_pelajaran_id', $tahunAktif->id)->first();
+                }
+                if (!$rombel) {
+                    $rombel = $siswa->rombels()->latest()->first();
+                }
+            }
+            $waliKelas = $rombel?->waliKelas;
+
+            return view('pages.izin.index', compact('perizinan', 'siswa', 'rombel', 'waliKelas'));
         } catch (\Exception $e) {
             Log::error('Error fetching permission history: ' . $e->getMessage());
             toast('Gagal memuat riwayat perizinan.', 'error');
@@ -41,11 +56,39 @@ class IzinController extends Controller
      */
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $kategori = $request->input('kategori_izin');
+        $durasiSakit = $request->input('durasi_sakit');
+
+        $rules = [
             'tanggal_izin' => 'required|date',
-            'keterangan' => 'required|string|min:10',
-            'dokumen_pendukung' => 'nullable|file|mimes:jpg,png,pdf|max:2048',
-        ]);
+            'kategori_izin' => 'required|string',
+        ];
+
+        $messages = [
+            'tanggal_izin.required' => 'Tanggal izin wajib diisi.',
+            'kategori_izin.required' => 'Silakan pilih kategori perizinan.',
+            'durasi_sakit.required' => 'Pilih durasi atau kondisi izin sakit.',
+            'dokumen_pendukung.required' => match ($durasiSakit) {
+                'rawat_inap' => 'Wajib melampirkan surat keterangan rawat inap resmi dari rumah sakit.',
+                'lebih_dari_1_hari' => 'Wajib melampirkan surat keterangan sakit resmi dari faskes (Puskesmas / RS / Klinik).',
+                default => 'Wajib melampirkan foto obat atau surat keterangan dokter/kesehatan.',
+            },
+            'dokumen_pendukung.mimes' => 'Format file dokumen tidak didukung (gunakan JPG, PNG, atau PDF).',
+            'dokumen_pendukung.max' => 'Ukuran file dokumen maksimal 5MB.',
+        ];
+
+        if ($kategori === 'sakit') {
+            $rules['durasi_sakit'] = 'required|in:1_hari,lebih_dari_1_hari,rawat_inap';
+            if ($durasiSakit === '1_hari') {
+                $rules['dokumen_pendukung'] = 'required|file|mimes:jpg,jpeg,png|max:5120';
+            } else {
+                $rules['dokumen_pendukung'] = 'required|file|mimes:jpg,jpeg,png,pdf|max:5120';
+            }
+        } else {
+            $rules['dokumen_pendukung'] = 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120';
+        }
+
+        $validator = Validator::make($request->all(), $rules, $messages);
 
         if ($validator->fails()) {
             toast($validator->errors()->first(), 'error');
@@ -58,11 +101,30 @@ class IzinController extends Controller
                 $dokumenPath = $request->file('dokumen_pendukung')->store('public/dokumen_izin');
             }
 
+            // Tentukan jenis_izin untuk kolom database enum ('sakit', 'izin', 'dispen')
+            $jenisIzin = $kategori === 'sakit' ? 'sakit' : 'izin';
+
+            // Susun teks keterangan yang deskriptif
+            $kategoriLabel = match ($kategori) {
+                'sakit' => match ($durasiSakit) {
+                    'rawat_inap' => 'Izin Sakit Berat / Rawat Inap (Opname di Rumah Sakit)',
+                    'lebih_dari_1_hari' => 'Izin Sakit (Lebih dari 1 Hari - Maks. 3 Hari)',
+                    default => 'Izin Sakit (1 Hari)',
+                },
+                'acara_keluarga' => 'Izin - Acara / Urusan Keluarga Inti (1 Hari)',
+                'duka_cita' => 'Izin - Takziah / Duka Cita Keluarga (1 Hari)',
+                'kepentingan_mendesak' => 'Izin - Kepentingan Pribadi Mendesak (1 Hari)',
+                default => 'Izin - Keperluan Lainnya (1 Hari)',
+            };
+
+            $catatan = trim((string) $request->input('catatan'));
+            $keteranganLengkap = $kategoriLabel . ($catatan !== '' ? ' — ' . $catatan : '');
+
             $perizinan = Perizinan::create([
                 'user_id' => Auth::id(),
                 'tanggal_izin' => $request->tanggal_izin,
-                'jenis_izin' => 'izin',
-                'keterangan' => $request->keterangan,
+                'jenis_izin' => $jenisIzin,
+                'keterangan' => $keteranganLengkap,
                 'dokumen_pendukung' => $dokumenPath,
                 'status' => 'diajukan',
             ]);
@@ -70,7 +132,7 @@ class IzinController extends Controller
             $masterSiswa = Auth::user()->masterSiswa;
             $tahunAktif = TahunPelajaran::where('is_active', true)->first();
             
-            if ($tahunAktif) {
+            if ($tahunAktif && $masterSiswa) {
                 $rombelAktif = $masterSiswa->rombels()
                     ->where('tahun_pelajaran_id', $tahunAktif->id)
                     ->first();
@@ -101,11 +163,24 @@ class IzinController extends Controller
             return redirect()->route('izin.index');
         }
 
-        $validator = Validator::make($request->all(), [
+        $kategori = $request->input('kategori_izin');
+        $durasiSakit = $request->input('durasi_sakit');
+
+        $rules = [
             'tanggal_izin' => 'required|date',
-            'keterangan' => 'required|string|min:10',
-            'dokumen_pendukung' => 'nullable|file|mimes:jpg,png,pdf|max:2048',
-        ]);
+            'dokumen_pendukung' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+        ];
+
+        if ($kategori) {
+            $rules['kategori_izin'] = 'required|string';
+            if ($kategori === 'sakit') {
+                $rules['durasi_sakit'] = 'required|in:1_hari,lebih_dari_1_hari,rawat_inap';
+            }
+        } else {
+            $rules['keterangan'] = 'required|string';
+        }
+
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             toast($validator->errors()->first(), 'error');
@@ -122,11 +197,31 @@ class IzinController extends Controller
                 $dokumenPath = $request->file('dokumen_pendukung')->store('public/dokumen_izin');
             }
 
-            $perizinan->update([
+            $updateData = [
                 'tanggal_izin' => $request->tanggal_izin,
-                'keterangan' => $request->keterangan,
                 'dokumen_pendukung' => $dokumenPath,
-            ]);
+            ];
+
+            if ($kategori) {
+                $updateData['jenis_izin'] = $kategori === 'sakit' ? 'sakit' : 'izin';
+                $kategoriLabel = match ($kategori) {
+                    'sakit' => match ($durasiSakit) {
+                        'rawat_inap' => 'Izin Sakit Berat / Rawat Inap (Opname di Rumah Sakit)',
+                        'lebih_dari_1_hari' => 'Izin Sakit (Lebih dari 1 Hari - Maks. 3 Hari)',
+                        default => 'Izin Sakit (1 Hari)',
+                    },
+                    'acara_keluarga' => 'Izin - Acara / Urusan Keluarga Inti (1 Hari)',
+                    'duka_cita' => 'Izin - Takziah / Duka Cita Keluarga (1 Hari)',
+                    'kepentingan_mendesak' => 'Izin - Kepentingan Pribadi Mendesak (1 Hari)',
+                    default => 'Izin - Keperluan Lainnya (1 Hari)',
+                };
+                $catatan = trim((string) $request->input('catatan'));
+                $updateData['keterangan'] = $kategoriLabel . ($catatan !== '' ? ' — ' . $catatan : '');
+            } else {
+                $updateData['keterangan'] = $request->keterangan;
+            }
+
+            $perizinan->update($updateData);
 
             toast('Pengajuan izin berhasil diperbarui!', 'success');
             return redirect()->route('izin.index');

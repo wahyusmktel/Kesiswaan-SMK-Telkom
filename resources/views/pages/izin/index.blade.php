@@ -6,6 +6,23 @@
     <div class="py-6 w-full" x-data="izinPageData()">
         <div class="w-full px-4 sm:px-6 lg:px-8">
 
+            {{-- Top Action Bar Di Atas Tabel --}}
+            <div class="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h3 class="text-lg font-black text-gray-900 leading-tight">Daftar Pengajuan Izin</h3>
+                    <p class="text-xs text-gray-500 mt-0.5">Pantau status persetujuan perizinan ketidakhadiran Anda.</p>
+                </div>
+                <div>
+                    <button @click="openCreateModal()"
+                        class="inline-flex items-center px-5 py-2.5 bg-indigo-600 border border-transparent rounded-xl font-bold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:outline-none shadow-md shadow-indigo-100 transition ease-in-out duration-150 gap-2 cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Ajukan Izin Tidak Masuk Sekolah
+                    </button>
+                </div>
+            </div>
+
             <div class="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
 
                 <div
@@ -22,14 +39,6 @@
                             class="pl-10 block w-full rounded-lg border-gray-300 bg-white text-sm focus:border-indigo-500 focus:ring-indigo-500 shadow-sm"
                             placeholder="Cari berdasarkan keterangan...">
                     </form>
-
-                    <button @click="openCreateModal()"
-                        class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 focus:outline-none shadow-md transition ease-in-out duration-150 gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                        Ajukan Izin Baru
-                    </button>
                 </div>
 
                 <div class="overflow-x-auto">
@@ -190,35 +199,71 @@
                     formAction: '{{ route('izin.store') }}',
                     form: {
                         tanggal_izin: '',
-                        keterangan: ''
+                        kategori_izin: '',
+                        durasi_sakit: '1_hari',
+                        catatan: ''
                     },
+                    filePreview: null,
+                    fileName: '',
+                    isPdf: false,
 
                     // State untuk Modal Detail
                     isDetailOpen: false,
                     detailItem: {},
+
+                    // Upload preview handler
+                    handleFileUpload(event) {
+                        const file = event.target.files[0];
+                        if (!file) {
+                            this.removeFile();
+                            return;
+                        }
+                        this.fileName = file.name;
+                        this.isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+                        if (file.type.startsWith('image/')) {
+                            const reader = new FileReader();
+                            reader.onload = (e) => {
+                                this.filePreview = e.target.result;
+                            };
+                            reader.readAsDataURL(file);
+                        } else {
+                            this.filePreview = null;
+                        }
+                    },
+
+                    removeFile() {
+                        this.filePreview = null;
+                        this.fileName = '';
+                        this.isPdf = false;
+                        const fileInput = document.getElementById('dokumen_pendukung');
+                        if (fileInput) fileInput.value = '';
+                    },
 
                     // Actions Form
                     openCreateModal() {
                         this.isFormOpen = true;
                         this.isEdit = false;
                         this.formAction = '{{ route('izin.store') }}';
+                        const today = new Date().toISOString().split('T')[0];
                         this.form = {
-                            tanggal_izin: '',
-                            keterangan: ''
+                            tanggal_izin: today,
+                            kategori_izin: '',
+                            durasi_sakit: '1_hari',
+                            catatan: ''
                         };
-                        // Reset file input manual
-                        if (document.getElementById('dokumen_pendukung')) document.getElementById('dokumen_pendukung').value =
-                            '';
+                        this.removeFile();
                     },
                     openEditModal(item) {
                         this.isFormOpen = true;
                         this.isEdit = true;
-                        // Ganti URL update dengan ID yang benar
                         this.formAction = '{{ url('izin') }}/' + item.id;
                         this.form = {
                             tanggal_izin: item.tanggal_izin,
-                            keterangan: item.keterangan
+                            kategori_izin: item.jenis_izin === 'sakit' ? 'sakit' : 'acara_keluarga',
+                            durasi_sakit: '1_hari',
+                            catatan: item.keterangan || ''
                         };
+                        this.removeFile();
                     },
                     closeFormModal() {
                         this.isFormOpen = false;

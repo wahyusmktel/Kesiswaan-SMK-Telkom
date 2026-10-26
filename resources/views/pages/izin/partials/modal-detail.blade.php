@@ -1,19 +1,18 @@
 <div x-show="isDetailOpen" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title"
     role="dialog" aria-modal="true">
 
-    <div x-show="isDetailOpen" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity"
-        @click="closeDetailModal"></div>
+    <div x-show="isDetailOpen" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"></div>
 
     <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
         <div x-show="isDetailOpen" x-transition:enter="ease-out duration-300"
             x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-            class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-gray-100">
+            class="relative transform overflow-hidden rounded-3xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-gray-100">
 
-            <div class="bg-gray-50 px-4 py-3 sm:px-6 border-b border-gray-100 flex justify-between items-center">
+            <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
                 <h3 class="text-lg font-bold leading-6 text-gray-900">Detail Izin</h3>
-                <button @click="closeDetailModal" class="text-gray-400 hover:text-gray-500 focus:outline-none">
-                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <button type="button" @click="closeDetailModal" class="rounded-xl p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all focus:outline-none cursor-pointer">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
@@ -50,7 +49,7 @@
                 <template x-if="detailItem.dokumen_pendukung">
                     <div>
                         <p class="text-xs font-bold text-gray-500 uppercase mb-1">Lampiran</p>
-                        <a :href="'/storage/' + detailItem.dokumen_pendukung" target="_blank"
+                        <a :href="'/storage/' + detailItem.dokumen_pendukung.replace(/^public\//, '')" target="_blank"
                             class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm transition-colors w-full justify-center">
                             <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor"
                                 viewBox="0 0 24 24">

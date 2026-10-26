@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stella Access Card - {{ $siswa->nama_lengkap }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -30,6 +32,17 @@
             body {
                 background: white;
                 padding: 0;
+            }
+            .card-wrapper {
+                box-shadow: none !important;
+                border-radius: 0 !important;
+            }
+            .page-break-card {
+                page-break-after: always;
+                break-after: always;
+            }
+            .no-print {
+                display: none !important;
             }
         }
 
@@ -205,7 +218,31 @@
     </style>
 </head>
 <body>
-    @if($design === 'minimalist')
+    @php
+        $side = request('side', 'both');
+    @endphp
+
+    @if($design === 'standar_ts')
+        <div class="no-print" style="position: fixed; top: 15px; left: 15px; display: flex; gap: 8px; z-index: 1000; background: white; padding: 6px 10px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.12); font-family: 'Plus Jakarta Sans', sans-serif;">
+            <a href="?design={{ $design }}&side=both" style="font-size: 11px; padding: 5px 10px; border-radius: 6px; text-decoration: none; font-weight: 700; {{ $side === 'both' ? 'background: #dc2626; color: white;' : 'background: #f1f5f9; color: #475569;' }}">Dua Sisi (Depan & Belakang)</a>
+            <a href="?design={{ $design }}&side=front" style="font-size: 11px; padding: 5px 10px; border-radius: 6px; text-decoration: none; font-weight: 700; {{ $side === 'front' ? 'background: #dc2626; color: white;' : 'background: #f1f5f9; color: #475569;' }}">Depan Saja</a>
+            <a href="?design={{ $design }}&side=back" style="font-size: 11px; padding: 5px 10px; border-radius: 6px; text-decoration: none; font-weight: 700; {{ $side === 'back' ? 'background: #dc2626; color: white;' : 'background: #f1f5f9; color: #475569;' }}">Belakang Saja</a>
+        </div>
+
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 6mm;">
+            @if($side === 'both' || $side === 'front')
+                <div class="card-wrapper {{ $side === 'both' ? 'page-break-card' : '' }}" style="box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border-radius: 4px; overflow: hidden;">
+                    @include('pages.kesiswaan.kartu-akses.partials.card-standar-ts', ['siswa' => $siswa, 'barcode' => $barcode, 'kepsekData' => $kepsekData, 'qrCodeKepsek' => $qrCodeKepsek])
+                </div>
+            @endif
+
+            @if($side === 'both' || $side === 'back')
+                <div class="card-wrapper" style="box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border-radius: 4px; overflow: hidden;">
+                    @include('pages.kesiswaan.kartu-akses.partials.card-standar-ts-back')
+                </div>
+            @endif
+        </div>
+    @elseif($design === 'minimalist')
         <div class="card" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 4px;">
             <div class="barcode-section" style="margin: 0; padding: 0; width: 100%;">
                 <img src="data:image/png;base64,{{ $barcode }}" alt="Barcode" style="height: 45px; width: 100%; object-fit: contain;">

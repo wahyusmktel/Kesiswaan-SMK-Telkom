@@ -85,6 +85,7 @@
                                 <th class="px-6 py-4 font-bold tracking-wider">Waktu Pengajuan</th>
                                 <th class="px-6 py-4 font-bold tracking-wider">Status</th>
                                 <th class="px-6 py-4 font-bold tracking-wider">Keterangan</th>
+                                <th class="px-6 py-4 font-bold tracking-wider">Foto Bukti</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
@@ -107,11 +108,11 @@
                                         @php
                                             $statusClass = match ($izin->status) {
                                                 'disetujui_guru_piket'
-                                                    => 'bg-indigo-100 text-indigo-700 border-indigo-200',
+                                                     => 'bg-indigo-100 text-indigo-700 border-indigo-200',
                                                 'diverifikasi_security'
-                                                    => 'bg-orange-100 text-orange-700 border-orange-200', // Sedang di luar
+                                                     => 'bg-orange-100 text-orange-700 border-orange-200', // Sedang di luar
                                                 'selesai'
-                                                    => 'bg-green-100 text-green-700 border-green-200', // Sudah kembali
+                                                     => 'bg-green-100 text-green-700 border-green-200', // Sudah kembali
                                                 'ditolak' => 'bg-red-100 text-red-700 border-red-200',
                                                 default => 'bg-yellow-100 text-yellow-700 border-yellow-200',
                                             };
@@ -137,10 +138,24 @@
                                             {{ $izin->keterangan ?? '-' }}
                                         @endif
                                     </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        @if ($izin->foto)
+                                            <a href="{{ asset('storage/' . $izin->foto) }}" target="_blank"
+                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 shadow-sm transition-colors">
+                                                <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                                Lihat Foto
+                                            </a>
+                                        @else
+                                            <span class="text-xs text-gray-400 italic">Tidak ada foto</span>
+                                        @endif
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="px-6 py-12 text-center text-gray-500">
+                                    <td colspan="6" class="px-6 py-12 text-center text-gray-500">
                                         <div class="flex flex-col items-center">
                                             <svg class="w-12 h-12 text-gray-300 mb-2" fill="none"
                                                 stroke="currentColor" viewBox="0 0 24 24">

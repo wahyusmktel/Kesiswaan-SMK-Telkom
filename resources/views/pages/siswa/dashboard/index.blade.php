@@ -56,7 +56,7 @@
 
             {{-- Alert Keterlambatan Hari Ini --}}
             @if($terlambatHariIni)
-            <div class="bg-gradient-to-r from-orange-500 to-amber-600 rounded-3xl p-1 shadow-xl shadow-orange-100 animate-in fade-in slide-in-from-top duration-700">
+            <div x-data="{ showQrModal: false }" class="bg-gradient-to-r from-orange-500 to-amber-600 rounded-3xl p-1 shadow-xl shadow-orange-100 animate-in fade-in slide-in-from-top duration-700">
                 <div class="bg-white rounded-[22px] p-6 flex flex-col md:flex-row items-center gap-6">
                     <div class="w-16 h-16 rounded-2xl bg-orange-50 flex items-center justify-center flex-shrink-0 animate-bounce">
                         <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -65,14 +65,103 @@
                         <h3 class="text-xl font-black text-gray-900 leading-tight">Surat Izin Masuk Kelas Tersedia!</h3>
                         <p class="text-sm text-gray-500 mt-1">
                             Kamu tercatat terlambat hari ini pada pukul <span class="font-bold text-orange-600">{{ $terlambatHariIni->waktu_dicatat_security->format('H:i') }} WIB</span>. 
-                            Silakan unduh surat izin masuk untuk ditunjukkan kepada guru di kelas.
+                            Silakan unduh surat izin masuk atau tunjukkan QR Code kepada guru pengajar di kelas.
                         </p>
                     </div>
-                    <div class="flex-shrink-0">
+                    <div class="flex flex-wrap items-center justify-center md:justify-end gap-3 flex-shrink-0">
                         <a href="{{ route('siswa.riwayat-keterlambatan.print', $terlambatHariIni->id) }}" 
-                            class="inline-flex items-center px-6 py-3 bg-orange-600 text-white rounded-xl font-bold text-sm hover:bg-orange-700 transition-all shadow-lg shadow-orange-100">
+                            class="inline-flex items-center px-5 py-2.5 bg-orange-50 text-orange-700 border border-orange-200 rounded-xl font-bold text-sm hover:bg-orange-100 transition-all shadow-sm">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                             Unduh Surat Izin
                         </a>
+                        <button type="button" 
+                            @click="showQrModal = true"
+                            class="inline-flex items-center px-5 py-2.5 bg-orange-600 text-white rounded-xl font-bold text-sm hover:bg-orange-700 transition-all shadow-lg shadow-orange-200 cursor-pointer">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                            Tunjukkan Surat
+                        </button>
+                    </div>
+                </div>
+
+                {{-- Modal QR Code Surat Izin (Hanya dapat ditutup via tombol exit / tutup) --}}
+                <div x-show="showQrModal" 
+                    x-cloak 
+                    class="fixed inset-0 z-50 overflow-y-auto" 
+                    role="dialog" 
+                    aria-modal="true">
+                    
+                    {{-- Backdrop / Overlay: sengaja tidak ada @click agar tidak bisa ditutup selain dari tombol X / Tutup --}}
+                    <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"></div>
+
+                    <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                        {{-- Modal Content Card: sengaja tidak ada @click.outside --}}
+                        <div class="relative transform overflow-hidden rounded-3xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-md border border-gray-100">
+                            
+                            {{-- Header Modal --}}
+                            <div class="flex items-center justify-between border-b border-gray-100 px-6 py-4 bg-gradient-to-r from-orange-50 to-amber-50">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-bold">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-base font-extrabold text-gray-900 leading-tight">Surat Izin Masuk Kelas</h4>
+                                        <p class="text-xs text-gray-500 font-medium">Verifikasi Masuk Kelas</p>
+                                    </div>
+                                </div>
+                                {{-- Tombol Exit (X) --}}
+                                <button type="button" 
+                                    @click="showQrModal = false" 
+                                    class="rounded-xl p-2 text-gray-400 hover:text-gray-600 hover:bg-white transition-all focus:outline-none cursor-pointer"
+                                    title="Tutup">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
+                            </div>
+
+                            {{-- Isi Modal --}}
+                            <div class="p-6 text-center">
+                                {{-- Ringkasan Siswa --}}
+                                <div class="mb-5 bg-gray-50 rounded-2xl p-3.5 border border-gray-100 flex items-center justify-between text-left">
+                                    <div>
+                                        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Nama Siswa</p>
+                                        <p class="text-sm font-black text-gray-800">{{ Auth::user()->name }}</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Waktu Terlambat</p>
+                                        <p class="text-sm font-black text-orange-600">{{ $terlambatHariIni->waktu_dicatat_security->format('H:i') }} WIB</p>
+                                    </div>
+                                </div>
+
+                                {{-- QR Code Box --}}
+                                <div class="inline-block p-4 bg-white rounded-2xl border-2 border-dashed border-orange-200 shadow-sm mb-4">
+                                    <div class="w-48 h-48 sm:w-56 sm:h-56 flex items-center justify-center mx-auto [&>svg]:w-full [&>svg]:h-full">
+                                        {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(220)->margin(1)->generate(route('guru-kelas.verifikasi-terlambat.scan', $terlambatHariIni->uuid)) !!}
+                                    </div>
+                                    <div class="mt-3 inline-flex items-center gap-1.5 px-3 py-1 bg-orange-50 text-orange-700 rounded-full text-xs font-black uppercase tracking-wider border border-orange-100">
+                                        <span class="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
+                                        PINDAI OLEH GURU KELAS
+                                    </div>
+                                </div>
+
+                                {{-- Kalimat Instruksi --}}
+                                <div class="bg-amber-50 rounded-2xl p-4 border border-amber-200/70 text-left mb-6">
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-6 h-6 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        </div>
+                                        <p class="text-xs text-amber-900 leading-relaxed font-medium">
+                                            <span class="font-bold">Instruksi:</span> Tunjukkan QR Code izin ini kepada Guru Pengajar di kelas untuk dipindai sebagai verifikasi izin masuk kelas secara langsung (alternatif tanpa cetak surat fisik).
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {{-- Tombol Tutup --}}
+                                <button type="button" 
+                                    @click="showQrModal = false"
+                                    class="w-full inline-flex justify-center items-center px-5 py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl font-bold text-sm transition-all focus:outline-none cursor-pointer">
+                                    Tutup
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -119,7 +208,7 @@
                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                                 </svg>
-                                Buat Izin Baru
+                                Buat Izin Tidak Masuk
                             </a>
                         </div>
                     </div>
@@ -226,23 +315,22 @@
                 </div>
 
                 <div
-                    class="bg-white rounded-2xl p-6 border border-red-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                    class="bg-white rounded-2xl p-6 border border-rose-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
                     <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <svg class="w-24 h-24 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-24 h-24 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
                     <div class="relative z-10">
-                        <p class="text-[10px] font-bold text-red-500 uppercase tracking-wider">Ditolak</p>
+                        <p class="text-[10px] font-bold text-rose-500 uppercase tracking-wider">Total Keterlambatan</p>
                         <div class="flex items-baseline mt-2">
-                            <h3 class="text-3xl font-black text-gray-800">{{ $totalDitolak }}</h3>
+                            <h3 class="text-3xl font-black text-gray-800">{{ $totalKeterlambatan }}</h3>
                             <span class="ml-2 text-xs text-gray-500">kali</span>
                         </div>
                     </div>
-                    <div class="mt-4 h-1 w-full bg-red-50 rounded-full overflow-hidden">
-                        <div class="h-full bg-red-500 w-full"
-                            style="width: {{ $totalDiajukan > 0 ? ($totalDitolak / $totalDiajukan) * 100 : 0 }}%">
+                    <div class="mt-4 h-1 w-full bg-rose-50 rounded-full overflow-hidden">
+                        <div class="h-full bg-rose-500 w-full">
                         </div>
                     </div>
                 </div>
