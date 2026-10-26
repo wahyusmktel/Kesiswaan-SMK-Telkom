@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Piket;
 use App\Http\Controllers\Controller;
 use App\Models\Keterlambatan;
 use App\Models\MasterSiswa;
+use App\Models\TahunPelajaran;
 use App\Models\User;
 use App\Models\JadwalPelajaran;
 use App\Models\PoinCategory;
@@ -22,7 +23,18 @@ class PenangananTerlambatController extends Controller
     public function index(Request $request)
     {
         $hasilPencarian = null;
-        $terlambatHariIni = Keterlambatan::with(['siswa.user', 'siswa.rombels.kelas', 'guruPiket'])
+        $tahunAktif = TahunPelajaran::where('is_active', true)->first();
+
+        $terlambatHariIni = Keterlambatan::with([
+            'siswa.user',
+            'siswa.rombels' => function ($q) use ($tahunAktif) {
+                if ($tahunAktif) {
+                    $q->orderByRaw("CASE WHEN tahun_pelajaran_id = {$tahunAktif->id} THEN 0 ELSE 1 END");
+                }
+                $q->orderByDesc('tahun_pelajaran_id')->with('kelas');
+            },
+            'guruPiket'
+        ])
             ->whereDate('waktu_dicatat_security', Carbon::today())
             ->latest()
             ->get();
@@ -191,17 +203,43 @@ class PenangananTerlambatController extends Controller
      */
     public function search(Request $request)
     {
-        $query = $request->get('query');
+        $query = trim((string) $request->get('query'));
 
-        // Validasi minimal 3 karakter biar query ga berat
-        if (strlen($query) < 3) {
+        // Validasi minimal 2 karakter
+        if (strlen($query) < 2) {
             return response()->json([]);
         }
 
         try {
-            $siswa = MasterSiswa::with('rombels.kelas')
-                ->where('nama_lengkap', 'like', "%{$query}%")
-                ->orWhere('nis', 'like', "%{$query}%")
+            $tahunAktif = TahunPelajaran::where('is_active', true)->first();
+
+            $siswaQuery = MasterSiswa::active()
+                ->whereNull('graduated_at')
+                ->with([
+                    'rombels' => function ($q) use ($tahunAktif) {
+                        if ($tahunAktif) {
+                            $q->orderByRaw("CASE WHEN tahun_pelajaran_id = {$tahunAktif->id} THEN 0 ELSE 1 END");
+                        }
+                        $q->orderByDesc('tahun_pelajaran_id')->with('kelas');
+                    }
+                ]);
+
+            // Cek jika exact NIS cocok (biasanya hasil scan barcode)
+            $exactNis = (clone $siswaQuery)->where('nis', $query)->first();
+            if ($exactNis) {
+                return response()->json([[
+                    'id' => $exactNis->id,
+                    'nis' => $exactNis->nis,
+                    'nama_lengkap' => $exactNis->nama_lengkap,
+                    'kelas' => $exactNis->rombels->first()?->kelas->nama_kelas ?? 'Tanpa Kelas',
+                ]]);
+            }
+
+            $siswa = $siswaQuery
+                ->where(function ($q) use ($query) {
+                    $q->where('nama_lengkap', 'like', "%{$query}%")
+                      ->orWhere('nis', 'like', "%{$query}%");
+                })
                 ->limit(10) // Batasi 10 hasil biar cepat
                 ->get()
                 ->map(function ($s) {

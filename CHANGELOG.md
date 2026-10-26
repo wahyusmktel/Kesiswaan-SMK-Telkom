@@ -8,6 +8,11 @@ Dokumen ini diperbarui secara berkelanjutan sebagai bukti riwayat pengembangan s
 
 ## [2.6.0] - 2026-10-26
 ### Added
+- **Peningkatan Halaman Penanganan Keterlambatan Guru Piket (`/piket/penanganan-terlambat`)**:
+  - Merapikan tata letak grid dan menyelaraskan posisi horizontal bagian atas (*header baseline*) antara kartu **1. Cari Siswa** dan **2. Proses Keterlambatan** agar simetris dan rapi di semua resolusi layar.
+  - Menambahkan opsi **Scan Barcode** langsung pada bagian pencarian siswa yang terhubung dengan modul kamera berbasis `Html5Qrcode`.
+  - Mendukung pemindaian otomatis barcode 1D (Code 128) dan QR Code pada fisik kartu pelajar siswa dengan *audio feedback* (beep) serta pemilihan data siswa secara instan ke form proses keterlambatan.
+  - Mengoptimalkan kueri pencarian siswa dan daftar keterlambatan hari ini agar terhubung dengan tahun pelajaran aktif dan mengecualikan data siswa alumni.
 - **Login Universal Menggunakan Email atau NIS Siswa**:
   - Memperbarui mekanisme autentikasi pada `LoginRequest` dan `SsoProviderLoginController` agar mendukung input fleksibel berupa **Email** atau **NIS (Nomor Induk Siswa)**.
   - Sistem secara otomatis mendeteksi input NIS dan menghubungkannya dengan akun pengguna terkait (`MasterSiswa` -> `User`), sehingga siswa tidak perlu lagi mengetikkan format email sekolah yang panjang.
