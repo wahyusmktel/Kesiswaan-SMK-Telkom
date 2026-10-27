@@ -333,21 +333,32 @@
                     <div
                         class="relative rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 shadow-lg overflow-hidden p-6 sm:p-10 animate-gradient h-full">
                         <div class="absolute right-0 top-0 h-full w-1/2 bg-white/10 transform skew-x-12"></div>
-                        <div class="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-5">
                             <div class="text-white">
                                 <h3 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Halo, {{ Auth::user()->name }}! 👋
                                 </h3>
                                 <p class="mt-2 text-indigo-100 font-medium">Bagaimana kabarmu hari ini? Jangan lupa jaga
                                     kesehatan ya.</p>
                             </div>
-                            <a href="{{ route('izin.index') }}"
-                                class="inline-flex items-center px-5 py-3 bg-white text-indigo-600 rounded-xl font-bold shadow-md hover:bg-indigo-50 hover:shadow-lg transition-all transform hover:-translate-y-1 group">
-                                <svg class="w-5 h-5 mr-2 text-pink-500 group-hover:scale-110 transition-transform"
-                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                </svg>
-                                Buat Izin Tidak Masuk
-                            </a>
+                            <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                                <a href="{{ route('siswa.izin-keluar-kelas.index') }}"
+                                    class="inline-flex items-center px-4 py-3 bg-white text-rose-600 rounded-xl font-bold text-sm shadow-md hover:bg-rose-50 hover:shadow-lg transition-all transform hover:-translate-y-1 group">
+                                    <svg class="w-5 h-5 mr-2 text-rose-500 group-hover:scale-110 transition-transform"
+                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                    </svg>
+                                    Izin Keluar Kelas
+                                </a>
+                                <a href="{{ route('izin.index') }}"
+                                    class="inline-flex items-center px-4 py-3 bg-white text-indigo-600 rounded-xl font-bold text-sm shadow-md hover:bg-indigo-50 hover:shadow-lg transition-all transform hover:-translate-y-1 group">
+                                    <svg class="w-5 h-5 mr-2 text-pink-500 group-hover:scale-110 transition-transform"
+                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    Buat Izin Tidak Masuk
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
