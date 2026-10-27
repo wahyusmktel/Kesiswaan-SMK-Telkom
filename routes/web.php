@@ -598,6 +598,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Route untuk Izin Meninggalkan Kelas
         Route::get('/izin-keluar-kelas', [IzinMeninggalkanKelasController::class, 'index'])->name('izin-keluar-kelas.index');
         Route::post('/izin-keluar-kelas', [IzinMeninggalkanKelasController::class, 'store'])->name('izin-keluar-kelas.store');
+        Route::get('/izin-keluar-kelas/{izin}/print', [IzinMeninggalkanKelasController::class, 'printPdf'])->name('izin-keluar-kelas.print');
 
         // Route Riwayat Catatan (Pelanggaran & Keterlambatan)
         Route::get('/riwayat-catatan', [\App\Http\Controllers\Siswa\RiwayatCatatanController::class, 'index'])->name('riwayat-catatan.index');

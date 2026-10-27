@@ -15,7 +15,7 @@ class PersetujuanIzinKeluarController extends Controller
     public function index()
     {
         // Ambil semua izin yang sudah disetujui guru kelas atau sudah diproses oleh piket
-        $daftarIzin = IzinMeninggalkanKelas::with(['siswa', 'guruKelasApprover'])
+        $daftarIzin = IzinMeninggalkanKelas::with(['siswa.masterSiswa.rombels.kelas', 'guruKelasApprover', 'guruPiketApprover'])
             ->whereIn('status', ['disetujui_guru_kelas', 'disetujui_guru_piket', 'diverifikasi_security', 'selesai'])
             ->latest()
             ->paginate(15);
@@ -34,8 +34,20 @@ class PersetujuanIzinKeluarController extends Controller
             'master_siswa_id' => 'required|exists:master_siswa,id',
             'jenis_izin' => 'required|in:keluar_sekolah,dalam_lingkungan',
             'tujuan' => 'required|string|max:255',
-            'keterangan' => 'nullable|string',
+            'keterangan' => 'required|string|min:5|max:1000',
             'estimasi_kembali' => 'required|date_format:H:i',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+        ], [
+            'master_siswa_id.required' => 'Pilih nama siswa terlebih dahulu.',
+            'jenis_izin.required' => 'Pilih jenis izin terlebih dahulu.',
+            'tujuan.required' => 'Tujuan / keperluan izin wajib diisi.',
+            'keterangan.required' => 'Keterangan alasan izin wajib diisi.',
+            'keterangan.min' => 'Keterangan alasan izin minimal 5 karakter.',
+            'estimasi_kembali.required' => 'Estimasi jam kembali wajib diisi.',
+            'estimasi_kembali.date_format' => 'Format estimasi kembali tidak valid (HH:MM).',
+            'foto.image' => 'File unggahan harus berupa gambar/foto.',
+            'foto.mimes' => 'Format foto harus berupa JPG, JPEG, PNG, atau WEBP.',
+            'foto.max' => 'Ukuran file foto maksimal 5MB.',
         ]);
 
         try {
@@ -62,14 +74,26 @@ class PersetujuanIzinKeluarController extends Controller
                 return back();
             }
 
-            // Cari jadwal saat ini
-            $namaHariIni = $this->getNamaHari(now()->dayOfWeek);
-            $waktuSaatIni = now()->format('H:i:s');
-            $jadwalSaatIni = \App\Models\JadwalPelajaran::with('guru')->where('rombel_id', $rombelAktif->id)
-                ->where('hari', $namaHariIni)
-                ->where('jam_mulai', '<=', $waktuSaatIni)
-                ->where('jam_selesai', '>=', $waktuSaatIni)
-                ->first();
+            // Cari jadwal saat ini (utamakan input jika dikirim, atau cari otomatis)
+            $jadwalSaatIni = null;
+            if ($request->filled('jadwal_pelajaran_id')) {
+                $jadwalSaatIni = \App\Models\JadwalPelajaran::with('guru')->find($request->jadwal_pelajaran_id);
+            }
+            if (!$jadwalSaatIni) {
+                $namaHariIni = $this->getNamaHari(now()->dayOfWeek);
+                $waktuSaatIni = now()->format('H:i:s');
+                $jadwalSaatIni = \App\Models\JadwalPelajaran::with('guru')->where('rombel_id', $rombelAktif->id)
+                    ->where('hari', $namaHariIni)
+                    ->where('jam_mulai', '<=', $waktuSaatIni)
+                    ->where('jam_selesai', '>=', $waktuSaatIni)
+                    ->first();
+            }
+
+            // Simpan file foto jika ada
+            $fotoPath = null;
+            if ($request->hasFile('foto')) {
+                $fotoPath = $request->file('foto')->store('izin_keluar_kelas', 'public');
+            }
 
             $piketUser = Auth::user();
             $izinBaru  = IzinMeninggalkanKelas::create([
@@ -79,6 +103,7 @@ class PersetujuanIzinKeluarController extends Controller
                 'jenis_izin'             => $request->jenis_izin,
                 'tujuan'                 => $request->tujuan,
                 'keterangan'             => $request->keterangan,
+                'foto'                   => $fotoPath,
                 'estimasi_kembali'       => now()->setTimeFromTimeString($request->estimasi_kembali),
                 'status'                 => 'disetujui_guru_piket',
                 'guru_kelas_approval_id' => $jadwalSaatIni?->guru?->user_id,
@@ -233,6 +258,11 @@ class PersetujuanIzinKeluarController extends Controller
         $securityQrCode       = QrCode::format('svg')->size(70)->generate($securityUrl);
         $securityQrCodeBase64 = 'data:image/svg+xml;base64,' . base64_encode($securityQrCode);
 
+        // Barcode scanner 1D untuk PC security di gerbang
+        $barcodeGen            = new \Picqer\Barcode\BarcodeGeneratorPNG();
+        $nis                   = $izin->siswa->masterSiswa?->nis;
+        $securityBarcodeBase64 = $nis ? 'data:image/png;base64,' . base64_encode($barcodeGen->getBarcode($nis, $barcodeGen::TYPE_CODE_128, 2, 45)) : null;
+
         // Digital signature dokumen Guru Kelas & Guru Piket
         $docGK = \App\Models\DigitalDocument::where('document_type', 'IZIN_KELUAR_GK')
             ->where('reference_id', $izin->id)->where('is_valid', true)->first();
@@ -243,13 +273,14 @@ class PersetujuanIzinKeluarController extends Controller
         $qrGPBase64 = $docGP ? $this->generateQrBase64(route('verifikasi.dokumen', $docGP->token)) : null;
 
         $pdf = Pdf::loadView('pdf.surat-izin-keluar', [
-            'izin'                 => $izin,
-            'publicQrCodeBase64'   => $publicQrCodeBase64,
-            'securityQrCodeBase64' => $securityQrCodeBase64,
-            'docGK'                => $docGK,
-            'docGP'                => $docGP,
-            'qrGKBase64'           => $qrGKBase64,
-            'qrGPBase64'           => $qrGPBase64,
+            'izin'                  => $izin,
+            'publicQrCodeBase64'    => $publicQrCodeBase64,
+            'securityQrCodeBase64'  => $securityQrCodeBase64,
+            'securityBarcodeBase64' => $securityBarcodeBase64,
+            'docGK'                 => $docGK,
+            'docGP'                 => $docGP,
+            'qrGKBase64'            => $qrGKBase64,
+            'qrGPBase64'            => $qrGPBase64,
         ]);
 
         return $pdf->stream('surat-izin-' . $izin->siswa->name . '.pdf');

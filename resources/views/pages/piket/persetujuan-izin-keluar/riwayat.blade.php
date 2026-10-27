@@ -120,8 +120,8 @@
                     </table>
                 </div>
 
-                <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
-                    {{ $riwayatIzin->withQueryString()->links() }}
+                <div class="px-6 py-4 bg-gray-50/30 border-t border-gray-100">
+                    {{ $riwayatIzin->withQueryString()->links('vendor.pagination.compact-light') }}
                 </div>
             </div>
         </div>

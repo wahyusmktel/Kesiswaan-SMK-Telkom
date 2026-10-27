@@ -95,6 +95,13 @@ class DashboardController extends Controller
             ->latest()
             ->first() : null;
 
+        $izinKeluarAktif = \App\Models\IzinMeninggalkanKelas::with(['siswa.masterSiswa.rombels.kelas', 'guruPiketApprover', 'jadwalPelajaran.mataPelajaran'])
+            ->where('user_id', $userId)
+            ->whereDate('created_at', today())
+            ->whereIn('status', ['disetujui_guru_piket', 'diverifikasi_security'])
+            ->latest()
+            ->first();
+
         $kegiatanSaatIni = $this->getKegiatanSaatIni();
 
         return view('pages.siswa.dashboard.index', compact(
@@ -109,6 +116,7 @@ class DashboardController extends Controller
             'konsultasiHariIni',
             'chat_rooms',
             'terlambatHariIni',
+            'izinKeluarAktif',
             'kegiatanSaatIni'
         ));
     }

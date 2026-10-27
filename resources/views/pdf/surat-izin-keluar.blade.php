@@ -256,6 +256,17 @@
                                 <div class="qr-caption">Cek<br>Validitas</div>
                             </div>
                         </div>
+                        @if (!empty($securityBarcodeBase64))
+                            <div style="margin-top: 5px; margin-bottom: 8px; text-align: center;">
+                                <img src="{{ $securityBarcodeBase64 }}" style="height: 28px; max-width: 130px;">
+                                <div style="font-family: monospace; font-size: 6.5pt; font-weight: bold; color: #222; margin-top: 2px;">
+                                    *{{ $izin->siswa->masterSiswa?->nis ?? '-' }}*
+                                </div>
+                                <div style="font-size: 5.5pt; color: #555; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    Scan Barcode Gerbang
+                                </div>
+                            </div>
+                        @endif
                         <div class="sig-name">{{ $izin->securityVerifier->name ?? '..........................' }}</div>
                     </td>
                 </tr>

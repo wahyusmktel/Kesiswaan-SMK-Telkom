@@ -54,6 +54,144 @@
             </div>
             @endif
 
+            {{-- Alert Izin Keluar Sekolah Aktif Hari Ini --}}
+            @if(isset($izinKeluarAktif) && $izinKeluarAktif)
+            <div x-data="{ showIzinQrModal: false }" class="bg-gradient-to-r from-red-600 via-rose-700 to-slate-900 rounded-3xl p-1 shadow-xl shadow-red-100 animate-in fade-in slide-in-from-top duration-700">
+                <div class="bg-white rounded-[22px] p-6 flex flex-col md:flex-row items-center gap-6">
+                    <div class="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center flex-shrink-0 animate-bounce">
+                        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                    </div>
+                    <div class="flex-1 text-center md:text-left">
+                        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold mb-2">
+                            <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                            {{ $izinKeluarAktif->status === 'disetujui_guru_piket' ? 'Izin Keluar Disetujui Piket' : 'Sedang di Luar Sekolah' }}
+                        </div>
+                        <h3 class="text-xl font-black text-gray-900 leading-tight">Surat Izin Keluar Sekolah Tersedia!</h3>
+                        <p class="text-sm text-gray-500 mt-1">
+                            Keperluan: <strong class="text-gray-800">{{ $izinKeluarAktif->tujuan }}</strong> &bull; 
+                            Estimasi Kembali: <strong class="text-red-600">{{ \Carbon\Carbon::parse($izinKeluarAktif->estimasi_kembali)->format('H:i') }} WIB</strong>. 
+                            Silakan tunjukkan QR Code ini kepada petugas Security di gerbang sekolah.
+                        </p>
+                    </div>
+                    <div class="flex flex-wrap items-center justify-center md:justify-end gap-3 flex-shrink-0">
+                        <a href="{{ route('siswa.izin-keluar-kelas.print', $izinKeluarAktif->id) }}" target="_blank"
+                            class="inline-flex items-center px-5 py-2.5 bg-red-50 text-red-700 border border-red-200 rounded-xl font-bold text-sm hover:bg-red-100 transition-all shadow-sm">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            Unduh Surat Izin
+                        </a>
+                        <button type="button" 
+                            @click="showIzinQrModal = true"
+                            class="inline-flex items-center px-5 py-2.5 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-all shadow-lg shadow-red-200 cursor-pointer">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                            Tunjukkan Surat Digital
+                        </button>
+                    </div>
+                </div>
+
+                {{-- Modal QR Code Surat Izin Keluar --}}
+                <div x-show="showIzinQrModal" 
+                    x-cloak 
+                    class="fixed inset-0 z-50 overflow-y-auto" 
+                    role="dialog" 
+                    aria-modal="true">
+                    
+                    <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" @click="showIzinQrModal = false"></div>
+
+                    <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                        <div class="relative transform overflow-hidden rounded-3xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-md border border-gray-100">
+                            
+                            {{-- Header Modal --}}
+                            <div class="flex items-center justify-between border-b border-gray-100 px-6 py-4 bg-gradient-to-r from-red-50 to-rose-50">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center font-bold">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-base font-extrabold text-gray-900 leading-tight">Surat Izin Keluar Sekolah</h4>
+                                        <p class="text-xs text-gray-500 font-medium">Verifikasi Security Gerbang</p>
+                                    </div>
+                                </div>
+                                <button type="button" 
+                                    @click="showIzinQrModal = false" 
+                                    class="rounded-xl p-2 text-gray-400 hover:text-gray-600 hover:bg-white transition-all focus:outline-none cursor-pointer"
+                                    title="Tutup">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
+                            </div>
+
+                            {{-- Isi Modal --}}
+                            <div class="p-6 text-center">
+                                <div class="mb-4 bg-gray-50 rounded-2xl p-4 border border-gray-100 text-left space-y-2">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-xs text-gray-500 font-bold uppercase">Nama Siswa</span>
+                                        <span class="text-sm font-black text-gray-900">{{ Auth::user()->name }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-xs text-gray-500 font-bold uppercase">Keperluan</span>
+                                        <span class="text-xs font-bold text-red-600 text-right max-w-[200px] truncate">{{ $izinKeluarAktif->tujuan }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-xs text-gray-500 font-bold uppercase">Estimasi Kembali</span>
+                                        <span class="text-xs font-black text-gray-900">{{ \Carbon\Carbon::parse($izinKeluarAktif->estimasi_kembali)->format('H:i') }} WIB</span>
+                                    </div>
+                                </div>
+
+                                {{-- QR Code & Barcode Box --}}
+                                <div class="inline-block p-4 sm:p-5 bg-white rounded-2xl border-2 border-dashed border-red-300 shadow-sm mb-4 w-full max-w-sm">
+                                    <div class="w-44 h-44 sm:w-48 sm:h-48 flex items-center justify-center mx-auto [&>svg]:w-full [&>svg]:h-full">
+                                        {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(200)->margin(1)->generate(route('security.verifikasi.process-scan', $izinKeluarAktif->uuid)) !!}
+                                    </div>
+
+                                    @php
+                                        $siswaNis = $izinKeluarAktif->siswa->masterSiswa?->nis ?? null;
+                                        $barcodeBase64 = null;
+                                        if ($siswaNis) {
+                                            $barcodeGen = new \Picqer\Barcode\BarcodeGeneratorPNG();
+                                            $barcodeBase64 = 'data:image/png;base64,' . base64_encode($barcodeGen->getBarcode($siswaNis, $barcodeGen::TYPE_CODE_128, 2, 50));
+                                        }
+                                    @endphp
+
+                                    @if ($barcodeBase64)
+                                        <div class="mt-4 pt-3 border-t border-dashed border-gray-200 flex flex-col items-center">
+                                            <img src="{{ $barcodeBase64 }}" alt="Barcode NIPD {{ $siswaNis }}" class="h-11 w-auto max-w-full object-contain">
+                                            <span class="font-mono font-bold text-xs text-gray-700 tracking-widest mt-1">
+                                                *{{ $siswaNis }}*
+                                            </span>
+                                        </div>
+                                    @endif
+
+                                    <div class="mt-3 inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-700 rounded-full text-xs font-black uppercase tracking-wider border border-red-100">
+                                        <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                                        Scan Security Gerbang (QR / Barcode)
+                                    </div>
+                                </div>
+
+                                <p class="text-xs text-gray-500 leading-relaxed">
+                                    Tunjukkan QR Code ini (kamera HP) atau Barcode (alat scanner barcode PC) kepada petugas Security saat melewati gerbang untuk verifikasi keluar dan kembali.
+                                </p>
+                            </div>
+
+                            {{-- Footer Modal --}}
+                            <div class="bg-gray-50 px-6 py-4 flex gap-3 border-t border-gray-100">
+                                <a href="{{ route('siswa.izin-keluar-kelas.print', $izinKeluarAktif->id) }}" target="_blank"
+                                    class="flex-1 py-2.5 bg-white border border-gray-300 text-gray-700 font-bold text-sm rounded-xl hover:bg-gray-50 transition text-center flex items-center justify-center gap-2">
+                                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                    Unduh PDF
+                                </a>
+                                <button type="button" 
+                                    @click="showIzinQrModal = false"
+                                    class="flex-1 py-2.5 bg-gray-900 text-white font-bold text-sm rounded-xl hover:bg-gray-800 transition">
+                                    Tutup
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
+
             {{-- Alert Keterlambatan Hari Ini --}}
             @if($terlambatHariIni)
             <div x-data="{ showQrModal: false }" class="bg-gradient-to-r from-orange-500 to-amber-600 rounded-3xl p-1 shadow-xl shadow-orange-100 animate-in fade-in slide-in-from-top duration-700">

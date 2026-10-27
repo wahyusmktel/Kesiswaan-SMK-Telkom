@@ -90,10 +90,16 @@ class VerifikasiController extends Controller
         $securityQrCode = QrCode::format('svg')->size(70)->generate($securityUrl);
         $securityQrCodeBase64 = 'data:image/svg+xml;base64,' . base64_encode($securityQrCode);
 
+        // 3. Barcode scanner 1D untuk PC security gerbang
+        $barcodeGen = new \Picqer\Barcode\BarcodeGeneratorPNG();
+        $nis = $izin->siswa->masterSiswa?->nis;
+        $securityBarcodeBase64 = $nis ? 'data:image/png;base64,' . base64_encode($barcodeGen->getBarcode($nis, $barcodeGen::TYPE_CODE_128, 2, 45)) : null;
+
         $pdf = Pdf::loadView('pdf.surat-izin-keluar', [
-            'izin' => $izin,
-            'publicQrCodeBase64' => $publicQrCodeBase64,
-            'securityQrCodeBase64' => $securityQrCodeBase64,
+            'izin'                  => $izin,
+            'publicQrCodeBase64'    => $publicQrCodeBase64,
+            'securityQrCodeBase64'  => $securityQrCodeBase64,
+            'securityBarcodeBase64' => $securityBarcodeBase64,
         ]);
 
         return $pdf->stream('surat-izin-terverifikasi-' . $izin->siswa->name . '.pdf');
