@@ -27,8 +27,8 @@
         <h2 class="font-bold text-xl text-gray-800 leading-tight">Dashboard Siswa</h2>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+    <div class="py-6 w-full">
+        <div class="w-full px-4 sm:px-6 lg:px-8 space-y-6">
 
             @if($panggilanAktif)
             <div class="bg-gradient-to-r from-red-600 to-red-700 rounded-3xl p-1 shadow-xl shadow-red-200 animate-in fade-in slide-in-from-top duration-700">
