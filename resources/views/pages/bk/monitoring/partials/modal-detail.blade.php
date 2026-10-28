@@ -63,7 +63,7 @@
                 <template x-if="item.dokumen_pendukung">
                     <div>
                         <p class="text-xs font-bold text-gray-500 uppercase mb-1">Dokumen Pendukung</p>
-                        <a :href="item.dokumen_url || ('/storage/' + item.dokumen_pendukung.replace(/^public\//, ''))" target="_blank"
+                        <a :href="item.dokumen_url || (item.id ? ('/izin/' + item.id + '/dokumen') : ('/storage/' + item.dokumen_pendukung.replace(/^public\//, '')))" target="_blank"
                             class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm transition-colors w-full justify-center">
                             <svg class="w-4 h-4 text-violet-500" fill="none" stroke="currentColor"
                                 viewBox="0 0 24 24">

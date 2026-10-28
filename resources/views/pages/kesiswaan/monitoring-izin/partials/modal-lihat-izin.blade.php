@@ -42,7 +42,7 @@
 
                 <template x-if="item.dokumen_pendukung">
                     <p><strong>Dokumen Pendukung:</strong> <a
-                            :href="item.dokumen_url || ('/storage/' + item.dokumen_pendukung.replace(/^public\//, ''))" target="_blank"
+                            :href="item.dokumen_url || (item.id ? ('/izin/' + item.id + '/dokumen') : ('/storage/' + item.dokumen_pendukung.replace(/^public\//, '')))" target="_blank"
                             class="text-blue-600 hover:underline">Lihat Dokumen</a></p>
                 </template>
 

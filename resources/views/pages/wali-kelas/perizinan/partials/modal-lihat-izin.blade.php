@@ -28,7 +28,7 @@
                     <div class="mt-1 p-2 border rounded-md prose max-w-none" x-html="item.keterangan"></div>
                 </div>
                 <template x-if="item.dokumen_pendukung">
-                    <p><strong>Dokumen Pendukung:</strong> <a :href="item.dokumen_url || ('/storage/' + item.dokumen_pendukung.replace(/^public\//, ''))" target="_blank" class="text-blue-600 hover:underline">Lihat Dokumen</a></p>
+                    <p><strong>Dokumen Pendukung:</strong> <a :href="item.dokumen_url || (item.id ? ('/izin/' + item.id + '/dokumen') : ('/storage/' + item.dokumen_pendukung.replace(/^public\//, '')))" target="_blank" class="text-blue-600 hover:underline">Lihat Dokumen</a></p>
                 </template>
                 <template x-if="item.status === 'ditolak'">
                     <div>

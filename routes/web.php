@@ -370,6 +370,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Route untuk Perizinan
     Route::get('/izin', [IzinController::class, 'index'])->name('izin.index');
     Route::post('/izin', [IzinController::class, 'store'])->name('izin.store');
+    Route::get('/izin/{perizinan}/dokumen', [IzinController::class, 'showDokumen'])->name('izin.dokumen');
     Route::put('/izin/{perizinan}', [IzinController::class, 'update'])->name('izin.update');
     Route::delete('/izin/{perizinan}', [IzinController::class, 'destroy'])->name('izin.destroy');
 
@@ -1688,8 +1689,46 @@ Route::post('/berita/{berita:slug}/komentar', [\App\Http\Controllers\Public\Beri
 Route::get('/berita/{slug}', [BeritaController::class, 'show'])->name('berita.show');
 
 // ============================================================
+// STORAGE FALLBACK ROUTE (Mencegah 404 jika symlink /storage belum terpasang atau file di private)
+// ============================================================
+Route::get('/storage/{path}', function ($path) {
+    $cleanPath = preg_replace('#^public/#', '', $path);
+    $candidatePaths = [
+        storage_path('app/public/' . $cleanPath),
+        storage_path('app/public/' . $path),
+        storage_path('app/private/' . $path),
+        storage_path('app/private/' . $cleanPath),
+        storage_path('app/private/public/' . $cleanPath),
+        storage_path('app/' . $path),
+        storage_path('app/' . $cleanPath),
+    ];
+
+    foreach ($candidatePaths as $fullPath) {
+        if (file_exists($fullPath) && is_file($fullPath)) {
+            $mime = mime_content_type($fullPath) ?: 'application/octet-stream';
+            return response()->file($fullPath, [
+                'Content-Type' => $mime,
+                'Content-Disposition' => 'inline; filename="' . basename($fullPath) . '"',
+            ]);
+        }
+    }
+
+    return response('
+        <div style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #f8fafc; margin: 0; padding: 20px; box-sizing: border-box;">
+            <div style="background: white; border-radius: 12px; padding: 32px; max-width: 480px; width: 100%; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;">
+                <div style="width: 56px; height: 56px; background: #fee2e2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                    <svg style="width: 28px; height: 28px; color: #dc2626;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                </div>
+                <h2 style="color: #0f172a; margin: 0 0 8px 0; font-size: 20px; font-weight: 700;">Berkas Tidak Ditemukan</h2>
+                <p style="color: #64748b; font-size: 14px; line-height: 1.5; margin: 0 0 20px 0;">Berkas di penyimpanan server (<code>' . htmlspecialchars($cleanPath) . '</code>) tidak ditemukan.</p>
+                <button onclick="window.close()" style="background: #2563eb; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">Tutup Jendela</button>
+            </div>
+        </div>', 404, ['Content-Type' => 'text/html']);
+})->where('path', '.*')->name('storage.fallback');
+
+// ============================================================
 // REDIRECT SHORTENER URL (CATCH-ALL)
 // ============================================================
 Route::get('/{code}', [\App\Http\Controllers\ShortUrlController::class, 'redirect'])
     ->name('shortener.redirect')
-    ->where('code', '.*');
+    ->where('code', '^(?!storage\/).*$');

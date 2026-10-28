@@ -54,6 +54,14 @@ class Perizinan extends Model
             return $this->dokumen_pendukung;
         }
 
+        if ($this->id) {
+            try {
+                return route('izin.dokumen', $this->id);
+            } catch (\Throwable $e) {
+                return '/izin/' . $this->id . '/dokumen';
+            }
+        }
+
         return \Illuminate\Support\Facades\Storage::url($this->dokumen_pendukung);
     }
 
