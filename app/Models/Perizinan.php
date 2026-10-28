@@ -33,6 +33,31 @@ class Perizinan extends Model
     ];
 
     /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array<int, string>
+     */
+    protected $appends = [
+        'dokumen_url',
+    ];
+
+    /**
+     * Accessor untuk URL dokumen pendukung yang valid.
+     */
+    public function getDokumenUrlAttribute(): ?string
+    {
+        if (! $this->dokumen_pendukung) {
+            return null;
+        }
+
+        if (str_starts_with($this->dokumen_pendukung, 'http')) {
+            return $this->dokumen_pendukung;
+        }
+
+        return \Illuminate\Support\Facades\Storage::url($this->dokumen_pendukung);
+    }
+
+    /**
      * Mendefinisikan relasi ke model User (siswa yang mengajukan).
      */
     public function user()

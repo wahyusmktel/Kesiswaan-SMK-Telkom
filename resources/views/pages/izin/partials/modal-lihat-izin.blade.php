@@ -38,7 +38,7 @@
                 </div>
                 
                 <template x-if="item.dokumen_pendukung">
-                    <p class="text-sm text-gray-500 mt-4"><strong>Dokumen Pendukung:</strong> <a :href="'/storage/' + item.dokumen_pendukung.replace('public/', '')" target="_blank" class="text-blue-600 hover:underline">Lihat Dokumen</a></p>
+                    <p class="text-sm text-gray-500 mt-4"><strong>Dokumen Pendukung:</strong> <a :href="item.dokumen_url || ('/storage/' + item.dokumen_pendukung.replace(/^public\//, ''))" target="_blank" class="text-blue-600 hover:underline">Lihat Dokumen</a></p>
                 </template>
 
                 <template x-if="item.status === 'ditolak' && item.alasan_penolakan">
