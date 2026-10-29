@@ -3,44 +3,58 @@
 <style>
     .builder-section {
         background: #fff;
-        border: 1px solid #e5e7eb;
-        border-radius: 1.25rem;
-        box-shadow: 0 1px 4px rgba(0,0,0,.06);
+        border: 1px solid #e2e8f0;
+        border-radius: .5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,.05);
+        overflow: hidden;
     }
-    .soal-row, .indikator-row {
+    .soal-row {
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         gap: .625rem;
         padding: .625rem .75rem;
         background: #f8fafc;
         border: 1px solid #e2e8f0;
-        border-radius: .75rem;
-        transition: box-shadow .15s;
+        border-radius: .5rem;
+        transition: all .15s;
     }
-    .soal-row:hover, .indikator-row:hover { box-shadow: 0 2px 8px rgba(99,102,241,.12); }
+    .soal-row:hover { background: #f1f5f9; border-color: #cbd5e1; }
+    .indikator-row {
+        display: flex;
+        align-items: center;
+        gap: .625rem;
+        padding: .5rem .75rem;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: .5rem;
+        transition: all .15s;
+    }
+    .indikator-row:hover { background: #f1f5f9; border-color: #cbd5e1; }
     .row-num {
         width: 1.5rem; height: 1.5rem; flex-shrink: 0;
         background: #6366f1; color: #fff;
         border-radius: .375rem;
         font-size: .65rem; font-weight: 800;
         display: flex; align-items: center; justify-content: center;
-        margin-top: .25rem;
+        margin: 0;
     }
     .kategori-card {
-        border: 2px solid #e5e7eb;
-        border-radius: 1rem;
+        border: 1px solid #e2e8f0;
+        border-radius: .5rem;
         transition: border-color .2s;
+        background: #fff;
+        overflow: hidden;
     }
-    .kategori-card:focus-within { border-color: #a78bfa; }
+    .kategori-card:focus-within { border-color: #8b5cf6; }
     .kategori-header {
         display: flex; align-items: center; gap: .75rem;
-        padding: .875rem 1rem;
+        padding: .75rem 1rem;
         background: linear-gradient(to right, #f5f3ff, #ede9fe);
         border-bottom: 1px solid #e5e7eb;
-        border-radius: .875rem .875rem 0 0;
+        border-radius: .5rem .5rem 0 0;
     }
     .indikator-add-btn {
-        border-radius: 0 0 .875rem .875rem;
+        border-radius: 0 0 .5rem .5rem;
     }
     .bobot-pill {
         display: inline-flex; align-items: center; gap: .25rem;
@@ -49,15 +63,15 @@
         font-size: .7rem; font-weight: 800;
     }
     .bobot-bar-track {
-        height: 10px; border-radius: 999px;
+        height: 8px; border-radius: 999px;
         background: #e5e7eb; overflow: hidden;
-        margin-top: .375rem;
+        margin-top: .25rem;
     }
     .btn-add {
         display: inline-flex; align-items: center; gap: .375rem;
         padding: .5rem 1rem;
         border: 2px dashed #c4b5fd;
-        border-radius: .75rem;
+        border-radius: .5rem;
         font-size: .8rem; font-weight: 700;
         color: #7c3aed;
         background: transparent;
@@ -67,17 +81,17 @@
     }
     .btn-add:hover { background: #f5f3ff; border-color: #7c3aed; }
     .del-btn {
-        flex-shrink: 0; width: 1.75rem; height: 1.75rem;
-        border-radius: .5rem; background: #fee2e2;
-        color: #ef4444; border: none; cursor: pointer;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 1rem; font-weight: 900; transition: all .15s;
-        margin-top: .2rem;
-    }
-    .del-btn:hover { background: #ef4444; color: #fff; }
-    .score-chip {
+        flex-shrink: 0; width: 1.625rem; height: 1.625rem;
+        border-radius: .375rem; background: #fee2e2;
+        color: #ef4444; border: 1px solid #fecaca; cursor: pointer;
         display: inline-flex; align-items: center; justify-content: center;
-        width: 2rem; height: 2rem; border-radius: .5rem;
+        transition: all .15s; margin: 0; padding: 0;
+    }
+    .del-btn:hover { background: #ef4444; color: #fff; border-color: #ef4444; }
+    .del-btn svg { width: .875rem; height: .875rem; display: block; stroke: currentColor; }
+    .score-badge {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 1.625rem; height: 1.625rem; border-radius: .375rem;
         font-size: .7rem; font-weight: 800; flex-shrink: 0;
     }
     input[type="range"] { accent-color: #7c3aed; }
@@ -232,7 +246,7 @@
 
         {{-- Indikator Bobot Akhir --}}
         <div class="px-4 sm:px-6 pb-3.5 max-w-screen-2xl mx-auto">
-            <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-2.5 sm:px-4 sm:py-2.5 bg-slate-50 border border-gray-200/80 rounded-xl">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-2.5 sm:px-4 sm:py-2.5 bg-slate-50 border border-gray-200/80 rounded-lg">
                 <span class="text-xs font-black text-gray-500 uppercase tracking-wider shrink-0">Bobot Akhir</span>
 
                 <div class="flex-1 flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
@@ -278,7 +292,7 @@
     </div>
 
     {{-- ═══ MAIN BUILDER CONTENT ═══ --}}
-    <div class="p-4 sm:p-6 max-w-screen-2xl mx-auto space-y-6">
+    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 py-6 space-y-6">
 
         {{-- Grid 2 Kolom: Pengetahuan & Keterampilan --}}
         <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
@@ -335,7 +349,11 @@
                             rows="2"
                             :placeholder="'Pertanyaan ' + (i+1) + '…'"
                             class="flex-1 text-sm text-gray-800 bg-transparent border-0 focus:outline-none resize-none leading-relaxed"></textarea>
-                        <button @click="removeSoal(i)" class="del-btn" title="Hapus soal">&times;</button>
+                        <button @click="removeSoal(i)" class="del-btn" title="Hapus Soal">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
                     </div>
                 </template>
 
@@ -372,17 +390,33 @@
                 </div>
             </div>
 
-            <div class="flex gap-1.5 px-4 py-2.5 border-b border-gray-100 bg-gray-50/60 flex-wrap">
-                <span class="score-chip bg-gray-100 text-gray-500 text-[10px]">0 Belum</span>
-                <span class="score-chip bg-amber-100 text-amber-700 text-[10px]">1 Cukup</span>
-                <span class="score-chip bg-blue-100 text-blue-700 text-[10px]">2 Baik</span>
-                <span class="score-chip bg-emerald-100 text-emerald-700 text-[10px]">3 Sangat Baik</span>
-                <span class="ml-auto text-[10px] text-gray-400 self-center">Total bobot kategori:
-                    <span class="font-black" :class="total_bobot_kategori===100 ? 'text-emerald-600' : 'text-red-500'"
-                        x-text="total_bobot_kategori + '%'"></span>
-                    <span x-show="total_bobot_kategori !== 100" class="text-red-500">(harus 100%)</span>
-                    <span x-show="total_bobot_kategori === 100" class="text-emerald-600">✓</span>
-                </span>
+            {{-- Keterangan Skor 0, 1, 2, 3 (Rapi & 1 Baris) --}}
+            <div class="flex items-center justify-between gap-2.5 px-4 py-2.5 border-b border-gray-100 bg-slate-50 flex-wrap">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-gray-200 text-gray-700 text-xs font-bold whitespace-nowrap shadow-xs">
+                        <span class="w-4 h-4 rounded bg-gray-100 text-gray-700 flex items-center justify-center text-[10px] font-black border border-gray-300">0</span>
+                        <span>Belum</span>
+                    </span>
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-amber-200 text-amber-800 text-xs font-bold whitespace-nowrap shadow-xs">
+                        <span class="w-4 h-4 rounded bg-amber-100 text-amber-800 flex items-center justify-center text-[10px] font-black border border-amber-300">1</span>
+                        <span>Cukup</span>
+                    </span>
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-blue-200 text-blue-800 text-xs font-bold whitespace-nowrap shadow-xs">
+                        <span class="w-4 h-4 rounded bg-blue-100 text-blue-800 flex items-center justify-center text-[10px] font-black border border-blue-300">2</span>
+                        <span>Baik</span>
+                    </span>
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-emerald-200 text-emerald-800 text-xs font-bold whitespace-nowrap shadow-xs">
+                        <span class="w-4 h-4 rounded bg-emerald-100 text-emerald-800 flex items-center justify-center text-[10px] font-black border border-emerald-300">3</span>
+                        <span>Sangat Baik</span>
+                    </span>
+                </div>
+
+                <div class="text-xs text-gray-500 font-medium whitespace-nowrap ml-auto">
+                    Total bobot: 
+                    <strong :class="total_bobot_kategori===100 ? 'text-emerald-600' : 'text-red-500'" x-text="total_bobot_kategori + '%'"></strong>
+                    <span x-show="total_bobot_kategori !== 100" class="text-red-500 font-bold">(harus 100%)</span>
+                    <span x-show="total_bobot_kategori === 100" class="text-emerald-600 font-bold">✓</span>
+                </div>
             </div>
 
             <div class="p-4 flex-1 flex flex-col gap-3 overflow-y-auto" style="max-height:600px">
@@ -390,7 +424,7 @@
                     <div class="kategori-card">
 
                         <div class="kategori-header">
-                            <div class="w-7 h-7 rounded-lg bg-violet-600 text-white flex items-center justify-center text-xs font-black shrink-0"
+                            <div class="w-7 h-7 rounded-md bg-violet-600 text-white flex items-center justify-center text-xs font-black shrink-0"
                                 x-text="ki+1"></div>
                             <input x-model="kat.nama_kategori" type="text"
                                 placeholder="Nama Kategori…"
@@ -411,7 +445,11 @@
                                 Import
                             </button>
 
-                            <button @click="removeKategori(ki)" class="del-btn" title="Hapus kategori">&times;</button>
+                            <button @click="removeKategori(ki)" class="del-btn" title="Hapus Kategori">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
                         </div>
 
                         <div class="px-4 pt-2 pb-1 bg-white">
@@ -427,14 +465,18 @@
                                     <div class="row-num" style="background:#10b981;font-size:.6rem" x-text="ii+1"></div>
                                     <input x-model="ind.nama_indikator" type="text"
                                         :placeholder="'Indikator ' + (ii+1) + '…'"
-                                        class="flex-1 text-sm text-gray-700 bg-transparent border-0 focus:outline-none">
-                                    <div class="flex gap-0.5 shrink-0">
-                                        <span class="score-chip bg-gray-100 text-gray-500" style="width:1.4rem;height:1.4rem;font-size:.6rem">0</span>
-                                        <span class="score-chip bg-amber-100 text-amber-600" style="width:1.4rem;height:1.4rem;font-size:.6rem">1</span>
-                                        <span class="score-chip bg-blue-100 text-blue-600" style="width:1.4rem;height:1.4rem;font-size:.6rem">2</span>
-                                        <span class="score-chip bg-emerald-100 text-emerald-600" style="width:1.4rem;height:1.4rem;font-size:.6rem">3</span>
+                                        class="flex-1 text-sm text-gray-700 bg-transparent border-0 focus:outline-none py-0.5">
+                                    <div class="flex items-center gap-1 shrink-0">
+                                        <span class="score-badge bg-gray-100 text-gray-600 border border-gray-200" title="Skor 0: Belum">0</span>
+                                        <span class="score-badge bg-amber-50 text-amber-700 border border-amber-200" title="Skor 1: Cukup">1</span>
+                                        <span class="score-badge bg-blue-50 text-blue-700 border border-blue-200" title="Skor 2: Baik">2</span>
+                                        <span class="score-badge bg-emerald-50 text-emerald-700 border border-emerald-200" title="Skor 3: Sangat Baik">3</span>
                                     </div>
-                                    <button @click="removeIndikator(ki, ii)" class="del-btn" title="Hapus indikator">&times;</button>
+                                    <button @click="removeIndikator(ki, ii)" class="del-btn" title="Hapus Indikator">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                                        </svg>
+                                    </button>
                                 </div>
                             </template>
 
@@ -442,6 +484,22 @@
                                 Belum ada indikator. Tambahkan manual atau import dari Excel.
                             </div>
                         </div>
+
+                        <div class="indikator-add-btn px-3 pb-3 pt-2 bg-white border-t border-gray-100">
+                            <button @click="addIndikator(ki)" class="btn-add" style="border-color:#a7f3d0;color:#059669">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                                Tambah Indikator
+                            </button>
+                        </div>
+                    </div>
+                </template>
+
+                <div x-show="form.kategori_keterampilan.length === 0" class="text-sm text-gray-400 text-center py-8 italic">
+                    Belum ada kategori keterampilan. Tambahkan di bawah.
+                </div>
+            </div>
 
                         <div class="indikator-add-btn px-3 pb-3 pt-2 bg-white border-t border-gray-100">
                             <button @click="addIndikator(ki)" class="btn-add" style="border-color:#a7f3d0;color:#059669">
@@ -480,7 +538,7 @@
         </div>
 
         {{-- ═══ KOTAK SIMPAN INSTRUMEN (Di dalam box konten, tidak melayang) ═══ --}}
-        <div class="builder-section p-5 sm:p-6 bg-white border border-gray-200 rounded-2xl shadow-sm">
+        <div class="builder-section p-5 sm:p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
             <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
                 {{-- Rincian Komponen --}}
                 <div class="space-y-2.5">
@@ -489,11 +547,11 @@
                         <h4 class="text-sm font-black text-gray-900 uppercase tracking-wider">Rincian Komponen Instrumen</h4>
                     </div>
                     <div class="flex flex-wrap items-center gap-3">
-                        <div class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-blue-50 border border-blue-100 text-blue-900 text-xs sm:text-sm font-semibold">
+                        <div class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-blue-50 border border-blue-100 text-blue-900 text-xs sm:text-sm font-semibold">
                             <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
                             <span>Pengetahuan: <strong class="font-black text-blue-700" x-text="form.soal_pengetahuan.length + ' soal'"></strong> · Bobot: <strong class="font-black text-blue-700" x-text="form.bobot_pengetahuan + '%'"></strong></span>
                         </div>
-                        <div class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-900 text-xs sm:text-sm font-semibold">
+                        <div class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-900 text-xs sm:text-sm font-semibold">
                             <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
                             <span>Keterampilan: <strong class="font-black text-emerald-700" x-text="form.kategori_keterampilan.length + ' kategori'"></strong> · Bobot: <strong class="font-black text-emerald-700" x-text="bobot_keterampilan + '%'"></strong></span>
                         </div>
@@ -503,11 +561,11 @@
                 {{-- Action Buttons --}}
                 <div class="flex items-center gap-3 shrink-0 pt-4 lg:pt-0 border-t border-gray-100 lg:border-0 justify-end">
                     <a href="{{ route('kaprodi.ukk.instrumen.index') }}"
-                        class="px-5 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-bold hover:bg-gray-50 transition-all text-sm">
+                        class="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-bold hover:bg-gray-50 transition-all text-sm">
                         Kembali
                     </a>
                     <button @click="save()" :disabled="saving"
-                        class="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-black rounded-xl shadow-md hover:from-violet-500 hover:to-indigo-500 transition-all disabled:opacity-50 text-sm cursor-pointer">
+                        class="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-black rounded-lg shadow-md hover:from-violet-500 hover:to-indigo-500 transition-all disabled:opacity-50 text-sm cursor-pointer">
                         <svg x-show="saving" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
