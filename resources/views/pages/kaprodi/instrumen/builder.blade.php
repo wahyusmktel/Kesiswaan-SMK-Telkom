@@ -185,24 +185,25 @@
      x-init="init()"
      @mousemove.window="onImportDrag($event)"
      @mouseup.window="stopImportDrag()"
-     class="min-h-screen bg-slate-50">
+     class="min-h-screen bg-slate-50 pb-12">
 
-    {{-- ═══ STICKY HEADER ═══ --}}
-    <div class="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
-        <div class="flex items-center gap-3 px-4 py-3 max-w-screen-2xl mx-auto">
+    {{-- ═══ HEADER BUILDER (Normal flow, ikut tergeser saat scroll dan tidak menutupi konten) ═══ --}}
+    <div class="bg-white border-b border-gray-200 shadow-sm relative">
+        <div class="flex flex-wrap items-center gap-3 px-4 sm:px-6 py-3.5 max-w-screen-2xl mx-auto">
             <a href="{{ route('kaprodi.ukk.instrumen.index') }}"
-                class="flex-shrink-0 w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
-                <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                class="flex-shrink-0 w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors text-gray-600 hover:text-gray-900"
+                title="Kembali ke Daftar Instrumen">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                 </svg>
             </a>
 
             <input x-model="form.nama_instrumen" type="text"
                 placeholder="Nama Instrumen Penilaian…"
-                class="flex-1 text-lg font-black text-gray-900 border-0 border-b-2 border-transparent focus:border-violet-500 focus:outline-none bg-transparent py-1 transition-colors placeholder-gray-300">
+                class="flex-1 min-w-[200px] text-lg sm:text-xl font-black text-gray-900 border-0 border-b-2 border-transparent focus:border-violet-500 focus:outline-none bg-transparent py-1 transition-colors placeholder-gray-400">
 
             <select x-model="form.ukk_ujian_id"
-                class="hidden sm:block text-sm font-bold border border-gray-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-violet-400 text-gray-700 max-w-[220px]">
+                class="hidden sm:block text-sm font-bold border border-gray-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-violet-400 text-gray-700 max-w-[240px]">
                 <option value="">— Pilih Ujian UKK —</option>
                 @foreach($ujians as $u)
                     <option value="{{ $u->id }}">{{ $u->nama_ujian }}</option>
@@ -210,7 +211,7 @@
             </select>
 
             <button @click="save()" :disabled="saving"
-                class="flex-shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-black rounded-xl shadow-md hover:from-violet-500 hover:to-indigo-500 transition-all disabled:opacity-50 text-sm">
+                class="flex-shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-black rounded-xl shadow-md hover:from-violet-500 hover:to-indigo-500 transition-all disabled:opacity-50 text-sm cursor-pointer">
                 <svg x-show="saving" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
@@ -219,7 +220,7 @@
             </button>
         </div>
 
-        <div class="sm:hidden px-4 pb-2">
+        <div class="sm:hidden px-4 pb-3">
             <select x-model="form.ukk_ujian_id"
                 class="w-full text-sm font-bold border border-gray-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-violet-400 text-gray-700">
                 <option value="">— Pilih Ujian UKK —</option>
@@ -229,21 +230,36 @@
             </select>
         </div>
 
-        <div class="px-4 pb-3 max-w-screen-2xl mx-auto">
-            <div class="flex items-center gap-3">
-                <span class="text-xs font-black text-gray-500 w-20 shrink-0">Bobot Akhir</span>
-                <div class="flex-1 flex rounded-full overflow-hidden h-8 border border-gray-200">
-                    <div class="flex items-center justify-center text-[11px] font-black text-white bg-blue-500 transition-all duration-300"
-                        :style="'width:' + form.bobot_pengetahuan + '%'">
-                        <span x-show="form.bobot_pengetahuan >= 12">Pengetahuan <span x-text="form.bobot_pengetahuan"></span>%</span>
+        {{-- Indikator Bobot Akhir --}}
+        <div class="px-4 sm:px-6 pb-3.5 max-w-screen-2xl mx-auto">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-2.5 sm:px-4 sm:py-2.5 bg-slate-50 border border-gray-200/80 rounded-xl">
+                <span class="text-xs font-black text-gray-500 uppercase tracking-wider shrink-0">Bobot Akhir</span>
+
+                <div class="flex-1 flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+                    {{-- Badge Nilai Responsif --}}
+                    <div class="flex items-center gap-2 shrink-0 flex-wrap">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200 text-xs font-extrabold">
+                            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                            Pengetahuan: <span x-text="form.bobot_pengetahuan"></span>%
+                        </span>
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-extrabold">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            Keterampilan: <span x-text="bobot_keterampilan"></span>%
+                        </span>
                     </div>
-                    <div class="flex items-center justify-center text-[11px] font-black text-white bg-emerald-500 flex-1 transition-all duration-300">
-                        <span x-show="bobot_keterampilan >= 12">Keterampilan <span x-text="bobot_keterampilan"></span>%</span>
+
+                    {{-- Progress Bar --}}
+                    <div class="flex-1 flex rounded-full overflow-hidden h-3 bg-gray-200 border border-gray-300 shadow-inner min-w-[120px]">
+                        <div class="h-full bg-blue-500 transition-all duration-300 rounded-l-full"
+                            :style="'width:' + form.bobot_pengetahuan + '%'"></div>
+                        <div class="h-full bg-emerald-500 flex-1 transition-all duration-300 rounded-r-full"></div>
                     </div>
                 </div>
-                <span class="text-xs font-black shrink-0"
-                    :class="form.bobot_pengetahuan >= 0 && form.bobot_pengetahuan <= 100 ? 'text-emerald-600' : 'text-red-600'"
-                    >= 100%</span>
+
+                <span class="text-xs font-black px-2.5 py-0.5 rounded-md shrink-0 self-start sm:self-auto border"
+                    :class="form.bobot_pengetahuan >= 0 && form.bobot_pengetahuan <= 100 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'">
+                    Total: 100%
+                </span>
             </div>
         </div>
     </div>
@@ -261,8 +277,11 @@
         </template>
     </div>
 
-    {{-- ═══ MAIN BUILDER ═══ --}}
-    <div class="p-4 sm:p-6 max-w-screen-2xl mx-auto grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+    {{-- ═══ MAIN BUILDER CONTENT ═══ --}}
+    <div class="p-4 sm:p-6 max-w-screen-2xl mx-auto space-y-6">
+
+        {{-- Grid 2 Kolom: Pengetahuan & Keterampilan --}}
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
 
         {{-- ══════════════════════════════════════
              LEFT: PENILAIAN PENGETAHUAN
@@ -457,32 +476,49 @@
                 </button>
             </div>
         </div>
-    </div>
-
-    {{-- Bottom summary bar --}}
-    <div class="sticky bottom-0 z-30 bg-white border-t border-gray-200 shadow-lg px-4 py-3 max-w-screen-2xl mx-auto">
-        <div class="flex flex-wrap items-center gap-4 justify-between text-sm">
-            <div class="flex gap-4 flex-wrap">
-                <span class="flex items-center gap-1.5 text-blue-700 font-semibold">
-                    <span class="w-3 h-3 rounded-full bg-blue-500 inline-block"></span>
-                    Pengetahuan: <strong x-text="form.soal_pengetahuan.length + ' soal'"></strong>
-                    · Bobot <strong x-text="form.bobot_pengetahuan + '%'"></strong>
-                </span>
-                <span class="flex items-center gap-1.5 text-emerald-700 font-semibold">
-                    <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
-                    Keterampilan: <strong x-text="form.kategori_keterampilan.length + ' kategori'"></strong>
-                    · Bobot <strong x-text="bobot_keterampilan + '%'"></strong>
-                </span>
-            </div>
-            <button @click="save()" :disabled="saving"
-                class="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-black rounded-xl shadow-md hover:from-violet-500 hover:to-indigo-500 transition-all disabled:opacity-50 text-sm">
-                <svg x-show="saving" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                </svg>
-                <span x-text="saving ? 'Menyimpan…' : '💾 Simpan Instrumen'"></span>
-            </button>
+        {{-- End Grid 2 Kolom --}}
         </div>
+
+        {{-- ═══ KOTAK SIMPAN INSTRUMEN (Di dalam box konten, tidak melayang) ═══ --}}
+        <div class="builder-section p-5 sm:p-6 bg-white border border-gray-200 rounded-2xl shadow-sm">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                {{-- Rincian Komponen --}}
+                <div class="space-y-2.5">
+                    <div class="flex items-center gap-2">
+                        <span class="text-base">📋</span>
+                        <h4 class="text-sm font-black text-gray-900 uppercase tracking-wider">Rincian Komponen Instrumen</h4>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <div class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-blue-50 border border-blue-100 text-blue-900 text-xs sm:text-sm font-semibold">
+                            <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
+                            <span>Pengetahuan: <strong class="font-black text-blue-700" x-text="form.soal_pengetahuan.length + ' soal'"></strong> · Bobot: <strong class="font-black text-blue-700" x-text="form.bobot_pengetahuan + '%'"></strong></span>
+                        </div>
+                        <div class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-900 text-xs sm:text-sm font-semibold">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+                            <span>Keterampilan: <strong class="font-black text-emerald-700" x-text="form.kategori_keterampilan.length + ' kategori'"></strong> · Bobot: <strong class="font-black text-emerald-700" x-text="bobot_keterampilan + '%'"></strong></span>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Action Buttons --}}
+                <div class="flex items-center gap-3 shrink-0 pt-4 lg:pt-0 border-t border-gray-100 lg:border-0 justify-end">
+                    <a href="{{ route('kaprodi.ukk.instrumen.index') }}"
+                        class="px-5 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-bold hover:bg-gray-50 transition-all text-sm">
+                        Kembali
+                    </a>
+                    <button @click="save()" :disabled="saving"
+                        class="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-black rounded-xl shadow-md hover:from-violet-500 hover:to-indigo-500 transition-all disabled:opacity-50 text-sm cursor-pointer">
+                        <svg x-show="saving" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                        </svg>
+                        <span x-text="saving ? 'Menyimpan…' : '💾 Simpan Instrumen'"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    {{-- End Main Builder Content --}}
     </div>
 
     {{-- ═══════════════════════════════════════════════════

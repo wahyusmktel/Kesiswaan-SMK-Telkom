@@ -43,62 +43,73 @@
             {{-- CARDS --}}
             @forelse($instrumens as $ins)
                 <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-4 overflow-hidden hover:shadow-md transition-shadow">
-                    <div class="flex flex-col sm:flex-row sm:items-center gap-4 p-5">
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5 p-5">
 
-                        {{-- Left: Info --}}
+                        {{-- Left: Info & Bobot --}}
                         <div class="flex-1 min-w-0">
                             <div class="flex flex-wrap items-center gap-2 mb-1.5">
-                                <span class="text-lg font-black text-gray-900">{{ $ins->nama_instrumen }}</span>
-                                <span class="px-2 py-0.5 rounded-lg bg-violet-50 text-violet-700 text-xs font-bold border border-violet-100">
+                                <span class="text-lg font-black text-gray-900 break-words">{{ $ins->nama_instrumen }}</span>
+                                <span class="px-2.5 py-0.5 rounded-lg bg-violet-50 text-violet-700 text-xs font-bold border border-violet-100">
                                     {{ $ins->ujian?->nama_ujian ?? '—' }}
                                 </span>
                             </div>
-                            <p class="text-xs text-gray-400 mb-3">
+                            <p class="text-xs text-gray-500 mb-3 font-medium">
                                 {{ $ins->ujian?->tahunPelajaran?->tahun ?? '—' }}
-                                &middot; {{ $ins->ujian?->jurusan ?? '—' }}
+                                &middot; <span class="text-gray-700 font-semibold">{{ $ins->ujian?->jurusan ?? '—' }}</span>
                             </p>
 
-                            {{-- Bobot bar --}}
-                            <div class="flex rounded-full overflow-hidden h-6 w-full max-w-xs border border-gray-200">
-                                @php $bp = $ins->bobot_pengetahuan; $bk = 100 - $bp; @endphp
-                                <div class="flex items-center justify-center text-[10px] font-black text-white bg-blue-500"
-                                    style="width:{{ $bp }}%">
-                                    @if($bp >= 15) Pengetahuan {{ $bp }}% @endif
+                            {{-- Bobot bar & Persentase Responsif --}}
+                            @php $bp = $ins->bobot_pengetahuan; $bk = 100 - $bp; @endphp
+                            <div class="w-full max-w-sm">
+                                <div class="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 text-xs font-bold border border-blue-100">
+                                        <span class="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
+                                        <span>Pengetahuan {{ $bp }}%</span>
+                                    </span>
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-100">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                                        <span>Keterampilan {{ $bk }}%</span>
+                                    </span>
                                 </div>
-                                <div class="flex items-center justify-center text-[10px] font-black text-white bg-emerald-500 flex-1">
-                                    @if($bk >= 15) Keterampilan {{ $bk }}% @endif
+                                <div class="flex rounded-full overflow-hidden h-2.5 w-full bg-gray-100 border border-gray-200 shadow-inner">
+                                    <div class="h-full bg-blue-500 transition-all duration-300" style="width: {{ $bp }}%"></div>
+                                    <div class="h-full bg-emerald-500 transition-all duration-300 flex-1"></div>
                                 </div>
                             </div>
                         </div>
 
-                        {{-- Middle: Stats --}}
-                        <div class="flex gap-4 shrink-0">
-                            <div class="text-center">
-                                <p class="text-2xl font-black text-blue-600">{{ $ins->soal_pengetahuan_count }}</p>
-                                <p class="text-xs text-gray-400 font-semibold">Soal Pengetahuan</p>
+                        {{-- Middle & Right: Stats and Actions --}}
+                        <div class="flex flex-wrap items-center justify-between sm:justify-end gap-5 pt-3 lg:pt-0 border-t border-gray-100 lg:border-0 shrink-0">
+                            {{-- Stats --}}
+                            <div class="flex items-center gap-4 sm:gap-6">
+                                <div class="text-center sm:text-right">
+                                    <p class="text-xl sm:text-2xl font-black text-blue-600">{{ $ins->soal_pengetahuan_count }}</p>
+                                    <p class="text-xs text-gray-500 font-semibold">Soal Pengetahuan</p>
+                                </div>
+                                <div class="w-px h-8 bg-gray-200 hidden sm:block"></div>
+                                <div class="text-center sm:text-right">
+                                    <p class="text-xl sm:text-2xl font-black text-emerald-600">{{ $ins->kategori_keterampilan_count }}</p>
+                                    <p class="text-xs text-gray-500 font-semibold">Kategori Keterampilan</p>
+                                </div>
                             </div>
-                            <div class="text-center">
-                                <p class="text-2xl font-black text-emerald-600">{{ $ins->kategori_keterampilan_count }}</p>
-                                <p class="text-xs text-gray-400 font-semibold">Kategori Keterampilan</p>
-                            </div>
-                        </div>
 
-                        {{-- Right: Actions --}}
-                        <div class="flex gap-2 shrink-0">
-                            <a href="{{ route('kaprodi.ukk.instrumen.edit', $ins->id) }}"
-                                class="inline-flex items-center gap-1.5 px-4 py-2 bg-violet-50 text-violet-700 border border-violet-200 rounded-xl text-sm font-bold hover:bg-violet-600 hover:text-white hover:border-violet-600 transition-all">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                </svg>
-                                Edit
-                            </a>
-                            <button @click="deleteInstrumen({{ $ins->id }}, '{{ addslashes($ins->nama_instrumen) }}')"
-                                class="inline-flex items-center gap-1.5 px-4 py-2 bg-red-50 text-red-700 border border-red-200 rounded-xl text-sm font-bold hover:bg-red-600 hover:text-white hover:border-red-600 transition-all">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                </svg>
-                                Hapus
-                            </button>
+                            {{-- Actions --}}
+                            <div class="flex items-center gap-2">
+                                <a href="{{ route('kaprodi.ukk.instrumen.edit', $ins->id) }}"
+                                    class="inline-flex items-center gap-1.5 px-4 py-2 bg-violet-50 text-violet-700 border border-violet-200 rounded-xl text-sm font-bold hover:bg-violet-600 hover:text-white hover:border-violet-600 transition-all shadow-sm">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    </svg>
+                                    Edit
+                                </a>
+                                <button @click="deleteInstrumen({{ $ins->id }}, '{{ addslashes($ins->nama_instrumen) }}')"
+                                    class="inline-flex items-center gap-1.5 px-4 py-2 bg-red-50 text-red-700 border border-red-200 rounded-xl text-sm font-bold hover:bg-red-600 hover:text-white hover:border-red-600 transition-all shadow-sm">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                    Hapus
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
