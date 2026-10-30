@@ -8,6 +8,27 @@
         box-shadow: 0 1px 3px rgba(0,0,0,.05);
         overflow: hidden;
     }
+    /* Custom visible scrollbars */
+    .builder-scroll {
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #94a3b8 #f1f5f9;
+    }
+    .builder-scroll::-webkit-scrollbar {
+        width: 7px;
+        height: 7px;
+    }
+    .builder-scroll::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 4px;
+    }
+    .builder-scroll::-webkit-scrollbar-thumb {
+        background: #94a3b8;
+        border-radius: 4px;
+    }
+    .builder-scroll::-webkit-scrollbar-thumb:hover {
+        background: #64748b;
+    }
     .soal-row {
         display: flex;
         align-items: center;
@@ -341,7 +362,7 @@
                 </button>
             </div>
 
-            <div class="p-4 flex-1 flex flex-col gap-2 overflow-y-auto" style="min-height: 480px; max-height: 750px">
+            <div id="soal-container" class="p-4 flex-1 flex flex-col gap-2 builder-scroll" style="height: 520px; max-height: 520px">
                 <template x-for="(soal, i) in form.soal_pengetahuan" :key="soal._key">
                     <div class="soal-row">
                         <div class="row-num" x-text="i+1"></div>
@@ -419,8 +440,8 @@
                 </div>
             </div>
 
-            {{-- Area List Kategori Keterampilan (Diperluas agar scrolling nyaman) --}}
-            <div class="p-4 flex-1 flex flex-col gap-4 overflow-y-auto" style="min-height: 480px; max-height: 750px">
+            {{-- Area List Kategori Keterampilan --}}
+            <div id="kategori-container" class="p-4 flex-1 flex flex-col gap-4 builder-scroll" style="height: 520px; max-height: 520px">
                 <template x-for="(kat, ki) in form.kategori_keterampilan" :key="kat._key">
                     <div class="kategori-card">
 
@@ -463,7 +484,7 @@
                         </div>
 
                         {{-- Indikator List per Kategori --}}
-                        <div class="px-3 pt-2.5 pb-2 bg-white flex flex-col gap-2 overflow-y-auto" style="max-height: 380px">
+                        <div :id="'indikator-list-' + ki" class="px-3 pt-2.5 pb-2 bg-white flex flex-col gap-2 builder-scroll" style="max-height: 250px">
                             <template x-for="(ind, ii) in kat.indikator" :key="ind._key">
                                 <div class="indikator-row">
                                     <div class="row-num" style="background:#10b981;font-size:.6rem" x-text="ii+1"></div>
@@ -501,7 +522,7 @@
                     </div>
                 </template>
 
-                <div x-show="form.kategori_keterampilan.length === 0" class="text-sm text-gray-400 text-center py-12 italic bg-slate-50/50 rounded-lg border border-dashed border-gray-200">
+                <div x-show="form.kategori_keterampilan.length === 0" class="flex-1 flex items-center justify-center py-12 text-sm text-gray-400 text-center italic bg-slate-50/50 rounded-lg border border-dashed border-gray-200">
                     Belum ada kategori keterampilan. Klik tombol "Tambah Kategori Keterampilan" di bawah.
                 </div>
             </div>
@@ -814,6 +835,10 @@ function instrumenBuilder() {
         addSoal() {
             this.form.soal_pengetahuan.push({ _key: mk(), id: null, pertanyaan: '' });
             this.$nextTick(() => {
+                const container = document.getElementById('soal-container');
+                if (container) {
+                    container.scrollTop = container.scrollHeight;
+                }
                 const inputs = this.$el.querySelectorAll('.soal-row textarea');
                 inputs[inputs.length - 1]?.focus();
             });
@@ -828,6 +853,14 @@ function instrumenBuilder() {
                 bobot: 0,
                 indikator: [],
             });
+            this.$nextTick(() => {
+                const container = document.getElementById('kategori-container');
+                if (container) {
+                    container.scrollTop = container.scrollHeight;
+                    const inputs = container.querySelectorAll('.kategori-header input[type="text"]');
+                    inputs[inputs.length - 1]?.focus();
+                }
+            });
         },
         removeKategori(i) {
             if (!confirm('Hapus kategori ini beserta semua indikatornya?')) return;
@@ -837,6 +870,14 @@ function instrumenBuilder() {
         // ── Indikator ──
         addIndikator(ki) {
             this.form.kategori_keterampilan[ki].indikator.push({ _key: mk(), id: null, nama_indikator: '' });
+            this.$nextTick(() => {
+                const list = document.getElementById('indikator-list-' + ki);
+                if (list) {
+                    list.scrollTop = list.scrollHeight;
+                    const inputs = list.querySelectorAll('input[type="text"]');
+                    inputs[inputs.length - 1]?.focus();
+                }
+            });
         },
         removeIndikator(ki, ii) {
             this.form.kategori_keterampilan[ki].indikator.splice(ii, 1);
