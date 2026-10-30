@@ -38,6 +38,7 @@
         border: 1px solid #e2e8f0;
         border-radius: .5rem;
         transition: all .15s;
+        flex-shrink: 0;
     }
     .soal-row:hover { background: #f1f5f9; border-color: #cbd5e1; }
     .indikator-row {
@@ -65,6 +66,7 @@
         transition: border-color .2s;
         background: #fff;
         overflow: hidden;
+        flex-shrink: 0;
     }
     .kategori-card:focus-within { border-color: #8b5cf6; }
     .kategori-header {
@@ -122,7 +124,7 @@
         position: fixed; inset: 0;
         background: rgba(0,0,0,.55);
         backdrop-filter: blur(3px);
-        z-index: 9800;
+        z-index: 100000;
         display: flex; align-items: center; justify-content: center;
         padding: 1rem;
     }
@@ -144,6 +146,8 @@
         max-height: 100vh !important;
         border-radius: 0 !important;
         width: 100vw !important;
+        height: 100vh !important;
+        z-index: 100000 !important;
     }
     .import-modal-box.positioned {
         position: fixed;
@@ -172,7 +176,7 @@
         position: fixed; inset: 0;
         background: rgba(0,0,0,.55);
         backdrop-filter: blur(3px);
-        z-index: 9750;
+        z-index: 99999;
         display: flex; align-items: center; justify-content: center;
         padding: 1rem;
     }
@@ -194,6 +198,8 @@
         max-height: 100vh !important;
         border-radius: 0 !important;
         width: 100vw !important;
+        height: 100vh !important;
+        z-index: 99999 !important;
     }
     .indikator-modal-box.positioned {
         position: fixed;
@@ -415,7 +421,7 @@
 
             <div id="soal-container" class="p-4 flex-1 flex flex-col gap-2 builder-scroll" style="height: 520px; max-height: 520px">
                 <template x-for="(soal, i) in form.soal_pengetahuan" :key="soal._key">
-                    <div class="soal-row">
+                    <div class="soal-row shrink-0">
                         <div class="row-num" x-text="i+1"></div>
                         <textarea x-model="soal.pertanyaan"
                             rows="2"
@@ -494,7 +500,7 @@
             {{-- Area List Kategori Keterampilan (Ringkas & Bersih, Indikator dikelola via Modal) --}}
             <div id="kategori-container" class="p-4 flex-1 flex flex-col gap-3.5 builder-scroll" style="height: 520px; max-height: 520px">
                 <template x-for="(kat, ki) in form.kategori_keterampilan" :key="kat._key">
-                    <div class="kategori-card shadow-xs">
+                    <div class="kategori-card shadow-xs shrink-0">
 
                         {{-- Header Kategori --}}
                         <div class="kategori-header">
@@ -620,8 +626,16 @@
     {{-- ═══════════════════════════════════════════════════
          MODAL KELOLA INDIKATOR KETERAMPILAN (Lega, Interaktif, Draggable, Maximizable)
     ═══════════════════════════════════════════════════ --}}
-    <template x-if="indikatorModal.open && currentKat">
-        <div class="indikator-modal-backdrop" style="z-index:9750">
+    <template x-teleport="body">
+        <div x-show="indikatorModal.open && currentKat"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="indikator-modal-backdrop"
+             style="z-index:99999; display:none;">
 
             <div x-ref="indikatorModalBox"
                  class="indikator-modal-box"
@@ -648,35 +662,35 @@
                             <span class="text-xs font-black px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200"
                                 x-text="'Kategori ' + ((indikatorModal.katIndex || 0) + 1)"></span>
                             <h3 class="font-black text-gray-900 text-sm truncate"
-                                x-text="currentKat.nama_kategori ? currentKat.nama_kategori : '(Nama Kategori Belum Diisi)'"></h3>
+                                x-text="currentKat?.nama_kategori ? currentKat.nama_kategori : '(Nama Kategori Belum Diisi)'"></h3>
                         </div>
                         <p class="text-[11px] text-gray-500">Kelola dan susun daftar indikator penilaian keterampilan untuk kategori ini</p>
                     </div>
 
                     <div class="flex items-center gap-1.5 shrink-0 px-2.5 py-1 bg-white/90 rounded-lg border border-emerald-200">
                         <span class="text-xs font-bold text-gray-500">Bobot:</span>
-                        <span class="text-xs font-black text-emerald-700" x-text="(currentKat.bobot || 0) + '%'"></span>
+                        <span class="text-xs font-black text-emerald-700" x-text="(currentKat?.bobot || 0) + '%'"></span>
                     </div>
 
                     {{-- Maximize button --}}
                     <button @click="toggleIndikatorMaximize()"
-                        class="w-7 h-7 rounded-lg flex items-center justify-center text-gray-500 hover:bg-white/80 hover:text-gray-800 transition-colors flex-shrink-0 cursor-pointer"
+                        type="button"
+                        class="w-7 h-7 rounded-lg flex items-center justify-center text-gray-600 hover:bg-white/90 hover:text-gray-900 transition-colors flex-shrink-0 cursor-pointer"
                         :title="indikatorModal.maximized ? 'Kembalikan ukuran' : 'Perbesar penuh'"
                         @mousedown.stop>
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <template x-if="!indikatorModal.maximized">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
-                            </template>
-                            <template x-if="indikatorModal.maximized">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"/>
-                            </template>
+                        <svg x-show="!indikatorModal.maximized" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+                        </svg>
+                        <svg x-show="indikatorModal.maximized" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display:none">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"/>
                         </svg>
                     </button>
 
                     {{-- Close button (only way to close) --}}
                     <button @click="closeIndikatorModal()"
+                        type="button"
                         class="w-7 h-7 rounded-lg flex items-center justify-center bg-red-100 text-red-500 hover:bg-red-500 hover:text-white transition-colors flex-shrink-0 font-black text-base cursor-pointer"
                         title="Tutup modal"
                         @mousedown.stop>
@@ -707,9 +721,10 @@
 
                     <div class="flex items-center gap-3 ml-auto">
                         <span class="text-xs text-gray-500 font-semibold">
-                            Total: <strong class="text-emerald-700 font-black" x-text="currentKat.indikator.length"></strong> indikator
+                            Total: <strong class="text-emerald-700 font-black" x-text="currentKat ? currentKat.indikator.length : 0"></strong> indikator
                         </span>
-                        <button @click="openImportModal('indikator', indikatorModal.katIndex, currentKat.nama_kategori)"
+                        <button @click="openImportModal('indikator', indikatorModal.katIndex, currentKat?.nama_kategori)"
+                            type="button"
                             class="btn-import-ind text-xs" title="Import indikator dari file Excel">
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
@@ -721,7 +736,7 @@
 
                 {{-- ── Body Modal: Daftar Indikator (Lega & Scrollable) ── --}}
                 <div id="modal-indikator-list" class="indikator-modal-body builder-scroll p-4 space-y-3">
-                    <template x-for="(ind, ii) in currentKat.indikator" :key="ind._key">
+                    <template x-for="(ind, ii) in (currentKat ? currentKat.indikator : [])" :key="ind._key">
                         <div class="indikator-row flex items-center gap-3 p-3 bg-slate-50/80 border border-gray-200 rounded-xl hover:bg-slate-100/90 transition-all">
                             <div class="row-num shrink-0" style="background:#10b981;font-size:.65rem;width:1.75rem;height:1.75rem" x-text="ii+1"></div>
 
@@ -745,7 +760,7 @@
                     </template>
 
                     {{-- Empty State --}}
-                    <div x-show="currentKat.indikator.length === 0"
+                    <div x-show="!currentKat || currentKat.indikator.length === 0"
                         class="text-center py-12 px-4 bg-slate-50 rounded-xl border border-dashed border-gray-300 flex flex-col items-center justify-center gap-3">
                         <span class="text-3xl">📝</span>
                         <div class="space-y-1">
@@ -756,7 +771,7 @@
 
                     {{-- Tombol Tambah Indikator Baru --}}
                     <div class="pt-2">
-                        <button @click="addIndikator(indikatorModal.katIndex)" class="btn-add py-2.5 text-sm" style="border-color:#10b981;color:#059669;background:#f0fdf4">
+                        <button @click="addIndikator(indikatorModal.katIndex)" type="button" class="btn-add py-2.5 text-sm" style="border-color:#10b981;color:#059669;background:#f0fdf4">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                             </svg>
@@ -771,6 +786,7 @@
                         💡 Seluruh indikator otomatis tersimpan di dalam instrumen ini.
                     </p>
                     <button @click="closeIndikatorModal()"
+                        type="button"
                         class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer">
                         Selesai & Tutup
                     </button>
@@ -782,8 +798,16 @@
     {{-- ═══════════════════════════════════════════════════
          IMPORT MODAL (shared for soal & indikator)
     ═══════════════════════════════════════════════════ --}}
-    <template x-if="importModal.open">
-        <div class="import-modal-backdrop" style="z-index:9800">
+    <template x-teleport="body">
+        <div x-show="importModal.open"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="import-modal-backdrop"
+             style="z-index:100000; display:none;">
 
             <div x-ref="importModalBox"
                  class="import-modal-box"
@@ -816,18 +840,17 @@
 
                     {{-- Maximize button --}}
                     <button @click="toggleImportMaximize()"
-                        class="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:bg-white/60 hover:text-gray-700 transition-colors flex-shrink-0"
+                        type="button"
+                        class="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:bg-white/60 hover:text-gray-700 transition-colors flex-shrink-0 cursor-pointer"
                         :title="importModal.maximized ? 'Kembalikan ukuran' : 'Perbesar'"
                         @mousedown.stop>
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <template x-if="!importModal.maximized">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
-                            </template>
-                            <template x-if="importModal.maximized">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"/>
-                            </template>
+                        <svg x-show="!importModal.maximized" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+                        </svg>
+                        <svg x-show="importModal.maximized" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display:none">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"/>
                         </svg>
                     </button>
 
