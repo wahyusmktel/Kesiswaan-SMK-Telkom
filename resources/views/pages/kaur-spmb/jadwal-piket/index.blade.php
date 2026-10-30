@@ -186,14 +186,14 @@
                             Jadwalkan Bergilir
                         </button>
 
-                        {{-- Print Official SK View --}}
-                        <a href="{{ route('kaur-spmb.jadwal-piket.print', ['tahun_ajaran' => $selectedYear]) }}" target="_blank"
+                        {{-- Cetak Surat Tugas Per-Pekan (Interactive Modal) --}}
+                        <button type="button" @click="openModalCetakSuratTugas()"
                             class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-md shadow-sm transition-colors">
                             <svg class="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                             </svg>
                             Cetak Surat Tugas
-                        </a>
+                        </button>
                     </div>
 
                 </div>
@@ -373,6 +373,14 @@
                                                             </select>
                                                         </form>
 
+                                                        {{-- Cetak Surat Tugas Tanggal Ini --}}
+                                                        <button type="button" @click="openModalCetakSuratTugas({{ $tgl->id }})"
+                                                            class="p-1 text-slate-400 hover:text-slate-700 rounded transition-colors" title="Cetak Surat Perintah Tugas Pekan Ini">
+                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                                            </svg>
+                                                        </button>
+
                                                         <form method="POST" action="{{ route('kaur-spmb.jadwal-piket.tanggal.destroy', $tgl) }}"
                                                             onsubmit="return confirm('Hapus tanggal ini?')">
                                                             @csrf
@@ -471,16 +479,26 @@
                                             </form>
                                         </td>
                                         <td class="px-4 py-3 text-center whitespace-nowrap">
-                                            <form method="POST" action="{{ route('kaur-spmb.jadwal-piket.tanggal.destroy', $item) }}"
-                                                onsubmit="return confirm('Hapus tanggal piket ini?')">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="p-1 text-slate-400 hover:text-red-600 rounded transition-colors" title="Hapus Tanggal">
+                                            <div class="flex items-center justify-center gap-1.5">
+                                                {{-- Cetak Surat Tugas Tanggal Ini --}}
+                                                <button type="button" @click="openModalCetakSuratTugas({{ $item->id }})"
+                                                    class="p-1 text-slate-400 hover:text-slate-800 rounded transition-colors" title="Cetak Surat Perintah Tugas Pekan Ini">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                                                     </svg>
                                                 </button>
-                                            </form>
+
+                                                <form method="POST" action="{{ route('kaur-spmb.jadwal-piket.tanggal.destroy', $item) }}"
+                                                    onsubmit="return confirm('Hapus tanggal piket ini?')">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="p-1 text-slate-400 hover:text-red-600 rounded transition-colors" title="Hapus Tanggal">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        </svg>
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </td>
                                     </tr>
                                 @empty
@@ -918,12 +936,214 @@
             </div>
         </template>
 
+        {{-- ======================================================== --}}
+        {{-- INTERACTIVE MODAL 5: CETAK SURAT PERINTAH TUGAS SPMB   --}}
+        {{-- ======================================================== --}}
+        <template x-teleport="body">
+            <div x-show="modalCetakSuratTugas.open"
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100"
+                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"
+                class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[99999]"
+                style="display: none;">
+
+                <div x-ref="modalCetakSuratTugasBox"
+                    class="bg-white rounded-lg shadow-2xl border border-slate-300 overflow-hidden flex flex-col transition-all duration-150 max-h-[92vh]"
+                    :class="{
+                        'fixed inset-4 w-auto h-auto': modalCetakSuratTugas.maximized,
+                        'w-full max-w-2xl': !modalCetakSuratTugas.maximized && modalCetakSuratTugas.pos.x === null
+                    }"
+                    :style="!modalCetakSuratTugas.maximized && modalCetakSuratTugas.pos.x !== null ? 'position: fixed; left:' + modalCetakSuratTugas.pos.x + 'px; top:' + modalCetakSuratTugas.pos.y + 'px; width: 680px;' : ''">
+
+                    {{-- Draggable Header --}}
+                    <div class="px-4 py-3 bg-slate-100 border-b border-slate-200 flex items-center justify-between select-none flex-shrink-0"
+                        :class="!modalCetakSuratTugas.maximized ? 'cursor-grab active:cursor-grabbing' : ''"
+                        @mousedown="startDragModal($event, 'modalCetakSuratTugas')">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-red-600"></span>
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800">
+                                Cetak Surat Perintah Tugas Piket SPMB (Per-Pekan)
+                            </h3>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <button type="button" @click="toggleMaximize('modalCetakSuratTugas')"
+                                class="p-1 text-slate-400 hover:text-slate-700 rounded transition-colors" title="Maximize/Restore">
+                                <svg x-show="!modalCetakSuratTugas.maximized" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                                </svg>
+                                <svg x-show="modalCetakSuratTugas.maximized" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display:none;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9L4 4m0 0v4m0-4h4m6 6l5-5m-5 5v-4m0 4h4M9 15l-5 5m0 0v-4m0 4h4m11-5l-5 5m5-5v4m0-4h-4" />
+                                </svg>
+                            </button>
+                            <button type="button" @click="closeModal('modalCetakSuratTugas')"
+                                class="p-1 text-slate-400 hover:text-red-600 rounded transition-colors" title="Tutup">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- Form Body --}}
+                    <form action="{{ route('kaur-spmb.jadwal-piket.surat-tugas') }}" method="GET" target="_blank" class="flex-1 overflow-y-auto p-5 space-y-4">
+                        
+                        {{-- 1. Pilihan Tanggal / Pekan Piket --}}
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">
+                                Pilih Hari / Pekan Piket SPMB <span class="text-red-500">*</span>
+                            </label>
+                            <select name="tanggal_id" x-model="modalCetakSuratTugas.selectedTanggalId" @change="onTanggalSuratChanged()" required
+                                class="w-full text-xs px-3 py-2 border border-slate-300 rounded-md focus:border-red-500 focus:ring-red-500 font-medium bg-white">
+                                <template x-for="opt in suratTugasOptions" :key="opt.id">
+                                    <option :value="opt.id" x-text="opt.label" :selected="opt.id == modalCetakSuratTugas.selectedTanggalId"></option>
+                                </template>
+                            </select>
+                            <p class="text-[11px] text-slate-400 mt-1">
+                                Pilih hari Sabtu tugas yang akan diterbitkan Surat Perintah Tugasnya.
+                            </p>
+                        </div>
+
+                        {{-- 2. Metadata Pengaturan Surat --}}
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 bg-slate-50 rounded-md border border-slate-200">
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-700 mb-1">Nomor Surat Tugas</label>
+                                <input type="text" name="nomor_surat" x-model="modalCetakSuratTugas.nomorSurat" required
+                                    class="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded-md focus:border-red-500 focus:ring-red-500 font-mono">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-700 mb-1">Tanggal Surat (Titi Mangsa)</label>
+                                <input type="text" name="tanggal_surat" x-model="modalCetakSuratTugas.tanggalSurat" required
+                                    placeholder="Contoh: 23 Oktober 2026"
+                                    class="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded-md focus:border-red-500 focus:ring-red-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-700 mb-1">Tempat Penugasan</label>
+                                <input type="text" name="tempat" x-model="modalCetakSuratTugas.tempat" required
+                                    class="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded-md focus:border-red-500 focus:ring-red-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-700 mb-1">Waktu Penugasan</label>
+                                <input type="text" name="waktu" x-model="modalCetakSuratTugas.waktu" required
+                                    class="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded-md focus:border-red-500 focus:ring-red-500">
+                            </div>
+                        </div>
+
+                        {{-- 3. Info TTE Digital Kepala Sekolah --}}
+                        <div class="p-3 rounded-md border text-xs flex items-start gap-2.5"
+                            :class="isTteReady ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-slate-50 border-slate-200 text-slate-700'">
+                            <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <template x-if="isTteReady">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                </template>
+                                <template x-if="!isTteReady">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </template>
+                            </svg>
+                            <div class="leading-relaxed">
+                                <template x-if="isTteReady">
+                                    <div>
+                                        <strong class="font-bold">Tanda Tangan Digital (TTE) Aktif:</strong>
+                                        Surat tugas ini akan langsung ditandatangani secara digital oleh Kepala Sekolah (QR Code verifikasi resmi terarsip di sistem).
+                                    </div>
+                                </template>
+                                <template x-if="!isTteReady">
+                                    <div>
+                                        <strong class="font-bold">Tanda Tangan Konvensional:</strong>
+                                        Fitur TTE Surat Tugas SPMB belum aktif pada akun Kepala Sekolah. Surat tugas akan dicetak dengan kolom tanda tangan biasa.
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        {{-- 4. Preview Anggota & Rincian Tugas --}}
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between">
+                                <label class="block text-xs font-semibold text-slate-700">
+                                    Rincian Tugas Anggota Piket (<span x-text="modalCetakSuratTugas.petugas.length"></span> Petugas)
+                                </label>
+                                <span class="text-[11px] text-slate-400">Rincian tugas dapat disesuaikan sebelum dicetak</span>
+                            </div>
+
+                            <div class="border border-slate-200 rounded-md overflow-hidden max-h-56 overflow-y-auto">
+                                <table class="w-full text-xs text-left">
+                                    <thead class="bg-slate-100 text-slate-700 font-semibold sticky top-0 border-b border-slate-200 z-10">
+                                        <tr>
+                                            <th class="px-2 py-1.5 w-10 text-center">NO</th>
+                                            <th class="px-3 py-1.5 w-44">NAMA</th>
+                                            <th class="px-2 py-1.5 w-20 text-center">JABATAN</th>
+                                            <th class="px-3 py-1.5">TUGAS</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100">
+                                        <template x-for="(p, index) in modalCetakSuratTugas.petugas" :key="p.id">
+                                            <tr class="hover:bg-slate-50/50">
+                                                <td class="px-2 py-2 text-center text-slate-500 font-medium" x-text="index + 1"></td>
+                                                <td class="px-3 py-2 font-medium text-slate-800" x-text="p.nama"></td>
+                                                <td class="px-2 py-2 text-center">
+                                                    <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold"
+                                                        :class="p.jabatan.toLowerCase().includes('tpa') ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-blue-50 text-blue-700 border border-blue-200'"
+                                                        x-text="p.jabatan"></span>
+                                                </td>
+                                                <td class="px-3 py-2">
+                                                    <textarea :name="'tugas[' + p.id + ']'" x-model="p.tugas" rows="2"
+                                                        class="w-full text-xs px-2 py-1 border border-slate-300 rounded focus:border-red-500 focus:ring-0 leading-tight"></textarea>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                        <template x-if="modalCetakSuratTugas.petugas.length === 0">
+                                            <tr>
+                                                <td colspan="4" class="px-3 py-6 text-center text-slate-400">
+                                                    Tidak ada petugas terdaftar di kelompok ini.
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {{-- Footer Aksi --}}
+                        <div class="pt-3 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200">
+                            <a href="{{ route('kaur-spmb.jadwal-piket.print', ['tahun_ajaran' => $selectedYear]) }}" target="_blank"
+                                class="inline-flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-900 font-medium hover:underline">
+                                <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Cetak Matriks SK Lengkap (1 Tahun)
+                            </a>
+
+                            <div class="flex items-center gap-2">
+                                <button type="button" @click="closeModal('modalCetakSuratTugas')"
+                                    class="px-3.5 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors">
+                                    Batal
+                                </button>
+                                <button type="submit"
+                                    class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-md shadow-sm transition-colors">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                    </svg>
+                                    Buka & Cetak Surat Tugas
+                                </button>
+                            </div>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </template>
+
     </div>
 
     {{-- JAVASCRIPT / ALPINE LOGIC --}}
     <script>
         function jadwalPiketPage() {
             return {
+                suratTugasOptions: @json($suratTugasOptions),
+                isTteReady: {{ $isTteReady ? 'true' : 'false' }},
+
                 modalKelompok: {
                     open: false,
                     isEdit: false,
@@ -958,6 +1178,18 @@
                     maximized: false,
                     pos: { x: null, y: null },
                     drag: { active: false, startX: 0, startY: 0, initialX: 0, initialY: 0 }
+                },
+                modalCetakSuratTugas: {
+                    open: false,
+                    maximized: false,
+                    pos: { x: null, y: null },
+                    drag: { active: false, startX: 0, startY: 0, initialX: 0, initialY: 0 },
+                    selectedTanggalId: null,
+                    nomorSurat: '',
+                    tanggalSurat: '',
+                    tempat: 'SMK Telkom Lampung',
+                    waktu: 'Pukul 07.30 sd 12.00 WIB',
+                    petugas: []
                 },
 
                 init() {
@@ -1014,6 +1246,47 @@
                     this.modalGenerate.open = true;
                 },
 
+                openModalCetakSuratTugas(tanggalId = null) {
+                    let selected = null;
+                    if (tanggalId && this.suratTugasOptions.length > 0) {
+                        selected = this.suratTugasOptions.find(o => o.id == tanggalId);
+                    }
+                    if (!selected && this.suratTugasOptions.length > 0) {
+                        selected = this.suratTugasOptions[0];
+                    }
+
+                    if (selected) {
+                        this.modalCetakSuratTugas.selectedTanggalId = selected.id;
+                        this.modalCetakSuratTugas.nomorSurat = selected.nomor_surat;
+                        this.modalCetakSuratTugas.tanggalSurat = selected.tanggal_surat;
+                        this.modalCetakSuratTugas.tempat = selected.tempat || 'SMK Telkom Lampung';
+                        this.modalCetakSuratTugas.waktu = selected.waktu || 'Pukul 07.30 sd 12.00 WIB';
+                        this.modalCetakSuratTugas.petugas = JSON.parse(JSON.stringify(selected.petugas || []));
+                    } else {
+                        this.modalCetakSuratTugas.selectedTanggalId = null;
+                        this.modalCetakSuratTugas.nomorSurat = '1774/SMKTEL-LPG/TATA.01/X/2026';
+                        this.modalCetakSuratTugas.tanggalSurat = '';
+                        this.modalCetakSuratTugas.tempat = 'SMK Telkom Lampung';
+                        this.modalCetakSuratTugas.waktu = 'Pukul 07.30 sd 12.00 WIB';
+                        this.modalCetakSuratTugas.petugas = [];
+                    }
+
+                    this.modalCetakSuratTugas.pos = { x: null, y: null };
+                    this.modalCetakSuratTugas.maximized = false;
+                    this.modalCetakSuratTugas.open = true;
+                },
+
+                onTanggalSuratChanged() {
+                    const found = this.suratTugasOptions.find(o => o.id == this.modalCetakSuratTugas.selectedTanggalId);
+                    if (found) {
+                        this.modalCetakSuratTugas.nomorSurat = found.nomor_surat;
+                        this.modalCetakSuratTugas.tanggalSurat = found.tanggal_surat;
+                        this.modalCetakSuratTugas.tempat = found.tempat || 'SMK Telkom Lampung';
+                        this.modalCetakSuratTugas.waktu = found.waktu || 'Pukul 07.30 sd 12.00 WIB';
+                        this.modalCetakSuratTugas.petugas = JSON.parse(JSON.stringify(found.petugas || []));
+                    }
+                },
+
                 closeModal(key) {
                     this[key].open = false;
                 },
@@ -1024,7 +1297,7 @@
 
                 startDragModal(e, key) {
                     if (this[key].maximized) return;
-                    if (e.target.closest('button') || e.target.closest('input')) return;
+                    if (e.target.closest('button') || e.target.closest('input') || e.target.closest('select') || e.target.closest('textarea')) return;
 
                     const refName = key + 'Box';
                     const el = this.$refs[refName];
@@ -1044,7 +1317,7 @@
                 },
 
                 onMouseMove(e) {
-                    const keys = ['modalKelompok', 'modalPetugas', 'modalTanggal', 'modalGenerate'];
+                    const keys = ['modalKelompok', 'modalPetugas', 'modalTanggal', 'modalGenerate', 'modalCetakSuratTugas'];
                     keys.forEach(key => {
                         if (this[key] && this[key].drag && this[key].drag.active) {
                             const dx = e.clientX - this[key].drag.startX;
@@ -1056,7 +1329,7 @@
                 },
 
                 onMouseUp() {
-                    const keys = ['modalKelompok', 'modalPetugas', 'modalTanggal', 'modalGenerate'];
+                    const keys = ['modalKelompok', 'modalPetugas', 'modalTanggal', 'modalGenerate', 'modalCetakSuratTugas'];
                     keys.forEach(key => {
                         if (this[key] && this[key].drag) {
                             this[key].drag.active = false;

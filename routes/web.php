@@ -1545,6 +1545,7 @@ Route::middleware(['auth', 'role:Kaur SPMB|KAUR SPMB|Super Admin'])->prefix('kau
 
         Route::post('/generate-rotating-dates', [\App\Http\Controllers\KaurSpmb\JadwalPiketController::class, 'generateRotatingDates'])->name('generate-dates');
         Route::get('/print', [\App\Http\Controllers\KaurSpmb\JadwalPiketController::class, 'print'])->name('print');
+        Route::get('/surat-tugas', [\App\Http\Controllers\KaurSpmb\JadwalPiketController::class, 'suratTugas'])->name('surat-tugas');
     });
 
     Route::prefix('absensi')->name('absensi.')->group(function () {

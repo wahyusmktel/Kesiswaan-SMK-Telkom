@@ -49,6 +49,10 @@ class KaurSpmbRoleSeeder extends Seeder
             }
         }
 
+        // Enable auto_sign_surat_tugas_spmb for Kepala Sekolah digital signature
+        \App\Models\UserDigitalSignature::whereIn('user_id', User::role('Kepala Sekolah')->pluck('id'))
+            ->update(['auto_sign_surat_tugas_spmb' => true]);
+
         // Also if user with id 1 exists
         $userOne = User::find(1);
         if ($userOne && ! $userOne->hasRole('Kaur SPMB')) {

@@ -4,15 +4,19 @@ namespace App\Http\Controllers\KaurSpmb;
 
 use App\Http\Controllers\Controller;
 use App\Models\AppSetting;
+use App\Models\DigitalDocument;
 use App\Models\MasterGuru;
 use App\Models\SpmbPiketKelompok;
 use App\Models\SpmbPiketPetugas;
 use App\Models\SpmbPiketTanggal;
 use App\Models\TahunPelajaran;
 use App\Models\User;
+use App\Models\UserDigitalSignature;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class JadwalPiketController extends Controller
 {
@@ -111,6 +115,57 @@ class JadwalPiketController extends Controller
         $masterGurus = MasterGuru::orderBy('nama_lengkap', 'asc')->get(['id', 'nama_lengkap', 'nik', 'user_id']);
         $users = User::orderBy('name', 'asc')->get(['id', 'name', 'email']);
 
+        // 6. Tanggal options for Cetak Surat Tugas Modal
+        $allTanggals = SpmbPiketTanggal::whereHas('kelompok', function ($q) use ($selectedYear) {
+            $q->where('tahun_ajaran', $selectedYear);
+        })
+        ->with(['kelompok.petugas' => function ($q) {
+            $q->orderBy('urutan', 'asc');
+        }])
+        ->orderBy('tanggal', 'asc')
+        ->get();
+
+        $romawiMap = [1=>'I', 2=>'II', 3=>'III', 4=>'IV', 5=>'V', 6=>'VI', 7=>'VII', 8=>'VIII', 9=>'IX', 10=>'X', 11=>'XI', 12=>'XII'];
+
+        $suratTugasOptions = $allTanggals->map(function ($tgl) use ($romawiMap) {
+            $carbon = Carbon::parse($tgl->tanggal);
+            $blnRomawi = $romawiMap[$carbon->month] ?? 'X';
+            $thn = $carbon->year;
+            $tglSurat = $carbon->copy()->subDay()->locale('id')->translatedFormat('d F Y');
+
+            $petugas = $tgl->kelompok?->petugas?->map(function ($p, $idx) {
+                $urutan = $idx + 1;
+                return [
+                    'id' => $p->id,
+                    'urutan' => $urutan,
+                    'nama' => $p->nama_petugas,
+                    'jabatan' => $p->jabatan ?: 'Guru',
+                    'tugas' => self::defaultTugasForPetugas($urutan, $p->jabatan ?? ''),
+                ];
+            })->values() ?? collect();
+
+            return [
+                'id' => $tgl->id,
+                'tanggal' => $tgl->tanggal->toDateString(),
+                'label' => Carbon::parse($tgl->tanggal)->locale('id')->isoFormat('dddd, D MMMM Y') . ' — ' . ($tgl->kelompok?->nama_kelompok ?? 'Kelompok'),
+                'kelompok_nama' => $tgl->kelompok?->nama_kelompok ?? '',
+                'hari_tanggal' => Carbon::parse($tgl->tanggal)->locale('id')->isoFormat('dddd, D MMMM Y'),
+                'nomor_surat' => "1774/SMKTEL-LPG/TATA.01/{$blnRomawi}/{$thn}",
+                'tanggal_surat' => $tglSurat,
+                'waktu' => $tgl->waktu ?: 'Pukul 07.30 sd 12.00 WIB',
+                'tempat' => 'SMK Telkom Lampung',
+                'petugas' => $petugas,
+            ];
+        })->values();
+
+        // 7. Check TTE status for Kepala Sekolah
+        $kepsekUser = User::whereHas('roles', fn ($r) => $r->where('name', 'Kepala Sekolah'))
+            ->where('name', 'like', '%Dedi Eko%')
+            ->first()
+            ?? User::role('Kepala Sekolah')->first();
+        $kepsekSig = $kepsekUser ? UserDigitalSignature::where('user_id', $kepsekUser->id)->first() : null;
+        $isTteReady = (bool) ($kepsekSig?->isReady() && $kepsekSig?->auto_sign_surat_tugas_spmb);
+
         return view('pages.kaur-spmb.jadwal-piket.index', compact(
             'availableYears',
             'selectedYear',
@@ -124,7 +179,10 @@ class JadwalPiketController extends Controller
             'totalHariPiket',
             'piketTerdekat',
             'masterGurus',
-            'users'
+            'users',
+            'suratTugasOptions',
+            'isTteReady',
+            'kepsekUser'
         ));
     }
 
@@ -386,5 +444,170 @@ class JadwalPiketController extends Controller
         ];
 
         return view('pages.kaur-spmb.jadwal-piket.print', compact('kelompoks', 'meta', 'tahunAjaran'));
+    }
+
+    /**
+     * Map default task distribution matching official SPMB guidelines.
+     */
+    public static function defaultTugasForPetugas(int $urutan, string $jabatan): string
+    {
+        if (stripos($jabatan, 'TPA') !== false || stripos($jabatan, 'Tenaga') !== false || $urutan >= 17) {
+            return "Menyiapkan Ruangan Tes";
+        }
+
+        return match ($urutan) {
+            1 => "1) Penerima Tamu\n2) Mendata Casis yang hadir\n3) Mengarahkan Casis dan Wali ke Ruang Tes",
+            2, 3, 7 => "Tes Buta Warna",
+            4, 5 => "Live Sosial Media Tiktok",
+            6, 8, 10, 11, 12 => "Wawancara Orang Tua",
+            default => "Wawancara Siswa",
+        };
+    }
+
+    /**
+     * Surat Perintah Tugas view (per-pekan/tanggal) with Kop Surat and Digital Signature.
+     */
+    public function suratTugas(Request $request)
+    {
+        $tanggalId = $request->get('tanggal_id');
+        $tanggal = null;
+
+        if ($tanggalId) {
+            $tanggal = SpmbPiketTanggal::with(['kelompok.petugas' => function ($q) {
+                $q->orderBy('urutan', 'asc');
+            }])->find($tanggalId);
+        }
+
+        if (! $tanggal) {
+            $tanggal = SpmbPiketTanggal::with(['kelompok.petugas' => function ($q) {
+                $q->orderBy('urutan', 'asc');
+            }])->orderBy('tanggal', 'asc')->firstOrFail();
+        }
+
+        $kelompok = $tanggal->kelompok;
+        $tahunAjaran = $kelompok?->tahun_ajaran ?: '2027/2028';
+
+        $carbonTgl = Carbon::parse($tanggal->tanggal);
+        $romawiMap = [1=>'I', 2=>'II', 3=>'III', 4=>'IV', 5=>'V', 6=>'VI', 7=>'VII', 8=>'VIII', 9=>'IX', 10=>'X', 11=>'XI', 12=>'XII'];
+        $blnRomawi = $romawiMap[$carbonTgl->month] ?? 'X';
+        $thn = $carbonTgl->year;
+
+        $defaultNomor = "1774/SMKTEL-LPG/TATA.01/{$blnRomawi}/{$thn}";
+        $nomorSurat = $request->get('nomor_surat', $defaultNomor);
+
+        $defaultTglSurat = $carbonTgl->copy()->subDay()->locale('id')->translatedFormat('d F Y');
+        $tanggalSurat = $request->get('tanggal_surat', $defaultTglSurat);
+
+        $tempat = $request->get('tempat', 'SMK Telkom Lampung');
+        $waktu = $request->get('waktu', $tanggal->waktu ?: 'Pukul 07.30 sd 12.00 WIB');
+        $hariTanggalStr = Carbon::parse($tanggal->tanggal)->locale('id')->isoFormat('dddd, D MMMM Y');
+
+        // Petugas and their customized/default tasks
+        $customTugas = $request->get('tugas', []);
+        $petugasList = [];
+        $rawPetugas = $kelompok ? $kelompok->petugas : collect();
+
+        foreach ($rawPetugas as $idx => $p) {
+            $urutan = $idx + 1;
+            $tugasText = $customTugas[$p->id] ?? self::defaultTugasForPetugas($urutan, $p->jabatan ?? '');
+            $petugasList[] = [
+                'no' => $urutan,
+                'nama' => $p->nama_petugas,
+                'jabatan' => $p->jabatan ?: 'Guru',
+                'tugas' => $tugasText,
+            ];
+        }
+
+        // Kop Surat UKK from AppSetting
+        $setting = AppSetting::first();
+        $kopBase64 = null;
+        $kopPath = $setting?->kop_surat_ukk;
+        if ($kopPath) {
+            if (Storage::disk('public')->exists($kopPath)) {
+                $kopData = Storage::disk('public')->get($kopPath);
+                $kopMime = Storage::disk('public')->mimeType($kopPath) ?: 'image/png';
+                $kopBase64 = 'data:' . $kopMime . ';base64,' . base64_encode($kopData);
+            } elseif (file_exists(storage_path('app/public/' . $kopPath))) {
+                $fullPath = storage_path('app/public/' . $kopPath);
+                $kopData = file_get_contents($fullPath);
+                $kopMime = mime_content_type($fullPath) ?: 'image/png';
+                $kopBase64 = 'data:' . $kopMime . ';base64,' . base64_encode($kopData);
+            } elseif (file_exists(public_path('storage/' . $kopPath))) {
+                $fullPath = public_path('storage/' . $kopPath);
+                $kopData = file_get_contents($fullPath);
+                $kopMime = mime_content_type($fullPath) ?: 'image/png';
+                $kopBase64 = 'data:' . $kopMime . ';base64,' . base64_encode($kopData);
+            }
+        }
+
+        // Kepala Sekolah User
+        $kepsekUser = User::whereHas('roles', fn ($r) => $r->where('name', 'Kepala Sekolah'))
+            ->where('name', 'like', '%Dedi Eko%')
+            ->first()
+            ?? User::role('Kepala Sekolah')->first();
+
+        $namaKepsek = $kepsekUser ? $kepsekUser->name : 'Dedi Eko Cahyono, S.Kom., Gr.';
+        $nipKepsek = '22880011';
+        $jabatanKepsek = 'Kepala Sekolah';
+
+        // Auto Digital Sign & Archive
+        $sig = $kepsekUser ? UserDigitalSignature::where('user_id', $kepsekUser->id)->first() : null;
+        $digitalDoc = null;
+        $qrCodeBase64 = null;
+
+        if ($kepsekUser && $sig?->isReady() && $sig->auto_sign_surat_tugas_spmb) {
+            $docTitle = "Surat Perintah Tugas Piket SPMB - {$hariTanggalStr}";
+
+            $digitalDoc = DigitalDocument::where('document_type', 'SURAT_TUGAS_PIKET_SPMB')
+                ->where('reference_id', $tanggal->id)
+                ->where('is_valid', true)
+                ->latest()
+                ->first();
+
+            if (! $digitalDoc) {
+                $hashParts = [
+                    'SURAT_TUGAS_PIKET_SPMB',
+                    (string) $tanggal->id,
+                    $nomorSurat,
+                    (string) $tanggal->tanggal->toDateString(),
+                    $namaKepsek,
+                ];
+
+                $digitalDoc = DigitalDocument::autoSign(
+                    $kepsekUser,
+                    'SURAT_TUGAS_PIKET_SPMB',
+                    $docTitle,
+                    $tanggal->id,
+                    $hashParts
+                );
+            }
+
+            if ($digitalDoc) {
+                $verifyUrl = route('verifikasi.dokumen', $digitalDoc->token);
+                $qrSvg = QrCode::format('svg')
+                    ->size(95)
+                    ->margin(0)
+                    ->generate($verifyUrl);
+                $qrCodeBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
+            }
+        }
+
+        return view('pages.kaur-spmb.jadwal-piket.surat-tugas', compact(
+            'tanggal',
+            'kelompok',
+            'tahunAjaran',
+            'nomorSurat',
+            'tanggalSurat',
+            'hariTanggalStr',
+            'tempat',
+            'waktu',
+            'petugasList',
+            'kopBase64',
+            'namaKepsek',
+            'nipKepsek',
+            'jabatanKepsek',
+            'digitalDoc',
+            'qrCodeBase64'
+        ));
     }
 }
