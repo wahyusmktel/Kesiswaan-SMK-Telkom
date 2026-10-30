@@ -1,28 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-            <div>
-                <nav class="flex text-xs text-slate-500 mb-1" aria-label="Breadcrumb">
-                    <ol class="inline-flex items-center space-x-1">
-                        <li><span>Beranda</span></li>
-                        <li><span class="mx-1">/</span></li>
-                        <li><span>Kaur SPMB</span></li>
-                        <li><span class="mx-1">/</span></li>
-                        <li class="font-semibold text-slate-800">Jadwal Piket</li>
-                    </ol>
-                </nav>
-                <h2 class="text-xl font-bold text-slate-900 tracking-tight">Jadwal Piket SPMB Pegawai</h2>
-                <p class="text-xs text-slate-500 mt-0.5">Penjadwalan piket SPMB hari Sabtu secara bergiliran bagi guru dan pegawai SMK Telkom Lampung</p>
-            </div>
-            <div class="flex items-center gap-2">
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold bg-red-50 text-red-700 border border-red-200">
-                    <svg class="w-3.5 h-3.5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    T.P {{ $selectedYear }}
-                </span>
-            </div>
-        </div>
+        <h2 class="font-bold text-xl text-gray-800 leading-tight">Jadwal Piket SPMB Pegawai</h2>
     </x-slot>
 
     <div class="py-6 w-full" x-data="jadwalPiketPage()" x-init="init()">

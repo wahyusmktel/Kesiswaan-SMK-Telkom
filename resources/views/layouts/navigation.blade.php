@@ -486,6 +486,7 @@
             @endcan
             <a href="{{ route('super-admin.spmb-fees.index') }}" class="submenu-item {{ request()->routeIs('super-admin.spmb-fees.*') ? 'submenu-item-active' : '' }}">Pembiayaan SPMB</a>
             <a href="{{ route('kaur-spmb.jadwal-piket.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.jadwal-piket.*') ? 'submenu-item-active' : '' }}">Jadwal Piket SPMB</a>
+            <a href="{{ route('kaur-spmb.absensi.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.absensi.*') ? 'submenu-item-active' : '' }}">Kelola Absensi Piket SPMB</a>
             <a href="{{ route('super-admin.sso-applications.index') }}" class="submenu-item {{ request()->routeIs('super-admin.sso-applications.*') ? 'submenu-item-active' : '' }}">Aplikasi SSO</a>
             @can('manage settings')
                 <a href="{{ route('super-admin.asset-sync.index') }}" class="submenu-item {{ request()->routeIs('super-admin.asset-sync.*') ? 'submenu-item-active' : '' }}">Sinkronisasi Aset</a>
@@ -513,6 +514,19 @@
             <span class="nav-text">Pengajuan Izin Pegawai</span>
         </a>
     </li>
+    @if(auth()->check() && (auth()->user()->isSpmbPiketOfficer() || auth()->user()->hasRole('Super Admin')))
+        <li>
+            <a href="{{ route('guru.spmb-piket.absensi.index') }}"
+                class="nav-link {{ request()->routeIs('guru.spmb-piket.absensi.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                <div class="nav-icon-container">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                    </svg>
+                </div>
+                <span class="nav-text">Absensi Piket SPMB</span>
+            </a>
+        </li>
+    @endif
 @endif
 
 {{-- ============================================================ --}}
@@ -1215,6 +1229,12 @@
                     class="submenu-item {{ request()->routeIs('guru.izin.*') ? 'submenu-item-active' : '' }}">
                     <span class="submenu-dot"></span>Pengajuan Izin Guru
                 </a>
+                @if(auth()->check() && (auth()->user()->isSpmbPiketOfficer() || auth()->user()->hasRole('Super Admin')))
+                    <a href="{{ route('guru.spmb-piket.absensi.index') }}"
+                        class="submenu-item {{ request()->routeIs('guru.spmb-piket.absensi.*') ? 'submenu-item-active' : '' }}">
+                        <span class="submenu-dot"></span>Absensi Piket SPMB
+                    </a>
+                @endif
                 <a href="{{ route('guru.dapodik.index') }}"
                     class="submenu-item {{ request()->routeIs('guru.dapodik.*') ? 'submenu-item-active' : '' }}">
                     <span class="submenu-dot"></span>Data Dapodik Saya
@@ -1236,6 +1256,10 @@
                     class="submenu-item {{ request()->routeIs('fingerprint-saya.*') ? 'submenu-item-active' : '' }}">Fingerprint Saya</a>
                 <a href="{{ route('guru.izin.index') }}"
                     class="submenu-item {{ request()->routeIs('guru.izin.*') ? 'submenu-item-active' : '' }}">Pengajuan Izin Guru</a>
+                @if(auth()->check() && (auth()->user()->isSpmbPiketOfficer() || auth()->user()->hasRole('Super Admin')))
+                    <a href="{{ route('guru.spmb-piket.absensi.index') }}"
+                        class="submenu-item {{ request()->routeIs('guru.spmb-piket.absensi.*') ? 'submenu-item-active' : '' }}">Absensi Piket SPMB</a>
+                @endif
                 <a href="{{ route('guru.dapodik.index') }}"
                     class="submenu-item {{ request()->routeIs('guru.dapodik.*') ? 'submenu-item-active' : '' }}">Data Dapodik Saya</a>
                 <a href="{{ route('tanda-tangan.index') }}"
@@ -3697,6 +3721,18 @@
                 </svg>
             </div>
             <span class="nav-text">Jadwal Piket SPMB</span>
+        </a>
+    </li>
+    <li>
+        <a href="{{ route('kaur-spmb.absensi.index') }}" title="Kelola Absensi Piket SPMB"
+            class="nav-link {{ request()->routeIs('kaur-spmb.absensi.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+            </div>
+            <span class="nav-text">Kelola Absensi Piket</span>
         </a>
     </li>
 @endif

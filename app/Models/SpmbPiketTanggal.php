@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SpmbPiketTanggal extends Model
 {
@@ -29,6 +30,11 @@ class SpmbPiketTanggal extends Model
     public function kelompok(): BelongsTo
     {
         return $this->belongsTo(SpmbPiketKelompok::class, 'spmb_piket_kelompok_id');
+    }
+
+    public function absensis(): HasMany
+    {
+        return $this->hasMany(SpmbPiketAbsensi::class, 'spmb_piket_tanggal_id');
     }
 
     public function getFormattedTanggalAttribute(): string

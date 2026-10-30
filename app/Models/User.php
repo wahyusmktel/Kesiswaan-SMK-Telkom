@@ -157,6 +157,20 @@ class User extends Authenticatable implements WebAuthnAuthenticatableContract
         return $this->hasMany(GuruPiketSchedule::class);
     }
 
+    public function spmbPiketPetugas()
+    {
+        return $this->hasMany(SpmbPiketPetugas::class, 'user_id');
+    }
+
+    public function isSpmbPiketOfficer(): bool
+    {
+        $guruId = $this->masterGuru?->id;
+
+        return SpmbPiketPetugas::where('user_id', $this->id)
+            ->when($guruId, fn($q) => $q->orWhere('master_guru_id', $guruId))
+            ->exists();
+    }
+
     public function notaDinasMasuk()
     {
         return $this->belongsToMany(NotaDinas::class, 'nota_dinas_penerima', 'penerima_user_id', 'nota_dinas_id')

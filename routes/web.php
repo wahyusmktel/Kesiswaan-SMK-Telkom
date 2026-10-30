@@ -875,6 +875,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/izin', [\App\Http\Controllers\Guru\IzinGuruController::class, 'store'])->name('izin.store');
         Route::get('/izin/schedules', [\App\Http\Controllers\Guru\IzinGuruController::class, 'getSchedules'])->name('izin.schedules');
         Route::get('/izin/lms-resources/{schedule}', [\App\Http\Controllers\Guru\IzinGuruController::class, 'getLmsResources'])->name('izin.lms-resources');
+
+        // Absensi Kehadiran Piket SPMB Pegawai
+        Route::get('/piket-spmb/absensi', [\App\Http\Controllers\Guru\SpmbPiketAbsensiController::class, 'index'])->name('spmb-piket.absensi.index');
+        Route::post('/piket-spmb/absensi', [\App\Http\Controllers\Guru\SpmbPiketAbsensiController::class, 'store'])->name('spmb-piket.absensi.store');
     });
 
     // Grup Route untuk Guru (Submission)
@@ -1541,6 +1545,13 @@ Route::middleware(['auth', 'role:Kaur SPMB|KAUR SPMB|Super Admin'])->prefix('kau
 
         Route::post('/generate-rotating-dates', [\App\Http\Controllers\KaurSpmb\JadwalPiketController::class, 'generateRotatingDates'])->name('generate-dates');
         Route::get('/print', [\App\Http\Controllers\KaurSpmb\JadwalPiketController::class, 'print'])->name('print');
+    });
+
+    Route::prefix('absensi')->name('absensi.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\KaurSpmb\AbsensiPiketController::class, 'index'])->name('index');
+        Route::post('/manual', [\App\Http\Controllers\KaurSpmb\AbsensiPiketController::class, 'storeManual'])->name('store-manual');
+        Route::delete('/{absensi}', [\App\Http\Controllers\KaurSpmb\AbsensiPiketController::class, 'destroy'])->name('destroy');
+        Route::get('/export', [\App\Http\Controllers\KaurSpmb\AbsensiPiketController::class, 'exportExcel'])->name('export');
     });
 });
 
