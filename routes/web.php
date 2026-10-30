@@ -1556,11 +1556,28 @@ Route::middleware(['auth', 'role:Kaur SPMB|KAUR SPMB|Super Admin'])->prefix('kau
     });
 
     Route::prefix('administrasi')->name('administrasi.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\KaurSpmb\AdministrasiController::class, 'index'])->name('index');
-        Route::post('/berita-acara', [\App\Http\Controllers\KaurSpmb\AdministrasiController::class, 'store'])->name('store');
-        Route::put('/berita-acara/{administrasi}', [\App\Http\Controllers\KaurSpmb\AdministrasiController::class, 'update'])->name('update');
-        Route::delete('/berita-acara/{administrasi}', [\App\Http\Controllers\KaurSpmb\AdministrasiController::class, 'destroy'])->name('destroy');
-        Route::get('/berita-acara/{administrasi}/print', [\App\Http\Controllers\KaurSpmb\AdministrasiController::class, 'print'])->name('print');
+        // Redirect shortcut /administrasi ke Berita Acara
+        Route::get('/', fn () => redirect()->route('kaur-spmb.administrasi.berita-acara.index'))->name('index');
+
+        // Submenu 1: Berita Acara Piket
+        Route::prefix('berita-acara')->name('berita-acara.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\KaurSpmb\AdministrasiController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\KaurSpmb\AdministrasiController::class, 'store'])->name('store');
+            Route::put('/{administrasi}', [\App\Http\Controllers\KaurSpmb\AdministrasiController::class, 'update'])->name('update');
+            Route::delete('/{administrasi}', [\App\Http\Controllers\KaurSpmb\AdministrasiController::class, 'destroy'])->name('destroy');
+            Route::get('/{administrasi}/print', [\App\Http\Controllers\KaurSpmb\AdministrasiController::class, 'print'])->name('print');
+        });
+
+        // Submenu 2: Daftar Seleksi Peserta
+        Route::prefix('peserta-seleksi')->name('peserta-seleksi.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\KaurSpmb\PesertaSeleksiController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\KaurSpmb\PesertaSeleksiController::class, 'store'])->name('store');
+            Route::put('/{pesertaSeleksi}', [\App\Http\Controllers\KaurSpmb\PesertaSeleksiController::class, 'update'])->name('update');
+            Route::delete('/{pesertaSeleksi}', [\App\Http\Controllers\KaurSpmb\PesertaSeleksiController::class, 'destroy'])->name('destroy');
+            Route::patch('/{pesertaSeleksi}/kehadiran', [\App\Http\Controllers\KaurSpmb\PesertaSeleksiController::class, 'updateKehadiran'])->name('kehadiran');
+            Route::get('/cetak-hadir-siswa', [\App\Http\Controllers\KaurSpmb\PesertaSeleksiController::class, 'cetakHadirSiswa'])->name('cetak-hadir-siswa');
+            Route::get('/cetak-hadir-ortu', [\App\Http\Controllers\KaurSpmb\PesertaSeleksiController::class, 'cetakHadirOrtu'])->name('cetak-hadir-ortu');
+        });
     });
 });
 

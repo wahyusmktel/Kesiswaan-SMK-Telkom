@@ -93,7 +93,7 @@
                     {{-- Left Filters --}}
                     <div class="flex flex-wrap items-center gap-2.5">
                         {{-- Academic Year Selector --}}
-                        <form method="GET" action="{{ route('kaur-spmb.administrasi.index') }}" class="flex items-center gap-2">
+                        <form method="GET" action="{{ route('kaur-spmb.administrasi.berita-acara.index') }}" class="flex items-center gap-2">
                             <input type="hidden" name="search" value="{{ $search }}">
                             <label class="text-xs font-semibold text-slate-600">T.P:</label>
                             <select name="tahun_ajaran" onchange="this.form.submit()"
@@ -107,7 +107,7 @@
                         </form>
 
                         {{-- Search Input --}}
-                        <form method="GET" action="{{ route('kaur-spmb.administrasi.index') }}" class="relative">
+                        <form method="GET" action="{{ route('kaur-spmb.administrasi.berita-acara.index') }}" class="relative">
                             <input type="hidden" name="tahun_ajaran" value="{{ $selectedYear }}">
                             <input type="text" name="search" value="{{ $search }}" placeholder="Cari nomor / ringkasan..."
                                 class="text-xs pl-8 pr-3 py-1.5 border border-slate-300 rounded-md focus:border-red-500 focus:ring-red-500 w-48 sm:w-64 bg-slate-50">
@@ -196,7 +196,7 @@
                                     <td class="px-4 py-3 text-center">
                                         <div class="flex items-center justify-center gap-1">
                                             {{-- Cetak Berita Acara & Lampiran --}}
-                                            <a href="{{ route('kaur-spmb.administrasi.print', $ba) }}" target="_blank"
+                                            <a href="{{ route('kaur-spmb.administrasi.berita-acara.print', $ba) }}" target="_blank"
                                                 class="p-1.5 text-slate-600 hover:text-red-600 hover:bg-slate-100 rounded transition-colors"
                                                 title="Cetak Berita Acara & Lampiran Absensi">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -214,7 +214,7 @@
                                             </button>
 
                                             {{-- Hapus --}}
-                                            <form method="POST" action="{{ route('kaur-spmb.administrasi.destroy', $ba) }}"
+                                            <form method="POST" action="{{ route('kaur-spmb.administrasi.berita-acara.destroy', $ba) }}"
                                                 onsubmit="return confirm('Hapus Berita Acara {{ $ba->nomor_surat }}?')">
                                                 @csrf
                                                 @method('DELETE')
@@ -499,7 +499,7 @@
                     open: false,
                     isEdit: false,
                     maximized: false,
-                    actionUrl: '{{ route("kaur-spmb.administrasi.store") }}',
+                    actionUrl: '{{ route("kaur-spmb.administrasi.berita-acara.store") }}',
                     pos: { x: null, y: null },
                     drag: { active: false, startX: 0, startY: 0, initialX: 0, initialY: 0 },
                     form: {
@@ -530,7 +530,7 @@
 
                 openAddBeritaAcaraModal() {
                     this.modalBeritaAcara.isEdit = false;
-                    this.modalBeritaAcara.actionUrl = '{{ route("kaur-spmb.administrasi.store") }}';
+                    this.modalBeritaAcara.actionUrl = '{{ route("kaur-spmb.administrasi.berita-acara.store") }}';
                     
                     let firstTgl = this.tanggalOptions.length > 0 ? this.tanggalOptions[0] : null;
 

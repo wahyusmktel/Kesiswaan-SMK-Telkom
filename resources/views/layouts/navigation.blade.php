@@ -487,7 +487,8 @@
             <a href="{{ route('super-admin.spmb-fees.index') }}" class="submenu-item {{ request()->routeIs('super-admin.spmb-fees.*') ? 'submenu-item-active' : '' }}">Pembiayaan SPMB</a>
             <a href="{{ route('kaur-spmb.jadwal-piket.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.jadwal-piket.*') ? 'submenu-item-active' : '' }}">Jadwal Piket SPMB</a>
             <a href="{{ route('kaur-spmb.absensi.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.absensi.*') ? 'submenu-item-active' : '' }}">Kelola Absensi Piket SPMB</a>
-            <a href="{{ route('kaur-spmb.administrasi.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.*') ? 'submenu-item-active' : '' }}">Administrasi SPMB</a>
+            <a href="{{ route('kaur-spmb.administrasi.berita-acara.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.berita-acara.*') ? 'submenu-item-active' : '' }}">Berita Acara SPMB</a>
+            <a href="{{ route('kaur-spmb.administrasi.peserta-seleksi.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.peserta-seleksi.*') ? 'submenu-item-active' : '' }}">Daftar Seleksi Peserta SPMB</a>
             <a href="{{ route('super-admin.sso-applications.index') }}" class="submenu-item {{ request()->routeIs('super-admin.sso-applications.*') ? 'submenu-item-active' : '' }}">Aplikasi SSO</a>
             @can('manage settings')
                 <a href="{{ route('super-admin.asset-sync.index') }}" class="submenu-item {{ request()->routeIs('super-admin.asset-sync.*') ? 'submenu-item-active' : '' }}">Sinkronisasi Aset</a>
@@ -3736,17 +3737,31 @@
             <span class="nav-text">Kelola Absensi Piket</span>
         </a>
     </li>
-    <li>
-        <a href="{{ route('kaur-spmb.administrasi.index') }}" title="Administrasi SPMB"
-            class="nav-link {{ request()->routeIs('kaur-spmb.administrasi.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
-            <div class="nav-icon-container">
-                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
+    <li class="submenu-dropdown"
+        x-data="{ expanded: {{ request()->routeIs('kaur-spmb.administrasi.*') ? 'true' : 'false' }}, flyoutTop: 0, updateFlyoutPosition(){ const r=this.$el.querySelector('button').getBoundingClientRect(); this.flyoutTop=r.top; } }"
+        @mouseenter="updateFlyoutPosition()">
+        <button type="button" @click="expanded = !expanded"
+            class="nav-link w-full {{ request()->routeIs('kaur-spmb.administrasi.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="flex items-center">
+                <div class="nav-icon-container">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                </div>
+                <span class="nav-text">Administrasi SPMB</span>
             </div>
-            <span class="nav-text">Administrasi SPMB</span>
-        </a>
+            <svg :class="expanded ? 'rotate-180' : ''" class="dropdown-arrow w-4 h-4 transition-transform text-white/60 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+        </button>
+        <div x-show="expanded" x-collapse class="submenu-card">
+            <a href="{{ route('kaur-spmb.administrasi.berita-acara.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.berita-acara.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Berita Acara Piket</a>
+            <a href="{{ route('kaur-spmb.administrasi.peserta-seleksi.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.peserta-seleksi.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Daftar Seleksi Peserta</a>
+        </div>
+        <div class="submenu-flyout" :style="'top: ' + flyoutTop + 'px'">
+            <div class="submenu-flyout-title">Administrasi SPMB</div>
+            <a href="{{ route('kaur-spmb.administrasi.berita-acara.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.berita-acara.*') ? 'submenu-item-active' : '' }}">Berita Acara Piket</a>
+            <a href="{{ route('kaur-spmb.administrasi.peserta-seleksi.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.peserta-seleksi.*') ? 'submenu-item-active' : '' }}">Daftar Seleksi Peserta</a>
+        </div>
     </li>
 @endif
 @endhasanyrole

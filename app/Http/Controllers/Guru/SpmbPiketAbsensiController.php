@@ -67,6 +67,24 @@ class SpmbPiketAbsensiController extends Controller
             return ! in_array($t->id, $sudahAbsenTanggalIds);
         });
 
+        // Determine active/selected schedule date for viewing candidate list
+        $targetTanggal = $jadwalHariIni ?: ($jadwalBerikutnya ?: $allTanggals->first());
+        $selectedTanggalId = $request->get('tanggal_id', $targetTanggal?->id);
+
+        $selectedTanggal = $allTanggals->firstWhere('id', $selectedTanggalId);
+        if (! $selectedTanggal && $selectedTanggalId) {
+            $selectedTanggal = SpmbPiketTanggal::with('kelompok')->find($selectedTanggalId);
+        }
+        if (! $selectedTanggal && $targetTanggal) {
+            $selectedTanggal = $targetTanggal;
+        }
+
+        $pesertaSeleksis = $selectedTanggal
+            ? \App\Models\SpmbPesertaSeleksi::where('spmb_piket_tanggal_id', $selectedTanggal->id)
+                ->orderBy('nomor_pendaftaran', 'asc')
+                ->get()
+            : collect();
+
         return view('pages.guru.spmb-piket.absensi', compact(
             'user',
             'isOfficer',
@@ -77,7 +95,9 @@ class SpmbPiketAbsensiController extends Controller
             'jadwalHariIni',
             'jadwalBerikutnya',
             'historyAbsensi',
-            'tanggalsBelumAbsen'
+            'tanggalsBelumAbsen',
+            'selectedTanggal',
+            'pesertaSeleksis'
         ));
     }
 

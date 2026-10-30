@@ -277,6 +277,180 @@
 
             </div>
 
+            {{-- ======================================================== --}}
+            {{-- DAFTAR CALON SISWA & ORANG TUA SELEKSI PEKAN INI         --}}
+            {{-- ======================================================== --}}
+            <div class="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-5 border-b border-slate-200 bg-slate-50/60">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-red-600"></span>
+                                <h3 class="text-sm font-bold text-slate-900">Daftar Calon Siswa &amp; Orang Tua Seleksi</h3>
+                                @if($selectedTanggal)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-red-50 text-red-700 border border-red-200">
+                                        Sabtu, {{ \Carbon\Carbon::parse($selectedTanggal->tanggal)->locale('id')->translatedFormat('d M Y') }}
+                                    </span>
+                                @endif
+                            </div>
+                            <p class="text-xs text-slate-500 mt-1">
+                                Data calon siswa yang dijadwalkan mengikuti sesi seleksi dan orang tua pendamping pada jadwal piket Anda.
+                            </p>
+                        </div>
+
+                        {{-- Tanggal Selector jika ada lebih dari 1 tanggal --}}
+                        @if($allTanggals->count() > 1)
+                            <form method="GET" action="{{ route('guru.spmb-piket.absensi.index') }}" class="flex items-center gap-2">
+                                <label for="filterTanggal" class="text-xs font-medium text-slate-600 flex-shrink-0">Pilih Tanggal:</label>
+                                <select id="filterTanggal" name="tanggal_id" onchange="this.form.submit()"
+                                    class="text-xs rounded-md border-slate-300 focus:border-red-500 focus:ring-red-500 py-1.5 pl-2.5 pr-8 bg-white font-medium">
+                                    @foreach($allTanggals as $tgl)
+                                        <option value="{{ $tgl->id }}" {{ ($selectedTanggal && $selectedTanggal->id == $tgl->id) ? 'selected' : '' }}>
+                                            Sabtu, {{ \Carbon\Carbon::parse($tgl->tanggal)->locale('id')->translatedFormat('d M Y') }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </form>
+                        @endif
+                    </div>
+
+                    {{-- Stats Summary --}}
+                    @if($selectedTanggal && $pesertaSeleksis->isNotEmpty())
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-3 border-t border-slate-200/80">
+                            <div class="bg-white p-2.5 rounded border border-slate-200">
+                                <span class="text-[10px] text-slate-500 uppercase font-semibold">Total Calon Siswa</span>
+                                <p class="text-base font-bold text-slate-900">{{ $pesertaSeleksis->count() }} <span class="text-xs font-normal text-slate-500">orang</span></p>
+                            </div>
+                            <div class="bg-white p-2.5 rounded border border-slate-200">
+                                <span class="text-[10px] text-slate-500 uppercase font-semibold">Siswa Hadir</span>
+                                <p class="text-base font-bold text-emerald-600">{{ $pesertaSeleksis->where('status_kehadiran_siswa', 'Hadir')->count() }} <span class="text-xs font-normal text-slate-500">siswa</span></p>
+                            </div>
+                            <div class="bg-white p-2.5 rounded border border-slate-200">
+                                <span class="text-[10px] text-slate-500 uppercase font-semibold">Orang Tua Hadir</span>
+                                <p class="text-base font-bold text-blue-600">{{ $pesertaSeleksis->where('status_kehadiran_ortu', 'Hadir')->count() }} <span class="text-xs font-normal text-slate-500">ortu</span></p>
+                            </div>
+                            <div class="bg-white p-2.5 rounded border border-slate-200">
+                                <span class="text-[10px] text-slate-500 uppercase font-semibold">Menunggu / Belum</span>
+                                <p class="text-base font-bold text-amber-600">{{ $pesertaSeleksis->whereIn('status_kehadiran_siswa', ['Terjadwal', 'Menunggu'])->count() }} <span class="text-xs font-normal text-slate-500">orang</span></p>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
+                                <th class="py-3 px-4 w-12 text-center">No</th>
+                                <th class="py-3 px-4">Calon Siswa</th>
+                                <th class="py-3 px-4">Asal Sekolah</th>
+                                <th class="py-3 px-4">Jurusan Pilihan</th>
+                                <th class="py-3 px-4">Orang Tua / Wali</th>
+                                <th class="py-3 px-4 text-center">Status Siswa</th>
+                                <th class="py-3 px-4 text-center">Status Ortu</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            @forelse($pesertaSeleksis as $index => $item)
+                                <tr class="hover:bg-slate-50/70 transition-colors">
+                                    <td class="py-3 px-4 text-center text-slate-500 font-bold">{{ $index + 1 }}</td>
+                                    <td class="py-3 px-4">
+                                        <div class="font-bold text-slate-900">{{ $item->nama_lengkap }}</div>
+                                        <div class="flex items-center gap-2 mt-0.5">
+                                            <span class="font-mono text-[10px] px-1.5 py-0.2 bg-slate-100 text-slate-700 rounded border border-slate-200">{{ $item->nomor_pendaftaran }}</span>
+                                            <span class="text-[11px] text-slate-500">({{ $item->jenis_kelamin == 'L' ? 'Laki-laki' : 'Perempuan' }})</span>
+                                        </div>
+                                        @if($item->no_wa_siswa)
+                                            <div class="mt-1">
+                                                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $item->no_wa_siswa) }}" target="_blank"
+                                                    class="inline-flex items-center gap-1 text-[11px] text-emerald-600 hover:text-emerald-800 font-medium">
+                                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
+                                                    {{ $item->no_wa_siswa }}
+                                                </a>
+                                            </div>
+                                        @endif
+                                    </td>
+                                    <td class="py-3 px-4 text-slate-700">
+                                        {{ $item->asal_sekolah ?: '-' }}
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-800 border border-slate-200">
+                                            {{ $item->jurusan_pilihan }}
+                                        </span>
+                                        @if($item->jurusan_pilihan_2)
+                                            <div class="text-[10px] text-slate-500 mt-0.5">Pilihan 2: {{ $item->jurusan_pilihan_2 }}</div>
+                                        @endif
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <div class="font-semibold text-slate-900">{{ $item->nama_orang_tua ?: '-' }}</div>
+                                        <div class="text-[11px] text-slate-500">{{ $item->hubungan_wali ?: 'Orang Tua' }}</div>
+                                        @if($item->no_wa_orang_tua)
+                                            <div class="mt-1">
+                                                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $item->no_wa_orang_tua) }}" target="_blank"
+                                                    class="inline-flex items-center gap-1 text-[11px] text-emerald-600 hover:text-emerald-800 font-medium">
+                                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
+                                                    {{ $item->no_wa_orang_tua }}
+                                                </a>
+                                            </div>
+                                        @endif
+                                    </td>
+                                    <td class="py-3 px-4 text-center">
+                                        @if($item->status_kehadiran_siswa === 'Hadir')
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                Hadir
+                                            </span>
+                                            @if($item->waktu_kehadiran_siswa)
+                                                <div class="text-[9px] text-slate-400 mt-0.5">{{ \Carbon\Carbon::parse($item->waktu_kehadiran_siswa)->format('H:i') }} WIB</div>
+                                            @endif
+                                        @elseif($item->status_kehadiran_siswa === 'Tidak Hadir')
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-red-50 text-red-700 border border-red-200">
+                                                Tidak Hadir
+                                            </span>
+                                        @elseif($item->status_kehadiran_siswa === 'Menunggu')
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                                Menunggu
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                                Terjadwal
+                                            </span>
+                                        @endif
+                                    </td>
+                                    <td class="py-3 px-4 text-center">
+                                        @if($item->status_kehadiran_ortu === 'Hadir')
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                                Hadir
+                                            </span>
+                                            @if($item->waktu_kehadiran_ortu)
+                                                <div class="text-[9px] text-slate-400 mt-0.5">{{ \Carbon\Carbon::parse($item->waktu_kehadiran_ortu)->format('H:i') }} WIB</div>
+                                            @endif
+                                        @elseif($item->status_kehadiran_ortu === 'Tidak Hadir')
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-red-50 text-red-700 border border-red-200">
+                                                Tidak Hadir
+                                            </span>
+                                        @elseif($item->status_kehadiran_ortu === 'Menunggu')
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                                Menunggu
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                                Terjadwal
+                                            </span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="7" class="py-8 text-center text-slate-400 italic">
+                                        Belum ada calon peserta seleksi yang dijadwalkan pada tanggal piket ini.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
         </div>
 
         {{-- LIGHTBOX MODAL: PREVIEW FOTO EVIDEN --}}

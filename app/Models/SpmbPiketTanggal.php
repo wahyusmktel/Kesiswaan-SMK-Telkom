@@ -47,6 +47,11 @@ class SpmbPiketTanggal extends Model
         return $this->hasOne(SpmbBeritaAcara::class, 'spmb_piket_tanggal_id')->latestOfMany();
     }
 
+    public function pesertaSeleksis(): HasMany
+    {
+        return $this->hasMany(SpmbPesertaSeleksi::class, 'spmb_piket_tanggal_id');
+    }
+
     public function getFormattedTanggalAttribute(): string
     {
         if (! $this->tanggal) {
