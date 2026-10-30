@@ -625,7 +625,7 @@ class OkrWeeklyReportController extends Controller
     public function linkCommitments(Request $request, OkrWeeklyReport $weeklyReport): RedirectResponse
     {
         abort_unless(
-            $this->canReview($request->user()) || in_array($this->activeRole($request->user()), $weeklyReport->unit->role_names ?? [], true),
+            $this->canReview($request->user()) || $this->isUnitEditor($request->user(), $weeklyReport->unit),
             403
         );
 
@@ -673,7 +673,7 @@ class OkrWeeklyReportController extends Controller
             }
 
             $report = $item->report;
-            $canManage = $this->canReview($request->user()) || in_array($this->activeRole($request->user()), $report->unit->role_names ?? [], true);
+            $canManage = $this->canReview($request->user()) || $this->isUnitEditor($request->user(), $report->unit);
             if (! $canManage) {
                 continue;
             }
@@ -893,43 +893,73 @@ class OkrWeeklyReportController extends Controller
         if ($this->isExecutiveViewer($user)) {
             return [];
         }
-        if ($this->activeRole($user) === 'Super Admin') {
+
+        if ($this->canManageAll($user)) {
             return $units->pluck('id')->map(fn ($id) => (int) $id)->all();
         }
 
-        $activeRole = $this->activeRole($user);
-
-        return $units->filter(fn (OkrUnit $unit) => in_array($activeRole, $unit->role_names ?? [], true))
+        return $units->filter(fn (OkrUnit $unit) => $this->isUnitEditor($user, $unit))
             ->pluck('id')->map(fn ($id) => (int) $id)->all();
+    }
+
+    private function isUnitEditor(User $user, OkrUnit $unit): bool
+    {
+        if ($this->isExecutiveViewer($user)) {
+            return false;
+        }
+
+        if ($this->canManageAll($user)) {
+            return true;
+        }
+
+        $activeRole = strtolower(trim($this->activeRole($user)));
+        $userRoles = $user->getRoleNames()->map(fn ($r) => strtolower(trim($r)))->all();
+        $unitRoles = collect($unit->role_names ?? [])->map(fn ($r) => strtolower(trim($r)))->all();
+
+        if (in_array($activeRole, $unitRoles, true)) {
+            return true;
+        }
+
+        foreach ($userRoles as $role) {
+            if (in_array($role, $unitRoles, true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function ensureUnitEditor(User $user, OkrUnit $unit): void
     {
-        abort_if($this->isExecutiveViewer($user), 403);
-        abort_unless(
-            $this->activeRole($user) === 'Super Admin'
-            || in_array($this->activeRole($user), $unit->role_names ?? [], true),
-            403
-        );
+        abort_unless($this->isUnitEditor($user, $unit), 403, 'Anda tidak memiliki hak akses untuk mengubah laporan unit ini.');
     }
 
     private function ensureUnitViewer(User $user, OkrUnit $unit): void
     {
         abort_unless(
-            in_array($this->activeRole($user), ['Super Admin', 'Kepala Sekolah'], true)
-            || in_array($this->activeRole($user), $unit->role_names ?? [], true),
-            403
+            $this->canReview($user) || $this->isUnitEditor($user, $unit),
+            403,
+            'Anda tidak memiliki hak akses untuk melihat laporan unit ini.'
         );
+    }
+
+    private function canManageAll(User $user): bool
+    {
+        return $this->activeRole($user) === 'Super Admin'
+            || $user->hasRole('Super Admin')
+            || $user->can('manage okr');
     }
 
     private function canReview(User $user): bool
     {
-        return in_array($this->activeRole($user), ['Super Admin', 'Kepala Sekolah'], true);
+        return $this->canManageAll($user)
+            || in_array($this->activeRole($user), ['Super Admin', 'Kepala Sekolah'], true)
+            || $user->hasRole('Kepala Sekolah');
     }
 
     private function isExecutiveViewer(User $user): bool
     {
-        return $this->activeRole($user) === 'Kepala Sekolah';
+        return $this->activeRole($user) === 'Kepala Sekolah' && ! $this->canManageAll($user);
     }
 
     private function activeRole(User $user): string

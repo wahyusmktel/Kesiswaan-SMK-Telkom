@@ -561,34 +561,63 @@ class OkrController extends Controller
             return $units->pluck('id')->map(fn ($id) => (int) $id)->all();
         }
 
-        $activeRole = session('active_role') ?: $user->getRoleNames()->first();
-
         return $units
-            ->filter(fn (OkrUnit $unit) => in_array($activeRole, $unit->role_names ?? [], true))
+            ->filter(fn (OkrUnit $unit) => $this->isUnitEditor($user, $unit))
             ->pluck('id')
             ->map(fn ($id) => (int) $id)
             ->all();
     }
 
+    private function isUnitEditor(User $user, OkrUnit $unit): bool
+    {
+        if ($this->isExecutiveViewer($user)) {
+            return false;
+        }
+
+        if ($this->canManageAll($user)) {
+            return true;
+        }
+
+        $activeRole = strtolower(trim(session('active_role') ?: (string) $user->getRoleNames()->first()));
+        $userRoles = $user->getRoleNames()->map(fn ($r) => strtolower(trim($r)))->all();
+        $unitRoles = collect($unit->role_names ?? [])->map(fn ($r) => strtolower(trim($r)))->all();
+
+        if (in_array($activeRole, $unitRoles, true)) {
+            return true;
+        }
+
+        foreach ($userRoles as $role) {
+            if (in_array($role, $unitRoles, true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private function canManageAll(User $user): bool
     {
-        $activeRole = session('active_role') ?: $user->getRoleNames()->first();
+        $activeRole = session('active_role') ?: (string) $user->getRoleNames()->first();
 
-        return $activeRole === 'Super Admin';
+        return $activeRole === 'Super Admin'
+            || $user->hasRole('Super Admin')
+            || $user->can('manage okr');
     }
 
     private function canManageMatrix(User $user): bool
     {
-        $activeRole = session('active_role') ?: $user->getRoleNames()->first();
+        $activeRole = session('active_role') ?: (string) $user->getRoleNames()->first();
 
-        return in_array($activeRole, ['Super Admin', 'Kepala Sekolah'], true);
+        return $this->canManageAll($user)
+            || in_array($activeRole, ['Super Admin', 'Kepala Sekolah'], true)
+            || $user->hasRole('Kepala Sekolah');
     }
 
     private function isExecutiveViewer(User $user): bool
     {
-        $activeRole = session('active_role') ?: $user->getRoleNames()->first();
+        $activeRole = session('active_role') ?: (string) $user->getRoleNames()->first();
 
-        return $activeRole === 'Kepala Sekolah';
+        return $activeRole === 'Kepala Sekolah' && ! $this->canManageAll($user);
     }
 
     private function ensureManager(User $user): void
@@ -603,12 +632,6 @@ class OkrController extends Controller
 
     private function ensureUnitEditor(User $user, OkrUnit $unit): void
     {
-        abort_if($this->isExecutiveViewer($user), 403);
-
-        abort_unless(
-            $this->canManageAll($user)
-            || in_array(session('active_role') ?: $user->getRoleNames()->first(), $unit->role_names ?? [], true),
-            403
-        );
+        abort_unless($this->isUnitEditor($user, $unit), 403);
     }
 }
