@@ -112,9 +112,18 @@ class OkrWeeklyReportController extends Controller
             ->get();
         $availablePlanOptions = $availablePlans->map(fn (OkrPlan $plan) => $this->weeklyPlanOption($plan))->values();
 
-        $unlinkedScopeUnitIds = $this->isExecutiveViewer($request->user()) || $this->canReview($request->user())
-            ? $units->pluck('id')->all()
-            : $editableUnitIds;
+        $activeRole = $this->activeRole($request->user());
+        $isExecutiveOrSuperAdmin = in_array($activeRole, ['Kepala Sekolah', 'Super Admin'], true);
+
+        if ($isExecutiveOrSuperAdmin) {
+            $unlinkedScopeUnitIds = $units->pluck('id')->all();
+        } else {
+            $activeRoleLower = strtolower(trim($activeRole));
+            $unlinkedScopeUnitIds = $units->filter(function (OkrUnit $unit) use ($activeRoleLower) {
+                $unitRoles = collect($unit->role_names ?? [])->map(fn ($r) => strtolower(trim($r)))->all();
+                return in_array($activeRoleLower, $unitRoles, true);
+            })->pluck('id')->all();
+        }
 
         $unlinkedCommitments = OkrWeeklyReportItem::query()
             ->with(['report.unit', 'report.period'])
@@ -890,16 +899,22 @@ class OkrWeeklyReportController extends Controller
 
     private function editableUnitIds(User $user, $units): array
     {
-        if ($this->isExecutiveViewer($user)) {
+        $activeRole = $this->activeRole($user);
+
+        if ($activeRole === 'Kepala Sekolah') {
             return [];
         }
 
-        if ($this->canManageAll($user)) {
+        if ($activeRole === 'Super Admin') {
             return $units->pluck('id')->map(fn ($id) => (int) $id)->all();
         }
 
-        return $units->filter(fn (OkrUnit $unit) => $this->isUnitEditor($user, $unit))
-            ->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $activeRoleLower = strtolower(trim($activeRole));
+
+        return $units->filter(function (OkrUnit $unit) use ($activeRoleLower) {
+            $unitRoles = collect($unit->role_names ?? [])->map(fn ($r) => strtolower(trim($r)))->all();
+            return in_array($activeRoleLower, $unitRoles, true);
+        })->pluck('id')->map(fn ($id) => (int) $id)->all();
     }
 
     private function isUnitEditor(User $user, OkrUnit $unit): bool

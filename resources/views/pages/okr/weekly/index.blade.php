@@ -159,6 +159,53 @@
                 flex-shrink: 0;
                 background: #f8fafc;
             }
+
+            /* Unlinked Commitments Modal Interaktif */
+            .unlinked-modal-box {
+                background: #fff;
+                border-radius: 0.5rem;
+                border: 1px solid #fcd34d;
+                box-shadow: 0 25px 60px rgba(0,0,0,.3);
+                width: 100%;
+                max-width: 1250px;
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                max-height: 88vh;
+            }
+            .unlinked-modal-box.maximized {
+                position: fixed !important;
+                inset: 0 !important;
+                max-width: 100vw !important;
+                max-height: 100vh !important;
+                border-radius: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                z-index: 99999 !important;
+            }
+            .unlinked-modal-box.positioned {
+                position: fixed;
+            }
+            .unlinked-modal-header {
+                display: flex; align-items: center; justify-content: space-between;
+                padding: 0.875rem 1.25rem;
+                flex-shrink: 0;
+                border-bottom: 1px solid #fcd34d;
+                background: linear-gradient(to right, #fef3c7, #fde68a);
+                user-select: none;
+            }
+            .unlinked-modal-body {
+                padding: 0;
+                overflow-y: auto;
+                flex: 1;
+            }
+            .unlinked-modal-footer {
+                padding: 0.875rem 1.25rem;
+                border-top: 1px solid #e5e7eb;
+                display: flex; align-items: center; justify-content: space-between;
+                flex-shrink: 0;
+                background: #fffbeb;
+            }
         </style>
     @endpush
 
@@ -185,114 +232,332 @@
             </section>
 
             @if($unlinkedCommitments->isNotEmpty())
-                <div class="rounded-xl border-2 border-amber-300 bg-gradient-to-r from-amber-50 via-amber-50/80 to-amber-100/50 p-5 shadow-sm space-y-4">
-                    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                        <div class="flex items-start gap-3">
-                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white shadow-md shadow-amber-500/20">
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                @php
+                    $unlinkedUnits = $unlinkedCommitments->map(fn($item) => $item->report->unit)->unique('id')->values();
+                @endphp
+                <div 
+                    x-data="{
+                        unlinkedModal: {
+                            open: false,
+                            maximized: false,
+                            dragging: false,
+                            pos: null,
+                            dragOffset: { x: 0, y: 0 }
+                        },
+                        unlinkedSearch: '',
+                        unlinkedUnitFilter: 'all',
+
+                        openUnlinkedModal() {
+                            this.unlinkedModal.open = true;
+                            this.unlinkedModal.maximized = false;
+                            this.unlinkedModal.pos = null;
+                            this.unlinkedSearch = '';
+                            this.unlinkedUnitFilter = 'all';
+                        },
+                        closeUnlinkedModal() {
+                            this.unlinkedModal.open = false;
+                            this.unlinkedModal.maximized = false;
+                            this.unlinkedModal.pos = null;
+                        },
+                        toggleUnlinkedMaximize() {
+                            this.unlinkedModal.maximized = !this.unlinkedModal.maximized;
+                            if (this.unlinkedModal.maximized) {
+                                this.unlinkedModal.pos = null;
+                            }
+                        },
+                        startUnlinkedDrag(e) {
+                            if (this.unlinkedModal.maximized) return;
+                            this.unlinkedModal.dragging = true;
+                            const box = this.$refs.unlinkedModalBox;
+                            if (!box) return;
+                            const rect = box.getBoundingClientRect();
+                            this.unlinkedModal.pos = { x: rect.left, y: rect.top };
+                            this.unlinkedModal.dragOffset = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+                        },
+                        onUnlinkedDrag(e) {
+                            if (!this.unlinkedModal.dragging) return;
+                            const maxX = window.innerWidth - 120;
+                            const maxY = window.innerHeight - 60;
+                            this.unlinkedModal.pos.x = Math.max(0, Math.min(e.clientX - this.unlinkedModal.dragOffset.x, maxX));
+                            this.unlinkedModal.pos.y = Math.max(0, Math.min(e.clientY - this.unlinkedModal.dragOffset.y, maxY));
+                        },
+                        stopUnlinkedDrag() {
+                            this.unlinkedModal.dragging = false;
+                        },
+                        matchesUnlinkedFilter(unitId, text) {
+                            if (this.unlinkedUnitFilter !== 'all' && this.unlinkedUnitFilter != unitId) return false;
+                            if (this.unlinkedSearch && this.unlinkedSearch.trim() !== '') {
+                                const q = this.unlinkedSearch.toLowerCase().trim();
+                                if (!text.includes(q)) return false;
+                            }
+                            return true;
+                        }
+                    }"
+                    @mousemove.window="onUnlinkedDrag($event)"
+                    @mouseup.window="stopUnlinkedDrag()"
+                    class="rounded-lg border-2 border-amber-300 bg-gradient-to-r from-amber-50 via-amber-50/80 to-amber-100/50 p-4 sm:p-5 shadow-sm space-y-3"
+                >
+                    {{-- Header Ringkas Card di Halaman Utama --}}
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div class="flex items-start gap-3.5">
+                            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-amber-500 text-white shadow-md shadow-amber-500/20">
+                                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                                 </svg>
                             </div>
                             <div>
-                                <h3 class="text-sm font-black text-amber-950 flex flex-wrap items-center gap-2">
-                                    <span>Terdapat {{ $unlinkedCommitments->count() }} Komitmen yang Belum Dikaitkan dengan Target OKR (Periode {{ $period->title }})</span>
-                                    <span class="rounded-full bg-amber-200 px-2.5 py-0.5 text-[10px] font-black uppercase text-amber-900 tracking-wide">Urgensi Penautan</span>
-                                </h3>
-                                <p class="mt-1 text-xs text-amber-800 leading-relaxed max-w-4xl">
-                                    Daftar seluruh komitmen di bawah ini belum terhubung ke target OKR mingguan. Silakan tentukan target OKR yang sesuai pada dropdown masing-masing unit lalu klik <strong>Simpan Penautan Target OKR</strong> agar sistem dapat mengalirkan rekomendasi progres otomatis ke Matriks OKR.
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <h3 class="text-sm sm:text-base font-black text-amber-950">
+                                        Komitmen Belum Dikaitkan dengan Target OKR
+                                    </h3>
+                                    <span class="rounded-full bg-amber-200 px-2.5 py-0.5 text-[10px] font-black uppercase text-amber-900 tracking-wide border border-amber-300">
+                                        Urgensi Penautan
+                                    </span>
+                                    <span class="rounded bg-amber-200/80 text-amber-900 px-2 py-0.5 text-[10px] font-bold">
+                                        Periode: {{ $period->title }}
+                                    </span>
+                                </div>
+                                <p class="mt-1 text-xs text-amber-900 leading-relaxed max-w-3xl">
+                                    Terdapat <strong>{{ $unlinkedCommitments->count() }} komitmen</strong> yang belum terhubung ke Target OKR Mingguan. Klik tombol untuk membuka modal penautan dan menghubungkan komitmen ke target agar rekomendasi progres berjalan otomatis.
                                 </p>
                             </div>
                         </div>
-                    </div>
 
-                    <form method="POST" action="{{ route('okr.weekly.link-all-commitments') }}" class="space-y-3">
-                        @csrf
-                        <input type="hidden" name="period_id" value="{{ $period->id }}">
-                        <input type="hidden" name="unit_id" value="{{ $selectedUnit->id }}">
-                        <input type="hidden" name="week_start" value="{{ $weekStart->format('Y-m-d') }}">
-
-                        <div class="overflow-x-auto rounded-lg border border-amber-200 bg-white shadow-sm">
-                            <table class="w-full text-left text-xs">
-                                <thead class="bg-amber-100/70 font-black text-amber-950 uppercase tracking-wider text-[11px] border-b border-amber-200">
-                                    <tr>
-                                        <th class="px-4 py-3 w-40">Unit Kerja</th>
-                                        <th class="px-4 py-3 w-44">Pekan Laporan</th>
-                                        <th class="px-4 py-3">Komitmen & Target Terukur</th>
-                                        <th class="px-4 py-3 w-72">Pilih Target OKR Mingguan</th>
-                                        <th class="px-4 py-3 w-28 text-center">Navigasi</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-amber-100">
-                                    @foreach($unlinkedCommitments as $unlinkedItem)
-                                        @php
-                                            $itemReport = $unlinkedItem->report;
-                                            $unitPlans = $weeklyPlansByUnit->get($itemReport->okr_unit_id, collect());
-                                        @endphp
-                                        <tr class="hover:bg-amber-50/50 transition">
-                                            <td class="px-4 py-3 align-top font-bold text-gray-900">
-                                                <span class="inline-flex items-center gap-1.5 rounded-md bg-indigo-50 border border-indigo-200 px-2 py-1 text-[11px] font-black text-indigo-700">
-                                                    {{ $itemReport->unit->name }}
-                                                </span>
-                                            </td>
-                                            <td class="px-4 py-3 align-top">
-                                                <p class="font-bold text-gray-800">{{ $itemReport->week_start->translatedFormat('d M') }} – {{ $itemReport->week_end->translatedFormat('d M Y') }}</p>
-                                                <span class="mt-1 inline-block rounded px-1.5 py-0.5 text-[10px] font-bold {{ $statusColors[$itemReport->status] ?? 'bg-gray-100 text-gray-700' }}">
-                                                    {{ $statusLabels[$itemReport->status] ?? $itemReport->status }}
-                                                </span>
-                                            </td>
-                                            <td class="px-4 py-3 align-top">
-                                                <p class="font-black text-indigo-900">Komitmen {{ $unlinkedItem->priority_order }}:</p>
-                                                <p class="font-bold text-gray-900 mt-0.5">{{ $unlinkedItem->commitment }}</p>
-                                                <p class="text-xs text-gray-500 mt-1">Target: {{ $unlinkedItem->measurable_target }}</p>
-                                            </td>
-                                            <td class="px-4 py-3 align-top">
-                                                @if($unitPlans->isNotEmpty())
-                                                    <select 
-                                                        name="items[{{ $unlinkedItem->id }}][okr_plan_id]" 
-                                                        class="w-full rounded-md border-amber-300 bg-amber-50/30 text-xs text-gray-800 focus:border-amber-500 focus:ring-amber-500 py-1.5 font-medium"
-                                                    >
-                                                        <option value="">-- Pilih Target OKR Mingguan --</option>
-                                                        @foreach($unitPlans as $plan)
-                                                            <option value="{{ $plan->id }}">
-                                                                [{{ $plan->keyResult?->code ?? 'KR' }}] {{ $plan->title }}
-                                                            </option>
-                                                        @endforeach
-                                                    </select>
-                                                @else
-                                                    <span class="text-xs text-red-600 font-bold italic">
-                                                        Unit ini belum memiliki target mingguan di Matriks OKR.
-                                                    </span>
-                                                @endif
-                                            </td>
-                                            <td class="px-4 py-3 align-top text-center">
-                                                <a 
-                                                    href="{{ route('okr.weekly.index', ['period_id' => $itemReport->okr_period_id, 'unit_id' => $itemReport->okr_unit_id, 'week_start' => $itemReport->week_start->format('Y-m-d')]) }}"
-                                                    class="inline-flex items-center gap-1 rounded bg-white border border-gray-300 px-2 py-1 text-[11px] font-bold text-gray-700 hover:bg-gray-50 hover:text-indigo-600 shadow-xs transition"
-                                                    title="Buka laporan pekan ini"
-                                                >
-                                                    <span>Buka</span>
-                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
-                            <span class="text-[11px] text-amber-800">
-                                Anda dapat menautkan satu atau beberapa komitmen sekaligus. Setelah seluruh komitmen tertaut, panel urgensi ini akan hilang otomatis.
-                            </span>
+                        {{-- Tombol Buka Modal Penautan --}}
+                        <div class="flex items-center gap-2 flex-shrink-0">
                             <button 
-                                type="submit" 
-                                class="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-5 py-2.5 text-xs font-black text-white hover:bg-amber-700 shadow-sm transition"
+                                type="button" 
+                                @click="openUnlinkedModal()"
+                                class="inline-flex items-center gap-2 rounded-lg bg-amber-600 hover:bg-amber-700 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-amber-600/25 hover:shadow-lg transition cursor-pointer"
                             >
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
-                                <span>Simpan Penautan Target OKR</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                                </svg>
+                                <span>Tautkan Target OKR (Buka Modal)</span>
+                                <span class="bg-amber-800/90 text-white px-2 py-0.5 rounded-md text-[10px] font-mono font-bold">{{ $unlinkedCommitments->count() }}</span>
                             </button>
                         </div>
-                    </form>
+                    </div>
+
+                    {{-- ══════════════════════════════════════════════════════════════
+                         MODAL INTERAKTIF: PENAUTAN KOMITMEN KE TARGET OKR
+                         (Lega, Draggable via Header, Maximizable, Hanya Ditutup via Button)
+                    ══════════════════════════════════════════════════════════════ --}}
+                    <template x-teleport="body">
+                        <div 
+                            x-show="unlinkedModal.open" 
+                            x-cloak
+                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            x-transition:leave="transition ease-in duration-150"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="monitoring-modal-backdrop"
+                            style="display: none;"
+                        >
+                            <div 
+                                x-ref="unlinkedModalBox"
+                                class="unlinked-modal-box"
+                                :class="{
+                                    'maximized': unlinkedModal.maximized,
+                                    'positioned': !unlinkedModal.maximized && unlinkedModal.pos !== null
+                                }"
+                                :style="!unlinkedModal.maximized && unlinkedModal.pos !== null
+                                    ? 'left:' + unlinkedModal.pos.x + 'px; top:' + unlinkedModal.pos.y + 'px; width:1250px; max-width:95vw;'
+                                    : ''"
+                                @click.stop
+                            >
+                                {{-- 1. Header Modal (Drag Handle) --}}
+                                <div class="unlinked-modal-header"
+                                    :class="!unlinkedModal.maximized ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'"
+                                    @mousedown="startUnlinkedDrag($event)"
+                                >
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-lg bg-amber-600 flex items-center justify-center text-white flex-shrink-0 shadow-xs">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <div class="flex items-center gap-2">
+                                                <h3 class="text-sm font-black text-amber-950">Penautan Komitmen ke Target OKR Mingguan</h3>
+                                                <span class="rounded bg-amber-200 text-amber-900 px-2 py-0.5 text-[10px] font-bold">
+                                                    Periode {{ $period->title }}
+                                                </span>
+                                                <span class="rounded-full bg-amber-300 text-amber-950 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide border border-amber-400">
+                                                    {{ $unlinkedCommitments->count() }} Komitmen Perlu Ditautkan
+                                                </span>
+                                            </div>
+                                            <p class="text-[11px] text-amber-800 font-medium">Tahan dan geser header untuk memindahkan modal. Pilih target OKR mingguan yang sesuai pada dropdown masing-masing baris.</p>
+                                        </div>
+                                    </div>
+
+                                    {{-- Control Buttons (Maximize & Close) --}}
+                                    <div class="flex items-center gap-1.5 flex-shrink-0" @mousedown.stop>
+                                        {{-- Maximize Button --}}
+                                        <button 
+                                            type="button"
+                                            @click="toggleUnlinkedMaximize()"
+                                            class="w-8 h-8 rounded-md flex items-center justify-center text-amber-800 hover:bg-amber-200 transition-colors cursor-pointer border border-transparent hover:border-amber-300"
+                                            :title="unlinkedModal.maximized ? 'Kembalikan ukuran' : 'Perbesar layar penuh'"
+                                        >
+                                            <svg x-show="!unlinkedModal.maximized" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+                                            </svg>
+                                            <svg x-show="unlinkedModal.maximized" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display:none">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"/>
+                                            </svg>
+                                        </button>
+
+                                        {{-- Close Button (X) --}}
+                                        <button 
+                                            type="button"
+                                            @click="closeUnlinkedModal()"
+                                            class="w-8 h-8 rounded-md flex items-center justify-center text-amber-800 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer border border-transparent hover:border-red-200"
+                                            title="Tutup (Esc)"
+                                        >
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {{-- 2. Sub-Header: Search & Filter Toolbar --}}
+                                <div class="px-5 py-3 border-b border-amber-200 bg-amber-50/70 flex flex-wrap items-center justify-between gap-3">
+                                    <div class="relative flex-1 min-w-[220px] max-w-md">
+                                        <input 
+                                            type="text" 
+                                            x-model="unlinkedSearch"
+                                            placeholder="Cari komitmen, unit kerja, atau target..." 
+                                            class="w-full text-xs rounded-md border-amber-300 pl-8 pr-3 py-1.5 focus:border-amber-500 focus:ring-amber-500 bg-white"
+                                        >
+                                        <svg class="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                        </svg>
+                                    </div>
+
+                                    @if($unlinkedUnits->count() > 1)
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="text-xs font-bold text-amber-900 whitespace-nowrap">Filter Unit:</span>
+                                            <select x-model="unlinkedUnitFilter" class="rounded-md border-amber-300 text-xs py-1 px-2.5 bg-white font-semibold text-gray-700 focus:border-amber-500 focus:ring-amber-500">
+                                                <option value="all">Semua Unit ({{ $unlinkedCommitments->count() }})</option>
+                                                @foreach($unlinkedUnits as $u)
+                                                    <option value="{{ $u->id }}">{{ $u->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    @endif
+                                </div>
+
+                                {{-- Form & Body Table --}}
+                                <form method="POST" action="{{ route('okr.weekly.link-all-commitments') }}" class="flex flex-col flex-1 overflow-hidden m-0">
+                                    @csrf
+                                    <input type="hidden" name="period_id" value="{{ $period->id }}">
+                                    <input type="hidden" name="unit_id" value="{{ $selectedUnit->id }}">
+                                    <input type="hidden" name="week_start" value="{{ $weekStart->format('Y-m-d') }}">
+
+                                    <div class="unlinked-modal-body">
+                                        <table class="w-full text-left text-xs border-collapse">
+                                            <thead class="sticky top-0 bg-amber-100/95 backdrop-blur-xs font-black text-amber-950 uppercase tracking-wider text-[11px] border-b border-amber-200 shadow-xs z-10">
+                                                <tr>
+                                                    <th class="px-4 py-3 w-40">Unit Kerja</th>
+                                                    <th class="px-4 py-3 w-44">Pekan Laporan</th>
+                                                    <th class="px-4 py-3">Komitmen &amp; Target Terukur</th>
+                                                    <th class="px-4 py-3 w-80">Pilih Target OKR Mingguan</th>
+                                                    <th class="px-4 py-3 w-28 text-center">Navigasi</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-amber-100">
+                                                @foreach($unlinkedCommitments as $unlinkedItem)
+                                                    @php
+                                                        $itemReport = $unlinkedItem->report;
+                                                        $unitPlans = $weeklyPlansByUnit->get($itemReport->okr_unit_id, collect());
+                                                        $unlinkedSearchText = strtolower($itemReport->unit->name . ' ' . $unlinkedItem->commitment . ' ' . ($unlinkedItem->measurable_target ?? ''));
+                                                    @endphp
+                                                    <tr 
+                                                        x-show="matchesUnlinkedFilter('{{ $itemReport->okr_unit_id }}', {{ json_encode($unlinkedSearchText) }})"
+                                                        class="hover:bg-amber-50/60 transition"
+                                                    >
+                                                        <td class="px-4 py-3 align-top font-bold text-gray-900">
+                                                            <span class="inline-flex items-center gap-1.5 rounded-md bg-indigo-50 border border-indigo-200 px-2 py-1 text-[11px] font-black text-indigo-700">
+                                                                {{ $itemReport->unit->name }}
+                                                            </span>
+                                                        </td>
+                                                        <td class="px-4 py-3 align-top">
+                                                            <p class="font-bold text-gray-800">{{ $itemReport->week_start->translatedFormat('d M') }} – {{ $itemReport->week_end->translatedFormat('d M Y') }}</p>
+                                                            <span class="mt-1 inline-block rounded px-1.5 py-0.5 text-[10px] font-bold {{ $statusColors[$itemReport->status] ?? 'bg-gray-100 text-gray-700' }}">
+                                                                {{ $statusLabels[$itemReport->status] ?? $itemReport->status }}
+                                                            </span>
+                                                        </td>
+                                                        <td class="px-4 py-3 align-top">
+                                                            <p class="font-black text-indigo-900">Komitmen {{ $unlinkedItem->priority_order }}:</p>
+                                                            <p class="font-bold text-gray-900 mt-0.5">{{ $unlinkedItem->commitment }}</p>
+                                                            <p class="text-xs text-gray-500 mt-1">Target: {{ $unlinkedItem->measurable_target }}</p>
+                                                        </td>
+                                                        <td class="px-4 py-3 align-top">
+                                                            @if($unitPlans->isNotEmpty())
+                                                                <select 
+                                                                    name="items[{{ $unlinkedItem->id }}][okr_plan_id]" 
+                                                                    class="w-full rounded-md border-amber-300 bg-white text-xs text-gray-800 focus:border-amber-500 focus:ring-amber-500 py-1.5 font-medium"
+                                                                >
+                                                                    <option value="">-- Pilih Target OKR Mingguan --</option>
+                                                                    @foreach($unitPlans as $plan)
+                                                                        <option value="{{ $plan->id }}">
+                                                                            [{{ $plan->keyResult?->code ?? 'KR' }}] {{ $plan->title }}
+                                                                        </option>
+                                                                    @endforeach
+                                                                </select>
+                                                            @else
+                                                                <span class="text-xs text-red-600 font-bold italic">
+                                                                    Unit ini belum memiliki target mingguan di Matriks OKR.
+                                                                </span>
+                                                            @endif
+                                                        </td>
+                                                        <td class="px-4 py-3 align-top text-center">
+                                                            <a 
+                                                                href="{{ route('okr.weekly.index', ['period_id' => $itemReport->okr_period_id, 'unit_id' => $itemReport->okr_unit_id, 'week_start' => $itemReport->week_start->format('Y-m-d')]) }}"
+                                                                class="inline-flex items-center gap-1 rounded bg-white border border-gray-300 px-2 py-1 text-[11px] font-bold text-gray-700 hover:bg-gray-50 hover:text-indigo-600 shadow-xs transition"
+                                                                title="Buka laporan pekan ini"
+                                                            >
+                                                                <span>Buka</span>
+                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    {{-- 4. Footer Modal --}}
+                                    <div class="unlinked-modal-footer">
+                                        <div class="text-[11px] text-amber-900 leading-snug">
+                                            💡 Anda dapat menautkan satu atau beberapa komitmen sekaligus. Setelah seluruh komitmen tertaut, panel urgensi ini akan hilang otomatis.
+                                        </div>
+
+                                        <div class="flex items-center gap-2.5">
+                                            <button 
+                                                type="button" 
+                                                @click="closeUnlinkedModal()" 
+                                                class="rounded-md border border-gray-300 bg-white px-4 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 cursor-pointer"
+                                            >
+                                                Batal
+                                            </button>
+                                            <button 
+                                                type="submit" 
+                                                class="inline-flex items-center gap-2 rounded-md bg-amber-600 hover:bg-amber-700 px-5 py-2 text-xs font-black text-white shadow-sm transition cursor-pointer"
+                                            >
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                                                <span>Simpan Penautan Target OKR</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </template>
                 </div>
             @endif
 
