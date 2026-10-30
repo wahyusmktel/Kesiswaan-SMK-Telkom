@@ -37,6 +37,16 @@ class SpmbPiketTanggal extends Model
         return $this->hasMany(SpmbPiketAbsensi::class, 'spmb_piket_tanggal_id');
     }
 
+    public function beritaAcaras(): HasMany
+    {
+        return $this->hasMany(SpmbBeritaAcara::class, 'spmb_piket_tanggal_id');
+    }
+
+    public function beritaAcara()
+    {
+        return $this->hasOne(SpmbBeritaAcara::class, 'spmb_piket_tanggal_id')->latestOfMany();
+    }
+
     public function getFormattedTanggalAttribute(): string
     {
         if (! $this->tanggal) {

@@ -32,6 +32,8 @@ class KaurSpmbRoleSeeder extends Seeder
             'view spmb piket',
             'manage spmb piket schedule',
             'print spmb piket schedule',
+            'view spmb administrasi',
+            'manage spmb administrasi',
         ];
 
         foreach ($permissions as $permName) {

@@ -1554,6 +1554,14 @@ Route::middleware(['auth', 'role:Kaur SPMB|KAUR SPMB|Super Admin'])->prefix('kau
         Route::delete('/{absensi}', [\App\Http\Controllers\KaurSpmb\AbsensiPiketController::class, 'destroy'])->name('destroy');
         Route::get('/export', [\App\Http\Controllers\KaurSpmb\AbsensiPiketController::class, 'exportExcel'])->name('export');
     });
+
+    Route::prefix('administrasi')->name('administrasi.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\KaurSpmb\AdministrasiController::class, 'index'])->name('index');
+        Route::post('/berita-acara', [\App\Http\Controllers\KaurSpmb\AdministrasiController::class, 'store'])->name('store');
+        Route::put('/berita-acara/{administrasi}', [\App\Http\Controllers\KaurSpmb\AdministrasiController::class, 'update'])->name('update');
+        Route::delete('/berita-acara/{administrasi}', [\App\Http\Controllers\KaurSpmb\AdministrasiController::class, 'destroy'])->name('destroy');
+        Route::get('/berita-acara/{administrasi}/print', [\App\Http\Controllers\KaurSpmb\AdministrasiController::class, 'print'])->name('print');
+    });
 });
 
 // Dashboard eksekutif lintas unit (read-only)
