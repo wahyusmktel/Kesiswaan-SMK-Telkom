@@ -104,6 +104,61 @@
             [x-cloak] {
                 display: none !important;
             }
+
+            /* Monitoring Modal Interaktif (Lega, Draggable, Maximizable) */
+            .monitoring-modal-backdrop {
+                position: fixed; inset: 0;
+                background: rgba(15, 23, 42, 0.65);
+                backdrop-filter: blur(4px);
+                z-index: 99999;
+                display: flex; align-items: center; justify-content: center;
+                padding: 1rem;
+            }
+            .monitoring-modal-box {
+                background: #fff;
+                border-radius: 0.5rem;
+                border: 1px solid #cbd5e1;
+                box-shadow: 0 25px 60px rgba(0,0,0,.3);
+                width: 100%;
+                max-width: 1250px;
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                max-height: 88vh;
+            }
+            .monitoring-modal-box.maximized {
+                position: fixed !important;
+                inset: 0 !important;
+                max-width: 100vw !important;
+                max-height: 100vh !important;
+                border-radius: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                z-index: 99999 !important;
+            }
+            .monitoring-modal-box.positioned {
+                position: fixed;
+            }
+            .monitoring-modal-header {
+                display: flex; align-items: center; justify-content: space-between;
+                padding: 0.875rem 1.25rem;
+                flex-shrink: 0;
+                border-bottom: 1px solid #c7d2fe;
+                background: linear-gradient(to right, #eef2ff, #e0e7ff);
+                user-select: none;
+            }
+            .monitoring-modal-body {
+                padding: 1rem 1.25rem;
+                overflow-y: auto;
+                flex: 1;
+            }
+            .monitoring-modal-footer {
+                padding: 0.875rem 1.25rem;
+                border-top: 1px solid #e5e7eb;
+                display: flex; align-items: center; justify-content: space-between;
+                flex-shrink: 0;
+                background: #f8fafc;
+            }
         </style>
     @endpush
 
@@ -249,6 +304,14 @@
                     x-data="{
                         statusFilter: 'all',
                         unitFilter: 'all',
+                        searchQuery: '',
+                        detailModal: {
+                            open: false,
+                            maximized: false,
+                            dragging: false,
+                            pos: null,
+                            dragOffset: { x: 0, y: 0 }
+                        },
                         progressModalOpen: false,
                         modalItemId: null,
                         modalCommitment: '',
@@ -258,6 +321,54 @@
                         modalStatus: 'on_progress',
                         modalBlockers: '',
                         modalActionUrl: '',
+
+                        openDetailModal(filter = 'all') {
+                            this.statusFilter = filter;
+                            this.detailModal.open = true;
+                            this.detailModal.maximized = false;
+                            this.detailModal.pos = null;
+                        },
+                        closeDetailModal() {
+                            this.detailModal.open = false;
+                            this.detailModal.maximized = false;
+                            this.detailModal.pos = null;
+                        },
+                        toggleDetailMaximize() {
+                            this.detailModal.maximized = !this.detailModal.maximized;
+                            if (this.detailModal.maximized) {
+                                this.detailModal.pos = null;
+                            }
+                        },
+                        startDetailDrag(e) {
+                            if (this.detailModal.maximized) return;
+                            this.detailModal.dragging = true;
+                            const box = this.$refs.detailModalBox;
+                            if (!box) return;
+                            const rect = box.getBoundingClientRect();
+                            this.detailModal.pos = { x: rect.left, y: rect.top };
+                            this.detailModal.dragOffset = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+                        },
+                        onDetailDrag(e) {
+                            if (!this.detailModal.dragging) return;
+                            const maxX = window.innerWidth - 120;
+                            const maxY = window.innerHeight - 60;
+                            this.detailModal.pos.x = Math.max(0, Math.min(e.clientX - this.detailModal.dragOffset.x, maxX));
+                            this.detailModal.pos.y = Math.max(0, Math.min(e.clientY - this.detailModal.dragOffset.y, maxY));
+                        },
+                        stopDetailDrag() {
+                            this.detailModal.dragging = false;
+                        },
+                        matchesFilter(unitId, isZero, isBlocked, isInProgress, text) {
+                            if (this.statusFilter === 'zero' && !isZero) return false;
+                            if (this.statusFilter === 'blocked' && !isBlocked) return false;
+                            if (this.statusFilter === 'in_progress' && !isInProgress) return false;
+                            if (this.unitFilter !== 'all' && this.unitFilter != unitId) return false;
+                            if (this.searchQuery && this.searchQuery.trim() !== '') {
+                                const q = this.searchQuery.toLowerCase().trim();
+                                if (!text.includes(q)) return false;
+                            }
+                            return true;
+                        },
                         openProgressModal(id, commitment, order, unit, progress, status, blockers, actionUrl) {
                             this.modalItemId = id;
                             this.modalCommitment = commitment;
@@ -283,317 +394,534 @@
                             }
                         }
                     }"
-                    class="rounded-xl border-2 border-indigo-200 bg-gradient-to-r from-indigo-50/70 via-white to-slate-50 p-5 shadow-sm space-y-4"
+                    @mousemove.window="onDetailDrag($event)"
+                    @mouseup.window="stopDetailDrag()"
+                    class="rounded-lg border-2 border-indigo-200 bg-gradient-to-r from-indigo-50/70 via-white to-slate-50 p-4 sm:p-5 shadow-sm space-y-4"
                 >
-                    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                        <div class="flex items-start gap-3">
-                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-md shadow-indigo-600/20">
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {{-- Header Kotak Monitoring --}}
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div class="flex items-start gap-3.5">
+                            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-md shadow-indigo-600/20">
+                                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                                 </svg>
                             </div>
                             <div>
-                                <h3 class="text-sm font-black text-indigo-950 flex flex-wrap items-center gap-2">
-                                    <span>Monitoring Komitmen Belum Selesai dan Mandek (Periode {{ $period->title }})</span>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <h3 class="text-sm sm:text-base font-black text-indigo-950">
+                                        Monitoring Komitmen Belum Selesai dan Mandek
+                                    </h3>
                                     <span class="rounded-full bg-rose-100 text-rose-700 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide border border-rose-200">
                                         {{ $incompleteStats['total'] }} Perlu Tindak Lanjut
                                     </span>
-                                </h3>
-                                <p class="mt-1 text-xs text-gray-600 leading-relaxed max-w-4xl">
-                                    Daftar seluruh komitmen yang belum mencapai 100% atau belum ada progres. Kepala Unit dapat langsung memperbarui progres komitmen pekan berjalan via tombol aksi, atau membuka laporan pekan terkait agar target segera berprogres dan tuntas.
+                                    <span class="rounded bg-indigo-100 text-indigo-800 px-2 py-0.5 text-[10px] font-bold">
+                                        Periode: {{ $period->title }}
+                                    </span>
+                                </div>
+                                <p class="mt-1 text-xs text-gray-600 leading-relaxed max-w-3xl">
+                                    Ringkasan seluruh komitmen pekanan lintas unit yang belum mencapai 100%, 0%, atau terhambat. Klik tombol untuk membuka modal interaktif selengkapnya dan melakukan update progres.
                                 </p>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Filter Bar -->
-                    <div class="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-indigo-100/80">
-                        <div class="flex flex-wrap items-center gap-2">
+                        {{-- Tombol Buka Modal Interaktif --}}
+                        <div class="flex items-center gap-2 flex-shrink-0">
                             <button 
                                 type="button" 
-                                @click="statusFilter = 'all'" 
-                                :class="statusFilter === 'all' ? 'bg-indigo-600 text-white shadow-xs font-black' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 font-bold'"
-                                class="rounded-lg px-3 py-1.5 text-xs transition"
+                                @click="openDetailModal('all')"
+                                class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/25 hover:shadow-lg transition cursor-pointer"
                             >
-                                Semua ({{ $incompleteStats['total'] }})
-                            </button>
-                            <button 
-                                type="button" 
-                                @click="statusFilter = 'zero'" 
-                                :class="statusFilter === 'zero' ? 'bg-amber-600 text-white shadow-xs font-black' : 'bg-white text-amber-900 border border-amber-200 hover:bg-amber-50 font-bold'"
-                                class="rounded-lg px-3 py-1.5 text-xs transition"
-                            >
-                                Belum Ada Progres / 0% ({{ $incompleteStats['zero'] }})
-                            </button>
-                            <button 
-                                type="button" 
-                                @click="statusFilter = 'blocked'" 
-                                :class="statusFilter === 'blocked' ? 'bg-rose-600 text-white shadow-xs font-black' : 'bg-white text-rose-900 border border-rose-200 hover:bg-rose-50 font-bold'"
-                                class="rounded-lg px-3 py-1.5 text-xs transition"
-                            >
-                                Terhambat ({{ $incompleteStats['blocked'] }})
-                            </button>
-                            <button 
-                                type="button" 
-                                @click="statusFilter = 'in_progress'" 
-                                :class="statusFilter === 'in_progress' ? 'bg-sky-600 text-white shadow-xs font-black' : 'bg-white text-sky-900 border border-sky-200 hover:bg-sky-50 font-bold'"
-                                class="rounded-lg px-3 py-1.5 text-xs transition"
-                            >
-                                Sedang Berjalan ({{ $incompleteStats['in_progress'] }})
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                                </svg>
+                                <span>Lihat Data Selengkapnya &amp; Aksi</span>
+                                <span class="bg-indigo-800/90 text-white px-2 py-0.5 rounded-md text-[10px] font-mono font-bold">{{ $incompleteStats['total'] }}</span>
                             </button>
                         </div>
-
-                        @if($incompleteUnits->count() > 1)
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs font-bold text-gray-500 whitespace-nowrap">Unit Kerja:</span>
-                                <select x-model="unitFilter" class="rounded-lg border-gray-300 text-xs py-1.5 px-3 bg-white font-semibold text-gray-700 focus:border-indigo-500 focus:ring-indigo-500">
-                                    <option value="all">Semua Unit ({{ $incompleteStats['total'] }})</option>
-                                    @foreach($incompleteUnits as $u)
-                                        <option value="{{ $u->id }}">{{ $u->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        @endif
                     </div>
 
-                    <!-- Table -->
-                    <div class="overflow-x-auto rounded-lg border border-indigo-200 bg-white shadow-sm">
-                        <table class="w-full text-left text-xs">
-                            <thead class="bg-indigo-100/60 font-black text-indigo-950 uppercase tracking-wider text-[11px] border-b border-indigo-200">
-                                <tr>
-                                    <th class="px-4 py-3 w-36">Unit Kerja</th>
-                                    <th class="px-4 py-3 w-44">Pekan Laporan</th>
-                                    <th class="px-4 py-3">Komitmen & Target Terukur</th>
-                                    <th class="px-4 py-3 w-52">Target OKR Terkait</th>
-                                    <th class="px-4 py-3 w-48">Capaian & Status</th>
-                                    <th class="px-4 py-3 w-52">Kendala / Update Terkini</th>
-                                    <th class="px-4 py-3 w-36 text-center">Aksi Cepat</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                @foreach($incompleteCommitments as $incItem)
-                                    @php
-                                        $incReport = $incItem->report;
-                                        $incLatestProgress = $incItem->progressUpdates->first();
-                                        $isZero = (float) $incItem->completion_percent == 0;
-                                        $isBlocked = $incItem->final_status === 'blocked';
-                                        $isInProgress = (float) $incItem->completion_percent > 0 && (float) $incItem->completion_percent < 100 && ! $isBlocked;
-                                        $canEditDraft = in_array($incReport->okr_unit_id, $editableUnitIds, true) && $incReport->status === 'draft';
-                                    @endphp
-                                    <tr 
-                                        x-show="(statusFilter === 'all' || (statusFilter === 'zero' && {{ $isZero ? 'true' : 'false' }}) || (statusFilter === 'blocked' && {{ $isBlocked ? 'true' : 'false' }}) || (statusFilter === 'in_progress' && {{ $isInProgress ? 'true' : 'false' }})) && (unitFilter === 'all' || unitFilter === '{{ $incReport->okr_unit_id }}')"
-                                        class="hover:bg-indigo-50/30 transition {{ $isBlocked ? 'bg-rose-50/20' : ($isZero ? 'bg-amber-50/10' : '') }}"
-                                    >
-                                        <td class="px-4 py-3 align-top font-bold text-gray-900">
-                                            <span class="inline-flex items-center gap-1.5 rounded-md bg-indigo-50 border border-indigo-200 px-2 py-1 text-[11px] font-black text-indigo-700">
-                                                {{ $incReport->unit->name }}
-                                            </span>
-                                        </td>
-                                        <td class="px-4 py-3 align-top">
-                                            <p class="font-bold text-gray-800">{{ $incReport->week_start->translatedFormat('d M') }} – {{ $incReport->week_end->translatedFormat('d M Y') }}</p>
-                                            <span class="mt-1 inline-block rounded px-1.5 py-0.5 text-[10px] font-bold {{ $statusColors[$incReport->status] ?? 'bg-gray-100 text-gray-700' }}">
-                                                {{ $statusLabels[$incReport->status] ?? $incReport->status }}
-                                            </span>
-                                        </td>
-                                        <td class="px-4 py-3 align-top">
-                                            <p class="font-black text-indigo-900">Komitmen {{ $incItem->priority_order }}:</p>
-                                            <p class="font-bold text-gray-900 mt-0.5">{{ $incItem->commitment }}</p>
-                                            <p class="text-xs text-gray-500 mt-1"><span class="font-semibold text-gray-600">Target:</span> {{ $incItem->measurable_target }}</p>
-                                        </td>
-                                        <td class="px-4 py-3 align-top">
-                                            @if($incItem->plan)
-                                                <p class="font-bold text-gray-800">[{{ $incItem->plan->keyResult?->code ?? 'KR' }}] {{ $incItem->plan->title }}</p>
-                                            @else
-                                                <span class="inline-flex items-center gap-1 rounded bg-amber-100 border border-amber-200 px-2 py-0.5 text-[10px] font-bold text-amber-800">
-                                                    Belum Tertaut Target
-                                                </span>
-                                            @endif
-                                        </td>
-                                        <td class="px-4 py-3 align-top">
-                                            <div class="space-y-1.5">
-                                                <div class="flex items-center justify-between text-xs">
-                                                    <span class="font-black text-gray-900 text-sm">{{ (float) $incItem->completion_percent }}%</span>
-                                                    <span class="rounded px-1.5 py-0.5 text-[9px] font-black {{ $incItem->final_status === 'completed' ? 'bg-emerald-100 text-emerald-700' : ($incItem->final_status === 'blocked' ? 'bg-rose-100 text-rose-700' : ($isZero ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-700')) }}">
-                                                        {{ $itemStatusLabels[$incItem->final_status] ?? $incItem->final_status }}
-                                                    </span>
-                                                </div>
-                                                <div class="h-2 w-full overflow-hidden rounded-full bg-gray-100 border border-gray-200">
-                                                    <div class="h-full rounded-full {{ $incItem->final_status === 'blocked' ? 'bg-rose-500' : ($isZero ? 'bg-amber-400' : 'bg-gradient-to-r from-cyan-500 to-indigo-600') }}" style="width: {{ min(100, max(3, (float) $incItem->completion_percent)) }}%"></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="px-4 py-3 align-top">
-                                            @if($incItem->blockers || $incLatestProgress?->blockers)
-                                                <div class="rounded bg-rose-50 border border-rose-200 p-2 text-[11px] font-semibold text-rose-800 leading-snug">
-                                                    <span class="font-black uppercase text-[9px] block text-rose-700">Kendala:</span>
-                                                    {{ $incItem->blockers ?: $incLatestProgress->blockers }}
-                                                </div>
-                                            @elseif($incLatestProgress?->note)
-                                                <p class="text-[11px] text-gray-700 leading-snug line-clamp-2">{{ $incLatestProgress->note }}</p>
-                                                <p class="text-[9px] text-gray-400 mt-1">{{ $incLatestProgress->recorder?->name ?? 'Pengguna' }} · {{ $incLatestProgress->recorded_at->translatedFormat('d M H:i') }}</p>
-                                            @elseif($incItem->actual_result)
-                                                <p class="text-[11px] text-gray-700 leading-snug line-clamp-2">{{ $incItem->actual_result }}</p>
-                                            @else
-                                                <span class="text-[11px] text-gray-400 italic">Belum ada pembaruan</span>
-                                            @endif
-                                        </td>
-                                        <td class="px-4 py-3 align-top text-center">
-                                            <div class="flex flex-col items-center gap-1.5">
-                                                @if($canEditDraft)
-                                                    <button 
-                                                        type="button"
-                                                        @click="openProgressModal(
-                                                            {{ $incItem->id }},
-                                                            @js($incItem->commitment),
-                                                            {{ $incItem->priority_order }},
-                                                            @js($incReport->unit->name),
-                                                            {{ (float) $incItem->completion_percent }},
-                                                            '{{ $incItem->final_status }}',
-                                                            @js($incItem->blockers ?? ''),
-                                                            '{{ route('okr.weekly.progress', $incReport) }}'
-                                                        )"
-                                                        class="w-full inline-flex items-center justify-center gap-1 rounded bg-indigo-600 px-2.5 py-1.5 text-[11px] font-black text-white hover:bg-indigo-700 shadow-xs transition"
-                                                        title="Perbarui progres komitmen ini"
-                                                    >
-                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                                        <span>Update Progres</span>
-                                                    </button>
-                                                @endif
-                                                <a 
-                                                    href="{{ route('okr.weekly.index', ['period_id' => $incReport->okr_period_id, 'unit_id' => $incReport->okr_unit_id, 'week_start' => $incReport->week_start->format('Y-m-d')]) }}"
-                                                    class="w-full inline-flex items-center justify-center gap-1 rounded bg-white border border-gray-300 px-2 py-1 text-[11px] font-bold text-gray-700 hover:bg-gray-50 hover:text-indigo-600 shadow-xs transition"
-                                                    title="Buka halaman laporan pekan ini"
-                                                >
-                                                    <span>Buka Laporan</span>
-                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-
-                    @if(!empty($editableUnitIds))
-                        <!-- Modal Perbarui Progres Cepat -->
+                    {{-- 4 Stat Cards Ringkas & Interaktif --}}
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-indigo-100/80">
                         <div 
-                            x-show="progressModalOpen" 
-                            x-cloak
-                            class="fixed inset-0 z-50 overflow-y-auto"
-                            @keydown.escape.window="closeProgressModal()"
+                            @click="openDetailModal('all')"
+                            class="p-3 bg-white rounded-lg border border-indigo-200 hover:border-indigo-400 hover:shadow-sm transition cursor-pointer group"
+                            title="Klik untuk membuka data komitmen"
                         >
-                            <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-xs transition-opacity" @click="closeProgressModal()"></div>
-                            <div class="flex min-h-full items-center justify-center p-4">
-                                <div 
-                                    class="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl transition-all border border-gray-200"
-                                    @click.stop
+                            <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Total Komitmen</span>
+                            <div class="mt-1 flex items-baseline justify-between">
+                                <span class="text-xl font-black text-indigo-950">{{ $incompleteStats['total'] }}</span>
+                                <span class="text-[10px] font-bold text-indigo-600 group-hover:translate-x-0.5 transition-transform">Buka Modal &rarr;</span>
+                            </div>
+                        </div>
+
+                        <div 
+                            @click="openDetailModal('zero')"
+                            class="p-3 bg-white rounded-lg border border-amber-200 hover:border-amber-400 hover:shadow-sm transition cursor-pointer group"
+                            title="Klik untuk memfilter komitmen 0%"
+                        >
+                            <span class="text-[10px] font-bold text-amber-800 uppercase tracking-wider block">Belum Ada Progres (0%)</span>
+                            <div class="mt-1 flex items-baseline justify-between">
+                                <span class="text-xl font-black text-amber-700">{{ $incompleteStats['zero'] }}</span>
+                                <span class="text-[10px] font-bold text-amber-600 group-hover:translate-x-0.5 transition-transform">Filter &rarr;</span>
+                            </div>
+                        </div>
+
+                        <div 
+                            @click="openDetailModal('blocked')"
+                            class="p-3 bg-white rounded-lg border border-rose-200 hover:border-rose-400 hover:shadow-sm transition cursor-pointer group"
+                            title="Klik untuk memfilter komitmen terhambat"
+                        >
+                            <span class="text-[10px] font-bold text-rose-800 uppercase tracking-wider block">Terhambat</span>
+                            <div class="mt-1 flex items-baseline justify-between">
+                                <span class="text-xl font-black text-rose-700">{{ $incompleteStats['blocked'] }}</span>
+                                <span class="text-[10px] font-bold text-rose-600 group-hover:translate-x-0.5 transition-transform">Filter &rarr;</span>
+                            </div>
+                        </div>
+
+                        <div 
+                            @click="openDetailModal('in_progress')"
+                            class="p-3 bg-white rounded-lg border border-sky-200 hover:border-sky-400 hover:shadow-sm transition cursor-pointer group"
+                            title="Klik untuk memfilter komitmen sedang berjalan"
+                        >
+                            <span class="text-[10px] font-bold text-sky-800 uppercase tracking-wider block">Sedang Berjalan</span>
+                            <div class="mt-1 flex items-baseline justify-between">
+                                <span class="text-xl font-black text-sky-700">{{ $incompleteStats['in_progress'] }}</span>
+                                <span class="text-[10px] font-bold text-sky-600 group-hover:translate-x-0.5 transition-transform">Filter &rarr;</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Highlight banner jika ada komitmen terhambat --}}
+                    @if($incompleteStats['blocked'] > 0)
+                        <div class="flex items-center justify-between gap-3 p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-900">
+                            <div class="flex items-center gap-2">
+                                <span class="flex h-2 w-2 rounded-full bg-rose-600 flex-shrink-0"></span>
+                                <span>Perhatian: Terdapat <strong>{{ $incompleteStats['blocked'] }} komitmen</strong> yang berstatus terhambat kendala. Segera lakukan koordinasi dan evaluasi.</span>
+                            </div>
+                            <button 
+                                type="button" 
+                                @click="openDetailModal('blocked')"
+                                class="inline-flex items-center gap-1 font-bold text-rose-700 hover:text-rose-900 underline flex-shrink-0 cursor-pointer text-xs"
+                            >
+                                Tinjau Terhambat &rarr;
+                            </button>
+                        </div>
+                    @endif
+
+                    {{-- ══════════════════════════════════════════════════════════════
+                         MODAL INTERAKTIF: DETAIL MONITORING KOMITMEN & AKSI LENGKAP
+                         (Lega, Draggable via Header, Maximizable, Hanya Ditutup via Button)
+                    ══════════════════════════════════════════════════════════════ --}}
+                    <template x-teleport="body">
+                        <div 
+                            x-show="detailModal.open" 
+                            x-cloak
+                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            x-transition:leave="transition ease-in duration-150"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="monitoring-modal-backdrop"
+                            style="display: none;"
+                        >
+                            <div 
+                                x-ref="detailModalBox"
+                                class="monitoring-modal-box"
+                                :class="{
+                                    'maximized': detailModal.maximized,
+                                    'positioned': !detailModal.maximized && detailModal.pos !== null
+                                }"
+                                :style="!detailModal.maximized && detailModal.pos !== null
+                                    ? 'left:' + detailModal.pos.x + 'px; top:' + detailModal.pos.y + 'px; width:1250px; max-width:95vw;'
+                                    : ''"
+                                @click.stop
+                            >
+                                {{-- 1. Header Modal (Drag Handle) --}}
+                                <div class="monitoring-modal-header"
+                                    :class="!detailModal.maximized ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'"
+                                    @mousedown="startDetailDrag($event)"
                                 >
-                                    <div class="flex items-start justify-between gap-4 border-b border-gray-100 pb-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white flex-shrink-0 shadow-xs">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                            </svg>
+                                        </div>
                                         <div>
                                             <div class="flex items-center gap-2">
-                                                <span class="rounded bg-indigo-50 border border-indigo-200 px-2 py-0.5 text-[10px] font-black text-indigo-700" x-text="modalUnit"></span>
-                                                <span class="text-xs font-black text-gray-500" x-text="'Komitmen #' + modalOrder"></span>
+                                                <h3 class="text-sm font-black text-indigo-950">Monitoring Komitmen Belum Selesai &amp; Mandek</h3>
+                                                <span class="rounded bg-indigo-100 text-indigo-800 px-2 py-0.5 text-[10px] font-bold">
+                                                    Periode {{ $period->title }}
+                                                </span>
+                                                <span class="rounded-full bg-rose-100 text-rose-700 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide border border-rose-200">
+                                                    {{ $incompleteStats['total'] }} Perlu Tindak Lanjut
+                                                </span>
                                             </div>
-                                            <h3 class="mt-1.5 text-base font-black text-gray-900" x-text="modalCommitment"></h3>
+                                            <p class="text-[11px] text-gray-500 font-medium">Tahan dan geser header untuk memindahkan posisi modal. Gunakan tombol perbesar untuk tampilan penuh.</p>
                                         </div>
-                                        <button type="button" @click="closeProgressModal()" class="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700">
-                                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    </div>
+
+                                    {{-- Control Buttons (Maximize & Close) --}}
+                                    <div class="flex items-center gap-1.5 flex-shrink-0" @mousedown.stop>
+                                        {{-- Maximize Button --}}
+                                        <button 
+                                            type="button"
+                                            @click="toggleDetailMaximize()"
+                                            class="w-8 h-8 rounded-md flex items-center justify-center text-gray-500 hover:bg-white/80 hover:text-gray-800 transition-colors cursor-pointer border border-transparent hover:border-gray-200"
+                                            :title="detailModal.maximized ? 'Kembalikan ukuran' : 'Perbesar layar penuh'"
+                                        >
+                                            <svg x-show="!detailModal.maximized" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+                                            </svg>
+                                            <svg x-show="detailModal.maximized" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display:none">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"/>
+                                            </svg>
+                                        </button>
+
+                                        {{-- Close Button (X) --}}
+                                        <button 
+                                            type="button"
+                                            @click="closeDetailModal()"
+                                            class="w-8 h-8 rounded-md flex items-center justify-center text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer border border-transparent hover:border-red-200"
+                                            title="Tutup (Esc)"
+                                        >
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {{-- 2. Sub-Header: Search & Filter Toolbar --}}
+                                <div class="px-5 py-3 border-b border-gray-200 bg-slate-50 flex flex-wrap items-center justify-between gap-3">
+                                    {{-- Search Box --}}
+                                    <div class="relative flex-1 min-w-[220px] max-w-md">
+                                        <input 
+                                            type="text" 
+                                            x-model="searchQuery"
+                                            placeholder="Cari komitmen, unit kerja, target, atau kendala..." 
+                                            class="w-full text-xs rounded-md border-gray-300 pl-8 pr-3 py-1.5 focus:border-indigo-500 focus:ring-indigo-500 bg-white"
+                                        >
+                                        <svg class="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                        </svg>
+                                    </div>
+
+                                    {{-- Status Tabs --}}
+                                    <div class="flex flex-wrap items-center gap-1.5">
+                                        <button 
+                                            type="button" 
+                                            @click="statusFilter = 'all'" 
+                                            :class="statusFilter === 'all' ? 'bg-indigo-600 text-white font-black shadow-xs' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-100 font-bold'"
+                                            class="rounded-md px-2.5 py-1 text-xs transition cursor-pointer"
+                                        >
+                                            Semua ({{ $incompleteStats['total'] }})
+                                        </button>
+                                        <button 
+                                            type="button" 
+                                            @click="statusFilter = 'zero'" 
+                                            :class="statusFilter === 'zero' ? 'bg-amber-600 text-white font-black shadow-xs' : 'bg-white text-amber-900 border border-amber-200 hover:bg-amber-50 font-bold'"
+                                            class="rounded-md px-2.5 py-1 text-xs transition cursor-pointer"
+                                        >
+                                            0% / Belum Ada Progres ({{ $incompleteStats['zero'] }})
+                                        </button>
+                                        <button 
+                                            type="button" 
+                                            @click="statusFilter = 'blocked'" 
+                                            :class="statusFilter === 'blocked' ? 'bg-rose-600 text-white font-black shadow-xs' : 'bg-white text-rose-900 border border-rose-200 hover:bg-rose-50 font-bold'"
+                                            class="rounded-md px-2.5 py-1 text-xs transition cursor-pointer"
+                                        >
+                                            Terhambat ({{ $incompleteStats['blocked'] }})
+                                        </button>
+                                        <button 
+                                            type="button" 
+                                            @click="statusFilter = 'in_progress'" 
+                                            :class="statusFilter === 'in_progress' ? 'bg-sky-600 text-white font-black shadow-xs' : 'bg-white text-sky-900 border border-sky-200 hover:bg-sky-50 font-bold'"
+                                            class="rounded-md px-2.5 py-1 text-xs transition cursor-pointer"
+                                        >
+                                            Sedang Berjalan ({{ $incompleteStats['in_progress'] }})
                                         </button>
                                     </div>
 
-                                    <form method="POST" x-bind:action="modalActionUrl" enctype="multipart/form-data" class="mt-5 space-y-4">
-                                        @csrf
-                                        <input type="hidden" name="item_id" x-bind:value="modalItemId">
+                                    {{-- Unit Filter Selector --}}
+                                    @if($incompleteUnits->count() > 1)
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="text-xs font-bold text-gray-500 whitespace-nowrap">Unit:</span>
+                                            <select x-model="unitFilter" class="rounded-md border-gray-300 text-xs py-1 px-2.5 bg-white font-semibold text-gray-700 focus:border-indigo-500 focus:ring-indigo-500">
+                                                <option value="all">Semua Unit ({{ $incompleteStats['total'] }})</option>
+                                                @foreach($incompleteUnits as $u)
+                                                    <option value="{{ $u->id }}">{{ $u->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    @endif
+                                </div>
 
-                                        <div class="grid grid-cols-2 gap-3">
-                                            <div>
-                                                <label class="mb-1 block text-xs font-bold text-gray-700">Progres (%)</label>
-                                                <input 
-                                                    type="number" 
-                                                    name="progress_percent" 
-                                                    min="0" 
-                                                    max="100" 
-                                                    step="1" 
-                                                    x-model="modalProgressPercent" 
-                                                    @input="onProgressChange()"
-                                                    required 
-                                                    class="w-full rounded-lg border-gray-300 text-sm font-bold focus:border-indigo-500 focus:ring-indigo-500"
+                                {{-- 3. Body: Interactive Scrollable Table --}}
+                                <div class="monitoring-modal-body p-0">
+                                    <table class="w-full text-left text-xs border-collapse">
+                                        <thead class="sticky top-0 bg-indigo-50/95 backdrop-blur-xs font-black text-indigo-950 uppercase tracking-wider text-[11px] border-b border-indigo-200 shadow-xs z-10">
+                                            <tr>
+                                                <th class="px-4 py-3 w-36">Unit Kerja</th>
+                                                <th class="px-4 py-3 w-44">Pekan Laporan</th>
+                                                <th class="px-4 py-3">Komitmen &amp; Target Terukur</th>
+                                                <th class="px-4 py-3 w-52">Target OKR Terkait</th>
+                                                <th class="px-4 py-3 w-48">Capaian &amp; Status</th>
+                                                <th class="px-4 py-3 w-52">Kendala / Update Terkini</th>
+                                                <th class="px-4 py-3 w-36 text-center">Aksi Cepat</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-100">
+                                            @foreach($incompleteCommitments as $incItem)
+                                                @php
+                                                    $incReport = $incItem->report;
+                                                    $incLatestProgress = $incItem->progressUpdates->first();
+                                                    $isZero = (float) $incItem->completion_percent == 0;
+                                                    $isBlocked = $incItem->final_status === 'blocked';
+                                                    $isInProgress = (float) $incItem->completion_percent > 0 && (float) $incItem->completion_percent < 100 && ! $isBlocked;
+                                                    $canEditDraft = in_array($incReport->okr_unit_id, $editableUnitIds, true) && $incReport->status === 'draft';
+                                                    $searchIndex = strtolower($incReport->unit->name . ' ' . $incItem->commitment . ' ' . ($incItem->measurable_target ?? '') . ' ' . ($incItem->blockers ?? '') . ' ' . ($incLatestProgress?->note ?? ''));
+                                                @endphp
+                                                <tr 
+                                                    x-show="matchesFilter('{{ $incReport->okr_unit_id }}', {{ $isZero ? 'true' : 'false' }}, {{ $isBlocked ? 'true' : 'false' }}, {{ $isInProgress ? 'true' : 'false' }}, {{ json_encode($searchIndex) }})"
+                                                    class="hover:bg-indigo-50/30 transition {{ $isBlocked ? 'bg-rose-50/20' : ($isZero ? 'bg-amber-50/10' : '') }}"
                                                 >
-                                            </div>
-                                            <div>
-                                                <label class="mb-1 block text-xs font-bold text-gray-700">Status Capaian</label>
-                                                <select 
-                                                    name="status" 
-                                                    x-model="modalStatus" 
-                                                    @change="onStatusChange()"
-                                                    class="w-full rounded-lg border-gray-300 text-sm font-semibold focus:border-indigo-500 focus:ring-indigo-500"
-                                                >
-                                                    <option value="not_started">Belum dimulai</option>
-                                                    <option value="on_progress">Berjalan</option>
-                                                    <option value="completed">Tercapai (100%)</option>
-                                                    <option value="blocked">Terhambat</option>
-                                                </select>
-                                            </div>
-                                        </div>
+                                                    <td class="px-4 py-3 align-top font-bold text-gray-900">
+                                                        <span class="inline-flex items-center gap-1.5 rounded-md bg-indigo-50 border border-indigo-200 px-2 py-1 text-[11px] font-black text-indigo-700">
+                                                            {{ $incReport->unit->name }}
+                                                        </span>
+                                                    </td>
+                                                    <td class="px-4 py-3 align-top">
+                                                        <p class="font-bold text-gray-800">{{ $incReport->week_start->translatedFormat('d M') }} – {{ $incReport->week_end->translatedFormat('d M Y') }}</p>
+                                                        <span class="mt-1 inline-block rounded px-1.5 py-0.5 text-[10px] font-bold {{ $statusColors[$incReport->status] ?? 'bg-gray-100 text-gray-700' }}">
+                                                            {{ $statusLabels[$incReport->status] ?? $incReport->status }}
+                                                        </span>
+                                                    </td>
+                                                    <td class="px-4 py-3 align-top">
+                                                        <p class="font-black text-indigo-900">Komitmen {{ $incItem->priority_order }}:</p>
+                                                        <p class="font-bold text-gray-900 mt-0.5">{{ $incItem->commitment }}</p>
+                                                        <p class="text-xs text-gray-500 mt-1"><span class="font-semibold text-gray-600">Target:</span> {{ $incItem->measurable_target }}</p>
+                                                    </td>
+                                                    <td class="px-4 py-3 align-top">
+                                                        @if($incItem->plan)
+                                                            <p class="font-bold text-gray-800">[{{ $incItem->plan->keyResult?->code ?? 'KR' }}] {{ $incItem->plan->title }}</p>
+                                                        @else
+                                                            <span class="inline-flex items-center gap-1 rounded bg-amber-100 border border-amber-200 px-2 py-0.5 text-[10px] font-bold text-amber-800">
+                                                                Belum Tertaut Target
+                                                            </span>
+                                                        @endif
+                                                    </td>
+                                                    <td class="px-4 py-3 align-top">
+                                                        <div class="space-y-1.5">
+                                                            <div class="flex items-center justify-between text-xs">
+                                                                <span class="font-black text-gray-900 text-sm">{{ (float) $incItem->completion_percent }}%</span>
+                                                                <span class="rounded px-1.5 py-0.5 text-[9px] font-black {{ $incItem->final_status === 'completed' ? 'bg-emerald-100 text-emerald-700' : ($incItem->final_status === 'blocked' ? 'bg-rose-100 text-rose-700' : ($isZero ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-700')) }}">
+                                                                    {{ $itemStatusLabels[$incItem->final_status] ?? $incItem->final_status }}
+                                                                </span>
+                                                            </div>
+                                                            <div class="h-2 w-full overflow-hidden rounded-full bg-gray-100 border border-gray-200">
+                                                                <div class="h-full rounded-full {{ $incItem->final_status === 'blocked' ? 'bg-rose-500' : ($isZero ? 'bg-amber-400' : 'bg-gradient-to-r from-cyan-500 to-indigo-600') }}" style="width: {{ min(100, max(3, (float) $incItem->completion_percent)) }}%"></div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-4 py-3 align-top">
+                                                        @if($incItem->blockers || $incLatestProgress?->blockers)
+                                                            <div class="rounded bg-rose-50 border border-rose-200 p-2 text-[11px] font-semibold text-rose-800 leading-snug">
+                                                                <span class="font-black uppercase text-[9px] block text-rose-700">Kendala:</span>
+                                                                {{ $incItem->blockers ?: $incLatestProgress->blockers }}
+                                                            </div>
+                                                        @elseif($incLatestProgress?->note)
+                                                            <p class="text-[11px] text-gray-700 leading-snug line-clamp-2">{{ $incLatestProgress->note }}</p>
+                                                            <p class="text-[9px] text-gray-400 mt-1">{{ $incLatestProgress->recorder?->name ?? 'Pengguna' }} · {{ $incLatestProgress->recorded_at->translatedFormat('d M H:i') }}</p>
+                                                        @elseif($incItem->actual_result)
+                                                            <p class="text-[11px] text-gray-700 leading-snug line-clamp-2">{{ $incItem->actual_result }}</p>
+                                                        @else
+                                                            <span class="text-[11px] text-gray-400 italic">Belum ada pembaruan</span>
+                                                        @endif
+                                                    </td>
+                                                    <td class="px-4 py-3 align-top text-center">
+                                                        <div class="flex flex-col items-center gap-1.5">
+                                                            @if($canEditDraft)
+                                                                <button 
+                                                                    type="button"
+                                                                    @click="openProgressModal(
+                                                                        {{ $incItem->id }},
+                                                                        @js($incItem->commitment),
+                                                                        {{ $incItem->priority_order }},
+                                                                        @js($incReport->unit->name),
+                                                                        {{ (float) $incItem->completion_percent }},
+                                                                        '{{ $incItem->final_status }}',
+                                                                        @js($incItem->blockers ?? ''),
+                                                                        '{{ route('okr.weekly.progress', $incReport) }}'
+                                                                    )"
+                                                                    class="w-full inline-flex items-center justify-center gap-1 rounded bg-indigo-600 px-2.5 py-1.5 text-[11px] font-black text-white hover:bg-indigo-700 shadow-xs transition cursor-pointer"
+                                                                    title="Perbarui progres komitmen ini"
+                                                                >
+                                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                                                    <span>Update Progres</span>
+                                                                </button>
+                                                            @endif
+                                                            <a 
+                                                                href="{{ route('okr.weekly.index', ['period_id' => $incReport->okr_period_id, 'unit_id' => $incReport->okr_unit_id, 'week_start' => $incReport->week_start->format('Y-m-d')]) }}"
+                                                                class="w-full inline-flex items-center justify-center gap-1 rounded bg-white border border-gray-300 px-2 py-1 text-[11px] font-bold text-gray-700 hover:bg-gray-50 hover:text-indigo-600 shadow-xs transition"
+                                                                title="Buka halaman laporan pekan ini"
+                                                            >
+                                                                <span>Buka Laporan</span>
+                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                                                            </a>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
 
-                                        <div>
-                                            <label class="mb-1 block text-xs font-bold text-gray-700">
-                                                Pembaruan Pekerjaan <span class="text-rose-500">*</span>
-                                            </label>
-                                            <textarea 
-                                                name="note" 
-                                                rows="3" 
-                                                required 
-                                                placeholder="Apa saja tindakan atau kemajuan yang sudah dicapai?" 
-                                                class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                            ></textarea>
-                                        </div>
+                                {{-- 4. Footer Modal --}}
+                                <div class="monitoring-modal-footer">
+                                    <div class="flex items-center gap-2 text-xs text-gray-500">
+                                        <svg class="w-4 h-4 text-indigo-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        <span>Gunakan tombol <strong>Update Progres</strong> untuk memperbarui langsung atau <strong>Buka Laporan</strong> untuk membuka pekan terkait.</span>
+                                    </div>
 
-                                        <div>
-                                            <label class="mb-1 block text-xs font-bold text-gray-700">
-                                                Kendala / Hambatan <span class="text-gray-400 font-normal">(opsional)</span>
-                                            </label>
-                                            <textarea 
-                                                name="blockers" 
-                                                rows="2" 
-                                                x-model="modalBlockers"
-                                                placeholder="Tuliskan jika ada faktor penghambat atau kebutuhan koordinasi..." 
-                                                class="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                            ></textarea>
-                                        </div>
-
-                                        <div>
-                                            <label class="mb-1 block text-xs font-bold text-gray-700">
-                                                Unggah Bukti Progres <span class="text-gray-400 font-normal">(opsional)</span>
-                                            </label>
-                                            <input 
-                                                type="file" 
-                                                name="evidence" 
-                                                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx" 
-                                                class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2 text-xs text-gray-600 focus:outline-none"
-                                            >
-                                        </div>
-
-                                        <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
-                                            <button 
-                                                type="button" 
-                                                @click="closeProgressModal()" 
-                                                class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50"
-                                            >
-                                                Batal
-                                            </button>
-                                            <button 
-                                                type="submit" 
-                                                class="rounded-lg bg-indigo-600 px-5 py-2 text-xs font-black text-white hover:bg-indigo-700 shadow-sm"
-                                            >
-                                                Simpan Progres Komitmen
-                                            </button>
-                                        </div>
-                                    </form>
+                                    <button 
+                                        type="button" 
+                                        @click="closeDetailModal()"
+                                        class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-md text-xs font-bold transition shadow-xs cursor-pointer"
+                                    >
+                                        Tutup
+                                    </button>
                                 </div>
                             </div>
                         </div>
+                    </template>
+
+                    {{-- ══════════════════════════════════════════════════════════════
+                         SUB-MODAL: PERBARUI PROGRES CEPAT (Z-Index Tinggi di atas modal detail)
+                    ══════════════════════════════════════════════════════════════ --}}
+                    @if(!empty($editableUnitIds))
+                        <template x-teleport="body">
+                            <div 
+                                x-show="progressModalOpen" 
+                                x-cloak
+                                class="fixed inset-0 z-[100001] overflow-y-auto"
+                                style="display: none;"
+                            >
+                                <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-xs transition-opacity"></div>
+                                <div class="flex min-h-full items-center justify-center p-4">
+                                    <div 
+                                        class="relative w-full max-w-lg rounded-lg bg-white p-6 shadow-2xl transition-all border border-gray-200"
+                                        @click.stop
+                                    >
+                                        <div class="flex items-start justify-between gap-4 border-b border-gray-100 pb-4">
+                                            <div>
+                                                <div class="flex items-center gap-2">
+                                                    <span class="rounded bg-indigo-50 border border-indigo-200 px-2 py-0.5 text-[10px] font-black text-indigo-700" x-text="modalUnit"></span>
+                                                    <span class="text-xs font-black text-gray-500" x-text="'Komitmen #' + modalOrder"></span>
+                                                </div>
+                                                <h3 class="mt-1.5 text-base font-black text-gray-900" x-text="modalCommitment"></h3>
+                                            </div>
+                                            <button type="button" @click="closeProgressModal()" class="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700">
+                                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                            </button>
+                                        </div>
+
+                                        <form method="POST" x-bind:action="modalActionUrl" enctype="multipart/form-data" class="mt-5 space-y-4">
+                                            @csrf
+                                            <input type="hidden" name="item_id" x-bind:value="modalItemId">
+
+                                            <div class="grid grid-cols-2 gap-3">
+                                                <div>
+                                                    <label class="mb-1 block text-xs font-bold text-gray-700">Progres (%)</label>
+                                                    <input 
+                                                        type="number" 
+                                                        name="progress_percent" 
+                                                        min="0" 
+                                                        max="100" 
+                                                        step="1" 
+                                                        x-model="modalProgressPercent" 
+                                                        @input="onProgressChange()"
+                                                        required 
+                                                        class="w-full rounded-md border-gray-300 text-sm font-bold focus:border-indigo-500 focus:ring-indigo-500"
+                                                    >
+                                                </div>
+                                                <div>
+                                                    <label class="mb-1 block text-xs font-bold text-gray-700">Status Capaian</label>
+                                                    <select 
+                                                        name="status" 
+                                                        x-model="modalStatus" 
+                                                        @change="onStatusChange()"
+                                                        class="w-full rounded-md border-gray-300 text-sm font-semibold focus:border-indigo-500 focus:ring-indigo-500"
+                                                    >
+                                                        <option value="not_started">Belum dimulai</option>
+                                                        <option value="on_progress">Berjalan</option>
+                                                        <option value="completed">Tercapai (100%)</option>
+                                                        <option value="blocked">Terhambat</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label class="mb-1 block text-xs font-bold text-gray-700">
+                                                    Pembaruan Pekerjaan <span class="text-rose-500">*</span>
+                                                </label>
+                                                <textarea 
+                                                    name="note" 
+                                                    rows="3" 
+                                                    required 
+                                                    placeholder="Apa saja tindakan atau kemajuan yang sudah dicapai?" 
+                                                    class="w-full rounded-md border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                ></textarea>
+                                            </div>
+
+                                            <div>
+                                                <label class="mb-1 block text-xs font-bold text-gray-700">
+                                                    Kendala / Hambatan <span class="text-gray-400 font-normal">(opsional)</span>
+                                                </label>
+                                                <textarea 
+                                                    name="blockers" 
+                                                    rows="2" 
+                                                    x-model="modalBlockers"
+                                                    placeholder="Tuliskan jika ada faktor penghambat atau kebutuhan koordinasi..." 
+                                                    class="w-full rounded-md border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                ></textarea>
+                                            </div>
+
+                                            <div>
+                                                <label class="mb-1 block text-xs font-bold text-gray-700">
+                                                    Unggah Bukti Progres <span class="text-gray-400 font-normal">(opsional)</span>
+                                                </label>
+                                                <input 
+                                                    type="file" 
+                                                    name="evidence" 
+                                                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx" 
+                                                    class="w-full rounded-md border border-gray-300 bg-gray-50 p-2 text-xs text-gray-600 focus:outline-none"
+                                                >
+                                            </div>
+
+                                            <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+                                                <button 
+                                                    type="button" 
+                                                    @click="closeProgressModal()" 
+                                                    class="rounded-md border border-gray-300 bg-white px-4 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 cursor-pointer"
+                                                >
+                                                    Batal
+                                                </button>
+                                                <button 
+                                                    type="submit" 
+                                                    class="rounded-md bg-indigo-600 px-5 py-2 text-xs font-black text-white hover:bg-indigo-700 shadow-sm cursor-pointer"
+                                                >
+                                                    Simpan Progres Komitmen
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
                     @endif
                 </div>
             @endif
