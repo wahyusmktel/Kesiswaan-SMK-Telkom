@@ -341,7 +341,7 @@
                 </button>
             </div>
 
-            <div class="p-4 flex-1 flex flex-col gap-2 overflow-y-auto" style="min-height:240px; max-height:520px">
+            <div class="p-4 flex-1 flex flex-col gap-2 overflow-y-auto" style="min-height: 480px; max-height: 750px">
                 <template x-for="(soal, i) in form.soal_pengetahuan" :key="soal._key">
                     <div class="soal-row">
                         <div class="row-num" x-text="i+1"></div>
@@ -357,12 +357,12 @@
                     </div>
                 </template>
 
-                <div x-show="form.soal_pengetahuan.length === 0" class="flex-1 flex items-center justify-center py-8 text-gray-400 text-sm">
+                <div x-show="form.soal_pengetahuan.length === 0" class="flex-1 flex items-center justify-center py-12 text-gray-400 text-sm italic bg-slate-50/50 rounded-lg border border-dashed border-gray-200">
                     Belum ada soal. Tambahkan manual atau import dari Excel.
                 </div>
             </div>
 
-            <div class="p-4 border-t border-gray-100">
+            <div class="p-4 border-t border-gray-100 bg-gray-50/50">
                 <button @click="addSoal()" class="btn-add">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -419,10 +419,12 @@
                 </div>
             </div>
 
-            <div class="p-4 flex-1 flex flex-col gap-3 overflow-y-auto" style="max-height:600px">
+            {{-- Area List Kategori Keterampilan (Diperluas agar scrolling nyaman) --}}
+            <div class="p-4 flex-1 flex flex-col gap-4 overflow-y-auto" style="min-height: 480px; max-height: 750px">
                 <template x-for="(kat, ki) in form.kategori_keterampilan" :key="kat._key">
                     <div class="kategori-card">
 
+                        {{-- Header Kategori --}}
                         <div class="kategori-header">
                             <div class="w-7 h-7 rounded-md bg-violet-600 text-white flex items-center justify-center text-xs font-black shrink-0"
                                 x-text="ki+1"></div>
@@ -452,14 +454,16 @@
                             </button>
                         </div>
 
-                        <div class="px-4 pt-2 pb-1 bg-white">
+                        {{-- Bobot Bar Track --}}
+                        <div class="px-4 pt-2.5 pb-1 bg-white">
                             <div class="bobot-bar-track">
                                 <div class="h-full rounded-full bg-violet-500 transition-all duration-300"
                                     :style="'width:' + Math.min(kat.bobot, 100) + '%'"></div>
                             </div>
                         </div>
 
-                        <div class="px-3 pt-2 pb-1 bg-white flex flex-col gap-1.5 overflow-y-auto" style="max-height:200px">
+                        {{-- Indikator List per Kategori --}}
+                        <div class="px-3 pt-2.5 pb-2 bg-white flex flex-col gap-2 overflow-y-auto" style="max-height: 380px">
                             <template x-for="(ind, ii) in kat.indikator" :key="ind._key">
                                 <div class="indikator-row">
                                     <div class="row-num" style="background:#10b981;font-size:.6rem" x-text="ii+1"></div>
@@ -480,11 +484,12 @@
                                 </div>
                             </template>
 
-                            <div x-show="kat.indikator.length === 0" class="text-xs text-gray-400 text-center py-2 italic">
-                                Belum ada indikator. Tambahkan manual atau import dari Excel.
+                            <div x-show="kat.indikator.length === 0" class="text-xs text-gray-400 text-center py-3 italic bg-slate-50 rounded-lg border border-dashed border-gray-200">
+                                Belum ada indikator. Klik tombol di bawah untuk menambah indikator atau import dari Excel.
                             </div>
                         </div>
 
+                        {{-- Tombol Tambah Indikator per Kategori --}}
                         <div class="indikator-add-btn px-3 pb-3 pt-2 bg-white border-t border-gray-100">
                             <button @click="addIndikator(ki)" class="btn-add" style="border-color:#a7f3d0;color:#059669">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -496,36 +501,20 @@
                     </div>
                 </template>
 
-                <div x-show="form.kategori_keterampilan.length === 0" class="text-sm text-gray-400 text-center py-8 italic">
-                    Belum ada kategori keterampilan. Tambahkan di bawah.
+                <div x-show="form.kategori_keterampilan.length === 0" class="text-sm text-gray-400 text-center py-12 italic bg-slate-50/50 rounded-lg border border-dashed border-gray-200">
+                    Belum ada kategori keterampilan. Klik tombol "Tambah Kategori Keterampilan" di bawah.
                 </div>
             </div>
 
-                        <div class="indikator-add-btn px-3 pb-3 pt-2 bg-white border-t border-gray-100">
-                            <button @click="addIndikator(ki)" class="btn-add" style="border-color:#a7f3d0;color:#059669">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                                </svg>
-                                Tambah Indikator
-                            </button>
-                        </div>
-                    </div>
-                </template>
-
-                <div x-show="form.kategori_keterampilan.length === 0" class="text-sm text-gray-400 text-center py-8 italic">
-                    Belum ada kategori keterampilan. Tambahkan di bawah.
-                </div>
-            </div>
-
+            {{-- Warning Bobot Kategori jika belum 100% --}}
             <div x-show="form.kategori_keterampilan.length > 0 && total_bobot_kategori !== 100"
-                class="mx-4 mb-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 font-semibold flex items-center gap-2">
+                class="mx-4 mb-3 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800 font-semibold flex items-center gap-2">
                 <span class="text-base">⚠️</span>
-                Total bobot kategori keterampilan harus tepat 100%.
-                Saat ini: <span class="font-black" x-text="total_bobot_kategori + '%'"></span>
-                (selisih: <span x-text="(100 - total_bobot_kategori) + '%'"></span>)
+                <span>Total bobot kategori keterampilan harus tepat 100%. Saat ini: <strong x-text="total_bobot_kategori + '%'"></strong> (selisih: <span x-text="(100 - total_bobot_kategori) + '%'"></span>)</span>
             </div>
 
-            <div class="p-4 border-t border-gray-100">
+            {{-- Tombol Tambah Kategori Keterampilan (Di dalam kotak builder-section) --}}
+            <div class="p-4 border-t border-gray-100 bg-gray-50/50">
                 <button @click="addKategori()" class="btn-add" style="border-color:#6ee7b7;color:#059669">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
