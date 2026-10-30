@@ -21,6 +21,7 @@ class DashboardRedirector
             'Security', 'Petugas Keamanan' => 'security.dashboard.index',
             'KAUR SDM' => 'sdm.dashboard.index',
             'KAUR SARPRA' => 'super-admin.asset-report-qrs.index',
+            'KAUR SPMB', 'Kaur SPMB' => 'kaur-spmb.jadwal-piket.index',
             'Operator' => 'operator.dashboard.index',
             'Tata Usaha' => 'tu.dashboard.index',
             'Kantin' => 'kantin.dashboard.index',

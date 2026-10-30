@@ -1524,6 +1524,26 @@ Route::middleware(['auth', 'role:Kurikulum'])->prefix('kurikulum/ukk')->name('ku
     Route::get('/rekap-nilai/export', [\App\Http\Controllers\Kaprodi\RekapNilaiUkkController::class, 'export'])->name('rekap-nilai.export');
 });
 
+// KAUR SPMB
+Route::middleware(['auth', 'role:Kaur SPMB|KAUR SPMB|Super Admin'])->prefix('kaur-spmb')->name('kaur-spmb.')->group(function () {
+    Route::prefix('jadwal-piket')->name('jadwal-piket.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\KaurSpmb\JadwalPiketController::class, 'index'])->name('index');
+        Route::post('/kelompok', [\App\Http\Controllers\KaurSpmb\JadwalPiketController::class, 'storeKelompok'])->name('kelompok.store');
+        Route::put('/kelompok/{kelompok}', [\App\Http\Controllers\KaurSpmb\JadwalPiketController::class, 'updateKelompok'])->name('kelompok.update');
+        Route::delete('/kelompok/{kelompok}', [\App\Http\Controllers\KaurSpmb\JadwalPiketController::class, 'destroyKelompok'])->name('kelompok.destroy');
+
+        Route::post('/kelompok/{kelompok}/petugas', [\App\Http\Controllers\KaurSpmb\JadwalPiketController::class, 'storePetugas'])->name('petugas.store');
+        Route::delete('/petugas/{petugas}', [\App\Http\Controllers\KaurSpmb\JadwalPiketController::class, 'destroyPetugas'])->name('petugas.destroy');
+
+        Route::post('/kelompok/{kelompok}/tanggal', [\App\Http\Controllers\KaurSpmb\JadwalPiketController::class, 'storeTanggal'])->name('tanggal.store');
+        Route::delete('/tanggal/{tanggal}', [\App\Http\Controllers\KaurSpmb\JadwalPiketController::class, 'destroyTanggal'])->name('tanggal.destroy');
+        Route::patch('/tanggal/{tanggal}/status', [\App\Http\Controllers\KaurSpmb\JadwalPiketController::class, 'updateStatusTanggal'])->name('tanggal.status');
+
+        Route::post('/generate-rotating-dates', [\App\Http\Controllers\KaurSpmb\JadwalPiketController::class, 'generateRotatingDates'])->name('generate-dates');
+        Route::get('/print', [\App\Http\Controllers\KaurSpmb\JadwalPiketController::class, 'print'])->name('print');
+    });
+});
+
 // Dashboard eksekutif lintas unit (read-only)
 Route::middleware(['auth', 'verified', 'role:Kepala Sekolah', 'permission:view executive dashboard'])
     ->prefix('kepala-sekolah')

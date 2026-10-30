@@ -485,6 +485,7 @@
                 <a href="{{ route('master-data.tahun-pelajaran.index') }}" class="submenu-item {{ request()->routeIs('master-data.tahun-pelajaran.index') ? 'submenu-item-active' : '' }}">Tahun Pelajaran</a>
             @endcan
             <a href="{{ route('super-admin.spmb-fees.index') }}" class="submenu-item {{ request()->routeIs('super-admin.spmb-fees.*') ? 'submenu-item-active' : '' }}">Pembiayaan SPMB</a>
+            <a href="{{ route('kaur-spmb.jadwal-piket.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.jadwal-piket.*') ? 'submenu-item-active' : '' }}">Jadwal Piket SPMB</a>
             <a href="{{ route('super-admin.sso-applications.index') }}" class="submenu-item {{ request()->routeIs('super-admin.sso-applications.*') ? 'submenu-item-active' : '' }}">Aplikasi SSO</a>
             @can('manage settings')
                 <a href="{{ route('super-admin.asset-sync.index') }}" class="submenu-item {{ request()->routeIs('super-admin.asset-sync.*') ? 'submenu-item-active' : '' }}">Sinkronisasi Aset</a>
@@ -3679,6 +3680,27 @@
     </li>
 @endif
 @endrole
+
+{{-- ============================================================ --}}
+{{-- ROLE: KAUR SPMB --}}
+{{-- ============================================================ --}}
+@hasanyrole('Kaur SPMB|KAUR SPMB|Super Admin')
+@if(in_array(session('active_role') ?: (auth()->user() ? auth()->user()->getRoleNames()->first() : ''), ['Kaur SPMB', 'KAUR SPMB']))
+    <div class="section-title">Menu Utama</div>
+    <li>
+        <a href="{{ route('kaur-spmb.jadwal-piket.index') }}" title="Jadwal Piket SPMB"
+            class="nav-link {{ request()->routeIs('kaur-spmb.jadwal-piket.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+            </div>
+            <span class="nav-text">Jadwal Piket SPMB</span>
+        </a>
+    </li>
+@endif
+@endhasanyrole
 
 {{-- ============================================================ --}}
 {{-- MENU: PENILAIAN SEMESTER --}}

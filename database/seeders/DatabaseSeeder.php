@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             KoordinatorPrakerinRoleSeeder::class,
             PetugasUksRoleSeeder::class,
             OkrUnitRoleSeeder::class,
+            KaurSpmbRoleSeeder::class,
 
             JamPelajaranSeeder::class,
         ]);
