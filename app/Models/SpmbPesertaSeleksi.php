@@ -67,4 +67,9 @@ class SpmbPesertaSeleksi extends Model
 
         return Carbon::parse($this->tanggal->tanggal)->locale('id')->isoFormat('dddd, D MMMM Y');
     }
+
+    public function getUsernameAttribute(): string
+    {
+        return $this->user ? $this->user->username : ($this->raw_password ?: '-');
+    }
 }

@@ -63,7 +63,7 @@ class PesertaSeleksiController extends Controller
                     ->orWhere('no_wa_siswa', 'like', "%{$search}%")
                     ->orWhere('no_wa_orang_tua', 'like', "%{$search}%")
                     ->orWhereHas('user', function ($uq) use ($search) {
-                        $uq->where('username', 'like', "%{$search}%");
+                        $uq->where('email', 'like', "%{$search}%");
                     });
             });
         }
@@ -144,22 +144,17 @@ class PesertaSeleksiController extends Controller
         // Auto-generate student login credentials: 5 digit angka unik, password = username
         do {
             $digit5 = (string) mt_rand(10000, 99999);
-        } while (User::where('username', $digit5)->exists());
+            $email = $digit5 . '@spmb.smktelkom-lpg.sch.id';
+        } while (User::where('email', $email)->exists());
 
         $username = $digit5;
         $rawPassword = $digit5;
-
-        $email = $digit5 . '@spmb.smktelkom-lpg.sch.id';
-        while (User::where('email', $email)->exists()) {
-            $email = $digit5 . mt_rand(10, 99) . '@spmb.smktelkom-lpg.sch.id';
-        }
 
         DB::beginTransaction();
         try {
             // 1. Create User Account
             $user = User::create([
                 'name' => $validated['nama_lengkap'],
-                'username' => $username,
                 'email' => $email,
                 'password' => Hash::make($rawPassword),
             ]);

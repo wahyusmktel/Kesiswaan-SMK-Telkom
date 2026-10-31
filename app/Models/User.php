@@ -69,6 +69,18 @@ class User extends Authenticatable implements WebAuthnAuthenticatableContract
         return $this->hasMany(User::class, 'wali_kelas_id');
     }
 
+    /**
+     * Virtual username accessor for display and login mapping.
+     */
+    public function getUsernameAttribute(): string
+    {
+        if ($this->email && str_contains($this->email, '@spmb.')) {
+            return explode('@', $this->email)[0];
+        }
+
+        return explode('@', (string) $this->email)[0];
+    }
+
     // Relasi dari User ke data induk siswanya
     public function masterSiswa()
     {

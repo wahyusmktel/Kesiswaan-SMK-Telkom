@@ -71,10 +71,22 @@ class LoginRequest extends FormRequest
             if ($siswa && $siswa->user) {
                 $resolvedEmail = $siswa->user->email;
             } else {
-                // If not found in MasterSiswa, check direct User email match as fallback
-                $matchedUser = User::where('email', $loginInput)->first();
-                if ($matchedUser) {
-                    $resolvedEmail = $matchedUser->email;
+                // Check if SPMB Calon Siswa login by 5-digit username
+                $spmbUser = User::where('email', $loginInput . '@spmb.smktelkom-lpg.sch.id')->first();
+                if ($spmbUser) {
+                    $resolvedEmail = $spmbUser->email;
+                } else {
+                    // Check if SPMB Calon Siswa login by Nomor Pendaftaran
+                    $peserta = \App\Models\SpmbPesertaSeleksi::where('nomor_pendaftaran', $loginInput)->first();
+                    if ($peserta && $peserta->user) {
+                        $resolvedEmail = $peserta->user->email;
+                    } else {
+                        // If not found in MasterSiswa or SPMB, check direct User email match as fallback
+                        $matchedUser = User::where('email', $loginInput)->first();
+                        if ($matchedUser) {
+                            $resolvedEmail = $matchedUser->email;
+                        }
+                    }
                 }
             }
         }
