@@ -876,9 +876,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/izin/schedules', [\App\Http\Controllers\Guru\IzinGuruController::class, 'getSchedules'])->name('izin.schedules');
         Route::get('/izin/lms-resources/{schedule}', [\App\Http\Controllers\Guru\IzinGuruController::class, 'getLmsResources'])->name('izin.lms-resources');
 
-        // Absensi Kehadiran Piket SPMB Pegawai
+        // Absensi Kehadiran Piket SPMB Pegawai & Pengelolaan Lapangan
         Route::get('/piket-spmb/absensi', [\App\Http\Controllers\Guru\SpmbPiketAbsensiController::class, 'index'])->name('spmb-piket.absensi.index');
         Route::post('/piket-spmb/absensi', [\App\Http\Controllers\Guru\SpmbPiketAbsensiController::class, 'store'])->name('spmb-piket.absensi.store');
+        Route::patch('/piket-spmb/peserta-kehadiran/{pesertaSeleksi}', [\App\Http\Controllers\Guru\SpmbPiketAbsensiController::class, 'updateKehadiranPeserta'])->name('spmb-piket.peserta-kehadiran');
+        Route::post('/piket-spmb/laporan-eviden', [\App\Http\Controllers\Guru\SpmbPiketAbsensiController::class, 'storeLaporanEviden'])->name('spmb-piket.laporan-eviden');
+        Route::get('/piket-spmb/cetak-hadir-siswa', [\App\Http\Controllers\KaurSpmb\PesertaSeleksiController::class, 'cetakHadirSiswa'])->name('spmb-piket.cetak-hadir-siswa');
+        Route::get('/piket-spmb/cetak-hadir-ortu', [\App\Http\Controllers\KaurSpmb\PesertaSeleksiController::class, 'cetakHadirOrtu'])->name('spmb-piket.cetak-hadir-ortu');
     });
 
     // Grup Route untuk Guru (Submission)
@@ -1546,6 +1550,8 @@ Route::middleware(['auth', 'role:Kaur SPMB|KAUR SPMB|Super Admin'])->prefix('kau
         Route::post('/generate-rotating-dates', [\App\Http\Controllers\KaurSpmb\JadwalPiketController::class, 'generateRotatingDates'])->name('generate-dates');
         Route::get('/print', [\App\Http\Controllers\KaurSpmb\JadwalPiketController::class, 'print'])->name('print');
         Route::get('/surat-tugas', [\App\Http\Controllers\KaurSpmb\JadwalPiketController::class, 'suratTugas'])->name('surat-tugas');
+        Route::post('/pengganti', [\App\Http\Controllers\KaurSpmb\JadwalPiketController::class, 'storeOrUpdatePengganti'])->name('pengganti.store');
+        Route::delete('/pengganti/{pengganti}', [\App\Http\Controllers\KaurSpmb\JadwalPiketController::class, 'destroyPengganti'])->name('pengganti.destroy');
     });
 
     Route::prefix('absensi')->name('absensi.')->group(function () {

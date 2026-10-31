@@ -31,6 +31,21 @@
                 </div>
             @endif
 
+            {{-- REPLACEMENT TEACHER BANNER --}}
+            @if($isPenggantiOnSelected && $penggantiInfo)
+                <div class="p-4 rounded-lg bg-amber-50 border border-amber-300 text-amber-900 shadow-sm flex items-start gap-3">
+                    <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div class="text-xs">
+                        <p class="font-bold text-amber-950">Penugasan Sebagai Guru Pengganti</p>
+                        <p class="mt-0.5">
+                            Anda terdaftar sebagai <strong>Guru Pengganti</strong> untuk <strong>{{ $penggantiInfo->nama_pengganti }}</strong> (menggantikan pegawai asli: <em>{{ $penggantiInfo->petugas?->nama_petugas ?? 'Petugas Utama' }}</em>) pada tanggal piket ini dengan alasan: "<em>{{ $penggantiInfo->alasan ?? 'Penugasan Pengganti' }}</em>". Anda memiliki wewenang penuh untuk melakukan absensi, presensi siswa, dan mengunggah laporan fisik.
+                        </p>
+                    </div>
+                </div>
+            @endif
+
             {{-- OFFICER INFORMATION CARD --}}
             <div class="bg-white rounded-lg border border-slate-200 shadow-sm p-5">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -41,12 +56,19 @@
                             </svg>
                         </div>
                         <div>
-                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 uppercase tracking-wider mb-1">
-                                Petugas Piket SPMB
-                            </span>
-                            <h3 class="text-base font-bold text-slate-900">{{ $activePetugas->nama_petugas ?? $user->name }}</h3>
+                            <div class="flex items-center gap-2">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 uppercase tracking-wider">
+                                    Petugas Piket SPMB
+                                </span>
+                                @if($isPenggantiOnSelected)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                                        Petugas Pengganti
+                                    </span>
+                                @endif
+                            </div>
+                            <h3 class="text-base font-bold text-slate-900 mt-1">{{ $activePetugas->nama_petugas ?? $user->name }}</h3>
                             <p class="text-xs text-slate-500 mt-0.5">
-                                {{ $assignedKelompok ? $assignedKelompok->nama_kelompok . ' (Waktu: ' . ($assignedKelompok->waktu ?: '07.30 - 12.00') . ')' : 'Belum terdaftar di kelompok piket aktif' }}
+                                {{ $assignedKelompok ? $assignedKelompok->nama_kelompok . ' (Waktu: ' . ($assignedKelompok->waktu ?: '07.30 - 12.00') . ')' : 'Petugas Penugasan SPMB' }}
                             </p>
                         </div>
                     </div>
@@ -78,7 +100,7 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-                {{-- FORM INPUT ABSENSI (7 cols) --}}
+                {{-- FORM INPUT ABSENSI MANDIRI PEGAWAI (7 cols) --}}
                 <div class="lg:col-span-7 space-y-6">
                     <div class="bg-white rounded-lg border border-slate-200 shadow-sm p-5 space-y-5">
                         <div class="border-b border-slate-200 pb-3">
@@ -91,14 +113,14 @@
                             <p class="text-xs text-slate-500 mt-0.5">Isi status kehadiran dan lampirkan foto bukti eviden bertugas di lokasi piket.</p>
                         </div>
 
-                        @if(! $activePetugas)
+                        @if(! $activePetugas && ! $isOfficer)
                             <div class="p-4 bg-amber-50 rounded-lg border border-amber-200 text-xs text-amber-800">
                                 Akun Anda belum terdaftar dalam daftar petugas piket SPMB. Hubungi Kaur SPMB jika Anda telah ditugaskan.
                             </div>
                         @else
                             <form action="{{ route('guru.spmb-piket.absensi.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
                                 @csrf
-                                <input type="hidden" name="spmb_piket_petugas_id" value="{{ $activePetugas->id }}">
+                                <input type="hidden" name="spmb_piket_petugas_id" value="{{ $activePetugas?->id }}">
 
                                 {{-- Tanggal Piket --}}
                                 <div>
@@ -118,8 +140,15 @@
                                                 </option>
                                             @endif
                                         @endforeach
+                                        @foreach($allTanggals as $tgl)
+                                            @if(in_array($tgl->id, $sudahAbsenTanggalIds))
+                                                <option value="{{ $tgl->id }}" class="text-slate-400">
+                                                    Sabtu, {{ \Carbon\Carbon::parse($tgl->tanggal)->locale('id')->translatedFormat('d M Y') }} (Sudah Diisi - Perbarui)
+                                                </option>
+                                            @endif
+                                        @endforeach
                                     </select>
-                                    <p class="text-[10px] text-slate-400 mt-1">Daftar hari Sabtu yang ditugaskan untuk kelompok Anda.</p>
+                                    <p class="text-[10px] text-slate-400 mt-1">Daftar hari Sabtu yang ditugaskan untuk Anda.</p>
                                 </div>
 
                                 {{-- Status Kehadiran --}}
@@ -149,7 +178,7 @@
                                 {{-- Foto Eviden Kehadiran --}}
                                 <div>
                                     <label class="block text-xs font-semibold text-slate-700 mb-1">
-                                        Upload Foto Bukti Kehadiran (Eviden)
+                                        Upload Foto Bukti Kehadiran (Eviden Pegawai)
                                         <span class="text-red-500" x-show="formStatus === 'Hadir'">*</span>
                                     </label>
                                     
@@ -189,8 +218,8 @@
 
                                 {{-- Catatan --}}
                                 <div>
-                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Catatan / Laporan Kegiatan Piket (Opsional)</label>
-                                    <textarea name="keterangan" rows="2" placeholder="Tuliskan catatan aktivitas piket, jumlah pendaftar yang dilayani, atau keterangan izin/sakit..."
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Catatan Kehadiran (Opsional)</label>
+                                    <textarea name="keterangan" rows="2" placeholder="Tuliskan catatan aktivitas pribadi atau keterangan izin/sakit..."
                                         class="w-full text-xs px-3 py-2 border border-slate-300 rounded-md focus:border-red-500 focus:ring-red-500"></textarea>
                                 </div>
 
@@ -262,12 +291,6 @@
                                                 </button>
                                             @endif
                                         </div>
-
-                                        @if($hist->keterangan)
-                                            <p class="mt-1.5 text-[11px] text-slate-600 italic bg-white p-2 rounded border border-slate-200">
-                                                "{{ $hist->keterangan }}"
-                                            </p>
-                                        @endif
                                     </div>
                                 @endforeach
                             </div>
@@ -282,10 +305,10 @@
             {{-- ======================================================== --}}
             <div class="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
                 <div class="p-5 border-b border-slate-200 bg-slate-50/60">
-                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                         <div>
                             <div class="flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-red-600"></span>
+                                <span class="w-2.5 h-2.5 rounded-full bg-red-600"></span>
                                 <h3 class="text-sm font-bold text-slate-900">Daftar Calon Siswa &amp; Orang Tua Seleksi</h3>
                                 @if($selectedTanggal)
                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-red-50 text-red-700 border border-red-200">
@@ -294,24 +317,49 @@
                                 @endif
                             </div>
                             <p class="text-xs text-slate-500 mt-1">
-                                Data calon siswa yang dijadwalkan mengikuti sesi seleksi dan orang tua pendamping pada jadwal piket Anda.
+                                Data peserta yang dijadwalkan hadir seleksi. Lakukan presensi digital dan cetak lembar tanda tangan manual.
                             </p>
                         </div>
 
-                        {{-- Tanggal Selector jika ada lebih dari 1 tanggal --}}
-                        @if($allTanggals->count() > 1)
-                            <form method="GET" action="{{ route('guru.spmb-piket.absensi.index') }}" class="flex items-center gap-2">
-                                <label for="filterTanggal" class="text-xs font-medium text-slate-600 flex-shrink-0">Pilih Tanggal:</label>
-                                <select id="filterTanggal" name="tanggal_id" onchange="this.form.submit()"
-                                    class="text-xs rounded-md border-slate-300 focus:border-red-500 focus:ring-red-500 py-1.5 pl-2.5 pr-8 bg-white font-medium">
-                                    @foreach($allTanggals as $tgl)
-                                        <option value="{{ $tgl->id }}" {{ ($selectedTanggal && $selectedTanggal->id == $tgl->id) ? 'selected' : '' }}>
-                                            Sabtu, {{ \Carbon\Carbon::parse($tgl->tanggal)->locale('id')->translatedFormat('d M Y') }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </form>
-                        @endif
+                        {{-- Action Buttons Toolbar --}}
+                        <div class="flex flex-wrap items-center gap-2">
+                            {{-- Tanggal Selector --}}
+                            @if($allTanggals->count() > 1)
+                                <form method="GET" action="{{ route('guru.spmb-piket.absensi.index') }}" class="flex items-center gap-1.5">
+                                    <label for="filterTanggal" class="text-xs font-medium text-slate-600 flex-shrink-0">Pekan:</label>
+                                    <select id="filterTanggal" name="tanggal_id" onchange="this.form.submit()"
+                                        class="text-xs rounded-md border-slate-300 focus:border-red-500 focus:ring-red-500 py-1.5 pl-2.5 pr-8 bg-white font-medium shadow-sm">
+                                        @foreach($allTanggals as $tgl)
+                                            <option value="{{ $tgl->id }}" {{ ($selectedTanggal && $selectedTanggal->id == $tgl->id) ? 'selected' : '' }}>
+                                                Sabtu, {{ \Carbon\Carbon::parse($tgl->tanggal)->locale('id')->translatedFormat('d M Y') }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </form>
+                            @endif
+
+                            @if($selectedTanggal)
+                                {{-- Cetak Hadir Siswa Manual --}}
+                                <a href="{{ route('guru.spmb-piket.cetak-hadir-siswa', ['tanggal_id' => $selectedTanggal->id]) }}" target="_blank"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-md shadow-sm transition-colors"
+                                    title="Cetak lembar presensi calon siswa bertanda tangan basah pulpen">
+                                    <svg class="w-3.5 h-3.5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                    </svg>
+                                    Cetak Absen Casis (Fisik)
+                                </a>
+
+                                {{-- Cetak Hadir Ortu Manual --}}
+                                <a href="{{ route('guru.spmb-piket.cetak-hadir-ortu', ['tanggal_id' => $selectedTanggal->id]) }}" target="_blank"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-md shadow-sm transition-colors"
+                                    title="Cetak lembar presensi orang tua bertanda tangan basah pulpen">
+                                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                    </svg>
+                                    Cetak Absen Ortu (Fisik)
+                                </a>
+                            @endif
+                        </div>
                     </div>
 
                     {{-- Stats Summary --}}
@@ -330,7 +378,7 @@
                                 <p class="text-base font-bold text-blue-600">{{ $pesertaSeleksis->where('status_kehadiran_ortu', 'Hadir')->count() }} <span class="text-xs font-normal text-slate-500">ortu</span></p>
                             </div>
                             <div class="bg-white p-2.5 rounded border border-slate-200">
-                                <span class="text-[10px] text-slate-500 uppercase font-semibold">Menunggu / Belum</span>
+                                <span class="text-[10px] text-slate-500 uppercase font-semibold">Menunggu / Terjadwal</span>
                                 <p class="text-base font-bold text-amber-600">{{ $pesertaSeleksis->whereIn('status_kehadiran_siswa', ['Terjadwal', 'Menunggu'])->count() }} <span class="text-xs font-normal text-slate-500">orang</span></p>
                             </div>
                         </div>
@@ -343,11 +391,11 @@
                             <tr class="bg-slate-50 border-b border-slate-200 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
                                 <th class="py-3 px-4 w-12 text-center">No</th>
                                 <th class="py-3 px-4">Calon Siswa</th>
-                                <th class="py-3 px-4">Asal Sekolah</th>
-                                <th class="py-3 px-4">Jurusan Pilihan</th>
                                 <th class="py-3 px-4">Orang Tua / Wali</th>
                                 <th class="py-3 px-4 text-center">Status Siswa</th>
                                 <th class="py-3 px-4 text-center">Status Ortu</th>
+                                <th class="py-3 px-4">Catatan</th>
+                                <th class="py-3 px-4 text-center w-28">Presensi Digital</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-200">
@@ -368,17 +416,6 @@
                                                     {{ $item->no_wa_siswa }}
                                                 </a>
                                             </div>
-                                        @endif
-                                    </td>
-                                    <td class="py-3 px-4 text-slate-700">
-                                        {{ $item->asal_sekolah ?: '-' }}
-                                    </td>
-                                    <td class="py-3 px-4">
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-800 border border-slate-200">
-                                            {{ $item->jurusan_pilihan }}
-                                        </span>
-                                        @if($item->jurusan_pilihan_2)
-                                            <div class="text-[10px] text-slate-500 mt-0.5">Pilihan 2: {{ $item->jurusan_pilihan_2 }}</div>
                                         @endif
                                     </td>
                                     <td class="py-3 px-4">
@@ -438,6 +475,18 @@
                                             </span>
                                         @endif
                                     </td>
+                                    <td class="py-3 px-4 text-slate-600">
+                                        {{ $item->catatan ?: '-' }}
+                                    </td>
+                                    <td class="py-3 px-4 text-center whitespace-nowrap">
+                                        <button type="button" @click="bukaModalKehadiran({{ json_encode($item) }})"
+                                            class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:text-white bg-slate-100 hover:bg-slate-800 rounded border border-slate-300 transition-colors shadow-sm">
+                                            <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                            Update
+                                        </button>
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>
@@ -451,7 +500,235 @@
                 </div>
             </div>
 
+            {{-- ======================================================== --}}
+            {{-- LAPORAN LAPANGAN & UNGGAH EVIDEN ABSENSI FISIK (MANUAL)   --}}
+            {{-- ======================================================== --}}
+            @if($selectedTanggal)
+                <div class="bg-white rounded-lg border border-slate-200 shadow-sm p-5 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Laporan Pelaksanaan Piket &amp; Unggah Bukti Eviden Presensi Manual Fisik
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-0.5">
+                                Setelah seluruh presensi cetak ditandatangani pulpen, foto dan unggah lembar presensi manual ke sistem. Foto ini akan otomatis terlampir di dokumen resmi Berita Acara Kaur SPMB.
+                            </p>
+                        </div>
+                        @if($selectedTanggal->laporan_petugas_at)
+                            <div class="text-right">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    Laporan Tersimpan
+                                </span>
+                                <p class="text-[10px] text-slate-400 mt-0.5">
+                                    Oleh {{ $selectedTanggal->laporanPetugasBy?->name ?? 'Petugas' }} ({{ $selectedTanggal->laporan_petugas_at->format('d/m/Y H:i') }} WIB)
+                                </p>
+                            </div>
+                        @endif
+                    </div>
+
+                    <form action="{{ route('guru.spmb-piket.laporan-eviden') }}" method="POST" enctype="multipart/form-data" class="space-y-5">
+                        @csrf
+                        <input type="hidden" name="spmb_piket_tanggal_id" value="{{ $selectedTanggal->id }}">
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            {{-- Foto Eviden Absen Siswa --}}
+                            <div class="p-4 rounded-lg border border-slate-200 bg-slate-50/70 space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <label class="block text-xs font-bold text-slate-800">
+                                        1. Foto Lembar Absensi Fisik Siswa (Manual)
+                                    </label>
+                                    @if($selectedTanggal->foto_eviden_absen_siswa)
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                                            ✓ Ada File
+                                        </span>
+                                    @endif
+                                </div>
+
+                                @if($selectedTanggal->foto_eviden_absen_siswa)
+                                    <div class="flex items-center gap-3 p-2 bg-white rounded border border-slate-200">
+                                        <img src="{{ $selectedTanggal->foto_eviden_absen_siswa_url }}" alt="Eviden Siswa" class="h-16 w-20 object-cover rounded border">
+                                        <div class="text-xs space-y-1">
+                                            <p class="font-medium text-slate-800">Foto lembar tanda tangan calon siswa</p>
+                                            <button type="button" @click="openImageModal('{{ $selectedTanggal->foto_eviden_absen_siswa_url }}', 'Lembar Absensi Manual Calon Siswa')"
+                                                class="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:underline">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                Pratinjau Foto Penuh
+                                            </button>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">
+                                        {{ $selectedTanggal->foto_eviden_absen_siswa ? 'Unggah Ulang / Ganti Foto Lembar Casis' : 'Pilih / Foto Lembar Casis' }}
+                                    </label>
+                                    <input type="file" name="foto_eviden_absen_siswa" accept="image/*" capture="environment"
+                                        class="w-full text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-slate-200 file:text-slate-800 hover:file:bg-slate-300 border border-slate-300 rounded-md bg-white">
+                                    <p class="text-[10px] text-slate-400 mt-1">Pastikan tulisan & tanda tangan basah terbaca jelas (Maks. 8 MB).</p>
+                                </div>
+                            </div>
+
+                            {{-- Foto Eviden Absen Ortu --}}
+                            <div class="p-4 rounded-lg border border-slate-200 bg-slate-50/70 space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <label class="block text-xs font-bold text-slate-800">
+                                        2. Foto Lembar Absensi Fisik Orang Tua (Manual)
+                                    </label>
+                                    @if($selectedTanggal->foto_eviden_absen_ortu)
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                                            ✓ Ada File
+                                        </span>
+                                    @endif
+                                </div>
+
+                                @if($selectedTanggal->foto_eviden_absen_ortu)
+                                    <div class="flex items-center gap-3 p-2 bg-white rounded border border-slate-200">
+                                        <img src="{{ $selectedTanggal->foto_eviden_absen_ortu_url }}" alt="Eviden Ortu" class="h-16 w-20 object-cover rounded border">
+                                        <div class="text-xs space-y-1">
+                                            <p class="font-medium text-slate-800">Foto lembar tanda tangan orang tua/wali</p>
+                                            <button type="button" @click="openImageModal('{{ $selectedTanggal->foto_eviden_absen_ortu_url }}', 'Lembar Absensi Manual Orang Tua')"
+                                                class="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:underline">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                Pratinjau Foto Penuh
+                                            </button>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">
+                                        {{ $selectedTanggal->foto_eviden_absen_ortu ? 'Unggah Ulang / Ganti Foto Lembar Ortu' : 'Pilih / Foto Lembar Ortu' }}
+                                    </label>
+                                    <input type="file" name="foto_eviden_absen_ortu" accept="image/*" capture="environment"
+                                        class="w-full text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-slate-200 file:text-slate-800 hover:file:bg-slate-300 border border-slate-300 rounded-md bg-white">
+                                    <p class="text-[10px] text-slate-400 mt-1">Pastikan tulisan & tanda tangan basah terbaca jelas (Maks. 8 MB).</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Catatan Petugas Lapangan --}}
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">
+                                Catatan Ringkasan &amp; Kendala Petugas Lapangan
+                            </label>
+                            <textarea name="catatan_petugas" rows="3"
+                                placeholder="Contoh: Sesi seleksi berlangsung kondusif. Dari 15 peserta terjadwal, 14 peserta hadir bersama orang tua lengkap mengikuti tes TPA dan wawancara. 1 peserta berhalangan karena sakit dan dijadwalkan ulang pekan depan..."
+                                class="w-full text-xs px-3 py-2 border border-slate-300 rounded-md focus:border-red-500 focus:ring-red-500">{{ old('catatan_petugas', $selectedTanggal->catatan_petugas) }}</textarea>
+                            <p class="text-[11px] text-slate-400 mt-1">
+                                Catatan ini mewakili laporan lapangan dari seluruh petugas piket dan akan otomatis disajikan pada saat Kaur SPMB menyusun Berita Acara Mingguan.
+                            </p>
+                        </div>
+
+                        <div class="flex justify-end pt-2">
+                            <button type="submit"
+                                class="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-md shadow-sm transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                Simpan Laporan &amp; Eviden Fisik Piket
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            @endif
+
         </div>
+
+        {{-- MODAL INTERAKTIF: UPDATE KEHADIRAN DIGITAL CALON PESERTA --}}
+        <template x-teleport="body">
+            <div x-show="modalKehadiran.open"
+                @click="modalKehadiran.open = false"
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100"
+                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"
+                class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]"
+                style="display: none;">
+
+                <div class="bg-white rounded-lg max-w-lg w-full shadow-xl overflow-hidden" @click.stop>
+                    <div class="flex items-center justify-between p-4 border-b border-slate-200 bg-slate-50">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-900">Catat Presensi Digital Peserta Seleksi</h3>
+                            <p class="text-xs text-slate-500" x-text="modalKehadiran.nama + ' (' + modalKehadiran.nomor + ')'"></p>
+                        </div>
+                        <button type="button" @click="modalKehadiran.open = false" class="text-slate-400 hover:text-red-600 text-lg">&times;</button>
+                    </div>
+
+                    <form :action="modalKehadiran.actionUrl" method="POST" class="p-5 space-y-4">
+                        @csrf
+                        @method('PATCH')
+
+                        {{-- Quick Presets --}}
+                        <div>
+                            <span class="text-[11px] font-semibold text-slate-500 uppercase">Pilihan Cepat:</span>
+                            <div class="grid grid-cols-3 gap-2 mt-1">
+                                <button type="button" @click="modalKehadiran.status_siswa = 'Hadir'; modalKehadiran.status_ortu = 'Hadir'"
+                                    class="px-2.5 py-1.5 text-xs font-semibold rounded bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100">
+                                    Keduanya Hadir
+                                </button>
+                                <button type="button" @click="modalKehadiran.status_siswa = 'Hadir'; modalKehadiran.status_ortu = 'Tidak Hadir'"
+                                    class="px-2.5 py-1.5 text-xs font-semibold rounded bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100">
+                                    Hanya Siswa
+                                </button>
+                                <button type="button" @click="modalKehadiran.status_siswa = 'Tidak Hadir'; modalKehadiran.status_ortu = 'Tidak Hadir'"
+                                    class="px-2.5 py-1.5 text-xs font-semibold rounded bg-red-50 text-red-800 border border-red-300 hover:bg-red-100">
+                                    Tidak Hadir
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3 pt-2">
+                            {{-- Status Calon Siswa --}}
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Status Kehadiran Siswa</label>
+                                <select name="status_kehadiran_siswa" x-model="modalKehadiran.status_siswa"
+                                    class="w-full text-xs border border-slate-300 rounded-md py-2 px-2.5 focus:border-red-500 focus:ring-red-500">
+                                    <option value="Hadir">Hadir</option>
+                                    <option value="Menunggu">Menunggu</option>
+                                    <option value="Terjadwal">Terjadwal</option>
+                                    <option value="Tidak Hadir">Tidak Hadir</option>
+                                </select>
+                            </div>
+
+                            {{-- Status Orang Tua --}}
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Status Kehadiran Orang Tua</label>
+                                <select name="status_kehadiran_ortu" x-model="modalKehadiran.status_ortu"
+                                    class="w-full text-xs border border-slate-300 rounded-md py-2 px-2.5 focus:border-red-500 focus:ring-red-500">
+                                    <option value="Hadir">Hadir</option>
+                                    <option value="Menunggu">Menunggu</option>
+                                    <option value="Terjadwal">Terjadwal</option>
+                                    <option value="Tidak Hadir">Tidak Hadir</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {{-- Catatan Khusus --}}
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Catatan Kehadiran (Opsional)</label>
+                            <input type="text" name="catatan" x-model="modalKehadiran.catatan" placeholder="Contoh: Datang terlambat 15 menit, wali diwakilkan paman..."
+                                class="w-full text-xs px-3 py-2 border border-slate-300 rounded-md focus:border-red-500 focus:ring-red-500">
+                        </div>
+
+                        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+                            <button type="button" @click="modalKehadiran.open = false"
+                                class="px-3.5 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-md">
+                                Batal
+                            </button>
+                            <button type="submit"
+                                class="px-4 py-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-md shadow-sm">
+                                Simpan Status Presensi
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </template>
 
         {{-- LIGHTBOX MODAL: PREVIEW FOTO EVIDEN --}}
         <template x-teleport="body">
@@ -468,7 +745,7 @@
 
                 <div class="relative bg-white rounded-lg p-2 max-w-xl w-full shadow-2xl" @click.stop>
                     <div class="flex items-center justify-between pb-2 border-b border-slate-200 px-2">
-                        <span class="text-xs font-bold text-slate-800" x-text="'Foto Eviden Piket: ' + modalImage.title"></span>
+                        <span class="text-xs font-bold text-slate-800" x-text="'Foto Eviden: ' + modalImage.title"></span>
                         <button type="button" @click="modalImage.open = false" class="text-slate-400 hover:text-red-600 text-lg">&times;</button>
                     </div>
                     <div class="p-2 flex items-center justify-center bg-slate-100 rounded mt-2">
@@ -490,6 +767,25 @@
                     open: false,
                     url: '',
                     title: ''
+                },
+                modalKehadiran: {
+                    open: false,
+                    actionUrl: '',
+                    nama: '',
+                    nomor: '',
+                    status_siswa: 'Hadir',
+                    status_ortu: 'Hadir',
+                    catatan: ''
+                },
+
+                bukaModalKehadiran(item) {
+                    this.modalKehadiran.actionUrl = '{{ url('/guru/spmb-piket/peserta-kehadiran') }}/' + item.id;
+                    this.modalKehadiran.nama = item.nama_lengkap;
+                    this.modalKehadiran.nomor = item.nomor_pendaftaran;
+                    this.modalKehadiran.status_siswa = item.status_kehadiran_siswa || 'Hadir';
+                    this.modalKehadiran.status_ortu = item.status_kehadiran_ortu || 'Hadir';
+                    this.modalKehadiran.catatan = item.catatan || '';
+                    this.modalKehadiran.open = true;
                 },
 
                 previewFile(e) {

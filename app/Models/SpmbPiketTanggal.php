@@ -21,10 +21,16 @@ class SpmbPiketTanggal extends Model
         'waktu',
         'status',
         'keterangan',
+        'foto_eviden_absen_siswa',
+        'foto_eviden_absen_ortu',
+        'catatan_petugas',
+        'laporan_petugas_by',
+        'laporan_petugas_at',
     ];
 
     protected $casts = [
         'tanggal' => 'date',
+        'laporan_petugas_at' => 'datetime',
     ];
 
     public function kelompok(): BelongsTo
@@ -52,6 +58,16 @@ class SpmbPiketTanggal extends Model
         return $this->hasMany(SpmbPesertaSeleksi::class, 'spmb_piket_tanggal_id');
     }
 
+    public function penggantis(): HasMany
+    {
+        return $this->hasMany(SpmbPiketPengganti::class, 'spmb_piket_tanggal_id');
+    }
+
+    public function laporanPetugasBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'laporan_petugas_by');
+    }
+
     public function getFormattedTanggalAttribute(): string
     {
         if (! $this->tanggal) {
@@ -59,5 +75,23 @@ class SpmbPiketTanggal extends Model
         }
 
         return Carbon::parse($this->tanggal)->locale('id')->translatedFormat('d M Y');
+    }
+
+    public function getFotoEvidenAbsenSiswaUrlAttribute(): ?string
+    {
+        if (! $this->foto_eviden_absen_siswa) {
+            return null;
+        }
+
+        return \Illuminate\Support\Facades\Storage::disk('public')->url($this->foto_eviden_absen_siswa);
+    }
+
+    public function getFotoEvidenAbsenOrtuUrlAttribute(): ?string
+    {
+        if (! $this->foto_eviden_absen_ortu) {
+            return null;
+        }
+
+        return \Illuminate\Support\Facades\Storage::disk('public')->url($this->foto_eviden_absen_ortu);
     }
 }

@@ -229,10 +229,25 @@
                                             {{ $item->petugas?->kelompok?->nama_kelompok ?? ($item->tanggal?->kelompok?->nama_kelompok ?? '-') }}
                                         </td>
                                         <td class="px-4 py-3 font-medium text-slate-900">
-                                            {{ $item->petugas->nama_petugas ?? '-' }}
-                                            <div class="text-[10px] text-slate-400 font-normal">
-                                                {{ $item->petugas?->jabatan ?? 'Petugas Piket SPMB' }}
-                                            </div>
+                                            @php
+                                                $pengganti = $item->tanggal?->penggantis?->firstWhere('spmb_piket_petugas_id', $item->spmb_piket_petugas_id);
+                                            @endphp
+                                            @if($pengganti)
+                                                <div class="flex items-center gap-1.5 flex-wrap">
+                                                    <span class="font-bold text-slate-900">{{ $pengganti->nama_pengganti }}</span>
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                                                        Pengganti
+                                                    </span>
+                                                </div>
+                                                <div class="text-[10px] text-slate-500 font-normal">
+                                                    {{ $pengganti->jabatan_pengganti ?? 'Petugas Pengganti' }} &bull; <span class="italic text-slate-400">Asli: {{ $item->petugas->nama_petugas ?? '-' }}</span>
+                                                </div>
+                                            @else
+                                                {{ $item->petugas->nama_petugas ?? '-' }}
+                                                <div class="text-[10px] text-slate-400 font-normal">
+                                                    {{ $item->petugas?->jabatan ?? 'Petugas Piket SPMB' }}
+                                                </div>
+                                            @endif
                                         </td>
                                         <td class="px-4 py-3 text-center whitespace-nowrap">
                                             @if($item->status === 'Hadir')

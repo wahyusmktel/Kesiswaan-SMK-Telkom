@@ -1067,12 +1067,12 @@
                                 <span class="text-[11px] text-slate-400">Rincian tugas dapat disesuaikan sebelum dicetak</span>
                             </div>
 
-                            <div class="border border-slate-200 rounded-md overflow-hidden max-h-56 overflow-y-auto">
+                            <div class="border border-slate-200 rounded-md overflow-hidden max-h-64 overflow-y-auto">
                                 <table class="w-full text-xs text-left">
                                     <thead class="bg-slate-100 text-slate-700 font-semibold sticky top-0 border-b border-slate-200 z-10">
                                         <tr>
                                             <th class="px-2 py-1.5 w-10 text-center">NO</th>
-                                            <th class="px-3 py-1.5 w-44">NAMA</th>
+                                            <th class="px-3 py-1.5 w-56">NAMA PETUGAS</th>
                                             <th class="px-2 py-1.5 w-20 text-center">JABATAN</th>
                                             <th class="px-3 py-1.5">TUGAS</th>
                                         </tr>
@@ -1081,7 +1081,29 @@
                                         <template x-for="(p, index) in modalCetakSuratTugas.petugas" :key="p.id">
                                             <tr class="hover:bg-slate-50/50">
                                                 <td class="px-2 py-2 text-center text-slate-500 font-medium" x-text="index + 1"></td>
-                                                <td class="px-3 py-2 font-medium text-slate-800" x-text="p.nama"></td>
+                                                <td class="px-3 py-2">
+                                                    <div class="font-medium text-slate-800" x-text="p.nama"></div>
+                                                    <template x-if="p.is_replaced">
+                                                        <div class="text-[10px] text-amber-800 flex items-center gap-1.5 mt-0.5">
+                                                            <span class="bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded font-bold border border-amber-300">Pengganti</span>
+                                                            <span class="text-slate-500">Asli: <span class="font-medium" x-text="p.nama_asli"></span></span>
+                                                            <button type="button" @click="batalPengganti(p)" class="text-rose-600 hover:text-rose-800 font-semibold underline text-[10px] ml-0.5" title="Batalkan penggantian dan kembalikan ke petugas asli">
+                                                                Reset
+                                                            </button>
+                                                        </div>
+                                                    </template>
+                                                    <template x-if="!p.is_replaced">
+                                                        <div class="mt-0.5">
+                                                            <button type="button" @click="bukaModalGanti(p)"
+                                                                class="inline-flex items-center gap-1 text-[10.5px] text-blue-600 hover:text-blue-800 font-medium hover:underline">
+                                                                <svg class="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                                                </svg>
+                                                                Ganti Pegawai Berhalangan
+                                                            </button>
+                                                        </div>
+                                                    </template>
+                                                </td>
                                                 <td class="px-2 py-2 text-center">
                                                     <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold"
                                                         :class="p.jabatan.toLowerCase().includes('tpa') ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-blue-50 text-blue-700 border border-blue-200'"
@@ -1135,6 +1157,73 @@
             </div>
         </template>
 
+        {{-- ======================================================== --}}
+        {{-- INTERACTIVE MODAL 6: PENGGANTIAN GURU PIKET BERHALANGAN   --}}
+        {{-- ======================================================== --}}
+        <template x-teleport="body">
+            <div x-show="modalGantiPegawai.open"
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100"
+                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"
+                class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[999999]"
+                style="display: none;">
+
+                <div class="bg-white rounded-lg shadow-2xl border border-slate-300 overflow-hidden w-full max-w-md">
+                    <div class="px-4 py-3 bg-slate-100 border-b border-slate-200 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800">
+                                Penggantian Petugas Piket SPMB
+                            </h3>
+                        </div>
+                        <button type="button" @click="modalGantiPegawai.open = false" class="text-slate-400 hover:text-red-600 font-bold text-base">&times;</button>
+                    </div>
+
+                    <form @submit.prevent="simpanPengganti()" class="p-4 space-y-3.5">
+                        <div class="p-2.5 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800">
+                            Petugas Asli Berhalangan: <strong x-text="modalGantiPegawai.petugas?.nama_asli || modalGantiPegawai.petugas?.nama"></strong>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">
+                                Pilih Guru / Staf Pengganti <span class="text-red-500">*</span>
+                            </label>
+                            <select x-model="modalGantiPegawai.master_guru_id" required
+                                class="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-white font-medium">
+                                <option value="">-- Pilih Guru / Staf Pengganti --</option>
+                                <template x-for="g in masterGurus" :key="g.id">
+                                    <option :value="g.id" x-text="g.nama_lengkap"></option>
+                                </template>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">
+                                Alasan Penggantian (Opsional)
+                            </label>
+                            <input type="text" x-model="modalGantiPegawai.alasan" placeholder="Misal: Izin sakit, dinas luar, dsb"
+                                class="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded focus:border-red-500 focus:ring-1 focus:ring-red-500">
+                        </div>
+
+                        <div class="pt-2 flex justify-end gap-2 border-t border-slate-200">
+                            <button type="button" @click="modalGantiPegawai.open = false"
+                                class="px-3 py-1.5 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded">
+                                Batal
+                            </button>
+                            <button type="submit" :disabled="modalGantiPegawai.loading"
+                                class="px-4 py-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded shadow-sm flex items-center gap-1.5">
+                                <span x-show="modalGantiPegawai.loading">Menyimpan...</span>
+                                <span x-show="!modalGantiPegawai.loading">Tetapkan Pengganti</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </template>
+
     </div>
 
     {{-- JAVASCRIPT / ALPINE LOGIC --}}
@@ -1142,7 +1231,95 @@
         function jadwalPiketPage() {
             return {
                 suratTugasOptions: @json($suratTugasOptions),
+                masterGurus: @json($masterGurus),
                 isTteReady: {{ $isTteReady ? 'true' : 'false' }},
+
+                modalGantiPegawai: {
+                    open: false,
+                    petugas: null,
+                    master_guru_id: '',
+                    alasan: 'Berhalangan hadir',
+                    loading: false
+                },
+
+                bukaModalGanti(p) {
+                    this.modalGantiPegawai.petugas = p;
+                    this.modalGantiPegawai.master_guru_id = p.pengganti_master_guru_id || '';
+                    this.modalGantiPegawai.alasan = p.pengganti_alasan || 'Berhalangan hadir';
+                    this.modalGantiPegawai.loading = false;
+                    this.modalGantiPegawai.open = true;
+                },
+
+                async simpanPengganti() {
+                    this.modalGantiPegawai.loading = true;
+                    try {
+                        const payload = {
+                            _token: '{{ csrf_token() }}',
+                            spmb_piket_tanggal_id: this.modalCetakSuratTugas.selectedTanggalId,
+                            spmb_piket_petugas_id: this.modalGantiPegawai.petugas.id,
+                            master_guru_id: this.modalGantiPegawai.master_guru_id,
+                            alasan: this.modalGantiPegawai.alasan,
+                        };
+
+                        const res = await fetch('{{ route("kaur-spmb.jadwal-piket.pengganti.store") }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify(payload)
+                        });
+
+                        const data = await res.json();
+                        if (data.success) {
+                            const p = this.modalGantiPegawai.petugas;
+                            const guru = this.masterGurus.find(g => g.id == this.modalGantiPegawai.master_guru_id);
+                            if (p && guru) {
+                                p.is_replaced = true;
+                                p.nama = guru.nama_lengkap;
+                                p.pengganti_id = data.pengganti.id;
+                                p.pengganti_nama = guru.nama_lengkap;
+                                p.pengganti_master_guru_id = guru.id;
+                                p.pengganti_alasan = this.modalGantiPegawai.alasan;
+                            }
+                            this.modalGantiPegawai.open = false;
+                        } else {
+                            alert(data.message || 'Gagal menyimpan penggantian');
+                        }
+                    } catch (e) {
+                        alert('Terjadi kesalahan: ' + e.message);
+                    } finally {
+                        this.modalGantiPegawai.loading = false;
+                    }
+                },
+
+                async batalPengganti(p) {
+                    if (!confirm('Kembalikan tugas pekan ini kepada petugas asli (' + p.nama_asli + ')?')) return;
+                    try {
+                        const res = await fetch('{{ url("kaur-spmb/jadwal-piket/pengganti") }}/' + p.pengganti_id, {
+                            method: 'DELETE',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            }
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            p.is_replaced = false;
+                            p.nama = p.nama_asli;
+                            p.pengganti_id = null;
+                            p.pengganti_nama = null;
+                            p.pengganti_master_guru_id = null;
+                            p.pengganti_alasan = null;
+                        } else {
+                            alert(data.message || 'Gagal mereset');
+                        }
+                    } catch (e) {
+                        alert('Terjadi kesalahan: ' + e.message);
+                    }
+                },
 
                 modalKelompok: {
                     open: false,

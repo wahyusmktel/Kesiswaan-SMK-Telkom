@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AppSetting;
 use App\Models\MasterGuru;
 use App\Models\SpmbBeritaAcara;
+use App\Models\SpmbPesertaSeleksi;
 use App\Models\SpmbPiketAbsensi;
 use App\Models\SpmbPiketKelompok;
 use App\Models\SpmbPiketPetugas;
@@ -47,6 +48,7 @@ class AdministrasiController extends Controller
             ->with([
                 'tanggal.kelompok.petugas',
                 'tanggal.absensis',
+                'tanggal.laporanPetugasBy',
                 'kaurUser',
             ]);
 
@@ -84,7 +86,7 @@ class AdministrasiController extends Controller
 
         // 5. Options Tanggal Piket for Modal Create
         $availableTanggals = SpmbPiketTanggal::whereHas('kelompok', fn ($q) => $q->where('tahun_ajaran', $selectedYear))
-            ->with(['kelompok.petugas', 'absensis'])
+            ->with(['kelompok.petugas', 'absensis', 'laporanPetugasBy', 'pesertaSeleksis'])
             ->orderBy('tanggal', 'desc')
             ->get();
 
@@ -101,6 +103,12 @@ class AdministrasiController extends Controller
             // Generate default number
             $nomorSurat = "0{$tgl->id}/BA-SPMB/SMKTEL-LPG/{$blnRomawi}/{$thn}";
 
+            // Live metrics from digital attendance of candidates & parents
+            $pesertas = $tgl->pesertaSeleksis;
+            $totalCasis = $pesertas->count();
+            $casisHadirCount = $pesertas->where('status_kehadiran_siswa', 'Hadir')->count();
+            $ortuHadirCount = $pesertas->where('status_kehadiran_ortu', 'Hadir')->count();
+
             // Default ringkasan kegiatan
             $ringkasan = "Telah dilaksanakan kegiatan pelayanan dan piket SPMB (Seleksi Penerimaan Murid Baru) Tahun Pelajaran {$selectedYear} SMK Telkom Lampung pada hari {$tgl->hari}, " .
                 $carbon->locale('id')->isoFormat('D MMMM Y') . " bertempat di SMK Telkom Lampung. " .
@@ -109,7 +117,7 @@ class AdministrasiController extends Controller
             return [
                 'id' => $tgl->id,
                 'tanggal' => $tgl->tanggal->toDateString(),
-                'label' => $carbon->locale('id')->isoFormat('dddd, D MMMM Y') . ' — ' . ($tgl->kelompok?->nama_kelompok ?? 'Kelompok') . " ({$hadirCount}/{$totalPetugas} Petugas Hadir)",
+                'label' => $carbon->locale('id')->isoFormat('dddd, D MMMM Y') . ' — ' . ($tgl->kelompok?->nama_kelompok ?? 'Kelompok') . " ({$hadirCount}/{$totalPetugas} Petugas Hadir, {$casisHadirCount} Casis Hadir)",
                 'kelompok_nama' => $tgl->kelompok?->nama_kelompok ?? '',
                 'hari_tanggal' => $carbon->locale('id')->isoFormat('dddd, D MMMM Y'),
                 'nomor_surat' => $nomorSurat,
@@ -118,6 +126,14 @@ class AdministrasiController extends Controller
                 'ringkasan_default' => $ringkasan,
                 'total_petugas' => $totalPetugas,
                 'hadir_count' => $hadirCount,
+                'jumlah_casis_hadir' => $casisHadirCount,
+                'jumlah_tamu' => $ortuHadirCount,
+                'total_casis' => $totalCasis,
+                'catatan_petugas' => $tgl->catatan_petugas ?? '',
+                'laporan_petugas_by' => $tgl->laporanPetugasBy?->name ?? '',
+                'laporan_petugas_at' => $tgl->laporan_petugas_at ? $tgl->laporan_petugas_at->format('d/m/Y H:i') : '',
+                'has_eviden_siswa' => ! empty($tgl->foto_eviden_absen_siswa),
+                'has_eviden_ortu' => ! empty($tgl->foto_eviden_absen_ortu),
             ];
         });
 
@@ -238,6 +254,8 @@ class AdministrasiController extends Controller
                 $q->orderBy('urutan', 'asc');
             },
             'tanggal.absensis',
+            'tanggal.penggantis',
+            'tanggal.laporanPetugasBy',
             'kaurUser',
         ]);
 
@@ -247,26 +265,35 @@ class AdministrasiController extends Controller
 
         $hariTanggalStr = Carbon::parse($beritaAcara->tanggal_kegiatan)->locale('id')->isoFormat('dddd, D MMMM Y');
 
-        // Build list of officers with attendance record for the lampiran table
+        // Build list of officers with attendance record & replacement support
         $petugasAbsensiList = [];
         $rawPetugas = $kelompok ? $kelompok->petugas : collect();
         $absensiMap = $tanggal ? $tanggal->absensis->keyBy('spmb_piket_petugas_id') : collect();
+        $penggantiMap = $tanggal ? $tanggal->penggantis->keyBy('spmb_piket_petugas_id') : collect();
 
         foreach ($rawPetugas as $idx => $p) {
             $abs = $absensiMap->get($p->id);
+            $pengganti = $penggantiMap->get($p->id);
+
             $status = $abs ? $abs->status : 'Belum Absen';
-            $waktuAbsen = $abs?->waktu_absen ? Carbon::parse($abs->waktu_absen)->format('H:i') . ' WIB' : '-';
-            $keterangan = $abs?->catatan ?: ($abs?->alasan_izin ?: '-');
+            $waktuAbsen = $abs?->jam_absen ? Carbon::parse($abs->jam_absen)->format('H:i') . ' WIB' : '-';
+            $keterangan = $abs?->keterangan ?: '-';
+
+            $namaTampil = $pengganti ? $pengganti->nama_pengganti : $p->nama_petugas;
+            $jabatanTampil = $pengganti ? ($pengganti->jabatan_pengganti ?: 'Guru') : ($p->jabatan ?: 'Guru');
 
             $petugasAbsensiList[] = [
                 'no' => $idx + 1,
-                'nama' => $p->nama_petugas,
-                'jabatan' => $p->jabatan ?: 'Guru',
+                'nama' => $namaTampil,
+                'nama_asli' => $p->nama_petugas,
+                'is_pengganti' => ! is_null($pengganti),
+                'alasan_ganti' => $pengganti?->alasan,
+                'jabatan' => $jabatanTampil,
                 'tugas' => JadwalPiketController::defaultTugasForPetugas($idx + 1, $p->jabatan ?? ''),
                 'status' => $status,
                 'waktu_absen' => $waktuAbsen,
                 'keterangan' => $keterangan,
-                'has_eviden' => (bool) $abs?->foto_bukti,
+                'has_eviden' => (bool) $abs?->foto_eviden,
             ];
         }
 
@@ -275,6 +302,35 @@ class AdministrasiController extends Controller
         $totalHadir = collect($petugasAbsensiList)->whereIn('status', ['Hadir', 'Terlambat'])->count();
         $totalIzinSakit = collect($petugasAbsensiList)->whereIn('status', ['Izin', 'Sakit'])->count();
         $totalAlpa = collect($petugasAbsensiList)->whereIn('status', ['Alpa', 'Belum Absen'])->count();
+
+        // Load Candidates (Lampiran 2)
+        $pesertaSeleksis = $tanggal
+            ? SpmbPesertaSeleksi::where('spmb_piket_tanggal_id', $tanggal->id)
+                ->orderBy('nomor_pendaftaran', 'asc')
+                ->get()
+            : collect();
+
+        // Load Physical Evidence Images (Lampiran 3) as base64 or storage url
+        $convertImageToBase64 = function ($path) {
+            if (! $path) {
+                return null;
+            }
+            if (Storage::disk('public')->exists($path)) {
+                $data = Storage::disk('public')->get($path);
+                $mime = Storage::disk('public')->mimeType($path) ?: 'image/jpeg';
+                return 'data:' . $mime . ';base64,' . base64_encode($data);
+            }
+            if (file_exists(storage_path('app/public/' . $path))) {
+                $fullPath = storage_path('app/public/' . $path);
+                $data = file_get_contents($fullPath);
+                $mime = mime_content_type($fullPath) ?: 'image/jpeg';
+                return 'data:' . $mime . ';base64,' . base64_encode($data);
+            }
+            return null;
+        };
+
+        $evidenSiswaBase64 = $convertImageToBase64($tanggal?->foto_eviden_absen_siswa);
+        $evidenOrtuBase64 = $convertImageToBase64($tanggal?->foto_eviden_absen_ortu);
 
         // Load Kop Surat UKK from AppSetting
         $setting = AppSetting::first();
@@ -309,6 +365,9 @@ class AdministrasiController extends Controller
             'totalHadir',
             'totalIzinSakit',
             'totalAlpa',
+            'pesertaSeleksis',
+            'evidenSiswaBase64',
+            'evidenOrtuBase64',
             'kopBase64'
         ));
     }

@@ -389,32 +389,71 @@
                         </div>
 
                         {{-- 4. Statistik Casis & Tamu --}}
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-700 mb-1">Jumlah Calon Siswa Hadir</label>
-                                <input type="number" min="0" name="jumlah_casis_hadir" x-model="modalBeritaAcara.form.jumlah_casis_hadir"
-                                    class="w-full text-xs px-3 py-2 border border-slate-300 rounded-md focus:border-red-500 focus:ring-red-500">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-700 mb-1">Jumlah Tamu / Orang Tua Hadir</label>
-                                <input type="number" min="0" name="jumlah_tamu" x-model="modalBeritaAcara.form.jumlah_tamu"
-                                    class="w-full text-xs px-3 py-2 border border-slate-300 rounded-md focus:border-red-500 focus:ring-red-500">
+                        <div class="space-y-2">
+                            <template x-if="getSelectedTanggal() && (getSelectedTanggal().total_casis > 0 || getSelectedTanggal().jumlah_casis_hadir > 0)">
+                                <div class="p-2.5 rounded-md bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span>
+                                            Sinkron Otomatis Lapangan: <strong x-text="getSelectedTanggal().jumlah_casis_hadir + ' calon siswa hadir'"></strong> &bull; <strong x-text="getSelectedTanggal().jumlah_tamu + ' orang tua hadir'"></strong>
+                                        </span>
+                                    </div>
+                                    <span class="text-[10px] font-bold uppercase bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded border border-emerald-200">
+                                        Presensi Petugas
+                                    </span>
+                                </div>
+                            </template>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Jumlah Calon Siswa Hadir</label>
+                                    <input type="number" min="0" name="jumlah_casis_hadir" x-model="modalBeritaAcara.form.jumlah_casis_hadir"
+                                        class="w-full text-xs px-3 py-2 border border-slate-300 rounded-md focus:border-red-500 focus:ring-red-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Jumlah Tamu / Orang Tua Hadir</label>
+                                    <input type="number" min="0" name="jumlah_tamu" x-model="modalBeritaAcara.form.jumlah_tamu"
+                                        class="w-full text-xs px-3 py-2 border border-slate-300 rounded-md focus:border-red-500 focus:ring-red-500">
+                                </div>
                             </div>
                         </div>
 
                         {{-- 5. Catatan Kendala & Kesimpulan --}}
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-700 mb-1">Catatan / Kendala Selama Piket (Opsional)</label>
-                                <textarea name="catatan_kendala" x-model="modalBeritaAcara.form.catatan_kendala" rows="2"
-                                    placeholder="Tuliskan jika ada kendala sistem, sarana, atau teknis..."
-                                    class="w-full text-xs px-3 py-2 border border-slate-300 rounded-md focus:border-red-500 focus:ring-red-500"></textarea>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-700 mb-1">Kesimpulan / Tindak Lanjut (Opsional)</label>
-                                <textarea name="kesimpulan" x-model="modalBeritaAcara.form.kesimpulan" rows="2"
-                                    placeholder="Rencana evaluasi atau tindak lanjut pekan berikutnya..."
-                                    class="w-full text-xs px-3 py-2 border border-slate-300 rounded-md focus:border-red-500 focus:ring-red-500"></textarea>
+                        <div class="space-y-3">
+                            <template x-if="getSelectedTanggal() && getSelectedTanggal().catatan_petugas">
+                                <div class="p-3 bg-blue-50 border border-blue-200 rounded-md text-xs text-blue-900 space-y-1.5">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-bold text-[11px] text-blue-950 flex items-center gap-1.5">
+                                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                                            </svg>
+                                            Catatan Lapangan dari Petugas Piket:
+                                        </span>
+                                        <button type="button" @click="modalBeritaAcara.form.catatan_kendala = getSelectedTanggal().catatan_petugas"
+                                            class="text-[10.5px] font-bold text-blue-700 hover:text-blue-900 underline">
+                                            Gunakan Catatan Petugas &darr;
+                                        </button>
+                                    </div>
+                                    <p class="italic text-[11px] text-slate-700 bg-white p-2 rounded border border-blue-100" x-text="getSelectedTanggal().catatan_petugas"></p>
+                                    <p class="text-[10px] text-slate-500" x-text="'Dilaporkan oleh: ' + (getSelectedTanggal().laporan_petugas_by || 'Petugas Piket') + (getSelectedTanggal().laporan_petugas_at ? ' (' + getSelectedTanggal().laporan_petugas_at + ' WIB)' : '')"></p>
+                                </div>
+                            </template>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Catatan / Kendala Selama Piket (Opsional)</label>
+                                    <textarea name="catatan_kendala" x-model="modalBeritaAcara.form.catatan_kendala" rows="2"
+                                        placeholder="Tuliskan jika ada kendala sistem, sarana, atau teknis..."
+                                        class="w-full text-xs px-3 py-2 border border-slate-300 rounded-md focus:border-red-500 focus:ring-red-500"></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Kesimpulan / Tindak Lanjut (Opsional)</label>
+                                    <textarea name="kesimpulan" x-model="modalBeritaAcara.form.kesimpulan" rows="2"
+                                        placeholder="Rencana evaluasi atau tindak lanjut pekan berikutnya..."
+                                        class="w-full text-xs px-3 py-2 border border-slate-300 rounded-md focus:border-red-500 focus:ring-red-500"></textarea>
+                                </div>
                             </div>
                         </div>
 
@@ -528,6 +567,11 @@
                     window.addEventListener('mouseup', () => this.onMouseUp());
                 },
 
+                getSelectedTanggal() {
+                    const selId = this.modalBeritaAcara.form.spmb_piket_tanggal_id;
+                    return this.tanggalOptions.find(t => t.id == selId) || null;
+                },
+
                 openAddBeritaAcaraModal() {
                     this.modalBeritaAcara.isEdit = false;
                     this.modalBeritaAcara.actionUrl = '{{ route("kaur-spmb.administrasi.berita-acara.store") }}';
@@ -543,9 +587,9 @@
                         waktu_selesai: '12:00',
                         tempat: 'SMK Telkom Lampung',
                         ringkasan_kegiatan: firstTgl ? firstTgl.ringkasan_default : '',
-                        jumlah_casis_hadir: 0,
-                        jumlah_tamu: 0,
-                        catatan_kendala: '',
+                        jumlah_casis_hadir: firstTgl ? (firstTgl.jumlah_casis_hadir || 0) : 0,
+                        jumlah_tamu: firstTgl ? (firstTgl.jumlah_tamu || 0) : 0,
+                        catatan_kendala: firstTgl ? (firstTgl.catatan_petugas || '') : '',
                         kesimpulan: '',
                         nama_penandatangan: this.defaultNamaSigner,
                         nip_penandatangan: this.defaultNipSigner,
@@ -595,6 +639,11 @@
                         this.modalBeritaAcara.form.nomor_surat = found.nomor_surat;
                         this.modalBeritaAcara.form.tanggal_kegiatan = found.tanggal;
                         this.modalBeritaAcara.form.ringkasan_kegiatan = found.ringkasan_default;
+                        this.modalBeritaAcara.form.jumlah_casis_hadir = found.jumlah_casis_hadir || 0;
+                        this.modalBeritaAcara.form.jumlah_tamu = found.jumlah_tamu || 0;
+                        if (found.catatan_petugas && !this.modalBeritaAcara.form.catatan_kendala) {
+                            this.modalBeritaAcara.form.catatan_kendala = found.catatan_petugas;
+                        }
                     }
                 },
 

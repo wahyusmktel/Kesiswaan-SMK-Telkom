@@ -54,7 +54,7 @@ class AbsensiPiketController extends Controller
         $absensiQuery = SpmbPiketAbsensi::whereHas('tanggal.kelompok', function ($q) use ($selectedYear) {
             $q->where('tahun_ajaran', $selectedYear);
         })
-        ->with(['petugas.kelompok', 'tanggal.kelompok', 'user', 'createdBy'])
+        ->with(['petugas.kelompok', 'tanggal.kelompok', 'tanggal.penggantis', 'user', 'createdBy'])
         ->orderBy('created_at', 'desc');
 
         if (! empty($selectedTanggalId)) {
@@ -205,13 +205,20 @@ class AbsensiPiketController extends Controller
             ? $validated['jam_absen']
             : ($validated['status'] === 'Hadir' ? now()->format('H:i:s') : null);
 
+        $pengganti = \App\Models\SpmbPiketPengganti::where('spmb_piket_tanggal_id', $tanggal->id)
+            ->where('spmb_piket_petugas_id', $petugas->id)
+            ->first();
+
+        $userId = $pengganti?->user_id ?: $petugas->user_id;
+        $namaDisplay = $pengganti ? "{$pengganti->nama_pengganti} (Pengganti {$petugas->nama_petugas})" : $petugas->nama_petugas;
+
         SpmbPiketAbsensi::updateOrCreate(
             [
                 'spmb_piket_petugas_id' => $petugas->id,
                 'spmb_piket_tanggal_id' => $tanggal->id,
             ],
             [
-                'user_id' => $petugas->user_id,
+                'user_id' => $userId,
                 'status' => $validated['status'],
                 'jam_absen' => $jamAbsen,
                 'foto_eviden' => $fotoPath ?: DB::raw('foto_eviden'),
@@ -221,7 +228,7 @@ class AbsensiPiketController extends Controller
             ]
         );
 
-        return redirect()->back()->with('success', "Absensi untuk {$petugas->nama_petugas} berhasil disimpan secara manual.");
+        return redirect()->back()->with('success', "Absensi untuk {$namaDisplay} berhasil disimpan secara manual.");
     }
 
     /**

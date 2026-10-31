@@ -8,6 +8,7 @@ use App\Models\DigitalDocument;
 use App\Models\MasterGuru;
 use App\Models\SpmbPiketKelompok;
 use App\Models\SpmbPiketPetugas;
+use App\Models\SpmbPiketPengganti;
 use App\Models\SpmbPiketTanggal;
 use App\Models\TahunPelajaran;
 use App\Models\User;
@@ -119,9 +120,12 @@ class JadwalPiketController extends Controller
         $allTanggals = SpmbPiketTanggal::whereHas('kelompok', function ($q) use ($selectedYear) {
             $q->where('tahun_ajaran', $selectedYear);
         })
-        ->with(['kelompok.petugas' => function ($q) {
-            $q->orderBy('urutan', 'asc');
-        }])
+        ->with([
+            'kelompok.petugas' => function ($q) {
+                $q->orderBy('urutan', 'asc');
+            },
+            'penggantis.masterGuru',
+        ])
         ->orderBy('tanggal', 'asc')
         ->get();
 
@@ -133,14 +137,24 @@ class JadwalPiketController extends Controller
             $thn = $carbon->year;
             $tglSurat = $carbon->copy()->subDay()->locale('id')->translatedFormat('d F Y');
 
-            $petugas = $tgl->kelompok?->petugas?->map(function ($p, $idx) {
+            $petugas = $tgl->kelompok?->petugas?->map(function ($p, $idx) use ($tgl) {
                 $urutan = $idx + 1;
+                $pengganti = $tgl->penggantis?->firstWhere('spmb_piket_petugas_id', $p->id);
+                $namaEfektif = $pengganti ? $pengganti->nama_pengganti : $p->nama_petugas;
+                $jabatanEfektif = $pengganti ? ($pengganti->jabatan_pengganti ?: 'Guru') : ($p->jabatan ?: 'Guru');
+
                 return [
                     'id' => $p->id,
                     'urutan' => $urutan,
-                    'nama' => $p->nama_petugas,
-                    'jabatan' => $p->jabatan ?: 'Guru',
+                    'nama' => $namaEfektif,
+                    'nama_asli' => $p->nama_petugas,
+                    'jabatan' => $jabatanEfektif,
                     'tugas' => self::defaultTugasForPetugas($urutan, $p->jabatan ?? ''),
+                    'is_replaced' => (bool) $pengganti,
+                    'pengganti_id' => $pengganti?->id,
+                    'pengganti_nama' => $pengganti?->nama_pengganti,
+                    'pengganti_master_guru_id' => $pengganti?->master_guru_id,
+                    'pengganti_alasan' => $pengganti?->alasan,
                 ];
             })->values() ?? collect();
 
@@ -502,19 +516,29 @@ class JadwalPiketController extends Controller
         $waktu = $request->get('waktu', $tanggal->waktu ?: 'Pukul 07.30 sd 12.00 WIB');
         $hariTanggalStr = Carbon::parse($tanggal->tanggal)->locale('id')->isoFormat('dddd, D MMMM Y');
 
-        // Petugas and their customized/default tasks
+        // Petugas and their customized/default tasks (with replacement check)
         $customTugas = $request->get('tugas', []);
         $petugasList = [];
         $rawPetugas = $kelompok ? $kelompok->petugas : collect();
+        $penggantiMap = SpmbPiketPengganti::where('spmb_piket_tanggal_id', $tanggal->id)
+            ->get()
+            ->keyBy('spmb_piket_petugas_id');
 
         foreach ($rawPetugas as $idx => $p) {
             $urutan = $idx + 1;
             $tugasText = $customTugas[$p->id] ?? self::defaultTugasForPetugas($urutan, $p->jabatan ?? '');
+            
+            $pengganti = $penggantiMap->get($p->id);
+            $nama = $pengganti ? $pengganti->nama_pengganti : $p->nama_petugas;
+            $jabatan = $pengganti ? ($pengganti->jabatan_pengganti ?: 'Guru') : ($p->jabatan ?: 'Guru');
+
             $petugasList[] = [
                 'no' => $urutan,
-                'nama' => $p->nama_petugas,
-                'jabatan' => $p->jabatan ?: 'Guru',
+                'nama' => $nama,
+                'jabatan' => $jabatan,
                 'tugas' => $tugasText,
+                'is_replaced' => (bool) $pengganti,
+                'nama_asli' => $p->nama_petugas,
             ];
         }
 
@@ -609,5 +633,64 @@ class JadwalPiketController extends Controller
             'digitalDoc',
             'qrCodeBase64'
         ));
+    }
+
+    /**
+     * Store or update replacement teacher for a specific duty date.
+     */
+    public function storeOrUpdatePengganti(Request $request)
+    {
+        $validated = $request->validate([
+            'spmb_piket_tanggal_id' => 'required|exists:spmb_piket_tanggals,id',
+            'spmb_piket_petugas_id' => 'required|exists:spmb_piket_petugas,id',
+            'master_guru_id' => 'required|exists:master_gurus,id',
+            'alasan' => 'nullable|string|max:255',
+        ]);
+
+        $guru = MasterGuru::with('user')->findOrFail($validated['master_guru_id']);
+        $petugas = SpmbPiketPetugas::findOrFail($validated['spmb_piket_petugas_id']);
+
+        $pengganti = SpmbPiketPengganti::updateOrCreate(
+            [
+                'spmb_piket_tanggal_id' => $validated['spmb_piket_tanggal_id'],
+                'spmb_piket_petugas_id' => $petugas->id,
+            ],
+            [
+                'master_guru_id' => $guru->id,
+                'user_id' => $guru->user_id,
+                'nama_pengganti' => $guru->nama_lengkap,
+                'jabatan_pengganti' => 'Guru',
+                'alasan' => $validated['alasan'] ?? 'Berhalangan hadir',
+                'created_by' => auth()->id(),
+            ]
+        );
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Petugas {$petugas->nama_petugas} berhasil digantikan oleh {$guru->nama_lengkap}.",
+                'pengganti' => $pengganti,
+            ]);
+        }
+
+        return redirect()->back()->with('success', "Petugas {$petugas->nama_petugas} berhasil digantikan oleh {$guru->nama_lengkap} pada pekan ini.");
+    }
+
+    /**
+     * Remove replacement and restore original officer.
+     */
+    public function destroyPengganti(SpmbPiketPengganti $pengganti, Request $request)
+    {
+        $petugasAsliNama = $pengganti->petugasAsli?->nama_petugas ?? 'Petugas';
+        $pengganti->delete();
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Penggantian untuk {$petugasAsliNama} berhasil dibatalkan.",
+            ]);
+        }
+
+        return redirect()->back()->with('success', "Penggantian untuk {$petugasAsliNama} berhasil dibatalkan, petugas kembali ke semula.");
     }
 }
