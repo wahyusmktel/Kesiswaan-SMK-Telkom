@@ -119,15 +119,6 @@
                             </select>
                         </div>
 
-                        {{-- Jurusan --}}
-                        <select name="jurusan" onchange="this.form.submit()"
-                            class="text-xs font-medium rounded-md border-slate-300 focus:border-red-500 focus:ring-red-500 py-1.5 pl-2.5 pr-7 bg-slate-50 max-w-[150px]">
-                            <option value="">-- Semua Jurusan --</option>
-                            @foreach($jurusanList as $jur)
-                                <option value="{{ $jur }}" {{ $jurusan == $jur ? 'selected' : '' }}>{{ $jur }}</option>
-                            @endforeach
-                        </select>
-
                         {{-- Search Input --}}
                         <div class="relative">
                             <input type="text" name="search" value="{{ $search }}" placeholder="Cari nama / no pendaftaran..."
@@ -179,8 +170,7 @@
                             <tr>
                                 <th class="px-3 py-3 text-center w-10">NO</th>
                                 <th class="px-3 py-3">NO. PENDAFTARAN & AKUN</th>
-                                <th class="px-3 py-3">NAMA SISWA & ASAL SEKOLAH</th>
-                                <th class="px-3 py-3">PILIHAN JURUSAN</th>
+                                <th class="px-3 py-3">NAMA SISWA</th>
                                 <th class="px-3 py-3">ORANG TUA / WALI</th>
                                 <th class="px-3 py-3">JADWAL TES</th>
                                 <th class="px-3 py-3 text-center">PRESENSI SISWA</th>
@@ -195,19 +185,20 @@
                                         {{ $pesertas->firstItem() + $idx }}
                                     </td>
                                     
-                                    {{-- No Pendaftaran & Akun Login --}}
+                                    {{-- No Pendaftaran & Akun Login (5 Digit Angka) --}}
                                     <td class="px-3 py-2.5">
-                                        <div class="font-bold text-slate-900 font-mono text-[11px] text-red-600">
+                                        <div class="font-bold font-mono text-[11.5px] text-red-600">
                                             {{ $p->nomor_pendaftaran }}
                                         </div>
-                                        <div class="text-[10px] text-slate-500 mt-0.5 flex items-center gap-1" title="Akun Login Calon Siswa">
-                                            <span class="font-mono bg-slate-100 px-1 py-0.5 rounded border border-slate-200">{{ $p->user?->username ?? '-' }}</span>
+                                        <div class="text-[10px] text-slate-500 mt-1 flex items-center gap-1.5" title="Akun Login Calon Siswa (5 Digit Angka)">
+                                            <span class="text-slate-400">Akun:</span>
+                                            <span class="font-mono bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 font-bold text-slate-800">{{ $p->user?->username ?? '-' }}</span>
                                             <span class="text-slate-400">/</span>
-                                            <span class="font-mono text-slate-600 bg-slate-100 px-1 py-0.5 rounded border border-slate-200">{{ $p->raw_password ?: 'spmb2027' }}</span>
+                                            <span class="font-mono text-slate-800 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 font-bold">{{ $p->raw_password ?: ($p->user?->username ?? '-') }}</span>
                                         </div>
                                     </td>
 
-                                    {{-- Nama Siswa & Asal Sekolah --}}
+                                    {{-- Nama Siswa & WhatsApp --}}
                                     <td class="px-3 py-2.5">
                                         <div class="font-bold text-slate-900 flex items-center gap-1.5">
                                             <span>{{ $p->nama_lengkap }}</span>
@@ -215,18 +206,16 @@
                                                 {{ $p->jenis_kelamin }}
                                             </span>
                                         </div>
-                                        <div class="text-[10.5px] text-slate-500 mt-0.5">
-                                            {{ $p->asal_sekolah ?: 'Asal sekolah belum diisi' }}
-                                        </div>
-                                    </td>
-
-                                    {{-- Jurusan --}}
-                                    <td class="px-3 py-2.5">
-                                        <span class="px-2 py-0.5 rounded font-semibold text-[10.5px] bg-slate-100 text-slate-800 border border-slate-200">
-                                            {{ $p->jurusan_pilihan }}
-                                        </span>
-                                        @if($p->jurusan_pilihan_2)
-                                            <div class="text-[10px] text-slate-400 mt-0.5">P2: {{ $p->jurusan_pilihan_2 }}</div>
+                                        @if($p->no_wa_siswa)
+                                            <a href="https://wa.me/{{ preg_replace('/^0/', '62', preg_replace('/[^0-9]/', '', $p->no_wa_siswa)) }}" target="_blank"
+                                                class="inline-flex items-center gap-1 text-[10.5px] text-emerald-600 hover:text-emerald-700 font-medium mt-0.5">
+                                                <svg class="w-3 h-3 text-emerald-500" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.073.376-.043.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.043.072.043.419-.101.824z"/>
+                                                </svg>
+                                                {{ $p->no_wa_siswa }}
+                                            </a>
+                                        @else
+                                            <div class="text-[10px] text-slate-400 mt-0.5">WA belum diisi</div>
                                         @endif
                                     </td>
 
@@ -314,7 +303,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="9" class="px-4 py-10 text-center text-slate-400">
+                                    <td colspan="8" class="px-4 py-10 text-center text-slate-400">
                                         <div class="max-w-sm mx-auto space-y-2">
                                             <svg class="w-8 h-8 mx-auto text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -412,23 +401,57 @@
 
                         {{-- Section 1: Tanggal & No Pendaftaran --}}
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-slate-50 rounded-md border border-slate-200">
-                            <div>
+                            {{-- Searchable Jadwal Piket --}}
+                            <div class="relative" @click.outside="jadwalDropdownOpen = false">
                                 <label class="block text-xs font-semibold text-slate-700 mb-1">
                                     Jadwal Piket / Tanggal Tes <span class="text-red-500">*</span>
                                 </label>
-                                <select name="spmb_piket_tanggal_id" x-model="modalPeserta.form.spmb_piket_tanggal_id" required
-                                    class="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded-md focus:border-red-500 focus:ring-red-500 bg-white">
-                                    <option value="">-- Pilih Hari Sabtu Piket --</option>
-                                    @foreach($tanggalOptions as $opt)
-                                        <option value="{{ $opt['id'] }}">{{ $opt['label'] }}</option>
-                                    @endforeach
-                                </select>
+                                <input type="hidden" name="spmb_piket_tanggal_id" :value="modalPeserta.form.spmb_piket_tanggal_id" required>
+                                
+                                <button type="button" @click="jadwalDropdownOpen = !jadwalDropdownOpen"
+                                    class="w-full text-left text-xs px-2.5 py-1.5 border border-slate-300 rounded-md focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-white flex items-center justify-between shadow-sm">
+                                    <span class="truncate font-medium text-slate-800" x-text="selectedJadwalLabel"></span>
+                                    <svg class="w-4 h-4 text-slate-400 shrink-0 ml-1.5 transition-transform" :class="jadwalDropdownOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+
+                                <div x-show="jadwalDropdownOpen" x-transition
+                                    class="absolute z-50 left-0 right-0 mt-1 bg-white border border-slate-300 rounded-md shadow-xl p-2 space-y-1.5 max-h-64 overflow-hidden flex flex-col"
+                                    style="display: none;">
+                                    <div class="relative flex-shrink-0">
+                                        <input type="text" x-model="searchJadwalQuery" placeholder="Cari tanggal / kelompok..."
+                                            @click.stop
+                                            class="w-full text-xs pl-7 pr-2.5 py-1 border border-slate-300 rounded focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-slate-50">
+                                        <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                        </svg>
+                                    </div>
+                                    <div class="overflow-y-auto max-h-48 divide-y divide-slate-100 flex-1">
+                                        <template x-for="opt in filteredTanggalOptions" :key="opt.id">
+                                            <button type="button" @click="selectJadwal(opt.id)"
+                                                class="w-full text-left px-2.5 py-1.5 text-xs rounded hover:bg-red-50 transition-colors flex items-center justify-between"
+                                                :class="modalPeserta.form.spmb_piket_tanggal_id == opt.id ? 'bg-red-50 text-red-700 font-bold' : 'text-slate-700'">
+                                                <span class="truncate" x-text="opt.label"></span>
+                                                <svg x-show="modalPeserta.form.spmb_piket_tanggal_id == opt.id" class="w-3.5 h-3.5 text-red-600 shrink-0 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            </button>
+                                        </template>
+                                        <div x-show="filteredTanggalOptions.length === 0" class="px-2 py-3 text-center text-xs text-slate-400 italic">
+                                            Jadwal tidak ditemukan
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
+
+                            {{-- Nomor Pendaftaran --}}
                             <div>
                                 <label class="block text-xs font-semibold text-slate-700 mb-1">
                                     Nomor Pendaftaran / No. Tes <span class="text-red-500">*</span>
                                 </label>
                                 <input type="text" name="nomor_pendaftaran" x-model="modalPeserta.form.nomor_pendaftaran" required
+                                    placeholder="masukan nomor pendaftaran yang sama dengan aplikasi ppdb"
                                     :readonly="modalPeserta.isEdit"
                                     class="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded-md focus:border-red-500 focus:ring-red-500 font-mono font-bold text-red-600 bg-white"
                                     :class="modalPeserta.isEdit ? 'bg-slate-100 cursor-not-allowed' : ''">
@@ -445,7 +468,7 @@
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <div class="sm:col-span-2">
                                     <label class="block text-[11px] font-semibold text-slate-700 mb-1">Nama Lengkap Siswa <span class="text-red-500">*</span></label>
-                                    <input type="text" name="nama_lengkap" x-model="modalPeserta.form.nama_lengkap" required placeholder="Sesuai Ijazah/Akte"
+                                    <input type="text" name="nama_lengkap" x-model="modalPeserta.form.nama_lengkap" required placeholder="Sesuai Ijazah / Akta Kelahiran"
                                         class="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded-md focus:border-red-500 focus:ring-red-500">
                                 </div>
                                 <div>
@@ -458,50 +481,10 @@
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                <div>
-                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">NISN (Opsional)</label>
-                                    <input type="text" name="nisn" x-model="modalPeserta.form.nisn" placeholder="10 digit NISN"
-                                        class="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded-md focus:border-red-500 focus:ring-red-500 font-mono">
-                                </div>
-                                <div>
-                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">NIK (Opsional)</label>
-                                    <input type="text" name="nik" x-model="modalPeserta.form.nik" placeholder="16 digit NIK"
-                                        class="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded-md focus:border-red-500 focus:ring-red-500 font-mono">
-                                </div>
-                                <div>
-                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">No. WhatsApp Siswa</label>
-                                    <input type="text" name="no_wa_siswa" x-model="modalPeserta.form.no_wa_siswa" placeholder="08xxxxxxxxxx"
-                                        class="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded-md focus:border-red-500 focus:ring-red-500 font-mono">
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                <div>
-                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">Asal Sekolah SMP/MTs</label>
-                                    <input type="text" name="asal_sekolah" x-model="modalPeserta.form.asal_sekolah" placeholder="Contoh: SMPN 1 Pringsewu"
-                                        class="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded-md focus:border-red-500 focus:ring-red-500">
-                                </div>
-                                <div>
-                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">Pilihan Jurusan 1 <span class="text-red-500">*</span></label>
-                                    <select name="jurusan_pilihan" x-model="modalPeserta.form.jurusan_pilihan" required
-                                        class="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded-md focus:border-red-500 focus:ring-red-500 bg-white">
-                                        <option value="">-- Pilih Jurusan Utama --</option>
-                                        @foreach($jurusanList as $jur)
-                                            <option value="{{ $jur }}">{{ $jur }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1">Pilihan Jurusan 2 (Opsional)</label>
-                                    <select name="jurusan_pilihan_2" x-model="modalPeserta.form.jurusan_pilihan_2"
-                                        class="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded-md focus:border-red-500 focus:ring-red-500 bg-white">
-                                        <option value="">-- Tidak Memilih --</option>
-                                        @foreach($jurusanList as $jur)
-                                            <option value="{{ $jur }}">{{ $jur }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-700 mb-1">No. WhatsApp Siswa (Opsional)</label>
+                                <input type="text" name="no_wa_siswa" x-model="modalPeserta.form.no_wa_siswa" placeholder="08xxxxxxxxxx"
+                                    class="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded-md focus:border-red-500 focus:ring-red-500 font-mono">
                             </div>
                         </div>
 
@@ -533,27 +516,6 @@
                                     <input type="text" name="no_wa_orang_tua" x-model="modalPeserta.form.no_wa_orang_tua" placeholder="08xxxxxxxxxx"
                                         class="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded-md focus:border-red-500 focus:ring-red-500 font-mono">
                                 </div>
-                            </div>
-                        </div>
-
-                        {{-- Section 4: Akun Login Calon Siswa --}}
-                        <div class="p-3 bg-amber-50/60 rounded-md border border-amber-200 text-xs text-amber-900 space-y-2">
-                            <div class="font-bold flex items-center gap-1.5 text-amber-950">
-                                <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                                </svg>
-                                Akun Login Siswa Otomatis Dibuat
-                            </div>
-                            <p class="text-[11px] text-amber-800 leading-relaxed">
-                                Sistem secara otomatis membuatkan akun login user (Role: <strong>Calon Siswa</strong>) dengan Username berupa Nomor Pendaftaran. Akun ini disiapkan untuk calon siswa mengakses portal seleksi/ujian online mendatang.
-                            </p>
-                            <div>
-                                <label class="block text-[11px] font-semibold text-amber-950 mb-1">
-                                    Password Login Siswa (Opsional)
-                                </label>
-                                <input type="text" name="custom_password" x-model="modalPeserta.form.custom_password"
-                                    :placeholder="modalPeserta.isEdit ? 'Kosongkan jika tidak ingin mengubah password' : 'Default: sama dengan nomor pendaftaran'"
-                                    class="w-full text-xs px-2.5 py-1.5 border border-amber-300 rounded-md focus:border-red-500 focus:ring-red-500 font-mono bg-white">
                             </div>
                         </div>
 
@@ -669,9 +631,31 @@
     <script>
         function pesertaSeleksiPage() {
             return {
-                suggestedNoPendaftaran: @json($suggestedNoPendaftaran),
                 tanggalOptions: @json($tanggalOptions),
-                defaultTanggalId: @json($tanggalId) || (@json($tanggalOptions)[0]?.id || ''),
+                nearestTanggalId: @json($nearestTanggalId),
+                defaultTanggalId: @json($nearestTanggalId) || @json($tanggalId) || (@json($tanggalOptions)[0]?.id || ''),
+
+                jadwalDropdownOpen: false,
+                searchJadwalQuery: '',
+
+                get filteredTanggalOptions() {
+                    if (!this.searchJadwalQuery || !this.searchJadwalQuery.trim()) {
+                        return this.tanggalOptions;
+                    }
+                    const q = this.searchJadwalQuery.toLowerCase();
+                    return this.tanggalOptions.filter(opt => opt.label.toLowerCase().includes(q));
+                },
+
+                get selectedJadwalLabel() {
+                    const found = this.tanggalOptions.find(opt => opt.id == this.modalPeserta.form.spmb_piket_tanggal_id);
+                    return found ? found.label : '-- Pilih Hari Sabtu Piket --';
+                },
+
+                selectJadwal(id) {
+                    this.modalPeserta.form.spmb_piket_tanggal_id = id;
+                    this.jadwalDropdownOpen = false;
+                    this.searchJadwalQuery = '';
+                },
 
                 modalPeserta: {
                     open: false,
@@ -684,17 +668,11 @@
                         spmb_piket_tanggal_id: '',
                         nomor_pendaftaran: '',
                         nama_lengkap: '',
-                        nisn: '',
-                        nik: '',
                         jenis_kelamin: 'L',
-                        asal_sekolah: '',
-                        jurusan_pilihan: 'Teknik Komputer dan Jaringan',
-                        jurusan_pilihan_2: '',
                         no_wa_siswa: '',
                         nama_orang_tua: '',
                         hubungan_wali: 'Orang Tua',
                         no_wa_orang_tua: '',
-                        custom_password: '',
                         status_kehadiran_siswa: 'Terjadwal',
                         status_kehadiran_ortu: 'Terjadwal',
                         catatan: ''
@@ -717,24 +695,20 @@
                     
                     this.modalPeserta.form = {
                         spmb_piket_tanggal_id: this.defaultTanggalId,
-                        nomor_pendaftaran: this.suggestedNoPendaftaran,
+                        nomor_pendaftaran: '',
                         nama_lengkap: '',
-                        nisn: '',
-                        nik: '',
                         jenis_kelamin: 'L',
-                        asal_sekolah: '',
-                        jurusan_pilihan: 'Teknik Komputer dan Jaringan',
-                        jurusan_pilihan_2: '',
                         no_wa_siswa: '',
                         nama_orang_tua: '',
                         hubungan_wali: 'Orang Tua',
                         no_wa_orang_tua: '',
-                        custom_password: '',
                         status_kehadiran_siswa: 'Terjadwal',
                         status_kehadiran_ortu: 'Terjadwal',
                         catatan: ''
                     };
 
+                    this.searchJadwalQuery = '';
+                    this.jadwalDropdownOpen = false;
                     this.modalPeserta.pos = { x: null, y: null };
                     this.modalPeserta.maximized = false;
                     this.modalPeserta.open = true;
@@ -748,22 +722,18 @@
                         spmb_piket_tanggal_id: p.spmb_piket_tanggal_id,
                         nomor_pendaftaran: p.nomor_pendaftaran,
                         nama_lengkap: p.nama_lengkap,
-                        nisn: p.nisn || '',
-                        nik: p.nik || '',
                         jenis_kelamin: p.jenis_kelamin || 'L',
-                        asal_sekolah: p.asal_sekolah || '',
-                        jurusan_pilihan: p.jurusan_pilihan,
-                        jurusan_pilihan_2: p.jurusan_pilihan_2 || '',
                         no_wa_siswa: p.no_wa_siswa || '',
                         nama_orang_tua: p.nama_orang_tua || '',
                         hubungan_wali: p.hubungan_wali || 'Orang Tua',
                         no_wa_orang_tua: p.no_wa_orang_tua || '',
-                        custom_password: '',
                         status_kehadiran_siswa: p.status_kehadiran_siswa || 'Terjadwal',
                         status_kehadiran_ortu: p.status_kehadiran_ortu || 'Terjadwal',
                         catatan: p.catatan || ''
                     };
 
+                    this.searchJadwalQuery = '';
+                    this.jadwalDropdownOpen = false;
                     this.modalPeserta.pos = { x: null, y: null };
                     this.modalPeserta.maximized = false;
                     this.modalPeserta.open = true;
@@ -776,6 +746,7 @@
 
                 closeModal(key) {
                     this[key].open = false;
+                    this.jadwalDropdownOpen = false;
                 },
 
                 toggleMaximize(key) {

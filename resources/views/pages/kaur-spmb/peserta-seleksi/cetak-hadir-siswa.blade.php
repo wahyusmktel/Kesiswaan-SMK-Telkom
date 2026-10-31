@@ -224,14 +224,13 @@
             <table class="table-doc mb-4">
                 <thead>
                     <tr>
-                        <th style="width: 4%;">NO</th>
-                        <th style="width: 13%;">NO. DAFTAR</th>
-                        <th style="width: 25%;">NAMA CALON SISWA</th>
-                        <th style="width: 5%;">L/P</th>
-                        <th style="width: 20%;">ASAL SEKOLAH</th>
-                        <th style="width: 13%;">PILIHAN JURUSAN</th>
-                        <th style="width: 14%;">TANDA TANGAN</th>
-                        <th style="width: 6%;">KET</th>
+                        <th style="width: 5%;">NO</th>
+                        <th style="width: 16%;">NO. DAFTAR</th>
+                        <th style="width: 33%;">NAMA CALON SISWA</th>
+                        <th style="width: 6%;">L/P</th>
+                        <th style="width: 18%;">NO. WHATSAPP SISWA</th>
+                        <th style="width: 15%;">TANDA TANGAN</th>
+                        <th style="width: 7%;">KET</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -241,8 +240,7 @@
                             <td class="text-center font-mono font-semibold">{{ $item->nomor_pendaftaran }}</td>
                             <td class="font-semibold">{{ $item->nama_lengkap }}</td>
                             <td class="text-center">{{ $item->jenis_kelamin }}</td>
-                            <td>{{ $item->asal_sekolah ?: '-' }}</td>
-                            <td class="text-xs">{{ $item->jurusan_pilihan }}</td>
+                            <td class="text-center font-mono text-[8pt]">{{ $item->no_wa_siswa ?: '-' }}</td>
                             <td style="height: 28px; vertical-align: bottom;">
                                 @if(($index + 1) % 2 != 0)
                                     <span style="font-size: 7.5pt; color: #475569;">{{ $index + 1 }}. ............</span>
@@ -264,7 +262,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="text-center py-6 text-slate-500 italic">
+                            <td colspan="7" class="text-center py-6 text-slate-500 italic">
                                 Belum ada calon siswa yang terdaftar pada tanggal piket ini.
                             </td>
                         </tr>

@@ -36,7 +36,6 @@ class PesertaSeleksiController extends Controller
         }
 
         $tanggalId = $request->get('tanggal_id');
-        $jurusan = $request->get('jurusan');
         $statusSiswa = $request->get('status_siswa');
         $search = trim($request->get('search', ''));
         $perPage = (int) $request->get('per_page', 10);
@@ -52,10 +51,6 @@ class PesertaSeleksiController extends Controller
             $query->where('spmb_piket_tanggal_id', $tanggalId);
         }
 
-        if (! empty($jurusan)) {
-            $query->where('jurusan_pilihan', $jurusan);
-        }
-
         if (! empty($statusSiswa)) {
             $query->where('status_kehadiran_siswa', $statusSiswa);
         }
@@ -64,11 +59,12 @@ class PesertaSeleksiController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('nomor_pendaftaran', 'like', "%{$search}%")
                     ->orWhere('nama_lengkap', 'like', "%{$search}%")
-                    ->orWhere('nisn', 'like', "%{$search}%")
-                    ->orWhere('asal_sekolah', 'like', "%{$search}%")
                     ->orWhere('nama_orang_tua', 'like', "%{$search}%")
                     ->orWhere('no_wa_siswa', 'like', "%{$search}%")
-                    ->orWhere('no_wa_orang_tua', 'like', "%{$search}%");
+                    ->orWhere('no_wa_orang_tua', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($uq) use ($search) {
+                        $uq->where('username', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -105,26 +101,16 @@ class PesertaSeleksiController extends Controller
                 ];
             });
 
-        // 5. Jurusan Master
-        $jurusanList = [
-            'Teknik Jaringan Akses',
-            'Rekayasa Perangkat Lunak',
-            'Teknik Komputer dan Jaringan',
-            'Animasi',
-        ];
-
-        // 6. Next auto register number suggestion
-        $prefix = 'SPMB' . substr(str_replace('/', '', $selectedYear), 2, 2) . '-';
-        $maxNum = SpmbPesertaSeleksi::where('tahun_ajaran', $selectedYear)
-            ->where('nomor_pendaftaran', 'like', "{$prefix}%")
-            ->count();
-        $suggestedNoPendaftaran = $prefix . str_pad($maxNum + 1, 3, '0', STR_PAD_LEFT);
+        // 5. Tanggal Piket Terdekat (Upcoming Saturday from today)
+        $today = Carbon::today()->toDateString();
+        $nearestTanggal = $tanggalOptions->first(fn ($t) => $t['tanggal'] >= $today) ?? $tanggalOptions->last() ?? $tanggalOptions->first();
+        $nearestTanggalId = $nearestTanggal ? $nearestTanggal['id'] : null;
 
         return view('pages.kaur-spmb.peserta-seleksi.index', compact(
             'availableYears',
             'selectedYear',
             'tanggalId',
-            'jurusan',
+            'nearestTanggalId',
             'statusSiswa',
             'search',
             'perPage',
@@ -133,9 +119,7 @@ class PesertaSeleksiController extends Controller
             'totalHadirSiswa',
             'totalHadirOrtu',
             'totalTerjadwal',
-            'tanggalOptions',
-            'jurusanList',
-            'suggestedNoPendaftaran'
+            'tanggalOptions'
         ));
     }
 
@@ -149,37 +133,26 @@ class PesertaSeleksiController extends Controller
             'tahun_ajaran' => 'required|string|max:20',
             'nomor_pendaftaran' => 'required|string|max:50|unique:spmb_peserta_seleksis,nomor_pendaftaran',
             'nama_lengkap' => 'required|string|max:150',
-            'nisn' => 'nullable|string|max:20',
-            'nik' => 'nullable|string|max:20',
             'jenis_kelamin' => 'required|in:L,P',
-            'asal_sekolah' => 'nullable|string|max:150',
-            'jurusan_pilihan' => 'required|string|max:100',
-            'jurusan_pilihan_2' => 'nullable|string|max:100',
             'no_wa_siswa' => 'nullable|string|max:30',
             'nama_orang_tua' => 'nullable|string|max:150',
             'hubungan_wali' => 'nullable|string|max:50',
             'no_wa_orang_tua' => 'nullable|string|max:30',
-            'custom_password' => 'nullable|string|min:4',
             'catatan' => 'nullable|string',
         ]);
 
-        // Auto-generate student user login credentials
-        $cleanNo = preg_replace('/[^a-zA-Z0-9]/', '', strtolower($validated['nomor_pendaftaran']));
-        $username = $cleanNo;
-        $counter = 1;
-        while (User::where('username', $username)->exists()) {
-            $username = $cleanNo . $counter;
-            $counter++;
-        }
+        // Auto-generate student login credentials: 5 digit angka unik, password = username
+        do {
+            $digit5 = (string) mt_rand(10000, 99999);
+        } while (User::where('username', $digit5)->exists());
 
-        $email = $username . '@spmb.smktelkom-lpg.sch.id';
+        $username = $digit5;
+        $rawPassword = $digit5;
+
+        $email = $digit5 . '@spmb.smktelkom-lpg.sch.id';
         while (User::where('email', $email)->exists()) {
-            $email = $username . rand(10, 99) . '@spmb.smktelkom-lpg.sch.id';
+            $email = $digit5 . mt_rand(10, 99) . '@spmb.smktelkom-lpg.sch.id';
         }
-
-        $rawPassword = ! empty($validated['custom_password'])
-            ? trim($validated['custom_password'])
-            : strtolower($validated['nomor_pendaftaran']);
 
         DB::beginTransaction();
         try {
@@ -200,14 +173,9 @@ class PesertaSeleksiController extends Controller
                 'user_id' => $user->id,
                 'spmb_piket_tanggal_id' => $validated['spmb_piket_tanggal_id'],
                 'tahun_ajaran' => $validated['tahun_ajaran'],
-                'nomor_pendaftaran' => strtoupper($validated['nomor_pendaftaran']),
+                'nomor_pendaftaran' => trim($validated['nomor_pendaftaran']),
                 'nama_lengkap' => $validated['nama_lengkap'],
-                'nisn' => $validated['nisn'] ?? null,
-                'nik' => $validated['nik'] ?? null,
                 'jenis_kelamin' => $validated['jenis_kelamin'],
-                'asal_sekolah' => $validated['asal_sekolah'] ?? null,
-                'jurusan_pilihan' => $validated['jurusan_pilihan'],
-                'jurusan_pilihan_2' => $validated['jurusan_pilihan_2'] ?? null,
                 'no_wa_siswa' => $validated['no_wa_siswa'] ?? null,
                 'nama_orang_tua' => $validated['nama_orang_tua'] ?? null,
                 'hubungan_wali' => $validated['hubungan_wali'] ?? 'Orang Tua',
@@ -237,19 +205,13 @@ class PesertaSeleksiController extends Controller
         $validated = $request->validate([
             'spmb_piket_tanggal_id' => 'required|exists:spmb_piket_tanggals,id',
             'nama_lengkap' => 'required|string|max:150',
-            'nisn' => 'nullable|string|max:20',
-            'nik' => 'nullable|string|max:20',
             'jenis_kelamin' => 'required|in:L,P',
-            'asal_sekolah' => 'nullable|string|max:150',
-            'jurusan_pilihan' => 'required|string|max:100',
-            'jurusan_pilihan_2' => 'nullable|string|max:100',
             'no_wa_siswa' => 'nullable|string|max:30',
             'nama_orang_tua' => 'nullable|string|max:150',
             'hubungan_wali' => 'nullable|string|max:50',
             'no_wa_orang_tua' => 'nullable|string|max:30',
             'status_kehadiran_siswa' => 'required|in:Terjadwal,Hadir,Tidak Hadir,Menunggu',
             'status_kehadiran_ortu' => 'required|in:Terjadwal,Hadir,Tidak Hadir,Menunggu',
-            'custom_password' => 'nullable|string|min:4',
             'catatan' => 'nullable|string',
         ]);
 
@@ -257,12 +219,9 @@ class PesertaSeleksiController extends Controller
         try {
             // Update associated user if present
             if ($pesertaSeleksi->user) {
-                $userUpdates = ['name' => $validated['nama_lengkap']];
-                if (! empty($validated['custom_password'])) {
-                    $userUpdates['password'] = Hash::make($validated['custom_password']);
-                    $pesertaSeleksi->raw_password = $validated['custom_password'];
-                }
-                $pesertaSeleksi->user->update($userUpdates);
+                $pesertaSeleksi->user->update([
+                    'name' => $validated['nama_lengkap'],
+                ]);
             }
 
             // Kehadiran timestamp
