@@ -489,6 +489,8 @@
             <a href="{{ route('kaur-spmb.absensi.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.absensi.*') ? 'submenu-item-active' : '' }}">Kelola Absensi Piket SPMB</a>
             <a href="{{ route('kaur-spmb.administrasi.berita-acara.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.berita-acara.*') ? 'submenu-item-active' : '' }}">Berita Acara SPMB</a>
             <a href="{{ route('kaur-spmb.administrasi.peserta-seleksi.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.peserta-seleksi.*') ? 'submenu-item-active' : '' }}">Daftar Seleksi Peserta SPMB</a>
+            <a href="{{ route('kaur-spmb.administrasi.instrumen-wawancara.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.instrumen-wawancara.*') ? 'submenu-item-active' : '' }}">Setting Instrumen Wawancara</a>
+            <a href="{{ route('kaur-spmb.administrasi.hasil-wawancara.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.hasil-wawancara.*') ? 'submenu-item-active' : '' }}">Hasil Wawancara SPMB</a>
             <a href="{{ route('super-admin.sso-applications.index') }}" class="submenu-item {{ request()->routeIs('super-admin.sso-applications.*') ? 'submenu-item-active' : '' }}">Aplikasi SSO</a>
             @can('manage settings')
                 <a href="{{ route('super-admin.asset-sync.index') }}" class="submenu-item {{ request()->routeIs('super-admin.asset-sync.*') ? 'submenu-item-active' : '' }}">Sinkronisasi Aset</a>
@@ -3756,11 +3758,15 @@
         <div x-show="expanded" x-collapse class="submenu-card">
             <a href="{{ route('kaur-spmb.administrasi.berita-acara.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.berita-acara.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Berita Acara Piket</a>
             <a href="{{ route('kaur-spmb.administrasi.peserta-seleksi.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.peserta-seleksi.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Daftar Seleksi Peserta</a>
+            <a href="{{ route('kaur-spmb.administrasi.instrumen-wawancara.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.instrumen-wawancara.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Instrumen Wawancara</a>
+            <a href="{{ route('kaur-spmb.administrasi.hasil-wawancara.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.hasil-wawancara.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Hasil Wawancara</a>
         </div>
         <div class="submenu-flyout" :style="'top: ' + flyoutTop + 'px'">
             <div class="submenu-flyout-title">Administrasi SPMB</div>
             <a href="{{ route('kaur-spmb.administrasi.berita-acara.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.berita-acara.*') ? 'submenu-item-active' : '' }}">Berita Acara Piket</a>
             <a href="{{ route('kaur-spmb.administrasi.peserta-seleksi.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.peserta-seleksi.*') ? 'submenu-item-active' : '' }}">Daftar Seleksi Peserta</a>
+            <a href="{{ route('kaur-spmb.administrasi.instrumen-wawancara.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.instrumen-wawancara.*') ? 'submenu-item-active' : '' }}">Instrumen Wawancara</a>
+            <a href="{{ route('kaur-spmb.administrasi.hasil-wawancara.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.hasil-wawancara.*') ? 'submenu-item-active' : '' }}">Hasil Wawancara</a>
         </div>
     </li>
 @endif

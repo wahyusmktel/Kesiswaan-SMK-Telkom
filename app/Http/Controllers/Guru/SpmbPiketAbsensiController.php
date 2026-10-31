@@ -116,6 +116,7 @@ class SpmbPiketAbsensiController extends Controller
 
         $pesertaSeleksis = $selectedTanggal
             ? SpmbPesertaSeleksi::where('spmb_piket_tanggal_id', $selectedTanggal->id)
+                ->with('wawancaraSesi')
                 ->orderBy('nomor_pendaftaran', 'asc')
                 ->get()
             : collect();

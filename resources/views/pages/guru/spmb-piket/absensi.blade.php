@@ -394,6 +394,7 @@
                                 <th class="py-3 px-4">Orang Tua / Wali</th>
                                 <th class="py-3 px-4 text-center">Status Siswa</th>
                                 <th class="py-3 px-4 text-center">Status Ortu</th>
+                                <th class="py-3 px-4 text-center">Penilaian Wawancara</th>
                                 <th class="py-3 px-4">Catatan</th>
                                 <th class="py-3 px-4 text-center w-28">Presensi Digital</th>
                             </tr>
@@ -475,6 +476,33 @@
                                             </span>
                                         @endif
                                     </td>
+                                    {{-- Wawancara Actions --}}
+                                    <td class="py-3 px-4 text-center whitespace-nowrap">
+                                        @php
+                                            $sesi = $item->wawancaraSesi;
+                                            $siswaDone = $sesi && $sesi->status_wawancara_siswa === 'Selesai';
+                                            $ortuDone = $sesi && $sesi->status_wawancara_ortu === 'Selesai';
+                                        @endphp
+                                        <div class="flex items-center justify-center gap-1.5">
+                                            <a href="{{ route('guru.spmb-piket.wawancara.siswa', $item) }}"
+                                               class="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold border transition-colors {{ $siswaDone ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50' }}"
+                                               title="Wawancara Calon Siswa {{ $siswaDone ? '(' . $sesi->hasil_wawancara_siswa . ')' : '' }}">
+                                                <svg class="w-3.5 h-3.5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                </svg>
+                                                <span>{{ $siswaDone ? $sesi->hasil_wawancara_siswa : 'Wwcr Siswa' }}</span>
+                                            </a>
+
+                                            <a href="{{ route('guru.spmb-piket.wawancara.ortu', $item) }}"
+                                               class="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-bold border transition-colors {{ $ortuDone ? 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50' }}"
+                                               title="Wawancara Orang Tua {{ $ortuDone ? '(' . $sesi->hasil_wawancara_ortu . ')' : '' }}">
+                                                <svg class="w-3.5 h-3.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                </svg>
+                                                <span>{{ $ortuDone ? $sesi->hasil_wawancara_ortu : 'Wwcr Ortu' }}</span>
+                                            </a>
+                                        </div>
+                                    </td>
                                     <td class="py-3 px-4 text-slate-600">
                                         {{ $item->catatan ?: '-' }}
                                     </td>
@@ -490,7 +518,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="py-8 text-center text-slate-400 italic">
+                                    <td colspan="8" class="py-8 text-center text-slate-400 italic">
                                         Belum ada calon peserta seleksi yang dijadwalkan pada tanggal piket ini.
                                     </td>
                                 </tr>

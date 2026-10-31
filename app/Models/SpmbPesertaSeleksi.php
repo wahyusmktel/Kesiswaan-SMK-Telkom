@@ -59,6 +59,11 @@ class SpmbPesertaSeleksi extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function wawancaraSesi()
+    {
+        return $this->hasOne(SpmbWawancaraSesi::class, 'spmb_peserta_seleksi_id');
+    }
+
     public function getFormattedTanggalAttribute(): string
     {
         if (! $this->tanggal?->tanggal) {

@@ -883,6 +883,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/piket-spmb/laporan-eviden', [\App\Http\Controllers\Guru\SpmbPiketAbsensiController::class, 'storeLaporanEviden'])->name('spmb-piket.laporan-eviden');
         Route::get('/piket-spmb/cetak-hadir-siswa', [\App\Http\Controllers\KaurSpmb\PesertaSeleksiController::class, 'cetakHadirSiswa'])->name('spmb-piket.cetak-hadir-siswa');
         Route::get('/piket-spmb/cetak-hadir-ortu', [\App\Http\Controllers\KaurSpmb\PesertaSeleksiController::class, 'cetakHadirOrtu'])->name('spmb-piket.cetak-hadir-ortu');
+        Route::get('/piket-spmb/wawancara/siswa/{pesertaSeleksi}', [\App\Http\Controllers\Guru\SpmbPiketWawancaraController::class, 'formSiswa'])->name('spmb-piket.wawancara.siswa');
+        Route::post('/piket-spmb/wawancara/siswa/{pesertaSeleksi}', [\App\Http\Controllers\Guru\SpmbPiketWawancaraController::class, 'storeSiswa'])->name('spmb-piket.wawancara.siswa.store');
+        Route::get('/piket-spmb/wawancara/ortu/{pesertaSeleksi}', [\App\Http\Controllers\Guru\SpmbPiketWawancaraController::class, 'formOrtu'])->name('spmb-piket.wawancara.ortu');
+        Route::post('/piket-spmb/wawancara/ortu/{pesertaSeleksi}', [\App\Http\Controllers\Guru\SpmbPiketWawancaraController::class, 'storeOrtu'])->name('spmb-piket.wawancara.ortu.store');
     });
 
     // Grup Route untuk Guru (Submission)
@@ -1583,6 +1587,32 @@ Route::middleware(['auth', 'role:Kaur SPMB|KAUR SPMB|Super Admin'])->prefix('kau
             Route::patch('/{pesertaSeleksi}/kehadiran', [\App\Http\Controllers\KaurSpmb\PesertaSeleksiController::class, 'updateKehadiran'])->name('kehadiran');
             Route::get('/cetak-hadir-siswa', [\App\Http\Controllers\KaurSpmb\PesertaSeleksiController::class, 'cetakHadirSiswa'])->name('cetak-hadir-siswa');
             Route::get('/cetak-hadir-ortu', [\App\Http\Controllers\KaurSpmb\PesertaSeleksiController::class, 'cetakHadirOrtu'])->name('cetak-hadir-ortu');
+        });
+
+        // Submenu 3: Setting Instrumen Wawancara
+        Route::prefix('instrumen-wawancara')->name('instrumen-wawancara.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\KaurSpmb\InstrumenWawancaraController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\KaurSpmb\InstrumenWawancaraController::class, 'store'])->name('store');
+            Route::put('/{pertanyaan}', [\App\Http\Controllers\KaurSpmb\InstrumenWawancaraController::class, 'update'])->name('update');
+            Route::delete('/{pertanyaan}', [\App\Http\Controllers\KaurSpmb\InstrumenWawancaraController::class, 'destroy'])->name('destroy');
+            Route::patch('/{pertanyaan}/toggle', [\App\Http\Controllers\KaurSpmb\InstrumenWawancaraController::class, 'toggle'])->name('toggle');
+            Route::post('/reorder', [\App\Http\Controllers\KaurSpmb\InstrumenWawancaraController::class, 'reorder'])->name('reorder');
+        });
+
+        // Submenu 4: Hasil & Rekapitulasi Wawancara
+        Route::prefix('hasil-wawancara')->name('hasil-wawancara.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\KaurSpmb\HasilWawancaraController::class, 'index'])->name('index');
+            Route::get('/{pesertaSeleksi}', [\App\Http\Controllers\KaurSpmb\HasilWawancaraController::class, 'show'])->name('show');
+            Route::patch('/{pesertaSeleksi}/rekomendasi', [\App\Http\Controllers\KaurSpmb\HasilWawancaraController::class, 'updateRekomendasi'])->name('rekomendasi');
+            Route::get('/{pesertaSeleksi}/print', [\App\Http\Controllers\KaurSpmb\HasilWawancaraController::class, 'print'])->name('print');
+        });
+
+        // Akses Langsung Lembar Wawancara untuk Kaur SPMB
+        Route::prefix('wawancara')->name('wawancara.')->group(function () {
+            Route::get('/siswa/{pesertaSeleksi}', [\App\Http\Controllers\Guru\SpmbPiketWawancaraController::class, 'formSiswa'])->name('siswa');
+            Route::post('/siswa/{pesertaSeleksi}', [\App\Http\Controllers\Guru\SpmbPiketWawancaraController::class, 'storeSiswa'])->name('siswa.store');
+            Route::get('/ortu/{pesertaSeleksi}', [\App\Http\Controllers\Guru\SpmbPiketWawancaraController::class, 'formOrtu'])->name('ortu');
+            Route::post('/ortu/{pesertaSeleksi}', [\App\Http\Controllers\Guru\SpmbPiketWawancaraController::class, 'storeOrtu'])->name('ortu.store');
         });
     });
 });
