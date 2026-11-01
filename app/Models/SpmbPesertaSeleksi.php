@@ -64,6 +64,11 @@ class SpmbPesertaSeleksi extends Model
         return $this->hasOne(SpmbWawancaraSesi::class, 'spmb_peserta_seleksi_id');
     }
 
+    public function tesButaWarnaSesi()
+    {
+        return $this->hasOne(SpmbTesButaWarnaSesi::class, 'spmb_peserta_seleksi_id');
+    }
+
     public function getFormattedTanggalAttribute(): string
     {
         if (! $this->tanggal?->tanggal) {

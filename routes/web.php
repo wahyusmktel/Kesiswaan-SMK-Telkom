@@ -1599,7 +1599,17 @@ Route::middleware(['auth', 'role:Kaur SPMB|KAUR SPMB|Super Admin'])->prefix('kau
             Route::post('/reorder', [\App\Http\Controllers\KaurSpmb\InstrumenWawancaraController::class, 'reorder'])->name('reorder');
         });
 
-        // Submenu 4: Hasil & Rekapitulasi Wawancara
+        // Submenu 4: Setting Instrumen Tes Buta Warna
+        Route::prefix('instrumen-buta-warna')->name('instrumen-buta-warna.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\KaurSpmb\InstrumenTesButaWarnaController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\KaurSpmb\InstrumenTesButaWarnaController::class, 'store'])->name('store');
+            Route::put('/{soal}', [\App\Http\Controllers\KaurSpmb\InstrumenTesButaWarnaController::class, 'update'])->name('update');
+            Route::delete('/{soal}', [\App\Http\Controllers\KaurSpmb\InstrumenTesButaWarnaController::class, 'destroy'])->name('destroy');
+            Route::patch('/{soal}/toggle', [\App\Http\Controllers\KaurSpmb\InstrumenTesButaWarnaController::class, 'toggle'])->name('toggle');
+            Route::post('/reorder', [\App\Http\Controllers\KaurSpmb\InstrumenTesButaWarnaController::class, 'reorder'])->name('reorder');
+        });
+
+        // Submenu 5: Hasil & Rekapitulasi Wawancara
         Route::prefix('hasil-wawancara')->name('hasil-wawancara.')->group(function () {
             Route::get('/', [\App\Http\Controllers\KaurSpmb\HasilWawancaraController::class, 'index'])->name('index');
             Route::get('/{pesertaSeleksi}', [\App\Http\Controllers\KaurSpmb\HasilWawancaraController::class, 'show'])->name('show');

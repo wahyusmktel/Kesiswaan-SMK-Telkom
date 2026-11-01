@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             OkrUnitRoleSeeder::class,
             KaurSpmbRoleSeeder::class,
             SpmbWawancaraPertanyaanSeeder::class,
+            SpmbTesButaWarnaSeeder::class,
 
             JamPelajaranSeeder::class,
         ]);
