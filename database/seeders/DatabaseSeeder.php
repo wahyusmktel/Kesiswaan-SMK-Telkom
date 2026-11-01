@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             PetugasUksRoleSeeder::class,
             OkrUnitRoleSeeder::class,
             KaurSpmbRoleSeeder::class,
+            SpmbWawancaraPertanyaanSeeder::class,
 
             JamPelajaranSeeder::class,
         ]);
