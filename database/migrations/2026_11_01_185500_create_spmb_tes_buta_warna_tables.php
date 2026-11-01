@@ -16,7 +16,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedInteger('nomor_urut')->default(1);
             $table->string('judul')->default('Soal nomor');
-            $table->text('petunjuk')->nullable()->default('Silahkan pilih angka/jawaban yang benar dari 3 (tiga) pilihan jawaban berikut');
+            $table->text('petunjuk')->nullable();
             $table->string('gambar'); // Path to image (e.g. images/soal-tes-buta-warna/1.png or storage/...)
             $table->json('pilihan_opsi'); // Array 3 pilihan (e.g. ["2", "8", "Tidak Terlihat Angka"])
             $table->string('kunci_jawaban'); // Jawaban benar (e.g. "2")
