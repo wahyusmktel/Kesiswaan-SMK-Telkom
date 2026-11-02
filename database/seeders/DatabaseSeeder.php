@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
             KaurSpmbRoleSeeder::class,
             SpmbWawancaraPertanyaanSeeder::class,
             SpmbTesButaWarnaSeeder::class,
+            SpmbTesBacaQuranSeeder::class,
 
             JamPelajaranSeeder::class,
         ]);

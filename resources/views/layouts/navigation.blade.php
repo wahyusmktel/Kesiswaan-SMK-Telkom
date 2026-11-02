@@ -491,6 +491,7 @@
             <a href="{{ route('kaur-spmb.administrasi.peserta-seleksi.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.peserta-seleksi.*') ? 'submenu-item-active' : '' }}">Daftar Seleksi Peserta SPMB</a>
             <a href="{{ route('kaur-spmb.administrasi.instrumen-wawancara.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.instrumen-wawancara.*') ? 'submenu-item-active' : '' }}">Setting Instrumen Wawancara</a>
             <a href="{{ route('kaur-spmb.administrasi.instrumen-buta-warna.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.instrumen-buta-warna.*') ? 'submenu-item-active' : '' }}">Instrumen Tes Buta Warna</a>
+            <a href="{{ route('kaur-spmb.administrasi.instrumen-baca-quran.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.instrumen-baca-quran.*') ? 'submenu-item-active' : '' }}">Instrumen Tes Baca Al-Qur'an</a>
             <a href="{{ route('kaur-spmb.administrasi.hasil-wawancara.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.hasil-wawancara.*') ? 'submenu-item-active' : '' }}">Hasil Wawancara SPMB</a>
             <a href="{{ route('super-admin.sso-applications.index') }}" class="submenu-item {{ request()->routeIs('super-admin.sso-applications.*') ? 'submenu-item-active' : '' }}">Aplikasi SSO</a>
             @can('manage settings')
@@ -3761,6 +3762,7 @@
             <a href="{{ route('kaur-spmb.administrasi.peserta-seleksi.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.peserta-seleksi.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Daftar Seleksi Peserta</a>
             <a href="{{ route('kaur-spmb.administrasi.instrumen-wawancara.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.instrumen-wawancara.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Instrumen Wawancara</a>
             <a href="{{ route('kaur-spmb.administrasi.instrumen-buta-warna.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.instrumen-buta-warna.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Instrumen Tes Buta Warna</a>
+            <a href="{{ route('kaur-spmb.administrasi.instrumen-baca-quran.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.instrumen-baca-quran.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Instrumen Tes Baca Al-Qur'an</a>
             <a href="{{ route('kaur-spmb.administrasi.hasil-wawancara.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.hasil-wawancara.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Hasil Wawancara</a>
         </div>
         <div class="submenu-flyout" :style="'top: ' + flyoutTop + 'px'">
@@ -3769,6 +3771,7 @@
             <a href="{{ route('kaur-spmb.administrasi.peserta-seleksi.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.peserta-seleksi.*') ? 'submenu-item-active' : '' }}">Daftar Seleksi Peserta</a>
             <a href="{{ route('kaur-spmb.administrasi.instrumen-wawancara.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.instrumen-wawancara.*') ? 'submenu-item-active' : '' }}">Instrumen Wawancara</a>
             <a href="{{ route('kaur-spmb.administrasi.instrumen-buta-warna.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.instrumen-buta-warna.*') ? 'submenu-item-active' : '' }}">Instrumen Tes Buta Warna</a>
+            <a href="{{ route('kaur-spmb.administrasi.instrumen-baca-quran.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.instrumen-baca-quran.*') ? 'submenu-item-active' : '' }}">Instrumen Tes Baca Al-Qur'an</a>
             <a href="{{ route('kaur-spmb.administrasi.hasil-wawancara.index') }}" class="submenu-item {{ request()->routeIs('kaur-spmb.administrasi.hasil-wawancara.*') ? 'submenu-item-active' : '' }}">Hasil Wawancara</a>
         </div>
     </li>

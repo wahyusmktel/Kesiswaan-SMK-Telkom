@@ -1609,7 +1609,17 @@ Route::middleware(['auth', 'role:Kaur SPMB|KAUR SPMB|Super Admin'])->prefix('kau
             Route::post('/reorder', [\App\Http\Controllers\KaurSpmb\InstrumenTesButaWarnaController::class, 'reorder'])->name('reorder');
         });
 
-        // Submenu 5: Hasil & Rekapitulasi Wawancara
+        // Submenu 5: Setting Instrumen Tes Baca Al-Qur'an
+        Route::prefix('instrumen-baca-quran')->name('instrumen-baca-quran.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\KaurSpmb\InstrumenTesBacaQuranController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\KaurSpmb\InstrumenTesBacaQuranController::class, 'store'])->name('store');
+            Route::put('/{rubrik}', [\App\Http\Controllers\KaurSpmb\InstrumenTesBacaQuranController::class, 'update'])->name('update');
+            Route::delete('/{rubrik}', [\App\Http\Controllers\KaurSpmb\InstrumenTesBacaQuranController::class, 'destroy'])->name('destroy');
+            Route::patch('/{rubrik}/toggle', [\App\Http\Controllers\KaurSpmb\InstrumenTesBacaQuranController::class, 'toggle'])->name('toggle');
+            Route::post('/reorder', [\App\Http\Controllers\KaurSpmb\InstrumenTesBacaQuranController::class, 'reorder'])->name('reorder');
+        });
+
+        // Submenu 6: Hasil & Rekapitulasi Wawancara
         Route::prefix('hasil-wawancara')->name('hasil-wawancara.')->group(function () {
             Route::get('/', [\App\Http\Controllers\KaurSpmb\HasilWawancaraController::class, 'index'])->name('index');
             Route::get('/{pesertaSeleksi}', [\App\Http\Controllers\KaurSpmb\HasilWawancaraController::class, 'show'])->name('show');
