@@ -13,6 +13,14 @@ class InstrumenTesBacaQuranController extends Controller
      */
     public function index()
     {
+        // Auto-seed if table is empty so user never needs to input manually
+        if (SpmbTesBacaQuranRubrik::count() === 0) {
+            \Illuminate\Support\Facades\Artisan::call('db:seed', [
+                '--class' => 'SpmbTesBacaQuranSeeder',
+                '--force' => true,
+            ]);
+        }
+
         $rubriks = SpmbTesBacaQuranRubrik::orderBy('nomor_urut', 'asc')->get();
 
         $totalRubrik = $rubriks->count();

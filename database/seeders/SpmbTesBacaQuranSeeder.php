@@ -80,7 +80,7 @@ class SpmbTesBacaQuranSeeder extends Seeder
                 'nomor_urut' => 5,
                 'kategori' => 'media',
                 'aspek' => 'UPLOAD REKAMAN TES',
-                'petunjuk' => "Silahkan upload hasil rekaman tes baca Al-Qur'an (Format: MP3, M4A, WAV, MP4, Max 20MB)",
+                'petunjuk' => "Silahkan upload hasil rekaman tes baca Al-Qur'an",
                 'tipe_input' => 'file_upload',
                 'pilihan_opsi' => null,
                 'skor_bobot' => null,

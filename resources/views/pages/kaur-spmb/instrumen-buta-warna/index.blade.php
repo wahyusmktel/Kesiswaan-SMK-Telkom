@@ -1,24 +1,27 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-                <h2 class="font-bold text-xl text-gray-800 leading-tight">Instrumen Tes Buta Warna</h2>
-                <p class="text-xs text-slate-500 mt-0.5">Pengelolaan Soal & Pelat Ishihara Calon Siswa Baru SMK Telkom Lampung</p>
-            </div>
-            <div class="flex items-center gap-2">
-                <button type="button" @click="openAddModal()" 
-                    class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg shadow-sm transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    + Tambah Soal Baru
-                </button>
-            </div>
-        </div>
+        <h2 class="font-bold text-xl text-gray-800 leading-tight">Instrumen Tes Buta Warna</h2>
     </x-slot>
 
     <div class="py-6 w-full" x-data="instrumenButaWarnaPage()">
         <div class="w-full px-4 sm:px-6 lg:px-8 space-y-6">
+
+            {{-- ACTION TOOLBAR (OUTSIDE HEADER) --}}
+            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900">INSTRUMEN TES BUTA WARNA - PELAT ISHIHARA</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Pengelolaan Soal & Pelat Ishihara Calon Siswa Baru SMK Telkom Lampung</p>
+                </div>
+                <div>
+                    <button type="button" @click="openAddModal()" 
+                        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg shadow-sm transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        + Tambah Soal Baru
+                    </button>
+                </div>
+            </div>
 
             {{-- FLASH NOTIFICATIONS --}}
             @if(session('success'))

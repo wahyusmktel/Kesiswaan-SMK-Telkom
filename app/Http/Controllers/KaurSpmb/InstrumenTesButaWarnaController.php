@@ -14,6 +14,14 @@ class InstrumenTesButaWarnaController extends Controller
      */
     public function index()
     {
+        // Auto-seed if table is empty
+        if (SpmbTesButaWarnaSoal::count() === 0) {
+            \Illuminate\Support\Facades\Artisan::call('db:seed', [
+                '--class' => 'SpmbTesButaWarnaSeeder',
+                '--force' => true,
+            ]);
+        }
+
         $soals = SpmbTesButaWarnaSoal::orderBy('nomor_urut', 'asc')->get();
 
         $totalSoal = $soals->count();
