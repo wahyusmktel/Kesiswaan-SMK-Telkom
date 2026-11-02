@@ -74,6 +74,16 @@ class SpmbPesertaSeleksi extends Model
         return $this->hasOne(SpmbTesBacaQuranSesi::class, 'spmb_peserta_seleksi_id');
     }
 
+    public function tpaSesi()
+    {
+        return $this->hasOne(SpmbTpaSesi::class, 'spmb_peserta_seleksi_id');
+    }
+
+    public function tpaSesis()
+    {
+        return $this->hasMany(SpmbTpaSesi::class, 'spmb_peserta_seleksi_id');
+    }
+
     public function getFormattedTanggalAttribute(): string
     {
         if (! $this->tanggal?->tanggal) {

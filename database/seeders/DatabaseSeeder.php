@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
             SpmbWawancaraPertanyaanSeeder::class,
             SpmbTesButaWarnaSeeder::class,
             SpmbTesBacaQuranSeeder::class,
+            SpmbTpaSeeder::class,
 
             JamPelajaranSeeder::class,
         ]);

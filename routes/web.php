@@ -1619,6 +1619,17 @@ Route::middleware(['auth', 'role:Kaur SPMB|KAUR SPMB|Super Admin'])->prefix('kau
             Route::post('/reorder', [\App\Http\Controllers\KaurSpmb\InstrumenTesBacaQuranController::class, 'reorder'])->name('reorder');
         });
 
+        // Submenu 6: Setting Instrumen Tes Potensi Akademik (TPA)
+        Route::prefix('instrumen-tpa')->name('instrumen-tpa.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\KaurSpmb\InstrumenTpaController::class, 'index'])->name('index');
+            Route::post('/soal', [\App\Http\Controllers\KaurSpmb\InstrumenTpaController::class, 'storeSoal'])->name('soal.store');
+            Route::put('/soal/{soal}', [\App\Http\Controllers\KaurSpmb\InstrumenTpaController::class, 'updateSoal'])->name('soal.update');
+            Route::delete('/soal/{soal}', [\App\Http\Controllers\KaurSpmb\InstrumenTpaController::class, 'destroySoal'])->name('soal.destroy');
+            Route::patch('/soal/{soal}/toggle', [\App\Http\Controllers\KaurSpmb\InstrumenTpaController::class, 'toggleSoal'])->name('soal.toggle');
+            Route::put('/kategori/{kategori}', [\App\Http\Controllers\KaurSpmb\InstrumenTpaController::class, 'updateKategori'])->name('kategori.update');
+            Route::post('/reset-seeder', [\App\Http\Controllers\KaurSpmb\InstrumenTpaController::class, 'resetSeeder'])->name('reset-seeder');
+        });
+
         // Submenu 6: Hasil & Rekapitulasi Wawancara
         Route::prefix('hasil-wawancara')->name('hasil-wawancara.')->group(function () {
             Route::get('/', [\App\Http\Controllers\KaurSpmb\HasilWawancaraController::class, 'index'])->name('index');
