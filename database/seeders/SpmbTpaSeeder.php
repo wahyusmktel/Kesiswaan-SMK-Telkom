@@ -294,6 +294,11 @@ class SpmbTpaSeeder extends Seeder
             );
 
             foreach ($soals as $idx => $soalData) {
+                $soalData['pertanyaan'] = str_replace(['\r\n', '\n', '\r'], "\n", $soalData['pertanyaan']);
+                if (isset($soalData['pembahasan'])) {
+                    $soalData['pembahasan'] = str_replace(['\r\n', '\n', '\r'], "\n", $soalData['pembahasan']);
+                }
+
                 SpmbTpaSoal::updateOrCreate(
                     [
                         'spmb_tpa_kategori_id' => $kategori->id,

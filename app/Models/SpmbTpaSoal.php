@@ -41,6 +41,26 @@ class SpmbTpaSoal extends Model
         return $this->belongsTo(SpmbTpaKategori::class, 'spmb_tpa_kategori_id');
     }
 
+    public function getPertanyaanAttribute($value): string
+    {
+        return str_replace(['\r\n', '\n', '\r'], "\n", $value ?? '');
+    }
+
+    public function setPertanyaanAttribute($value): void
+    {
+        $this->attributes['pertanyaan'] = str_replace(['\r\n', '\n', '\r'], "\n", $value ?? '');
+    }
+
+    public function getPembahasanAttribute($value): ?string
+    {
+        return $value !== null ? str_replace(['\r\n', '\n', '\r'], "\n", $value) : null;
+    }
+
+    public function setPembahasanAttribute($value): void
+    {
+        $this->attributes['pembahasan'] = $value !== null ? str_replace(['\r\n', '\n', '\r'], "\n", $value) : null;
+    }
+
     public function getGambarUrlAttribute(): ?string
     {
         if (! $this->gambar) {
