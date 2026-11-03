@@ -292,26 +292,40 @@ class SpmbTpaSeeder extends Seeder
                 ['kode' => $kategoriData['kode']],
                 $kategoriData
             );
+        }
 
-            foreach ($soals as $idx => $soalData) {
-                $soalData['pertanyaan'] = str_replace(['\r\n', '\n', '\r'], "\n", $soalData['pertanyaan']);
-                if (isset($soalData['pembahasan'])) {
-                    $soalData['pembahasan'] = str_replace(['\r\n', '\n', '\r'], "\n", $soalData['pembahasan']);
+        // Check if Moodle XML files exist in storage, and import authentic bank soal
+        $moodleXmlDir = storage_path('app/public/soal-xml-moodle');
+        $xmlFiles = \Illuminate\Support\Facades\File::glob($moodleXmlDir . '/*.xml');
+
+        if (! empty($xmlFiles)) {
+            $importer = new \App\Services\MoodleXmlImporterService();
+            $importer->importAllLocalFiles('replace');
+        } else {
+            foreach ($kategoris as $kategoriData) {
+                $soals = $kategoriData['soals'];
+                $kategori = SpmbTpaKategori::where('kode', $kategoriData['kode'])->first();
+
+                foreach ($soals as $idx => $soalData) {
+                    $soalData['pertanyaan'] = str_replace(['\r\n', '\n', '\r'], "\n", $soalData['pertanyaan']);
+                    if (isset($soalData['pembahasan'])) {
+                        $soalData['pembahasan'] = str_replace(['\r\n', '\n', '\r'], "\n", $soalData['pembahasan']);
+                    }
+
+                    SpmbTpaSoal::updateOrCreate(
+                        [
+                            'spmb_tpa_kategori_id' => $kategori->id,
+                            'nomor_urut' => $idx + 1,
+                        ],
+                        array_merge($soalData, [
+                            'spmb_tpa_kategori_id' => $kategori->id,
+                            'nomor_urut' => $idx + 1,
+                            'tipe_soal' => 'pilihan_ganda',
+                            'bobot' => 1,
+                            'is_active' => true,
+                        ])
+                    );
                 }
-
-                SpmbTpaSoal::updateOrCreate(
-                    [
-                        'spmb_tpa_kategori_id' => $kategori->id,
-                        'nomor_urut' => $idx + 1,
-                    ],
-                    array_merge($soalData, [
-                        'spmb_tpa_kategori_id' => $kategori->id,
-                        'nomor_urut' => $idx + 1,
-                        'tipe_soal' => 'pilihan_ganda',
-                        'bobot' => 1,
-                        'is_active' => true,
-                    ])
-                );
             }
         }
     }

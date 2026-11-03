@@ -1628,6 +1628,8 @@ Route::middleware(['auth', 'role:Kaur SPMB|KAUR SPMB|Super Admin'])->prefix('kau
             Route::patch('/soal/{soal}/toggle', [\App\Http\Controllers\KaurSpmb\InstrumenTpaController::class, 'toggleSoal'])->name('soal.toggle');
             Route::put('/kategori/{kategori}', [\App\Http\Controllers\KaurSpmb\InstrumenTpaController::class, 'updateKategori'])->name('kategori.update');
             Route::post('/reset-seeder', [\App\Http\Controllers\KaurSpmb\InstrumenTpaController::class, 'resetSeeder'])->name('reset-seeder');
+            Route::post('/import-moodle', [\App\Http\Controllers\KaurSpmb\InstrumenTpaController::class, 'importMoodleXml'])->name('import-moodle');
+            Route::post('/import-local-moodle', [\App\Http\Controllers\KaurSpmb\InstrumenTpaController::class, 'importLocalMoodleXml'])->name('import-local-moodle');
         });
 
         // Submenu 6: Hasil & Rekapitulasi Wawancara

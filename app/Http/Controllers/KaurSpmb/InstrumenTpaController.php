@@ -57,6 +57,7 @@ class InstrumenTpaController extends Controller
         $totalSoalAktif = SpmbTpaSoal::where('is_active', true)->count();
         $totalDurasiMenit = $kategoris->sum('durasi_menit');
         $avgPassingGrade = $kategoris->count() > 0 ? round($kategoris->avg('passing_grade')) : 65;
+        $hasLocalMoodleFiles = count(\Illuminate\Support\Facades\File::glob(storage_path('app/public/soal-xml-moodle/*.xml'))) > 0;
 
         return view('pages.kaur-spmb.instrumen-tpa.index', compact(
             'kategoris',
@@ -66,7 +67,8 @@ class InstrumenTpaController extends Controller
             'totalSoalAktif',
             'totalDurasiMenit',
             'avgPassingGrade',
-            'search'
+            'search',
+            'hasLocalMoodleFiles'
         ));
     }
 
@@ -248,5 +250,45 @@ class InstrumenTpaController extends Controller
 
         return redirect()->route('kaur-spmb.administrasi.instrumen-tpa.index')
             ->with('success', 'Bank soal dan kategori TPA berhasil disinkronkan ulang dengan bank soal standar.');
+    }
+
+    /**
+     * Import questions from an uploaded Moodle XML file.
+     */
+    public function importMoodleXml(Request $request, \App\Services\MoodleXmlImporterService $importer)
+    {
+        $request->validate([
+            'xml_file' => 'required|file|max:20480', // max 20MB
+            'kategori_id' => 'nullable|exists:spmb_tpa_kategoris,id',
+            'mode' => 'required|in:replace,append',
+        ]);
+
+        try {
+            $file = $request->file('xml_file');
+            $forcedKategoriId = $request->input('kategori_id') ? (int) $request->input('kategori_id') : null;
+            $mode = $request->input('mode', 'replace');
+
+            $res = $importer->importFile($file->getRealPath(), $forcedKategoriId, $mode);
+
+            return redirect()->route('kaur-spmb.administrasi.instrumen-tpa.index', ['kategori' => $res['kategori_kode']])
+                ->with('success', "Berhasil mengimpor {$res['imported_count']} butir soal untuk mata uji {$res['kategori_nama']} ({$res['extracted_images']} gambar diekstrak).");
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal mengimpor file Moodle XML: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Import all 4 standard Moodle XML files stored locally in storage/app/public/soal-xml-moodle.
+     */
+    public function importLocalMoodleXml(\App\Services\MoodleXmlImporterService $importer)
+    {
+        try {
+            $res = $importer->importAllLocalFiles('replace');
+
+            return redirect()->route('kaur-spmb.administrasi.instrumen-tpa.index')
+                ->with('success', "Berhasil mengimpor {$res['total_imported']} butir soal dari {$res['total_files']} file Moodle XML lokal ({$res['total_images']} gambar diekstrak otomatis).");
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal mengimpor file Moodle lokal: ' . $e->getMessage());
+        }
     }
 }

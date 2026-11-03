@@ -16,6 +16,7 @@
                     <p class="text-xs text-slate-500 mt-1">Menggantikan LMS Moodle untuk 4 Mata Uji: Bahasa Indonesia, Matematika, Bahasa Inggris, dan Dasar TIK</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
+                    {{-- Tombol Simulasi Siswa --}}
                     <button type="button" @click="showSimulasiModal = true"
                         class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-300 text-xs font-semibold rounded-lg shadow-sm transition-colors">
                         <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -24,6 +25,32 @@
                         </svg>
                         Preview Simulasi Ujian
                     </button>
+
+                    {{-- Tombol Import Moodle XML --}}
+                    <button type="button" @click="showImportModal = true"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-xs font-semibold rounded-lg shadow-sm transition-colors">
+                        <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                        Import Moodle XML
+                    </button>
+
+                    {{-- Shortcut Sinkron 4 File XML Lokal --}}
+                    @if(!empty($hasLocalMoodleFiles))
+                        <form method="POST" action="{{ route('kaur-spmb.administrasi.instrumen-tpa.import-local-moodle') }}" class="inline"
+                            onsubmit="return confirm('Apakah Anda ingin mengimpor ulang 4 bank soal Moodle lokal? Soal lama pada ke-4 kategori akan diperbarui.')">
+                            @csrf
+                            <button type="submit" title="Impor otomatis 4 file Moodle XML di storage lokal"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-semibold rounded-lg shadow-sm transition-colors">
+                                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Sync Bank Soal Moodle (Lokal)
+                            </button>
+                        </form>
+                    @endif
+
+                    {{-- Tombol Setting Kategori --}}
                     @if($currentKategori)
                         <button type="button" @click="openSettingKategoriModal({{ json_encode($currentKategori) }})"
                             class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-semibold rounded-lg shadow-sm transition-colors">
@@ -31,9 +58,11 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
-                            Setting Mata Uji ({{ $currentKategori->nama }})
+                            Setting Mapel ({{ $currentKategori->nama }})
                         </button>
                     @endif
+
+                    {{-- Tombol Tambah Soal --}}
                     <button type="button" @click="openAddSoalModal()"
                         class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg shadow-sm transition-colors">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -296,13 +325,13 @@
 
                         {{-- Isi Pertanyaan & Opsi --}}
                         <div class="p-4 space-y-4">
-                            {{-- Teks Pertanyaan --}}
-                            <div class="text-sm font-medium text-slate-900 leading-relaxed whitespace-pre-line">
-                                {!! nl2br(e($soal->pertanyaan)) !!}
+                            {{-- Teks Pertanyaan (Mendukung HTML & Gambar) --}}
+                            <div class="text-sm font-medium text-slate-900 leading-relaxed tpa-content">
+                                {!! $soal->pertanyaan_html !!}
                             </div>
 
-                            {{-- Gambar Soal (Jika ada) --}}
-                            @if($soal->gambar)
+                            {{-- Gambar Soal Standalone (Jika ada dan belum muncul di pertanyaan) --}}
+                            @if($soal->gambar && !str_contains($soal->pertanyaan, '<img'))
                                 <div class="p-2 bg-slate-50 border border-slate-200 rounded-lg inline-block">
                                     <img src="{{ $soal->gambar_url }}" alt="Gambar Soal {{ $soal->nomor_urut }}" class="max-h-48 rounded object-contain cursor-pointer"
                                         @click="previewImage = '{{ $soal->gambar_url }}'; showImageModal = true">
@@ -317,14 +346,14 @@
                                         @php
                                             $isKunci = strtoupper($soal->kunci_jawaban) === $abjad;
                                         @endphp
-                                        <div class="flex items-start gap-2.5 p-2.5 rounded-lg border text-xs transition-all
+                                        <div class="flex items-start gap-2.5 p-2.5 rounded-lg border text-xs transition-all tpa-content
                                             {{ $isKunci ? 'bg-emerald-50/80 border-emerald-300 font-semibold text-emerald-950 ring-1 ring-emerald-400/30' : 'bg-slate-50/60 border-slate-200 text-slate-700' }}">
                                             <span class="w-6 h-6 rounded flex items-center justify-center font-bold flex-shrink-0 text-[11px]
                                                 {{ $isKunci ? 'bg-emerald-600 text-white shadow-sm' : 'bg-white border border-slate-300 text-slate-700' }}">
                                                 {{ $abjad }}
                                             </span>
                                             <div class="flex-1 pt-0.5 leading-snug">
-                                                <span>{{ $teksOpsi }}</span>
+                                                <span>{!! $soal->renderOpsi($teksOpsi) !!}</span>
                                                 @if($isKunci)
                                                     <span class="inline-flex items-center gap-1 ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-200 text-emerald-900">
                                                         <svg class="w-3 h-3 text-emerald-700" fill="currentColor" viewBox="0 0 20 20">
@@ -348,7 +377,7 @@
                                         </svg>
                                         <span>Pembahasan / Keterangan:</span>
                                     </div>
-                                    <p class="leading-relaxed whitespace-pre-line text-indigo-900/90">{{ $soal->pembahasan }}</p>
+                                    <div class="leading-relaxed text-indigo-900/90 tpa-content">{!! $soal->pembahasan !!}</div>
                                 </div>
                             @endif
                         </div>
@@ -362,7 +391,7 @@
                         </div>
                         <h4 class="text-sm font-bold text-slate-800">Belum ada butir soal pada kategori ini</h4>
                         <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                            Klik tombol <strong>+ Tambah Soal Baru</strong> untuk membuat soal pertama, atau klik <strong>Sync Seeder</strong> untuk memuat bank soal standar.
+                            Klik tombol <strong>Import Moodle XML</strong> untuk mengunggah file kuis dari Moodle, atau klik <strong>+ Tambah Soal Baru</strong> untuk membuat soal secara manual.
                         </p>
                     </div>
                 @endforelse
@@ -375,6 +404,96 @@
                 </div>
             @endif
 
+        </div>
+
+        {{-- ============================================================== --}}
+        {{-- MODAL IMPORT MOODLE XML --}}
+        {{-- ============================================================== --}}
+        <div x-show="showImportModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+            <div class="min-h-screen px-4 text-center flex items-center justify-center">
+                <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" @click="showImportModal = false"></div>
+
+                <div class="inline-block w-full max-w-xl my-8 p-6 text-left bg-white rounded-xl shadow-2xl transform transition-all relative z-10">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+                        <div class="flex items-center gap-2">
+                            <span class="p-1.5 rounded-lg bg-amber-100 text-amber-700">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                </svg>
+                            </span>
+                            <div>
+                                <h3 class="text-base font-bold text-slate-900">Import Bank Soal dari Moodle XML</h3>
+                                <p class="text-xs text-slate-500">Mendukung ekstraksi otomatis teks, rumus, kunci jawaban, dan gambar base64</p>
+                            </div>
+                        </div>
+                        <button type="button" @click="showImportModal = false" class="text-slate-400 hover:text-slate-600">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+
+                    <form method="POST" action="{{ route('kaur-spmb.administrasi.instrumen-tpa.import-moodle') }}" enctype="multipart/form-data" class="mt-4 space-y-4">
+                        @csrf
+
+                        {{-- Input Berkas XML --}}
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Pilih Berkas Moodle XML (.xml) <span class="text-red-500">*</span></label>
+                            <input type="file" name="xml_file" accept=".xml,text/xml" required
+                                class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-50 file:text-amber-800 hover:file:bg-amber-100 border border-slate-300 rounded-lg">
+                            <p class="text-[11px] text-slate-400 mt-1">Berkas hasil ekspor kuis / question bank dari LMS Moodle (Maks. 20MB)</p>
+                        </div>
+
+                        {{-- Target Kategori --}}
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Target Mata Uji / Kategori</label>
+                            <select name="kategori_id" class="w-full text-xs rounded-lg border-slate-300 focus:ring-amber-500 focus:border-amber-500">
+                                <option value="">-- Deteksi Otomatis dari Isi XML --</option>
+                                @foreach($kategoris as $kat)
+                                    <option value="{{ $kat->id }}" {{ $currentKategori && $currentKategori->id === $kat->id ? 'selected' : '' }}>
+                                        {{ $kat->nama }} ({{ $kat->kode }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            <p class="text-[11px] text-slate-400 mt-1">Jika memilih deteksi otomatis, sistem akan membaca kategori dari tag <code>&lt;category&gt;</code> di dalam XML.</p>
+                        </div>
+
+                        {{-- Mode Impor --}}
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Mode Penyimpanan</label>
+                            <div class="space-y-2">
+                                <label class="flex items-start gap-2.5 p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+                                    <input type="radio" name="mode" value="replace" checked class="text-amber-600 focus:ring-amber-500 mt-0.5">
+                                    <div class="text-xs">
+                                        <span class="font-bold text-slate-800">Ganti Seluruh Soal (Replace)</span>
+                                        <p class="text-slate-500 text-[11px]">Hapus butir soal lama pada kategori tersebut dan isi ulang dengan soal dari berkas XML ini.</p>
+                                    </div>
+                                </label>
+                                <label class="flex items-start gap-2.5 p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+                                    <input type="radio" name="mode" value="append" class="text-amber-600 focus:ring-amber-500 mt-0.5">
+                                    <div class="text-xs">
+                                        <span class="font-bold text-slate-800">Tambahkan ke Soal Yang Ada (Append)</span>
+                                        <p class="text-slate-500 text-[11px]">Pertahankan soal yang sudah ada, lalu masukkan soal dari XML ini di nomor urut berikutnya.</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        {{-- Petunjuk Tambahan --}}
+                        <div class="p-3 bg-amber-50 rounded-lg border border-amber-200 text-[11px] text-amber-900">
+                            <strong>💡 Informasi:</strong> Soal pilihan ganda (*multichoice*), kunci jawaban otomatis (*fraction 100%*), bobot nilai, serta gambar/diagram yang tersimpan di Moodle akan otomatis diekstrak dan disimpan ke server Sisfo.
+                        </div>
+
+                        {{-- Tombol Aksi --}}
+                        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+                            <button type="button" @click="showImportModal = false" class="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">
+                                Batal
+                            </button>
+                            <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-lg shadow-sm">
+                                Mulai Import XML
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
 
         {{-- ============================================================== --}}
@@ -791,12 +910,13 @@
                                         <span class="text-xs text-slate-400" x-text="'Kategori: ' + (simulasiList[activeSimulasiIdx]?.kategori?.nama || '-')"></span>
                                     </div>
 
-                                    <div class="text-sm font-medium text-slate-900 leading-relaxed whitespace-pre-line"
-                                        x-text="simulasiList[activeSimulasiIdx]?.pertanyaan">
+                                    {{-- Teks Pertanyaan HTML (Mendukung rumus/gambar) --}}
+                                    <div class="text-sm font-medium text-slate-900 leading-relaxed tpa-content"
+                                        x-html="simulasiList[activeSimulasiIdx]?.pertanyaan">
                                     </div>
 
-                                    {{-- Gambar jika ada --}}
-                                    <template x-if="simulasiList[activeSimulasiIdx]?.gambar">
+                                    {{-- Gambar jika ada dan belum di html --}}
+                                    <template x-if="simulasiList[activeSimulasiIdx]?.gambar && !simulasiList[activeSimulasiIdx]?.pertanyaan.includes('<img')">
                                         <div class="p-2 bg-slate-50 border border-slate-200 rounded-lg inline-block">
                                             <img :src="simulasiList[activeSimulasiIdx]?.gambar.startsWith('http') || simulasiList[activeSimulasiIdx]?.gambar.startsWith('/images') || simulasiList[activeSimulasiIdx]?.gambar.startsWith('images') ? (simulasiList[activeSimulasiIdx]?.gambar.startsWith('/') ? simulasiList[activeSimulasiIdx]?.gambar : '/' + simulasiList[activeSimulasiIdx]?.gambar) : '/storage/' + simulasiList[activeSimulasiIdx]?.gambar"
                                                 alt="Gambar Soal" class="max-h-56 rounded object-contain">
@@ -807,14 +927,14 @@
                                     <div class="space-y-2 pt-2">
                                         <template x-for="abjad in ['A', 'B', 'C', 'D', 'E']" :key="abjad">
                                             <template x-if="simulasiList[activeSimulasiIdx]?.['opsi_' + abjad.toLowerCase()]">
-                                                <label class="flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all"
+                                                <label class="flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all tpa-content"
                                                     :class="selectedJawaban[simulasiList[activeSimulasiIdx]?.id] === abjad ? 'bg-red-50 border-red-300 ring-1 ring-red-400/20' : 'bg-slate-50/50 hover:bg-slate-50 border-slate-200'">
                                                     <input type="radio" :name="'jawaban_' + simulasiList[activeSimulasiIdx]?.id" :value="abjad"
                                                         x-model="selectedJawaban[simulasiList[activeSimulasiIdx]?.id]"
                                                         class="text-red-600 focus:ring-red-500 mt-0.5">
-                                                    <div class="text-xs">
+                                                    <div class="text-xs flex items-start gap-1">
                                                         <span class="font-bold text-slate-800" x-text="abjad + '.'"></span>
-                                                        <span class="text-slate-700 ml-1" x-text="simulasiList[activeSimulasiIdx]?.['opsi_' + abjad.toLowerCase()]"></span>
+                                                        <span class="text-slate-700 ml-1" x-html="simulasiList[activeSimulasiIdx]?.['opsi_' + abjad.toLowerCase()]"></span>
                                                     </div>
                                                 </label>
                                             </template>
@@ -872,6 +992,29 @@
 
     </div>
 
+    @push('styles')
+    <style>
+        .tpa-content img {
+            display: inline-block;
+            max-height: 12rem;
+            max-width: 100%;
+            vertical-align: middle;
+            margin: 0.25rem 0.125rem;
+            border-radius: 0.375rem;
+            background-color: #ffffff;
+        }
+        .tpa-content table {
+            border-collapse: collapse;
+            margin: 0.5rem 0;
+            font-size: 0.75rem;
+        }
+        .tpa-content table, .tpa-content th, .tpa-content td {
+            border: 1px solid #cbd5e1;
+            padding: 0.25rem 0.5rem;
+        }
+    </style>
+    @endpush
+
     @push('scripts')
     <script>
         function instrumenTpaPage() {
@@ -880,6 +1023,7 @@
                 showEditModal: false,
                 showSettingKategoriModal: false,
                 showSimulasiModal: false,
+                showImportModal: false,
                 showImageModal: false,
                 previewImage: '',
 

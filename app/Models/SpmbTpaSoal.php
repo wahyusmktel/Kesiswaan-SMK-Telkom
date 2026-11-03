@@ -61,6 +61,26 @@ class SpmbTpaSoal extends Model
         $this->attributes['pembahasan'] = $value !== null ? str_replace(['\r\n', '\n', '\r'], "\n", $value) : null;
     }
 
+    public function getPertanyaanHtmlAttribute(): string
+    {
+        $val = $this->pertanyaan ?? '';
+        if (preg_match('/<[a-z][\s\S]*>/i', $val)) {
+            return $val;
+        }
+        return nl2br(e($val));
+    }
+
+    public function renderOpsi(?string $val): string
+    {
+        if ($val === null || trim($val) === '') {
+            return '';
+        }
+        if (preg_match('/<[a-z][\s\S]*>/i', $val)) {
+            return $val;
+        }
+        return e($val);
+    }
+
     public function getGambarUrlAttribute(): ?string
     {
         if (! $this->gambar) {
