@@ -61,10 +61,15 @@ class MoodleXmlImporterService
             throw new \Exception("Tidak ada Kategori TPA yang ditemukan di sistem untuk menampung soal ini.");
         }
 
-        // 2. Prepare Directory for Extracted Images
-        $destinationDir = storage_path('app/public/spmb/tpa/moodle');
-        if (! File::isDirectory($destinationDir)) {
-            File::makeDirectory($destinationDir, 0755, true);
+        // 2. Prepare Directory for Extracted Images (both public/images/soal-tpa and storage)
+        $publicDir = public_path('images/soal-tpa');
+        $storageDir = storage_path('app/public/spmb/tpa/moodle');
+
+        if (! File::isDirectory($publicDir)) {
+            File::makeDirectory($publicDir, 0755, true);
+        }
+        if (! File::isDirectory($storageDir)) {
+            File::makeDirectory($storageDir, 0755, true);
         }
 
         // 3. Clear existing questions if mode is 'replace'
@@ -91,7 +96,8 @@ class MoodleXmlImporterService
                     $fName = (string) $f['name'];
                     $fContent = base64_decode(trim((string) $f));
                     if ($fContent !== false) {
-                        File::put($destinationDir . '/' . $fName, $fContent);
+                        File::put($publicDir . '/' . $fName, $fContent);
+                        File::put($storageDir . '/' . $fName, $fContent);
                         $extractedImages++;
                     }
                 }
@@ -104,16 +110,17 @@ class MoodleXmlImporterService
                         $fName = (string) $f['name'];
                         $fContent = base64_decode(trim((string) $f));
                         if ($fContent !== false) {
-                            File::put($destinationDir . '/' . $fName, $fContent);
+                            File::put($publicDir . '/' . $fName, $fContent);
+                            File::put($storageDir . '/' . $fName, $fContent);
                             $extractedImages++;
                         }
                     }
                 }
             }
 
-            // Clean & URL-replace question text
+            // Clean & URL-replace question text to use public /images/soal-tpa/
             $rawText = (string) $q->questiontext->text;
-            $rawText = str_replace('@@PLUGINFILE@@/', '/storage/spmb/tpa/moodle/', $rawText);
+            $rawText = str_replace(['@@PLUGINFILE@@/', '/storage/spmb/tpa/moodle/'], '/images/soal-tpa/', $rawText);
             $cleanQuestion = trim(strip_tags($rawText, '<img><b><i><u><br><strong><em><table><tr><td><th><tbody>'));
 
             // Check if there is an image in question text or standalone
@@ -136,7 +143,7 @@ class MoodleXmlImporterService
                 $letter = $letters[$idx];
                 $fraction = (float) $ans['fraction'];
                 $ansRaw = (string) $ans->text;
-                $ansRaw = str_replace('@@PLUGINFILE@@/', '/storage/spmb/tpa/moodle/', $ansRaw);
+                $ansRaw = str_replace(['@@PLUGINFILE@@/', '/storage/spmb/tpa/moodle/'], '/images/soal-tpa/', $ansRaw);
                 $ansClean = trim(strip_tags($ansRaw, '<img><b><i><u><br><strong><em><table><tr><td><th><tbody>'));
 
                 $answers[$letter] = $ansClean;
@@ -152,7 +159,7 @@ class MoodleXmlImporterService
             $feedbackRaw = (string) $q->generalfeedback->text;
             $feedbackClean = null;
             if (! empty(trim($feedbackRaw))) {
-                $feedbackRaw = str_replace('@@PLUGINFILE@@/', '/storage/spmb/tpa/moodle/', $feedbackRaw);
+                $feedbackRaw = str_replace(['@@PLUGINFILE@@/', '/storage/spmb/tpa/moodle/'], '/images/soal-tpa/', $feedbackRaw);
                 $feedbackClean = trim(strip_tags($feedbackRaw, '<img><b><i><u><br><strong><em>'));
             }
 
@@ -197,13 +204,17 @@ class MoodleXmlImporterService
     }
 
     /**
-     * Import all 4 standard XML files from storage if present.
+     * Import all 4 standard XML files from database/data or storage if present.
      */
     public function importAllLocalFiles(string $mode = 'replace'): array
     {
-        $dir = storage_path('app/public/soal-xml-moodle');
+        $dir = database_path('data/soal-xml-moodle');
+        if (! File::isDirectory($dir) || empty(File::glob($dir . '/*.xml'))) {
+            $dir = storage_path('app/public/soal-xml-moodle');
+        }
+
         if (! File::isDirectory($dir)) {
-            throw new \Exception("Direktori {$dir} tidak ditemukan.");
+            throw new \Exception("Direktori file XML tidak ditemukan di {$dir}.");
         }
 
         $files = File::glob($dir . '/*.xml');

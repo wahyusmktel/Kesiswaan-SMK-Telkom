@@ -57,7 +57,8 @@ class InstrumenTpaController extends Controller
         $totalSoalAktif = SpmbTpaSoal::where('is_active', true)->count();
         $totalDurasiMenit = $kategoris->sum('durasi_menit');
         $avgPassingGrade = $kategoris->count() > 0 ? round($kategoris->avg('passing_grade')) : 65;
-        $hasLocalMoodleFiles = count(\Illuminate\Support\Facades\File::glob(storage_path('app/public/soal-xml-moodle/*.xml'))) > 0;
+        $hasLocalMoodleFiles = count(\Illuminate\Support\Facades\File::glob(database_path('data/soal-xml-moodle/*.xml'))) > 0
+            || count(\Illuminate\Support\Facades\File::glob(storage_path('app/public/soal-xml-moodle/*.xml'))) > 0;
 
         return view('pages.kaur-spmb.instrumen-tpa.index', compact(
             'kategoris',

@@ -1,0 +1,614 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<quiz>
+<!-- question: 0  -->
+  <question type="category">
+    <category>
+      <text>$course$/top/TES AKADEMIK BAHASA INDONESIA</text>
+    </category>
+    <info format="moodle_auto_format">
+      <text></text>
+    </info>
+    <idnumber></idnumber>
+  </question>
+
+<!-- question: 563555  -->
+  <question type="multichoice">
+    <name>
+      <text>Bacalah paragraf berikut dengan seksama !Yudan itu anak yang sempit hati. ...</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[Bacalah paragraf berikut dengan seksama !<br>Yudan itu anak yang sempit hati. Pernah suatu hari ia berdiam diri hanya karena temannya tidak sengaja berteriak di dekatnya. Oleh karena itu, banyak teman yang tidak suka kepadanya.<br><br>Makna ungkapan sempit hati pada paragraf tersebut adalah ……….]]></text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="html">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="html">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="html">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="0" format="html">
+      <text>Suka berbohong</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Suka memfitnah</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="100" format="html">
+      <text>Mudah tersinggung</text>
+      <feedback format="html">
+        <text>Correct</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Tidak jujur</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Sering membual</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 563552  -->
+  <question type="multichoice">
+    <name>
+      <text>Bacalah paragraph berikut dengan seksama !Nasihat agar lebih mendekatkan diri...</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[Bacalah paragraph berikut dengan seksama !<br>Nasihat agar lebih mendekatkan diri kepada Tuhan saat sakit memang terdengar klise. Penelitian terbaru menunjukkan dengan pemahaman spiritual positif penderita mendapatkan peningkatan kesehatan mental yang mendukung penyembuhan. Hal itu berdasarkan penelitian pada pasien yang menderita penyakit beresiko tinggi.<br><br>Kata - kata tidak baku dalam paragraf tersebut adalah……………………….]]></text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="html">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="html">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="html">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="0" format="html">
+      <text>Spiritual</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Positif</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Klise</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Nasihat</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="100" format="html">
+      <text>Beresiko</text>
+      <feedback format="html">
+        <text>Correct</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 563558  -->
+  <question type="multichoice">
+    <name>
+      <text><![CDATA[Bacalah penggalan novel berikut&nbsp; dengan cermat !Dalam penggambarannya di ...]]></text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[Bacalah penggalan novel berikut&nbsp; dengan cermat !<br>Dalam penggambarannya di Surabaya, Tamin bertemu dengan tetangganya yang bernama Pak Banji . Pak Banji mengatakan bahwa orang tuanya telah meninggal dan orang kampung mengharapkan kepulangannya. Mendengar cerita Pak Banji. Tamin berkesimpun bahwa orang - orang sekampungnya tidak mengetahui kebohongannya dan mereka benar - benar mencintainya.<br><br>Latar penggalan novel Pulang karya Toha Mohtar tersebut adalah…………]]></text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="html">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="html">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="html">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="0" format="html">
+      <text>Kota</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="100" format="html">
+      <text>Surabaya</text>
+      <feedback format="html">
+        <text>Correct</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Kampung</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Rumah tangga</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Rumah tamin</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 563561  -->
+  <question type="multichoice">
+    <name>
+      <text>Bacalah penggalan paragraf berikut !Dokter praktek lebih dipilih oleh ...</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[Bacalah penggalan paragraf berikut !<br>Dokter praktek lebih dipilih oleh masyarakat untuk berobat karena pelayanannya yang memuaskan. Obat yang diberikan lebih berkualitas dibandingkan yang lain. Bahkan ada dokter praktek yang membuka apotek di tempat ia bekerja.<br><br>Penulisan kata - kata bergaris bawah yang sesuai dengan EYD adalah……..]]></text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="html">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="html">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="html">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="0" format="html">
+      <text>Praktek, berkualitas, apotek</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="100" format="html">
+      <text>Berkualitas, apotek,di tempat</text>
+      <feedback format="html">
+        <text>Correct</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Praktek, di tempat, apotek</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Apotek, praktek,berkualitas</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Berkualitas, di tempat, praktek</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 563554  -->
+  <question type="multichoice">
+    <name>
+      <text>Cermatilah paragraf berikut !(1) Menjamurnya tempat rekreasi berarti kita ...</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[Cermatilah paragraf berikut !<br>(1) Menjamurnya tempat rekreasi berarti kita semakin mudah menikmati liburan. <br>(2) Di sinilah kita mesti berhati - hati memilih tempat rekreasi yang tepat.<br>(3) Ada tempat rekreasi Kebun Raya Bogor di Bogor.<br>(4) Tempat ini sangat cocok untuk mengenal alam.<br>(5) Anak - anak pasti senang saat menikmati wahana yang ada.<br>Kalimat berisi fakta yang terdapat pada paragraf tersebut ditandai dengan nomor….]]></text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="html">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="html">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="html">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="0" format="html">
+      <text>(1)</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>(2)</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="100" format="html">
+      <text>(3)</text>
+      <feedback format="html">
+        <text>Correct</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>(4)</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>(5)</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 563556  -->
+  <question type="multichoice">
+    <name>
+      <text>Cermati penggalan puisi berikut !Wahai deru………….Janganlah kau melangkah di ...</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[Cermati penggalan puisi berikut !<br>Wahai deru………….<br>Janganlah kau melangkah di jalan keputusasaan<br>Karena di alam ini ternyata berjuta harapan <br>Janganlah kau berlalu mengarah pada kegelapan<br>Karena di ala mini terdapat cahaya iman<br><br>Tema puisi di atas adalah…………………]]></text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="html">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="html">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="html">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="0" format="html">
+      <text>Cahaya iman</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Keputusasaan</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Kegelapan</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="100" format="html">
+      <text>Penyemangat</text>
+      <feedback format="html">
+        <text>Correct</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Kepercayaan</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 563553  -->
+  <question type="multichoice">
+    <name>
+      <text>Mereka terus saja menggerogoti kekayaan Negara. Rasanya rakyat harus kembali ...</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[Mereka terus saja menggerogoti kekayaan Negara. Rasanya rakyat harus kembali memikirkan tipe pemimpin yang mampu berdiri untuk mereka.<br><br>Kata yang memiliki konotasi negatif dalam paragraf tersebut adalah………….]]></text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="html">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="html">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="html">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="0" format="html">
+      <text>Mereka</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="100" format="html">
+      <text>Menggerogoti</text>
+      <feedback format="html">
+        <text>Correct</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Kekayaan</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Rakyat</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Berdiri</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 563560  -->
+  <question type="multichoice">
+    <name>
+      <text>Perhatikan penggalan novel berikut ini !Jadi, di tengah hutan itu aku ...</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[Perhatikan penggalan novel berikut ini !<br>Jadi, di tengah hutan itu aku mempunyai pekerjaan menguliti seekor ular, memotongnya pendek - pendek lalu memasukkannya dalam tiga buah tas ransel. Sesungguhnya aku tidak menyukai pekerjaan semacam ini.Tetapi demi sersan Slamet, segalanya kulakukan meski beberapa kali aku hamper muntah.<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (Ronggeng Dukuh Pasuk, Ahmad Tohari) <br><br>Unsur ekstrinsik yang terdapat pada penggalan novel tersebut adalah………………..]]></text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="html">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="html">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="html">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="0" format="html">
+      <text>Budaya</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>adat</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="100" format="html">
+      <text>Sosial</text>
+      <feedback format="html">
+        <text>Correct</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Agama</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Politik</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 563557  -->
+  <question type="multichoice">
+    <name>
+      <text>Perhatikan penggalan puisi berikut dengan seksama !Air kecil girang mengalirM...</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[Perhatikan penggalan puisi berikut dengan seksama !<br>Air kecil girang mengalir<br>Menggelintir berdesir - desir <br>Berlari - lari mencari kawan<br>Tiba di jalan ibu bengawan<br>Lembar lakunya menuju samudra <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (Intoyo)<br>Majas yang terdapat dalam penggalan puisi tersebut adalah…………]]></text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="html">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="html">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="html">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="0" format="html">
+      <text>Litotes</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="100" format="html">
+      <text>Personifikasi</text>
+      <feedback format="html">
+        <text>Correct</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Metafora</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Eufemisme</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Hiperbola</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 563559  -->
+  <question type="multichoice">
+    <name>
+      <text>Pukul 10,aku dan Rangga memutuskan untuk masuk ke Mezquita saat lonceng ...</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[Pukul 10,aku dan Rangga memutuskan untuk masuk ke Mezquita saat lonceng berbunyi berdentang. Begitu kami menginjakkan kaki ke kompleks Mezquita, sebuah kolam dengan pancuran berundak-undak adalah keindahan yang pertama kami lihat di masjid katedral ini. Air mancur di pelataran masjid, seperti yang kulihat di masjid Paris. Namun ukurannya jauh lebih besar. Airnya yang melompat - lompat dari ujung pancuran seperti menyapu dahaga kami dari&nbsp; panasnya matahari.<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (99 cahaya langit Eropa : Hanun Salsabila Rais, Rangga Almahendra)<br><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Tahapan alur penggalan novel tersebut adalah………………..]]></text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="html">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="html">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="html">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="html">
+      <text>Pengenalan situasi cerita</text>
+      <feedback format="html">
+        <text>Correct</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Pengungkapan peristiwa</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Menuju pada konflik</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Puncak konflik</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Penyelesaian (ending)</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+  </question>
+
+</quiz>

@@ -1,0 +1,573 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<quiz>
+<!-- question: 0  -->
+  <question type="category">
+    <category>
+      <text>$course$/top/TES AKADEMIK MATEMATIKA</text>
+    </category>
+    <info format="moodle_auto_format">
+      <text></text>
+    </info>
+    <idnumber></idnumber>
+  </question>
+
+<!-- question: 563594  -->
+  <question type="multichoice">
+    <name>
+      <text>1 , 4 , 9 , 16 , . . . .</text>
+    </name>
+    <questiontext format="html">
+      <text>1 , 4 , 9 , 16 , . . . .</text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="html">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="html">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="html">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="0" format="html">
+      <text>49</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="100" format="html">
+      <text>25</text>
+      <feedback format="html">
+        <text>Correct</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>20</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>19</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 563592  -->
+  <question type="multichoice">
+    <name>
+      <text>2 , 4 , 6 , 8 , 10, . . . . .</text>
+    </name>
+    <questiontext format="html">
+      <text>2 , 4 , 6 , 8 , 10, . . . . .</text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="html">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="html">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="html">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="0" format="html">
+      <text>44</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>35</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>26</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="100" format="html">
+      <text>12</text>
+      <feedback format="html">
+        <text>Correct</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 563593  -->
+  <question type="multichoice">
+    <name>
+      <text>3, 6 , 12 , 24 , . . . .</text>
+    </name>
+    <questiontext format="html">
+      <text>3, 6 , 12 , 24 , . . . .</text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="html">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="html">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="html">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="html">
+      <text>48</text>
+      <feedback format="html">
+        <text>Correct</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>42</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>30</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>12</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 563595  -->
+  <question type="multichoice">
+    <name>
+      <text>50 , 4 , 45 , 7 , 40 , … , …</text>
+    </name>
+    <questiontext format="html">
+      <text>50 , 4 , 45 , 7 , 40 , … , …</text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="html">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="html">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="html">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="0" format="html">
+      <text>12 , 30</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>12 , 35</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>10, 30</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="100" format="html">
+      <text>10, 35</text>
+      <feedback format="html">
+        <text>Correct</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 563601  -->
+  <question type="multichoice">
+    <name>
+      <text><![CDATA[Data di bawah ini merupakan nilai ulangan semester matematika dari 20 siswa8&nbsp;...]]></text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[Data di bawah ini merupakan nilai ulangan semester matematika dari 20 siswa<br>8&nbsp; 8&nbsp; 6&nbsp; 9&nbsp; 6&nbsp; 6&nbsp; 9&nbsp; 9&nbsp; 7&nbsp; 7<br>6&nbsp; 8&nbsp; 7&nbsp; 7&nbsp; 7&nbsp; 7&nbsp; 6&nbsp; 8&nbsp; 9&nbsp; 7<br>Rata - rata nilai ulangan 20 siswa adalah . . .]]></text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="html">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="html">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="html">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="html">
+      <text>7,35</text>
+      <feedback format="html">
+        <text>Correct</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>7,45</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>7,65</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>7,89</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 563598  -->
+  <question type="multichoice">
+    <name>
+      <text>Diketahui  , maka nilai  yang memenuhi ialah . ….</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[Diketahui <img width="69" height="19" align="bottom" alt="mc007-1.jpg" src="@@PLUGINFILE@@/ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc007-1.jpg" border="0"> , maka nilai <img width="8" height="19" align="bottom" alt="mc007-2.jpg" src="@@PLUGINFILE@@/ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc007-2.jpg" border="0"> yang memenuhi ialah . ….]]></text>
+<file name="ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc007-1.jpg" path="/" encoding="base64">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</file>
+<file name="ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc007-2.jpg" path="/" encoding="base64">/9j/4AAQSkZJRgABAAEAIwAUAAD//gAfTEVBRCBUZWNobm9sb2dpZXMgSW5jLiBWMS4wMQD/2wCEAAICAgICAgICAgICAgICAgICAgICAgICAgICAwMDAwMDAwMDBAUEAwQFBAMDBAYEBQUFBgYGAwQGBwYGBwUGBgUBAgICAgICAgICAgUDAwMFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBf/EAaIAAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKCwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoLEAACAQMDAgQDBQUEBAAAAX0BAgMABBEFEiExQQYTUWEHInEUMoGRoQgjQrHBFVLR8CQzYnKCCQoWFxgZGiUmJygpKjQ1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4eLj5OXm5+jp6vHy8/T19vf4+foRAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/AABEIABMACAMBEQACEQEDEQH/2gAMAwEAAhEDEQA/AP3h/wCEl8OCeS1/4SDRBcwanb6JNb/2rYCeHWZ1LQWDx+ZuW6kVWKW5AdgpIU4p2atpYlSi3JRkm4uz12dk7Ps7NO3Zp9T4G+Gvwo8Q2/7T+q/Eu8/Z5bw14A+Imkafrthb6zqng0t8P/GulX+vXuoeJ9f02xubtJPE2pXF7pqWhtGu/ItPvX9u0H2NM6CUnXqTU4+9P3pSvKVpb2b5nCcndOTuoxjaPLGKhX1511RpTU1q3JVKbk1Nqo1ONRzmo8ri6b5eSL9rVnFv2jeL/RSrA//Z</file>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="html">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="html">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="html">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="html">
+      <text>8</text>
+      <feedback format="html">
+        <text>Correct</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>6</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>4</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>2</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 563597  -->
+  <question type="multichoice">
+    <name>
+      <text>Hasil dari  adalah . . .</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[Hasil dari <img width="136" height="19" align="bottom" alt="mc006-1.jpg" src="@@PLUGINFILE@@/ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc006-1.jpg" border="0"> adalah . . .]]></text>
+<file name="ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc006-1.jpg" path="/" encoding="base64">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</file>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="html">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="html">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="html">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="html">
+      <text>-2</text>
+      <feedback format="html">
+        <text>Correct</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>-1</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>0</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>1</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 563599  -->
+  <question type="multichoice">
+    <name>
+      <text>Hasil dari  adalah . . . .</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[Hasil dari <img width="104" height="21" align="bottom" alt="mc008-1.jpg" src="@@PLUGINFILE@@/ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc008-1.jpg" border="0"> adalah . . . .]]></text>
+<file name="ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc008-1.jpg" path="/" encoding="base64">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</file>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="html">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="html">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="html">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="0" format="html">
+      <text><![CDATA[<img width="18" height="21" align="bottom" alt="mc008-2.jpg" src="@@PLUGINFILE@@/ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc008-2.jpg" border="0">]]></text>
+<file name="ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc008-2.jpg" path="/" encoding="base64">/9j/4AAQSkZJRgABAAEAIwAUAAD//gAfTEVBRCBUZWNobm9sb2dpZXMgSW5jLiBWMS4wMQD/2wCEAAICAgICAgICAgICAgICAgICAgICAgICAgICAwMDAwMDAwMDBAUEAwQFBAMDBAYEBQUFBgYGAwQGBwYGBwUGBgUBAgICAgICAgICAgUDAwMFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBf/EAaIAAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKCwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoLEAACAQMDAgQDBQUEBAAAAX0BAgMABBEFEiExQQYTUWEHInEUMoGRoQgjQrHBFVLR8CQzYnKCCQoWFxgZGiUmJygpKjQ1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4eLj5OXm5+jp6vHy8/T19vf4+foRAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/AABEIABUAEgMBEQACEQEDEQH/2gAMAwEAAhEDEQA/AP3W8aeKLHwP4Q8UeMdTUvp/hXw/q/iC7iEsMDzwafay3TQpJKQiu/leWu4gbnWmot35Veyb9FFNt+iSbb6JNvQcYylKMIRblJpJLdt6JJdW3okfF+rftS/FDQW8OW3iLS/2W/BmreK9K0jW9J8PeMv2gPiFpGu2Wm6zHcSaSNUgT4eyx2Vw37lJYmlCK1pdbZWV1aIU6ShTq1PdpPVy5k0o6e9dqKaSberjFqDfMk5OnhTnCpKqqeOjNU4qWlNc0vdlJ8sfbtu8Yxdoe0knXgnFuNL619zaTJqsulaZLrtpp9hrcmn2UmsWGk6hc6vpVlqrQobuCyvri1tJr23jmMiR3ElrbPIiq7QxFjGq+Vvne3zsr+tl6G1uXTm5rdbct/Pl5pct97c0rbcz3Pzo+I/xE+JuveIfEf7J3xXj8PSeNvit4u+Hl78O9V8G+Htag8O3/wAG7hbd/GEtkNRE6nVNAn8Patf3X2m5YNHrumGIJuCQzecfdp87lLmV4tQ5Y8ur5uaLtbR8kvaNu0LP4dZxlKPuUoqm4KMv3kXOSnzxqtxk1FNQUuROMo25IzpVbqNfc/bO8VeEbTwP8cPDFj8b/CXw98Uar8JvFWn6t8J7zR/B2n+K/jNqt74cvY9N0zT7vV1TUtWl1C18nRIG0oXEschMMTC4i8tKlzRpuULK3NrJNpNwaTaUou6lyyu3aUYOPnHnUpTxVOjC0qjikouMnJx59FBqUb8rnNqK5lGpUjKStJxqfoXQWcTrfw58E+IvGPgr4gax4es7vxn8Om10+DfEW+6t9R0WPWbCXTdTgDQSItzbz28zBracSxB0imCCWGORHe0eXpdPZX0TW+9tXdXs3ZtNxVmm4qSVtVbZPqnpfZ6LVWdrq9m0+qudO0+9eGS8sbO7ktpFlt3ubWCd7eVTlXjLqSjA8gjBFCbTi07OO3ltt22X3LsQ4xcakHFONRJSVtJKPMkpLqlzzsntzSt8TvcpFH//2Q==</file>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text><![CDATA[<img width="29" height="21" align="bottom" alt="mc008-3.jpg" src="@@PLUGINFILE@@/ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc008-3.jpg" border="0">]]></text>
+<file name="ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc008-3.jpg" path="/" encoding="base64">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</file>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="100" format="html">
+      <text><![CDATA[<img width="37" height="21" align="bottom" alt="mc008-4.jpg" src="@@PLUGINFILE@@/ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc008-4.jpg" border="0">]]></text>
+<file name="ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc008-4.jpg" path="/" encoding="base64">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</file>
+      <feedback format="html">
+        <text>Correct</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text><![CDATA[<img width="26" height="21" align="bottom" alt="mc008-5.jpg" src="@@PLUGINFILE@@/ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc008-5.jpg" border="0">]]></text>
+<file name="ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc008-5.jpg" path="/" encoding="base64">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</file>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 563600  -->
+  <question type="multichoice">
+    <name>
+      <text>Hasil dari  adalah . . . ..</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[Hasil dari <img width="80" height="21" align="bottom" alt="mc009-1.jpg" src="@@PLUGINFILE@@/ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc009-1.jpg" border="0"> adalah . . . ..]]></text>
+<file name="ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc009-1.jpg" path="/" encoding="base64">/9j/4AAQSkZJRgABAAEAIwAUAAD//gAfTEVBRCBUZWNobm9sb2dpZXMgSW5jLiBWMS4wMQD/2wCEAAICAgICAgICAgICAgICAgICAgICAgICAgICAwMDAwMDAwMDBAUEAwQFBAMDBAYEBQUFBgYGAwQGBwYGBwUGBgUBAgICAgICAgICAgUDAwMFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBf/EAaIAAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKCwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoLEAACAQMDAgQDBQUEBAAAAX0BAgMABBEFEiExQQYTUWEHInEUMoGRoQgjQrHBFVLR8CQzYnKCCQoWFxgZGiUmJygpKjQ1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4eLj5OXm5+jp6vHy8/T19vf4+foRAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/AABEIABUAUAMBEQACEQEDEQH/2gAMAwEAAhEDEQA/AP2kT47fB2Txw3w2i+I/hR/HKan/AGI/htNUhe+TWfKkm+wMR+7W62xSr9nL798bR7d420JN3tFu3k+19/T8n2dibhSjBzqwjzWsnOPM7y5V7t+b4rLbRyhf44c3o2s6raaDo+q63fyJDYaNpt9qt7K8kUKRWlpA9xM7SSFUQBI2JZiFGMkgc01a6voiZcyjLkScktE3ZN9E2k7Lzs7dmfG0v7QPxxh+HfhP4p6p4I/Z58D+EPHenaDq/hyP4h/HLx/4f1+3t9ftGvtGsNSsrfwDcRx6qIrmzW5soJp1ie1vAk0iESREXBOkqvu80lHddf5U0uZpc0uW692DbaTbgqjjCrKMcR7vLKUV7JuTUE5SulV00jFJpO86yhGMp04RxP0P4D1H43Xmp38fxO8HfCvw3oy2bPplz4D+JPi3xpqc2ofaWCxXVrq3hTRooYfszITMk8jebER5W2QGJrl5Xo4yTVle6trfWy1WiWmur02L5OX/AJf89v8Ap3yeV7+1nba9rP4+Xm/d81X1SpAKAMPS/E3h7W9Q1/SNH1rTdS1PwrfW+meI7Cyu4bi60PUJ7WG9ht7yNCTBI1vPDKFbBKuPehNOKlFpxba0fWLs18mmn5prdMiNSDnOnF3lC199Lq6V9r2s7Xuk4tpKUW/OPjB8Sde8Bp4F0PwZ4c0jxV48+JfjCTwb4U0nX/EN14Z0C1nt9C1rxDe6pq99Z2GoXkNjBa6JNEWgsp2a4vLKI+WJjIht9lu3b89ntu9Nlq0tVdl1qqnbrK1vKOsoK837kdW+ZrljOVoS89h8e/tN3mtav4ZsPA37MU/iTQrLTtU1jQ4/2gfiPNf6PpWrPq8Wi3V3Enw63xpcvps6puVA/wDZt2VPzjybior2fPFxi3rZptLS7StG9rvRuKbja65nyZRadWrSjilL2ajf9y1q7vlf75qLajF2Upyiqqbi1Si8T5p8P/2tfEnjrxv4E8Jaa/7Neujxrrwsol8B/Gj4leLNTj0SKx1fWbu+t1f4fWto7R6bpN26faLm1glubRLYzxteI0ERlzU1UjRklzcurtbR2dpKMnHRq8YvVLZTbp04yjUdNYynLlbTSjHnvFyUrQVeTSvGDTu4qFeM7yjCk8XQ8R/Gz4L+PfiBZfDBPiJ8OPAfgPwV8dfDdjqfhqHVNFt/id8VPj9p3xDtLuw0rSvC8BOo6bpMHjO3iu9Q1mW187U7i2u5VMOmpPqV/SpuUISu4S1fL7tuVc8U27u3NyuUI6Sats7xbinObjzKPK3y+9D3+WN6iet4uHPSajpOTlF2UJU3V434nfEj4q63L4+/ZE+MVr4bbx78er3wl4d+Geq+AtL1u08Pap8HPElrFpPxIn0ttWhlSTV/C1hp3iPXbhLm7JdNW0vy1AKQnCvLkqKnRmpc13rGMnGLU4wc4qd178V1blZuPKvfp7ulVlTg6co03FJOSqcrmk5OTcedOLqQjJezvKMVKNOTrcydbR+OOpa/4Y/aS8ReL/EXxZ8O/B7w9o3wj8LzfCTxB428P6BqdnrniaGfxU/i3w/4ZvNckj02zvbmGTw+b2NG/tO4gSBbVhbw3hTqliFToTpuatCLny3vCP8AE/ezSnHlkuWyvKCnCDu7RUljWTVGnGGIp0JTlpzSfvOX7tNrnk1yPl5UqFTknKElG1arTxf3V8NfEereMPhz4A8W6/pB8P674p8FeFfEetaC0V5A2iatqWmWt7eWBju0S4jME00kO2ZEkHl4dQwIE1IqnUqQW0W1ra+jt0bX3NrswVklaoqiX2o25Zf3laU1Z7q05q20pLV/CviHxD4k07WPEmg+DtT8XS/siHXbmH4h/EPRxcXeteDb6W5v28Q6b4S1ONjeT+GIrmKWLVNXiEz6U1xcRWcqrbSmzhut7aFR1LJO7und+7PmvN30cnF8y1haS5oxs6WWKpyxMKnNWU5S+ON1KdSUpRjGPKpJKooO8aTipYhqm5QxE6sqeK+0/HL+MLX4V6ofgfbeHNU8Vr4ds4fAEerat9m8OSo4git5zfrFcq0cdqzTxOY5kkaOIMGVzTquq3N3XtG38Sdr95JNN66tJpva63WkHCrC/t5NSi2pp88m3H3Zc02+Zt2bnLm35mp7P83vgY/xq0PxT+0v8MPgPo/wT0Hxb4b/ALBOvaj4u+KrfEbXR40g8DaZYafNfWejaVYyz3V3qcN1Pe6te4jSWKa3Fq7QvHG6tWvL2bjrTjNJx5Uox9180lyuCUZctNR5YJ+7yqKi7UMIqaxNSlVqKH1iFSspQu5805uylGpUnGM4ydpqLqpXUpyqyar4z3f4B/FGX9pf4teGviI+h6p4aPwV+EepeD/FukXumanY3Wg/GrxjqOmzeLvCWpSanZ2sslxo9n4V0CbNvBHEW16QM8jRbISqqdKrOhSxUakoSabioyvCLnC94yvTbqQ+GUdeVq10muyUYVeevC3slK9NKej1qR5uTnl8MVanUTqXhUbVRQqRdba+GniH4LaH+2N8avDXhDxZ8OLXX/FHw1+FaX+h6b4o8Pz+JfEPxJtfFvxt1bxVbvbid7y81Oyt2hlvLXJks7ZbNHijgihWJwlD2FTk15pLVbXjzxd7O101y6ptWkrqzTn6xdfVvbpuNvcu21y+9p79ope1TadOTftFJShdqpwPwD+I/h3w/f8A7N3w3+EX7T3hP49+BNU0i18DjwPa2HghPF3gv4daN4B1/U9K8SalFpBj1jTpILvw54f0KZdSt4lSfXZIZ0W7kgSKL+xTp1uXmnK0Xts5u0feal7q1avfklJWTslK3N7OEknSk1OzUvsrljdaJe85t6uX7vllGKkqv6EDRdHW4F2uk6Yt0JjcC5Fhai4FwWkcy+YE3b90srbs5zI5zljmeWN78qv6en+S+5djVV60YqEa0lFK1ru1veVrX29+en96X8zvzuvfDrwT4m8WeBPHWu+HrK/8X/DK71+98C+IHa4h1Hw9Lrelz6LqyQvC6iaG5srh45LaYSRM0dvNs823hkju7StfRGCjFSc1FKTSTdtWleyv2V3ZdLvudZPZ2d00L3VpbXD2zmW3aeCKVreQjaXjLglGxxkYOKE2lZOyun847P1XR9OhfNJQnSu1CaalHo004tNbNOMpRafSTWzZZpCI1iijjEKRRpCqlBEqKsYXuAoGAPaqc5uXO5Ny3vfW/qTKEZqpGcVJTcnJNX5nJtycu7k23K+7bb3HIixqscaqiIoREQBVRQMAADgAAYwKTbk3KTu3q292y5SlKTlJttu7b3b6tvuQJZ2cVxLdxWltHdzosc10kESXEyKSVV5ANzAEkgEnGaLtJq9k7N+bSsr+i0XZaApSjTVJNqCd+XoneUm7bX5pzl6yk95O/J+FPhz4J8C6p421jwj4dsfD9/8AEXxMfGXjN9PM8UGt+KGsrTT5dSe2LmC3nmhsoGmMCRCeYzXMoeeeaWSbe853bbSW7tZXtZXst90rtJJ3SVpjGMFywioq7eitq3dv1bu35tvdnUJpmnRSrPHp9lHOk890kyWkCSpczhhNKrhch3DuGcHLb2yTk0WS6Wt/wL/kvuXYvmla3M7WS+UXNxXpFzm0ujnNr4ndtrpemWMjy2WnWFnK6lHltbS3t5HQuZCrNGoJG9mfB7sT1NJRjHaKVvL0/wAl9y7Fzr1qiaqVpSTd9W3reTvq97yk/WUn1Z//2Q==</file>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="html">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="html">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="html">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="0" format="html">
+      <text><![CDATA[<img width="34" height="21" align="bottom" alt="mc009-2.jpg" src="@@PLUGINFILE@@/ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc009-2.jpg" border="0">]]></text>
+<file name="ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc009-2.jpg" path="/" encoding="base64">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</file>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text><![CDATA[<img width="34" height="21" align="bottom" alt="mc009-3.jpg" src="@@PLUGINFILE@@/ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc009-3.jpg" border="0">]]></text>
+<file name="ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc009-3.jpg" path="/" encoding="base64">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</file>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="100" format="html">
+      <text><![CDATA[<img width="42" height="21" align="bottom" alt="mc009-4.jpg" src="@@PLUGINFILE@@/ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc009-4.jpg" border="0">]]></text>
+<file name="ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc009-4.jpg" path="/" encoding="base64">/9j/4AAQSkZJRgABAAEAIwAUAAD//gAfTEVBRCBUZWNobm9sb2dpZXMgSW5jLiBWMS4wMQD/2wCEAAICAgICAgICAgICAgICAgICAgICAgICAgICAwMDAwMDAwMDBAUEAwQFBAMDBAYEBQUFBgYGAwQGBwYGBwUGBgUBAgICAgICAgICAgUDAwMFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBf/EAaIAAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKCwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoLEAACAQMDAgQDBQUEBAAAAX0BAgMABBEFEiExQQYTUWEHInEUMoGRoQgjQrHBFVLR8CQzYnKCCQoWFxgZGiUmJygpKjQ1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4eLj5OXm5+jp6vHy8/T19vf4+foRAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/AABEIABUAKgMBEQACEQEDEQH/2gAMAwEAAhEDEQA/AP2nh+OXwguPHEvw2g+I3hSXx1BqB0iXw1HqsDagmrLE8rWPB2G6CxSg24bzA0ToV3KVAk3ey2/4HX5/g+zsStT9knJJz2SactOa7cU3JJctm2kk5QTadSnzdtqHinw5pWt6B4a1HW9MsvEHil7+Pw5o1xdxR6lrTWNrLe3n2SAnfMIreGWVyBhVQkmmldSs17ttLq+t7aXu9nstOo3GUYRqOLUZS5U7dUnJ/JJavZNxTac4p1PHXi2x8A+C/FnjbU42nsPCXh3WPEVzbRzW9vNdx6fay3P2aF52WNZZTGIo9zAF5FGeaWi30S9P1aX3tLu0K0n7tNXk9laTu+itCM5v0hCcn9mMnZP5wn+Kv7Rtvb+D5rrwL+zboc/xBuls/BuleIfj38QbDWNVvJ9OvtVtrJLaL4fSCa8S0gE08ETuqLY3ZEjK6tFrGC5+SS5VFvm95aJbtKSjzNa2j7rfKlpze5lSbqKnKOITjOKcf3S1fLKTTaryhFNQXLJTmnKryx53Sj9ZqeIfjL8evC/iLw74P13w7+yto3izxdcTQeGdA1D9ob4jx3+pszXMdp5UY+HIZmkkEEShhGJHtrlY2Zm2wZwlSlVhSl7rd2/eV1FWu0mo8zV9FePM0kmnP3NlQqav6zHls+W9NRcnFNzSi6+yShdxc+V14xabhD6z9aaTJqsulaZLrtpp9hrcmn2UmsWGk6hc6vpVlqrQobuCyvri1tJr23jmMiR3ElrbPIiq7QxFjGq+Vvne3zsr+tl6Cty6c3Nbrblv58vNLlvvbmlbbme58K+IfjJ8FPH/AMQ7H4Xn4g/DbwP4J8C/HPw3FeeHIfEGg2PxI+KHx907x3DeWelab4Xt2+32WmQ+MIoru+1Wa3E2pXdrduoj09JdQvs+Wo1Cr7Vwjf4OXVpSnC8pcztGTjzRjyXsufmWyVFxnUlzQi1FTUOZwu5RiueXve9TdOMo8qXLUqOpB39hKMcT4P8AFaT4xeDf2n/hd4r1Dwt8Irz4ueM/H/xL8P8AwrvPFPxftNJ00+BbLwx4y07wzZW+hrow1C3iI1ezvNRENzJJf6hPp9mZogbRrDZTh7OdKNRKbcZON2+VWmlJpcqb0cVeLcrJc8YpxjpCryRq0p03UjHlcZJcjqOLa5Na1ZU4Xqc691xpp13GnKr72N9G8W/EP4k+NPEep/sj/Fy00BviL4u+KPhLX9D1LwloGuReF9T+AVpPB4iudY05tXgED3em3WiLpl5DJc3TiW/Roy3Hk4JzdO/M6dS7tq48rT9xxcGpvZSThKM0nfmpNSdPSXNz1VhoOnTjTajPSU5KSlGcpRU1ClZO0VUly6KHssQ5U4Yr0z9qTxH8HfBnxT/Zl8TeMfE/w88K+L7D4uWMlxq/izxR4b0DU9I8AReDviIs1zv1SdGs9Okv54reSeMIs1xJaQu5ZYgm1NOU3CLclBc0oJyla0KqjLkjUgla8m5OM1aDcotU1KHNBU1XheooOUZ+621zqEJNXSVm4SknFylDlcnGMpSqewr+YfGi68PWEP7dPgTxDaQ/8LP+NOm6RH8BNKu9Me91/wCIgl+F/hzQ/C9v4RkVZHvn0zxpp2t3skVvg6LI76xcm0t51vC4ppTS05ZR5lqrS15G1fpZ+9yrls7y6LZ1KssLG9VSw84TcUpwkpwUZe0jGCjzyXLLWPPNS9tFRpwda9f9L6kzMwaLo63Au10nTFuhMbgXIsLUXAuC0jmXzAm7fullbdnOZHOcsczyxvflV/T0/wAl9y7Gqr1oxUI1pKKVrXdre8rWvt789P70v5ne1NZWdxLBPcWltPPaOJLWaaCKSW2kGQGidgTGeTypB5NNpO11e23lt/kvuXYiEpU3N05OLmkpW0ukpJJ23SU5pJ9JyX2nfltS+H3g3V/Gnhn4iahoFpP428H6frWk+HvEatcW+o2GlaskaX9k7Quq3VvJ5UbiGdZUR1EiBH+aqu0uW9l2+7/JfcjJ0qbmqjppzVrOyurKSWu+ilJLylLuzpbvTNOv9v2/T7K98sOE+12kFzsDKUYL5inblWZTjqGI71LSdrq9tvLb/JfcuxrCUqbm6cnFzSUraXSUkk7bpKc0k+k5L7TvKbS0L2rm1ty9ju+xOYYy9nuQxN5JxmLKEoduMqSOlVJuUnOTvJ31e+u+vn1G6lSXOpTb5nzO7eslezfdq71eur7ssUiD/9k=</file>
+      <feedback format="html">
+        <text>Correct</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text><![CDATA[<img width="34" height="21" align="bottom" alt="mc009-5.jpg" src="@@PLUGINFILE@@/ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc009-5.jpg" border="0">]]></text>
+<file name="ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc009-5.jpg" path="/" encoding="base64">/9j/4AAQSkZJRgABAAEAIwAUAAD//gAfTEVBRCBUZWNobm9sb2dpZXMgSW5jLiBWMS4wMQD/2wCEAAICAgICAgICAgICAgICAgICAgICAgICAgICAwMDAwMDAwMDBAUEAwQFBAMDBAYEBQUFBgYGAwQGBwYGBwUGBgUBAgICAgICAgICAgUDAwMFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBf/EAaIAAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKCwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoLEAACAQMDAgQDBQUEBAAAAX0BAgMABBEFEiExQQYTUWEHInEUMoGRoQgjQrHBFVLR8CQzYnKCCQoWFxgZGiUmJygpKjQ1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4eLj5OXm5+jp6vHy8/T19vf4+foRAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/AABEIABUAIgMBEQACEQEDEQH/2gAMAwEAAhEDEQA/AP2mg+OfwfufG8vw2t/iN4Vl8cwai+jy+Gk1SE6gmrpHJK1jj7huQsUubcN5gaJ127lIDSetl8P3dOu19dt9H/LK0uUUqfvJObaS+17rkm3H4lFOPxNKPvU9f3tPn6/xr4qsPAvg/wAUeMtUAbT/AAroGra/dR+dDbtPFY20lwYEkmIRZJDGI03EAs6jvUtqKbbsl+BpGMpyjCEXKUmkkldtvRJJbt9EfM4+Lv7RZ07wRf3PgL9nLw9N8SZIIfBmi+KPjv8AEPS9f1G7u9NvNXtdPNknw+k338dpEstzbRO6xCxvCJCrK0VU5U5+zdnyytdxfNaOmqVlzWTb3irRu5JSvDKKT95YyDptJxk4KKk9dLuu0ua0VC0ptyq8sYydKP1iLxD8Zfj14X8ReHfB+u+Hf2VtG8WeLriaDwzoGoftDfEeO/1Nma5jtPKjHw5DM0kggiUMIxI9tcrGzM22AhKlKrClL3W7t+8rqKtdpNR5mr6K8eZpJNOfuaKhU1f1mPLZ8t6ai5OKbmlF19klC7i58rrxi03CH1n600mTVZdK0yXXbTT7DW5NPspNYsNJ1C51fSrLVWhQ3cFlfXFraTXtvHMZEjuJLW2eRFV2hiLGNV8rfO9vnZX9bL0Fbl05ua3W3Lfz5eaXLfe3NK23M9z8ohqsMl/p3gxvjJ4e1PVIf26tQ1Zv2YhB4V/4TrSbc/tDatrkXiAi23eI1tRaqvjUNLCsDWDSFphYMHXNylKl+6SlJNxUo3spKU9ZLnV+SK5ZRUl8Emopv3VKfKvjjBRV3Gy5pxlOlCOsr8rjOd3KPJzJ06a968cR3fjj4kfFPxXrfib9kn4u2Ph//hYnxF8Y+Ab/AMI6l4I0fXV8MXnwTnazn8R6ppn9pwsr3eiXGjXrXSXN1KzNqluUARQke0qtKc6UaCVKUHJWqON58vPKMl72jcUmow5pe60uSTcqTdCrGEKdX36NRSjzxvCU0+f2keVN04OMGko1ajg6bSnTxUpRpYv1P9qfxH8GfB3xL/Zo8T+OPFPw98LeLNK+LumS/wBp+LfEuhaLqWleCD4Y8cRT3SjUZl+yWDX0tvDJdqqI8pt43lDLHtqLm6cqSsoNqTvZaxUratPWzlZK13azUkpJxqOL9lGo4uSb5VJxuoqzdlVpXSUrP3npJxdOspexqeWfGS68NWlt+3L4Q1uK3k+JPxy0fRYP2f8AS57P+0tZ+JCP8MPDuj+FV8HtGJHvH0/xlbaxeOtvgaQ6trFwbWCX7YUpRUI06cWnzJy31lpyPokkvhbV0/aPncVy09Z1KnsVSn7tNU5fbb9pD95zxVN7uKlJSjBttVqcXSi60JV/0yqDEojS9NF4dRGnWI1BmVmvhaW4vCyxNApM23eSImaMHPCsV6HFKyve2qKUpKLgpNRbTa6Nq6Tt3V3btd9zmdW+HngvXPGXhL4hapoFpceNfA0Gt2nhbxGr3NtqOmWWr2xtNRtC0EiLdW0sZBNtcCWJZEjmVFljR1q9lYz5VzKWqaTW7trbdbN6KzautUrXd+nu9M06/wBv2/T7K98sOE+12kFzsDKUYL5inblWZTjqGI71LSdrq9tvLb/JfcuxpCUqbm6cnFzSUraXSUkk7bpKc0k+k5L7TvKbS0L2rm1ty9ju+xOYYy9nuQxN5JxmLKEoduMqSOlVJuUnOTvJ31e+u+vn1G6lSXOpTb5nzO7eslezfdq71eur7ssUiD//2Q==</file>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 563596  -->
+  <question type="multichoice">
+    <name>
+      <text>Hasil Penjumlahan dan  adalah .. ..</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[Hasil Penjumlahan <img width="95" height="19" align="bottom" alt="mc005-1.jpg" src="@@PLUGINFILE@@/ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc005-1.jpg" border="0">dan <img width="94" height="19" align="bottom" alt="mc005-2.jpg" src="@@PLUGINFILE@@/ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc005-2.jpg" border="0"> adalah .. ..]]></text>
+<file name="ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc005-1.jpg" path="/" encoding="base64">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</file>
+<file name="ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc005-2.jpg" path="/" encoding="base64">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</file>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="html">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="html">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="html">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="0" format="html">
+      <text><![CDATA[<img width="100" height="19" align="bottom" alt="mc005-3.jpg" src="@@PLUGINFILE@@/ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc005-3.jpg" border="0">]]></text>
+<file name="ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc005-3.jpg" path="/" encoding="base64">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</file>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text><![CDATA[<img width="94" height="19" align="bottom" alt="mc005-4.jpg" src="@@PLUGINFILE@@/ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc005-4.jpg" border="0">]]></text>
+<file name="ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc005-4.jpg" path="/" encoding="base64">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</file>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="100" format="html">
+      <text><![CDATA[<img width="83" height="19" align="bottom" alt="mc005-5.jpg" src="@@PLUGINFILE@@/ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc005-5.jpg" border="0">]]></text>
+<file name="ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc005-5.jpg" path="/" encoding="base64">/9j/4AAQSkZJRgABAAEAIwAUAAD//gAfTEVBRCBUZWNobm9sb2dpZXMgSW5jLiBWMS4wMQD/2wCEAAICAgICAgICAgICAgICAgICAgICAgICAgICAwMDAwMDAwMDBAUEAwQFBAMDBAYEBQUFBgYGAwQGBwYGBwUGBgUBAgICAgICAgICAgUDAwMFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBf/EAaIAAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKCwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoLEAACAQMDAgQDBQUEBAAAAX0BAgMABBEFEiExQQYTUWEHInEUMoGRoQgjQrHBFVLR8CQzYnKCCQoWFxgZGiUmJygpKjQ1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4eLj5OXm5+jp6vHy8/T19vf4+foRAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/AABEIABMAUwMBEQACEQEDEQH/2gAMAwEAAhEDEQA/AP1l0T44fELxlqk0Pgr4C+Jb/wAL2fxR8QfDy88d6v42+Hmk6FHYeF/Gt14R8U6wmnrqMusOtv8A2TrU9tbfYhJcPb2yHyknMsWn7mPJ8Um7p6Riovlk027ttcyirKN3e3uq8lN5Ri3y+8mtFZ7zkm7vl2hyS6u7nFJ8kXV98ufE3huy/tP7Z4g0S0/sSSxi1n7Tqthb/wBkS3uz7Gl7vkH2Vpt6eUJNpk3rtzkVipRfJaSfM2lru483Ml3ceWV0tVyyvsxOpTjzXmlytReq0crcqfZvmjZbvmVt0bdUWFAHhnxQ+L/iP4evq02j/B3xz480XwzoUniHxR4j0rUfB/h/R9KsY45biVbdtf1C0l1aSK2t55pUso5/LxFGT5km1ZUtZR9nJNNJP3eVrlbbvz8+mkfgs5SWtlOUY5pRm4ypuy5WrWbafOm90lyzjFOLkp8jnPk0oxr+l6J4z8M6/pcGrWGr2SwSeH9I8UXFvdXMFrf6Xoep2pvLO51C2kYSWKPEsjZlCj9zLz8jYFKLjzxknFJO/SzvZ37Ozt6MuC9p7FUve9rfktrz25b8tvitzwva/wAUf5lfdsNQsNUs7fUNMvbTUbC6TzbW9sLmG7s7iPJG+KaJmSRcgjKkjg1bTi2mrNfgTGUZxjOElKMkmmtU09mmt0+hbpFHnPj/AMbeIvCZ0e18K/DPxZ8StV1U30z2Xh268O6PZaVp9n9mWae91XXry0sYZGe7gSC084zzgXDxoUtp3jE0pRi07O92knaydm05RvrZWTctb2aUmh+7By66qK7y5ZSina7jFuNpTs1G63lKEJVfBXxX8N+K/BFj411MjwPDLrvirwnqel+LdS0WzuNH8XeGta1bw9rulPdQXMlndNBqOh6pGk1vNJHNHbechKNkKrOjRb5qqjBN2crRuknK+r0tFOTV9Em9k2C1+GLSfRpKS7JqLkk+jtKSvs3ueh6fqWnataRX+lX9lqdhOZRBe6fdQXtpMY5GikCTQsyNtkR0bBOGRgeQRRGUZJuMk0m1p3Taa9U0010aaDbyPgG98Ave/EGCXwV+zN8RPhp4+j+PVh4mufi0vijw1L8O9R8J2fxJm1TxXq7eR4jN8r+I/DUetk2L6EGFz4nht2bbGbyO78qpqE3aDk+qs5xcZ36NNWi9WnanpemuQUsRJv2s5U0l7vLVfI4xlGMUowkuVtOTlGUIp3r3clX5q/FaH8GfEWp/tL6X8Up/2bbnS/hN8SfD99pur/DvxTqHgopoHxA0jxRPrA+IvxAsrW4vbS4vpbLxn8QLXSbK1l1rabXTleWwS8iOi1Ko4Vv3d1KLv7VNrmkpNqWvv814xadlZezfxOapuVSvUk6lWopOkrRspOUvaOSnacp6csKkvae7BT5q0IqXJGpi/wBB/HngaPx7p1jpsnizxz4RWw1FdRW98B+JbnwvqN06wzQfZ7m4gVmntys7MYG+Uusb/ejQrMWovWKkl0d99k9Gnp2vbq07Kye0kvdbTV+qTT2TvG6lyzUuXmTgo39nOrTqcr4M+DkPgzXLfXF+Jvxj8UNbwXMA0nxn8QL7X9DmM0YjMstm8aK8ifMyEnCs5IHC7c+SCVNJNcl3fmldt3u5XlZ2u0o2UFpaKcYuJLVtr3Ve9lsleo+XW7tacVe/NalTvK7qur4r+054RXxwdT0O6/Z98b/EnVrjwbrOmeAPGvg/xR4es9M0HWb20ukH9t22qa9o5sfIuvssqTRx6hvRyV2MrRG3tCG1pJp6Kz1slJPnS0XOnaErwbcuSXs+dycvrtCWHbpuEXLb94oSvypdXFObUU3OUfbU+T97ThiPD/iP8KtQ0H4lfAHSPhz4S0GD47ePPhb4/wDCXxf8X6ZcRXE3hnw9feHtM0+48U66FjjTVNPs9Tilh0+1mighkuHWO3RRE1uVrCPLGvGKclo1KPM1CfLyxTcU0l8DlK0LqMXGLqU+p1VTVKNStOpZxjyR5Y+0jdynUkpyqOMlL35Vffnz1JKdWU67hiPvLRvhZ4e8NfC/SfhN4Yu9Z8K+HdE0Gw8P6be+F75dC1uwtrXyyZbW5towtrLIyMzmJFX99IFVQQBFOMoRipScmt27663e7bS6JJ+7GyjZJWhJKM0oRhzKXwJxUZSveUU3J3UnzLnc7yXv895X4rTP2f7fTNR03UP+FxftAX50y/stQ+xan8U9TutOvzbTRTfZ7yARKJ7eTyikkWQGSWReARttKChCHs9Yu/NzTu7817+9az5mrWSjaLgoOMWnK7k2ny2d1a1k05uOjvdRcoaT5lNUYRqKcZV1WpftCeIPilp9r4X8O/D7wX8Qda0XxNJrY8deLfhi/gaTxp4W0ixitXh0/SYfE2r6Zb2t5qhnuIk1ZXuWsksZ9luLi4tri2zm5JOMNG07O17P7N1pdN6NXT84q8470qXPCUlOKcXFWntyybU5K04yvCKc1ZSV1blnNwo1fmfx5oOseIPDXwt8HaN+yD488PeFrS0+Itvquoacnwl8U+LPAHhe88RXCLY6Ra69r8VnD4h8QwaLaaxd64TfzaYmo+VBJd3l9Jc2kzk406lCPOoNXajpzK0/djLnThJS5bNqyUnyyhZzg5c9eFStOUZ1Iyi+WdtXaUZT+OF6kYObUtXJuXN7Sc1Srfb/AMINGsvD3wr+HekWHgG0+FcFp4N8Ol/htZXNtfQeBryayhnu9FN5bqsd9Ja3Es0Ml4B/pEiSTHJkJO7sm1F3S2urO3TS7t6XfqYSUVJqDbinpdWdul1d2fld+rPRqQgoAKACgAoA5nRfBXg3w1qmv634d8JeGdA1rxXejUvFOr6LoOlaVqniXUQCoutVurWJJdQnAJHmzs7YPWq5pKPJzNRve3S+17dwS5ea2nNa/ny83Lfvy80rduaVt2dNUgFABQAUAFAH/9k=</file>
+      <feedback format="html">
+        <text>Correct</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text><![CDATA[<img width="91" height="19" align="bottom" alt="mc005-6.jpg" src="@@PLUGINFILE@@/ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc005-6.jpg" border="0">]]></text>
+<file name="ppg__examview__TES_AKADEMIK_MATEMATIKA__00001_res__mc005-6.jpg" path="/" encoding="base64">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</file>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+  </question>
+
+</quiz>

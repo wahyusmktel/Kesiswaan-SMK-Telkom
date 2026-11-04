@@ -1,0 +1,555 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<quiz>
+<!-- question: 0  -->
+  <question type="category">
+    <category>
+      <text>$course$/top/TES AKADEMIK BAHASA INGGRIS</text>
+    </category>
+    <info format="moodle_auto_format">
+      <text></text>
+    </info>
+    <idnumber></idnumber>
+  </question>
+
+<!-- question: 563564  -->
+  <question type="multichoice">
+    <name>
+      <text>Complete the imperative sentence below!........The door!</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[Complete the imperative sentence below!<br>........The door!]]></text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="html">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="html">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="html">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="html">
+      <text>close</text>
+      <feedback format="html">
+        <text>Correct</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>closed</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>closing</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>closes</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 563565  -->
+  <question type="multichoice">
+    <name>
+      <text>Complete the imperative sentence below!......The window!</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[Complete the imperative sentence below!<br>......The window!]]></text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="html">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="html">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="html">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="0" format="html">
+      <text>opens</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="100" format="html">
+      <text>open</text>
+      <feedback format="html">
+        <text>Correct</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>opening</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>opened</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 563568  -->
+  <question type="multichoice">
+    <name>
+      <text>How to Make a Cup of CoffeeYou will need a spoonful of sugar, a teaspoon of ...</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[How to Make a Cup of Coffee<br><span style="font-size:12pt">You will need a spoonful of sugar, a teaspoon of coffee and some water.<br>First, boil some water in the kettle.<br>Then, put a teaspoon of coffee into a cup.<br>Add a spoonful of sugar.<br>Fill the cup with boiling water.<br>Finally, stir the mixture for a few moments and the coffee is ready to serve.<br>What should you do to the water?</span>]]></text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="html">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="html">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="html">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="0" format="html">
+      <text>We should stir it</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>We should mix it</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="100" format="html">
+      <text>We should boil it</text>
+      <feedback format="html">
+        <text>Correct</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>We should pour it</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 563567  -->
+  <question type="multichoice">
+    <name>
+      <text>How to Make a Cup of CoffeeYou will need a spoonful of sugar, a teaspoon of ...</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[How to Make a Cup of Coffee<br><span style="font-size:12pt">You will need a spoonful of sugar, a teaspoon of coffee and some water.<br>1) First, boil some water in the kettle.<br>2) Then, put a teaspoon of coffee into a cup.<br>3) Add a spoonful of sugar.<br>4) Fill the cup with boiling water.<br>5) Finally, stir the mixture for a few moments and the coffee is ready to serve.<br>How much coffee do you need?</span>]]></text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="html">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="html">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="html">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="0" format="html">
+      <text>a cup</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>a kettle</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>a spoonful</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="100" format="html">
+      <text>a teaspoon</text>
+      <feedback format="html">
+        <text>Correct</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 563563  -->
+  <question type="multichoice">
+    <name>
+      <text>Mrs. Rina : May I have your attention, please?Students : ….</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[Mrs. Rina : May I have your attention, please?<br>Students : ….]]></text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="html">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="html">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="html">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="html">
+      <text>Yes, Ma'am</text>
+      <feedback format="html">
+        <text>Correct</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Yes, Sir</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Yes, please</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Thank you</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 563570  -->
+  <question type="multichoice">
+    <name>
+      <text>Once upon a time in West Java Indonesia lived a princess name Dayang Sumbi. ...</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[Once upon a time in West Java Indonesia lived a princess name Dayang Sumbi. She was beautiful and kind-hearted, her hobby was weaving clothes.<br><span style="font-size:12pt">What is the title of the story above?</span>]]></text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="html">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="html">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="html">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="0" format="html">
+      <text>Danau Toba</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Malin Kundang</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Surabaya</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="100" format="html">
+      <text>Gunung Tangkuban Perahu</text>
+      <feedback format="html">
+        <text>Correct</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 563569  -->
+  <question type="multichoice">
+    <name>
+      <text>Once upon a time in West Java Indonesia lived a princess name Dayang Sumbi. ...</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[Once upon a time in West Java Indonesia lived a princess name Dayang Sumbi. She was beautiful and kind-hearted, her hobby was weaving clothes.<br><span style="font-size:12pt">Who is the character introduce in the text?</span>]]></text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="html">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="html">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="html">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="100" format="html">
+      <text>Dayang Sumbi</text>
+      <feedback format="html">
+        <text>Correct</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Sangkuriang</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Tumang</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Genies</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 563562  -->
+  <question type="multichoice">
+    <name>
+      <text>Student: ..........,sir.Teacher: Sure. What's up?Student: When should we ...</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[Student: ..........,sir.<br>Teacher: Sure. What's up?<br>Student: When should we submit the assignment,sir?<br>Teacher: Submit it on Tuesday after the first break on my desk, please.<br>Student: Okay. Thank you, sir.]]></text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="html">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="html">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="html">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="0" format="html">
+      <text>Hey!</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="100" format="html">
+      <text>Excuse me</text>
+      <feedback format="html">
+        <text>Correct</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Look at me</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>Hello</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 563566  -->
+  <question type="multichoice">
+    <name>
+      <text>What is he doing?</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[What is he doing?<br><img width="164" height="93" align="bottom" alt="mc005-1.jpg" src="@@PLUGINFILE@@/ppg__examview__TES_AKADEMIK_BAHASA_INGGRIS__00001_res__mc005-1.jpg" border="0">]]></text>
+<file name="ppg__examview__TES_AKADEMIK_BAHASA_INGGRIS__00001_res__mc005-1.jpg" path="/" encoding="base64">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</file>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="html">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="html">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="html">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="0" format="html">
+      <text>He rides a bicycle</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="100" format="html">
+      <text>He is ridding bicycle</text>
+      <feedback format="html">
+        <text>Correct</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>He rode bicycle</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>He was riding bicycle</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+  </question>
+
+<!-- question: 563571  -->
+  <question type="multichoice">
+    <name>
+      <text>What is narrative text?</text>
+    </name>
+    <questiontext format="html">
+      <text>What is narrative text?</text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <showstandardinstruction>0</showstandardinstruction>
+    <correctfeedback format="html">
+      <text></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="html">
+      <text></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="html">
+      <text></text>
+    </incorrectfeedback>
+    <answer fraction="0" format="html">
+      <text>A factual news</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>A true experience story</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="0" format="html">
+      <text>A text that describe specific things</text>
+      <feedback format="html">
+        <text>Incorrect</text>
+      </feedback>
+    </answer>
+    <answer fraction="100" format="html">
+      <text>An imaginative story to entertain people</text>
+      <feedback format="html">
+        <text>Correct</text>
+      </feedback>
+    </answer>
+  </question>
+
+</quiz>

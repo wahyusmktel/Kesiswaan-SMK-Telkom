@@ -294,8 +294,11 @@ class SpmbTpaSeeder extends Seeder
             );
         }
 
-        // Check if Moodle XML files exist in storage, and import authentic bank soal
-        $moodleXmlDir = storage_path('app/public/soal-xml-moodle');
+        // Check if Moodle XML files exist in database/data or storage, and import authentic bank soal
+        $moodleXmlDir = database_path('data/soal-xml-moodle');
+        if (! \Illuminate\Support\Facades\File::isDirectory($moodleXmlDir) || empty(\Illuminate\Support\Facades\File::glob($moodleXmlDir . '/*.xml'))) {
+            $moodleXmlDir = storage_path('app/public/soal-xml-moodle');
+        }
         $xmlFiles = \Illuminate\Support\Facades\File::glob($moodleXmlDir . '/*.xml');
 
         if (! empty($xmlFiles)) {
