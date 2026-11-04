@@ -912,7 +912,7 @@
 
                                     {{-- Teks Pertanyaan HTML (Mendukung rumus/gambar) --}}
                                     <div class="text-sm font-medium text-slate-900 leading-relaxed tpa-content"
-                                        x-html="simulasiList[activeSimulasiIdx]?.pertanyaan">
+                                        x-html="formatTpaContent(simulasiList[activeSimulasiIdx]?.pertanyaan_html || simulasiList[activeSimulasiIdx]?.pertanyaan)">
                                     </div>
 
                                     {{-- Gambar jika ada dan belum di html --}}
@@ -934,7 +934,7 @@
                                                         class="text-red-600 focus:ring-red-500 mt-0.5">
                                                     <div class="text-xs flex items-start gap-1">
                                                         <span class="font-bold text-slate-800" x-text="abjad + '.'"></span>
-                                                        <span class="text-slate-700 ml-1" x-html="simulasiList[activeSimulasiIdx]?.['opsi_' + abjad.toLowerCase()]"></span>
+                                                        <span class="text-slate-700 ml-1" x-html="formatTpaContent(simulasiList[activeSimulasiIdx]?.['opsi_' + abjad.toLowerCase()])"></span>
                                                     </div>
                                                 </label>
                                             </template>
@@ -1017,6 +1017,15 @@
 
     @push('scripts')
     <script>
+        function formatTpaContent(text) {
+            if (!text) return '';
+            let res = String(text).replace(/\\r\\n|\\n|\\r/g, "\n");
+            if (!/<[a-z][\s\S]*>/i.test(res)) {
+                res = res.replace(/\r\n|\n|\r/g, '<br>');
+            }
+            return res;
+        }
+
         function instrumenTpaPage() {
             return {
                 showAddModal: false,

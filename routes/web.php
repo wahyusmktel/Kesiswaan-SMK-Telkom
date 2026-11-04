@@ -1853,6 +1853,24 @@ Route::get('/storage/{path}', function ($path) {
 })->where('path', '.*')->name('storage.fallback');
 
 // ============================================================
+// PORTAL CBT SELEKSI CALON SISWA BARU (SPMB)
+// ============================================================
+Route::prefix('seleksi')->name('seleksi.')->group(function () {
+    Route::get('/login', [\App\Http\Controllers\Spmb\SeleksiCasisController::class, 'loginView'])->name('login');
+    Route::post('/login', [\App\Http\Controllers\Spmb\SeleksiCasisController::class, 'loginSubmit'])->name('login.submit');
+    Route::post('/logout', [\App\Http\Controllers\Spmb\SeleksiCasisController::class, 'logout'])->name('logout');
+
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\Spmb\SeleksiCasisController::class, 'dashboard'])->name('dashboard');
+        Route::get('/buta-warna', [\App\Http\Controllers\Spmb\SeleksiCasisController::class, 'butaWarnaView'])->name('buta-warna');
+        Route::post('/buta-warna/submit', [\App\Http\Controllers\Spmb\SeleksiCasisController::class, 'butaWarnaSubmit'])->name('buta-warna.submit');
+        Route::get('/tpa/{mapel}', [\App\Http\Controllers\Spmb\SeleksiCasisController::class, 'tpaView'])->name('tpa');
+        Route::post('/tpa/{mapel}/submit', [\App\Http\Controllers\Spmb\SeleksiCasisController::class, 'tpaSubmit'])->name('tpa.submit');
+        Route::get('/selesai', [\App\Http\Controllers\Spmb\SeleksiCasisController::class, 'selesaiView'])->name('selesai');
+    });
+});
+
+// ============================================================
 // REDIRECT SHORTENER URL (CATCH-ALL)
 // ============================================================
 Route::get('/{code}', [\App\Http\Controllers\ShortUrlController::class, 'redirect'])

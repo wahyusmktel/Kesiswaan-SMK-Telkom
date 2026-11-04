@@ -47,7 +47,7 @@ class SpmbTpaSeeder extends Seeder
                         'pembahasan' => 'Konvergen berarti memusat menuju satu titik. Lawan katanya adalah divergen yang bermakna menyebar/memencar.',
                     ],
                     [
-                        'pertanyaan' => 'Bacalah paragraf berikut:\n"Perkembangan teknologi kecerdasan buatan (AI) telah mengubah berbagai sektor kehidupan, mulai dari otomasi industri, medis, hingga pendidikan. Di bidang pendidikan, AI mampu memberikan pembelajaran adaptif yang menyesuaikan gaya belajar masing-masing peserta didik secara personal."\n\nIde pokok paragraf di atas adalah...',
+                        'pertanyaan' => "Bacalah paragraf berikut:\n\"Perkembangan teknologi kecerdasan buatan (AI) telah mengubah berbagai sektor kehidupan, mulai dari otomasi industri, medis, hingga pendidikan. Di bidang pendidikan, AI mampu memberikan pembelajaran adaptif yang menyesuaikan gaya belajar masing-masing peserta didik secara personal.\"\n\nIde pokok paragraf di atas adalah...",
                         'opsi_a' => 'AI hanya bermanfaat untuk dunia medis dan industri.',
                         'opsi_b' => 'Perkembangan AI mengubah berbagai sektor kehidupan manusia.',
                         'opsi_c' => 'Siswa tidak perlu guru karena ada teknologi kecerdasan buatan.',
@@ -92,7 +92,7 @@ class SpmbTpaSeeder extends Seeder
                 'warna_tema' => 'blue',
                 'soals' => [
                     [
-                        'pertanyaan' => 'Perhatikan deret pola angka berikut:\n3, 7, 15, 31, 63, ...\nAngka berikutnya pada barisan tersebut adalah...',
+                        'pertanyaan' => "Perhatikan deret pola angka berikut:\n3, 7, 15, 31, 63, ...\nAngka berikutnya pada barisan tersebut adalah...",
                         'opsi_a' => '95',
                         'opsi_b' => '126',
                         'opsi_c' => '127',
@@ -159,7 +159,7 @@ class SpmbTpaSeeder extends Seeder
                 'warna_tema' => 'purple',
                 'soals' => [
                     [
-                        'pertanyaan' => 'Choose the correct form of verb to complete the sentence:\n"She ... to join SMK Telkom Lampung since she was in junior high school."',
+                        'pertanyaan' => "Choose the correct form of verb to complete the sentence:\n\"She ... to join SMK Telkom Lampung since she was in junior high school.\"",
                         'opsi_a' => 'has wanted',
                         'opsi_b' => 'is wanting',
                         'opsi_c' => 'wanted',
@@ -170,7 +170,7 @@ class SpmbTpaSeeder extends Seeder
                         'pembahasan' => 'Kata keterangan waktu "since she was in junior high school" mengindikasikan kegiatan yang dimulai di masa lampau dan masih berlanjut hingga sekarang (Present Perfect Tense: has/have + V3).',
                     ],
                     [
-                        'pertanyaan' => 'Rian: "I just won first place in the National Web Programming Competition!"\nAndi: "..."\nWhat is the most suitable response from Andi?',
+                        'pertanyaan' => "Rian: \"I just won first place in the National Web Programming Competition!\"\nAndi: \"...\"\nWhat is the most suitable response from Andi?",
                         'opsi_a' => 'I am really sorry to hear that.',
                         'opsi_b' => 'Congratulations! You really deserve it after practicing so hard.',
                         'opsi_c' => 'Never mind, better luck next time.',
@@ -181,7 +181,7 @@ class SpmbTpaSeeder extends Seeder
                         'pembahasan' => 'Respon yang sopan dan tepat atas pencapaian seseorang adalah ucapan selamat (congratulations).',
                     ],
                     [
-                        'pertanyaan' => 'Read the announcement:\n"All prospective students taking the entrance test are required to bring their examination cards and stationery. Electronic devices such as smartwatches must be kept inside bags."\n\nWhat item must NOT be used during the test?',
+                        'pertanyaan' => "Read the announcement:\n\"All prospective students taking the entrance test are required to bring their examination cards and stationery. Electronic devices such as smartwatches must be kept inside bags.\"\n\nWhat item must NOT be used during the test?",
                         'opsi_a' => 'Pencil',
                         'opsi_b' => 'Eraser',
                         'opsi_c' => 'Examination card',
@@ -192,7 +192,7 @@ class SpmbTpaSeeder extends Seeder
                         'pembahasan' => 'Disebutkan secara eksplisit bahwa perangkat elektronik seperti smartwatch harus disimpan di dalam tas selama tes.',
                     ],
                     [
-                        'pertanyaan' => 'Choose the synonym of the underlined word:\n"Technological innovations have made communication much more _convenient_ than before."',
+                        'pertanyaan' => "Choose the synonym of the underlined word:\n\"Technological innovations have made communication much more _convenient_ than before.\"",
                         'opsi_a' => 'Difficult',
                         'opsi_b' => 'Complicated',
                         'opsi_c' => 'Practical and easy',
@@ -203,7 +203,7 @@ class SpmbTpaSeeder extends Seeder
                         'pembahasan' => '"Convenient" bermakna praktis, mudah digunakan, atau nyaman (practical and easy).',
                     ],
                     [
-                        'pertanyaan' => 'Complete the sentence:\n"If the weather is fine tomorrow, the students ... their drone flight practice in the school yard."',
+                        'pertanyaan' => "Complete the sentence:\n\"If the weather is fine tomorrow, the students ... their drone flight practice in the school yard.\"",
                         'opsi_a' => 'would conduct',
                         'opsi_b' => 'will conduct',
                         'opsi_c' => 'conducted',
@@ -270,7 +270,7 @@ class SpmbTpaSeeder extends Seeder
                         'pembahasan' => 'Phishing adalah bentuk kejahatan siber berupa rekayasa sosial untuk memancing korban memberikan kredensial rahasia menggunakan identitas palsu.',
                     ],
                     [
-                        'pertanyaan' => 'Perhatikan potongan logika algoritma berikut:\n\nUmur = 16\nIF Umur >= 17 THEN\n    Status = "Bisa Buat KTP"\nELSE\n    Status = "Belum Bisa Buat KTP"\nENDIF\n\nNilai akhir dari variabel Status adalah...',
+                        'pertanyaan' => "Perhatikan potongan logika algoritma berikut:\n\nUmur = 16\nIF Umur >= 17 THEN\n    Status = \"Bisa Buat KTP\"\nELSE\n    Status = \"Belum Bisa Buat KTP\"\nENDIF\n\nNilai akhir dari variabel Status adalah...",
                         'opsi_a' => '"Bisa Buat KTP"',
                         'opsi_b' => '"Belum Bisa Buat KTP"',
                         'opsi_c' => 'Null / Kosong',
@@ -310,9 +310,9 @@ class SpmbTpaSeeder extends Seeder
                 $kategori = SpmbTpaKategori::where('kode', $kategoriData['kode'])->first();
 
                 foreach ($soals as $idx => $soalData) {
-                    $soalData['pertanyaan'] = str_replace(['\r\n', '\n', '\r'], "\n", $soalData['pertanyaan']);
+                    $soalData['pertanyaan'] = SpmbTpaSoal::normalizeNewlines($soalData['pertanyaan']);
                     if (isset($soalData['pembahasan'])) {
-                        $soalData['pembahasan'] = str_replace(['\r\n', '\n', '\r'], "\n", $soalData['pembahasan']);
+                        $soalData['pembahasan'] = SpmbTpaSoal::normalizeNewlines($soalData['pembahasan']);
                     }
 
                     SpmbTpaSoal::updateOrCreate(

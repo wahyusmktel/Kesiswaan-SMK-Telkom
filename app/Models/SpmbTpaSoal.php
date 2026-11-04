@@ -36,37 +36,53 @@ class SpmbTpaSoal extends Model
         'is_active' => 'boolean',
     ];
 
+    protected $appends = [
+        'pertanyaan_html',
+        'gambar_url',
+    ];
+
     public function kategori(): BelongsTo
     {
         return $this->belongsTo(SpmbTpaKategori::class, 'spmb_tpa_kategori_id');
     }
 
+    public static function normalizeNewlines(?string $value): string
+    {
+        if ($value === null || $value === '') {
+            return '';
+        }
+        return str_replace(['\\r\\n', '\\n', '\\r', '\r\n', '\n', '\r'], "\n", $value);
+    }
+
     public function getPertanyaanAttribute($value): string
     {
-        return str_replace(['\r\n', '\n', '\r'], "\n", $value ?? '');
+        return self::normalizeNewlines($value);
     }
 
     public function setPertanyaanAttribute($value): void
     {
-        $this->attributes['pertanyaan'] = str_replace(['\r\n', '\n', '\r'], "\n", $value ?? '');
+        $this->attributes['pertanyaan'] = self::normalizeNewlines($value);
     }
 
     public function getPembahasanAttribute($value): ?string
     {
-        return $value !== null ? str_replace(['\r\n', '\n', '\r'], "\n", $value) : null;
+        return $value !== null ? self::normalizeNewlines($value) : null;
     }
 
     public function setPembahasanAttribute($value): void
     {
-        $this->attributes['pembahasan'] = $value !== null ? str_replace(['\r\n', '\n', '\r'], "\n", $value) : null;
+        $this->attributes['pembahasan'] = $value !== null ? self::normalizeNewlines($value) : null;
     }
 
     public function getPertanyaanHtmlAttribute(): string
     {
         $val = $this->pertanyaan ?? '';
+        $val = self::normalizeNewlines($val);
+
         if (preg_match('/<[a-z][\s\S]*>/i', $val)) {
             return $val;
         }
+
         return nl2br(e($val));
     }
 
@@ -75,10 +91,11 @@ class SpmbTpaSoal extends Model
         if ($val === null || trim($val) === '') {
             return '';
         }
+        $val = self::normalizeNewlines($val);
         if (preg_match('/<[a-z][\s\S]*>/i', $val)) {
             return $val;
         }
-        return e($val);
+        return nl2br(e($val));
     }
 
     public function getGambarUrlAttribute(): ?string
