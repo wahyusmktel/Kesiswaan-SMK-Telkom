@@ -278,15 +278,11 @@
         </div>
     </div>
 
-    @push('scripts')
     <script>
         function formatTpaContent(text) {
             if (!text) return '';
             let res = String(text).replace(/\\r\\n|\\n|\\r/g, "\n");
-            if (!/<[a-z][\s\S]*>/i.test(res)) {
-                res = res.replace(/\r\n|\n|\r/g, '<br>');
-            }
-            return res;
+            return res.replace(/\r\n|\n|\r/g, '<br>');
         }
 
         function tpaExamEngine(soalList, existingAnswers, initialSeconds) {
@@ -376,7 +372,6 @@
             }
         }
     </script>
-    @endpush
 
 </body>
 </html>

@@ -80,7 +80,7 @@ class SpmbTpaSoal extends Model
         $val = self::normalizeNewlines($val);
 
         if (preg_match('/<[a-z][\s\S]*>/i', $val)) {
-            return $val;
+            return nl2br($val);
         }
 
         return nl2br(e($val));
@@ -93,7 +93,7 @@ class SpmbTpaSoal extends Model
         }
         $val = self::normalizeNewlines($val);
         if (preg_match('/<[a-z][\s\S]*>/i', $val)) {
-            return $val;
+            return nl2br($val);
         }
         return nl2br(e($val));
     }

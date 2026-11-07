@@ -49,12 +49,18 @@ class BimbinganLaporanController extends Controller
         ->whereNotNull('prakerin_rombel_id')
         ->where('status', 'aktif');
 
-        if (! $isSuperAdmin) {
-            if (! $guru) {
-                Alert::error('Akses Ditolak', 'Akun Anda tidak terhubung dengan data Master Guru.');
-                return redirect()->route('dashboard');
-            }
-            $penempatanQuery->where('master_guru_id', $guru->id);
+        if ($guru) {
+            $penempatanQuery->where(function ($q) use ($guru) {
+                $q->where('master_guru_id', $guru->id)
+                    ->orWhereHas('rombelPkl', function ($rq) use ($guru) {
+                        $rq->whereHas('pembimbingInternal', function ($iq) use ($guru) {
+                            $iq->where('master_guru_id', $guru->id);
+                        });
+                    });
+            });
+        } elseif (! $isSuperAdmin) {
+            Alert::error('Akses Ditolak', 'Akun Anda tidak terhubung dengan data Master Guru sebagai Pembimbing Sekolah.');
+            return redirect()->route('dashboard');
         }
 
         // Filter Pencarian
@@ -89,9 +95,7 @@ class BimbinganLaporanController extends Controller
         $penempatans = $penempatanQuery->latest()->paginate(12)->withQueryString();
 
         // Ambil daftar Rombel PKL untuk dropdown filter
-        if ($isSuperAdmin) {
-            $rombels = PrakerinRombel::with('industri')->where('status', 'aktif')->orderBy('nama_rombel')->get();
-        } else {
+        if ($guru) {
             $rombels = PrakerinRombel::with('industri')
                 ->where('status', 'aktif')
                 ->where(function ($q) use ($guru) {
@@ -103,6 +107,8 @@ class BimbinganLaporanController extends Controller
                 })
                 ->orderBy('nama_rombel')
                 ->get();
+        } else {
+            $rombels = PrakerinRombel::with('industri')->where('status', 'aktif')->orderBy('nama_rombel')->get();
         }
 
         // Pastikan setiap penempatan memiliki record bimbingan laporan
@@ -141,7 +147,8 @@ class BimbinganLaporanController extends Controller
             'totalSiswaBimbingan',
             'totalJudulDiajukan',
             'totalPerluReview',
-            'totalAccFinal'
+            'totalAccFinal',
+            'guru'
         ));
     }
 
@@ -607,13 +614,19 @@ class BimbinganLaporanController extends Controller
     private function authorizeAccess(PrakerinBimbinganLaporan $laporan): void
     {
         $user = Auth::user();
-        if ($user->hasRole('Super Admin')) {
+        $guru = $user->masterGuru;
+
+        if ($guru) {
+            $isAssigned = $laporan->penempatan->master_guru_id === $guru->id
+                || ($laporan->penempatan->rombelPkl?->pembimbingInternal?->master_guru_id === $guru->id);
+            if (! $isAssigned && ! $user->hasRole('Super Admin')) {
+                abort(403, 'Anda bukan guru pembimbing yang ditugaskan untuk siswa ini.');
+            }
             return;
         }
 
-        $guru = $user->masterGuru;
-        if (! $guru || $laporan->penempatan->master_guru_id !== $guru->id) {
-            abort(403, 'Anda bukan guru pembimbing yang ditugaskan untuk siswa ini.');
+        if (! $user->hasRole('Super Admin')) {
+            abort(403, 'Akses ditolak.');
         }
     }
 }
