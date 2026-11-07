@@ -2,11 +2,13 @@
 
 namespace App\Services;
 
+use App\Models\AppSetting;
 use App\Models\PrakerinBimbinganJudul;
 use App\Models\PrakerinBimbinganLaporan;
 use App\Models\PrakerinBimbinganTahap;
 use App\Models\UserDigitalSignature;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class PrakerinBeritaAcaraService
@@ -115,6 +117,7 @@ class PrakerinBeritaAcaraService
             'sig' => $sig,
             'qrCodeBase64' => $qrCodeBase64,
             'anotasis' => $tahap->anotasis,
+            'kopBase64' => $this->getKopSuratUkkBase64(),
         ]);
 
         $pdf->setPaper('A4', 'portrait');
@@ -211,6 +214,7 @@ class PrakerinBeritaAcaraService
             'guruUser' => $guruUser,
             'sig' => $sig,
             'qrCodeBase64' => $qrCodeBase64,
+            'kopBase64' => $this->getKopSuratUkkBase64(),
         ]);
 
         $pdf->setPaper('A4', 'portrait');
@@ -295,10 +299,24 @@ class PrakerinBeritaAcaraService
             'qrCodeBase64' => $qrCodeBase64,
             'tahaps' => $laporan->tahaps,
             'judulRiwayats' => $laporan->judulRiwayats->sortBy('pengajuan_ke'),
+            'kopBase64' => $this->getKopSuratUkkBase64(),
         ]);
 
         $pdf->setPaper('A4', 'portrait');
 
         return $pdf;
+    }
+
+    /**
+     * Ambil data kop surat UKK (yang diupload super admin) dalam bentuk Base64 Data URI.
+     */
+    public function getKopSuratUkkBase64(): ?string
+    {
+        $setting = AppSetting::first();
+        if ($setting) {
+            return $setting->getKopSuratUkkBase64();
+        }
+
+        return null;
     }
 }

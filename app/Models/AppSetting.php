@@ -59,4 +59,36 @@ class AppSetting extends Model
         'stella_ai_api_key',
         'stella_ai_image_api_key',
     ];
+
+    /**
+     * Ambil data kop surat UKK (yang diupload super admin) dalam bentuk Base64 Data URI.
+     */
+    public function getKopSuratUkkBase64(): ?string
+    {
+        if (! $this->kop_surat_ukk) {
+            return null;
+        }
+
+        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($this->kop_surat_ukk)) {
+            $kopData = \Illuminate\Support\Facades\Storage::disk('public')->get($this->kop_surat_ukk);
+            $kopMime = \Illuminate\Support\Facades\Storage::disk('public')->mimeType($this->kop_surat_ukk) ?: 'image/png';
+            return 'data:' . $kopMime . ';base64,' . base64_encode($kopData);
+        }
+
+        if (file_exists(storage_path('app/public/' . $this->kop_surat_ukk))) {
+            $fullPath = storage_path('app/public/' . $this->kop_surat_ukk);
+            $kopData = file_get_contents($fullPath);
+            $kopMime = mime_content_type($fullPath) ?: 'image/png';
+            return 'data:' . $kopMime . ';base64,' . base64_encode($kopData);
+        }
+
+        if (file_exists(public_path('storage/' . $this->kop_surat_ukk))) {
+            $fullPath = public_path('storage/' . $this->kop_surat_ukk);
+            $kopData = file_get_contents($fullPath);
+            $kopMime = mime_content_type($fullPath) ?: 'image/png';
+            return 'data:' . $kopMime . ';base64,' . base64_encode($kopData);
+        }
+
+        return null;
+    }
 }

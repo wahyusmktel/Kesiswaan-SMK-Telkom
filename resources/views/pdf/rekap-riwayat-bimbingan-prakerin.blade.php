@@ -3,6 +3,12 @@
 <head>
     <meta charset="utf-8">
     <title>Kartu Riwayat Bimbingan Laporan Prakerin - {{ $siswa?->nama_lengkap }}</title>
+    @php
+        if (!isset($kopBase64)) {
+            $appSettingKop = \App\Models\AppSetting::first();
+            $kopBase64 = $appSettingKop ? $appSettingKop->getKopSuratUkkBase64() : null;
+        }
+    @endphp
     <style>
         @page {
             margin: 1.5cm 2cm 1.5cm 2cm;
@@ -12,6 +18,20 @@
             font-size: 9.5pt;
             color: #1f2937;
             line-height: 1.4;
+        }
+        /* Kop Surat Banner dari Super Admin */
+        .kop-banner-wrap {
+            margin-top: -0.6cm;
+            margin-left: -0.6cm;
+            margin-right: -0.6cm;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        .kop-banner-img {
+            width: 100%;
+            height: auto;
+            max-height: 125px;
+            display: block;
         }
         .header-table {
             width: 100%;
@@ -176,16 +196,22 @@
     </style>
 </head>
 <body>
-    {{-- Header Kop --}}
-    <table class="header-table">
-        <tr>
-            <td style="width: 100%; text-align: center;">
-                <h1 class="header-title">SMK TELKOM LAMPUNG</h1>
-                <h2 class="header-subtitle">KARTU KENDALI BIMBINGAN LAPORAN PRAKERIN</h2>
-                <p class="header-address">Jl. Purnawirawan No. 01, Pasir Gintung, Kec. Tj. Karang Barat, Kota Bandar Lampung</p>
-            </td>
-        </tr>
-    </table>
+    {{-- Header Kop Surat (Menggunakan Kop Surat UKK dari Pengaturan Super Admin) --}}
+    @if(!empty($kopBase64))
+        <div class="kop-banner-wrap">
+            <img src="{{ $kopBase64 }}" alt="Kop Surat Resmi" class="kop-banner-img">
+        </div>
+    @else
+        <table class="header-table">
+            <tr>
+                <td style="width: 100%; text-align: center;">
+                    <h1 class="header-title">SMK TELKOM LAMPUNG</h1>
+                    <h2 class="header-subtitle">KARTU KENDALI BIMBINGAN LAPORAN PRAKERIN</h2>
+                    <p class="header-address">Jl. Purnawirawan No. 01, Pasir Gintung, Kec. Tj. Karang Barat, Kota Bandar Lampung</p>
+                </td>
+            </tr>
+        </table>
+    @endif
 
     <div class="doc-title-container">
         <h3 class="doc-title">LEMBAR RIWAYAT & KEMAJUAN BIMBINGAN PRAKERIN</h3>
