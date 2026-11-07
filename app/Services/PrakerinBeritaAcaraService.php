@@ -31,8 +31,9 @@ class PrakerinBeritaAcaraService
         $tahap->load([
             'laporan.penempatan.siswa.rombels.kelas',
             'laporan.penempatan.industri',
-            'laporan.penempatan.guruPembimbing.user',
-            'reviewer',
+            'laporan.penempatan.guruPembimbing.dapodikGuru',
+            'laporan.penempatan.guruPembimbing.user.masterGuru.dapodikGuru',
+            'reviewer.masterGuru.dapodikGuru',
             'anotasis',
         ]);
 
@@ -40,6 +41,7 @@ class PrakerinBeritaAcaraService
         $penempatan = $laporan->penempatan;
         $guru = $penempatan->guruPembimbing;
         $guruUser = ($beritaAcara?->pembimbing) ?? ($guru?->user ?? $tahap->reviewer);
+        $guruNip = $guru?->dapodikGuru?->nip ?? $guruUser?->masterGuru?->dapodikGuru?->nip;
 
         // Ambil tanda tangan digital guru jika ada
         $sig = $guruUser ? UserDigitalSignature::where('user_id', $guruUser->id)->first() : null;
@@ -114,6 +116,7 @@ class PrakerinBeritaAcaraService
             'kelas' => $penempatan->siswa?->rombels->first()?->kelas?->nama_kelas ?? 'XII',
             'guru' => $guru,
             'guruUser' => $guruUser,
+            'guruNip' => $guruNip,
             'sig' => $sig,
             'qrCodeBase64' => $qrCodeBase64,
             'anotasis' => $tahap->anotasis,
@@ -133,15 +136,17 @@ class PrakerinBeritaAcaraService
         $judul->load([
             'laporan.penempatan.siswa.rombels.kelas',
             'laporan.penempatan.industri',
-            'laporan.penempatan.guruPembimbing.user',
+            'laporan.penempatan.guruPembimbing.dapodikGuru',
+            'laporan.penempatan.guruPembimbing.user.masterGuru.dapodikGuru',
             'laporan.penempatan.rombelPkl',
-            'reviewer',
+            'reviewer.masterGuru.dapodikGuru',
         ]);
 
         $laporan = $judul->laporan;
         $penempatan = $laporan->penempatan;
         $guru = $penempatan->guruPembimbing;
         $guruUser = $judul->reviewer ?? $guru?->user;
+        $guruNip = $guru?->dapodikGuru?->nip ?? $guruUser?->masterGuru?->dapodikGuru?->nip;
 
         // Ambil tanda tangan digital guru jika ada
         $sig = $guruUser ? UserDigitalSignature::where('user_id', $guruUser->id)->first() : null;
@@ -212,6 +217,7 @@ class PrakerinBeritaAcaraService
             'kelas' => $penempatan->siswa?->rombels->first()?->kelas?->nama_kelas ?? 'XII',
             'guru' => $guru,
             'guruUser' => $guruUser,
+            'guruNip' => $guruNip,
             'sig' => $sig,
             'qrCodeBase64' => $qrCodeBase64,
             'kopBase64' => $this->getKopSuratUkkBase64(),
@@ -230,17 +236,19 @@ class PrakerinBeritaAcaraService
         $laporan->load([
             'penempatan.siswa.rombels.kelas',
             'penempatan.industri',
-            'penempatan.guruPembimbing.user',
+            'penempatan.guruPembimbing.dapodikGuru',
+            'penempatan.guruPembimbing.user.masterGuru.dapodikGuru',
             'penempatan.rombelPkl',
             'judulRiwayats.reviewer',
             'tahaps.anotasis',
             'tahaps.reviewer',
-            'accBy',
+            'accBy.masterGuru.dapodikGuru',
         ]);
 
         $penempatan = $laporan->penempatan;
         $guru = $penempatan->guruPembimbing;
         $guruUser = $guru?->user ?? $laporan->accBy;
+        $guruNip = $guru?->dapodikGuru?->nip ?? $guruUser?->masterGuru?->dapodikGuru?->nip;
 
         $sig = $guruUser ? UserDigitalSignature::where('user_id', $guruUser->id)->first() : null;
 
@@ -295,6 +303,7 @@ class PrakerinBeritaAcaraService
             'kelas' => $penempatan->siswa?->rombels->first()?->kelas?->nama_kelas ?? 'XII',
             'guru' => $guru,
             'guruUser' => $guruUser,
+            'guruNip' => $guruNip,
             'sig' => $sig,
             'qrCodeBase64' => $qrCodeBase64,
             'tahaps' => $laporan->tahaps,

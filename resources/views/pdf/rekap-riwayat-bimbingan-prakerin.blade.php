@@ -8,30 +8,41 @@
             $appSettingKop = \App\Models\AppSetting::first();
             $kopBase64 = $appSettingKop ? $appSettingKop->getKopSuratUkkBase64() : null;
         }
+        $guruNip = $guruNip ?? ($guru?->dapodikGuru?->nip ?? $guruUser?->masterGuru?->dapodikGuru?->nip);
     @endphp
     <style>
         @page {
-            margin: 1.5cm 2cm 1.5cm 2cm;
+            size: A4 portrait;
+            margin: 0;
+        }
+        * {
+            box-sizing: border-box;
         }
         body {
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            font-size: 9.5pt;
+            font-size: 9pt;
             color: #1f2937;
-            line-height: 1.4;
+            line-height: 1.35;
+            margin: 0;
+            padding: 0;
         }
-        /* Kop Surat Banner dari Super Admin */
+        /* Kop Surat Banner Edge-to-Edge dari Super Admin */
         .kop-banner-wrap {
-            margin-top: -0.6cm;
-            margin-left: -0.6cm;
-            margin-right: -0.6cm;
-            margin-bottom: 16px;
-            text-align: center;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            line-height: 0;
         }
         .kop-banner-img {
             width: 100%;
             height: auto;
             max-height: 125px;
             display: block;
+            margin: 0;
+            padding: 0;
+        }
+        .kop-fallback-wrap {
+            padding: 12mm 18mm 0 18mm;
         }
         .header-table {
             width: 100%;
@@ -57,12 +68,15 @@
             color: #6b7280;
             margin-top: 3px;
         }
+        .doc-container {
+            padding: 8px 18mm 20mm 18mm;
+        }
         .doc-title-container {
             text-align: center;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
         }
         .doc-title {
-            font-size: 12pt;
+            font-size: 11.5pt;
             font-weight: 800;
             text-transform: uppercase;
             text-decoration: underline;
@@ -72,15 +86,15 @@
         .info-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 14px;
+            margin-bottom: 12px;
         }
         .info-table td {
             padding: 3px 6px;
             vertical-align: top;
-            font-size: 9pt;
+            font-size: 8.5pt;
         }
         .info-label {
-            width: 24%;
+            width: 22%;
             color: #4b5563;
             font-weight: 600;
         }
@@ -89,35 +103,35 @@
             text-align: center;
         }
         .info-value {
-            width: 74%;
+            width: 76%;
             color: #111827;
             font-weight: 700;
         }
-        .history-table {
+        .bimbingan-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
-            margin-bottom: 15px;
+            margin-top: 6px;
+            margin-bottom: 12px;
         }
-        .history-table th {
+        .bimbingan-table th {
             background-color: #f3f4f6;
             border: 1px solid #d1d5db;
-            padding: 6px 8px;
-            font-size: 8.5pt;
-            text-align: left;
-            color: #111827;
+            padding: 5px 6px;
+            font-size: 8pt;
+            color: #374151;
             font-weight: 700;
+            text-align: left;
         }
-        .history-table td {
+        .bimbingan-table td {
             border: 1px solid #e5e7eb;
-            padding: 6px 8px;
-            font-size: 8.5pt;
+            padding: 5px 6px;
+            font-size: 8pt;
             vertical-align: top;
         }
         .badge-status {
             display: inline-block;
-            padding: 2px 6px;
-            border-radius: 4px;
+            padding: 2px 5px;
+            border-radius: 3px;
             font-size: 7.5pt;
             font-weight: 700;
             text-transform: uppercase;
@@ -125,17 +139,20 @@
         .badge-disetujui {
             background-color: #ecfdf5;
             color: #065f46;
+            border: 1px solid #a7f3d0;
         }
         .badge-revisi {
             background-color: #fef2f2;
             color: #991b1b;
+            border: 1px solid #fecaca;
         }
         .badge-diajukan {
             background-color: #eff6ff;
             color: #1e40af;
+            border: 1px solid #bfdbfe;
         }
         .signature-section {
-            margin-top: 20px;
+            margin-top: 15px;
             width: 100%;
         }
         .sig-box {
@@ -149,10 +166,10 @@
             color: #374151;
         }
         .sig-role {
-            font-size: 9pt;
+            font-size: 8.5pt;
             font-weight: 700;
             color: #111827;
-            margin-bottom: 4px;
+            margin-bottom: 5px;
         }
         .sig-qr {
             margin: 4px auto;
@@ -166,243 +183,249 @@
         }
         .sig-nip {
             font-size: 8pt;
-            color: #6b7280;
+            color: #4b5563;
+            margin-top: 2px;
         }
         .clear {
             clear: both;
         }
         .final-acc-banner {
-            border: 2px solid #059669;
+            border: 1.5px solid #059669;
             background-color: #f0fdf4;
-            padding: 10px 14px;
-            border-radius: 6px;
-            margin-top: 10px;
-            margin-bottom: 12px;
+            padding: 8px 12px;
+            border-radius: 5px;
+            margin-top: 8px;
+            margin-bottom: 10px;
         }
         .final-acc-title {
             color: #065f46;
             font-weight: 800;
-            font-size: 10pt;
+            font-size: 9.5pt;
             text-transform: uppercase;
         }
-        .watermark {
+        .footer-watermark {
+            position: fixed;
+            bottom: 8mm;
+            left: 18mm;
+            right: 18mm;
+            text-align: center;
             font-size: 7.5pt;
             color: #9ca3af;
             border-top: 1px dashed #e5e7eb;
-            padding-top: 6px;
-            margin-top: 20px;
-            text-align: center;
+            padding-top: 4px;
+            line-height: 1.35;
         }
     </style>
 </head>
 <body>
-    {{-- Header Kop Surat (Menggunakan Kop Surat UKK dari Pengaturan Super Admin) --}}
+    {{-- Header Kop Surat Edge-to-Edge (Menggunakan Kop Surat UKK dari Pengaturan Super Admin) --}}
     @if(!empty($kopBase64))
         <div class="kop-banner-wrap">
             <img src="{{ $kopBase64 }}" alt="Kop Surat Resmi" class="kop-banner-img">
         </div>
     @else
-        <table class="header-table">
-            <tr>
-                <td style="width: 100%; text-align: center;">
-                    <h1 class="header-title">SMK TELKOM LAMPUNG</h1>
-                    <h2 class="header-subtitle">KARTU KENDALI BIMBINGAN LAPORAN PRAKERIN</h2>
-                    <p class="header-address">Jl. Purnawirawan No. 01, Pasir Gintung, Kec. Tj. Karang Barat, Kota Bandar Lampung</p>
-                </td>
-            </tr>
-        </table>
-    @endif
-
-    <div class="doc-title-container">
-        <h3 class="doc-title">LEMBAR RIWAYAT & KEMAJUAN BIMBINGAN PRAKERIN</h3>
-    </div>
-
-    {{-- Data Siswa & PKL --}}
-    <table class="info-table">
-        <tr>
-            <td class="info-label">Nama Siswa</td>
-            <td class="info-colon">:</td>
-            <td class="info-value">{{ $siswa?->nama_lengkap ?? '-' }}</td>
-        </tr>
-        <tr>
-            <td class="info-label">NIS / Kelas</td>
-            <td class="info-colon">:</td>
-            <td class="info-value">{{ $siswa?->nis ?? '-' }} / {{ $kelas }}</td>
-        </tr>
-        <tr>
-            <td class="info-label">Tempat PKL (Industri)</td>
-            <td class="info-colon">:</td>
-            <td class="info-value">{{ $penempatan->industri?->nama_industri ?? '-' }} ({{ $penempatan->industri?->kota ?? 'Lampung' }})</td>
-        </tr>
-        <tr>
-            <td class="info-label">Judul Laporan PKL</td>
-            <td class="info-colon">:</td>
-            <td class="info-value" style="color:#b91c1c;">"{{ $laporan->judul_laporan ?? 'Belum Ditentukan' }}"</td>
-        </tr>
-        <tr>
-            <td class="info-label">Guru Pembimbing</td>
-            <td class="info-colon">:</td>
-            <td class="info-value">{{ $guru?->nama_lengkap ?? $guruUser?->name ?? '-' }}</td>
-        </tr>
-    </table>
-
-    {{-- Status ACC Final jika sudah ACC --}}
-    @if($laporan->status_laporan === 'selesai_acc')
-        <div class="final-acc-banner">
-            <div class="final-acc-title">✓ LAPORAN PRAKERIN TELAH DI-ACC (SELESAI)</div>
-            <p style="margin: 3px 0 0 0; font-size: 8.5pt; color: #047857;">
-                Laporan telah disetujui secara tuntas oleh Guru Pembimbing pada <strong>{{ $laporan->acc_at?->isoFormat('D MMMM YYYY') }}</strong> dan dinyatakan memenuhi syarat pengesahan.
-                @if($laporan->catatan_acc)
-                    <br><em>"{{ $laporan->catatan_acc }}"</em>
-                @endif
-            </p>
+        <div class="kop-fallback-wrap">
+            <table class="header-table">
+                <tr>
+                    <td style="width: 100%; text-align: center;">
+                        <h1 class="header-title">SMK TELKOM LAMPUNG</h1>
+                        <h2 class="header-subtitle">KARTU KENDALI BIMBINGAN LAPORAN PRAKERIN</h2>
+                        <p class="header-address">Jl. Purnawirawan No. 01, Pasir Gintung, Kec. Tj. Karang Barat, Kota Bandar Lampung</p>
+                    </td>
+                </tr>
+            </table>
         </div>
     @endif
 
-    {{-- Tabel Riwayat Bimbingan Bab per Bab --}}
-    <p style="font-weight: 700; margin-bottom: 4px; font-size: 9pt;">Riwayat Pemeriksaan Per Bab / Tahapan:</p>
-    <table class="history-table">
-        <thead>
+    <div class="doc-container">
+        <div class="doc-title-container">
+            <h3 class="doc-title">LEMBAR RIWAYAT & KEMAJUAN BIMBINGAN PRAKERIN</h3>
+        </div>
+
+        {{-- Data Siswa & PKL --}}
+        <table class="info-table">
             <tr>
-                <th style="width: 5%; text-align: center;">No</th>
-                <th style="width: 25%;">Bab / Materi Bimbingan</th>
-                <th style="width: 14%; text-align: center;">Tgl Pengajuan</th>
-                <th style="width: 14%; text-align: center;">Tgl Review</th>
-                <th style="width: 14%; text-align: center;">Status</th>
-                <th style="width: 28%;">Catatan & Arahan Pembimbing</th>
+                <td class="info-label">Nama Siswa</td>
+                <td class="info-colon">:</td>
+                <td class="info-value">{{ $siswa?->nama_lengkap ?? '-' }}</td>
             </tr>
-        </thead>
-        <tbody>
-            @php $rowNo = 1; @endphp
-            {{-- Entri Riwayat Pengajuan & Review Judul --}}
-            @if(isset($judulRiwayats) && $judulRiwayats->count() > 0)
-                @foreach($judulRiwayats as $jRiwayat)
-                    <tr>
+            <tr>
+                <td class="info-label">NIS / NISN</td>
+                <td class="info-colon">:</td>
+                <td class="info-value">{{ $siswa?->nis ?? '-' }} / {{ $siswa?->nisn ?? '-' }}</td>
+            </tr>
+            <tr>
+                <td class="info-label">Kelas / Rombel</td>
+                <td class="info-colon">:</td>
+                <td class="info-value">{{ $kelas }} (Rombel PKL: {{ $penempatan->rombelPkl?->nama_rombel ?? '-' }})</td>
+            </tr>
+            <tr>
+                <td class="info-label">Industri Mitra PKL</td>
+                <td class="info-colon">:</td>
+                <td class="info-value">{{ $penempatan->industri?->nama_industri ?? '-' }} ({{ $penempatan->industri?->kota ?? 'Lampung' }})</td>
+            </tr>
+            <tr>
+                <td class="info-label">Guru Pembimbing</td>
+                <td class="info-colon">:</td>
+                <td class="info-value">{{ $guru?->nama_lengkap ?? $guruUser?->name ?? 'Guru Pembimbing Sekolah' }}</td>
+            </tr>
+            <tr>
+                <td class="info-label">Judul Laporan Prakerin</td>
+                <td class="info-colon">:</td>
+                <td class="info-value" style="color: #b91c1c;">"{{ $laporan->judul_laporan ?? 'Belum ada judul laporan' }}"</td>
+            </tr>
+        </table>
+
+        {{-- Banner Jika Laporan Selesai di-ACC --}}
+        @if($laporan->status_laporan === 'selesai_acc')
+            <div class="final-acc-banner">
+                <div class="final-acc-title">&#10003; LAPORAN PRAKERIN TELAH DI-ACC FINAL</div>
+                <div style="font-size: 8pt; color: #047857; margin-top: 2px;">
+                    Laporan telah dinyatakan lengkap dan memenuhi seluruh standar bimbingan. Disahkan pada: <strong>{{ $laporan->acc_at ? $laporan->acc_at->isoFormat('D MMMM YYYY, HH:mm') : '-' }} WIB</strong>.
+                </div>
+            </div>
+        @endif
+
+        {{-- Tabel Log Kemajuan Bimbingan (Termasuk Riwayat Judul & Seluruh Bab) --}}
+        <table class="bimbingan-table">
+            <thead>
+                <tr>
+                    <th style="width: 5%; text-align: center;">No</th>
+                    <th style="width: 27%;">Materi / Tahapan Bimbingan</th>
+                    <th style="width: 14%; text-align: center;">Tgl Pengajuan</th>
+                    <th style="width: 14%; text-align: center;">Tgl Review</th>
+                    <th style="width: 13%; text-align: center;">Status</th>
+                    <th style="width: 27%;">Catatan Pembimbing</th>
+                </tr>
+            </thead>
+            <tbody>
+                @php $rowNo = 1; @endphp
+
+                {{-- Riwayat Pengajuan & Review Judul --}}
+                @if(isset($judulRiwayats) && $judulRiwayats->count() > 0)
+                    @foreach($judulRiwayats as $jHistory)
+                        <tr style="background-color: #fafaf9;">
+                            <td style="text-align: center; font-weight: 700;">{{ $rowNo++ }}</td>
+                            <td>
+                                <strong>Pengajuan Judul (Ke-{{ $jHistory->pengajuan_ke }})</strong>
+                                <div style="font-size: 7.5pt; color: #4b5563; margin-top: 1px; font-style: italic;">
+                                    "{{ $jHistory->judul_laporan }}"
+                                </div>
+                            </td>
+                            <td style="text-align: center;">
+                                {{ $jHistory->diajukan_at ? $jHistory->diajukan_at->format('d/m/Y') : '-' }}
+                            </td>
+                            <td style="text-align: center;">
+                                {{ $jHistory->reviewed_at ? $jHistory->reviewed_at->format('d/m/Y') : '-' }}
+                            </td>
+                            <td style="text-align: center;">
+                                @if($jHistory->status === 'disetujui')
+                                    <span class="badge-status badge-disetujui">Disetujui</span>
+                                @elseif($jHistory->status === 'ditolak')
+                                    <span class="badge-status badge-revisi">Ditolak</span>
+                                @else
+                                    <span class="badge-status badge-diajukan">Ditinjau</span>
+                                @endif
+                            </td>
+                            <td>
+                                {{ $jHistory->catatan_pembimbing ?: ($jHistory->status === 'disetujui' ? 'Judul disetujui untuk penulisan laporan.' : '-') }}
+                            </td>
+                        </tr>
+                    @endforeach
+                @elseif($laporan->judul_laporan)
+                    <tr style="background-color: #fafaf9;">
                         <td style="text-align: center; font-weight: 700;">{{ $rowNo++ }}</td>
                         <td>
-                            <strong>Tahap 1: Pengajuan Judul Laporan (Ke-{{ $jRiwayat->pengajuan_ke }})</strong>
-                            <div style="font-size: 8pt; color: #111827; margin-top: 2px;">
-                                "{{ $jRiwayat->judul_laporan }}"
+                            <strong>Pengajuan Judul Laporan</strong>
+                            <div style="font-size: 7.5pt; color: #4b5563; margin-top: 1px; font-style: italic;">
+                                "{{ $laporan->judul_laporan }}"
                             </div>
-                            @if($jRiwayat->nomor_berita_acara)
-                                <div style="font-size: 7pt; color: #6b7280; margin-top: 2px;">
-                                    No. BA: {{ $jRiwayat->nomor_berita_acara }}
-                                </div>
-                            @endif
                         </td>
                         <td style="text-align: center;">
-                            {{ $jRiwayat->diajukan_at?->format('d/m/Y') ?? '-' }}
+                            {{ $laporan->judul_diajukan_at?->format('d/m/Y') ?? '-' }}
                         </td>
                         <td style="text-align: center;">
-                            {{ $jRiwayat->reviewed_at?->format('d/m/Y') ?? '-' }}
+                            {{ $laporan->judul_reviewed_at?->format('d/m/Y') ?? '-' }}
                         </td>
                         <td style="text-align: center;">
-                            @if($jRiwayat->status === 'disetujui')
+                            @if($laporan->status_judul === 'disetujui')
                                 <span class="badge-status badge-disetujui">Disetujui</span>
-                            @elseif($jRiwayat->status === 'ditolak')
+                            @elseif($laporan->status_judul === 'ditolak')
                                 <span class="badge-status badge-revisi">Ditolak</span>
                             @else
                                 <span class="badge-status badge-diajukan">Ditinjau</span>
                             @endif
                         </td>
                         <td>
-                            {{ $jRiwayat->catatan_pembimbing ?? ($jRiwayat->status === 'disetujui' ? 'Judul telah disetujui untuk penulisan laporan.' : '-') }}
+                            {{ $laporan->catatan_judul ?? ($laporan->status_judul === 'disetujui' ? 'Judul telah disetujui untuk penulisan laporan.' : '-') }}
                         </td>
                     </tr>
-                @endforeach
-            @elseif($laporan->judul_laporan)
-                <tr>
-                    <td style="text-align: center; font-weight: 700;">{{ $rowNo++ }}</td>
-                    <td>
-                        <strong>Tahap 1: Pengajuan Judul Laporan</strong>
-                        <div style="font-size: 8pt; color: #111827; margin-top: 2px;">
-                            "{{ $laporan->judul_laporan }}"
-                        </div>
-                    </td>
-                    <td style="text-align: center;">
-                        {{ $laporan->judul_diajukan_at?->format('d/m/Y') ?? '-' }}
-                    </td>
-                    <td style="text-align: center;">
-                        {{ $laporan->judul_reviewed_at?->format('d/m/Y') ?? '-' }}
-                    </td>
-                    <td style="text-align: center;">
-                        @if($laporan->status_judul === 'disetujui')
-                            <span class="badge-status badge-disetujui">Disetujui</span>
-                        @elseif($laporan->status_judul === 'ditolak')
-                            <span class="badge-status badge-revisi">Ditolak</span>
-                        @else
-                            <span class="badge-status badge-diajukan">Ditinjau</span>
-                        @endif
-                    </td>
-                    <td>
-                        {{ $laporan->catatan_judul ?? ($laporan->status_judul === 'disetujui' ? 'Judul telah disetujui untuk penulisan laporan.' : '-') }}
-                    </td>
-                </tr>
-            @endif
+                @endif
 
-            {{-- Entri Bab Laporan --}}
-            @forelse($tahaps as $tahap)
-                <tr>
-                    <td style="text-align: center; font-weight: 700;">{{ $rowNo++ }}</td>
-                    <td>
-                        <strong>{{ $tahap->judul_tahap }}</strong>
-                        @if($tahap->anotasis->count() > 0)
-                            <div style="font-size: 7.5pt; color: #b91c1c; margin-top: 2px;">
-                                ({{ $tahap->anotasis->count() }} Poin Coretan Anotasi)
-                            </div>
-                        @endif
-                    </td>
-                    <td style="text-align: center;">
-                        {{ $tahap->diajukan_at?->format('d/m/Y') ?? '-' }}
-                    </td>
-                    <td style="text-align: center;">
-                        {{ $tahap->reviewed_at?->format('d/m/Y') ?? '-' }}
-                    </td>
-                    <td style="text-align: center;">
-                        @if($tahap->status === 'disetujui')
-                            <span class="badge-status badge-disetujui">Disetujui</span>
-                        @elseif($tahap->status === 'perlu_revisi')
-                            <span class="badge-status badge-revisi">Perlu Revisi</span>
-                        @elseif($tahap->status === 'diajukan')
-                            <span class="badge-status badge-diajukan">Ditinjau</span>
-                        @else
-                            <span class="badge-status" style="background:#f3f4f6; color:#6b7280;">{{ ucfirst(str_replace('_', ' ', $tahap->status)) }}</span>
-                        @endif
-                    </td>
-                    <td>
-                        {{ $tahap->catatan_pembimbing ?? ($tahap->status === 'disetujui' ? 'Bab telah sesuai & disetujui.' : '-') }}
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="6" style="text-align: center; color: #9ca3af; padding: 15px;">Belum ada riwayat bimbingan bab.</td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
+                {{-- Entri Bab Laporan --}}
+                @forelse($tahaps as $tahap)
+                    <tr>
+                        <td style="text-align: center; font-weight: 700;">{{ $rowNo++ }}</td>
+                        <td>
+                            <strong>{{ $tahap->judul_tahap }}</strong>
+                            @if($tahap->anotasis->count() > 0)
+                                <div style="font-size: 7.5pt; color: #b91c1c; margin-top: 2px;">
+                                    ({{ $tahap->anotasis->count() }} Poin Coretan Anotasi)
+                                </div>
+                            @endif
+                        </td>
+                        <td style="text-align: center;">
+                            {{ $tahap->diajukan_at?->format('d/m/Y') ?? '-' }}
+                        </td>
+                        <td style="text-align: center;">
+                            {{ $tahap->reviewed_at?->format('d/m/Y') ?? '-' }}
+                        </td>
+                        <td style="text-align: center;">
+                            @if($tahap->status === 'disetujui')
+                                <span class="badge-status badge-disetujui">Disetujui</span>
+                            @elseif($tahap->status === 'perlu_revisi')
+                                <span class="badge-status badge-revisi">Perlu Revisi</span>
+                            @elseif($tahap->status === 'diajukan')
+                                <span class="badge-status badge-diajukan">Ditinjau</span>
+                            @else
+                                <span class="badge-status" style="background:#f3f4f6; color:#6b7280;">{{ ucfirst(str_replace('_', ' ', $tahap->status)) }}</span>
+                            @endif
+                        </td>
+                        <td>
+                            {{ $tahap->catatan_pembimbing ?? ($tahap->status === 'disetujui' ? 'Bab telah sesuai & disetujui.' : '-') }}
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: #9ca3af; padding: 15px;">Belum ada riwayat bimbingan bab.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
 
-    {{-- Pengesahan Digital Pembimbing --}}
-    <div class="signature-section">
-        <div class="sig-box">
-            <p class="sig-date">Bandar Lampung, {{ $laporan->acc_at ? $laporan->acc_at->isoFormat('D MMMM YYYY') : now()->isoFormat('D MMMM YYYY') }}</p>
-            <p class="sig-role">Guru Pembimbing Internal,</p>
+        {{-- Pengesahan Digital Pembimbing --}}
+        <div class="signature-section">
+            <div class="sig-box">
+                <p class="sig-date">Pringsewu, {{ $laporan->acc_at ? $laporan->acc_at->isoFormat('D MMMM YYYY') : now()->isoFormat('D MMMM YYYY') }}</p>
+                <p class="sig-role">Guru Pembimbing Internal,</p>
 
-            <div class="sig-qr">
-                <img src="{{ $qrCodeBase64 }}" width="85" height="85" alt="QR Digital Signature">
+                <div class="sig-qr">
+                    <img src="{{ $qrCodeBase64 }}" width="80" height="80" alt="QR Digital Signature">
+                </div>
+
+                <p class="sig-name">{{ $guru?->nama_lengkap ?? $guruUser?->name ?? 'Guru Pembimbing' }}</p>
+                <p class="sig-nip">
+                    NIP: {{ ($guruNip && trim($guruNip) !== '') ? $guruNip : '-' }}
+                </p>
             </div>
-
-            <p class="sig-name">{{ $guru?->nama_lengkap ?? $guruUser?->name ?? 'Guru Pembimbing' }}</p>
-            <p class="sig-nip">
-                {{ $guru?->kode_guru ? 'Kode Guru: ' . $guru->kode_guru : ($guru?->nik ? 'NIK: ' . $guru->nik : 'Tanda Tangan Digital Terverifikasi') }}
-            </p>
+            <div class="clear"></div>
         </div>
-        <div class="clear"></div>
     </div>
 
-    {{-- Watermark --}}
-    <div class="watermark">
-        Dokumen ini sah dan diterbitkan secara digital melalui Sistem Informasi SMK Telkom Lampung.<br>
-        Dapat dijadikan lampiran portofolio resmi laporan Praktik Kerja Lapangan (Prakerin).
+    {{-- Watermark / Validitas di Paling Bawah Dokumen --}}
+    <div class="footer-watermark">
+        Dokumen ini diterbitkan secara otomatis dan sah melalui Sistem Informasi Akademik & Kesiswaan SMK Telkom Lampung.<br>
+        Keaslian dokumen dapat diverifikasi dengan memindai QR Code di atas.
     </div>
 </body>
 </html>
