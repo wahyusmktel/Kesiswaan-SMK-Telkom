@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <title>Berita Acara Bimbingan Laporan Prakerin - {{ $siswa?->nama_lengkap }}</title>
     @php
+        \Carbon\Carbon::setLocale('id');
         if (!isset($kopBase64)) {
             $appSettingKop = \App\Models\AppSetting::first();
             $kopBase64 = $appSettingKop ? $appSettingKop->getKopSuratUkkBase64() : null;
@@ -247,7 +248,7 @@
         </div>
 
         <p style="margin-bottom: 12px; font-size: 9.5pt;">
-            Pada hari ini, <strong>{{ $tanggalReview ? $tanggalReview->isoFormat('dddd, D MMMM YYYY') : now()->isoFormat('dddd, D MMMM YYYY') }}</strong>, telah dilaksanakan sesi bimbingan dan pemeriksaan dokumen laporan Praktik Kerja Lapangan (Prakerin) untuk peserta didik:
+            Pada hari ini, <strong>{{ ($tanggalReview ? $tanggalReview : now())->translatedFormat('l, d F Y') }}</strong>, telah dilaksanakan sesi bimbingan dan pemeriksaan dokumen laporan Praktik Kerja Lapangan (Prakerin) untuk peserta didik:
         </p>
 
         {{-- Data Peserta Didik --}}
@@ -291,12 +292,12 @@
             <tr>
                 <td class="info-label">Tanggal Pengajuan Siswa</td>
                 <td class="info-colon">:</td>
-                <td class="info-value">{{ $tahap->diajukan_at?->isoFormat('D MMMM YYYY, HH:mm') ?? '-' }} WIB</td>
+                <td class="info-value">{{ $tahap->diajukan_at ? $tahap->diajukan_at->translatedFormat('d F Y, HH:mm') . ' WIB' : '-' }}</td>
             </tr>
             <tr>
                 <td class="info-label">Tanggal Pemeriksaan Pembimbing</td>
                 <td class="info-colon">:</td>
-                <td class="info-value">{{ $tanggalReview ? $tanggalReview->isoFormat('D MMMM YYYY, HH:mm') : now()->isoFormat('D MMMM YYYY, HH:mm') }} WIB</td>
+                <td class="info-value">{{ ($tanggalReview ? $tanggalReview : now())->translatedFormat('d F Y, HH:mm') }} WIB</td>
             </tr>
             <tr>
                 <td class="info-label">Status Keputusan</td>
@@ -348,7 +349,7 @@
         {{-- Tanda Tangan Digital Guru Pembimbing --}}
         <div class="signature-section">
             <div class="sig-box">
-                <p class="sig-date">Pringsewu, {{ $tanggalReview ? $tanggalReview->isoFormat('D MMMM YYYY') : now()->isoFormat('D MMMM YYYY') }}</p>
+                <p class="sig-date">Pringsewu, {{ ($tanggalReview ? $tanggalReview : now())->translatedFormat('d F Y') }}</p>
                 <p class="sig-role">Guru Pembimbing Internal,</p>
 
                 <div class="sig-qr">

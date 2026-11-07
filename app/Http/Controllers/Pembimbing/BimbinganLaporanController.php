@@ -210,6 +210,22 @@ class BimbinganLaporanController extends Controller
     {
         $this->authorizeAccess($laporan);
 
+        // Cegah penolakan berulang atau persetujuan saat status masih ditolak (menunggu siswa mengajukan kembali)
+        if ($laporan->status_judul === 'ditolak') {
+            Alert::warning('Menunggu Revisi Siswa', 'Judul telah ditolak sebelumnya. Anda baru dapat meninjau (menyetujui atau menolak) kembali setelah siswa mengajukan revisi judul laporan.');
+            return back();
+        }
+
+        if ($laporan->status_judul === 'disetujui') {
+            Alert::info('Judul Sudah Disetujui', 'Judul laporan ini sudah disetujui sebelumnya.');
+            return back();
+        }
+
+        if ($laporan->status_judul !== 'diajukan') {
+            Alert::warning('Tidak Dapat Direview', 'Status judul saat ini tidak dalam antrean review (' . ucfirst($laporan->status_judul) . ').');
+            return back();
+        }
+
         // Dukung input dari form action ('setuju'/'tolak') maupun status_keputusan ('disetujui'/'ditolak')
         $statusKeputusan = $request->input('status_keputusan');
         if (! $statusKeputusan && $request->filled('action')) {

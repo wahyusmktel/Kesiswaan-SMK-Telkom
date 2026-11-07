@@ -8,6 +8,7 @@ use App\Models\PrakerinBimbinganLaporan;
 use App\Models\PrakerinBimbinganTahap;
 use App\Models\UserDigitalSignature;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
@@ -19,6 +20,7 @@ class PrakerinBeritaAcaraService
      */
     public function generateBeritaAcaraPdf($target)
     {
+        Carbon::setLocale('id');
         $beritaAcara = null;
         if ($target instanceof \App\Models\PrakerinBimbinganBeritaAcara) {
             $beritaAcara = $target;
@@ -133,6 +135,7 @@ class PrakerinBeritaAcaraService
      */
     public function generateBeritaAcaraJudulPdf(PrakerinBimbinganJudul $judul)
     {
+        Carbon::setLocale('id');
         $judul->load([
             'laporan.penempatan.siswa.rombels.kelas',
             'laporan.penempatan.industri',
@@ -233,6 +236,7 @@ class PrakerinBeritaAcaraService
      */
     public function generateRiwayatBimbinganPdf(PrakerinBimbinganLaporan $laporan)
     {
+        Carbon::setLocale('id');
         $laporan->load([
             'penempatan.siswa.rombels.kelas',
             'penempatan.industri',

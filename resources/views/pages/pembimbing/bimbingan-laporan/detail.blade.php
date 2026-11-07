@@ -174,7 +174,7 @@
                     </div>
 
                     {{-- Review Action Buttons --}}
-                    @if ($laporan->judul_status === 'diajukan' || $laporan->judul_status === 'ditolak')
+                    @if ($laporan->judul_status === 'diajukan')
                         <div class="flex items-center justify-end gap-3 mt-4 pt-4 border-t border-gray-100">
                             <button type="button" @click="showTolakJudulModal = true"
                                 class="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-100 rounded-xl transition">
@@ -186,6 +186,34 @@
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                 Setujui Judul Laporan
                             </button>
+                        </div>
+                    @elseif ($laporan->judul_status === 'ditolak')
+                        <div class="mt-4 pt-4 border-t border-gray-100">
+                            <div class="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 flex flex-col md:flex-row md:items-center md:justify-between gap-4 text-xs text-amber-900">
+                                <div class="flex items-start gap-3">
+                                    <div class="p-1.5 bg-amber-100 text-amber-700 rounded-xl mt-0.5 flex-shrink-0">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                    </div>
+                                    <div>
+                                        <span class="font-extrabold text-amber-950 block text-sm">Judul Telah Ditolak (Menunggu Siswa Mengajukan Revisi)</span>
+                                        <p class="mt-1 text-amber-800 leading-relaxed">
+                                            Aksi tolak dinonaktifkan untuk mencegah penolakan ganda, dan tombol persetujuan baru akan aktif kembali setelah siswa mengirimkan perbaikan judul melalui formulirnya.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2.5 flex-shrink-0 self-end md:self-center">
+                                    <button type="button" disabled
+                                        class="cursor-not-allowed opacity-60 inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-gray-500 bg-gray-100 border border-gray-200 rounded-xl">
+                                        <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                                        Tolak (Dinonaktifkan)
+                                    </button>
+                                    <button type="button" disabled
+                                        class="cursor-not-allowed opacity-60 inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-gray-500 bg-gray-100 border border-gray-200 rounded-xl">
+                                        <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                        Setujui Judul (Menunggu Revisi)
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     @elseif ($laporan->judul_status === 'disetujui')
                         @php

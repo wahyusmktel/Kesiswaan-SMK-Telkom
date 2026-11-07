@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <title>Kartu Riwayat Bimbingan Laporan Prakerin - {{ $siswa?->nama_lengkap }}</title>
     @php
+        \Carbon\Carbon::setLocale('id');
         if (!isset($kopBase64)) {
             $appSettingKop = \App\Models\AppSetting::first();
             $kopBase64 = $appSettingKop ? $appSettingKop->getKopSuratUkkBase64() : null;
@@ -281,7 +282,7 @@
             <div class="final-acc-banner">
                 <div class="final-acc-title">&#10003; LAPORAN PRAKERIN TELAH DI-ACC FINAL</div>
                 <div style="font-size: 8pt; color: #047857; margin-top: 2px;">
-                    Laporan telah dinyatakan lengkap dan memenuhi seluruh standar bimbingan. Disahkan pada: <strong>{{ $laporan->acc_at ? $laporan->acc_at->isoFormat('D MMMM YYYY, HH:mm') : '-' }} WIB</strong>.
+                    Laporan telah dinyatakan lengkap dan memenuhi seluruh standar bimbingan. Disahkan pada: <strong>{{ $laporan->acc_at ? $laporan->acc_at->translatedFormat('d F Y, HH:mm') . ' WIB' : '-' }}</strong>.
                 </div>
             </div>
         @endif
@@ -313,10 +314,10 @@
                                 </div>
                             </td>
                             <td style="text-align: center;">
-                                {{ $jHistory->diajukan_at ? $jHistory->diajukan_at->format('d/m/Y') : '-' }}
+                                {{ $jHistory->diajukan_at ? $jHistory->diajukan_at->translatedFormat('d M Y') : '-' }}
                             </td>
                             <td style="text-align: center;">
-                                {{ $jHistory->reviewed_at ? $jHistory->reviewed_at->format('d/m/Y') : '-' }}
+                                {{ $jHistory->reviewed_at ? $jHistory->reviewed_at->translatedFormat('d M Y') : '-' }}
                             </td>
                             <td style="text-align: center;">
                                 @if($jHistory->status === 'disetujui')
@@ -342,10 +343,10 @@
                             </div>
                         </td>
                         <td style="text-align: center;">
-                            {{ $laporan->judul_diajukan_at?->format('d/m/Y') ?? '-' }}
+                            {{ $laporan->judul_diajukan_at ? $laporan->judul_diajukan_at->translatedFormat('d M Y') : '-' }}
                         </td>
                         <td style="text-align: center;">
-                            {{ $laporan->judul_reviewed_at?->format('d/m/Y') ?? '-' }}
+                            {{ $laporan->judul_reviewed_at ? $laporan->judul_reviewed_at->translatedFormat('d M Y') : '-' }}
                         </td>
                         <td style="text-align: center;">
                             @if($laporan->status_judul === 'disetujui')
@@ -375,10 +376,10 @@
                             @endif
                         </td>
                         <td style="text-align: center;">
-                            {{ $tahap->diajukan_at?->format('d/m/Y') ?? '-' }}
+                            {{ $tahap->diajukan_at ? $tahap->diajukan_at->translatedFormat('d M Y') : '-' }}
                         </td>
                         <td style="text-align: center;">
-                            {{ $tahap->reviewed_at?->format('d/m/Y') ?? '-' }}
+                            {{ $tahap->reviewed_at ? $tahap->reviewed_at->translatedFormat('d M Y') : '-' }}
                         </td>
                         <td style="text-align: center;">
                             @if($tahap->status === 'disetujui')
@@ -406,7 +407,7 @@
         {{-- Pengesahan Digital Pembimbing --}}
         <div class="signature-section">
             <div class="sig-box">
-                <p class="sig-date">Pringsewu, {{ $laporan->acc_at ? $laporan->acc_at->isoFormat('D MMMM YYYY') : now()->isoFormat('D MMMM YYYY') }}</p>
+                <p class="sig-date">Pringsewu, {{ ($laporan->acc_at ? $laporan->acc_at : now())->translatedFormat('d F Y') }}</p>
                 <p class="sig-role">Guru Pembimbing Internal,</p>
 
                 <div class="sig-qr">

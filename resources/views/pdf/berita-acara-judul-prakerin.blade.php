@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <title>Berita Acara Judul Laporan Prakerin - {{ $siswa?->nama_lengkap }}</title>
     @php
+        \Carbon\Carbon::setLocale('id');
         if (!isset($kopBase64)) {
             $appSettingKop = \App\Models\AppSetting::first();
             $kopBase64 = $appSettingKop ? $appSettingKop->getKopSuratUkkBase64() : null;
@@ -245,7 +246,7 @@
         </div>
 
         <p style="margin-bottom: 12px; font-size: 9.5pt;">
-            Pada hari ini, <strong>{{ $tanggalReview ? $tanggalReview->isoFormat('dddd, D MMMM YYYY') : now()->isoFormat('dddd, D MMMM YYYY') }}</strong>, telah dilaksanakan peninjauan dan evaluasi terhadap pengajuan judul laporan Praktik Kerja Lapangan (Prakerin) untuk peserta didik berikut:
+            Pada hari ini, <strong>{{ ($tanggalReview ? $tanggalReview : now())->translatedFormat('l, d F Y') }}</strong>, telah dilaksanakan peninjauan dan evaluasi terhadap pengajuan judul laporan Praktik Kerja Lapangan (Prakerin) untuk peserta didik berikut:
         </p>
 
         {{-- I. Data Identitas Peserta Didik --}}
@@ -285,7 +286,7 @@
                 <td class="info-label">Tanggal Pengajuan Siswa</td>
                 <td class="info-colon">:</td>
                 <td class="info-value">
-                    {{ $judul->diajukan_at ? $judul->diajukan_at->isoFormat('D MMMM YYYY, HH:mm') . ' WIB' : '-' }}
+                    {{ $judul->diajukan_at ? $judul->diajukan_at->translatedFormat('d F Y, HH:mm') . ' WIB' : '-' }}
                 </td>
             </tr>
             <tr>
@@ -343,7 +344,7 @@
         <div class="signature-section">
             <div class="sig-box">
                 <div class="sig-date">
-                    Pringsewu, {{ $tanggalReview ? $tanggalReview->isoFormat('D MMMM YYYY') : now()->isoFormat('D MMMM YYYY') }}
+                    Pringsewu, {{ ($tanggalReview ? $tanggalReview : now())->translatedFormat('d F Y') }}
                 </div>
                 <div class="sig-role">Guru Pembimbing Sekolah</div>
 
