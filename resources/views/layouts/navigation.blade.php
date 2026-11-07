@@ -1105,6 +1105,8 @@
                     </svg>
                 </button>
                 <div x-show="expanded" x-collapse class="submenu-card">
+                    {{-- Menu yang disembunyikan sementara (akan dikembangkan di kemudian hari) --}}
+                    {{--
                     <a href="{{ route('pembimbing-prakerin.monitoring.index') }}"
                         class="submenu-item {{ request()->routeIs('pembimbing-prakerin.monitoring.*') ? 'submenu-item-active' : '' }}">
                         <span class="submenu-dot"></span>Monitoring Prakerin
@@ -1117,6 +1119,7 @@
                         class="submenu-item {{ request()->routeIs('pembimbing-prakerin.laporan.*') ? 'submenu-item-active' : '' }}">
                         <span class="submenu-dot"></span>Bimbingan Laporan
                     </a>
+                    --}}
                     <a href="{{ route('pembimbing-prakerin.bimbingan-laporan.index') }}"
                         class="submenu-item {{ request()->routeIs('pembimbing-prakerin.bimbingan-laporan.*') ? 'submenu-item-active' : '' }}">
                         <span class="submenu-dot"></span>Bimbingan Lap. Prakerin
@@ -1124,12 +1127,15 @@
                 </div>
                 <div class="submenu-flyout" :style="'top: ' + flyoutTop + 'px'">
                     <div class="submenu-flyout-title">Pembimbing PKL</div>
+                    {{-- Menu yang disembunyikan sementara (akan dikembangkan di kemudian hari) --}}
+                    {{--
                     <a href="{{ route('pembimbing-prakerin.monitoring.index') }}"
                         class="submenu-item {{ request()->routeIs('pembimbing-prakerin.monitoring.*') ? 'submenu-item-active' : '' }}">Monitoring Prakerin</a>
                     <a href="{{ route('pembimbing-prakerin.konsultasi.index') }}"
                         class="submenu-item {{ request()->routeIs('pembimbing-prakerin.konsultasi.*') ? 'submenu-item-active' : '' }}">Konsultasi PKL</a>
                     <a href="{{ route('pembimbing-prakerin.laporan.index') }}"
                         class="submenu-item {{ request()->routeIs('pembimbing-prakerin.laporan.*') ? 'submenu-item-active' : '' }}">Bimbingan Laporan</a>
+                    --}}
                     <a href="{{ route('pembimbing-prakerin.bimbingan-laporan.index') }}"
                         class="submenu-item {{ request()->routeIs('pembimbing-prakerin.bimbingan-laporan.*') ? 'submenu-item-active' : '' }}">Bimbingan Lap. Prakerin</a>
                 </div>
