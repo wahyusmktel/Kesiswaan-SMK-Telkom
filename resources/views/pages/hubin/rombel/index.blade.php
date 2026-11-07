@@ -51,6 +51,15 @@
             <div class="flex items-center gap-3">
                 <button
                     type="button"
+                    @click="openImportModal()"
+                    class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-semibold text-sm shadow-sm transition-all hover:shadow">
+                    <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    <span>Import Excel / CSV</span>
+                </button>
+                <button
+                    type="button"
                     @click="openCreateModal()"
                     class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-semibold text-sm shadow-md shadow-red-600/20 transition-all hover:shadow-lg hover:shadow-red-600/30">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -623,6 +632,136 @@
                 </div>
             </div>
         </div>
+
+        {{-- Modal Import Excel / CSV Rombel PKL --}}
+        <div
+            x-cloak
+            x-show="showImportModal"
+            class="fixed inset-0 z-50 overflow-y-auto"
+            aria-labelledby="import-modal-title"
+            role="dialog"
+            aria-modal="true">
+            <div class="flex min-h-screen items-center justify-center p-4 text-center sm:p-0">
+                <div
+                    x-show="showImportModal"
+                    x-transition:enter="ease-out duration-300"
+                    x-transition:enter-start="opacity-0"
+                    x-transition:enter-end="opacity-100"
+                    x-transition:leave="ease-in duration-200"
+                    x-transition:leave-start="opacity-100"
+                    x-transition:leave-end="opacity-0"
+                    @click="closeImportModal()"
+                    class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"></div>
+
+                <div
+                    x-show="showImportModal"
+                    x-transition:enter="ease-out duration-300"
+                    x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                    x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                    x-transition:leave="ease-in duration-200"
+                    x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                    x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                    class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-xl">
+
+                    <div class="border-b border-gray-100 bg-emerald-50/50 px-6 py-4 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-emerald-100 text-emerald-700 rounded-xl">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-base font-bold text-gray-900">Import Data Rombel & Penempatan PKL</h3>
+                                <p class="text-xs text-gray-500">Unggah file Excel (.xlsx, .xls) atau CSV (.csv) Surat Perintah Tugas</p>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            @click="closeImportModal()"
+                            class="text-gray-400 hover:text-gray-500 p-1 rounded-lg hover:bg-gray-100 transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <form action="{{ route('hubin.rombel-pkl.import') }}" method="POST" enctype="multipart/form-data" class="p-6 space-y-4">
+                        @csrf
+
+                        {{-- Panduan Format --}}
+                        <div class="rounded-xl bg-amber-50 border border-amber-200/80 p-3.5 text-xs text-amber-900 space-y-1.5">
+                            <div class="flex items-center gap-1.5 font-bold">
+                                <svg class="w-4 h-4 text-amber-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                </svg>
+                                <span>Petunjuk Format File:</span>
+                            </div>
+                            <p class="leading-relaxed">
+                                File wajib memiliki kolom: <strong>No</strong>, <strong>Nama Guru</strong>, <strong>Nama Siswa</strong>, <strong>NIS</strong>, <strong>Kelas</strong>, dan <strong>Lokasi PKL</strong>.
+                            </p>
+                            <p class="text-[11px] text-amber-800">
+                                * Pembimbing industri akan dikosongkan dan dapat diinput manual sewaktu-waktu.
+                            </p>
+                            <div class="pt-1">
+                                <a href="{{ route('hubin.rombel-pkl.template') }}" class="inline-flex items-center gap-1 font-bold text-emerald-700 hover:text-emerald-800 underline">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                    Unduh Contoh Template CSV
+                                </a>
+                            </div>
+                        </div>
+
+                        {{-- Input File --}}
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">
+                                File Excel / CSV <span class="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="file"
+                                name="file"
+                                required
+                                accept=".xlsx,.xls,.csv,.txt"
+                                class="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 border border-gray-200 rounded-xl cursor-pointer">
+                            <p class="text-[11px] text-gray-400 mt-1">Mendukung format .xlsx, .xls, .csv (Maksimal 10 MB)</p>
+                        </div>
+
+                        {{-- Periode PKL Default --}}
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">Tanggal Mulai PKL</label>
+                                <input
+                                    type="date"
+                                    name="tanggal_mulai"
+                                    value="2026-07-06"
+                                    class="w-full rounded-xl border-gray-200 text-xs focus:border-emerald-500 focus:ring-emerald-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">Tanggal Selesai PKL</label>
+                                <input
+                                    type="date"
+                                    name="tanggal_selesai"
+                                    value="2026-12-11"
+                                    class="w-full rounded-xl border-gray-200 text-xs focus:border-emerald-500 focus:ring-emerald-500">
+                            </div>
+                        </div>
+
+                        {{-- Modal Footer --}}
+                        <div class="border-t border-gray-100 pt-4 flex items-center justify-end gap-3">
+                            <button
+                                type="button"
+                                @click="closeImportModal()"
+                                class="px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 font-semibold text-xs hover:bg-gray-50 transition">
+                                Batal
+                            </button>
+                            <button
+                                type="submit"
+                                class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold text-xs shadow-md transition">
+                                Mulai Import Data
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 
     @push('styles')
@@ -691,6 +830,7 @@
             function hubinRombelManager() {
                 return {
                     showModal: false,
+                    showImportModal: false,
                     isEdit: false,
                     formAction: '{{ route('hubin.rombel-pkl.store') }}',
                     formData: {
@@ -759,6 +899,14 @@
 
                     closeModal() {
                         this.showModal = false;
+                    },
+
+                    openImportModal() {
+                        this.showImportModal = true;
+                    },
+
+                    closeImportModal() {
+                        this.showImportModal = false;
                     },
 
                     confirmDelete(event, name) {

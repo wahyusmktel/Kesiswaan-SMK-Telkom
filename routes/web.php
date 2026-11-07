@@ -1035,6 +1035,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('industri/{industri}/mou-download', [\App\Http\Controllers\Hubin\IndustriKerjasamaController::class, 'downloadMou'])->name('industri.download-mou');
 
         // Rombel PKL & Mapping Siswa Kelas XII
+        Route::post('rombel-pkl/import', [\App\Http\Controllers\Hubin\RombelPklController::class, 'import'])->name('rombel-pkl.import');
+        Route::get('rombel-pkl/template-download', [\App\Http\Controllers\Hubin\RombelPklController::class, 'downloadTemplate'])->name('rombel-pkl.template');
         Route::resource('rombel-pkl', \App\Http\Controllers\Hubin\RombelPklController::class)
             ->except(['create', 'show', 'edit'])
             ->parameters(['rombel-pkl' => 'rombel']);

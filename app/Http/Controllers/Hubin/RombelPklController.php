@@ -11,6 +11,7 @@ use App\Models\PrakerinPembimbing;
 use App\Models\PrakerinPenempatan;
 use App\Models\PrakerinRombel;
 use App\Models\PrakerinSetting;
+use App\Services\PrakerinRombelImportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use RealRashid\SweetAlert\Facades\Alert;
@@ -365,5 +366,71 @@ class RombelPklController extends Controller
         Alert::success('Berhasil', 'Siswa berhasil dilepas dari rombel PKL.');
 
         return back();
+    }
+
+    /**
+     * Import data Rombel PKL dan Penempatan Siswa dari file Excel / CSV.
+     */
+    public function import(Request $request, PrakerinRombelImportService $importService)
+    {
+        $validated = $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv,txt|max:10240',
+            'tanggal_mulai' => 'nullable|date',
+            'tanggal_selesai' => 'nullable|date|after_or_equal:tanggal_mulai',
+        ], [
+            'file.required' => 'Pilih file Excel atau CSV yang akan diimpor.',
+            'file.mimes' => 'Format file harus berupa Excel (.xlsx, .xls) atau CSV (.csv).',
+            'file.max' => 'Ukuran file maksimal 10 MB.',
+            'tanggal_selesai.after_or_equal' => 'Tanggal selesai tidak boleh sebelum tanggal mulai.',
+        ]);
+
+        $tanggalMulai = $validated['tanggal_mulai'] ?? '2026-07-06';
+        $tanggalSelesai = $validated['tanggal_selesai'] ?? '2026-12-11';
+
+        try {
+            $parsedRows = $importService->parseUploadedFile($request->file('file'));
+
+            if (empty($parsedRows)) {
+                Alert::error('Gagal', 'Tidak ada data siswa PKL valid yang terbaca dari file. Pastikan file memiliki kolom Nama Guru, Nama Siswa, NIS, dan Lokasi PKL.');
+                return back();
+            }
+
+            $result = $importService->import($parsedRows, $tanggalMulai, $tanggalSelesai);
+
+            $msg = "Import berhasil! {$result['matched_students']} siswa berhasil ditempatkan ke {$result['rombel_count']} rombel pada {$result['industri_count']} industri mitra.";
+            if (!empty($result['missing_students'])) {
+                $msg .= ' Catatan: ' . count($result['missing_students']) . ' siswa tidak ditemukan di master siswa.';
+            }
+
+            Alert::success('Berhasil', $msg);
+        } catch (\Throwable $e) {
+            Alert::error('Terjadi Kesalahan', 'Gagal memproses file import: ' . $e->getMessage());
+        }
+
+        return back();
+    }
+
+    /**
+     * Download format template CSV untuk Import Rombel PKL.
+     */
+    public function downloadTemplate()
+    {
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="template-import-rombel-pkl.csv"',
+        ];
+
+        $columns = ['No', 'Nama Guru', 'Nama Siswa', 'NIS', 'Kelas', 'Lokasi PKL', 'Jumlah Siswa'];
+
+        $callback = function () use ($columns) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $columns);
+            fputcsv($file, ['1', 'Ahmad Iksan, M.Kom', 'Arda Meysya', '553241026', 'XII TKJ 1', 'BPS Pesawaran', '9']);
+            fputcsv($file, ['1', 'Ahmad Iksan, M.Kom', 'Gladys Putri Kinara', '553241072', 'XII TKJ 1', 'Telkom Witel Lampung', '9']);
+            fputcsv($file, ['2', 'Aji Sakti Kurniawan, S.Kom', 'Afgan Zahari', '553241005', 'XII ANIMASI', 'Ventura Studios', '4']);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }
