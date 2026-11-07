@@ -733,6 +733,8 @@
     </li>
 
     @if (Auth::user()->masterSiswa?->penempatan()->exists())
+        {{-- Menu yang disembunyikan sementara (akan dikembangkan di kemudian hari) --}}
+        {{--
         <li>
             <a href="{{ route('siswa.jurnal-prakerin.index') }}"
                 class="nav-link {{ request()->routeIs("siswa.jurnal-prakerin.*") ? "nav-link-active" : "nav-link-inactive" }}">
@@ -753,6 +755,7 @@
                 <span class="nav-text">Konsultasi PKL</span>
             </a>
         </li>
+        --}}
         <li>
             <a href="{{ route('siswa.bimbingan-laporan.index') }}"
                 class="nav-link {{ request()->routeIs("siswa.bimbingan-laporan.*") ? "nav-link-active" : "nav-link-inactive" }}">

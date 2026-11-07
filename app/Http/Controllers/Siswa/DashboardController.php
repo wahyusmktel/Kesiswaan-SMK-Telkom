@@ -104,6 +104,16 @@ class DashboardController extends Controller
 
         $kegiatanSaatIni = $this->getKegiatanSaatIni();
 
+        // 4. Deteksi Mapping Siswa ke Rombel Prakerin / PKL Aktif
+        $penempatanPrakerin = null;
+        if ($siswa) {
+            $penempatanPrakerin = $siswa->penempatan()
+                ->with(['industri', 'rombelPkl.pembimbingInternal', 'guruPembimbing', 'bimbinganLaporan.tahaps'])
+                ->whereNotNull('prakerin_rombel_id')
+                ->where('status', 'aktif')
+                ->first();
+        }
+
         return view('pages.siswa.dashboard.index', compact(
             'totalDiajukan',
             'totalDisetujui',
@@ -117,7 +127,8 @@ class DashboardController extends Controller
             'chat_rooms',
             'terlambatHariIni',
             'izinKeluarAktif',
-            'kegiatanSaatIni'
+            'kegiatanSaatIni',
+            'penempatanPrakerin'
         ));
     }
 

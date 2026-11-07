@@ -328,6 +328,72 @@
             </div>
             @endif
 
+            {{-- Kotak Notifikasi Anggota Rombel Prakerin / PKL --}}
+            @if(isset($penempatanPrakerin) && $penempatanPrakerin)
+            <div class="bg-gradient-to-r from-rose-500 via-rose-600 to-indigo-600 rounded-3xl p-1 shadow-xl shadow-rose-100 animate-in fade-in slide-in-from-top duration-700">
+                <div class="bg-white rounded-[22px] p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div class="flex items-start gap-5">
+                        <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center flex-shrink-0 shadow-sm">
+                            <svg class="w-7 h-7 sm:w-8 sm:h-8 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                        <div class="space-y-1.5">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-rose-100 text-rose-700 text-xs font-black uppercase tracking-wider">
+                                    <span class="w-2 h-2 rounded-full bg-rose-600 animate-pulse"></span>
+                                    Anggota Rombel PKL Aktif
+                                </span>
+                                @if($penempatanPrakerin->rombelPkl)
+                                    <span class="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-bold border border-slate-200">
+                                        Rombel: {{ $penempatanPrakerin->rombelPkl->nama_rombel }}
+                                    </span>
+                                @endif
+                            </div>
+                            <h3 class="text-lg sm:text-xl font-black text-gray-900 leading-snug">
+                                Anda Terdaftar Sebagai Peserta Prakerin — Segera Susun Laporan!
+                            </h3>
+                            @php
+                                $namaPembimbing = $penempatanPrakerin->guruPembimbing?->nama_guru 
+                                    ?: ($penempatanPrakerin->rombelPkl?->pembimbingInternal?->nama ?? 'Guru Pembimbing Sekolah');
+                            @endphp
+                            <p class="text-xs sm:text-sm text-gray-600 max-w-3xl leading-relaxed">
+                                Anda ditempatkan di <strong class="text-gray-800">{{ $penempatanPrakerin->industri?->nama_industri ?? 'Mitra Industri' }}</strong>
+                                dengan Pembimbing Sekolah <strong class="text-gray-800">{{ $namaPembimbing }}</strong>.
+                                Pastikan Anda segera mengajukan judul laporan dan menyelesaikan tahapan bimbingan bersama guru pembimbing.
+                            </p>
+                            @php
+                                $statusJudul = $penempatanPrakerin->bimbinganLaporan?->status_judul ?? 'belum_mengajukan';
+                                $statusBadge = [
+                                    'draft' => ['label' => 'Judul: Draft', 'class' => 'bg-slate-100 text-slate-700 border-slate-200'],
+                                    'diajukan' => ['label' => 'Judul: Menunggu Review Guru', 'class' => 'bg-amber-100 text-amber-800 border-amber-200'],
+                                    'revisi' => ['label' => 'Judul: Perlu Revisi', 'class' => 'bg-rose-100 text-rose-800 border-rose-200'],
+                                    'disetujui' => ['label' => 'Judul: Disetujui (ACC)', 'class' => 'bg-emerald-100 text-emerald-800 border-emerald-200'],
+                                    'belum_mengajukan' => ['label' => 'Belum Mengajukan Judul', 'class' => 'bg-amber-50 text-amber-700 border-amber-200'],
+                                ][$statusJudul] ?? ['label' => 'Belum Mengajukan Judul', 'class' => 'bg-amber-50 text-amber-700 border-amber-200'];
+                            @endphp
+                            <div class="pt-1 flex items-center gap-2">
+                                <span class="text-[11px] font-semibold text-gray-500">Status Judul Saat Ini:</span>
+                                <span class="px-2 py-0.5 rounded-md text-[11px] font-bold border {{ $statusBadge['class'] }}">
+                                    {{ $statusBadge['label'] }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex-shrink-0 flex items-center">
+                        <a href="{{ route('siswa.bimbingan-laporan.index') }}"
+                            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-rose-600/30 active:scale-[0.99] whitespace-nowrap">
+                            <span>Buka Bimbingan Laporan</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            @endif
+
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
                 <div class="lg:col-span-3">
                     <div
