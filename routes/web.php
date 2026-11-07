@@ -633,6 +633,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/tahap/{tahap}/viewer', [\App\Http\Controllers\Siswa\BimbinganLaporanController::class, 'reviewViewer'])->name('viewer');
             Route::get('/tahap/{tahap}/berita-acara', [\App\Http\Controllers\Siswa\BimbinganLaporanController::class, 'unduhBeritaAcara'])->name('berita-acara');
             Route::get('/berita-acara-item/{beritaAcara}', [\App\Http\Controllers\Siswa\BimbinganLaporanController::class, 'unduhBeritaAcaraItem'])->name('berita-acara.item');
+            Route::get('/judul/{judul}/berita-acara', [\App\Http\Controllers\Siswa\BimbinganLaporanController::class, 'unduhBeritaAcaraJudul'])->name('berita-acara-judul');
             Route::get('/riwayat-pdf', [\App\Http\Controllers\Siswa\BimbinganLaporanController::class, 'unduhRiwayatPdf'])->name('riwayat-pdf');
         });
 
@@ -1070,6 +1071,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/acc-final/{laporan}', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'accFinal'])->name('acc-final');
             Route::get('/tahap/{tahap}/berita-acara', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'unduhBeritaAcara'])->name('berita-acara');
             Route::get('/berita-acara-item/{beritaAcara}', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'unduhBeritaAcaraItem'])->name('berita-acara.item');
+            Route::get('/judul/{judul}/berita-acara', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'unduhBeritaAcaraJudul'])->name('berita-acara-judul');
             Route::get('/riwayat-pdf/{laporan}', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'unduhRiwayatPdf'])->name('riwayat-pdf');
         });
     });

@@ -247,9 +247,77 @@
             </tr>
         </thead>
         <tbody>
-            @forelse($tahaps as $index => $tahap)
+            @php $rowNo = 1; @endphp
+            {{-- Entri Riwayat Pengajuan & Review Judul --}}
+            @if(isset($judulRiwayats) && $judulRiwayats->count() > 0)
+                @foreach($judulRiwayats as $jRiwayat)
+                    <tr>
+                        <td style="text-align: center; font-weight: 700;">{{ $rowNo++ }}</td>
+                        <td>
+                            <strong>Tahap 1: Pengajuan Judul Laporan (Ke-{{ $jRiwayat->pengajuan_ke }})</strong>
+                            <div style="font-size: 8pt; color: #111827; margin-top: 2px;">
+                                "{{ $jRiwayat->judul_laporan }}"
+                            </div>
+                            @if($jRiwayat->nomor_berita_acara)
+                                <div style="font-size: 7pt; color: #6b7280; margin-top: 2px;">
+                                    No. BA: {{ $jRiwayat->nomor_berita_acara }}
+                                </div>
+                            @endif
+                        </td>
+                        <td style="text-align: center;">
+                            {{ $jRiwayat->diajukan_at?->format('d/m/Y') ?? '-' }}
+                        </td>
+                        <td style="text-align: center;">
+                            {{ $jRiwayat->reviewed_at?->format('d/m/Y') ?? '-' }}
+                        </td>
+                        <td style="text-align: center;">
+                            @if($jRiwayat->status === 'disetujui')
+                                <span class="badge-status badge-disetujui">Disetujui</span>
+                            @elseif($jRiwayat->status === 'ditolak')
+                                <span class="badge-status badge-revisi">Ditolak</span>
+                            @else
+                                <span class="badge-status badge-diajukan">Ditinjau</span>
+                            @endif
+                        </td>
+                        <td>
+                            {{ $jRiwayat->catatan_pembimbing ?? ($jRiwayat->status === 'disetujui' ? 'Judul telah disetujui untuk penulisan laporan.' : '-') }}
+                        </td>
+                    </tr>
+                @endforeach
+            @elseif($laporan->judul_laporan)
                 <tr>
-                    <td style="text-align: center; font-weight: 700;">{{ $index + 1 }}</td>
+                    <td style="text-align: center; font-weight: 700;">{{ $rowNo++ }}</td>
+                    <td>
+                        <strong>Tahap 1: Pengajuan Judul Laporan</strong>
+                        <div style="font-size: 8pt; color: #111827; margin-top: 2px;">
+                            "{{ $laporan->judul_laporan }}"
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        {{ $laporan->judul_diajukan_at?->format('d/m/Y') ?? '-' }}
+                    </td>
+                    <td style="text-align: center;">
+                        {{ $laporan->judul_reviewed_at?->format('d/m/Y') ?? '-' }}
+                    </td>
+                    <td style="text-align: center;">
+                        @if($laporan->status_judul === 'disetujui')
+                            <span class="badge-status badge-disetujui">Disetujui</span>
+                        @elseif($laporan->status_judul === 'ditolak')
+                            <span class="badge-status badge-revisi">Ditolak</span>
+                        @else
+                            <span class="badge-status badge-diajukan">Ditinjau</span>
+                        @endif
+                    </td>
+                    <td>
+                        {{ $laporan->catatan_judul ?? ($laporan->status_judul === 'disetujui' ? 'Judul telah disetujui untuk penulisan laporan.' : '-') }}
+                    </td>
+                </tr>
+            @endif
+
+            {{-- Entri Bab Laporan --}}
+            @forelse($tahaps as $tahap)
+                <tr>
+                    <td style="text-align: center; font-weight: 700;">{{ $rowNo++ }}</td>
                     <td>
                         <strong>{{ $tahap->judul_tahap }}</strong>
                         @if($tahap->anotasis->count() > 0)

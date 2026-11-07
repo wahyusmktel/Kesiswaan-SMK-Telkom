@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PrakerinBimbinganAktivitasLog;
 use App\Models\PrakerinBimbinganAnotasi;
 use App\Models\PrakerinBimbinganBeritaAcara;
+use App\Models\PrakerinBimbinganJudul;
 use App\Models\PrakerinBimbinganLaporan;
 use App\Models\PrakerinBimbinganTahap;
 use App\Models\PrakerinPenempatan;
@@ -164,11 +165,32 @@ class BimbinganLaporanController extends Controller
         $isSignatureReady = $sig && $sig->isReady();
         $hasTtdDigital = $isSignatureReady;
 
+        // Auto-sinkron entri judul riwayat jika ada judul laporan tapi riwayat kosong
+        if ($laporan->judul_laporan && $laporan->judulRiwayats()->count() === 0) {
+            $nomorBa = null;
+            if ($laporan->status_judul === 'disetujui') {
+                $nomorBa = 'BA-JUDUL-ACC/' . date('Ymd') . '/' . str_pad($laporan->id, 4, '0', STR_PAD_LEFT);
+            } elseif ($laporan->status_judul === 'ditolak') {
+                $nomorBa = 'BA-JUDUL-TOLAK/' . date('Ymd') . '/' . str_pad($laporan->id, 4, '0', STR_PAD_LEFT) . '/R1';
+            }
+            $laporan->judulRiwayats()->create([
+                'pengajuan_ke' => 1,
+                'judul_laporan' => $laporan->judul_laporan,
+                'deskripsi_judul' => $laporan->deskripsi_judul,
+                'status' => in_array($laporan->status_judul, ['disetujui', 'ditolak']) ? $laporan->status_judul : 'diajukan',
+                'catatan_pembimbing' => $laporan->catatan_judul,
+                'nomor_berita_acara' => $nomorBa,
+                'diajukan_at' => $laporan->judul_diajukan_at ?? now(),
+                'reviewed_at' => $laporan->judul_reviewed_at,
+            ]);
+        }
+
         $laporan->load([
             'penempatan.siswa.rombels.kelas',
             'penempatan.industri',
             'penempatan.rombelPkl',
             'penempatan.guruPembimbing',
+            'judulRiwayats.reviewer',
             'tahaps.anotasis',
             'tahaps.beritaAcaras',
             'tahaps.reviewer',
@@ -210,6 +232,35 @@ class BimbinganLaporanController extends Controller
 
         $status = $validated['status_keputusan'];
         $catatan = $validated['catatan_judul'] ? trim($validated['catatan_judul']) : null;
+
+        $latestJudul = $laporan->judulRiwayats()->where('status', 'diajukan')->latest()->first()
+            ?? $laporan->judulRiwayats()->latest()->first();
+
+        if (! $latestJudul) {
+            $latestJudul = $laporan->judulRiwayats()->create([
+                'pengajuan_ke' => $laporan->judulRiwayats()->count() + 1,
+                'judul_laporan' => $laporan->judul_laporan ?? 'Judul Laporan Prakerin',
+                'deskripsi_judul' => $laporan->deskripsi_judul,
+                'status' => 'diajukan',
+                'diajukan_at' => $laporan->judul_diajukan_at ?? now(),
+            ]);
+        }
+
+        $isAcc = $status === 'disetujui';
+        if ($isAcc) {
+            $nomorBeritaAcara = 'BA-JUDUL-ACC/' . date('Ymd') . '/' . str_pad($laporan->id, 4, '0', STR_PAD_LEFT);
+        } else {
+            $revisiKe = $laporan->judulRiwayats()->where('status', 'ditolak')->count() + 1;
+            $nomorBeritaAcara = 'BA-JUDUL-TOLAK/' . date('Ymd') . '/' . str_pad($laporan->id, 4, '0', STR_PAD_LEFT) . '/R' . $revisiKe;
+        }
+
+        $latestJudul->update([
+            'status' => $status,
+            'catatan_pembimbing' => $catatan,
+            'nomor_berita_acara' => $nomorBeritaAcara,
+            'reviewed_at' => now(),
+            'reviewed_by' => Auth::id(),
+        ]);
 
         $laporan->update([
             'status_judul' => $status,
@@ -594,6 +645,19 @@ class BimbinganLaporanController extends Controller
         $pdf = $this->pdfService->generateBeritaAcaraPdf($tahap);
 
         return $pdf->stream('Berita-Acara-' . str_replace(' ', '-', $tahap->judul_tahap) . '.pdf');
+    }
+
+    /**
+     * Unduh Berita Acara Review Judul Laporan (PDF).
+     */
+    public function unduhBeritaAcaraJudul(PrakerinBimbinganJudul $judul)
+    {
+        $this->authorizeAccess($judul->laporan);
+
+        $pdf = $this->pdfService->generateBeritaAcaraJudulPdf($judul);
+
+        $statusStr = $judul->status === 'disetujui' ? 'ACC' : 'Revisi';
+        return $pdf->stream('Berita-Acara-Judul-' . $statusStr . '-Pengajuan-' . $judul->pengajuan_ke . '.pdf');
     }
 
     /**

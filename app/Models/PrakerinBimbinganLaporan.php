@@ -83,6 +83,11 @@ class PrakerinBimbinganLaporan extends Model
         return $this->hasMany(PrakerinBimbinganTahap::class, 'prakerin_bimbingan_laporan_id')->orderBy('urutan');
     }
 
+    public function judulRiwayats()
+    {
+        return $this->hasMany(PrakerinBimbinganJudul::class, 'prakerin_bimbingan_laporan_id')->orderBy('pengajuan_ke', 'desc');
+    }
+
     public function aktivitasLogs()
     {
         return $this->hasMany(PrakerinBimbinganAktivitasLog::class, 'prakerin_bimbingan_laporan_id')->latest();

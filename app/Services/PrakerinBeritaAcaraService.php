@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\PrakerinBimbinganJudul;
 use App\Models\PrakerinBimbinganLaporan;
 use App\Models\PrakerinBimbinganTahap;
 use App\Models\UserDigitalSignature;
@@ -122,6 +123,102 @@ class PrakerinBeritaAcaraService
     }
 
     /**
+     * Generate Berita Acara Review / Pengajuan Judul Laporan (PDF).
+     */
+    public function generateBeritaAcaraJudulPdf(PrakerinBimbinganJudul $judul)
+    {
+        $judul->load([
+            'laporan.penempatan.siswa.rombels.kelas',
+            'laporan.penempatan.industri',
+            'laporan.penempatan.guruPembimbing.user',
+            'laporan.penempatan.rombelPkl',
+            'reviewer',
+        ]);
+
+        $laporan = $judul->laporan;
+        $penempatan = $laporan->penempatan;
+        $guru = $penempatan->guruPembimbing;
+        $guruUser = $judul->reviewer ?? $guru?->user;
+
+        // Ambil tanda tangan digital guru jika ada
+        $sig = $guruUser ? UserDigitalSignature::where('user_id', $guruUser->id)->first() : null;
+
+        $isAcc = $judul->status === 'disetujui';
+        $nomorBeritaAcara = $judul->nomor_berita_acara
+            ?? (($isAcc ? 'BA-JUDUL-ACC/' : 'BA-JUDUL-TOLAK/') . date('Ymd') . '/' . str_pad($laporan->id, 4, '0', STR_PAD_LEFT));
+
+        $catatanPembimbing = $judul->catatan_pembimbing;
+        $tanggalReview = $judul->reviewed_at ?? now();
+
+        // Terbitkan / sinkronkan DigitalDocument resmi jika akun guru tersedia
+        $digDoc = null;
+        if ($guruUser) {
+            $docTitle = ($isAcc ? 'Berita Acara Persetujuan Judul Laporan' : 'Berita Acara Penolakan / Revisi Judul Laporan')
+                . ' — ' . ($penempatan->siswa?->nama_lengkap ?? '-') . ' (' . $judul->judul_laporan . ')';
+            $refId = $judul->id;
+            $hashParts = [
+                'BERITA_ACARA_JUDUL_PRAKERIN',
+                (string) $refId,
+                $nomorBeritaAcara,
+                (string) ($penempatan->siswa?->nis ?? ''),
+                $isAcc ? 'ACC_JUDUL' : 'TOLAK_JUDUL',
+                (string) $tanggalReview->timestamp,
+            ];
+            $digDoc = \App\Models\DigitalDocument::autoSign(
+                $guruUser,
+                'BERITA_ACARA_JUDUL_PRAKERIN',
+                $docTitle,
+                $refId,
+                $hashParts
+            );
+        }
+
+        // QR Code Digital Verification URL
+        $verifyData = [
+            'doc' => $isAcc ? 'BERITA_ACARA_ACC_JUDUL_PRAKERIN' : 'BERITA_ACARA_PENOLAKAN_JUDUL_PRAKERIN',
+            'nomor' => $nomorBeritaAcara,
+            'siswa' => $penempatan->siswa?->nama_lengkap,
+            'nis' => $penempatan->siswa?->nis,
+            'judul' => $judul->judul_laporan,
+            'status' => $judul->status,
+            'pengajuan_ke' => $judul->pengajuan_ke,
+            'guru' => $guru?->nama_lengkap ?? $guruUser?->name,
+            'tanggal' => $tanggalReview->format('d-m-Y H:i'),
+        ];
+
+        $verifyPayload = $digDoc
+            ? route('verifikasi.dokumen', $digDoc->token)
+            : route('verifikasi.bimbingan-prakerin', base64_encode(json_encode($verifyData)));
+
+        $qrCodeSvg = QrCode::format('svg')
+            ->size(90)
+            ->margin(0)
+            ->generate($verifyPayload);
+
+        $qrCodeBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrCodeSvg);
+
+        $pdf = Pdf::loadView('pdf.berita-acara-judul-prakerin', [
+            'judul' => $judul,
+            'nomorBeritaAcara' => $nomorBeritaAcara,
+            'isAcc' => $isAcc,
+            'catatanPembimbing' => $catatanPembimbing,
+            'tanggalReview' => $tanggalReview,
+            'laporan' => $laporan,
+            'penempatan' => $penempatan,
+            'siswa' => $penempatan->siswa,
+            'kelas' => $penempatan->siswa?->rombels->first()?->kelas?->nama_kelas ?? 'XII',
+            'guru' => $guru,
+            'guruUser' => $guruUser,
+            'sig' => $sig,
+            'qrCodeBase64' => $qrCodeBase64,
+        ]);
+
+        $pdf->setPaper('A4', 'portrait');
+
+        return $pdf;
+    }
+
+    /**
      * Generate Rekap Riwayat Bimbingan Lengkap Siswa (PDF).
      */
     public function generateRiwayatBimbinganPdf(PrakerinBimbinganLaporan $laporan)
@@ -131,6 +228,7 @@ class PrakerinBeritaAcaraService
             'penempatan.industri',
             'penempatan.guruPembimbing.user',
             'penempatan.rombelPkl',
+            'judulRiwayats.reviewer',
             'tahaps.anotasis',
             'tahaps.reviewer',
             'accBy',
@@ -196,6 +294,7 @@ class PrakerinBeritaAcaraService
             'sig' => $sig,
             'qrCodeBase64' => $qrCodeBase64,
             'tahaps' => $laporan->tahaps,
+            'judulRiwayats' => $laporan->judulRiwayats->sortBy('pengajuan_ke'),
         ]);
 
         $pdf->setPaper('A4', 'portrait');

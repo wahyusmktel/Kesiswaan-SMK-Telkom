@@ -164,7 +164,19 @@
                 @if ($laporan && $laporan->judul_status === 'disetujui')
                     {{-- Judul Disetujui View --}}
                     <div class="bg-gradient-to-r from-emerald-50/70 to-teal-50/50 border border-emerald-200 rounded-2xl p-6">
-                        <div class="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Judul Laporan yang Telah Disetujui</div>
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+                            <span class="text-xs font-bold text-emerald-700 uppercase tracking-wider">Judul Laporan yang Telah Disetujui</span>
+                            @php
+                                $judulDisetujui = $laporan->judulRiwayats?->firstWhere('status', 'disetujui');
+                            @endphp
+                            @if ($judulDisetujui)
+                                <a href="{{ route('siswa.bimbingan-laporan.berita-acara-judul', $judulDisetujui->id) }}" target="_blank"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-emerald-800 bg-white hover:bg-emerald-100 border border-emerald-300 shadow-xs transition">
+                                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                    Unduh Berita Acara Persetujuan Judul (PDF)
+                                </a>
+                            @endif
+                        </div>
                         <h4 class="font-extrabold text-gray-900 text-lg mt-1">"{{ $laporan->judul }}"</h4>
                         @if ($laporan->abstrak_rencana)
                             <p class="text-xs text-gray-600 mt-2 leading-relaxed bg-white/70 p-3 rounded-xl border border-emerald-100">
@@ -276,6 +288,71 @@
                             </button>
                         </div>
                     </form>
+                @endif
+
+                {{-- Riwayat Pengajuan & Review Judul (Ditampilkan jika ada riwayat pengajuan sebelumnya) --}}
+                @if ($laporan && $laporan->judulRiwayats && $laporan->judulRiwayats->count() > 0)
+                    <div class="mt-6 pt-5 border-t border-gray-100 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h5 class="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
+                                <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Riwayat Pengajuan Judul ({{ $laporan->judulRiwayats->count() }} Pengajuan)
+                            </h5>
+                        </div>
+
+                        <div class="space-y-3">
+                            @foreach ($laporan->judulRiwayats as $jHistory)
+                                <div class="p-4 rounded-xl border {{ $jHistory->status === 'disetujui' ? 'bg-emerald-50/40 border-emerald-200' : ($jHistory->status === 'ditolak' ? 'bg-rose-50/40 border-rose-200' : 'bg-gray-50 border-gray-200') }} transition">
+                                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                        <div class="flex items-center gap-2">
+                                            <span class="px-2 py-0.5 rounded text-[11px] font-black uppercase tracking-wider
+                                                {{ $jHistory->status === 'disetujui' ? 'bg-emerald-600 text-white' : ($jHistory->status === 'ditolak' ? 'bg-rose-600 text-white' : 'bg-amber-500 text-white') }}">
+                                                Pengajuan Ke-{{ $jHistory->pengajuan_ke }}
+                                            </span>
+                                            <span class="text-xs font-semibold {{ $jHistory->status === 'disetujui' ? 'text-emerald-700' : ($jHistory->status === 'ditolak' ? 'text-rose-700' : 'text-amber-700') }}">
+                                                {{ $jHistory->status_label }}
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center gap-2 text-[11px] text-gray-500">
+                                            <span>Diajukan: {{ $jHistory->diajukan_at ? $jHistory->diajukan_at->translatedFormat('d M Y H:i') : '-' }}</span>
+                                            @if ($jHistory->reviewed_at)
+                                                <span>&bull; Direview: {{ $jHistory->reviewed_at->translatedFormat('d M Y H:i') }}</span>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-2 text-sm font-bold text-gray-900">
+                                        "{{ $jHistory->judul_laporan }}"
+                                    </div>
+
+                                    @if ($jHistory->deskripsi_judul)
+                                        <p class="mt-1 text-xs text-gray-600 leading-relaxed">
+                                            <span class="font-semibold text-gray-700">Rencana:</span> {{ $jHistory->deskripsi_judul }}
+                                        </p>
+                                    @endif
+
+                                    @if ($jHistory->catatan_pembimbing)
+                                        <div class="mt-2.5 p-2.5 rounded-lg text-xs leading-relaxed {{ $jHistory->status === 'disetujui' ? 'bg-emerald-100/70 text-emerald-900 border border-emerald-200' : 'bg-rose-100/70 text-rose-900 border border-rose-200' }}">
+                                            <strong>Catatan / Alasan Pembimbing:</strong> {{ $jHistory->catatan_pembimbing }}
+                                        </div>
+                                    @endif
+
+                                    @if ($jHistory->status !== 'diajukan')
+                                        <div class="mt-3 flex items-center justify-between pt-2 border-t border-gray-100/80">
+                                            <span class="text-[11px] text-gray-400 font-mono">
+                                                {{ $jHistory->nomor_berita_acara ?? '-' }}
+                                            </span>
+                                            <a href="{{ route('siswa.bimbingan-laporan.berita-acara-judul', $jHistory->id) }}" target="_blank"
+                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-gray-700 bg-white hover:bg-gray-100 border border-gray-200 shadow-xs transition">
+                                                <svg class="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                Unduh Berita Acara (PDF)
+                                            </a>
+                                        </div>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
                 @endif
             </div>
         </div>
