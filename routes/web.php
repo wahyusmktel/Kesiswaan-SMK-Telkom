@@ -1062,8 +1062,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'index'])->name('index');
             Route::get('/detail/{laporan}', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'detailSiswa'])->name('detail');
             Route::post('/review-judul/{laporan}', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'reviewJudul'])->name('review-judul');
+            Route::post('/batalkan-acc-judul/{laporan}', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'batalkanAccJudul'])->name('batalkan-acc-judul');
             Route::post('/tahap/{laporan}', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'tambahTahap'])->name('tambah-tahap');
             Route::delete('/tahap/{tahap}', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'hapusTahap'])->name('hapus-tahap');
+            Route::post('/tahap/{tahap}/batalkan-acc', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'batalkanAccTahap'])->name('batalkan-acc-tahap');
             Route::get('/tahap/{tahap}/annotator', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'editorAnotasi'])->name('annotator');
             Route::post('/tahap/{tahap}/anotasi', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'simpanAnotasi'])->name('simpan-anotasi');
             Route::delete('/anotasi/{anotasi}', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'hapusAnotasi'])->name('hapus-anotasi');

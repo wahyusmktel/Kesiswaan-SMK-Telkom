@@ -33,8 +33,17 @@
     <div class="py-6 space-y-6" x-data="{
         showTolakJudulModal: false,
         showSetujuiJudulModal: false,
+        showBatalAccJudulModal: false,
+        showBatalAccTahapModal: false,
+        batalTahapId: null,
+        batalTahapNama: '',
         showTambahTahap: false,
-        showAccFinalModal: false
+        showAccFinalModal: false,
+        openBatalAccTahapModal(id, nama) {
+            this.batalTahapId = id;
+            this.batalTahapNama = nama;
+            this.showBatalAccTahapModal = true;
+        }
     }">
         {{-- Flash Messages --}}
         @if (session('success'))
@@ -219,15 +228,20 @@
                         @php
                             $approvedJudul = $laporan->judulRiwayats?->firstWhere('status', 'disetujui') ?? $laporan->judulRiwayats?->first();
                         @endphp
-                        @if ($approvedJudul)
-                            <div class="mt-4 pt-3 flex items-center justify-end">
+                        <div class="mt-4 pt-3 flex flex-wrap items-center justify-end gap-3">
+                            @if ($approvedJudul)
                                 <a href="{{ route('pembimbing-prakerin.bimbingan-laporan.berita-acara-judul', $approvedJudul->id) }}" target="_blank"
                                     class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl transition shadow-xs">
                                     <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                     Unduh Berita Acara Persetujuan Judul (PDF)
                                 </a>
-                            </div>
-                        @endif
+                            @endif
+                            <button type="button" @click="showBatalAccJudulModal = true"
+                                class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 rounded-xl transition shadow-xs">
+                                <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                Batalkan ACC Judul
+                            </button>
+                        </div>
                     @endif
 
                     {{-- Riwayat Pengajuan & Review Judul (Terutama jika ada penolakan/revisi sebelumnya) --}}
@@ -460,6 +474,14 @@
                                                 {{ $tahap->status === 'disetujui' ? 'Berita Acara ACC (PDF)' : 'Berita Acara Revisi (PDF)' }}
                                             </a>
                                         @endif
+                                    @endif
+
+                                    @if ($tahap->status === 'disetujui')
+                                        <button type="button" @click="openBatalAccTahapModal({{ $tahap->id }}, '{{ addslashes($tahap->nama_tahap) }}')"
+                                            class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-xl text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 transition shadow-xs" title="Batalkan Persetujuan (ACC) Bab Ini">
+                                            <svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                            Batalkan ACC
+                                        </button>
                                     @endif
                                 @endif
 
@@ -699,6 +721,126 @@
                         <button type="submit"
                             class="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-md shadow-emerald-200 transition">
                             Sahkan ACC Final
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {{-- MODAL BATALKAN ACC JUDUL --}}
+        <div x-show="showBatalAccJudulModal" style="display: none;"
+            class="fixed inset-0 z-50 overflow-y-auto bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+            <div @click.away="showBatalAccJudulModal = false" class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+                    <div class="flex items-center gap-2">
+                        <div class="p-2 bg-amber-100 text-amber-700 rounded-xl">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        </div>
+                        <h4 class="font-bold text-gray-900 text-base">Batalkan Persetujuan (ACC) Judul</h4>
+                    </div>
+                    <button type="button" @click="showBatalAccJudulModal = false" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                <form method="POST" action="{{ route('pembimbing-prakerin.bimbingan-laporan.batalkan-acc-judul', $laporan) }}" class="space-y-4">
+                    @csrf
+
+                    <div class="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900 space-y-1">
+                        <p class="font-bold">Judul saat ini: "{{ $laporan->judul }}"</p>
+                        <p class="text-[11px] leading-relaxed text-amber-800">
+                            Membatalkan ACC judul akan mengembalikan status judul laporan menjadi <strong>Menunggu Persetujuan</strong>. Anda dapat meninjau kembali, menolak dengan revisi, atau menyetujui ulang.
+                        </p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                            Alasan Pembatalan ACC Judul <span class="text-rose-500">*</span>
+                        </label>
+                        <textarea name="alasan_pembatalan" rows="3" required maxlength="1000"
+                            placeholder="Tuliskan alasan mengapa persetujuan judul ini dibatalkan (misal: perlu penyesuaian materi PKL, salah klik, atau ada pergantian topik)..."
+                            class="w-full text-sm rounded-xl border-gray-300 focus:border-rose-500 focus:ring-rose-500 shadow-sm transition"></textarea>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+                        <button type="button" @click="showBatalAccJudulModal = false"
+                            class="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition">
+                            Tutup
+                        </button>
+                        <button type="submit"
+                            class="px-5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl shadow-md shadow-amber-200 transition">
+                            Konfirmasi Batalkan ACC Judul
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {{-- MODAL BATALKAN ACC TAHAP / BAB --}}
+        <div x-show="showBatalAccTahapModal" style="display: none;"
+            class="fixed inset-0 z-50 overflow-y-auto bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+            <div @click.away="showBatalAccTahapModal = false" class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+                    <div class="flex items-center gap-2">
+                        <div class="p-2 bg-amber-100 text-amber-700 rounded-xl">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        </div>
+                        <h4 class="font-bold text-gray-900 text-base">Batalkan ACC Bab / Tahap</h4>
+                    </div>
+                    <button type="button" @click="showBatalAccTahapModal = false" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                <form method="POST" :action="'{{ url('pembimbing-prakerin/bimbingan-laporan/tahap') }}/' + batalTahapId + '/batalkan-acc'" class="space-y-4">
+                    @csrf
+
+                    <div class="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900 space-y-1">
+                        <p class="font-bold">Tahap: <span x-text="batalTahapNama" class="text-amber-950 underline"></span></p>
+                        <p class="text-[11px] leading-relaxed text-amber-800">
+                            Status persetujuan bab ini akan dicabut. Siswa akan mendapatkan catatan revisi atau tahapan kembali dibuka untuk pemeriksaan ulang.
+                        </p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                            Status Tujuan Setelah Pembatalan <span class="text-rose-500">*</span>
+                        </label>
+                        <div class="space-y-2">
+                            <label class="flex items-start gap-2.5 p-3 rounded-xl border border-gray-200 hover:bg-gray-50 cursor-pointer">
+                                <input type="radio" name="status_tujuan" value="perlu_revisi" checked class="mt-0.5 text-rose-600 focus:ring-rose-500">
+                                <div class="text-xs">
+                                    <span class="font-bold text-gray-800 block">Perlu Revisi (Siswa Wajib Unggah Revisi)</span>
+                                    <span class="text-gray-500 text-[11px]">Gunakan ini jika ada kesalahan isi laporan yang harus diperbaiki oleh siswa.</span>
+                                </div>
+                            </label>
+                            <label class="flex items-start gap-2.5 p-3 rounded-xl border border-gray-200 hover:bg-gray-50 cursor-pointer">
+                                <input type="radio" name="status_tujuan" value="diajukan" class="mt-0.5 text-rose-600 focus:ring-rose-500">
+                                <div class="text-xs">
+                                    <span class="font-bold text-gray-800 block">Menunggu Review (Periksa Kembali di Editor)</span>
+                                    <span class="text-gray-500 text-[11px]">Gunakan ini jika Anda ingin memeriksa ulang dokumen yang sudah diunggah tanpa meminta siswa unggah baru.</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                            Alasan Pembatalan ACC <span class="text-rose-500">*</span>
+                        </label>
+                        <textarea name="alasan_pembatalan" rows="3" required maxlength="1000"
+                            placeholder="Tuliskan alasan pembatalan ACC bab ini dan instruksi poin perbaikan..."
+                            class="w-full text-sm rounded-xl border-gray-300 focus:border-rose-500 focus:ring-rose-500 shadow-sm transition"></textarea>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+                        <button type="button" @click="showBatalAccTahapModal = false"
+                            class="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition">
+                            Tutup
+                        </button>
+                        <button type="submit"
+                            class="px-5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl shadow-md shadow-amber-200 transition">
+                            Konfirmasi Batalkan ACC Bab
                         </button>
                     </div>
                 </form>

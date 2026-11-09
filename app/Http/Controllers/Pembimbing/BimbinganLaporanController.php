@@ -298,6 +298,68 @@ class BimbinganLaporanController extends Controller
     }
 
     /**
+     * Guru Pembimbing Membatalkan Status ACC Judul Laporan Siswa.
+     */
+    public function batalkanAccJudul(Request $request, PrakerinBimbinganLaporan $laporan)
+    {
+        $this->authorizeAccess($laporan);
+
+        if ($laporan->status_judul !== 'disetujui') {
+            Alert::warning('Tidak Dapat Dibatalkan', 'Status judul saat ini bukan disetujui (ACC).');
+            return back();
+        }
+
+        $validated = $request->validate([
+            'alasan_pembatalan' => 'required|string|max:1000',
+        ], [
+            'alasan_pembatalan.required' => 'Alasan pembatalan ACC judul wajib diisi.',
+        ]);
+
+        $alasan = trim($validated['alasan_pembatalan']);
+
+        // Update riwayat judul yang disetujui sebelumnya
+        $latestJudul = $laporan->judulRiwayats()->where('status', 'disetujui')->latest()->first()
+            ?? $laporan->judulRiwayats()->latest()->first();
+
+        if ($latestJudul) {
+            $latestJudul->update([
+                'status' => 'diajukan',
+                'catatan_pembimbing' => 'ACC Dibatalkan oleh Pembimbing. Alasan: ' . $alasan,
+                'reviewed_at' => now(),
+                'reviewed_by' => Auth::id(),
+            ]);
+        }
+
+        // Kembalikan status judul laporan menjadi diajukan
+        $laporanUpdate = [
+            'status_judul' => 'diajukan',
+            'catatan_judul' => 'ACC Dibatalkan: ' . $alasan,
+            'judul_reviewed_at' => now(),
+        ];
+
+        // Jika laporan sebelumnya sudah selesai_acc atau siap_acc atau dalam_bimbingan,
+        // kembalikan status laporan ke draft karena judulnya perlu disetujui ulang
+        if (in_array($laporan->status_laporan, ['selesai_acc', 'siap_acc', 'dalam_bimbingan'])) {
+            $laporanUpdate['status_laporan'] = 'draft';
+            $laporanUpdate['acc_at'] = null;
+            $laporanUpdate['acc_by'] = null;
+        }
+
+        $laporan->update($laporanUpdate);
+
+        PrakerinBimbinganAktivitasLog::catat(
+            $laporan->id,
+            Auth::id(),
+            'batal_acc_judul',
+            'Guru pembimbing membatalkan persetujuan (ACC) judul: "' . $laporan->judul_laporan . '". Alasan: ' . $alasan
+        );
+
+        Alert::success('Berhasil', 'Persetujuan (ACC) judul laporan berhasil dibatalkan. Status judul kembali menjadi antrean peninjauan.');
+
+        return back();
+    }
+
+    /**
      * Guru menambah bab/tahap bimbingan baru untuk siswa (Dinamis).
      */
     public function tambahTahap(Request $request, PrakerinBimbinganLaporan $laporan)
@@ -353,6 +415,80 @@ class BimbinganLaporanController extends Controller
         );
 
         Alert::success('Berhasil', 'Tahapan berhasil dihapus.');
+
+        return back();
+    }
+
+    /**
+     * Guru Pembimbing Membatalkan Status ACC Bab / Tahap Tertentu.
+     */
+    public function batalkanAccTahap(Request $request, PrakerinBimbinganTahap $tahap)
+    {
+        $laporan = $tahap->laporan;
+        $this->authorizeAccess($laporan);
+
+        if ($tahap->status !== 'disetujui') {
+            Alert::warning('Tidak Dapat Dibatalkan', 'Status bab ini belum atau tidak berstatus disetujui (ACC).');
+            return back();
+        }
+
+        $validated = $request->validate([
+            'alasan_pembatalan' => 'required|string|max:1000',
+            'status_tujuan' => 'nullable|in:perlu_revisi,diajukan',
+        ], [
+            'alasan_pembatalan.required' => 'Alasan pembatalan ACC bab wajib diisi.',
+        ]);
+
+        $alasan = trim($validated['alasan_pembatalan']);
+        $statusTujuan = $validated['status_tujuan'] ?? 'perlu_revisi';
+
+        $jumlahRevisi = $tahap->beritaAcaras()->where('jenis', 'revisi')->count();
+        $revisiKe = $jumlahRevisi + 1;
+        $nomorBeritaAcara = 'BA-REV/' . date('Ymd') . '/' . str_pad($tahap->id, 4, '0', STR_PAD_LEFT) . '/R' . $revisiKe;
+
+        // Terbitkan catatan Berita Acara pembatalan / revisi
+        $tahap->beritaAcaras()->create([
+            'prakerin_bimbingan_laporan_id' => $laporan->id,
+            'user_id' => Auth::id(),
+            'nomor_berita_acara' => $nomorBeritaAcara,
+            'jenis' => 'revisi',
+            'revisi_ke' => $revisiKe,
+            'judul_tahap' => $tahap->judul_tahap,
+            'catatan_pembimbing' => 'ACC Dibatalkan oleh Pembimbing: ' . $alasan,
+            'total_anotasi' => $tahap->anotasis()->count(),
+            'file_pdf_path' => $tahap->file_pdf_path,
+            'diterbitkan_at' => now(),
+        ]);
+
+        // Perbarui status tahap
+        $tahap->update([
+            'status' => $statusTujuan,
+            'disetujui_at' => null,
+            'catatan_pembimbing' => 'ACC Dibatalkan: ' . $alasan,
+            'nomor_berita_acara' => $nomorBeritaAcara,
+            'reviewed_at' => now(),
+            'reviewed_by' => Auth::id(),
+            'berita_acara_at' => now(),
+        ]);
+
+        // Jika status laporan sebelumnya adalah siap_acc atau selesai_acc, kembalikan ke dalam_bimbingan
+        if (in_array($laporan->status_laporan, ['siap_acc', 'selesai_acc'])) {
+            $laporan->update([
+                'status_laporan' => 'dalam_bimbingan',
+                'acc_at' => null,
+                'acc_by' => null,
+            ]);
+        }
+
+        PrakerinBimbinganAktivitasLog::catat(
+            $laporan->id,
+            Auth::id(),
+            'batal_acc_bab',
+            'Guru pembimbing membatalkan ACC pada ' . $tahap->judul_tahap . '. Alasan: ' . $alasan,
+            $tahap->id
+        );
+
+        Alert::success('Berhasil', 'Persetujuan (ACC) pada ' . $tahap->judul_tahap . ' berhasil dibatalkan.');
 
         return back();
     }
