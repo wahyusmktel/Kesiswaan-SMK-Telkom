@@ -183,8 +183,10 @@
                     $persen = $lap?->persentase_selesai ?? 0;
                     $tahapDisetujui = $lap ? $lap->tahaps->where('status', 'disetujui')->count() : 0;
                     $totalTahap = $lap ? $lap->tahaps->count() : 0;
+                    $tahapPerluReview = $lap ? $lap->tahaps->where('status', 'diajukan')->count() : 0;
+                    $tahapPerluReviewItems = $lap ? $lap->tahaps->where('status', 'diajukan') : collect();
                 @endphp
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition flex flex-col justify-between overflow-hidden">
+                <div class="bg-white rounded-2xl border {{ $tahapPerluReview > 0 ? 'border-rose-300 ring-2 ring-rose-100 shadow-md' : 'border-gray-100 shadow-sm hover:shadow-md' }} transition flex flex-col justify-between overflow-hidden">
                     <div class="p-6 space-y-4">
                         {{-- Siswa Header --}}
                         <div class="flex items-start justify-between gap-3">
@@ -202,6 +204,11 @@
                                 <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-600">Belum Ada Judul</span>
                             @elseif ($lap->judul_status === 'diajukan')
                                 <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800 animate-pulse">Review Judul</span>
+                            @elseif ($tahapPerluReview > 0)
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-200 animate-pulse">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-rose-600"></span>
+                                    {{ $tahapPerluReview }} Bab Perlu Review
+                                </span>
                             @elseif ($lap->status === 'selesai')
                                 <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800">ACC Selesai</span>
                             @else
@@ -230,9 +237,9 @@
                             @endif
                         </div>
 
-                        {{-- Progress Bar Bab --}}
+                        {{-- Progress Bar Bab & Notifikasi Perlu Review --}}
                         @if ($lap && $lap->judul_status === 'disetujui')
-                            <div class="space-y-1.5 pt-2 border-t border-gray-100">
+                            <div class="space-y-2 pt-2.5 border-t border-gray-100">
                                 <div class="flex items-center justify-between text-[11px]">
                                     <span class="font-bold text-gray-600">Progres Bab</span>
                                     <span class="font-extrabold text-rose-600">{{ $tahapDisetujui }}/{{ $totalTahap }} Tahap ({{ $persen }}%)</span>
@@ -241,6 +248,24 @@
                                     <div class="bg-gradient-to-r from-rose-500 to-emerald-500 h-2 rounded-full"
                                         style="width: {{ $persen }}%"></div>
                                 </div>
+
+                                {{-- Notifikasi jika ada tahapan bab yang diunggah siswa dan butuh respon pembimbing --}}
+                                @if ($tahapPerluReview > 0)
+                                    <div class="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 flex items-start gap-2 shadow-xs">
+                                        <div class="p-1 bg-rose-200/80 rounded-lg text-rose-800 flex-shrink-0 mt-0.5">
+                                            <svg class="w-3.5 h-3.5 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                                        </div>
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex items-center justify-between gap-1">
+                                                <span class="text-[11px] font-black text-rose-950 uppercase tracking-wider">Perlu Respon Pembimbing</span>
+                                                <span class="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-rose-600 text-white">{{ $tahapPerluReview }} Bab Baru</span>
+                                            </div>
+                                            <p class="text-[11px] text-rose-800 leading-snug mt-1">
+                                                Dokumen diunggah: <strong>{{ $tahapPerluReviewItems->pluck('judul_tahap')->implode(', ') }}</strong>
+                                            </p>
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                         @endif
                     </div>
@@ -257,8 +282,8 @@
 
                         @if ($lap)
                             <a href="{{ route('pembimbing-prakerin.bimbingan-laporan.detail', $lap) }}"
-                                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-sm transition">
-                                <span>Buka Bimbingan</span>
+                                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl {{ $tahapPerluReview > 0 ? 'bg-rose-600 hover:bg-rose-700 shadow-md shadow-rose-200 ring-2 ring-rose-400 ring-offset-1' : 'bg-gray-900 hover:bg-gray-800' }} text-white font-bold text-xs transition">
+                                <span>{{ $tahapPerluReview > 0 ? 'Review Dokumen (' . $tahapPerluReview . ')' : 'Buka Bimbingan' }}</span>
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                             </a>
                         @else

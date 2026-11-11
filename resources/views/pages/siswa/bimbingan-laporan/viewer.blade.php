@@ -64,8 +64,8 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {{-- Main PDF Viewer Panel --}}
             <div class="lg:col-span-8 space-y-4">
-                {{-- Viewer Controls --}}
-                <div class="bg-white rounded-2xl border border-gray-200 p-3 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                {{-- Viewer Controls (Sticky saat PDF di-scroll) --}}
+                <div class="sticky top-2 z-30 bg-white/95 backdrop-blur-md rounded-2xl border border-gray-200/90 p-3 shadow-md flex flex-wrap items-center justify-between gap-3 transition">
                     {{-- Page Navigation & Quick Jump --}}
                     <div class="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-xl px-2 py-1">
                         <button type="button" id="prev-page-btn"
@@ -108,8 +108,8 @@
                 </div>
             </div>
 
-            {{-- Right Sidebar: Summary & Navigation to Annotations --}}
-            <div class="lg:col-span-4 space-y-6 sticky top-4">
+            {{-- Right Sidebar: Summary & Navigation to Annotations (Scrollable Independen) --}}
+            <div class="lg:col-span-4 space-y-5 lg:sticky lg:top-2 lg:max-h-[calc(100vh-1rem)] lg:overflow-y-auto pr-1 pb-6 custom-scrollbar">
                 {{-- Status & Info Tahap --}}
                 <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
                     <div class="flex items-center justify-between">
@@ -223,7 +223,7 @@
                                         {{ $anotasi->tipe === 'box' ? 'Kotak' : ($anotasi->tipe === 'circle' ? 'Lingkaran' : ($anotasi->tipe === 'pin' ? 'Pin' : 'Coretan')) }}
                                     </span>
                                 </div>
-                                <p class="text-xs text-gray-800 font-medium leading-snug">
+                                <p class="text-xs text-gray-800 font-medium leading-relaxed whitespace-pre-line">
                                     {{ $anotasi->catatan ?: '(Tanda koreksi tanpa catatan teks)' }}
                                 </p>
                             </div>
@@ -282,26 +282,70 @@
             transform: scale(1.02);
             z-index: 35;
         }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(241, 245, 249, 0.6);
+            border-radius: 9999px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .page-wrapper {
+            position: relative;
+            background: white;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: visible !important;
+        }
+        .annotation-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 25;
+            overflow: visible !important;
+        }
+        .annotation-marker {
+            position: absolute;
+            pointer-events: auto;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .annotation-marker:hover {
+            transform: scale(1.02);
+            z-index: 45;
+        }
         .annotation-tooltip {
             position: absolute;
-            bottom: calc(100% + 8px);
+            bottom: calc(100% + 10px);
             left: 50%;
             transform: translateX(-50%);
             background: #0f172a;
             color: #ffffff;
-            padding: 8px 12px;
-            border-radius: 10px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+            padding: 10px 14px;
+            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
             opacity: 0;
             visibility: hidden;
             pointer-events: none;
             transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
-            z-index: 60;
-            min-width: 160px;
-            max-width: 300px;
+            z-index: 70;
+            width: max-content;
+            min-width: 220px;
+            max-width: 360px;
             text-align: left;
             border: 1px solid rgba(255, 255, 255, 0.2);
             white-space: normal;
+            backdrop-filter: blur(8px);
         }
         .annotation-tooltip::after {
             content: '';
@@ -315,12 +359,48 @@
         }
         .annotation-tooltip.tooltip-bottom {
             bottom: auto;
-            top: calc(100% + 8px);
+            top: calc(100% + 10px);
         }
         .annotation-tooltip.tooltip-bottom::after {
             top: auto;
             bottom: 100%;
             border-color: transparent transparent #0f172a transparent;
+        }
+        .annotation-tooltip.tooltip-align-left {
+            left: 0 !important;
+            transform: none !important;
+        }
+        .annotation-tooltip.tooltip-align-left::after {
+            left: 20px !important;
+            transform: none !important;
+        }
+        .annotation-tooltip.tooltip-align-right {
+            left: auto !important;
+            right: 0 !important;
+            transform: none !important;
+        }
+        .annotation-tooltip.tooltip-align-right::after {
+            left: auto !important;
+            right: 20px !important;
+            transform: none !important;
+        }
+        .annotation-tooltip-body {
+            max-height: 220px;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            padding-right: 4px;
+            font-size: 11px;
+            line-height: 1.55;
+            color: #f1f5f9;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .annotation-tooltip-body::-webkit-scrollbar {
+            width: 4px;
+        }
+        .annotation-tooltip-body::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
         }
         .annotation-marker:hover .annotation-tooltip,
         .annotation-marker.active-tooltip .annotation-tooltip {
@@ -487,6 +567,12 @@
             return div.innerHTML;
         }
 
+        function formatAnnotationText(text) {
+            if (!text) return '';
+            const escaped = escapeHtml(text);
+            return escaped.replace(/\n/g, '<br>');
+        }
+
         function renderAnnotationsForPage(pageNum, layer, viewport) {
             layer.innerHTML = '';
             const pageAnnotations = annotations.filter(a => Number(a.halaman) === Number(pageNum));
@@ -590,17 +676,29 @@
                     }
                 }
 
-                // Popup Tooltip Catatan Revisi
+                // Popup Tooltip Catatan Revisi dengan Smart Positioning & Formatting Teks
                 if (a.catatan) {
                     const tooltip = document.createElement('div');
-                    tooltip.className = 'annotation-tooltip' + (top < 70 ? ' tooltip-bottom' : '');
+
+                    // Smart positioning vertikal: jika marker dekat bagian atas (< 170px), buka ke bawah agar tidak terpotong
+                    let posClass = (top < 170) ? ' tooltip-bottom' : '';
+
+                    // Smart positioning horizontal:
+                    const layerWidth = layer.offsetWidth || 800;
+                    if (left < 140) {
+                        posClass += ' tooltip-align-left';
+                    } else if (left + width > layerWidth - 140) {
+                        posClass += ' tooltip-align-right';
+                    }
+
+                    tooltip.className = 'annotation-tooltip' + posClass;
                     tooltip.innerHTML = `
-                        <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#f87171;margin-bottom:3px;display:flex;align-items:center;justify-content:space-between;">
+                        <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#f87171;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:space-between;">
                             <span>Catatan Koreksi #${badgeNum}</span>
                             <span style="color:#94a3b8;font-size:9px;">Hal. ${a.halaman}</span>
                         </div>
-                        <div style="font-size:11px;font-weight:600;color:#ffffff;line-height:1.4;">
-                            ${escapeHtml(a.catatan)}
+                        <div class="annotation-tooltip-body">
+                            ${formatAnnotationText(a.catatan)}
                         </div>
                     `;
                     el.appendChild(tooltip);
@@ -608,6 +706,29 @@
 
                 // Klik interaktif pada coretan di PDF
                 el.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    scrollToAnnotation(a.id, pageNum);
+
+                    const listItem = document.querySelector(`.annotation-nav-item[data-id="${a.id}"]`);
+                    if (listItem) {
+                        listItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        listItem.classList.add('ring-2', 'ring-rose-500', 'bg-rose-100');
+                        setTimeout(() => listItem.classList.remove('ring-2', 'ring-rose-500', 'bg-rose-100'), 2500);
+                    }
+                });
+
+                layer.appendChild(el);
+            });
+        }
+
+        // Tutup tooltip aktif jika klik di luar marker
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.annotation-marker')) {
+                document.querySelectorAll('.annotation-marker.active-tooltip').forEach(m => {
+                    m.classList.remove('active-tooltip');
+                });
+            }
+        });
                     e.stopPropagation();
                     scrollToAnnotation(a.id, pageNum);
 

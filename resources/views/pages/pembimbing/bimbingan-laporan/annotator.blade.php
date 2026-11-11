@@ -31,9 +31,9 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {{-- Studio Workspace: Toolbar & Canvas --}}
             <div class="lg:col-span-8 space-y-4">
-                {{-- Interactive Annotation Toolbar / Readonly Header --}}
+                {{-- Interactive Annotation Toolbar / Readonly Header (Sticky saat PDF di-scroll) --}}
                 @if($tahap->status === 'disetujui')
-                    <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                    <div class="sticky top-2 z-30 bg-emerald-50/95 backdrop-blur-md border border-emerald-300 rounded-2xl p-3 shadow-md flex flex-wrap items-center justify-between gap-3 transition">
                         <div class="flex items-center gap-2.5">
                             <span class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 shadow-sm">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -77,7 +77,7 @@
                         </div>
                     </div>
                 @else
-                    <div class="bg-white rounded-2xl border border-gray-200 p-3 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                    <div class="sticky top-2 z-30 bg-white/95 backdrop-blur-md rounded-2xl border border-gray-200/90 p-3 shadow-md flex flex-wrap items-center justify-between gap-3 transition">
                         {{-- Tool Selection --}}
                         <div class="flex items-center gap-1 bg-gray-100 p-1 rounded-xl">
                             <button type="button" class="tool-btn px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 active-tool bg-white text-gray-900 shadow-sm"
@@ -159,8 +159,8 @@
                 </div>
             </div>
 
-            {{-- Right Sidebar: Annotations List & Final Review Form --}}
-            <div class="lg:col-span-4 space-y-6 sticky top-4">
+            {{-- Right Sidebar: Annotations List & Final Review Form (Scrollable Independen) --}}
+            <div class="lg:col-span-4 space-y-5 lg:sticky lg:top-2 lg:max-h-[calc(100vh-1rem)] lg:overflow-y-auto pr-1 pb-6 custom-scrollbar">
                 {{-- Form Keputusan / Kartu Status Disetujui (ACC) --}}
                 @if($tahap->status === 'disetujui')
                     <div class="bg-white rounded-2xl border-2 border-emerald-200 shadow-sm p-6 space-y-4">
@@ -196,7 +196,7 @@
                         </div>
 
                         <div class="pt-1">
-                            <a href="{{ route('pembimbing-prakerin.bimbingan-laporan.tahap.berita-acara', $tahap) }}" target="_blank"
+                            <a href="{{ route('pembimbing-prakerin.bimbingan-laporan.berita-acara', $tahap) }}" target="_blank"
                                 class="w-full py-2.5 px-4 rounded-xl text-white font-bold text-xs shadow-md bg-emerald-600 hover:bg-emerald-700 transition flex items-center justify-center gap-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z"/></svg>
                                 <span>Unduh Berita Acara Pengesahan (PDF)</span>
@@ -362,29 +362,42 @@
 
     {{-- Modal Popover: Input Catatan Coretan Baru --}}
     <div id="note-modal" style="display: none;"
-        class="fixed inset-0 z-50 overflow-y-auto bg-gray-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl space-y-3">
-            <div class="flex items-center justify-between pb-2 border-b border-gray-100">
-                <h4 class="font-bold text-gray-900 text-xs uppercase tracking-wider">Tulis Catatan Revisi Coretan</h4>
-                <button type="button" onclick="cancelPendingAnnotation()" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        class="fixed inset-0 z-50 overflow-y-auto bg-gray-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-gray-100">
+            <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+                <div class="flex items-center gap-2">
+                    <div class="p-1.5 rounded-lg bg-rose-50 text-rose-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                    </div>
+                    <h4 class="font-bold text-gray-900 text-sm">Catatan Koreksi &amp; Arahan Revisi</h4>
+                </div>
+                <button type="button" onclick="cancelPendingAnnotation()" class="text-gray-400 hover:text-gray-600 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
 
-            <div>
-                <textarea id="pending-note-input" rows="3" maxlength="1000"
-                    placeholder="Tuliskan arahan perbaikan untuk area yang baru saja Anda tandai..."
-                    class="w-full text-xs rounded-xl border-gray-300 focus:border-rose-500 focus:ring-rose-500 shadow-sm"></textarea>
+            <div class="space-y-2">
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+                    Uraian Koreksi untuk Area Ini <span class="text-rose-500">*</span>
+                </label>
+                <textarea id="pending-note-input" rows="5" maxlength="1500"
+                    placeholder="Tuliskan arahan perbaikan secara jelas...&#10;Contoh:&#10;1. Perbaiki penulisan rumus pada bab ini&#10;2. Lengkapi referensi sumber tabel"
+                    class="w-full text-xs font-normal leading-relaxed rounded-xl border-gray-300 focus:border-rose-500 focus:ring-rose-500 shadow-sm transition placeholder:text-gray-400"></textarea>
+                <div class="flex items-center justify-between text-[11px] text-gray-400 px-0.5">
+                    <span>💡 Gunakan Enter untuk membuat baris baru / poin nomor</span>
+                    <span id="note-char-count">Maks. 1500 karakter</span>
+                </div>
             </div>
 
-            <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+            <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-gray-100">
                 <button type="button" onclick="cancelPendingAnnotation()"
-                    class="px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition">
+                    class="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition">
                     Batal
                 </button>
                 <button type="button" onclick="savePendingAnnotation()"
-                    class="px-4 py-1.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-sm transition">
-                    Simpan Coretan
+                    class="px-5 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-md shadow-rose-200 transition flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    <span>Simpan Catatan Koreksi</span>
                 </button>
             </div>
         </div>
@@ -393,6 +406,21 @@
     {{-- PDF.js & Drawing Studio Engine --}}
     <script src="{{ asset('vendor/pdfjs/pdf.min.js') }}"></script>
     <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(241, 245, 249, 0.6);
+            border-radius: 9999px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
         .page-wrapper {
             position: relative;
             background: white;
@@ -415,6 +443,7 @@
             bottom: 0;
             pointer-events: none;
             z-index: 25;
+            overflow: visible !important;
         }
         .annotation-marker {
             position: absolute;
@@ -424,28 +453,30 @@
         }
         .annotation-marker:hover {
             transform: scale(1.02);
-            z-index: 35;
+            z-index: 45;
         }
         .annotation-tooltip {
             position: absolute;
-            bottom: calc(100% + 8px);
+            bottom: calc(100% + 10px);
             left: 50%;
             transform: translateX(-50%);
             background: #0f172a;
             color: #ffffff;
-            padding: 8px 12px;
-            border-radius: 10px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+            padding: 10px 14px;
+            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
             opacity: 0;
             visibility: hidden;
             pointer-events: none;
             transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
-            z-index: 60;
-            min-width: 160px;
-            max-width: 300px;
+            z-index: 70;
+            width: max-content;
+            min-width: 220px;
+            max-width: 360px;
             text-align: left;
             border: 1px solid rgba(255, 255, 255, 0.2);
             white-space: normal;
+            backdrop-filter: blur(8px);
         }
         .annotation-tooltip::after {
             content: '';
@@ -459,12 +490,48 @@
         }
         .annotation-tooltip.tooltip-bottom {
             bottom: auto;
-            top: calc(100% + 8px);
+            top: calc(100% + 10px);
         }
         .annotation-tooltip.tooltip-bottom::after {
             top: auto;
             bottom: 100%;
             border-color: transparent transparent #0f172a transparent;
+        }
+        .annotation-tooltip.tooltip-align-left {
+            left: 0 !important;
+            transform: none !important;
+        }
+        .annotation-tooltip.tooltip-align-left::after {
+            left: 20px !important;
+            transform: none !important;
+        }
+        .annotation-tooltip.tooltip-align-right {
+            left: auto !important;
+            right: 0 !important;
+            transform: none !important;
+        }
+        .annotation-tooltip.tooltip-align-right::after {
+            left: auto !important;
+            right: 20px !important;
+            transform: none !important;
+        }
+        .annotation-tooltip-body {
+            max-height: 220px;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            padding-right: 4px;
+            font-size: 11px;
+            line-height: 1.55;
+            color: #f1f5f9;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .annotation-tooltip-body::-webkit-scrollbar {
+            width: 4px;
+        }
+        .annotation-tooltip-body::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
         }
         .annotation-marker:hover .annotation-tooltip,
         .annotation-marker.active-tooltip .annotation-tooltip {
@@ -474,7 +541,7 @@
         }
         .pdf-annotation-highlight {
             animation: pulse-glow 1.5s infinite alternate;
-            z-index: 40 !important;
+            z-index: 50 !important;
         }
         @keyframes pulse-glow {
             from {
@@ -838,6 +905,12 @@
             return div.innerHTML;
         }
 
+        function formatAnnotationText(text) {
+            if (!text) return '';
+            const escaped = escapeHtml(text);
+            return escaped.replace(/\n/g, '<br>');
+        }
+
         function renderPageAnnotations(pageNum, layer) {
             layer.innerHTML = '';
             const pageAnnotations = existingAnnotations.filter(a => Number(a.halaman) === Number(pageNum));
@@ -941,17 +1014,29 @@
                     }
                 }
 
-                // Popup Tooltip Catatan Revisi
+                // Popup Tooltip Catatan Revisi dengan Smart Positioning & Formatting Teks
                 if (a.catatan) {
                     const tooltip = document.createElement('div');
-                    tooltip.className = 'annotation-tooltip' + (top < 70 ? ' tooltip-bottom' : '');
+
+                    // Smart positioning vertikal: jika marker dekat bagian atas (< 170px), buka ke bawah agar tidak terpotong
+                    let posClass = (top < 170) ? ' tooltip-bottom' : '';
+
+                    // Smart positioning horizontal:
+                    const layerWidth = layer.offsetWidth || 800;
+                    if (left < 140) {
+                        posClass += ' tooltip-align-left';
+                    } else if (left + width > layerWidth - 140) {
+                        posClass += ' tooltip-align-right';
+                    }
+
+                    tooltip.className = 'annotation-tooltip' + posClass;
                     tooltip.innerHTML = `
-                        <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#f87171;margin-bottom:3px;display:flex;align-items:center;justify-content:space-between;">
+                        <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#f87171;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:space-between;">
                             <span>Catatan Koreksi #${badgeNum}</span>
                             <span style="color:#94a3b8;font-size:9px;">Hal. ${a.halaman}</span>
                         </div>
-                        <div style="font-size:11px;font-weight:600;color:#ffffff;line-height:1.4;">
-                            ${escapeHtml(a.catatan)}
+                        <div class="annotation-tooltip-body">
+                            ${formatAnnotationText(a.catatan)}
                         </div>
                     `;
                     el.appendChild(tooltip);
@@ -1005,9 +1090,9 @@
                     </span>
                     ${deleteButtonHtml}
                 </div>
-                <p class="text-xs text-gray-800 font-medium leading-snug">
-                    ${anotasi.catatan || '(Coretan penanda tanpa catatan teks)'}
-                </p>
+                <div class="text-xs text-gray-800 font-medium leading-relaxed whitespace-pre-line">
+                    ${escapeHtml(anotasi.catatan) || '(Coretan penanda tanpa catatan teks)'}
+                </div>
             `;
 
             container.appendChild(item);
@@ -1031,6 +1116,15 @@
             currentPage = pageNum;
             updateNavigationState();
         }
+
+        // Tutup tooltip aktif jika klik di luar marker
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.annotation-marker')) {
+                document.querySelectorAll('.annotation-marker.active-tooltip').forEach(m => {
+                    m.classList.remove('active-tooltip');
+                });
+            }
+        });
 
         // Zoom Controls
         document.getElementById('zoom-in-btn').addEventListener('click', () => {
