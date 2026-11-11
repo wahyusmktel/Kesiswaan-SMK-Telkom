@@ -1,37 +1,22 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div class="flex items-center gap-3">
-                <div class="p-2.5 bg-rose-50 text-rose-600 rounded-2xl shadow-sm border border-rose-100">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
-                </div>
-                <div>
-                    <h2 class="font-bold text-xl text-gray-800 leading-tight">Bimbingan Laporan Prakerin Siswa</h2>
-                    <p class="text-xs text-gray-500">
-                        @if(isset($guru) && $guru)
-                            Ruang Bimbingan: <strong class="text-gray-700">{{ $guru->nama_guru }}</strong> &bull; Siswa Binaan Pembimbing Sekolah
-                        @else
-                            Pemeriksaan judul, koreksi coretan dokumen interaktif, dan penerbitan Berita Acara Digital
-                        @endif
-                    </p>
-                </div>
+        <div class="flex items-center gap-3">
+            <div class="p-2.5 bg-rose-50 text-rose-600 rounded-2xl shadow-sm border border-rose-100">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
             </div>
-
-            @if (!($hasTtdDigital ?? false))
-                <a href="{{ route('tanda-tangan.index') }}"
-                    class="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl shadow-md shadow-amber-200 transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                    Aktivasi TTD Digital Sekarang
-                </a>
-            @else
-                <div class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl">
-                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                    TTD Digital Siap & Aktif
-                </div>
-            @endif
+            <div>
+                <h2 class="font-bold text-xl text-gray-800 leading-tight">Bimbingan Laporan Prakerin Siswa</h2>
+                <p class="text-xs text-gray-500">
+                    @if(isset($guru) && $guru)
+                        Ruang Bimbingan: <strong class="text-gray-700">{{ $guru->nama_guru }}</strong> &bull; Siswa Binaan Pembimbing Sekolah
+                    @else
+                        Pemeriksaan judul, koreksi coretan dokumen interaktif, dan penerbitan Berita Acara Digital
+                    @endif
+                </p>
+            </div>
         </div>
     </x-slot>
 
@@ -82,6 +67,29 @@
                         Buka Menu Tanda Tangan Digital
                     </a>
                 </div>
+            </div>
+        @else
+            {{-- Status TTD Digital: Siap & Aktif --}}
+            <div class="rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50/90 to-teal-50/50 p-4 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h4 class="font-bold text-gray-900 text-sm">Tanda Tangan Digital Siap &amp; Aktif</h4>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-200 text-emerald-900 uppercase tracking-wider">Terverifikasi</span>
+                        </div>
+                        <p class="text-xs text-gray-600 mt-0.5">Sertifikat dan QR Code digital siap digunakan untuk pengesahan judul, review bab laporan, dan penerbitan Berita Acara.</p>
+                    </div>
+                </div>
+                <a href="{{ route('tanda-tangan.index') }}"
+                    class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-emerald-900 bg-white border border-emerald-300 rounded-xl hover:bg-emerald-100/70 shadow-xs transition flex-shrink-0 self-start sm:self-auto">
+                    <svg class="w-4 h-4 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    <span>Kelola TTD Digital</span>
+                </a>
             </div>
         @endif
 
