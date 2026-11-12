@@ -890,10 +890,10 @@ class BimbinganLaporanController extends Controller
         ]);
 
         $setting = \App\Models\AppSetting::first();
-        if (! $setting || ! $setting->stella_ai_enabled || ! $setting->stella_ai_api_key || ! $setting->stella_ai_base_url) {
+        if (! $setting || ! $setting->stella_ai_enabled || empty($setting->stella_ai_base_url)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Layanan Stella AI belum aktif atau konfigurasinya belum lengkap. Silakan hubungi Super Admin untuk mengaktifkan Stella AI pada Menu Pengaturan Aplikasi.',
+                'message' => 'Layanan Stella AI belum aktif atau Base URL belum dikonfigurasi. Hubungi Super Admin pada Menu Pengaturan Aplikasi.',
             ], 422);
         }
 
@@ -904,12 +904,16 @@ class BimbinganLaporanController extends Controller
         $judulTahap = $tahap->judul_tahap;
         $halaman = $request->input('halaman', 1);
         $lingkup = $request->input('lingkup', 'halaman');
-        $teksDokumen = trim($request->input('teks_dokumen'));
+        $rawTeksDokumen = trim((string) $request->input('teks_dokumen'));
+
+        // Sanitasi karakter kontrol non-printable UTF-8
+        $cleanTeksDokumen = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', ' ', $rawTeksDokumen);
+        $cleanTeksDokumen = mb_convert_encoding($cleanTeksDokumen, 'UTF-8', 'UTF-8');
 
         // Batasi panjang teks (maksimal ~14.000 karakter) agar efisien pada context token
         $maxChars = 14000;
-        if (mb_strlen($teksDokumen) > $maxChars) {
-            $teksDokumen = mb_substr($teksDokumen, 0, $maxChars) . "\n\n[...Konten selanjutnya diringkas untuk analisis AI...]";
+        if (mb_strlen($cleanTeksDokumen) > $maxChars) {
+            $cleanTeksDokumen = mb_substr($cleanTeksDokumen, 0, $maxChars) . "\n\n[...Konten bab diringkas untuk analisis koreksi AI...]";
         }
 
         $systemPrompt = <<<PROMPT
@@ -949,17 +953,21 @@ PROMPT;
             . "- Bab / Bagian yang Diperiksa: {$judulTahap}\n"
             . "- Lingkup Analisis: " . ($lingkup === 'halaman' ? "Halaman {$halaman}" : "Seluruh Dokumen Bab") . "\n\n"
             . "Teks Dokumen Laporan Siswa:\n"
-            . "\"\"\"\n{$teksDokumen}\n\"\"\"\n\n"
+            . "\"\"\"\n{$cleanTeksDokumen}\n\"\"\"\n\n"
             . "Berikan evaluasi koreksi objektif sekarang dalam JSON valid.";
 
         try {
             $client = \Illuminate\Support\Facades\Http::acceptJson()
                 ->asJson()
-                ->withToken($setting->stella_ai_api_key)
+                ->withoutVerifying()
                 ->timeout(120);
 
+            if (! empty($setting->stella_ai_api_key)) {
+                $client = $client->withToken(trim($setting->stella_ai_api_key));
+            }
+
             $endpoint = rtrim($setting->stella_ai_base_url, '/') . '/chat/completions';
-            $model = $setting->stella_ai_chat_model ?: 'gpt-4o-mini';
+            $model = $setting->stella_ai_chat_model ?: 'wr/glm-5.2';
 
             $response = $client->post($endpoint, [
                 'model' => $model,
@@ -967,7 +975,7 @@ PROMPT;
                     ['role' => 'system', 'content' => $systemPrompt],
                     ['role' => 'user', 'content' => $userMessage],
                 ],
-                'temperature' => 0.3,
+                'stream' => false,
             ]);
 
             if ($response->failed()) {
@@ -975,10 +983,16 @@ PROMPT;
                     'status' => $response->status(),
                     'body' => $response->body(),
                 ]);
+
+                $providerErr = data_get($response->json(), 'error.message')
+                    ?? data_get($response->json(), 'message')
+                    ?? data_get($response->json(), 'detail')
+                    ?? \Illuminate\Support\Str::limit(strip_tags($response->body()), 250);
+
                 return response()->json([
                     'success' => false,
-                    'message' => 'Layanan Stella AI menolak permintaan (HTTP ' . $response->status() . '). Periksa kuota / kunci API Stella AI.',
-                ], 500);
+                    'message' => 'Layanan AI menolak permintaan (HTTP ' . $response->status() . '): ' . $providerErr,
+                ], 422);
             }
 
             $respData = $response->json();

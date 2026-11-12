@@ -1586,9 +1586,30 @@
                     })
                 });
 
-                const res = await response.json();
-                if (!response.ok || !res.success) {
-                    throw new Error(res.message || 'Terjadi kendala saat memproses koreksi dengan Stella AI.');
+                let res = null;
+                try {
+                    res = await response.json();
+                } catch (jsonErr) {
+                    // Response body bukan JSON
+                }
+
+                if (!response.ok || !res || !res.success) {
+                    let errMessage = res?.message || res?.error?.message;
+                    if (!errMessage && res?.errors) {
+                        errMessage = Object.values(res.errors).flat().join(' ');
+                    }
+                    if (!errMessage) {
+                        if (response.status === 419) {
+                            errMessage = 'Sesi form Anda telah kedaluwarsa. Silakan refresh halaman dan coba kembali.';
+                        } else if (response.status === 403) {
+                            errMessage = 'Akses ditolak: Anda bukan pembimbing yang ditugaskan untuk siswa ini.';
+                        } else if (response.status >= 500) {
+                            errMessage = `Server mengalami kendala internal (HTTP ${response.status}).`;
+                        } else {
+                            errMessage = `Permintaan tidak dapat diproses (HTTP ${response.status}).`;
+                        }
+                    }
+                    throw new Error(errMessage);
                 }
 
                 lastAiResultData = res.data;
