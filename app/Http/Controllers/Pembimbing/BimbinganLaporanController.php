@@ -461,6 +461,12 @@ class BimbinganLaporanController extends Controller
         ]);
 
         // Perbarui status tahap
+        $baAcc = $tahap->beritaAcaras()->where('jenis', 'disetujui')->latest('id')->first();
+        if ($baAcc) {
+            // Lepaskan kaitan anotasi agar kembali aktif untuk dikoreksi kembali
+            $baAcc->anotasis()->update(['prakerin_bimbingan_berita_acara_id' => null]);
+        }
+
         $tahap->update([
             'status' => $statusTujuan,
             'disetujui_at' => null,
@@ -496,7 +502,7 @@ class BimbinganLaporanController extends Controller
     /**
      * Halaman Editor Pemeriksaan Dokumen Interaktif (Interactive PDF Annotator).
      */
-    public function editorAnotasi(PrakerinBimbinganTahap $tahap)
+    public function editorAnotasi(Request $request, PrakerinBimbinganTahap $tahap)
     {
         $laporan = $tahap->laporan;
         $this->authorizeAccess($laporan);
@@ -508,27 +514,61 @@ class BimbinganLaporanController extends Controller
             return redirect()->route('tanda-tangan.index');
         }
 
-        $cleanPath = str_replace('public/', '', (string) $tahap->file_pdf_path);
-        $fileExists = Storage::disk('public')->exists($tahap->file_pdf_path)
-            || Storage::disk('public')->exists($cleanPath)
-            || Storage::exists($tahap->file_pdf_path);
+        $beritaAcaras = $tahap->beritaAcaras()->with(['pembimbing', 'anotasis.user'])->orderBy('id', 'desc')->get();
 
-        if (! $tahap->file_pdf_path || ! $fileExists) {
-            Alert::error('File Tidak Ada', 'Dokumen PDF belum diunggah oleh siswa.');
-            return back();
+        $selectedBaId = $request->query('berita_acara_id');
+        $selectedBeritaAcara = $selectedBaId ? $beritaAcaras->firstWhere('id', (int) $selectedBaId) : null;
+        $isArsipMode = (bool) $selectedBeritaAcara;
+
+        $targetPdfPath = $isArsipMode && $selectedBeritaAcara->file_pdf_path
+            ? $selectedBeritaAcara->file_pdf_path
+            : $tahap->file_pdf_path;
+
+        $cleanPath = str_replace('public/', '', (string) $targetPdfPath);
+        $fileExists = Storage::disk('public')->exists($targetPdfPath)
+            || Storage::disk('public')->exists($cleanPath)
+            || Storage::exists($targetPdfPath);
+
+        if (! $targetPdfPath || ! $fileExists) {
+            // Fallback ke file tahap jika file arsip tidak ditemukan
+            $targetPdfPath = $tahap->file_pdf_path;
+            $cleanPath = str_replace('public/', '', (string) $targetPdfPath);
+            $fileExists = Storage::disk('public')->exists($targetPdfPath)
+                || Storage::disk('public')->exists($cleanPath)
+                || Storage::exists($targetPdfPath);
+
+            if (! $targetPdfPath || ! $fileExists) {
+                Alert::error('File Tidak Ada', 'Dokumen PDF belum diunggah oleh siswa.');
+                return back();
+            }
         }
 
         $tahap->load([
-            'anotasis.user',
-            'beritaAcaras.pembimbing',
             'laporan.penempatan.siswa.rombels.kelas',
             'laporan.penempatan.industri',
         ]);
 
-        $anotasis = $tahap->anotasis;
-        $beritaAcaras = $tahap->beritaAcaras;
+        if ($isArsipMode) {
+            $anotasis = $selectedBeritaAcara->anotasis()->with('user')->get();
+            $canAnnotate = false;
+        } else {
+            $anotasis = $tahap->anotasisAktif()->with('user')->get();
+            $canAnnotate = ($tahap->status !== 'disetujui');
+        }
 
-        return view('pages.pembimbing.bimbingan-laporan.annotator', compact('tahap', 'laporan', 'sig', 'anotasis', 'beritaAcaras'));
+        $activePdfUrl = asset('storage/' . $cleanPath);
+
+        return view('pages.pembimbing.bimbingan-laporan.annotator', compact(
+            'tahap',
+            'laporan',
+            'sig',
+            'anotasis',
+            'beritaAcaras',
+            'selectedBeritaAcara',
+            'isArsipMode',
+            'canAnnotate',
+            'activePdfUrl'
+        ));
     }
 
     /**
@@ -587,6 +627,7 @@ class BimbinganLaporanController extends Controller
         }
 
         $anotasi = $tahap->anotasis()->create([
+            'prakerin_bimbingan_berita_acara_id' => null, // Anotasi aktif pada putaran berjalan
             'user_id' => Auth::id(),
             'halaman' => $validated['halaman'],
             'posisi_x' => $validated['posisi_x'],
@@ -697,6 +738,8 @@ class BimbinganLaporanController extends Controller
             $nomorBeritaAcara = 'BA-REV/' . date('Ymd') . '/' . str_pad($tahap->id, 4, '0', STR_PAD_LEFT) . '/R' . $revisiKe;
         }
 
+        $totalAnotasiAktif = $tahap->anotasisAktif()->count();
+
         // Terbitkan entri Berita Acara resmi ke tabel riwayat berita acara
         $beritaAcara = $tahap->beritaAcaras()->create([
             'prakerin_bimbingan_laporan_id' => $laporan->id,
@@ -706,9 +749,14 @@ class BimbinganLaporanController extends Controller
             'revisi_ke' => $revisiKe,
             'judul_tahap' => $tahap->judul_tahap,
             'catatan_pembimbing' => $validated['catatan_pembimbing'] ? trim($validated['catatan_pembimbing']) : null,
-            'total_anotasi' => $tahap->anotasis()->count(),
+            'total_anotasi' => $totalAnotasiAktif,
             'file_pdf_path' => $tahap->file_pdf_path,
             'diterbitkan_at' => now(),
+        ]);
+
+        // Kunci / arsipkan seluruh anotasi aktif ke Berita Acara yang baru saja diterbitkan
+        $tahap->anotasisAktif()->update([
+            'prakerin_bimbingan_berita_acara_id' => $beritaAcara->id,
         ]);
 
         $tahap->update([
@@ -822,6 +870,175 @@ class BimbinganLaporanController extends Controller
         $pdf = $this->pdfService->generateRiwayatBimbinganPdf($laporan);
 
         return $pdf->stream('Rekap-Riwayat-Bimbingan-Prakerin-' . ($laporan->penempatan->siswa?->nis ?? 'siswa') . '.pdf');
+    }
+
+    /**
+     * Koreksi Otomatis Dokumen Laporan menggunakan Stella AI (AJAX JSON).
+     */
+    public function aiKoreksi(Request $request, PrakerinBimbinganTahap $tahap)
+    {
+        $laporan = $tahap->laporan;
+        $this->authorizeAccess($laporan);
+
+        $request->validate([
+            'teks_dokumen' => 'required|string|min:15',
+            'lingkup' => 'nullable|string|in:halaman,seluruh',
+            'halaman' => 'nullable|integer|min:1',
+        ], [
+            'teks_dokumen.required' => 'Teks dokumen tidak boleh kosong.',
+            'teks_dokumen.min' => 'Teks dokumen terlalu pendek untuk dianalisis oleh AI.',
+        ]);
+
+        $setting = \App\Models\AppSetting::first();
+        if (! $setting || ! $setting->stella_ai_enabled || ! $setting->stella_ai_api_key || ! $setting->stella_ai_base_url) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Layanan Stella AI belum aktif atau konfigurasinya belum lengkap. Silakan hubungi Super Admin untuk mengaktifkan Stella AI pada Menu Pengaturan Aplikasi.',
+            ], 422);
+        }
+
+        $siswa = $laporan->penempatan?->siswa;
+        $industri = $laporan->penempatan?->industri;
+        $namaSiswa = $siswa?->nama_lengkap ?? 'Siswa Prakerin';
+        $judulLaporan = $laporan->judul_laporan ?? 'Laporan Praktik Kerja Industri';
+        $judulTahap = $tahap->judul_tahap;
+        $halaman = $request->input('halaman', 1);
+        $lingkup = $request->input('lingkup', 'halaman');
+        $teksDokumen = trim($request->input('teks_dokumen'));
+
+        // Batasi panjang teks (maksimal ~14.000 karakter) agar efisien pada context token
+        $maxChars = 14000;
+        if (mb_strlen($teksDokumen) > $maxChars) {
+            $teksDokumen = mb_substr($teksDokumen, 0, $maxChars) . "\n\n[...Konten selanjutnya diringkas untuk analisis AI...]";
+        }
+
+        $systemPrompt = <<<PROMPT
+Kamu adalah "Stella AI", asisten pembimbing laporan Praktik Kerja Industri (Prakerin/PKL) di SMK Telkom Lampung.
+Tugasmu adalah menganalisis teks bab laporan siswa untuk membantu guru pembimbing sekolah melakukan koreksi akademik secara cepat, teliti, dan solutif.
+
+Pedoman Penilaian:
+1. Kesesuaian materi dengan judul laporan dan bab laporan PKL (Pendahuluan, Profil DU-DI, Kegiatan Teknis/Hasil, Penutup/Kesimpulan).
+2. Sistematika penulisan karya ilmiah & laporan PKL SMK.
+3. Kebakuan bahasa Indonesia (EYD Edisi V), ejaan, tanda baca, istilah teknis, dan kejelasan kalimat.
+4. Kerapian logika alur bahasan dan kedalaman deskripsi teknis pekerjaan siswa.
+
+WAJIB balas HANYA dalam format JSON murni yang valid tanpa teks pembuka/penutup dan tanpa markdown ```json.
+Struktur JSON yang WAJIB dipatuhi:
+{
+  "ringkasan_evaluasi": "Uraian ringkas 2-3 kalimat mengenai kualitas dan isi materi yang diperiksa.",
+  "skor_kelayakan": 80,
+  "rekomendasi_status": "disetujui",
+  "catatan_arahan": "Draf catatan arahan pembimbing yang santun, jelas, dan siap pakai untuk siswa di berita acara.",
+  "poin_koreksi": [
+    {
+      "aspek": "Tata Bahasa & EYD",
+      "temuan": "Uraian kalimat/bagian yang kurang tepat atau perlu diperbaiki",
+      "saran": "Instruksi perbaikan praktis bagi siswa"
+    }
+  ]
+}
+Catatan untuk "rekomendasi_status":
+- Isi "disetujui" jika secara keseluruhan teks layak (skor >= 75) dengan perbaikan minor.
+- Isi "perlu_revisi" jika terdapat kesalahan konsep/data/format substansial yang harus diperbaiki siswa.
+PROMPT;
+
+        $userMessage = "Data Laporan Siswa SMK Telkom Lampung:\n"
+            . "- Nama Siswa: {$namaSiswa}\n"
+            . "- DU-DI / Industri: " . ($industri?->nama_industri ?? '-') . "\n"
+            . "- Judul Laporan: {$judulLaporan}\n"
+            . "- Bab / Bagian yang Diperiksa: {$judulTahap}\n"
+            . "- Lingkup Analisis: " . ($lingkup === 'halaman' ? "Halaman {$halaman}" : "Seluruh Dokumen Bab") . "\n\n"
+            . "Teks Dokumen Laporan Siswa:\n"
+            . "\"\"\"\n{$teksDokumen}\n\"\"\"\n\n"
+            . "Berikan evaluasi koreksi objektif sekarang dalam JSON valid.";
+
+        try {
+            $client = \Illuminate\Support\Facades\Http::acceptJson()
+                ->asJson()
+                ->withToken($setting->stella_ai_api_key)
+                ->timeout(120);
+
+            $endpoint = rtrim($setting->stella_ai_base_url, '/') . '/chat/completions';
+            $model = $setting->stella_ai_chat_model ?: 'gpt-4o-mini';
+
+            $response = $client->post($endpoint, [
+                'model' => $model,
+                'messages' => [
+                    ['role' => 'system', 'content' => $systemPrompt],
+                    ['role' => 'user', 'content' => $userMessage],
+                ],
+                'temperature' => 0.3,
+            ]);
+
+            if ($response->failed()) {
+                \Illuminate\Support\Facades\Log::warning('Stella AI Bimbingan Request Failed', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Layanan Stella AI menolak permintaan (HTTP ' . $response->status() . '). Periksa kuota / kunci API Stella AI.',
+                ], 500);
+            }
+
+            $respData = $response->json();
+            $content = data_get($respData, 'choices.0.message.content')
+                ?: data_get($respData, 'choices.0.message.reasoning_content');
+
+            if (! is_string($content) || trim($content) === '') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Stella AI tidak mengembalikan respon teks yang dapat dibaca.',
+                ], 500);
+            }
+
+            // Bersihkan wrapper markdown jika ada
+            $cleanJson = trim($content);
+            if (str_starts_with($cleanJson, '```json')) {
+                $cleanJson = substr($cleanJson, 7);
+            } elseif (str_starts_with($cleanJson, '```')) {
+                $cleanJson = substr($cleanJson, 3);
+            }
+            if (str_ends_with($cleanJson, '```')) {
+                $cleanJson = substr($cleanJson, 0, -3);
+            }
+            $cleanJson = trim($cleanJson);
+
+            $parsed = json_decode($cleanJson, true);
+            if (! is_array($parsed)) {
+                // Fallback jika model menjawab dengan teks biasa
+                $parsed = [
+                    'ringkasan_evaluasi' => 'Hasil evaluasi dan telaah Stella AI terhadap dokumen laporan.',
+                    'skor_kelayakan' => 70,
+                    'rekomendasi_status' => 'perlu_revisi',
+                    'catatan_arahan' => $cleanJson,
+                    'poin_koreksi' => [
+                        [
+                            'aspek' => 'Telaah Dokumen',
+                            'temuan' => 'Ulasan umum konten laporan siswa',
+                            'saran' => $cleanJson,
+                        ]
+                    ],
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $parsed,
+                'model' => $model,
+                'halaman' => $halaman,
+                'lingkup' => $lingkup,
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Stella AI Exception in Bimbingan', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan sistem saat menghubungi Stella AI: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**

@@ -14,6 +14,7 @@ class PrakerinBimbinganAnotasi extends Model
 
     protected $fillable = [
         'prakerin_bimbingan_tahap_id',
+        'prakerin_bimbingan_berita_acara_id',
         'user_id',
         'halaman',
         'posisi_x',
@@ -44,6 +45,11 @@ class PrakerinBimbinganAnotasi extends Model
     public function tahap()
     {
         return $this->belongsTo(PrakerinBimbinganTahap::class, 'prakerin_bimbingan_tahap_id');
+    }
+
+    public function beritaAcara()
+    {
+        return $this->belongsTo(PrakerinBimbinganBeritaAcara::class, 'prakerin_bimbingan_berita_acara_id');
     }
 
     public function user()

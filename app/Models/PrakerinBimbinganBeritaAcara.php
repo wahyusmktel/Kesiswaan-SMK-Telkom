@@ -47,6 +47,20 @@ class PrakerinBimbinganBeritaAcara extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    public function anotasis()
+    {
+        return $this->hasMany(PrakerinBimbinganAnotasi::class, 'prakerin_bimbingan_berita_acara_id')->orderBy('halaman')->orderBy('id');
+    }
+
+    public function getFilePdfUrlAttribute(): ?string
+    {
+        if (! $this->file_pdf_path) {
+            return null;
+        }
+        $clean = str_replace('public/', '', $this->file_pdf_path);
+        return asset('storage/' . $clean);
+    }
+
     public function getJudulDokumenAttribute(): string
     {
         if ($this->jenis === 'disetujui') {

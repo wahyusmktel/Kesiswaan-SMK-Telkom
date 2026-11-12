@@ -56,6 +56,14 @@ class PrakerinBimbinganTahap extends Model
         return $this->hasMany(PrakerinBimbinganAnotasi::class, 'prakerin_bimbingan_tahap_id')->orderBy('halaman')->orderBy('id');
     }
 
+    public function anotasisAktif()
+    {
+        return $this->hasMany(PrakerinBimbinganAnotasi::class, 'prakerin_bimbingan_tahap_id')
+            ->whereNull('prakerin_bimbingan_berita_acara_id')
+            ->orderBy('halaman')
+            ->orderBy('id');
+    }
+
     public function aktivitasLogs()
     {
         return $this->hasMany(PrakerinBimbinganAktivitasLog::class, 'prakerin_bimbingan_tahap_id')->latest();

@@ -297,26 +297,67 @@ class BimbinganLaporanController extends Controller
     /**
      * Halaman Siswa Melihat Hasil Catatan / Review Koreksi PDF dari Guru Pembimbing.
      */
-    public function reviewViewer(PrakerinBimbinganTahap $tahap)
+    public function reviewViewer(Request $request, PrakerinBimbinganTahap $tahap)
     {
         $laporan = $this->getLaporanSiswa();
         abort_unless($tahap->prakerin_bimbingan_laporan_id === $laporan->id, 403);
 
-        $cleanPath = str_replace('public/', '', (string) $tahap->file_pdf_path);
-        $fileExists = Storage::disk('public')->exists($tahap->file_pdf_path)
-            || Storage::disk('public')->exists($cleanPath)
-            || Storage::exists($tahap->file_pdf_path);
+        $beritaAcaras = $tahap->beritaAcaras()->with(['pembimbing', 'anotasis.user'])->orderBy('id', 'desc')->get();
 
-        if (! $tahap->file_pdf_path || ! $fileExists) {
-            Alert::error('File Tidak Ditemukan', 'Dokumen PDF belum diunggah atau tidak ditemukan.');
-            return back();
+        $selectedBaId = $request->query('berita_acara_id');
+        $selectedBeritaAcara = $selectedBaId ? $beritaAcaras->firstWhere('id', (int) $selectedBaId) : null;
+        $isArsipMode = (bool) $selectedBeritaAcara;
+
+        // Jika tidak secara eksplisit memilih arsip, periksa apakah siswa melihat revisi sebelumnya
+        if (! $selectedBeritaAcara && $beritaAcaras->isNotEmpty() && $tahap->status !== 'diajukan' && $tahap->anotasisAktif()->count() === 0) {
+            $latestBa = $beritaAcaras->first();
+            if ($latestBa && $latestBa->anotasis()->exists()) {
+                $selectedBeritaAcara = $latestBa;
+                $isArsipMode = true;
+            }
         }
 
-        $tahap->load(['anotasis.user', 'beritaAcaras.pembimbing', 'reviewer']);
-        $anotasis = $tahap->anotasis;
-        $beritaAcaras = $tahap->beritaAcaras;
+        $targetPdfPath = $isArsipMode && $selectedBeritaAcara?->file_pdf_path
+            ? $selectedBeritaAcara->file_pdf_path
+            : $tahap->file_pdf_path;
 
-        return view('pages.siswa.bimbingan-laporan.viewer', compact('tahap', 'laporan', 'anotasis', 'beritaAcaras'));
+        $cleanPath = str_replace('public/', '', (string) $targetPdfPath);
+        $fileExists = Storage::disk('public')->exists($targetPdfPath)
+            || Storage::disk('public')->exists($cleanPath)
+            || Storage::exists($targetPdfPath);
+
+        if (! $targetPdfPath || ! $fileExists) {
+            $targetPdfPath = $tahap->file_pdf_path;
+            $cleanPath = str_replace('public/', '', (string) $targetPdfPath);
+            $fileExists = Storage::disk('public')->exists($targetPdfPath)
+                || Storage::disk('public')->exists($cleanPath)
+                || Storage::exists($targetPdfPath);
+
+            if (! $targetPdfPath || ! $fileExists) {
+                Alert::error('File Tidak Ditemukan', 'Dokumen PDF belum diunggah atau tidak ditemukan.');
+                return back();
+            }
+        }
+
+        $tahap->load(['reviewer']);
+
+        if ($isArsipMode && $selectedBeritaAcara) {
+            $anotasis = $selectedBeritaAcara->anotasis()->with('user')->get();
+        } else {
+            $anotasis = $tahap->anotasisAktif()->with('user')->get();
+        }
+
+        $activePdfUrl = asset('storage/' . $cleanPath);
+
+        return view('pages.siswa.bimbingan-laporan.viewer', compact(
+            'tahap',
+            'laporan',
+            'anotasis',
+            'beritaAcaras',
+            'selectedBeritaAcara',
+            'isArsipMode',
+            'activePdfUrl'
+        ));
     }
 
     /**
