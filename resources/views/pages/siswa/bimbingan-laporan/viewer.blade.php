@@ -61,11 +61,89 @@
     </x-slot>
 
     <div class="py-6">
+        {{-- Version Selector & Archive History Switcher (Siswa) --}}
+        @if(isset($beritaAcaras) && $beritaAcaras->isNotEmpty())
+            <div class="mb-5 bg-white p-3.5 rounded-2xl border border-gray-200 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold text-xs flex-shrink-0 border border-indigo-100">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </span>
+                    <div>
+                        <h3 class="text-xs font-bold text-gray-900">Riwayat Bimbingan &amp; Catatan Pembimbing</h3>
+                        <p class="text-[11px] text-gray-500">Beralih antara dokumen terbaru yang Anda ajukan atau arsip catatan revisi pembimbing sebelumnya</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-1.5 flex-wrap">
+                    {{-- Pilihan Dokumen Saat Ini / Aktif --}}
+                    <a href="{{ route('siswa.bimbingan-laporan.viewer', $tahap) }}"
+                        class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 {{ ! $isArsipMode ? 'bg-rose-600 text-white shadow-sm ring-2 ring-rose-300' : 'bg-gray-100 hover:bg-gray-200 text-gray-700' }}">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z"/></svg>
+                        <span>Dokumen Saat Ini (Terbaru)</span>
+                        @if($tahap->status === 'disetujui')
+                            <span class="px-1.5 py-0.2 rounded text-[9px] font-black bg-emerald-500 text-white">ACC</span>
+                        @elseif($tahap->status === 'diajukan')
+                            <span class="px-1.5 py-0.2 rounded text-[9px] font-black bg-amber-400 text-gray-900">Diajukan</span>
+                        @endif
+                    </a>
+
+                    {{-- Pilihan Arsip Berita Acara yang lalu --}}
+                    @foreach($beritaAcaras as $ba)
+                        @php $isCurrentBa = $isArsipMode && ($selectedBeritaAcara?->id === $ba->id); @endphp
+                        <a href="{{ route('siswa.bimbingan-laporan.viewer', [$tahap, 'berita_acara_id' => $ba->id]) }}"
+                            class="px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 {{ $isCurrentBa ? 'bg-amber-600 text-white shadow-sm ring-2 ring-amber-300 font-bold' : 'bg-gray-100 hover:bg-gray-200 text-gray-700' }}">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+                            <span>
+                                {{ $ba->jenis === 'disetujui' ? 'Arsip ACC' : 'Arsip Revisi #' . ($ba->revisi_ke ?? 1) }}
+                                <span class="opacity-75 font-normal text-[10px]">({{ $ba->diterbitkan_at?->format('d/m/y') }})</span>
+                            </span>
+                            <span class="px-1 py-0.2 rounded text-[9px] font-bold {{ $isCurrentBa ? 'bg-white/25 text-white' : 'bg-gray-200 text-gray-700' }}">
+                                {{ $ba->anotasis()->count() }} Catatan
+                            </span>
+                        </a>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
+        {{-- Banner Mode Tinjauan Arsip (Siswa) --}}
+        @if($isArsipMode && $selectedBeritaAcara)
+            <div class="mb-5 p-4 rounded-2xl border-2 border-amber-300 bg-amber-50 text-amber-900 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold flex-shrink-0 shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-200 text-amber-900">Arsip Catatan Pembimbing</span>
+                            <h4 class="font-extrabold text-sm text-gray-900">{{ $selectedBeritaAcara->judul_dokumen }}</h4>
+                        </div>
+                        <p class="text-xs text-amber-800 mt-0.5">
+                            Menampilkan riwayat <strong>{{ $anotasis->count() }} coretan revisi</strong> pada saat Berita Acara ini diterbitkan oleh pembimbing ({{ $selectedBeritaAcara->diterbitkan_at?->translatedFormat('d F Y H:i') }} WIB). Gunakan catatan ini sebagai acuan perbaikan dokumen Anda.
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <a href="{{ route('siswa.bimbingan-laporan.berita-acara.item', $selectedBeritaAcara) }}" target="_blank"
+                        class="px-3 py-2 rounded-xl text-xs font-bold bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 transition shadow-xs flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z"/></svg>
+                        <span>Unduh BA (PDF)</span>
+                    </a>
+                    @if($tahap->status === 'diajukan' || $tahap->file_pdf_path)
+                        <a href="{{ route('siswa.bimbingan-laporan.viewer', $tahap) }}"
+                            class="px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-amber-700 hover:bg-amber-800 transition shadow-xs flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                            <span>Lihat Dokumen Terbaru</span>
+                        </a>
+                    @endif
+                </div>
+            </div>
+        @endif
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {{-- Main PDF Viewer Panel --}}
             <div class="lg:col-span-8 space-y-4">
-                {{-- Viewer Controls --}}
-                <div class="bg-white rounded-2xl border border-gray-200 p-3 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                {{-- Viewer Controls (Sticky saat PDF di-scroll) --}}
+                <div class="sticky top-2 z-30 bg-white/95 backdrop-blur-md rounded-2xl border border-gray-200/90 p-3 shadow-md flex flex-wrap items-center justify-between gap-3 transition">
                     {{-- Page Navigation & Quick Jump --}}
                     <div class="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-xl px-2 py-1">
                         <button type="button" id="prev-page-btn"
@@ -108,8 +186,8 @@
                 </div>
             </div>
 
-            {{-- Right Sidebar: Summary & Navigation to Annotations --}}
-            <div class="lg:col-span-4 space-y-6 sticky top-4">
+            {{-- Right Sidebar: Summary & Navigation to Annotations (Scrollable Independen) --}}
+            <div class="lg:col-span-4 space-y-5 lg:sticky lg:top-2 lg:max-h-[calc(100vh-1rem)] lg:overflow-y-auto pr-1 pb-6 custom-scrollbar">
                 {{-- Status & Info Tahap --}}
                 <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
                     <div class="flex items-center justify-between">
@@ -134,10 +212,17 @@
                         <p class="text-xs text-gray-500 mt-0.5">Laporan: {{ $laporan->judul }}</p>
                     </div>
 
-                    @if ($tahap->catatan_pembimbing)
+                    @php
+                        $displayCatatan = ($isArsipMode && $selectedBeritaAcara)
+                            ? $selectedBeritaAcara->catatan_pembimbing
+                            : $tahap->catatan_pembimbing;
+                    @endphp
+                    @if ($displayCatatan)
                         <div class="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 leading-relaxed">
-                            <span class="font-bold text-amber-800 block mb-1">Catatan Kesimpulan Pembimbing:</span>
-                            {{ $tahap->catatan_pembimbing }}
+                            <span class="font-bold text-amber-800 block mb-1">
+                                Catatan Arahan Pembimbing {{ $isArsipMode && $selectedBeritaAcara ? '(' . $selectedBeritaAcara->judul_dokumen . ')' : '' }}:
+                            </span>
+                            {{ $displayCatatan }}
                         </div>
                     @endif
 
@@ -178,11 +263,18 @@
                                             {{ $ba->nomor_berita_acara }}
                                         </p>
                                     </div>
-                                    <a href="{{ route('siswa.bimbingan-laporan.berita-acara.item', $ba) }}" target="_blank"
-                                        class="p-1.5 rounded-lg bg-white border border-gray-300 hover:border-emerald-500 hover:text-emerald-700 text-gray-600 transition shadow-sm flex-shrink-0"
-                                        title="Unduh PDF Berita Acara ini">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                                    </a>
+                                    <div class="flex items-center gap-1.5 flex-shrink-0">
+                                        <a href="{{ route('siswa.bimbingan-laporan.viewer', [$tahap, 'berita_acara_id' => $ba->id]) }}"
+                                            class="p-1.5 rounded-lg bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-indigo-700 transition shadow-xs"
+                                            title="Buka Dokumen & Coretan Revisi Ini">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                        </a>
+                                        <a href="{{ route('siswa.bimbingan-laporan.berita-acara.item', $ba) }}" target="_blank"
+                                            class="p-1.5 rounded-lg bg-white border border-gray-300 hover:border-emerald-500 hover:text-emerald-700 text-gray-600 transition shadow-sm"
+                                            title="Unduh PDF Berita Acara ini">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                        </a>
+                                    </div>
                                 </div>
                             @endforeach
                         </div>
@@ -223,7 +315,7 @@
                                         {{ $anotasi->tipe === 'box' ? 'Kotak' : ($anotasi->tipe === 'circle' ? 'Lingkaran' : ($anotasi->tipe === 'pin' ? 'Pin' : 'Coretan')) }}
                                     </span>
                                 </div>
-                                <p class="text-xs text-gray-800 font-medium leading-snug">
+                                <p class="text-xs text-gray-800 font-medium leading-relaxed whitespace-pre-line">
                                     {{ $anotasi->catatan ?: '(Tanda koreksi tanpa catatan teks)' }}
                                 </p>
                             </div>
@@ -282,26 +374,70 @@
             transform: scale(1.02);
             z-index: 35;
         }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(241, 245, 249, 0.6);
+            border-radius: 9999px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .page-wrapper {
+            position: relative;
+            background: white;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: visible !important;
+        }
+        .annotation-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 25;
+            overflow: visible !important;
+        }
+        .annotation-marker {
+            position: absolute;
+            pointer-events: auto;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .annotation-marker:hover {
+            transform: scale(1.02);
+            z-index: 45;
+        }
         .annotation-tooltip {
             position: absolute;
-            bottom: calc(100% + 8px);
+            bottom: calc(100% + 10px);
             left: 50%;
             transform: translateX(-50%);
             background: #0f172a;
             color: #ffffff;
-            padding: 8px 12px;
-            border-radius: 10px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+            padding: 10px 14px;
+            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
             opacity: 0;
             visibility: hidden;
             pointer-events: none;
             transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
-            z-index: 60;
-            min-width: 160px;
-            max-width: 300px;
+            z-index: 70;
+            width: max-content;
+            min-width: 220px;
+            max-width: 360px;
             text-align: left;
             border: 1px solid rgba(255, 255, 255, 0.2);
             white-space: normal;
+            backdrop-filter: blur(8px);
         }
         .annotation-tooltip::after {
             content: '';
@@ -315,12 +451,48 @@
         }
         .annotation-tooltip.tooltip-bottom {
             bottom: auto;
-            top: calc(100% + 8px);
+            top: calc(100% + 10px);
         }
         .annotation-tooltip.tooltip-bottom::after {
             top: auto;
             bottom: 100%;
             border-color: transparent transparent #0f172a transparent;
+        }
+        .annotation-tooltip.tooltip-align-left {
+            left: 0 !important;
+            transform: none !important;
+        }
+        .annotation-tooltip.tooltip-align-left::after {
+            left: 20px !important;
+            transform: none !important;
+        }
+        .annotation-tooltip.tooltip-align-right {
+            left: auto !important;
+            right: 0 !important;
+            transform: none !important;
+        }
+        .annotation-tooltip.tooltip-align-right::after {
+            left: auto !important;
+            right: 20px !important;
+            transform: none !important;
+        }
+        .annotation-tooltip-body {
+            max-height: 220px;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            padding-right: 4px;
+            font-size: 11px;
+            line-height: 1.55;
+            color: #f1f5f9;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .annotation-tooltip-body::-webkit-scrollbar {
+            width: 4px;
+        }
+        .annotation-tooltip-body::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
         }
         .annotation-marker:hover .annotation-tooltip,
         .annotation-marker.active-tooltip .annotation-tooltip {
@@ -333,7 +505,7 @@
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = "{{ asset('vendor/pdfjs/pdf.worker.min.js') }}";
 
-        const pdfUrl = @js($tahap->file_url);
+        const pdfUrl = @js($activePdfUrl ?? $tahap->file_url);
         const annotations = @js($anotasis);
 
         let pdfDoc = null;
@@ -487,6 +659,12 @@
             return div.innerHTML;
         }
 
+        function formatAnnotationText(text) {
+            if (!text) return '';
+            const escaped = escapeHtml(text);
+            return escaped.replace(/\n/g, '<br>');
+        }
+
         function renderAnnotationsForPage(pageNum, layer, viewport) {
             layer.innerHTML = '';
             const pageAnnotations = annotations.filter(a => Number(a.halaman) === Number(pageNum));
@@ -590,17 +768,29 @@
                     }
                 }
 
-                // Popup Tooltip Catatan Revisi
+                // Popup Tooltip Catatan Revisi dengan Smart Positioning & Formatting Teks
                 if (a.catatan) {
                     const tooltip = document.createElement('div');
-                    tooltip.className = 'annotation-tooltip' + (top < 70 ? ' tooltip-bottom' : '');
+
+                    // Smart positioning vertikal: jika marker dekat bagian atas (< 170px), buka ke bawah agar tidak terpotong
+                    let posClass = (top < 170) ? ' tooltip-bottom' : '';
+
+                    // Smart positioning horizontal:
+                    const layerWidth = layer.offsetWidth || 800;
+                    if (left < 140) {
+                        posClass += ' tooltip-align-left';
+                    } else if (left + width > layerWidth - 140) {
+                        posClass += ' tooltip-align-right';
+                    }
+
+                    tooltip.className = 'annotation-tooltip' + posClass;
                     tooltip.innerHTML = `
-                        <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#f87171;margin-bottom:3px;display:flex;align-items:center;justify-content:space-between;">
+                        <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#f87171;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:space-between;">
                             <span>Catatan Koreksi #${badgeNum}</span>
                             <span style="color:#94a3b8;font-size:9px;">Hal. ${a.halaman}</span>
                         </div>
-                        <div style="font-size:11px;font-weight:600;color:#ffffff;line-height:1.4;">
-                            ${escapeHtml(a.catatan)}
+                        <div class="annotation-tooltip-body">
+                            ${formatAnnotationText(a.catatan)}
                         </div>
                     `;
                     el.appendChild(tooltip);
@@ -608,6 +798,29 @@
 
                 // Klik interaktif pada coretan di PDF
                 el.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    scrollToAnnotation(a.id, pageNum);
+
+                    const listItem = document.querySelector(`.annotation-nav-item[data-id="${a.id}"]`);
+                    if (listItem) {
+                        listItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        listItem.classList.add('ring-2', 'ring-rose-500', 'bg-rose-100');
+                        setTimeout(() => listItem.classList.remove('ring-2', 'ring-rose-500', 'bg-rose-100'), 2500);
+                    }
+                });
+
+                layer.appendChild(el);
+            });
+        }
+
+        // Tutup tooltip aktif jika klik di luar marker
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.annotation-marker')) {
+                document.querySelectorAll('.annotation-marker.active-tooltip').forEach(m => {
+                    m.classList.remove('active-tooltip');
+                });
+            }
+        });
                     e.stopPropagation();
                     scrollToAnnotation(a.id, pageNum);
 

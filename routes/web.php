@@ -1141,6 +1141,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/tahap/{tahap}/batalkan-acc', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'batalkanAccTahap'])->name('batalkan-acc-tahap');
             Route::get('/tahap/{tahap}/annotator', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'editorAnotasi'])->name('annotator');
             Route::post('/tahap/{tahap}/anotasi', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'simpanAnotasi'])->name('simpan-anotasi');
+            Route::post('/tahap/{tahap}/ai-koreksi', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'aiKoreksi'])->name('ai-koreksi');
             Route::delete('/anotasi/{anotasi}', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'hapusAnotasi'])->name('hapus-anotasi');
             Route::post('/tahap/{tahap}/selesaikan-review', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'selesaikanReview'])->name('selesaikan-review');
             Route::post('/acc-final/{laporan}', [\App\Http\Controllers\Pembimbing\BimbinganLaporanController::class, 'accFinal'])->name('acc-final');

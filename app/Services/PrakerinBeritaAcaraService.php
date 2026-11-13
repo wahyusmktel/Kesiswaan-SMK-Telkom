@@ -104,6 +104,12 @@ class PrakerinBeritaAcaraService
 
         $qrCodeBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrCodeSvg);
 
+        $anotasis = ($beritaAcara && $beritaAcara->anotasis()->exists())
+            ? $beritaAcara->anotasis
+            : ($tahap->anotasis()->whereNull('prakerin_bimbingan_berita_acara_id')->exists()
+                ? $tahap->anotasis()->whereNull('prakerin_bimbingan_berita_acara_id')->get()
+                : $tahap->anotasis);
+
         $pdf = Pdf::loadView('pdf.berita-acara-bimbingan-prakerin', [
             'tahap' => $tahap,
             'beritaAcara' => $beritaAcara,
@@ -121,7 +127,7 @@ class PrakerinBeritaAcaraService
             'guruNip' => $guruNip,
             'sig' => $sig,
             'qrCodeBase64' => $qrCodeBase64,
-            'anotasis' => $tahap->anotasis,
+            'anotasis' => $anotasis,
             'kopBase64' => $this->getKopSuratUkkBase64(),
         ]);
 

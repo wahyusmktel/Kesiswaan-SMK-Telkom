@@ -14,19 +14,6 @@
                     <p class="text-xs text-gray-500">{{ $penempatan->industri?->nama_industri }} • Rombel: {{ $penempatan->rombelPkl?->nama_rombel }}</p>
                 </div>
             </div>
-
-            <div class="flex items-center gap-2">
-                @if ($laporan->judul_status === 'disetujui')
-                    <a href="{{ route('pembimbing-prakerin.bimbingan-laporan.riwayat-pdf', $laporan) }}" target="_blank"
-                        class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 shadow-sm transition">
-                        <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        Unduh Rekap Riwayat (PDF)
-                    </a>
-                @endif
-            </div>
         </div>
     </x-slot>
 
@@ -126,6 +113,29 @@
                     </div>
                 </div>
             </div>
+
+            {{-- Rekap Riwayat Bimbingan PDF Action (Pindah dari Header ke Konten) --}}
+            @if ($laporan->judul_status === 'disetujui')
+                <div class="mt-6 pt-4 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-gray-50/80 -mx-6 -mb-6 p-4 px-6 rounded-b-2xl">
+                    <div class="flex items-center gap-2.5 text-xs text-gray-600">
+                        <div class="p-1.5 rounded-lg bg-emerald-100 text-emerald-700 flex-shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <div>
+                            <span class="font-bold text-gray-800 block">Kartu Kendali &amp; Rekap Riwayat Bimbingan Siswa</span>
+                            <span class="text-[11px] text-gray-500">Mencatat riwayat konsultasi bab, persetujuan judul, dan tanda tangan digital resmi pembimbing.</span>
+                        </div>
+                    </div>
+                    <a href="{{ route('pembimbing-prakerin.bimbingan-laporan.riwayat-pdf', $laporan) }}" target="_blank"
+                        class="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold text-gray-800 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 shadow-sm transition flex-shrink-0">
+                        <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <span>Unduh Rekap Riwayat (PDF)</span>
+                    </a>
+                </div>
+            @endif
         </div>
 
         {{-- TAHAP 1: REVIEW JUDUL LAPORAN --}}
@@ -331,7 +341,16 @@
                             </div>
                         </div>
 
-                        <div class="flex items-center gap-3">
+                        <div class="flex flex-wrap items-center gap-2.5">
+                            <a href="{{ route('pembimbing-prakerin.bimbingan-laporan.riwayat-pdf', $laporan) }}" target="_blank"
+                                class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 shadow-xs transition" title="Unduh Rekap Kartu Riwayat Bimbingan Lengkap">
+                                <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                <span>Rekap Riwayat (PDF)</span>
+                            </a>
+
                             <button type="button" @click="showTambahTahap = true"
                                 class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 rounded-xl hover:bg-rose-100 transition shadow-sm">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
