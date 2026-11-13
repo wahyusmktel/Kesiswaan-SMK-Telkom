@@ -813,29 +813,6 @@
             });
         }
 
-        // Tutup tooltip aktif jika klik di luar marker
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.annotation-marker')) {
-                document.querySelectorAll('.annotation-marker.active-tooltip').forEach(m => {
-                    m.classList.remove('active-tooltip');
-                });
-            }
-        });
-                    e.stopPropagation();
-                    scrollToAnnotation(a.id, pageNum);
-
-                    const listItem = document.getElementById(`list-item-${a.id}`);
-                    if (listItem) {
-                        listItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                        listItem.classList.add('ring-2', 'ring-rose-500', 'bg-rose-100');
-                        setTimeout(() => listItem.classList.remove('ring-2', 'ring-rose-500', 'bg-rose-100'), 2500);
-                    }
-                });
-
-                layer.appendChild(el);
-            });
-        }
-
         function scrollToAnnotation(id, pageNum) {
             const marker = document.getElementById(`annotation-marker-${id}`);
             const pageWrapper = document.getElementById(`page-wrapper-${pageNum}`);
