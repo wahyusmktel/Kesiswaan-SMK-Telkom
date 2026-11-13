@@ -1256,6 +1256,9 @@
                 const globalIndex = existingAnnotations.findIndex(x => x.id === a.id);
                 const badgeNum = globalIndex !== -1 ? (globalIndex + 1) : '';
 
+                let strokeMinX = 0, strokeMaxX = 0, strokeMinY = 0, strokeMaxY = 0;
+                let hasDrawingBounds = false;
+
                 if (type === 'drawing') {
                     el.style.left = '0px';
                     el.style.top = '0px';
@@ -1266,6 +1269,14 @@
                     try {
                         const paths = Array.isArray(a.drawing_data) ? a.drawing_data : JSON.parse(a.drawing_data || '[]');
                         if (paths && paths.length > 0) {
+                            const xs = paths.map(p => Number(p.x) * scale);
+                            const ys = paths.map(p => Number(p.y) * scale);
+                            strokeMinX = Math.min(...xs);
+                            strokeMaxX = Math.max(...xs);
+                            strokeMinY = Math.min(...ys);
+                            strokeMaxY = Math.max(...ys);
+                            hasDrawingBounds = true;
+
                             const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
                             svg.style.width = "100%";
                             svg.style.height = "100%";
@@ -1332,19 +1343,57 @@
                 // Popup Tooltip Catatan Revisi dengan Smart Positioning & Formatting Teks
                 if (a.catatan) {
                     const tooltip = document.createElement('div');
-
-                    // Smart positioning vertikal: jika marker dekat bagian atas (< 170px), buka ke bawah agar tidak terpotong
-                    let posClass = (top < 170) ? ' tooltip-bottom' : '';
-
-                    // Smart positioning horizontal:
                     const layerWidth = layer.offsetWidth || 800;
-                    if (left < 140) {
-                        posClass += ' tooltip-align-left';
-                    } else if (left + width > layerWidth - 140) {
-                        posClass += ' tooltip-align-right';
+
+                    if (type === 'drawing' && hasDrawingBounds) {
+                        const strokeCenterX = (strokeMinX + strokeMaxX) / 2;
+                        const isNearTop = strokeMinY < 180;
+
+                        tooltip.className = 'annotation-tooltip';
+                        tooltip.style.position = 'absolute';
+                        tooltip.style.bottom = 'auto';
+
+                        if (isNearTop) {
+                            tooltip.classList.add('tooltip-bottom');
+                            tooltip.style.top = `${strokeMaxY + 12}px`;
+                        } else {
+                            tooltip.style.top = `${Math.max(10, strokeMinY - 12)}px`;
+                            tooltip.style.transform = 'translate(-50%, -100%)';
+                        }
+
+                        if (strokeCenterX < 160) {
+                            tooltip.classList.add('tooltip-align-left');
+                            tooltip.style.left = `${Math.max(10, strokeMinX)}px`;
+                            tooltip.style.right = 'auto';
+                            tooltip.style.transform = isNearTop ? 'none' : 'translateY(-100%)';
+                        } else if (strokeCenterX > layerWidth - 160) {
+                            tooltip.classList.add('tooltip-align-right');
+                            tooltip.style.left = 'auto';
+                            tooltip.style.right = `${Math.max(10, layerWidth - strokeMaxX)}px`;
+                            tooltip.style.transform = isNearTop ? 'none' : 'translateY(-100%)';
+                        } else {
+                            tooltip.style.left = `${strokeCenterX}px`;
+                            tooltip.style.right = 'auto';
+                            if (isNearTop) {
+                                tooltip.style.transform = 'translateX(-50%)';
+                            }
+                        }
+                    } else {
+                        // Smart positioning vertikal: jika marker dekat bagian atas (< 170px), buka ke bawah agar tidak terpotong
+                        let posClass = (top < 170) ? ' tooltip-bottom' : '';
+
+                        // Smart positioning horizontal:
+                        if (left < 140) {
+                            posClass += ' tooltip-align-left';
+                        } else if (left + width > layerWidth - 140) {
+                            posClass += ' tooltip-align-right';
+                        }
+
+                        tooltip.className = 'annotation-tooltip' + posClass;
                     }
 
-                    tooltip.className = 'annotation-tooltip' + posClass;
+                    tooltip.addEventListener('click', (e) => e.stopPropagation());
+
                     tooltip.innerHTML = `
                         <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#f87171;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:space-between;">
                             <span>Catatan Koreksi #${badgeNum}</span>
@@ -1418,7 +1467,17 @@
             const pageWrapper = document.getElementById(`page-wrapper-${pageNum}`);
 
             if (marker) {
-                marker.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                try {
+                    const polyline = marker.querySelector('polyline');
+                    if (polyline && typeof polyline.scrollIntoView === 'function') {
+                        polyline.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else {
+                        marker.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                } catch (e) {
+                    marker.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+
                 document.querySelectorAll('.annotation-marker').forEach(m => {
                     m.classList.remove('pdf-annotation-highlight', 'active-tooltip');
                 });

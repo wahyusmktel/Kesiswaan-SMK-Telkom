@@ -1,61 +1,15 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div class="flex items-center gap-3">
-                <a href="{{ route('siswa.bimbingan-laporan.index') }}"
-                    class="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 transition" title="Kembali">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                    </svg>
-                </a>
-                <div>
-                    <h2 class="font-bold text-xl text-gray-800 leading-tight">Review Dokumen: {{ $tahap->nama_tahap }}</h2>
-                    <p class="text-xs text-gray-500">Coretan, catatan revisi, dan navigasi langsung ke area yang dikoreksi oleh pembimbing</p>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-2">
-                @if ((isset($beritaAcaras) && $beritaAcaras->isNotEmpty()) || $tahap->nomor_berita_acara)
-                    @if (isset($beritaAcaras) && $beritaAcaras->count() > 1)
-                        <div class="relative inline-block text-left" x-data="{ open: false }">
-                            <button @click="open = !open" type="button"
-                                class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl {{ $tahap->status === 'disetujui' ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200' : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200' }} transition">
-                                <svg class="w-4 h-4 {{ $tahap->status === 'disetujui' ? 'text-emerald-600' : 'text-rose-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z"/></svg>
-                                Berita Acara ({{ $beritaAcaras->count() }})
-                                <svg class="w-3.5 h-3.5 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                            </button>
-                            <div x-show="open" @click.away="open = false" x-cloak
-                                class="origin-top-right absolute right-0 mt-2 w-64 rounded-xl shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-30 p-1 divide-y divide-gray-100">
-                                <div class="py-1">
-                                    <div class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400">Pilih Berita Acara:</div>
-                                    @foreach($beritaAcaras as $ba)
-                                        <a href="{{ route('siswa.bimbingan-laporan.berita-acara.item', $ba) }}" target="_blank"
-                                            class="flex items-center justify-between px-3 py-2 text-xs rounded-lg hover:bg-gray-50 transition group">
-                                            <div>
-                                                <span class="font-bold {{ $ba->jenis === 'disetujui' ? 'text-emerald-700' : 'text-rose-700' }}">
-                                                    {{ $ba->jenis === 'disetujui' ? 'Berita Acara ACC' : 'BA Revisi ' . ($ba->revisi_ke ? '#' . $ba->revisi_ke : '') }}
-                                                </span>
-                                                <span class="block text-[10px] text-gray-400">{{ $ba->diterbitkan_at?->format('d/m/Y H:i') }}</span>
-                                            </div>
-                                            <svg class="w-4 h-4 text-gray-400 group-hover:text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                                        </a>
-                                    @endforeach
-                                </div>
-                            </div>
-                        </div>
-                    @else
-                        <a href="{{ route('siswa.bimbingan-laporan.berita-acara', $tahap) }}" target="_blank"
-                            class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl {{ $tahap->status === 'disetujui' ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200' : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200' }} transition">
-                            <svg class="w-4 h-4 {{ $tahap->status === 'disetujui' ? 'text-emerald-600' : 'text-rose-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z"/></svg>
-                            {{ $tahap->status === 'disetujui' ? 'Berita Acara ACC (PDF)' : 'Berita Acara Revisi (PDF)' }}
-                        </a>
-                    @endif
-                @endif
-                <a href="{{ $tahap->file_url }}" target="_blank" download
-                    class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition shadow-sm">
-                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                    Unduh Dokumen Asli
-                </a>
+        <div class="flex items-center gap-3">
+            <a href="{{ route('siswa.bimbingan-laporan.index') }}"
+                class="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 transition" title="Kembali">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+            </a>
+            <div>
+                <h2 class="font-bold text-xl text-gray-800 leading-tight">Review Dokumen: {{ $tahap->nama_tahap }}</h2>
+                <p class="text-xs text-gray-500">Coretan, catatan revisi, dan navigasi langsung ke area yang dikoreksi oleh pembimbing</p>
             </div>
         </div>
     </x-slot>
@@ -144,34 +98,81 @@
             <div class="lg:col-span-8 space-y-4">
                 {{-- Viewer Controls (Sticky saat PDF di-scroll) --}}
                 <div class="sticky top-2 z-30 bg-white/95 backdrop-blur-md rounded-2xl border border-gray-200/90 p-3 shadow-md flex flex-wrap items-center justify-between gap-3 transition">
-                    {{-- Page Navigation & Quick Jump --}}
-                    <div class="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-xl px-2 py-1">
-                        <button type="button" id="prev-page-btn"
-                            class="p-1.5 rounded-lg hover:bg-white text-gray-600 hover:text-gray-900 transition disabled:opacity-40 disabled:cursor-not-allowed" title="Halaman Sebelumnya">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                        </button>
-                        <div class="flex items-center gap-1 text-xs font-medium text-gray-600">
-                            <span>Hal.</span>
-                            <input type="number" id="page-input" min="1" max="1" value="1"
-                                class="w-12 text-center text-xs font-bold bg-white border border-gray-300 rounded-lg py-1 px-1 text-gray-800 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 shadow-inner"
-                                title="Ketik nomor halaman lalu tekan Enter untuk berpindah cepat">
-                            <span>/ <span id="total-pages-num" class="font-bold text-gray-800">-</span></span>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        {{-- Page Navigation & Quick Jump --}}
+                        <div class="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-xl px-2 py-1">
+                            <button type="button" id="prev-page-btn"
+                                class="p-1.5 rounded-lg hover:bg-white text-gray-600 hover:text-gray-900 transition disabled:opacity-40 disabled:cursor-not-allowed" title="Halaman Sebelumnya">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                            </button>
+                            <div class="flex items-center gap-1 text-xs font-medium text-gray-600">
+                                <span>Hal.</span>
+                                <input type="number" id="page-input" min="1" max="1" value="1"
+                                    class="w-12 text-center text-xs font-bold bg-white border border-gray-300 rounded-lg py-1 px-1 text-gray-800 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 shadow-inner"
+                                    title="Ketik nomor halaman lalu tekan Enter untuk berpindah cepat">
+                                <span>/ <span id="total-pages-num" class="font-bold text-gray-800">-</span></span>
+                            </div>
+                            <button type="button" id="next-page-btn"
+                                class="p-1.5 rounded-lg hover:bg-white text-gray-600 hover:text-gray-900 transition disabled:opacity-40 disabled:cursor-not-allowed" title="Halaman Selanjutnya">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            </button>
                         </div>
-                        <button type="button" id="next-page-btn"
-                            class="p-1.5 rounded-lg hover:bg-white text-gray-600 hover:text-gray-900 transition disabled:opacity-40 disabled:cursor-not-allowed" title="Halaman Selanjutnya">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                        </button>
+
+                        {{-- Zoom Controls --}}
+                        <div class="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-xl px-2 py-1">
+                            <button type="button" id="zoom-out-btn" class="p-1.5 rounded-lg hover:bg-white text-gray-600 hover:text-gray-900 transition" title="Perkecil">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
+                            </button>
+                            <span id="zoom-level-text" class="text-xs font-bold text-gray-700 min-w-[45px] text-center">100%</span>
+                            <button type="button" id="zoom-in-btn" class="p-1.5 rounded-lg hover:bg-white text-gray-600 hover:text-gray-900 transition" title="Perbesar">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            </button>
+                        </div>
                     </div>
 
-                    {{-- Zoom Controls --}}
-                    <div class="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-xl px-2 py-1">
-                        <button type="button" id="zoom-out-btn" class="p-1.5 rounded-lg hover:bg-white text-gray-600 hover:text-gray-900 transition" title="Perkecil">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
-                        </button>
-                        <span id="zoom-level-text" class="text-xs font-bold text-gray-700 min-w-[45px] text-center">100%</span>
-                        <button type="button" id="zoom-in-btn" class="p-1.5 rounded-lg hover:bg-white text-gray-600 hover:text-gray-900 transition" title="Perbesar">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                        </button>
+                    {{-- Actions: Berita Acara & Unduh Asli --}}
+                    <div class="flex items-center gap-2 flex-wrap">
+                        @if ((isset($beritaAcaras) && $beritaAcaras->isNotEmpty()) || $tahap->nomor_berita_acara)
+                            @if (isset($beritaAcaras) && $beritaAcaras->count() > 1)
+                                <div class="relative inline-block text-left" x-data="{ open: false }">
+                                    <button @click="open = !open" type="button"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl {{ $tahap->status === 'disetujui' ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200' : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200' }} transition">
+                                        <svg class="w-3.5 h-3.5 {{ $tahap->status === 'disetujui' ? 'text-emerald-600' : 'text-rose-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z"/></svg>
+                                        Berita Acara ({{ $beritaAcaras->count() }})
+                                        <svg class="w-3 h-3 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                    </button>
+                                    <div x-show="open" @click.away="open = false" x-cloak
+                                        class="origin-top-right absolute right-0 mt-2 w-64 rounded-xl shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-30 p-1 divide-y divide-gray-100">
+                                        <div class="py-1">
+                                            <div class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400">Pilih Berita Acara:</div>
+                                            @foreach($beritaAcaras as $ba)
+                                                <a href="{{ route('siswa.bimbingan-laporan.berita-acara.item', $ba) }}" target="_blank"
+                                                    class="flex items-center justify-between px-3 py-2 text-xs rounded-lg hover:bg-gray-50 transition group">
+                                                    <div>
+                                                        <span class="font-bold {{ $ba->jenis === 'disetujui' ? 'text-emerald-700' : 'text-rose-700' }}">
+                                                            {{ $ba->jenis === 'disetujui' ? 'Berita Acara ACC' : 'BA Revisi ' . ($ba->revisi_ke ? '#' . $ba->revisi_ke : '') }}
+                                                        </span>
+                                                        <span class="block text-[10px] text-gray-400">{{ $ba->diterbitkan_at?->format('d/m/Y H:i') }}</span>
+                                                    </div>
+                                                    <svg class="w-4 h-4 text-gray-400 group-hover:text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                                </a>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                </div>
+                            @else
+                                <a href="{{ route('siswa.bimbingan-laporan.berita-acara', $tahap) }}" target="_blank"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl {{ $tahap->status === 'disetujui' ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200' : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200' }} transition">
+                                    <svg class="w-3.5 h-3.5 {{ $tahap->status === 'disetujui' ? 'text-emerald-600' : 'text-rose-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z"/></svg>
+                                    {{ $tahap->status === 'disetujui' ? 'Berita Acara ACC (PDF)' : 'Berita Acara Revisi (PDF)' }}
+                                </a>
+                            @endif
+                        @endif
+                        <a href="{{ $tahap->file_url }}" target="_blank" download
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition shadow-xs">
+                            <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            Unduh Dokumen Asli
+                        </a>
                     </div>
                 </div>
 
@@ -229,6 +230,52 @@
                     <div class="pt-3 border-t border-gray-100 text-[11px] text-gray-400 space-y-1">
                         <div>Pembimbing: <span class="font-semibold text-gray-700">{{ $tahap->reviewer?->name ?? 'Guru Pembimbing' }}</span></div>
                         <div>Waktu Review: <span class="font-semibold text-gray-700">{{ $tahap->direview_at ? \Carbon\Carbon::parse($tahap->direview_at)->translatedFormat('d F Y, H:i') : '-' }}</span></div>
+                    </div>
+
+                    <div class="pt-3 border-t border-gray-100 flex flex-col gap-2">
+                        @if ((isset($beritaAcaras) && $beritaAcaras->isNotEmpty()) || $tahap->nomor_berita_acara)
+                            @if (isset($beritaAcaras) && $beritaAcaras->count() > 1)
+                                <div class="relative w-full" x-data="{ open: false }">
+                                    <button @click="open = !open" type="button"
+                                        class="w-full inline-flex items-center justify-between px-3 py-2 text-xs font-bold rounded-xl {{ $tahap->status === 'disetujui' ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200' : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200' }} transition shadow-xs">
+                                        <span class="flex items-center gap-1.5">
+                                            <svg class="w-4 h-4 {{ $tahap->status === 'disetujui' ? 'text-emerald-600' : 'text-rose-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z"/></svg>
+                                            Berita Acara ({{ $beritaAcaras->count() }})
+                                        </span>
+                                        <svg class="w-3.5 h-3.5 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                    </button>
+                                    <div x-show="open" @click.away="open = false" x-cloak
+                                        class="origin-top-right absolute left-0 right-0 mt-2 rounded-xl shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-30 p-1 divide-y divide-gray-100">
+                                        <div class="py-1">
+                                            <div class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400">Pilih Berita Acara:</div>
+                                            @foreach($beritaAcaras as $ba)
+                                                <a href="{{ route('siswa.bimbingan-laporan.berita-acara.item', $ba) }}" target="_blank"
+                                                    class="flex items-center justify-between px-3 py-2 text-xs rounded-lg hover:bg-gray-50 transition group">
+                                                    <div>
+                                                        <span class="font-bold {{ $ba->jenis === 'disetujui' ? 'text-emerald-700' : 'text-rose-700' }}">
+                                                            {{ $ba->jenis === 'disetujui' ? 'Berita Acara ACC' : 'BA Revisi ' . ($ba->revisi_ke ? '#' . $ba->revisi_ke : '') }}
+                                                        </span>
+                                                        <span class="block text-[10px] text-gray-400">{{ $ba->diterbitkan_at?->format('d/m/Y H:i') }}</span>
+                                                    </div>
+                                                    <svg class="w-4 h-4 text-gray-400 group-hover:text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                                </a>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                </div>
+                            @else
+                                <a href="{{ route('siswa.bimbingan-laporan.berita-acara', $tahap) }}" target="_blank"
+                                    class="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold rounded-xl {{ $tahap->status === 'disetujui' ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200' : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200' }} transition shadow-xs">
+                                    <svg class="w-4 h-4 {{ $tahap->status === 'disetujui' ? 'text-emerald-600' : 'text-rose-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z"/></svg>
+                                    {{ $tahap->status === 'disetujui' ? 'Berita Acara ACC (PDF)' : 'Berita Acara Revisi (PDF)' }}
+                                </a>
+                            @endif
+                        @endif
+                        <a href="{{ $tahap->file_url }}" target="_blank" download
+                            class="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-gray-50 border border-gray-300 text-gray-700 hover:bg-gray-100 transition shadow-xs">
+                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            Unduh Dokumen Asli
+                        </a>
                     </div>
                 </div>
 
@@ -348,6 +395,7 @@
             bottom: 0;
             pointer-events: none;
             z-index: 25;
+            overflow: visible !important;
         }
         .pdf-annotation-highlight {
             animation: pulse-glow 1.5s infinite alternate;
@@ -372,7 +420,7 @@
         }
         .annotation-marker:hover {
             transform: scale(1.02);
-            z-index: 35;
+            z-index: 45;
         }
         .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
@@ -387,34 +435,6 @@
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
-        }
-
-        .page-wrapper {
-            position: relative;
-            background: white;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-            overflow: visible !important;
-        }
-        .annotation-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            pointer-events: none;
-            z-index: 25;
-            overflow: visible !important;
-        }
-        .annotation-marker {
-            position: absolute;
-            pointer-events: auto;
-            cursor: pointer;
-            transition: transform 0.15s ease, box-shadow 0.15s ease;
-        }
-        .annotation-marker:hover {
-            transform: scale(1.02);
-            z-index: 45;
         }
         .annotation-tooltip {
             position: absolute;
@@ -695,6 +715,9 @@
                 const globalIndex = annotations.findIndex(x => x.id === a.id);
                 const badgeNum = globalIndex !== -1 ? (globalIndex + 1) : '';
 
+                let strokeMinX = 0, strokeMaxX = 0, strokeMinY = 0, strokeMaxY = 0;
+                let hasDrawingBounds = false;
+
                 if (type === 'drawing') {
                     el.style.left = '0px';
                     el.style.top = '0px';
@@ -705,6 +728,14 @@
                     try {
                         const paths = Array.isArray(a.drawing_data) ? a.drawing_data : JSON.parse(a.drawing_data || '[]');
                         if (paths && paths.length > 0) {
+                            const xs = paths.map(p => Number(p.x) * scale);
+                            const ys = paths.map(p => Number(p.y) * scale);
+                            strokeMinX = Math.min(...xs);
+                            strokeMaxX = Math.max(...xs);
+                            strokeMinY = Math.min(...ys);
+                            strokeMaxY = Math.max(...ys);
+                            hasDrawingBounds = true;
+
                             const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
                             svg.style.width = "100%";
                             svg.style.height = "100%";
@@ -771,19 +802,57 @@
                 // Popup Tooltip Catatan Revisi dengan Smart Positioning & Formatting Teks
                 if (a.catatan) {
                     const tooltip = document.createElement('div');
-
-                    // Smart positioning vertikal: jika marker dekat bagian atas (< 170px), buka ke bawah agar tidak terpotong
-                    let posClass = (top < 170) ? ' tooltip-bottom' : '';
-
-                    // Smart positioning horizontal:
                     const layerWidth = layer.offsetWidth || 800;
-                    if (left < 140) {
-                        posClass += ' tooltip-align-left';
-                    } else if (left + width > layerWidth - 140) {
-                        posClass += ' tooltip-align-right';
+
+                    if (type === 'drawing' && hasDrawingBounds) {
+                        const strokeCenterX = (strokeMinX + strokeMaxX) / 2;
+                        const isNearTop = strokeMinY < 180;
+
+                        tooltip.className = 'annotation-tooltip';
+                        tooltip.style.position = 'absolute';
+                        tooltip.style.bottom = 'auto';
+
+                        if (isNearTop) {
+                            tooltip.classList.add('tooltip-bottom');
+                            tooltip.style.top = `${strokeMaxY + 12}px`;
+                        } else {
+                            tooltip.style.top = `${Math.max(10, strokeMinY - 12)}px`;
+                            tooltip.style.transform = 'translate(-50%, -100%)';
+                        }
+
+                        if (strokeCenterX < 160) {
+                            tooltip.classList.add('tooltip-align-left');
+                            tooltip.style.left = `${Math.max(10, strokeMinX)}px`;
+                            tooltip.style.right = 'auto';
+                            tooltip.style.transform = isNearTop ? 'none' : 'translateY(-100%)';
+                        } else if (strokeCenterX > layerWidth - 160) {
+                            tooltip.classList.add('tooltip-align-right');
+                            tooltip.style.left = 'auto';
+                            tooltip.style.right = `${Math.max(10, layerWidth - strokeMaxX)}px`;
+                            tooltip.style.transform = isNearTop ? 'none' : 'translateY(-100%)';
+                        } else {
+                            tooltip.style.left = `${strokeCenterX}px`;
+                            tooltip.style.right = 'auto';
+                            if (isNearTop) {
+                                tooltip.style.transform = 'translateX(-50%)';
+                            }
+                        }
+                    } else {
+                        // Smart positioning vertikal: jika marker dekat bagian atas (< 170px), buka ke bawah agar tidak terpotong
+                        let posClass = (top < 170) ? ' tooltip-bottom' : '';
+
+                        // Smart positioning horizontal:
+                        if (left < 140) {
+                            posClass += ' tooltip-align-left';
+                        } else if (left + width > layerWidth - 140) {
+                            posClass += ' tooltip-align-right';
+                        }
+
+                        tooltip.className = 'annotation-tooltip' + posClass;
                     }
 
-                    tooltip.className = 'annotation-tooltip' + posClass;
+                    tooltip.addEventListener('click', (e) => e.stopPropagation());
+
                     tooltip.innerHTML = `
                         <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#f87171;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:space-between;">
                             <span>Catatan Koreksi #${badgeNum}</span>
@@ -818,7 +887,16 @@
             const pageWrapper = document.getElementById(`page-wrapper-${pageNum}`);
 
             if (marker) {
-                marker.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                try {
+                    const polyline = marker.querySelector('polyline');
+                    if (polyline && typeof polyline.scrollIntoView === 'function') {
+                        polyline.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else {
+                        marker.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                } catch (e) {
+                    marker.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
 
                 // Remove previous highlights and active tooltips
                 document.querySelectorAll('.annotation-marker').forEach(m => {
