@@ -6,6 +6,9 @@ title SISFO SMK Telkom Lampung - Local Development
 cd /d "%~dp0"
 
 :: Pastikan path Node.js, NPM, dan PHP selalu tersedia di sesi terminal ini
+if exist "%LOCALAPPDATA%\Programs\NodeJS" set "PATH=%LOCALAPPDATA%\Programs\NodeJS;%PATH%"
+if exist "%LOCALAPPDATA%\Programs\PHP" set "PATH=%LOCALAPPDATA%\Programs\PHP;%PATH%"
+if exist "%LOCALAPPDATA%\Programs\Git\cmd" set "PATH=%LOCALAPPDATA%\Programs\Git\cmd;%PATH%"
 if exist "C:\Program Files\nodejs" set "PATH=C:\Program Files\nodejs;%PATH%"
 if exist "%APPDATA%\npm" set "PATH=%APPDATA%\npm;%PATH%"
 if exist "C:\newappraporsmk\php" set "PATH=C:\newappraporsmk\php;%PATH%"

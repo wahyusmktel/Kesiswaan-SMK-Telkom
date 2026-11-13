@@ -426,6 +426,49 @@
         </div>
     </li>
 
+    {{-- GRUP: OSIS & PEMILIHAN KETUA OSIS --}}
+    <li class="submenu-dropdown"
+        x-data="{ expanded: {{ request()->routeIs('osis.*') ? 'true' : 'false' }}, flyoutTop:0, updateFlyoutPosition(){ const r=this.$el.querySelector('button').getBoundingClientRect(); this.flyoutTop=r.top; } }"
+        @mouseenter="updateFlyoutPosition()">
+        <button @click="expanded = !expanded"
+            class="nav-link w-full {{ request()->routeIs('osis.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="flex items-center">
+                <div class="nav-icon-container">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                </div>
+                <span class="nav-text">OSIS & E-Voting</span>
+            </div>
+            <svg :class="expanded ? 'rotate-180' : ''" class="dropdown-arrow w-4 h-4 transition-transform text-white/60 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+        </button>
+        <div x-show="expanded" x-collapse class="submenu-card">
+            <a href="{{ route('osis.dashboard.index') }}" class="submenu-item {{ request()->routeIs('osis.dashboard.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Dashboard OSIS</a>
+            <a href="{{ route('osis.profile.edit') }}" class="submenu-item {{ request()->routeIs('osis.profile.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Profil & Info OSIS</a>
+            <a href="{{ route('osis.pengurus.index') }}" class="submenu-item {{ request()->routeIs('osis.pengurus.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Pengurus OSIS</a>
+            <a href="{{ route('osis.agenda.index') }}" class="submenu-item {{ request()->routeIs('osis.agenda.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Agenda & Kegiatan</a>
+            <a href="{{ route('osis.pilketos.periode.index') }}" class="submenu-item {{ request()->routeIs('osis.pilketos.periode.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Periode & Timeline</a>
+            <a href="{{ route('osis.pilketos.kandidat.index') }}" class="submenu-item {{ request()->routeIs('osis.pilketos.kandidat.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Kandidat Paslon</a>
+            <a href="{{ route('osis.pilketos.dpt.index') }}" class="submenu-item {{ request()->routeIs('osis.pilketos.dpt.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>DPT & Kartu Barcode</a>
+            <a href="{{ route('osis.pilketos.rekapitulasi.index') }}" class="submenu-item {{ request()->routeIs('osis.pilketos.rekapitulasi.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Hasil Rekapitulasi</a>
+            <a href="{{ route('pilketos.booth') }}" target="_blank" class="submenu-item text-amber-300 font-bold"><span class="submenu-dot bg-amber-400"></span>Buka Bilik Suara ↗</a>
+            <a href="{{ route('public.osis.live-count') }}" target="_blank" class="submenu-item text-cyan-300 font-bold"><span class="submenu-dot bg-cyan-400"></span>Layar Live Count ↗</a>
+        </div>
+        <div class="submenu-flyout" :style="'top: ' + flyoutTop + 'px'">
+            <div class="submenu-flyout-title">OSIS & E-Voting</div>
+            <a href="{{ route('osis.dashboard.index') }}" class="submenu-item {{ request()->routeIs('osis.dashboard.*') ? 'submenu-item-active' : '' }}">Dashboard OSIS</a>
+            <a href="{{ route('osis.profile.edit') }}" class="submenu-item {{ request()->routeIs('osis.profile.*') ? 'submenu-item-active' : '' }}">Profil & Info OSIS</a>
+            <a href="{{ route('osis.pengurus.index') }}" class="submenu-item {{ request()->routeIs('osis.pengurus.*') ? 'submenu-item-active' : '' }}">Pengurus OSIS</a>
+            <a href="{{ route('osis.agenda.index') }}" class="submenu-item {{ request()->routeIs('osis.agenda.*') ? 'submenu-item-active' : '' }}">Agenda & Kegiatan</a>
+            <a href="{{ route('osis.pilketos.periode.index') }}" class="submenu-item {{ request()->routeIs('osis.pilketos.periode.*') ? 'submenu-item-active' : '' }}">Periode & Timeline</a>
+            <a href="{{ route('osis.pilketos.kandidat.index') }}" class="submenu-item {{ request()->routeIs('osis.pilketos.kandidat.*') ? 'submenu-item-active' : '' }}">Kandidat Paslon</a>
+            <a href="{{ route('osis.pilketos.dpt.index') }}" class="submenu-item {{ request()->routeIs('osis.pilketos.dpt.*') ? 'submenu-item-active' : '' }}">DPT & Kartu Barcode</a>
+            <a href="{{ route('osis.pilketos.rekapitulasi.index') }}" class="submenu-item {{ request()->routeIs('osis.pilketos.rekapitulasi.*') ? 'submenu-item-active' : '' }}">Hasil Rekapitulasi</a>
+            <a href="{{ route('pilketos.booth') }}" target="_blank" class="submenu-item text-amber-300 font-bold">Buka Bilik Suara ↗</a>
+            <a href="{{ route('public.osis.live-count') }}" target="_blank" class="submenu-item text-cyan-300 font-bold">Layar Live Count ↗</a>
+        </div>
+    </li>
+
     {{-- GRUP: PUSAT SISTEM & MASTER DATA --}}
     <li class="submenu-dropdown"
         x-data="{ expanded: {{ request()->routeIs('users.*', 'admin.roles.*', 'super-admin.permissions.*', 'super-admin.role-menus.*', 'master-data.tahun-pelajaran.*', 'super-admin.spmb-fees.*', 'super-admin.sso-applications.*', 'super-admin.asset-sync.*', 'kesiswaan.database.*', 'super-admin.settings', 'super-admin.system-update.*') ? 'true' : 'false' }}, flyoutTop:0, updateFlyoutPosition(){ const r=this.$el.querySelector('button').getBoundingClientRect(); this.flyoutTop=r.top; } }"
@@ -2483,6 +2526,110 @@
 @endif
 @endhasanyrole
 
+{{-- ============================================================ --}}
+{{-- ROLE: OSIS (PENGURUS OSIS) --}}
+{{-- ============================================================ --}}
+@role('OSIS')
+@if(session('active_role') == 'OSIS')
+    <div class="section-title">Menu Utama OSIS</div>
+    <li>
+        <a href="{{ route('osis.dashboard.index') }}" title="Dashboard OSIS"
+            class="nav-link {{ request()->routeIs('osis.dashboard.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+            </div>
+            <span class="nav-text">Dashboard OSIS</span>
+        </a>
+    </li>
+
+    <li>
+        <a href="{{ route('osis.profile.edit') }}" title="Profil & Info OSIS"
+            class="nav-link {{ request()->routeIs('osis.profile.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+            </div>
+            <span class="nav-text">Profil & Visi Misi</span>
+        </a>
+    </li>
+
+    <li>
+        <a href="{{ route('osis.pengurus.index') }}" title="Pengurus OSIS"
+            class="nav-link {{ request()->routeIs('osis.pengurus.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+            </div>
+            <span class="nav-text">Daftar Pengurus</span>
+        </a>
+    </li>
+
+    <li>
+        <a href="{{ route('osis.agenda.index') }}" title="Agenda & Proker"
+            class="nav-link {{ request()->routeIs('osis.agenda.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+            </div>
+            <span class="nav-text">Agenda & Kegiatan</span>
+        </a>
+    </li>
+
+    <div class="section-title">Pemilihan Ketua OSIS</div>
+    <li class="submenu-dropdown"
+        x-data="{ expanded: {{ request()->routeIs('osis.pilketos.*') ? 'true' : 'false' }}, flyoutTop:0, updateFlyoutPosition(){ const r=this.$el.querySelector('button').getBoundingClientRect(); this.flyoutTop=r.top; } }"
+        @mouseenter="updateFlyoutPosition()">
+        <button @click="expanded = !expanded"
+            class="nav-link w-full {{ request()->routeIs('osis.pilketos.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="flex items-center">
+                <div class="nav-icon-container">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <span class="nav-text">E-Voting Pilketos</span>
+            </div>
+            <svg :class="expanded ? 'rotate-180' : ''" class="dropdown-arrow w-4 h-4 transition-transform text-white/60 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div x-show="expanded" x-collapse class="submenu-card">
+            <a href="{{ route('osis.pilketos.periode.index') }}" class="submenu-item {{ request()->routeIs('osis.pilketos.periode.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Periode & Timeline</a>
+            <a href="{{ route('osis.pilketos.kandidat.index') }}" class="submenu-item {{ request()->routeIs('osis.pilketos.kandidat.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Calon Kandidat</a>
+            <a href="{{ route('osis.pilketos.dpt.index') }}" class="submenu-item {{ request()->routeIs('osis.pilketos.dpt.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>DPT & Kartu Barcode</a>
+            <a href="{{ route('osis.pilketos.rekapitulasi.index') }}" class="submenu-item {{ request()->routeIs('osis.pilketos.rekapitulasi.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Hasil Rekapitulasi</a>
+            <a href="{{ route('pilketos.booth') }}" target="_blank" class="submenu-item text-amber-300 font-bold"><span class="submenu-dot bg-amber-400"></span>Buka Bilik Suara ↗</a>
+            <a href="{{ route('public.osis.live-count') }}" target="_blank" class="submenu-item text-cyan-300 font-bold"><span class="submenu-dot bg-cyan-400"></span>Layar Live Count ↗</a>
+        </div>
+        <div class="submenu-flyout" :style="'top: ' + flyoutTop + 'px'">
+            <div class="submenu-flyout-title">E-Voting Pilketos</div>
+            <a href="{{ route('osis.pilketos.periode.index') }}" class="submenu-item {{ request()->routeIs('osis.pilketos.periode.*') ? 'submenu-item-active' : '' }}">Periode & Timeline</a>
+            <a href="{{ route('osis.pilketos.kandidat.index') }}" class="submenu-item {{ request()->routeIs('osis.pilketos.kandidat.*') ? 'submenu-item-active' : '' }}">Calon Kandidat</a>
+            <a href="{{ route('osis.pilketos.dpt.index') }}" class="submenu-item {{ request()->routeIs('osis.pilketos.dpt.*') ? 'submenu-item-active' : '' }}">DPT & Kartu Barcode</a>
+            <a href="{{ route('osis.pilketos.rekapitulasi.index') }}" class="submenu-item {{ request()->routeIs('osis.pilketos.rekapitulasi.*') ? 'submenu-item-active' : '' }}">Hasil Rekapitulasi</a>
+            <a href="{{ route('pilketos.booth') }}" target="_blank" class="submenu-item text-amber-300 font-bold">Buka Bilik Suara ↗</a>
+            <a href="{{ route('public.osis.live-count') }}" target="_blank" class="submenu-item text-cyan-300 font-bold">Layar Live Count ↗</a>
+        </div>
+    </li>
+
+    <div class="section-title">Halaman Publik</div>
+    <li>
+        <a href="{{ route('public.osis.index') }}" target="_blank" title="Lihat Halaman Publik OSIS"
+            class="nav-link nav-link-inactive text-rose-300 hover:text-white">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                </svg>
+            </div>
+            <span class="nav-text font-bold">Lihat Web OSIS ↗</span>
+        </a>
+    </li>
+@endif
+@endrole
+
 {{-- ROLE: KAUR SDM --}}
 {{-- ============================================================ --}}
 @can('view sdm dashboard')
@@ -3789,6 +3936,110 @@
     </li>
 @endif
 @endhasanyrole
+
+{{-- ============================================================ --}}
+{{-- ROLE: OSIS (PENGURUS OSIS) --}}
+{{-- ============================================================ --}}
+@role('OSIS')
+@if(session('active_role') == 'OSIS')
+    <div class="section-title">Menu Utama OSIS</div>
+    <li>
+        <a href="{{ route('osis.dashboard.index') }}" title="Dashboard OSIS"
+            class="nav-link {{ request()->routeIs('osis.dashboard.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+            </div>
+            <span class="nav-text">Dashboard OSIS</span>
+        </a>
+    </li>
+
+    <li>
+        <a href="{{ route('osis.profile.edit') }}" title="Profil & Info OSIS"
+            class="nav-link {{ request()->routeIs('osis.profile.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+            </div>
+            <span class="nav-text">Profil & Visi Misi</span>
+        </a>
+    </li>
+
+    <li>
+        <a href="{{ route('osis.pengurus.index') }}" title="Pengurus OSIS"
+            class="nav-link {{ request()->routeIs('osis.pengurus.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+            </div>
+            <span class="nav-text">Daftar Pengurus</span>
+        </a>
+    </li>
+
+    <li>
+        <a href="{{ route('osis.agenda.index') }}" title="Agenda & Proker"
+            class="nav-link {{ request()->routeIs('osis.agenda.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+            </div>
+            <span class="nav-text">Agenda & Kegiatan</span>
+        </a>
+    </li>
+
+    <div class="section-title">Pemilihan Ketua OSIS</div>
+    <li class="submenu-dropdown"
+        x-data="{ expanded: {{ request()->routeIs('osis.pilketos.*') ? 'true' : 'false' }}, flyoutTop:0, updateFlyoutPosition(){ const r=this.$el.querySelector('button').getBoundingClientRect(); this.flyoutTop=r.top; } }"
+        @mouseenter="updateFlyoutPosition()">
+        <button @click="expanded = !expanded"
+            class="nav-link w-full {{ request()->routeIs('osis.pilketos.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="flex items-center">
+                <div class="nav-icon-container">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <span class="nav-text">E-Voting Pilketos</span>
+            </div>
+            <svg :class="expanded ? 'rotate-180' : ''" class="dropdown-arrow w-4 h-4 transition-transform text-white/60 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div x-show="expanded" x-collapse class="submenu-card">
+            <a href="{{ route('osis.pilketos.periode.index') }}" class="submenu-item {{ request()->routeIs('osis.pilketos.periode.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Periode & Timeline</a>
+            <a href="{{ route('osis.pilketos.kandidat.index') }}" class="submenu-item {{ request()->routeIs('osis.pilketos.kandidat.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Calon Kandidat</a>
+            <a href="{{ route('osis.pilketos.dpt.index') }}" class="submenu-item {{ request()->routeIs('osis.pilketos.dpt.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>DPT & Kartu Barcode</a>
+            <a href="{{ route('osis.pilketos.rekapitulasi.index') }}" class="submenu-item {{ request()->routeIs('osis.pilketos.rekapitulasi.*') ? 'submenu-item-active' : '' }}"><span class="submenu-dot"></span>Hasil Rekapitulasi</a>
+            <a href="{{ route('pilketos.booth') }}" target="_blank" class="submenu-item text-amber-300 font-bold"><span class="submenu-dot bg-amber-400"></span>Buka Bilik Suara ↗</a>
+            <a href="{{ route('public.osis.live-count') }}" target="_blank" class="submenu-item text-cyan-300 font-bold"><span class="submenu-dot bg-cyan-400"></span>Layar Live Count ↗</a>
+        </div>
+        <div class="submenu-flyout" :style="'top: ' + flyoutTop + 'px'">
+            <div class="submenu-flyout-title">E-Voting Pilketos</div>
+            <a href="{{ route('osis.pilketos.periode.index') }}" class="submenu-item {{ request()->routeIs('osis.pilketos.periode.*') ? 'submenu-item-active' : '' }}">Periode & Timeline</a>
+            <a href="{{ route('osis.pilketos.kandidat.index') }}" class="submenu-item {{ request()->routeIs('osis.pilketos.kandidat.*') ? 'submenu-item-active' : '' }}">Calon Kandidat</a>
+            <a href="{{ route('osis.pilketos.dpt.index') }}" class="submenu-item {{ request()->routeIs('osis.pilketos.dpt.*') ? 'submenu-item-active' : '' }}">DPT & Kartu Barcode</a>
+            <a href="{{ route('osis.pilketos.rekapitulasi.index') }}" class="submenu-item {{ request()->routeIs('osis.pilketos.rekapitulasi.*') ? 'submenu-item-active' : '' }}">Hasil Rekapitulasi</a>
+            <a href="{{ route('pilketos.booth') }}" target="_blank" class="submenu-item text-amber-300 font-bold">Buka Bilik Suara ↗</a>
+            <a href="{{ route('public.osis.live-count') }}" target="_blank" class="submenu-item text-cyan-300 font-bold">Layar Live Count ↗</a>
+        </div>
+    </li>
+
+    <div class="section-title">Halaman Publik</div>
+    <li>
+        <a href="{{ route('public.osis.index') }}" target="_blank" title="Lihat Halaman Publik OSIS"
+            class="nav-link nav-link-inactive text-rose-300 hover:text-white">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                </svg>
+            </div>
+            <span class="nav-text font-bold">Lihat Web OSIS ↗</span>
+        </a>
+    </li>
+@endif
+@endrole
 
 {{-- ============================================================ --}}
 {{-- MENU: PENILAIAN SEMESTER --}}

@@ -1,6 +1,16 @@
 <?php
 
 use App\Http\Controllers\Admin\AssetSyncController;
+use App\Http\Controllers\Public\OsisPublicController;
+use App\Http\Controllers\Public\PilketosBoothController;
+use App\Http\Controllers\Osis\OsisDashboardController;
+use App\Http\Controllers\Osis\OsisProfileController;
+use App\Http\Controllers\Osis\OsisPengurusController;
+use App\Http\Controllers\Osis\OsisAgendaController;
+use App\Http\Controllers\Osis\PilketosManagementController;
+use App\Http\Controllers\Osis\PilketosKandidatController;
+use App\Http\Controllers\Osis\PilketosDptController;
+use App\Http\Controllers\Osis\PilketosRekapitulasiController;
 use App\Http\Controllers\Admin\BeritaController;
 use App\Http\Controllers\Admin\LandingPopupController;
 use App\Http\Controllers\Admin\PermissionManagementController;
@@ -246,6 +256,69 @@ Route::middleware('auth')->group(function () {
 Route::get('/employee', fn () => redirect()->route('pegawai.index', request()->query()));
 Route::get('/employees', fn () => redirect()->route('pegawai.index', request()->query()));
 Route::get('/employee/{slug}', fn ($slug) => redirect()->route('pegawai.show', $slug));
+
+// ============================================================
+// OSIS & PEMILIHAN KETUA OSIS (PILKETOS) - PUBLIC ROUTES
+// ============================================================
+Route::prefix('osis')->group(function () {
+    Route::get('/', [OsisPublicController::class, 'index'])->name('public.osis.index');
+    Route::get('/live-count', [OsisPublicController::class, 'liveCount'])->name('public.osis.live-count');
+    Route::get('/live-count-alias', [OsisPublicController::class, 'liveCount'])->name('osis.live-count');
+    Route::get('/api/live-count-data', [OsisPublicController::class, 'liveCountData'])->name('api.osis.live-count-data');
+
+    // Bilik Suara E-Voting (Barcode Scanner Access)
+    Route::get('/bilik-suara', [PilketosBoothController::class, 'index'])->name('pilketos.booth');
+    Route::post('/bilik-suara/scan', [PilketosBoothController::class, 'scanBarcode'])->name('pilketos.booth.scan');
+    Route::post('/bilik-suara/submit', [PilketosBoothController::class, 'submitBallot'])->name('pilketos.booth.submit');
+    Route::post('/bilik-suara/cancel', [PilketosBoothController::class, 'cancelSession'])->name('pilketos.booth.cancel');
+});
+
+// Alias singkat /pilketos
+Route::get('/pilketos', fn () => redirect()->route('public.osis.index'));
+Route::get('/pilketos/live-count', fn () => redirect()->route('public.osis.live-count'));
+Route::get('/pilketos/bilik', fn () => redirect()->route('pilketos.booth'));
+
+// ============================================================
+// OSIS ADMIN MANAGEMENT (Role: OSIS | Super Admin | Waka Kesiswaan)
+// ============================================================
+Route::middleware(['auth', 'role:OSIS|Super Admin|Waka Kesiswaan'])->prefix('panel-osis')->name('osis.')->group(function () {
+    Route::get('/dashboard', [OsisDashboardController::class, 'index'])->name('dashboard.index');
+
+    // Profil & Pengaturan OSIS
+    Route::get('/profil', [OsisProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profil', [OsisProfileController::class, 'update'])->name('profile.update');
+
+    // Pengurus OSIS
+    Route::resource('pengurus', OsisPengurusController::class);
+
+    // Agenda OSIS
+    Route::resource('agenda', OsisAgendaController::class);
+
+    // Pilketos: Periode & Timeline
+    Route::get('/pilketos/periode', [PilketosManagementController::class, 'index'])->name('pilketos.periode.index');
+    Route::put('/pilketos/periode/{periode}', [PilketosManagementController::class, 'updatePeriode'])->name('pilketos.periode.update');
+    Route::post('/pilketos/periode/{periode}/timeline', [PilketosManagementController::class, 'storeTimeline'])->name('pilketos.timeline.store');
+    Route::put('/pilketos/timeline/{timeline}', [PilketosManagementController::class, 'updateTimeline'])->name('pilketos.timeline.update');
+    Route::delete('/pilketos/timeline/{timeline}', [PilketosManagementController::class, 'destroyTimeline'])->name('pilketos.timeline.destroy');
+
+    // Pilketos: Kandidat Paslon
+    Route::resource('pilketos/kandidat', PilketosKandidatController::class)->names('pilketos.kandidat');
+
+    // Pilketos: DPT & Cetak Barcode
+    Route::get('/pilketos/dpt', [PilketosDptController::class, 'index'])->name('pilketos.dpt.index');
+    Route::post('/pilketos/dpt/generate', [PilketosDptController::class, 'generateFromSiswa'])->name('pilketos.dpt.generate');
+    Route::get('/pilketos/dpt/print-cards', [PilketosDptController::class, 'printCards'])->name('pilketos.dpt.print-cards');
+    Route::get('/pilketos/dpt/print', [PilketosDptController::class, 'printCards'])->name('pilketos.dpt.print');
+    Route::patch('/pilketos/dpt/{dpt}/reset', [PilketosDptController::class, 'resetStatus'])->name('pilketos.dpt.reset');
+    Route::delete('/pilketos/dpt/{dpt}', [PilketosDptController::class, 'destroy'])->name('pilketos.dpt.destroy');
+
+    // Pilketos: Rekapitulasi & Berita Acara
+    Route::get('/pilketos/rekapitulasi', [PilketosRekapitulasiController::class, 'index'])->name('pilketos.rekapitulasi.index');
+    Route::get('/pilketos/rekapitulasi/print', [PilketosRekapitulasiController::class, 'printBeritaAcara'])->name('pilketos.rekapitulasi.print');
+    Route::get('/pilketos/rekapitulasi/berita-acara', [PilketosRekapitulasiController::class, 'printBeritaAcara'])->name('pilketos.rekapitulasi.berita-acara');
+    Route::post('/pilketos/rekapitulasi/reset-votes', [PilketosRekapitulasiController::class, 'resetVotes'])->name('pilketos.rekapitulasi.reset-votes');
+    Route::post('/pilketos/rekapitulasi/reset', [PilketosRekapitulasiController::class, 'resetVotes'])->name('pilketos.rekapitulasi.reset');
+});
 // Happiness Meter (Public API)
 Route::prefix('api/happiness')->name('happiness.')->group(function () {
     Route::post('/check', [App\Http\Controllers\HappinessMetricController::class, 'checkStatus'])->name('check');

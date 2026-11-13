@@ -29,6 +29,7 @@ class DashboardRedirector
             'Koordinator Prakerin' => 'prakerin.industri.index',
             'Kepala Sekolah' => 'kepala-sekolah.dashboard.index',
             'Petugas UKS' => 'uks.records.index',
+            'OSIS', 'Pengurus OSIS' => 'osis.dashboard.index',
             'TPA' => 'profile.edit',
             'Hubin Sinergi UP dan Alumni', 'adminup' => 'hubin.industri.index',
             'QMR', 'Kesiswaan', 'Hubin PPDB', 'Human Capital', 'Keuangan', 'Sarana dan Prasarana', 'IT', 'KAUR LAB', 'Kaprodi PPLGIM ANIMASI', 'Kaprodi TJKT' => 'okr.index',
