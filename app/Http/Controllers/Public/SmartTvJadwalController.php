@@ -26,10 +26,14 @@ class SmartTvJadwalController extends Controller
 
     public function index()
     {
-        $tahunAktif = TahunPelajaran::where('is_active', true)->first();
+        // Ambil tahun pelajaran yang sedang aktif (dengan fallback ke tahun pelajaran terbaru)
+        $tahunAktif = TahunPelajaran::where('is_active', true)->first()
+            ?? TahunPelajaran::orderByDesc('id')->first();
 
+        // Ambil rombel yang terdaftar pada tahun pelajaran aktif dan memiliki relasi kelas
         $rombels = Rombel::with(['kelas', 'waliKelas'])
             ->where('tahun_pelajaran_id', $tahunAktif?->id)
+            ->whereHas('kelas')
             ->orderBy('kelas_id')
             ->get();
 

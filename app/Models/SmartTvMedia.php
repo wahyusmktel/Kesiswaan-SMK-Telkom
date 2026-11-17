@@ -92,9 +92,9 @@ class SmartTvMedia extends Model
     public function getModeTayangLabelAttribute(): string
     {
         return match ($this->mode_tayang) {
-            'fullscreen_total' => 'Full Screen Total (Iklan Penuh)',
-            'eksklusif' => 'Eksklusif (Takeover Frame)',
-            default => 'Kombinasi (Slide Jadwal)',
+            'fullscreen_total' => 'Full Screen Total (Iklan Penuh Tanpa Frame)',
+            'eksklusif' => 'Eksklusif (Takeover Layar Penuh Tanpa Frame)',
+            default => 'Kombinasi (Slide Seluruh Layar Bergantian)',
         };
     }
 

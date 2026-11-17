@@ -205,7 +205,7 @@
                                             </span>
                                         @elseif($item->mode_tayang === 'eksklusif')
                                             <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-700 tracking-wider uppercase">
-                                                Eksklusif (Frame Jam)
+                                                Eksklusif (Takeover)
                                             </span>
                                         @else
                                             <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-100 text-indigo-700 tracking-wider uppercase">
@@ -414,8 +414,8 @@
                         <div>
                             <label class="block text-xs font-bold text-gray-700 mb-1">Mode Penayangan *</label>
                             <select name="mode_tayang" required class="w-full text-xs rounded-xl border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
-                                <option value="kombinasi">1. Kombinasi (Disisipkan ke Slideshow Jadwal)</option>
-                                <option value="eksklusif">2. Eksklusif (Takeover Layar dengan Bingkai Jam & Status)</option>
+                                <option value="kombinasi">1. Kombinasi (Slide Seluruh Layar Bergantian dengan Jadwal)</option>
+                                <option value="eksklusif">2. Eksklusif (Takeover Seluruh Layar Saat Jam Aktif)</option>
                                 <option value="fullscreen_total">3. Full Screen Total (Iklan Penuh Tanpa Frame / Billboard Edge-to-Edge)</option>
                             </select>
                         </div>
@@ -526,8 +526,9 @@
                         <div>
                             <label class="block text-xs font-bold text-gray-700 mb-1">Mode Penayangan *</label>
                             <select name="mode_tayang" required x-model="editData.mode_tayang" class="w-full text-xs rounded-xl border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
-                                <option value="eksklusif">Eksklusif (Takeover Fullscreen tanpa jadwal)</option>
-                                <option value="kombinasi">Kombinasi (Disisipkan ke Slideshow Jadwal)</option>
+                                <option value="kombinasi">1. Kombinasi (Slide Seluruh Layar Bergantian dengan Jadwal)</option>
+                                <option value="eksklusif">2. Eksklusif (Takeover Seluruh Layar Saat Jam Aktif)</option>
+                                <option value="fullscreen_total">3. Full Screen Total (Iklan Penuh Tanpa Frame / Billboard Edge-to-Edge)</option>
                             </select>
                         </div>
                     </div>

@@ -598,157 +598,204 @@
         @keyframes slide-out { from { opacity:1; transform:none; } to { opacity:0; transform:translateX(-60px) scale(.97); } }
 
         /* ══════════════════════════════
-           EXCLUSIVE MEDIA OVERLAY (TAKEOVER QR / MADING)
+           FULL SCREEN TOTAL OVERLAY (IKLAN PENUH TANPA FRAME / BILLBOARD)
+        ══════════════════════════════ */
+        #fullscreen-total-overlay {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 99999;
+            background: #000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        #fullscreen-total-overlay.show {
+            display: flex;
+        }
+        .fst-item {
+            position: absolute;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+        }
+        .fst-item.active {
+            display: flex;
+        }
+        .fst-content {
+            width: 100vw;
+            height: 100vh;
+            max-width: 100vw;
+            max-height: 100vh;
+            object-fit: contain;
+            border: none;
+            box-shadow: none;
+        }
+
+        /* ══════════════════════════════
+           EXCLUSIVE MEDIA OVERLAY (TAKEOVER LAYAR PENUH TANPA FRAME)
         ══════════════════════════════ */
         #exclusive-media-overlay {
             position: fixed;
-            top: calc(var(--topbar-h) + var(--ticker-h));
-            bottom: 0; left: 0; right: 0;
-            z-index: 100;
-            background: radial-gradient(circle at center, #0f172a 0%, #060c1e 100%);
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 99990;
+            background: #000;
             display: none;
-            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             overflow: hidden;
-            animation: fadeInEx 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            animation: fadeInEx 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         #exclusive-media-overlay.show {
             display: flex;
         }
         @keyframes fadeInEx {
-            from { opacity: 0; transform: scale(0.98); }
+            from { opacity: 0; transform: scale(0.99); }
             to { opacity: 1; transform: scale(1); }
         }
-        .ex-inner {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            padding: 1.2rem 2.5rem 1.5rem;
-            position: relative;
-        }
-        .ex-header-bar {
+        .ex-media-stage {
+            position: absolute;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 20px;
-            padding: 10px 24px;
-            margin-bottom: 1rem;
-            backdrop-filter: blur(12px);
+            justify-content: center;
+            background: #000;
         }
-        .ex-badge {
-            display: inline-flex;
+        .ex-fullscreen-content {
+            width: 100vw;
+            height: 100vh;
+            max-width: 100vw;
+            max-height: 100vh;
+            object-fit: contain;
+            border: none;
+            box-shadow: none;
+        }
+        .ex-floating-badge {
+            position: absolute;
+            top: 24px;
+            right: 28px;
+            z-index: 10;
+            display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 6px 16px;
+            gap: 12px;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(14px);
+            padding: 8px 18px;
             border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            pointer-events: none;
+        }
+        .ex-floating-badge .badge-tag {
             font-size: 0.72rem;
             font-weight: 900;
-            letter-spacing: 0.1em;
+            letter-spacing: 0.08em;
             text-transform: uppercase;
+            padding: 4px 12px;
+            border-radius: 999px;
         }
-        .ex-badge.qr_hadir { background: rgba(16,185,129,0.2); color: #34d399; border: 1px solid rgba(16,185,129,0.4); }
-        .ex-badge.qr_pulang { background: rgba(244,63,94,0.2); color: #fb7185; border: 1px solid rgba(244,63,94,0.4); }
-        .ex-badge.mading, .ex-badge.pengumuman, .ex-badge.lainnya { background: rgba(99,102,241,0.2); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.4); }
+        .badge-tag.qr_hadir { background: rgba(16,185,129,0.25); color: #34d399; border: 1px solid rgba(16,185,129,0.4); }
+        .badge-tag.qr_pulang { background: rgba(244,63,94,0.25); color: #fb7185; border: 1px solid rgba(244,63,94,0.4); }
+        .badge-tag.mading, .badge-tag.pengumuman, .badge-tag.lainnya { background: rgba(99,102,241,0.25); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.4); }
 
-        .ex-title {
-            font-size: 1.4rem;
-            font-weight: 900;
-            color: #ffffff;
-            letter-spacing: -0.02em;
-        }
-        .ex-time-tag {
-            font-size: 0.85rem;
+        .ex-floating-badge .time-tag {
+            font-size: 0.82rem;
             font-weight: 800;
             color: #f59e0b;
             font-family: monospace;
             display: flex;
             align-items: center;
             gap: 6px;
-            background: rgba(245,158,11,0.12);
-            padding: 5px 14px;
+        }
+        .ex-floating-tip {
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(14px);
+            padding: 8px 24px;
             border-radius: 999px;
-            border: 1px solid rgba(245,158,11,0.25);
-        }
-        .ex-viewport {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            background: rgba(0,0,0,0.4);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 24px;
-            padding: 1rem;
-            overflow: hidden;
-            box-shadow: inset 0 0 40px rgba(0,0,0,0.6);
-        }
-        .ex-image {
-            max-width: 95%;
-            max-height: 95%;
-            object-fit: contain;
-            border-radius: 16px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.1);
-        }
-        .ex-canvas-box {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-        }
-        .ex-canvas {
-            max-width: 95%;
-            max-height: 95%;
-            object-fit: contain;
-            border-radius: 16px;
-            background: white;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.2);
-        }
-        .ex-footer-bar {
-            text-align: center;
-            padding-top: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: rgba(255, 255, 255, 0.9);
             font-size: 0.8rem;
             font-weight: 700;
-            color: rgba(226,232,240,0.7);
-            letter-spacing: 0.05em;
             display: flex;
             align-items: center;
-            justify-content: center;
             gap: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            pointer-events: none;
         }
 
         /* ══════════════════════════════
-           SLIDE KOMBINASI MEDIA
+           SLIDE KOMBINASI MEDIA (TANPA FRAME)
         ══════════════════════════════ */
-        .slide-media .slide-inner {
-            grid-template-columns: 360px 1fr;
-        }
-        .slide-media-preview-box {
+        .slide.slide-media {
+            position: absolute;
+            inset: 0;
             width: 100%;
             height: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 1.5rem;
-            background: rgba(0,0,0,0.3);
+            background: #000;
             overflow: hidden;
         }
-        .slide-media-img {
-            max-width: 95%;
-            max-height: 95%;
-            object-fit: contain;
-            border-radius: 18px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.1);
+        .slide-media-full {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+            overflow: hidden;
         }
-        .slide-media-canvas {
-            max-width: 95%;
-            max-height: 95%;
+        .media-fullscreen-content {
+            width: 100%;
+            height: 100%;
+            max-width: 100vw;
+            max-height: 100%;
             object-fit: contain;
-            border-radius: 18px;
-            background: white;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+            border: none;
+            box-shadow: none;
+        }
+        .comb-floating-pill {
+            position: absolute;
+            bottom: 20px;
+            left: 24px;
+            z-index: 5;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            padding: 6px 16px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            pointer-events: none;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+        .comb-floating-pill .pill-tag {
+            color: #f43f5e;
+            text-transform: uppercase;
+            font-weight: 900;
         }
     </style>
     {{-- PDF.js Library --}}
@@ -963,60 +1010,18 @@
                  data-media-title="{{ $media->judul }}"
                  data-file-type="{{ $media->file_type }}"
                  data-file-url="{{ $media->file_url }}">
-                <div class="slide-inner">
-                    {{-- LEFT PANEL --}}
-                    <div class="slide-left">
-                        <div class="slide-left-bg"></div>
-                        <div class="slide-left-glow" style="background: #ec4899;"></div>
+                {{-- TAMPILAN MEDIA KOMBINASI TANPA FRAME (EDGE-TO-EDGE) --}}
+                <div class="slide-media-full" id="comb-viewport-{{ $media->id }}">
+                    @if($media->file_type === 'image')
+                        <img src="{{ $media->file_url }}" alt="{{ $media->judul }}" class="media-fullscreen-content">
+                    @else
+                        <canvas id="comb-pdf-canvas-{{ $media->id }}" class="media-fullscreen-content" data-pdf-url="{{ $media->file_url }}"></canvas>
+                    @endif
 
-                        <div class="class-number" style="color: #ec4899;">
-                            Media Informasi TV
-                        </div>
-
-                        <div class="class-name">
-                            <span style="background: linear-gradient(to right, #ec4899, #a855f7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">
-                                {{ $media->tipe_label }}
-                            </span>
-                            {{ $media->judul }}
-                        </div>
-
-                        <div class="wali-card">
-                            <div class="wali-avatar" style="background: linear-gradient(135deg, #ec4899, #8b5cf6);">
-                                <svg style="width:20px;height:20px;color:white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
-                                </svg>
-                            </div>
-                            <div class="wali-info">
-                                <p>Waktu Tayang</p>
-                                <h4>{{ $media->jam_mulai_formatted }} - {{ $media->jam_selesai_formatted }} WIB</h4>
-                            </div>
-                        </div>
-
-                        @if($media->keterangan)
-                            <p style="font-size: 0.78rem; color: rgba(226,232,240,0.7); line-height: 1.5; margin-bottom: 1.5rem; background: rgba(255,255,255,0.03); padding: 12px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.06);">
-                                {{ $media->keterangan }}
-                            </p>
-                        @endif
-
-                        <div class="stats-row">
-                            <div class="stat-box">
-                                <div class="sv sv-indigo">{{ $media->durasi_detik }}s</div>
-                                <div class="sk">Durasi Slide</div>
-                            </div>
-                            <div class="stat-box">
-                                <div class="sv sv-cyan">{{ strtoupper($media->file_type) }}</div>
-                                <div class="sk">Format</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- RIGHT PANEL: Full Media Viewport --}}
-                    <div class="slide-media-preview-box" id="comb-viewport-{{ $media->id }}">
-                        @if($media->file_type === 'image')
-                            <img src="{{ $media->file_url }}" alt="{{ $media->judul }}" class="slide-media-img">
-                        @else
-                            <canvas id="comb-pdf-canvas-{{ $media->id }}" class="slide-media-canvas" data-pdf-url="{{ $media->file_url }}"></canvas>
-                        @endif
+                    <div class="comb-floating-pill">
+                        <span class="pill-tag">{{ $media->tipe_label }}</span>
+                        <span>•</span>
+                        <span>{{ $media->judul }}</span>
                     </div>
                 </div>
             </div>
@@ -1060,36 +1065,53 @@
     </div>
 </div>
 
-{{-- ══ EXCLUSIVE MEDIA OVERLAY (TAKEOVER QR PRESENSI / PENGUMUMAN UTAMA) ══ --}}
+{{-- ══ EXCLUSIVE MEDIA OVERLAY (TAKEOVER LAYAR PENUH TANPA FRAME) ══ --}}
 <div id="exclusive-media-overlay" class="{{ $exclusiveMedia ? 'show' : '' }}">
     @if($exclusiveMedia)
-        <div class="ex-inner">
-            <div class="ex-header-bar">
-                <div style="display:flex; align-items:center; gap: 14px;">
-                    <span class="ex-badge {{ $exclusiveMedia->tipe }}">{{ $exclusiveMedia->tipe_label }}</span>
-                    <h2 class="ex-title">{{ $exclusiveMedia->judul }}</h2>
-                </div>
-                <div class="ex-time-tag">
-                    <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <span>Pukul {{ $exclusiveMedia->jam_mulai_formatted }} - {{ $exclusiveMedia->jam_selesai_formatted }} WIB</span>
-                </div>
+        <div class="ex-media-stage" id="exclusive-viewport">
+            @if($exclusiveMedia->file_type === 'image')
+                <img src="{{ $exclusiveMedia->file_url }}" alt="{{ $exclusiveMedia->judul }}" class="ex-fullscreen-content">
+            @else
+                <canvas id="exclusive-pdf-canvas" class="ex-fullscreen-content" data-pdf-url="{{ $exclusiveMedia->file_url }}"></canvas>
+            @endif
+
+            {{-- Floating Badge Jam & Status di Pojok Kanan Atas --}}
+            <div class="ex-floating-badge">
+                <span class="badge-tag {{ $exclusiveMedia->tipe }}">{{ $exclusiveMedia->tipe_label }}</span>
+                <span class="time-tag">
+                    <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span>{{ $exclusiveMedia->jam_mulai_formatted }} - {{ $exclusiveMedia->jam_selesai_formatted }} WIB</span>
+                </span>
             </div>
 
-            <div class="ex-viewport" id="exclusive-viewport">
-                @if($exclusiveMedia->file_type === 'image')
-                    <img src="{{ $exclusiveMedia->file_url }}" alt="{{ $exclusiveMedia->judul }}" class="ex-image">
+            {{-- Floating Tip di Bawah --}}
+            @if(str_contains($exclusiveMedia->tipe, 'qr'))
+                <div class="ex-floating-tip">
+                    <svg style="width:16px;height:16px;color:#38bdf8;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                    <span>Arahkan kamera smartphone atau buka aplikasi Sisfo untuk memindai QR Code Presensi</span>
+                </div>
+            @endif
+        </div>
+    @endif
+</div>
+
+{{-- ══ FULL SCREEN TOTAL OVERLAY (IKLAN PENUH TANPA FRAME / BILLBOARD EDGE-TO-EDGE) ══ --}}
+<div id="fullscreen-total-overlay" class="{{ (isset($fullscreenTotalMedia) && $fullscreenTotalMedia->isNotEmpty()) ? 'show' : '' }}">
+    @if(isset($fullscreenTotalMedia) && $fullscreenTotalMedia->isNotEmpty())
+        @foreach($fullscreenTotalMedia as $fstIdx => $fst)
+            <div class="fst-item {{ $fstIdx === 0 ? 'active' : '' }}"
+                 id="fst-item-{{ $fst->id }}"
+                 data-idx="{{ $fstIdx }}"
+                 data-duration="{{ ($fst->durasi_detik ?: 20) * 1000 }}"
+                 data-file-type="{{ $fst->file_type }}"
+                 data-file-url="{{ $fst->file_url }}">
+                @if($fst->file_type === 'image')
+                    <img src="{{ $fst->file_url }}" alt="{{ $fst->judul }}" class="fst-content">
                 @else
-                    <div class="ex-canvas-box">
-                        <canvas id="exclusive-pdf-canvas" class="ex-canvas" data-pdf-url="{{ $exclusiveMedia->file_url }}"></canvas>
-                    </div>
+                    <canvas id="fst-canvas-{{ $fst->id }}" class="fst-content" data-pdf-url="{{ $fst->file_url }}"></canvas>
                 @endif
             </div>
-
-            <div class="ex-footer-bar">
-                <svg style="width:18px;height:18px;color:#38bdf8;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
-                <span>Arahkan kamera smartphone atau buka aplikasi Sisfo untuk memindai QR Code Presensi</span>
-            </div>
-        </div>
+        @endforeach
     @endif
 </div>
 
@@ -1387,8 +1409,8 @@ async function renderPdfToCanvas(url, canvasEl) {
         const page = await pdf.getPage(1);
         
         const parent = canvasEl.parentElement;
-        const availWidth = (parent && parent.clientWidth) ? (parent.clientWidth - 30) : (window.innerWidth * 0.7);
-        const availHeight = (parent && parent.clientHeight) ? (parent.clientHeight - 30) : (window.innerHeight * 0.75);
+        const availWidth = (parent && parent.clientWidth > 50) ? parent.clientWidth : window.innerWidth;
+        const availHeight = (parent && parent.clientHeight > 50) ? parent.clientHeight : window.innerHeight;
 
         const unscaledViewport = page.getViewport({ scale: 1.0 });
         const scaleX = availWidth / unscaledViewport.width;
@@ -1420,6 +1442,42 @@ async function renderPdfToCanvas(url, canvasEl) {
 const exclusiveCanvas = document.getElementById('exclusive-pdf-canvas');
 if (exclusiveCanvas && exclusiveCanvas.dataset.pdfUrl) {
     renderPdfToCanvas(exclusiveCanvas.dataset.pdfUrl, exclusiveCanvas);
+}
+
+// ─── Full Screen Total Rotator (Iklan Penuh Tanpa Frame) ─────────
+const fstItems = document.querySelectorAll('#fullscreen-total-overlay .fst-item');
+let currentFstIdx = 0;
+let fstTimer = null;
+
+function renderFstItem(itemEl) {
+    if (!itemEl) return;
+    if (itemEl.dataset.fileType === 'pdf') {
+        const canvas = itemEl.querySelector('canvas');
+        if (canvas && canvas.dataset.pdfUrl && !canvas.dataset.rendered) {
+            renderPdfToCanvas(canvas.dataset.pdfUrl, canvas);
+            canvas.dataset.rendered = "true";
+        }
+    }
+}
+
+function rotateFst() {
+    if (fstItems.length <= 1) return;
+    fstItems[currentFstIdx].classList.remove('active');
+    currentFstIdx = (currentFstIdx + 1) % fstItems.length;
+    const nextItem = fstItems[currentFstIdx];
+    nextItem.classList.add('active');
+    renderFstItem(nextItem);
+
+    const dur = parseInt(nextItem.dataset.duration, 10) || 20000;
+    fstTimer = setTimeout(rotateFst, dur);
+}
+
+if (fstItems.length > 0) {
+    renderFstItem(fstItems[0]);
+    if (fstItems.length > 1) {
+        const dur0 = parseInt(fstItems[0].dataset.duration, 10) || 20000;
+        fstTimer = setTimeout(rotateFst, dur0);
+    }
 }
 
 // ─── Slider ───────────────────────────────────────────────────────
