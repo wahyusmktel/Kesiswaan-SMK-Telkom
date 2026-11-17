@@ -112,26 +112,32 @@ class SmartTvJadwalController extends Controller
             ->orderBy('id', 'asc')
             ->get();
 
-        // 1. Media Eksklusif (Takeover Fullscreen) yang aktif saat jam dan hari ini
+        // 1. Media Full Screen Total (Iklan Penuh Tanpa Frame) yang aktif saat jam dan hari ini
+        $fullscreenTotalMedia = $allActiveMedia
+            ->filter(fn($m) => $m->mode_tayang === 'fullscreen_total' && $m->isScheduleActiveNow($now))
+            ->values();
+
+        // 2. Media Eksklusif (Takeover Frame Jam/QR) yang aktif saat jam dan hari ini
         $exclusiveMedia = $allActiveMedia
             ->filter(fn($m) => $m->mode_tayang === 'eksklusif' && $m->isScheduleActiveNow($now))
             ->first();
 
-        // 2. Media Kombinasi (Disisipkan ke Slideshow Jadwal) yang aktif saat jam dan hari ini
+        // 3. Media Kombinasi (Disisipkan ke Slideshow Jadwal) yang aktif saat jam dan hari ini
         $kombinasiMedia = $allActiveMedia
             ->filter(fn($m) => $m->mode_tayang === 'kombinasi' && $m->isScheduleActiveNow($now))
             ->values();
 
         return view('public.smart-tv-jadwal', [
-            'kelasData'      => $kelasData,
-            'todaySlots'     => array_values($todaySlots),
-            'todayName'      => $todayName,
-            'tahunAktif'     => $tahunAktif,
-            'activitySlots'  => $activitySlots,
-            'tickers'        => $tickers,
-            'exclusiveMedia' => $exclusiveMedia,
-            'kombinasiMedia' => $kombinasiMedia,
-            'allActiveMedia' => $allActiveMedia,
+            'kelasData'            => $kelasData,
+            'todaySlots'           => array_values($todaySlots),
+            'todayName'            => $todayName,
+            'tahunAktif'           => $tahunAktif,
+            'activitySlots'        => $activitySlots,
+            'tickers'              => $tickers,
+            'fullscreenTotalMedia' => $fullscreenTotalMedia,
+            'exclusiveMedia'       => $exclusiveMedia,
+            'kombinasiMedia'       => $kombinasiMedia,
+            'allActiveMedia'       => $allActiveMedia,
         ]);
     }
 
@@ -149,6 +155,22 @@ class SmartTvJadwalController extends Controller
             ->orderBy('urutan', 'asc')
             ->orderBy('id', 'asc')
             ->get();
+
+        $fullscreenTotal = $allActiveMedia
+            ->filter(fn($m) => $m->mode_tayang === 'fullscreen_total' && $m->isScheduleActiveNow($now))
+            ->values()
+            ->map(function ($item) {
+                return [
+                    'id'           => $item->id,
+                    'judul'        => $item->judul,
+                    'tipe'         => $item->tipe,
+                    'tipe_label'   => $item->tipe_label,
+                    'file_url'     => $item->file_url,
+                    'file_type'    => $item->file_type,
+                    'durasi_detik' => $item->durasi_detik ?: 20,
+                    'keterangan'   => $item->keterangan,
+                ];
+            });
 
         $exclusive = $allActiveMedia
             ->filter(fn($m) => $m->mode_tayang === 'eksklusif' && $m->isScheduleActiveNow($now))
@@ -173,11 +195,13 @@ class SmartTvJadwalController extends Controller
         $tickers = InfoTicker::active()->latest()->pluck('konten')->toArray();
 
         $payload = [
-            'server_time'      => $now->format('H:i:s'),
-            'server_date'      => $now->translatedFormat('l, d F Y'),
-            'today_name'       => $todayName,
-            'is_exclusive'     => (bool) $exclusive,
-            'exclusive_media'  => $exclusive ? [
+            'server_time'            => $now->format('H:i:s'),
+            'server_date'            => $now->translatedFormat('l, d F Y'),
+            'today_name'             => $todayName,
+            'is_fullscreen_total'    => $fullscreenTotal->isNotEmpty(),
+            'fullscreen_total_media' => $fullscreenTotal,
+            'is_exclusive'           => (bool) $exclusive,
+            'exclusive_media'        => $exclusive ? [
                 'id'           => $exclusive->id,
                 'judul'        => $exclusive->judul,
                 'tipe'         => $exclusive->tipe,
@@ -188,12 +212,14 @@ class SmartTvJadwalController extends Controller
                 'jam_selesai'  => $exclusive->jam_selesai_formatted,
                 'keterangan'   => $exclusive->keterangan,
             ] : null,
-            'kombinasi_media'  => $kombinasi,
-            'tickers'          => $tickers,
+            'kombinasi_media'        => $kombinasi,
+            'tickers'                => $tickers,
         ];
 
         // Hash untuk perbandingan perubahan secara instan
         $payload['hash'] = md5(json_encode([
+            $payload['is_fullscreen_total'],
+            $fullscreenTotal->pluck('id')->toArray(),
             $payload['is_exclusive'],
             $payload['exclusive_media']['id'] ?? null,
             $payload['exclusive_media']['file_url'] ?? null,

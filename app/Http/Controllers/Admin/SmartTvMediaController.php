@@ -26,6 +26,7 @@ class SmartTvMediaController extends Controller
         $tickers = InfoTicker::with('creator')->latest()->get();
 
         $now = Carbon::now();
+        $activeFullscreenTotalCount = $mediaList->filter(fn($m) => $m->mode_tayang === 'fullscreen_total' && $m->isScheduleActiveNow($now))->count();
         $activeExclusiveCount = $mediaList->filter(fn($m) => $m->mode_tayang === 'eksklusif' && $m->isScheduleActiveNow($now))->count();
         $activeKombinasiCount = $mediaList->filter(fn($m) => $m->mode_tayang === 'kombinasi' && $m->isScheduleActiveNow($now))->count();
 
@@ -34,6 +35,7 @@ class SmartTvMediaController extends Controller
             'tickers' => $tickers,
             'days' => self::DAYS,
             'now' => $now,
+            'activeFullscreenTotalCount' => $activeFullscreenTotalCount,
             'activeExclusiveCount' => $activeExclusiveCount,
             'activeKombinasiCount' => $activeKombinasiCount,
         ]);
@@ -49,7 +51,7 @@ class SmartTvMediaController extends Controller
             'jam_selesai' => 'required|date_format:H:i',
             'hari' => 'nullable|array',
             'hari.*' => 'in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu,Minggu',
-            'mode_tayang' => 'required|in:eksklusif,kombinasi',
+            'mode_tayang' => 'required|in:eksklusif,kombinasi,fullscreen_total',
             'durasi_detik' => 'nullable|integer|min:5|max:300',
             'urutan' => 'nullable|integer|min:0|max:999',
             'keterangan' => 'nullable|string|max:500',
@@ -97,7 +99,7 @@ class SmartTvMediaController extends Controller
             'jam_selesai' => 'required|date_format:H:i',
             'hari' => 'nullable|array',
             'hari.*' => 'in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu,Minggu',
-            'mode_tayang' => 'required|in:eksklusif,kombinasi',
+            'mode_tayang' => 'required|in:eksklusif,kombinasi,fullscreen_total',
             'durasi_detik' => 'nullable|integer|min:5|max:300',
             'urutan' => 'nullable|integer|min:0|max:999',
             'keterangan' => 'nullable|string|max:500',

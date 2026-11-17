@@ -45,7 +45,7 @@
         <div class="w-full px-4 sm:px-6 lg:px-8 space-y-6">
 
             {{-- ══ KARTU RINGKASAN & STATUS AKTIF HARI INI ══ --}}
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div class="bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 text-white rounded-2xl p-5 shadow-lg relative overflow-hidden">
                     <div class="relative z-10">
                         <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-200">Waktu Server TV</span>
@@ -53,6 +53,23 @@
                         <p class="text-xs text-indigo-200 mt-1">{{ $now->translatedFormat('l, d F Y') }}</p>
                     </div>
                     <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+                </div>
+
+                <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-xs flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <span class="text-xs text-gray-500 font-semibold block">Full Screen Total (Iklan)</span>
+                        <div class="text-xl font-extrabold text-gray-900 mt-0.5">
+                            {{ $activeFullscreenTotalCount }} <span class="text-xs font-medium text-gray-400">Media</span>
+                        </div>
+                        <span class="text-[11px] {{ $activeFullscreenTotalCount > 0 ? 'text-purple-600 font-bold' : 'text-gray-400' }}">
+                            {{ $activeFullscreenTotalCount > 0 ? '● Iklan Penuh Aktif' : '○ Standby' }}
+                        </span>
+                    </div>
                 </div>
 
                 <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-xs flex items-center gap-4">
@@ -66,7 +83,7 @@
                         <div class="text-xl font-extrabold text-gray-900 mt-0.5">
                             {{ $activeExclusiveCount }} <span class="text-xs font-medium text-gray-400">Media</span>
                         </div>
-                        <span class="text-[11px] {{ $activeExclusiveCount > 0 ? 'text-emerald-600 font-bold' : 'text-gray-400' }}">
+                        <span class="text-[11px] {{ $activeExclusiveCount > 0 ? 'text-rose-600 font-bold' : 'text-gray-400' }}">
                             {{ $activeExclusiveCount > 0 ? '● Layar Takeover (QR/Khusus)' : '○ Mode Jadwal Reguler' }}
                         </span>
                     </div>
@@ -181,9 +198,14 @@
                                         </div>
 
                                         {{-- Badge Mode Tayang --}}
-                                        @if($item->mode_tayang === 'eksklusif')
+                                        @if($item->mode_tayang === 'fullscreen_total')
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-100 text-purple-700 tracking-wider uppercase flex items-center gap-1">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                                                Full Screen Total (Iklan)
+                                            </span>
+                                        @elseif($item->mode_tayang === 'eksklusif')
                                             <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-700 tracking-wider uppercase">
-                                                Eksklusif (Takeover)
+                                                Eksklusif (Frame Jam)
                                             </span>
                                         @else
                                             <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-100 text-indigo-700 tracking-wider uppercase">
@@ -231,7 +253,7 @@
                                                 </span>
                                             </div>
 
-                                            @if($item->mode_tayang === 'kombinasi')
+                                            @if($item->mode_tayang === 'kombinasi' || $item->mode_tayang === 'fullscreen_total')
                                                 <div class="flex items-center justify-between text-gray-600">
                                                     <span class="text-gray-400">Durasi Slide:</span>
                                                     <span class="font-bold text-gray-700">{{ $item->durasi_detik }} detik</span>
@@ -392,8 +414,9 @@
                         <div>
                             <label class="block text-xs font-bold text-gray-700 mb-1">Mode Penayangan *</label>
                             <select name="mode_tayang" required class="w-full text-xs rounded-xl border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
-                                <option value="eksklusif">Eksklusif (Takeover Fullscreen tanpa jadwal)</option>
-                                <option value="kombinasi">Kombinasi (Disisipkan ke Slideshow Jadwal)</option>
+                                <option value="kombinasi">1. Kombinasi (Disisipkan ke Slideshow Jadwal)</option>
+                                <option value="eksklusif">2. Eksklusif (Takeover Layar dengan Bingkai Jam & Status)</option>
+                                <option value="fullscreen_total">3. Full Screen Total (Iklan Penuh Tanpa Frame / Billboard Edge-to-Edge)</option>
                             </select>
                         </div>
                     </div>

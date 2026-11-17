@@ -39,6 +39,7 @@ class SmartTvMedia extends Model
     protected $appends = [
         'file_url',
         'tipe_label',
+        'mode_tayang_label',
         'jam_mulai_formatted',
         'jam_selesai_formatted',
     ];
@@ -85,6 +86,15 @@ class SmartTvMedia extends Model
             'mading' => 'Mading Digital',
             'pengumuman' => 'Pengumuman Resmi',
             default => 'Media Display',
+        };
+    }
+
+    public function getModeTayangLabelAttribute(): string
+    {
+        return match ($this->mode_tayang) {
+            'fullscreen_total' => 'Full Screen Total (Iklan Penuh)',
+            'eksklusif' => 'Eksklusif (Takeover Frame)',
+            default => 'Kombinasi (Slide Jadwal)',
         };
     }
 
