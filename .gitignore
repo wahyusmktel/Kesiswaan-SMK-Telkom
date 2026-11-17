@@ -24,3 +24,7 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 *.sql
+smart-tv-client/dist/*.exe
+smart-tv-client/build/
+smart-tv-client/*.spec
+

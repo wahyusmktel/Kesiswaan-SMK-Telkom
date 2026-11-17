@@ -596,7 +596,163 @@
         ══════════════════════════════ */
         @keyframes slide-in  { from { opacity:0; transform:translateX(60px) scale(.97); } to { opacity:1; transform:none; } }
         @keyframes slide-out { from { opacity:1; transform:none; } to { opacity:0; transform:translateX(-60px) scale(.97); } }
+
+        /* ══════════════════════════════
+           EXCLUSIVE MEDIA OVERLAY (TAKEOVER QR / MADING)
+        ══════════════════════════════ */
+        #exclusive-media-overlay {
+            position: fixed;
+            top: calc(var(--topbar-h) + var(--ticker-h));
+            bottom: 0; left: 0; right: 0;
+            z-index: 100;
+            background: radial-gradient(circle at center, #0f172a 0%, #060c1e 100%);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            animation: fadeInEx 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        #exclusive-media-overlay.show {
+            display: flex;
+        }
+        @keyframes fadeInEx {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .ex-inner {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            padding: 1.2rem 2.5rem 1.5rem;
+            position: relative;
+        }
+        .ex-header-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 10px 24px;
+            margin-bottom: 1rem;
+            backdrop-filter: blur(12px);
+        }
+        .ex-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 900;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+        .ex-badge.qr_hadir { background: rgba(16,185,129,0.2); color: #34d399; border: 1px solid rgba(16,185,129,0.4); }
+        .ex-badge.qr_pulang { background: rgba(244,63,94,0.2); color: #fb7185; border: 1px solid rgba(244,63,94,0.4); }
+        .ex-badge.mading, .ex-badge.pengumuman, .ex-badge.lainnya { background: rgba(99,102,241,0.2); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.4); }
+
+        .ex-title {
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: -0.02em;
+        }
+        .ex-time-tag {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: #f59e0b;
+            font-family: monospace;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(245,158,11,0.12);
+            padding: 5px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(245,158,11,0.25);
+        }
+        .ex-viewport {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 24px;
+            padding: 1rem;
+            overflow: hidden;
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.6);
+        }
+        .ex-image {
+            max-width: 95%;
+            max-height: 95%;
+            object-fit: contain;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.1);
+        }
+        .ex-canvas-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+        .ex-canvas {
+            max-width: 95%;
+            max-height: 95%;
+            object-fit: contain;
+            border-radius: 16px;
+            background: white;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.2);
+        }
+        .ex-footer-bar {
+            text-align: center;
+            padding-top: 0.75rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: rgba(226,232,240,0.7);
+            letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        /* ══════════════════════════════
+           SLIDE KOMBINASI MEDIA
+        ══════════════════════════════ */
+        .slide-media .slide-inner {
+            grid-template-columns: 360px 1fr;
+        }
+        .slide-media-preview-box {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            background: rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .slide-media-img {
+            max-width: 95%;
+            max-height: 95%;
+            object-fit: contain;
+            border-radius: 18px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.1);
+        }
+        .slide-media-canvas {
+            max-width: 95%;
+            max-height: 95%;
+            object-fit: contain;
+            border-radius: 18px;
+            background: white;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+        }
     </style>
+    {{-- PDF.js Library --}}
+    <script src="{{ asset('vendor/pdfjs/pdf.min.js') }}"></script>
 </head>
 <body>
 
@@ -794,6 +950,78 @@
             </div>
         </div>{{-- /.slide --}}
     @endforeach
+
+    {{-- Slide Media Terjadwal (Kombinasi / Mading Digital) --}}
+    @if(isset($kombinasiMedia) && $kombinasiMedia->isNotEmpty())
+        @php $startIdx = count($kelasData); @endphp
+        @foreach($kombinasiMedia as $kmIdx => $media)
+            @php $slideIdx = $startIdx + $kmIdx; @endphp
+            <div class="slide slide-media {{ count($kelasData) === 0 && $kmIdx === 0 ? 'active' : '' }}"
+                 id="slide-{{ $slideIdx }}"
+                 data-idx="{{ $slideIdx }}"
+                 data-duration="{{ ($media->durasi_detik ?: 20) * 1000 }}"
+                 data-media-title="{{ $media->judul }}"
+                 data-file-type="{{ $media->file_type }}"
+                 data-file-url="{{ $media->file_url }}">
+                <div class="slide-inner">
+                    {{-- LEFT PANEL --}}
+                    <div class="slide-left">
+                        <div class="slide-left-bg"></div>
+                        <div class="slide-left-glow" style="background: #ec4899;"></div>
+
+                        <div class="class-number" style="color: #ec4899;">
+                            Media Informasi TV
+                        </div>
+
+                        <div class="class-name">
+                            <span style="background: linear-gradient(to right, #ec4899, #a855f7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">
+                                {{ $media->tipe_label }}
+                            </span>
+                            {{ $media->judul }}
+                        </div>
+
+                        <div class="wali-card">
+                            <div class="wali-avatar" style="background: linear-gradient(135deg, #ec4899, #8b5cf6);">
+                                <svg style="width:20px;height:20px;color:white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
+                                </svg>
+                            </div>
+                            <div class="wali-info">
+                                <p>Waktu Tayang</p>
+                                <h4>{{ $media->jam_mulai_formatted }} - {{ $media->jam_selesai_formatted }} WIB</h4>
+                            </div>
+                        </div>
+
+                        @if($media->keterangan)
+                            <p style="font-size: 0.78rem; color: rgba(226,232,240,0.7); line-height: 1.5; margin-bottom: 1.5rem; background: rgba(255,255,255,0.03); padding: 12px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.06);">
+                                {{ $media->keterangan }}
+                            </p>
+                        @endif
+
+                        <div class="stats-row">
+                            <div class="stat-box">
+                                <div class="sv sv-indigo">{{ $media->durasi_detik }}s</div>
+                                <div class="sk">Durasi Slide</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="sv sv-cyan">{{ strtoupper($media->file_type) }}</div>
+                                <div class="sk">Format</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- RIGHT PANEL: Full Media Viewport --}}
+                    <div class="slide-media-preview-box" id="comb-viewport-{{ $media->id }}">
+                        @if($media->file_type === 'image')
+                            <img src="{{ $media->file_url }}" alt="{{ $media->judul }}" class="slide-media-img">
+                        @else
+                            <canvas id="comb-pdf-canvas-{{ $media->id }}" class="slide-media-canvas" data-pdf-url="{{ $media->file_url }}"></canvas>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        @endforeach
+    @endif
 </div>
 
 {{-- ══ PROGRESS BAR ══ --}}
@@ -811,15 +1039,58 @@
                  title="{{ $kelas['kelas'] }}"
                  onclick="goToSlide({{ $idx }}, true)"></div>
         @endforeach
+        @if(isset($kombinasiMedia))
+            @foreach($kombinasiMedia as $kmIdx => $media)
+                @php $dotIdx = count($kelasData) + $kmIdx; @endphp
+                <div class="bb-kelas-dot"
+                     style="width: 6px; background: rgba(236,72,153,0.5);"
+                     data-idx="{{ $dotIdx }}"
+                     title="{{ $media->judul }}"
+                     onclick="goToSlide({{ $dotIdx }}, true)"></div>
+            @endforeach
+        @endif
     </div>
     <div class="bb-sep"></div>
     <div class="bb-next">
         Berikutnya: <span class="bb-next-name" id="next-kelas">—</span>
     </div>
     <div class="bb-right">
-        Auto-rotate 14 detik &nbsp;•&nbsp; Refresh 5 menit<br>
-        © {{ date('Y') }} SMK Telkom — Kesiswaan
+        Auto-rotate Smart TV &nbsp;•&nbsp; Realtime Sync<br>
+        © {{ date('Y') }} SMK Telkom — Kesiswaan &amp; Kurikulum
     </div>
+</div>
+
+{{-- ══ EXCLUSIVE MEDIA OVERLAY (TAKEOVER QR PRESENSI / PENGUMUMAN UTAMA) ══ --}}
+<div id="exclusive-media-overlay" class="{{ $exclusiveMedia ? 'show' : '' }}">
+    @if($exclusiveMedia)
+        <div class="ex-inner">
+            <div class="ex-header-bar">
+                <div style="display:flex; align-items:center; gap: 14px;">
+                    <span class="ex-badge {{ $exclusiveMedia->tipe }}">{{ $exclusiveMedia->tipe_label }}</span>
+                    <h2 class="ex-title">{{ $exclusiveMedia->judul }}</h2>
+                </div>
+                <div class="ex-time-tag">
+                    <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span>Pukul {{ $exclusiveMedia->jam_mulai_formatted }} - {{ $exclusiveMedia->jam_selesai_formatted }} WIB</span>
+                </div>
+            </div>
+
+            <div class="ex-viewport" id="exclusive-viewport">
+                @if($exclusiveMedia->file_type === 'image')
+                    <img src="{{ $exclusiveMedia->file_url }}" alt="{{ $exclusiveMedia->judul }}" class="ex-image">
+                @else
+                    <div class="ex-canvas-box">
+                        <canvas id="exclusive-pdf-canvas" class="ex-canvas" data-pdf-url="{{ $exclusiveMedia->file_url }}"></canvas>
+                    </div>
+                @endif
+            </div>
+
+            <div class="ex-footer-bar">
+                <svg style="width:18px;height:18px;color:#38bdf8;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                <span>Arahkan kamera smartphone atau buka aplikasi Sisfo untuk memindai QR Code Presensi</span>
+            </div>
+        </div>
+    @endif
 </div>
 
 {{-- ══ SPECIAL ACTIVITY OVERLAY ══ --}}
@@ -1103,10 +1374,64 @@ function checkSpecialActivity() {
 checkSpecialActivity();
 setInterval(checkSpecialActivity, 10000);
 
+// ─── PDF.js Renderer Engine ──────────────────────────────────────
+if (window.pdfjsLib) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "{{ asset('vendor/pdfjs/pdf.worker.min.js') }}";
+}
+
+async function renderPdfToCanvas(url, canvasEl) {
+    if (!canvasEl || !window.pdfjsLib || !url) return;
+    try {
+        const loadingTask = pdfjsLib.getDocument(url);
+        const pdf = await loadingTask.promise;
+        const page = await pdf.getPage(1);
+        
+        const parent = canvasEl.parentElement;
+        const availWidth = (parent && parent.clientWidth) ? (parent.clientWidth - 30) : (window.innerWidth * 0.7);
+        const availHeight = (parent && parent.clientHeight) ? (parent.clientHeight - 30) : (window.innerHeight * 0.75);
+
+        const unscaledViewport = page.getViewport({ scale: 1.0 });
+        const scaleX = availWidth / unscaledViewport.width;
+        const scaleY = availHeight / unscaledViewport.height;
+        const fitScale = Math.min(scaleX, scaleY);
+        const scale = Math.max(fitScale, 0.5);
+
+        const viewport = page.getViewport({ scale: scale });
+        const dpr = window.devicePixelRatio || 1;
+
+        canvasEl.width = Math.floor(viewport.width * dpr);
+        canvasEl.height = Math.floor(viewport.height * dpr);
+        canvasEl.style.width = Math.floor(viewport.width) + "px";
+        canvasEl.style.height = Math.floor(viewport.height) + "px";
+
+        const ctx = canvasEl.getContext('2d');
+        ctx.scale(dpr, dpr);
+
+        await page.render({
+            canvasContext: ctx,
+            viewport: viewport
+        }).promise;
+    } catch (err) {
+        console.error('Gagal render canvas PDF:', err);
+    }
+}
+
+// Render PDF Eksklusif jika ada saat pertama dibuka
+const exclusiveCanvas = document.getElementById('exclusive-pdf-canvas');
+if (exclusiveCanvas && exclusiveCanvas.dataset.pdfUrl) {
+    renderPdfToCanvas(exclusiveCanvas.dataset.pdfUrl, exclusiveCanvas);
+}
+
 // ─── Slider ───────────────────────────────────────────────────────
+function getSlideDuration(slideEl) {
+    if (!slideEl) return SLIDE_DURATION;
+    const custom = parseInt(slideEl.dataset.duration, 10);
+    return (!isNaN(custom) && custom > 0) ? custom : SLIDE_DURATION;
+}
+
 function goToSlide(idx, userTriggered=false) {
     if (idx === currentSlide && !userTriggered) return;
-    if (slides.length <= 1) { startProgress(); return; }
+    if (slides.length <= 1) { startProgress(getSlideDuration(slides[0])); return; }
 
     // Exit current
     slides[currentSlide].classList.remove('active');
@@ -1116,21 +1441,36 @@ function goToSlide(idx, userTriggered=false) {
 
     // Activate next
     currentSlide = idx;
-    slides[currentSlide].classList.add('active');
+    const activeSlide = slides[currentSlide];
+    activeSlide.classList.add('active');
+
+    // Jika slide media bertipe PDF, pastikan sudah dirender
+    if (activeSlide.dataset.fileType === 'pdf') {
+        const canvas = activeSlide.querySelector('canvas');
+        if (canvas && canvas.dataset.pdfUrl && !canvas.dataset.rendered) {
+            renderPdfToCanvas(canvas.dataset.pdfUrl, canvas);
+            canvas.dataset.rendered = "true";
+        }
+    }
 
     // Update dots
     bbDots.forEach((d, i) => d.classList.toggle('active', i === idx));
 
     // Update next label
     const nextIdx  = (idx+1) % slides.length;
-    document.getElementById('next-kelas').textContent =
-        KELAS_DATA[nextIdx]?.kelas ?? '—';
+    const nextSlideEl = slides[nextIdx];
+    let nextTitle = '—';
+    if (nextSlideEl) {
+        nextTitle = nextSlideEl.dataset.mediaTitle || (KELAS_DATA[nextIdx]?.kelas ?? 'Informasi');
+    }
+    document.getElementById('next-kelas').textContent = nextTitle;
 
     // Update timeline immediately
     updateTimelines();
 
-    // Progress bar
-    startProgress();
+    // Progress bar dengan durasi slide aktif
+    const slideDur = getSlideDuration(activeSlide);
+    startProgress(slideDur);
 
     if (userTriggered) {
         clearInterval(autoTimer);
@@ -1139,11 +1479,14 @@ function goToSlide(idx, userTriggered=false) {
             isUserPaused = false;
             scheduleAuto();
         }, 60000);
+    } else {
+        scheduleAuto(slideDur);
     }
 }
 
-function startProgress() {
+function startProgress(duration) {
     cancelAnimationFrame(progressRaf);
+    const dur = duration || SLIDE_DURATION;
     const fill = document.getElementById('progress-fill');
     fill.style.transition = 'none';
     fill.style.width = '0%';
@@ -1151,30 +1494,65 @@ function startProgress() {
     progressStart = performance.now();
     function tick(ts) {
         const elapsed = ts - progressStart;
-        const pct     = Math.min((elapsed / SLIDE_DURATION)*100, 100);
+        const pct     = Math.min((elapsed / dur)*100, 100);
         fill.style.width = pct + '%';
         if (pct < 100) progressRaf = requestAnimationFrame(tick);
     }
     progressRaf = requestAnimationFrame(tick);
 }
 
-function scheduleAuto() {
+function scheduleAuto(currentDur) {
     clearInterval(autoTimer);
-    startProgress();
+    const dur = currentDur || getSlideDuration(slides[currentSlide]);
+    startProgress(dur);
     autoTimer = setInterval(() => {
         if (isUserPaused) return;
         const next = (currentSlide+1) % slides.length;
         goToSlide(next);
-    }, SLIDE_DURATION);
+    }, dur);
 }
+
+// ─── Realtime Status Checker / Polling TV ─────────────────────────
+let currentServerHash = null;
+async function checkTvStatus() {
+    try {
+        const res = await fetch("{{ route('tv.jadwal.status') }}");
+        if (!res.ok) return;
+        const data = await res.json();
+
+        if (!currentServerHash) {
+            currentServerHash = data.hash;
+            return;
+        }
+
+        // Jika hash berubah (pergantian jam tayang eksklusif, media baru diunggah waka, ticker baru)
+        if (data.hash !== currentServerHash) {
+            console.log('Perubahan jadwal tayang Smart TV terdeteksi dari server. Memperbarui tampilan...');
+            location.reload();
+        }
+    } catch (e) {
+        // Abaikan kendala jaringan sesaat
+    }
+}
+setInterval(checkTvStatus, 20000); // Cek setiap 20 detik
 
 // Init
 const nextIdx0 = 1 % slides.length;
-document.getElementById('next-kelas').textContent = KELAS_DATA[nextIdx0]?.kelas ?? '—';
+const initNextEl = slides[nextIdx0];
+document.getElementById('next-kelas').textContent = initNextEl?.dataset?.mediaTitle || (KELAS_DATA[nextIdx0]?.kelas ?? '—');
 scheduleAuto();
 
-// Auto page refresh every 5 minutes
-setTimeout(() => location.reload(), 5*60*1000);
+// Render slide pertama jika PDF
+if (slides[0] && slides[0].dataset.fileType === 'pdf') {
+    const canvas = slides[0].querySelector('canvas');
+    if (canvas && canvas.dataset.pdfUrl) {
+        renderPdfToCanvas(canvas.dataset.pdfUrl, canvas);
+        canvas.dataset.rendered = "true";
+    }
+}
+
+// Auto page refresh cadangan setiap 10 menit
+setTimeout(() => location.reload(), 10*60*1000);
 </script>
 </body>
 </html>

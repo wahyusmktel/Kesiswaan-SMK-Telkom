@@ -2266,6 +2266,19 @@
         </a>
     </li>
 @endcan
+
+    <div class="section-title">Layanan Digital &amp; Display</div>
+    <li>
+        <a href="{{ route('smart-tv.index') }}"
+            class="nav-link {{ request()->routeIs('smart-tv.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+            </div>
+            <span class="nav-text">Display Smart TV &amp; Mading</span>
+        </a>
+    </li>
 @endif
 @endrole
 @endcan
@@ -2403,6 +2416,17 @@
                 </li>
             @endcan
             <div class="section-title">Layanan Digital</div>
+            <li>
+                <a href="{{ route('smart-tv.index') }}"
+                    class="nav-link {{ request()->routeIs('smart-tv.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                    <div class="nav-icon-container">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <span class="nav-text">Display Smart TV &amp; Mading</span>
+                </a>
+            </li>
             <li>
                 <a href="{{ route('tanda-tangan.index') }}"
                     class="nav-link {{ request()->routeIs('tanda-tangan.*') ? 'nav-link-active' : 'nav-link-inactive' }}">

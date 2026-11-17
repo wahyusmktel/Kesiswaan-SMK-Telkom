@@ -967,7 +967,7 @@ PROMPT;
             }
 
             $endpoint = rtrim($setting->stella_ai_base_url, '/') . '/chat/completions';
-            $model = $setting->stella_ai_chat_model ?: 'wr/glm-5.2';
+            $model = $setting->stella_ai_chat_model ?: 'ag/gemini-3-flash';
 
             $response = $client->post($endpoint, [
                 'model' => $model,

@@ -157,6 +157,7 @@ Route::post('/pengaduan', [PengaduanController::class, 'store'])->name('pengadua
 
 // Smart TV Jadwal Pelajaran (Publik — tanpa login)
 Route::get('/tv/jadwal', [\App\Http\Controllers\Public\SmartTvJadwalController::class, 'index'])->name('tv.jadwal');
+Route::get('/tv/jadwal/status', [\App\Http\Controllers\Public\SmartTvJadwalController::class, 'status'])->name('tv.jadwal.status');
 
 // DigiReligi — Platform Al-Qur'an Digital & Jadwal Sholat (Publik)
 Route::get('/digireligi', [\App\Http\Controllers\Public\DigiReligiController::class, 'index'])->name('digireligi');
@@ -845,6 +846,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/info-ticker', [\App\Http\Controllers\Piket\InfoTickerController::class, 'store'])->name('info-ticker.store');
         Route::patch('/info-ticker/{ticker}/toggle', [\App\Http\Controllers\Piket\InfoTickerController::class, 'toggle'])->name('info-ticker.toggle');
         Route::delete('/info-ticker/{ticker}', [\App\Http\Controllers\Piket\InfoTickerController::class, 'destroy'])->name('info-ticker.destroy');
+    });
+
+    // CMS Smart TV (Media Display, Jadwal Tayang QR/Mading & Running Text)
+    // Bisa dikelola oleh Waka Kesiswaan, Guru Piket, Kurikulum, dan Super Admin
+    Route::middleware(['role:Waka Kesiswaan|Guru Piket|Kurikulum|Super Admin'])->prefix('smart-tv')->name('smart-tv.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\SmartTvMediaController::class, 'index'])->name('index');
+        Route::post('/media', [\App\Http\Controllers\Admin\SmartTvMediaController::class, 'storeMedia'])->name('media.store');
+        Route::put('/media/{media}', [\App\Http\Controllers\Admin\SmartTvMediaController::class, 'updateMedia'])->name('media.update');
+        Route::patch('/media/{media}/toggle', [\App\Http\Controllers\Admin\SmartTvMediaController::class, 'toggleMedia'])->name('media.toggle');
+        Route::delete('/media/{media}', [\App\Http\Controllers\Admin\SmartTvMediaController::class, 'destroyMedia'])->name('media.destroy');
+        Route::post('/ticker', [\App\Http\Controllers\Admin\SmartTvMediaController::class, 'storeTicker'])->name('ticker.store');
+        Route::patch('/ticker/{ticker}/toggle', [\App\Http\Controllers\Admin\SmartTvMediaController::class, 'toggleTicker'])->name('ticker.toggle');
+        Route::delete('/ticker/{ticker}', [\App\Http\Controllers\Admin\SmartTvMediaController::class, 'destroyTicker'])->name('ticker.destroy');
     });
 
     // Route ini kita namakan 'api.siswa.search' sesuai panggilan di JavaScript

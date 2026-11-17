@@ -7,12 +7,14 @@ use App\Models\InfoTicker;
 use App\Models\JadwalPelajaran;
 use App\Models\JamPelajaran;
 use App\Models\Rombel;
+use App\Models\SmartTvMedia;
 use App\Models\TahunPelajaran;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class SmartTvJadwalController extends Controller
 {
-    private const DAYS = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    private const DAYS = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
 
     private const ACTIVITY_LABELS = [
         'istirahat'    => 'Istirahat',
@@ -103,14 +105,103 @@ class SmartTvJadwalController extends Controller
         // Running text aktif
         $tickers = InfoTicker::active()->latest()->pluck('konten')->toArray();
 
+        // Ambil Media Tayang Terjadwal Aktif
+        $now = Carbon::now();
+        $allActiveMedia = SmartTvMedia::active()
+            ->orderBy('urutan', 'asc')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        // 1. Media Eksklusif (Takeover Fullscreen) yang aktif saat jam dan hari ini
+        $exclusiveMedia = $allActiveMedia
+            ->filter(fn($m) => $m->mode_tayang === 'eksklusif' && $m->isScheduleActiveNow($now))
+            ->first();
+
+        // 2. Media Kombinasi (Disisipkan ke Slideshow Jadwal) yang aktif saat jam dan hari ini
+        $kombinasiMedia = $allActiveMedia
+            ->filter(fn($m) => $m->mode_tayang === 'kombinasi' && $m->isScheduleActiveNow($now))
+            ->values();
+
         return view('public.smart-tv-jadwal', [
-            'kelasData'    => $kelasData,
-            'todaySlots'   => array_values($todaySlots),
-            'todayName'    => $todayName,
-            'tahunAktif'   => $tahunAktif,
-            'activitySlots'=> $activitySlots,
-            'tickers'      => $tickers,
+            'kelasData'      => $kelasData,
+            'todaySlots'     => array_values($todaySlots),
+            'todayName'      => $todayName,
+            'tahunAktif'     => $tahunAktif,
+            'activitySlots'  => $activitySlots,
+            'tickers'        => $tickers,
+            'exclusiveMedia' => $exclusiveMedia,
+            'kombinasiMedia' => $kombinasiMedia,
+            'allActiveMedia' => $allActiveMedia,
         ]);
+    }
+
+    /**
+     * Endpoint JSON polling status realtime untuk Smart TV.
+     * TV memanggil ini tiap 15-30 detik untuk mendeteksi perubahan jadwal/media/running text tanpa reload browser.
+     */
+    public function status(Request $request)
+    {
+        $now = Carbon::now();
+        $dayMap = [0 => 'Minggu', 1 => 'Senin', 2 => 'Selasa', 3 => 'Rabu', 4 => 'Kamis', 5 => 'Jumat', 6 => 'Sabtu'];
+        $todayName = $dayMap[$now->dayOfWeek] ?? 'Senin';
+
+        $allActiveMedia = SmartTvMedia::active()
+            ->orderBy('urutan', 'asc')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        $exclusive = $allActiveMedia
+            ->filter(fn($m) => $m->mode_tayang === 'eksklusif' && $m->isScheduleActiveNow($now))
+            ->first();
+
+        $kombinasi = $allActiveMedia
+            ->filter(fn($m) => $m->mode_tayang === 'kombinasi' && $m->isScheduleActiveNow($now))
+            ->values()
+            ->map(function ($item) {
+                return [
+                    'id'           => $item->id,
+                    'judul'        => $item->judul,
+                    'tipe'         => $item->tipe,
+                    'tipe_label'   => $item->tipe_label,
+                    'file_url'     => $item->file_url,
+                    'file_type'    => $item->file_type,
+                    'durasi_detik' => $item->durasi_detik ?: 20,
+                    'keterangan'   => $item->keterangan,
+                ];
+            });
+
+        $tickers = InfoTicker::active()->latest()->pluck('konten')->toArray();
+
+        $payload = [
+            'server_time'      => $now->format('H:i:s'),
+            'server_date'      => $now->translatedFormat('l, d F Y'),
+            'today_name'       => $todayName,
+            'is_exclusive'     => (bool) $exclusive,
+            'exclusive_media'  => $exclusive ? [
+                'id'           => $exclusive->id,
+                'judul'        => $exclusive->judul,
+                'tipe'         => $exclusive->tipe,
+                'tipe_label'   => $exclusive->tipe_label,
+                'file_url'     => $exclusive->file_url,
+                'file_type'    => $exclusive->file_type,
+                'jam_mulai'    => $exclusive->jam_mulai_formatted,
+                'jam_selesai'  => $exclusive->jam_selesai_formatted,
+                'keterangan'   => $exclusive->keterangan,
+            ] : null,
+            'kombinasi_media'  => $kombinasi,
+            'tickers'          => $tickers,
+        ];
+
+        // Hash untuk perbandingan perubahan secara instan
+        $payload['hash'] = md5(json_encode([
+            $payload['is_exclusive'],
+            $payload['exclusive_media']['id'] ?? null,
+            $payload['exclusive_media']['file_url'] ?? null,
+            $kombinasi->pluck('id')->toArray(),
+            $tickers,
+        ]));
+
+        return response()->json($payload);
     }
 
     private function isSpecialActivity(JamPelajaran $slot, string $day): bool
