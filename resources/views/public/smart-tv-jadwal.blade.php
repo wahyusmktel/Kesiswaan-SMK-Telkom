@@ -739,7 +739,7 @@
         }
 
         /* ══════════════════════════════
-           SLIDE KOMBINASI MEDIA (TANPA FRAME)
+           SLIDE KOMBINASI MEDIA (LAYAR PENUH RAKSASA TANPA FRAME)
         ══════════════════════════════ */
         .slide.slide-media {
             position: absolute;
@@ -774,28 +774,97 @@
         }
         .comb-floating-pill {
             position: absolute;
-            bottom: 20px;
-            left: 24px;
-            z-index: 5;
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(12px);
-            padding: 6px 16px;
+            bottom: 24px;
+            left: 28px;
+            z-index: 10;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(14px);
+            padding: 8px 20px;
             border-radius: 999px;
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.15);
             color: #fff;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             font-weight: 700;
             letter-spacing: 0.02em;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             pointer-events: none;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
         }
         .comb-floating-pill .pill-tag {
             color: #f43f5e;
             text-transform: uppercase;
             font-weight: 900;
+        }
+
+        /* Mode Layar Penuh Raksasa saat Slide Media Kombinasi Aktif */
+        body.media-fullscreen-mode .topbar,
+        body.media-fullscreen-mode .ticker-bar,
+        body.media-fullscreen-mode .bottombar,
+        body.media-fullscreen-mode .slide-progress-track {
+            opacity: 0 !important;
+            pointer-events: none !important;
+            visibility: hidden !important;
+            transition: opacity 0.4s ease;
+        }
+        body.media-fullscreen-mode .slider-stage {
+            top: 0 !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 999 !important;
+            background: #000 !important;
+        }
+        body.media-fullscreen-mode .slide.slide-media.active {
+            position: absolute !important;
+            inset: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: 100vw !important;
+            max-height: 100vh !important;
+            background: #000 !important;
+            transform: none !important;
+        }
+        body.media-fullscreen-mode .slide-media-full {
+            position: absolute !important;
+            inset: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: 100vw !important;
+            max-height: 100vh !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: #000 !important;
+        }
+        body.media-fullscreen-mode .media-fullscreen-content {
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: 100vw !important;
+            max-height: 100vh !important;
+            object-fit: contain !important;
+        }
+        .media-fullscreen-progress {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: rgba(255,255,255,0.08);
+            z-index: 10001;
+            display: none;
+        }
+        .media-fullscreen-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #ec4899, #8b5cf6, #06b6d4);
+            box-shadow: 0 0 12px rgba(236,72,153,0.8);
+        }
+        body.media-fullscreen-mode .media-fullscreen-progress {
+            display: block;
         }
     </style>
     {{-- PDF.js Library --}}
@@ -1032,6 +1101,11 @@
 {{-- ══ PROGRESS BAR ══ --}}
 <div class="slide-progress-track">
     <div class="slide-progress-fill" id="progress-fill"></div>
+</div>
+
+{{-- ══ MEDIA FULLSCREEN PROGRESS BAR (TAMPIL HANYA SAAT SLIDE MEDIA KOMBINASI RAKSASA AKTIF) ══ --}}
+<div class="media-fullscreen-progress" id="media-fullscreen-progress">
+    <div class="media-fullscreen-progress-fill" id="media-fullscreen-progress-fill"></div>
 </div>
 
 {{-- ══ BOTTOM BAR ══ --}}
@@ -1502,6 +1576,14 @@ function goToSlide(idx, userTriggered=false) {
     const activeSlide = slides[currentSlide];
     activeSlide.classList.add('active');
 
+    // Cek apakah slide aktif adalah slide media kombinasi (Layar Penuh Raksasa Tanpa Frame)
+    const isMediaSlide = activeSlide.classList.contains('slide-media');
+    if (isMediaSlide) {
+        document.body.classList.add('media-fullscreen-mode');
+    } else {
+        document.body.classList.remove('media-fullscreen-mode');
+    }
+
     // Jika slide media bertipe PDF, pastikan sudah dirender
     if (activeSlide.dataset.fileType === 'pdf') {
         const canvas = activeSlide.querySelector('canvas');
@@ -1546,14 +1628,22 @@ function startProgress(duration) {
     cancelAnimationFrame(progressRaf);
     const dur = duration || SLIDE_DURATION;
     const fill = document.getElementById('progress-fill');
-    fill.style.transition = 'none';
-    fill.style.width = '0%';
+    const fstFill = document.getElementById('media-fullscreen-progress-fill');
+    if (fill) {
+        fill.style.transition = 'none';
+        fill.style.width = '0%';
+    }
+    if (fstFill) {
+        fstFill.style.transition = 'none';
+        fstFill.style.width = '0%';
+    }
 
     progressStart = performance.now();
     function tick(ts) {
         const elapsed = ts - progressStart;
         const pct     = Math.min((elapsed / dur)*100, 100);
-        fill.style.width = pct + '%';
+        if (fill) fill.style.width = pct + '%';
+        if (fstFill) fstFill.style.width = pct + '%';
         if (pct < 100) progressRaf = requestAnimationFrame(tick);
     }
     progressRaf = requestAnimationFrame(tick);
@@ -1595,6 +1685,9 @@ async function checkTvStatus() {
 setInterval(checkTvStatus, 20000); // Cek setiap 20 detik
 
 // Init
+if (slides[0] && slides[0].classList.contains('slide-media')) {
+    document.body.classList.add('media-fullscreen-mode');
+}
 const nextIdx0 = 1 % slides.length;
 const initNextEl = slides[nextIdx0];
 document.getElementById('next-kelas').textContent = initNextEl?.dataset?.mediaTitle || (KELAS_DATA[nextIdx0]?.kelas ?? '—');
