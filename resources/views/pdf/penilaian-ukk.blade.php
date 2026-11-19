@@ -1,23 +1,58 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Penilaian UKK — {{ $siswa->nama_lengkap }}</title>
+    @php
+        \Carbon\Carbon::setLocale('id');
+        $checkIcon = 'data:image/svg+xml;base64,' . base64_encode('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>');
+        $checkIconGreen = 'data:image/svg+xml;base64,' . base64_encode('<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>');
+    @endphp
     <style>
-        @page { margin: 0; size: A4 portrait; }
+        @page {
+            size: A4 portrait;
+            margin-top: 14mm;
+            margin-bottom: 18mm;
+            margin-left: 10mm;
+            margin-right: 10mm;
+        }
         * { box-sizing: border-box; }
         body {
             font-family: 'DejaVu Sans', sans-serif;
             color: #1e293b;
-            font-size: 9pt;
+            font-size: 8.5pt;
             margin: 0;
             padding: 0;
             letter-spacing: -.05px;
         }
 
+        /* ── FIXED FOOTER ON EVERY PAGE ── */
+        .page-footer {
+            position: fixed;
+            bottom: -12mm;
+            left: 0;
+            right: 0;
+            border-top: 1px solid #cbd5e1;
+            padding-top: 4px;
+            font-size: 7pt;
+            color: #94a3b8;
+            text-align: center;
+            line-height: 1.3;
+        }
+
         /* ── KOP ── */
-        .kop { width: 100%; margin: 0; padding: 0; }
-        .kop img { width: 100%; height: 90px; display: block; }
+        .kop {
+            margin-top: -14mm;
+            margin-left: -10mm;
+            margin-right: -10mm;
+            margin-bottom: 10px;
+        }
+        .kop img {
+            width: 100%;
+            height: auto;
+            max-height: 125px;
+            display: block;
+        }
         .kop-text {
             background: #1e293b;
             padding: 13px 24px 11px;
@@ -29,7 +64,7 @@
         .kop-divider { height: 3px; background: #94a3b8; margin: 0; }
 
         /* ── CONTENT ── */
-        .content { padding: 15px 24px 14px; }
+        .content { padding: 0; }
 
         /* ── TITLE ── */
         .title-block {
@@ -71,14 +106,14 @@
             border-left: 3px solid #334155;
             background: #f1f5f9;
             margin: 14px 0 8px;
+            page-break-after: avoid;
         }
 
         /* ── INSTRUMEN BLOCK ── */
         .instrumen-block {
             border: 1px solid #cbd5e1;
-            border-radius: 4px;
-            margin-bottom: 13px;
-            overflow: hidden;
+            margin-bottom: 12px;
+            page-break-inside: auto;
         }
         .instrumen-head {
             background: #f8fafc;
@@ -87,9 +122,10 @@
             font-weight: 900;
             font-size: 9pt;
             color: #0f172a;
+            page-break-after: avoid;
         }
         .instrumen-head small { font-size: 7.5pt; font-weight: 500; color: #64748b; }
-        .instrumen-inner { padding: 10px; }
+        .instrumen-inner { padding: 8px 10px; }
 
         /* ── ASPECT HEAD ── */
         .aspect-head {
@@ -98,16 +134,23 @@
             padding: 4px 8px;
             border-left: 3px solid;
             margin: 10px 0 6px;
+            page-break-after: avoid;
         }
         .aspect-head.p { border-color: #3b82f6; color: #1d4ed8; background: #f0f7ff; }
         .aspect-head.k { border-color: #22c55e; color: #166534; background: #f0fdf4; }
 
+        /* ── TABLES COMMON PAGINATION ── */
+        table { border-collapse: collapse; }
+        thead { display: table-header-group; }
+        tfoot { display: table-footer-group; }
+        tr { page-break-inside: avoid; }
+
         /* ── PENGETAHUAN TABLE ── */
-        .soal-table { width: 100%; border-collapse: collapse; font-size: 8pt; }
+        .soal-table { width: 100%; border-collapse: collapse; font-size: 8pt; margin-bottom: 4px; }
         .soal-table th {
             background: #f0f7ff;
             color: #1e3a5f;
-            border: 1px solid #bfdbfe;
+            border: 1px solid #cbd5e1;
             padding: 4px 6px;
             font-weight: 800;
             text-align: center;
@@ -115,7 +158,7 @@
         }
         .soal-table th.left { text-align: left; }
         .soal-table td {
-            border: 1px solid #e2e8f0;
+            border: 1px solid #cbd5e1;
             padding: 4px 6px;
             vertical-align: middle;
         }
@@ -125,16 +168,16 @@
             background: #e0f0ff;
             font-weight: 800;
             color: #1e40af;
-            border-color: #bfdbfe;
+            border: 1px solid #93c5fd;
         }
-        .chk { font-size: 11pt; font-weight: 900; color: #0f172a; }
+        .chk-img { width: 11px; height: 11px; vertical-align: middle; display: inline-block; }
 
         /* ── KETERAMPILAN TABLE ── */
-        .ket-table { width: 100%; border-collapse: collapse; font-size: 7.5pt; }
+        .ket-table { width: 100%; border-collapse: collapse; font-size: 7.5pt; margin-bottom: 4px; }
         .ket-table th {
             background: #f0fdf4;
             color: #166534;
-            border: 1px solid #bbf7d0;
+            border: 1px solid #cbd5e1;
             padding: 4px 5px;
             font-weight: 800;
             text-align: center;
@@ -149,12 +192,12 @@
         .ket-table th.score-num {
             background: #ecfdf5;
             color: #15803d;
-            border-color: #bbf7d0;
+            border-color: #86efac;
             font-size: 8pt;
             font-weight: 900;
         }
         .ket-table td {
-            border: 1px solid #e2e8f0;
+            border: 1px solid #cbd5e1;
             padding: 4px 5px;
             vertical-align: middle;
         }
@@ -166,24 +209,24 @@
             font-size: 8pt;
             padding: 5px 6px;
             color: #0f172a;
-            border-color: #cbd5e1;
+            border: 1px solid #cbd5e1;
         }
         .rerata-row td {
             background: #f0fdf4 !important;
             font-style: italic;
             font-size: 7pt;
             color: #166534;
-            border-color: #d1fae5;
+            border: 1px solid #cbd5e1;
         }
         .ket-foot-row td {
             background: #dcfce7 !important;
             font-weight: 900;
             color: #166534;
-            border-color: #86efac;
+            border: 1px solid #86efac;
         }
 
         /* ── REKAP TABLE ── */
-        .rekap-table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+        .rekap-table { width: 100%; border-collapse: collapse; font-size: 8.5pt; page-break-inside: avoid; }
         .rekap-table th {
             background: #f1f5f9;
             color: #1e293b;
@@ -195,7 +238,7 @@
         }
         .rekap-table th.left { text-align: left; }
         .rekap-table td {
-            border: 1px solid #e2e8f0;
+            border: 1px solid #cbd5e1;
             padding: 5px 8px;
             text-align: center;
         }
@@ -204,23 +247,23 @@
             background: #fef9c3;
             font-weight: 900;
             color: #713f12;
-            border-color: #fde047;
+            border: 1px solid #fde047;
         }
 
         /* ── SIGNATURE ── */
-        .sig-section { margin-top: 20px; page-break-inside: avoid; }
-        .sig-grid { width: 100%; }
-        .sig-cell { width: 50%; vertical-align: top; padding: 0 8px; }
-        .sig-label { font-size: 8.5pt; font-weight: 700; color: #475569; margin-bottom: 6px; }
-        .sig-blank { height: 54px; }
-        .sig-img-wrap { height: 60px; display: flex; align-items: center; margin-bottom: 2px; }
-        .sig-img-wrap img { max-height: 56px; max-width: 150px; }
-        .sig-line { border-bottom: 1px solid #1e293b; margin: 4px 0 3px; width: 170px; }
-        .sig-name { font-size: 9pt; font-weight: 900; color: #0f172a; }
-        .sig-role { font-size: 7.5pt; color: #64748b; }
-        .qr-wrap { margin-top: 4px; }
-        .qr-wrap img { width: 66px; height: 66px; }
-        .doc-token { font-size: 6pt; color: #94a3b8; font-family: monospace; margin-top: 1px; }
+        .sig-section { margin-top: 18px; page-break-inside: avoid; }
+        .sig-grid { width: 100%; border-collapse: collapse; }
+        .sig-cell { width: 50%; vertical-align: top; }
+        .sig-box { display: inline-block; text-align: left; min-width: 210px; }
+        .sig-label { font-size: 8.5pt; font-weight: 700; color: #475569; margin-bottom: 6px; line-height: 1.35; }
+        .sig-blank { height: 50px; }
+        .sig-img-wrap { height: 52px; display: block; margin-bottom: 2px; }
+        .sig-img-wrap img { max-height: 50px; max-width: 140px; }
+        .sig-name { font-size: 9pt; font-weight: 900; color: #0f172a; margin-top: 3px; }
+        .sig-role { font-size: 8pt; color: #475569; margin-top: 2px; }
+        .qr-wrap { margin-top: 3px; margin-bottom: 3px; }
+        .qr-wrap img { width: 62px; height: 62px; }
+        .doc-token { font-size: 6pt; color: #94a3b8; font-family: monospace; margin-top: 2px; }
         .verified-badge {
             display: inline-block;
             background: #dcfce7;
@@ -229,22 +272,18 @@
             font-weight: 800;
             padding: 2px 5px;
             border-radius: 3px;
-            margin-top: 2px;
+            margin-top: 3px;
             border: 1px solid #86efac;
-        }
-
-        /* ── FOOTER ── */
-        .page-footer {
-            margin-top: 12px;
-            border-top: 1px solid #e2e8f0;
-            padding-top: 5px;
-            font-size: 7pt;
-            color: #94a3b8;
-            text-align: center;
         }
     </style>
 </head>
 <body>
+
+{{-- ════════ FIXED FOOTER PADA SETIAP HALAMAN ════════ --}}
+<div class="page-footer">
+    Dicetak pada {{ \Carbon\Carbon::now()->isoFormat('D MMMM Y, HH:mm') }} WIB
+    @if($settings) &middot; {{ $settings->school_name }} @endif
+</div>
 
 {{-- ════════ KOP ════════ --}}
 <div class="kop">
@@ -364,8 +403,8 @@
                     <tr>
                         <td class="center">{{ $loop->iteration }}</td>
                         <td>{{ $soal->pertanyaan }}</td>
-                        <td class="center"><span class="chk">@if($isBenar)&#10003;@endif</span></td>
-                        <td class="center"><span class="chk">@if($isSalah)&#10003;@endif</span></td>
+                        <td class="center">@if($isBenar)<img src="{{ $checkIcon }}" class="chk-img" alt="✓">@endif</td>
+                        <td class="center">@if($isSalah)<img src="{{ $checkIcon }}" class="chk-img" alt="✓">@endif</td>
                         <td class="center">@if($vp !== null){{ $isBenar ? $poinSoal : 0 }}@endif</td>
                     </tr>
                     @endforeach
@@ -421,10 +460,10 @@
                     <tr>
                         <td class="center" style="font-size:7pt;color:#64748b;">{{ $ki + 1 }}.{{ $ii + 1 }}</td>
                         <td>{{ $ind->nama_indikator }}</td>
-                        <td class="center"><span class="chk">@if($vk === 0)&#10003;@endif</span></td>
-                        <td class="center"><span class="chk">@if($vk === 1)&#10003;@endif</span></td>
-                        <td class="center"><span class="chk">@if($vk === 2)&#10003;@endif</span></td>
-                        <td class="center"><span class="chk">@if($vk === 3)&#10003;@endif</span></td>
+                        <td class="center">@if($vk === 0)<img src="{{ $checkIcon }}" class="chk-img" alt="✓">@endif</td>
+                        <td class="center">@if($vk === 1)<img src="{{ $checkIcon }}" class="chk-img" alt="✓">@endif</td>
+                        <td class="center">@if($vk === 2)<img src="{{ $checkIcon }}" class="chk-img" alt="✓">@endif</td>
+                        <td class="center">@if($vk === 3)<img src="{{ $checkIcon }}" class="chk-img" alt="✓">@endif</td>
                         <td></td>
                     </tr>
                     @endforeach
@@ -493,44 +532,42 @@
         <table class="sig-grid">
             <tr>
                 <td class="sig-cell" style="text-align:left;padding-left:0;">
-                    <div class="sig-label">Mengetahui,<br>Kepala Sekolah / Kaprodi</div>
-                    <div class="sig-blank"></div>
-                    <div class="sig-line"></div>
-                    <div class="sig-name">_______________________</div>
+                    <div class="sig-box">
+                        <div class="sig-label">Mengetahui,<br>Kepala Program Studi</div>
+                        <div class="sig-blank"></div>
+                        <div class="sig-name">( ............................................ )</div>
+                        <div class="sig-role">NIP. ............................................</div>
+                    </div>
                 </td>
                 <td class="sig-cell" style="text-align:right;padding-right:0;">
-                    <div class="sig-label" style="text-align:right;">
-                        {{ \Carbon\Carbon::now()->isoFormat('D MMMM Y') }},<br>Penguji UKK,
+                    <div class="sig-box">
+                        <div class="sig-label">
+                            Pringsewu, {{ \Carbon\Carbon::now()->isoFormat('D MMMM Y') }}<br>Penguji UKK,
+                        </div>
+                        @if($ttdBase64)
+                            <div class="sig-img-wrap">
+                                <img src="{{ $ttdBase64 }}" alt="Tanda Tangan">
+                            </div>
+                        @else
+                            <div class="sig-blank"></div>
+                        @endif
+                        @if($digDoc && $qrBase64)
+                            <div class="qr-wrap">
+                                <img src="{{ $qrBase64 }}" alt="QR Verifikasi">
+                            </div>
+                        @endif
+                        <div class="sig-name">( {{ $user->name }} )</div>
+                        <div class="sig-role">NIP. {{ $user->nip ?? '............................................' }}</div>
+                        @if($digDoc)
+                            <div style="margin-top:3px;">
+                                <span class="verified-badge"><img src="{{ $checkIconGreen }}" style="width:9px;height:9px;vertical-align:middle;display:inline-block;" alt="✓"> Terverifikasi Digital</span>
+                            </div>
+                            <div class="doc-token">Token: {{ $digDoc->token }}</div>
+                        @endif
                     </div>
-                    @if($ttdBase64)
-                        <div class="sig-img-wrap" style="justify-content:flex-end;">
-                            <img src="{{ $ttdBase64 }}" alt="Tanda Tangan">
-                        </div>
-                    @else
-                        <div class="sig-blank"></div>
-                    @endif
-                    @if($digDoc && $qrBase64)
-                        <div class="qr-wrap" style="text-align:right;">
-                            <img src="{{ $qrBase64 }}" alt="QR Verifikasi">
-                        </div>
-                    @endif
-                    <div class="sig-line" style="margin-left:auto;margin-right:0;"></div>
-                    <div class="sig-name" style="text-align:right;">{{ $user->name }}</div>
-                    <div class="sig-role" style="text-align:right;">Penguji UKK</div>
-                    @if($digDoc)
-                        <div style="text-align:right;">
-                            <span class="verified-badge">&#10003; Terverifikasi Digital</span>
-                        </div>
-                        <div class="doc-token" style="text-align:right;">Token: {{ $digDoc->token }}</div>
-                    @endif
                 </td>
             </tr>
         </table>
-    </div>
-
-    <div class="page-footer">
-        Dicetak pada {{ \Carbon\Carbon::now()->isoFormat('D MMMM Y, HH:mm') }} WIB
-        @if($settings) &middot; {{ $settings->school_name }} @endif
     </div>
 
 </div>
