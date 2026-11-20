@@ -48,11 +48,15 @@ class InstrumenController extends Controller
             'ukk_ujian_id'                                       => 'required|exists:ukk_ujians,id',
             'bobot_pengetahuan'                                  => 'required|integer|min:0|max:100',
             'soal_pengetahuan'                                   => 'nullable|array',
+            'soal_pengetahuan.*.id'                              => 'nullable|integer',
             'soal_pengetahuan.*.pertanyaan'                      => 'required|string',
+            'soal_pengetahuan.*.kunci_jawaban'                   => 'nullable|string',
             'kategori_keterampilan'                              => 'nullable|array',
+            'kategori_keterampilan.*.id'                         => 'nullable|integer',
             'kategori_keterampilan.*.nama_kategori'              => 'required|string|max:255',
             'kategori_keterampilan.*.bobot'                      => 'required|integer|min:0|max:100',
             'kategori_keterampilan.*.indikator'                  => 'nullable|array',
+            'kategori_keterampilan.*.indikator.*.id'             => 'nullable|integer',
             'kategori_keterampilan.*.indikator.*.nama_indikator' => 'required|string',
         ]);
 
@@ -88,8 +92,9 @@ class InstrumenController extends Controller
             'ukk_ujian_id'          => $instrumen->ukk_ujian_id,
             'bobot_pengetahuan'     => $instrumen->bobot_pengetahuan,
             'soal_pengetahuan'      => $instrumen->soalPengetahuan->map(fn ($s) => [
-                'id'         => $s->id,
-                'pertanyaan' => $s->pertanyaan,
+                'id'            => $s->id,
+                'pertanyaan'    => $s->pertanyaan,
+                'kunci_jawaban' => $s->kunci_jawaban,
             ])->values()->all(),
             'kategori_keterampilan' => $instrumen->kategoriKeterampilan->map(fn ($k) => [
                 'id'             => $k->id,
@@ -112,11 +117,15 @@ class InstrumenController extends Controller
             'ukk_ujian_id'                                       => 'required|exists:ukk_ujians,id',
             'bobot_pengetahuan'                                  => 'required|integer|min:0|max:100',
             'soal_pengetahuan'                                   => 'nullable|array',
+            'soal_pengetahuan.*.id'                              => 'nullable|integer',
             'soal_pengetahuan.*.pertanyaan'                      => 'required|string',
+            'soal_pengetahuan.*.kunci_jawaban'                   => 'nullable|string',
             'kategori_keterampilan'                              => 'nullable|array',
+            'kategori_keterampilan.*.id'                         => 'nullable|integer',
             'kategori_keterampilan.*.nama_kategori'              => 'required|string|max:255',
             'kategori_keterampilan.*.bobot'                      => 'required|integer|min:0|max:100',
             'kategori_keterampilan.*.indikator'                  => 'nullable|array',
+            'kategori_keterampilan.*.indikator.*.id'             => 'nullable|integer',
             'kategori_keterampilan.*.indikator.*.nama_indikator' => 'required|string',
         ]);
 
@@ -126,10 +135,6 @@ class InstrumenController extends Controller
                 'nama_instrumen'    => $validated['nama_instrumen'],
                 'bobot_pengetahuan' => $validated['bobot_pengetahuan'],
             ]);
-
-            // Delete old nested records (cascade handles indikators)
-            $instrumen->soalPengetahuan()->delete();
-            $instrumen->kategoriKeterampilan()->delete();
 
             $this->syncNested($instrumen, $validated);
         });
@@ -172,9 +177,13 @@ class InstrumenController extends Controller
 
             $items = [];
             foreach (array_slice($rows, 1) as $row) {
-                $val = trim((string) ($row[1] ?? ''));
+                $val   = trim((string) ($row[1] ?? ''));
+                $kunci = trim((string) ($row[2] ?? ''));
                 if ($val !== '' && count($items) < 100) {
-                    $items[] = $val;
+                    $items[] = [
+                        'pertanyaan'    => $val,
+                        'kunci_jawaban' => $kunci,
+                    ];
                 }
             }
 
@@ -231,26 +240,76 @@ class InstrumenController extends Controller
 
     private function syncNested(UkkInstrumen $instrumen, array $validated): void
     {
+        // ── 1. Soal Pengetahuan (Smart Sync: update existing, insert new, delete removed) ──
+        $existingSoal = $instrumen->soalPengetahuan()->get()->keyBy('id');
+        $keptSoalIds  = [];
+
         foreach ($validated['soal_pengetahuan'] ?? [] as $i => $soal) {
-            $instrumen->soalPengetahuan()->create([
-                'pertanyaan' => $soal['pertanyaan'],
-                'urutan'     => $i + 1,
-            ]);
-        }
-
-        foreach ($validated['kategori_keterampilan'] ?? [] as $i => $kat) {
-            $kategori = $instrumen->kategoriKeterampilan()->create([
-                'nama_kategori' => $kat['nama_kategori'],
-                'bobot'         => $kat['bobot'],
-                'urutan'        => $i + 1,
-            ]);
-
-            foreach ($kat['indikator'] ?? [] as $j => $ind) {
-                $kategori->indikator()->create([
-                    'nama_indikator' => $ind['nama_indikator'],
-                    'urutan'         => $j + 1,
+            $soalId = $soal['id'] ?? null;
+            if ($soalId && $existingSoal->has($soalId)) {
+                $existingSoal[$soalId]->update([
+                    'pertanyaan'    => $soal['pertanyaan'],
+                    'kunci_jawaban' => $soal['kunci_jawaban'] ?? null,
+                    'urutan'        => $i + 1,
                 ]);
+                $keptSoalIds[] = $soalId;
+            } else {
+                $newSoal = $instrumen->soalPengetahuan()->create([
+                    'pertanyaan'    => $soal['pertanyaan'],
+                    'kunci_jawaban' => $soal['kunci_jawaban'] ?? null,
+                    'urutan'        => $i + 1,
+                ]);
+                $keptSoalIds[] = $newSoal->id;
             }
         }
+
+        $instrumen->soalPengetahuan()->whereNotIn('id', $keptSoalIds)->delete();
+
+        // ── 2. Kategori Keterampilan & Indikator (Smart Sync) ──
+        $existingKat = $instrumen->kategoriKeterampilan()->with('indikator')->get()->keyBy('id');
+        $keptKatIds  = [];
+
+        foreach ($validated['kategori_keterampilan'] ?? [] as $i => $kat) {
+            $katId = $kat['id'] ?? null;
+            if ($katId && $existingKat->has($katId)) {
+                $kategori = $existingKat[$katId];
+                $kategori->update([
+                    'nama_kategori' => $kat['nama_kategori'],
+                    'bobot'         => $kat['bobot'],
+                    'urutan'        => $i + 1,
+                ]);
+            } else {
+                $kategori = $instrumen->kategoriKeterampilan()->create([
+                    'nama_kategori' => $kat['nama_kategori'],
+                    'bobot'         => $kat['bobot'],
+                    'urutan'        => $i + 1,
+                ]);
+            }
+            $keptKatIds[] = $kategori->id;
+
+            $existingInd = $kategori->indikator->keyBy('id');
+            $keptIndIds  = [];
+
+            foreach ($kat['indikator'] ?? [] as $j => $ind) {
+                $indId = $ind['id'] ?? null;
+                if ($indId && $existingInd->has($indId)) {
+                    $existingInd[$indId]->update([
+                        'nama_indikator' => $ind['nama_indikator'],
+                        'urutan'         => $j + 1,
+                    ]);
+                    $keptIndIds[] = $indId;
+                } else {
+                    $newInd = $kategori->indikator()->create([
+                        'nama_indikator' => $ind['nama_indikator'],
+                        'urutan'         => $j + 1,
+                    ]);
+                    $keptIndIds[] = $newInd->id;
+                }
+            }
+
+            $kategori->indikator()->whereNotIn('id', $keptIndIds)->delete();
+        }
+
+        $instrumen->kategoriKeterampilan()->whereNotIn('id', $keptKatIds)->delete();
     }
 }

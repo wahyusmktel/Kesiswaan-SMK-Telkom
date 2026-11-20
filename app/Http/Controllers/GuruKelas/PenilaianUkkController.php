@@ -115,16 +115,21 @@ class PenilaianUkkController extends Controller
             $i->kategoriKeterampilan->flatMap(fn ($k) => $k->indikator->pluck('id'))
         );
 
-        $nilaiP = UkkNilaiPengetahuan::where('master_siswa_id', $siswa->id)
+        $recordsP = UkkNilaiPengetahuan::where('master_siswa_id', $siswa->id)
             ->whereIn('soal_id', $allSoalIds)
-            ->pluck('nilai', 'soal_id');
+            ->get()
+            ->keyBy('soal_id');
+
+        $nilaiP   = $recordsP->map(fn ($r) => $r->nilai);
+        $jawabanP = $recordsP->map(fn ($r) => $r->jawaban_siswa);
+        $catatanP = $recordsP->map(fn ($r) => $r->catatan_penguji);
 
         $nilaiK = UkkNilaiKeterampilan::where('master_siswa_id', $siswa->id)
             ->whereIn('indikator_id', $allIndikatorIds)
             ->pluck('nilai', 'indikator_id');
 
         return view('pages.guru-kelas.ukk.penilaian', compact(
-            'ujian', 'siswa', 'nilaiP', 'nilaiK'
+            'ujian', 'siswa', 'nilaiP', 'jawabanP', 'catatanP', 'nilaiK'
         ));
     }
 
@@ -134,7 +139,9 @@ class PenilaianUkkController extends Controller
 
         $request->validate([
             'pengetahuan'               => 'nullable|array',
-            'pengetahuan.*'             => 'integer|in:0,1',
+            'pengetahuan.*'             => 'nullable|integer|in:0,1',
+            'catatan_pengetahuan'       => 'nullable|array',
+            'catatan_pengetahuan.*'     => 'nullable|string',
             'keterampilan'              => 'nullable|array',
             'keterampilan.*'            => 'integer|in:0,1,2,3',
         ]);
@@ -149,10 +156,17 @@ class PenilaianUkkController extends Controller
         DB::transaction(function () use ($request, $siswa, $validSoalIds, $validIndIds) {
             foreach ($request->input('pengetahuan', []) as $soalId => $nilai) {
                 if (!$validSoalIds->contains((int) $soalId)) continue;
-                UkkNilaiPengetahuan::updateOrCreate(
-                    ['master_siswa_id' => $siswa->id, 'soal_id' => (int) $soalId],
-                    ['nilai' => (int) $nilai, 'penguji_id' => Auth::id()]
-                );
+                $catatan = $request->input("catatan_pengetahuan.{$soalId}");
+                $record  = UkkNilaiPengetahuan::firstOrNew([
+                    'master_siswa_id' => $siswa->id,
+                    'soal_id'         => (int) $soalId,
+                ]);
+                $record->penguji_id = Auth::id();
+                $record->nilai      = ($nilai !== null && $nilai !== '') ? (int) $nilai : null;
+                if ($catatan !== null) {
+                    $record->catatan_penguji = $catatan;
+                }
+                $record->save();
             }
             foreach ($request->input('keterampilan', []) as $indId => $nilai) {
                 if (!$validIndIds->contains((int) $indId)) continue;

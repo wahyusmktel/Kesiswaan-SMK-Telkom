@@ -407,8 +407,8 @@
             </div>
 
             <div class="flex gap-2 px-5 py-2.5 border-b border-gray-100 bg-gray-50/60 flex-wrap items-center">
-                <span class="bobot-pill bg-emerald-100 text-emerald-700">✓ Benar — 1 poin</span>
-                <span class="bobot-pill bg-red-100 text-red-700">✗ Salah — 0 poin</span>
+                <span class="bobot-pill bg-indigo-100 text-indigo-700">Soal Esai Siswa</span>
+                <span class="bobot-pill bg-emerald-100 text-emerald-700">Kunci Acuan Penguji</span>
                 <span class="text-xs text-gray-400 ml-auto self-center"><span class="font-bold text-blue-600" x-text="form.soal_pengetahuan.length"></span> soal</span>
                 {{-- Import button --}}
                 <button @click="openImportModal('soal')" class="btn-import-soal">
@@ -419,24 +419,41 @@
                 </button>
             </div>
 
-            <div id="soal-container" class="p-4 flex-1 flex flex-col gap-2 builder-scroll" style="height: 520px; max-height: 520px">
+            <div id="soal-container" class="p-4 flex-1 flex flex-col gap-3 builder-scroll" style="height: 520px; max-height: 520px">
                 <template x-for="(soal, i) in form.soal_pengetahuan" :key="soal._key">
-                    <div class="soal-row shrink-0">
-                        <div class="row-num" x-text="i+1"></div>
-                        <textarea x-model="soal.pertanyaan"
-                            rows="2"
-                            :placeholder="'Pertanyaan ' + (i+1) + '…'"
-                            class="flex-1 text-sm text-gray-800 bg-transparent border-0 focus:outline-none resize-none leading-relaxed"></textarea>
-                        <button @click="removeSoal(i)" class="del-btn" title="Hapus Soal">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                        </button>
+                    <div class="p-3 bg-slate-50 border border-slate-200 hover:border-indigo-300 rounded-xl flex flex-col gap-2 shrink-0 transition-all">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <div class="row-num" x-text="i+1"></div>
+                                <span class="text-xs font-black text-slate-700">Soal Esai #<span x-text="i+1"></span></span>
+                            </div>
+                            <button @click="removeSoal(i)" class="del-btn" title="Hapus Soal">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-700 mb-1">Pertanyaan Esai (Dikerjakan Siswa):</label>
+                            <textarea x-model="soal.pertanyaan"
+                                rows="2"
+                                :placeholder="'Tuliskan pertanyaan esai ' + (i+1) + '…'"
+                                class="w-full text-xs text-gray-800 bg-white border border-gray-200 rounded-lg p-2 focus:ring-1 focus:ring-indigo-500 resize-y leading-relaxed"></textarea>
+                        </div>
+                        <div class="bg-indigo-50/70 p-2.5 rounded-lg border border-indigo-100">
+                            <label class="block text-[11px] font-bold text-indigo-900 mb-1 flex items-center gap-1">
+                                <span>🔑</span> Kunci Jawaban / Panduan Rubrik (Acuan Penguji):
+                            </label>
+                            <textarea x-model="soal.kunci_jawaban"
+                                rows="2"
+                                placeholder="Tuliskan poin kunci jawaban / kriteria jawaban benar untuk acuan penguji saat mengoreksi…"
+                                class="w-full text-xs text-indigo-950 bg-white border border-indigo-200 rounded-lg p-2 focus:ring-1 focus:ring-indigo-500 resize-y leading-relaxed"></textarea>
+                        </div>
                     </div>
                 </template>
 
                 <div x-show="form.soal_pengetahuan.length === 0" class="flex-1 flex items-center justify-center py-12 text-gray-400 text-sm italic bg-slate-50/50 rounded-lg border border-dashed border-gray-200">
-                    Belum ada soal. Tambahkan manual atau import dari Excel.
+                    Belum ada soal esai pengetahuan. Tambahkan manual atau import dari Excel.
                 </div>
             </div>
 
@@ -1061,14 +1078,14 @@ function instrumenBuilder() {
 
         // ── Soal Pengetahuan ──
         addSoal() {
-            this.form.soal_pengetahuan.push({ _key: mk(), id: null, pertanyaan: '' });
+            this.form.soal_pengetahuan.push({ _key: mk(), id: null, pertanyaan: '', kunci_jawaban: '' });
             this.$nextTick(() => {
                 const container = document.getElementById('soal-container');
                 if (container) {
                     container.scrollTop = container.scrollHeight;
                 }
-                const inputs = this.$el.querySelectorAll('.soal-row textarea');
-                inputs[inputs.length - 1]?.focus();
+                const inputs = this.$el.querySelectorAll('#soal-container textarea');
+                inputs[inputs.length - 2]?.focus();
             });
         },
         removeSoal(i) { this.form.soal_pengetahuan.splice(i, 1); },
@@ -1259,7 +1276,12 @@ function instrumenBuilder() {
                 const katIdx = this.importModal.katIdx;
 
                 if (type === 'soal') {
-                    const newSoal = items.map(p => ({ _key: mk(), id: null, pertanyaan: p }));
+                    const newSoal = items.map(p => {
+                        if (typeof p === 'object' && p !== null) {
+                            return { _key: mk(), id: null, pertanyaan: p.pertanyaan || '', kunci_jawaban: p.kunci_jawaban || '' };
+                        }
+                        return { _key: mk(), id: null, pertanyaan: p, kunci_jawaban: '' };
+                    });
                     this.form.soal_pengetahuan.push(...newSoal);
                 } else {
                     const newInd = items.map(n => ({ _key: mk(), id: null, nama_indikator: n }));
@@ -1323,11 +1345,19 @@ function instrumenBuilder() {
                 nama_instrumen:        this.form.nama_instrumen,
                 ukk_ujian_id:          this.form.ukk_ujian_id,
                 bobot_pengetahuan:     this.form.bobot_pengetahuan,
-                soal_pengetahuan:      this.form.soal_pengetahuan.map(s => ({ pertanyaan: s.pertanyaan })),
+                soal_pengetahuan:      this.form.soal_pengetahuan.map(s => ({
+                    id:            s.id || null,
+                    pertanyaan:    s.pertanyaan,
+                    kunci_jawaban: s.kunci_jawaban || '',
+                })),
                 kategori_keterampilan: this.form.kategori_keterampilan.map(k => ({
+                    id:            k.id || null,
                     nama_kategori: k.nama_kategori,
                     bobot:         k.bobot,
-                    indikator:     k.indikator.map(i => ({ nama_indikator: i.nama_indikator })),
+                    indikator:     k.indikator.map(i => ({
+                        id:             i.id || null,
+                        nama_indikator: i.nama_indikator,
+                    })),
                 })),
             };
 

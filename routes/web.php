@@ -767,6 +767,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/pengumuman-kelulusan', [SiswaPengumumanKelulusanController::class, 'index'])->name('pengumuman-kelulusan.index');
         Route::get('/pengumuman-kelulusan/download-skl', [SiswaPengumumanKelulusanController::class, 'downloadSKL'])->name('pengumuman-kelulusan.download-skl');
         Route::get('/pengumuman-kelulusan/kartu', [SiswaPengumumanKelulusanController::class, 'kartuKelulusan'])->name('pengumuman-kelulusan.kartu');
+
+        // Ujian UKK Siswa (Pengerjaan Soal Esai Pengetahuan)
+        Route::prefix('ukk')->name('ukk.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Siswa\UkkSiswaController::class, 'index'])->name('index');
+            Route::get('/{ujian}', [\App\Http\Controllers\Siswa\UkkSiswaController::class, 'show'])->name('show');
+            Route::post('/{ujian}/simpan', [\App\Http\Controllers\Siswa\UkkSiswaController::class, 'simpanJawaban'])->name('simpan');
+        });
     });
 
     // Monitoring Pelanggaran & Keterlambatan (Shared BK & Waka)

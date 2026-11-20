@@ -8,7 +8,20 @@ class UkkNilaiPengetahuan extends Model
 {
     protected $table = 'ukk_nilai_pengetahuan';
 
-    protected $fillable = ['master_siswa_id', 'soal_id', 'penguji_id', 'nilai'];
+    protected $fillable = [
+        'master_siswa_id',
+        'soal_id',
+        'penguji_id',
+        'jawaban_siswa',
+        'nilai',
+        'catatan_penguji',
+        'waktu_submit',
+    ];
+
+    protected $casts = [
+        'waktu_submit' => 'datetime',
+        'nilai'        => 'integer',
+    ];
 
     public function siswa()
     {
@@ -23,5 +36,10 @@ class UkkNilaiPengetahuan extends Model
     public function penguji()
     {
         return $this->belongsTo(User::class, 'penguji_id');
+    }
+
+    public function isSudahDikoreksi(): bool
+    {
+        return $this->nilai !== null;
     }
 }

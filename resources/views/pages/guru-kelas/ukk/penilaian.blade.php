@@ -1,232 +1,332 @@
 <x-app-layout px="0">
 
 <style>
-    .soal-card { background:#f8fafc; border:1px solid #e2e8f0; border-radius:.875rem; padding:.875rem 1rem; transition:box-shadow .15s; }
-    .soal-card:hover { box-shadow:0 2px 8px rgba(99,102,241,.1); }
-    .score-btn { width:2.75rem; height:2.75rem; border-radius:.625rem; font-size:.75rem; font-weight:800; border:2px solid transparent; cursor:pointer; transition:all .15s; display:flex; align-items:center; justify-content:center; flex-direction:column; line-height:1; }
-    .indikator-row { display:flex; align-items:center; gap:.75rem; padding:.75rem 1rem; background:#f8fafc; border:1px solid #e2e8f0; border-radius:.875rem; }
-    .kategori-block { border:2px solid #e5e7eb; border-radius:1rem; overflow:hidden; margin-bottom:.75rem; }
-    .kategori-head { padding:.75rem 1rem; background:linear-gradient(to right,#f5f3ff,#ede9fe); border-bottom:1px solid #e5e7eb; display:flex; align-items:center; gap:.625rem; }
+    .score-btn { width:2.75rem; height:2.75rem; border-radius:.75rem; font-size:.75rem; font-weight:800; border:2px solid transparent; cursor:pointer; transition:all .15s; display:flex; align-items:center; justify-content:center; flex-direction:column; line-height:1; }
+    .indikator-row { display:flex; align-items:center; gap:1rem; padding:.875rem 1.25rem; background:#f8fafc; border:1px solid #e2e8f0; border-radius:1rem; transition:background .15s; }
+    .indikator-row:hover { background:#f1f5f9; }
+    .kategori-block { border:1px solid #e2e8f0; border-radius:1.25rem; overflow:hidden; margin-bottom:1rem; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.03); }
+    .kategori-head { padding:.875rem 1.25rem; background:linear-gradient(to right,#f8fafc,#f1f5f9); border-bottom:1px solid #e2e8f0; display:flex; align-items:center; gap:.75rem; }
 </style>
 
-<div x-data="penilaianForm()" x-init="init()" class="min-h-screen bg-slate-50">
-
-    {{-- ══ STICKY HEADER ══ --}}
-    <div class="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
-        <div class="flex items-center gap-3 px-4 py-3 max-w-screen-xl mx-auto">
-            <a href="{{ route('guru-kelas.penilaian-ukk.show', $ujian->id) }}"
-                class="flex-shrink-0 w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
-                <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                </svg>
-            </a>
-
-            {{-- Student info --}}
-            <div class="flex items-center gap-2 flex-1 min-w-0">
-                <div class="w-9 h-9 rounded-full overflow-hidden bg-orange-100 flex items-center justify-center shrink-0">
-                    @if($siswa->user?->avatar)
-                        <img src="{{ $siswa->user->avatar }}" class="w-full h-full object-cover">
-                    @else
-                        <span class="text-orange-600 font-black text-sm">{{ strtoupper(substr($siswa->nama_lengkap,0,1)) }}</span>
-                    @endif
-                </div>
-                <div class="min-w-0">
-                    <p class="font-black text-gray-900 text-sm truncate">{{ $siswa->nama_lengkap }}</p>
-                    <p class="text-xs text-gray-400">NIS: {{ $siswa->nis }} &middot; {{ $ujian->nama_ujian }}</p>
-                </div>
-            </div>
-
-            {{-- Live score display --}}
-            <div class="hidden sm:flex items-center gap-3 shrink-0">
-                <div class="text-center px-3 py-1.5 bg-blue-50 rounded-xl border border-blue-100">
-                    <p class="text-xs text-blue-400 font-semibold">Pengetahuan</p>
-                    <p class="text-base font-black text-blue-700" x-text="skorPengetahuan.toFixed(1)"></p>
-                </div>
-                <div class="text-center px-3 py-1.5 bg-emerald-50 rounded-xl border border-emerald-100">
-                    <p class="text-xs text-emerald-400 font-semibold">Keterampilan</p>
-                    <p class="text-base font-black text-emerald-700" x-text="skorKeterampilan.toFixed(1)"></p>
-                </div>
-                <div class="text-center px-3 py-1.5 bg-violet-50 rounded-xl border border-violet-100">
-                    <p class="text-xs text-violet-400 font-semibold">Nilai Akhir</p>
-                    <p class="text-base font-black text-violet-700" x-text="nilaiAkhir.toFixed(1)"></p>
-                </div>
-            </div>
-
-            {{-- Save button --}}
-            <button @click="simpan()" :disabled="saving"
-                class="flex-shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-black rounded-xl shadow-md hover:from-orange-400 hover:to-amber-400 transition-all disabled:opacity-50 text-sm">
-                <svg x-show="saving" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                </svg>
-                <span x-text="saving ? 'Menyimpan…' : '💾 Simpan'"></span>
-            </button>
-
-            {{-- Cetak PDF --}}
-            <button @click="isComplete && window.open('{{ route('guru-kelas.penilaian-ukk.pdf', [$ujian->id, $siswa->id]) }}', '_blank')"
-                :disabled="!isComplete"
-                :class="isComplete ? 'bg-violet-600 hover:bg-violet-500 text-white shadow-md' : 'bg-gray-200 text-gray-400 cursor-not-allowed'"
-                class="flex-shrink-0 inline-flex items-center gap-2 px-5 py-2.5 font-black rounded-xl transition-all text-sm"
-                :title="isComplete ? 'Cetak PDF penilaian' : 'Selesaikan penilaian 100% terlebih dahulu'">
-                🖨️ <span class="hidden sm:inline">Cetak PDF</span>
-            </button>
-        </div>
-    </div>
+<div x-data="penilaianForm()" x-init="init()" class="min-h-screen bg-slate-50 py-6">
 
     {{-- TOAST --}}
-    <div class="fixed top-20 right-5 z-[9999] flex flex-col gap-2 pointer-events-none" style="min-width:280px">
+    <div class="fixed top-6 right-6 z-[9999] flex flex-col gap-2 pointer-events-none" style="min-width:300px">
         <template x-for="t in toasts" :key="t.id">
-            <div class="pointer-events-auto flex items-start gap-3 px-4 py-3 rounded-xl shadow-2xl border text-sm font-semibold"
-                :class="{'bg-emerald-50 border-emerald-200 text-emerald-800':t.type==='success','bg-red-50 border-red-200 text-red-800':t.type==='error'}"
+            <div class="pointer-events-auto flex items-start gap-3 px-4 py-3 rounded-2xl shadow-2xl border text-sm font-semibold"
+                :class="{'bg-emerald-50 border-emerald-300 text-emerald-900':t.type==='success','bg-red-50 border-red-300 text-red-900':t.type==='error','bg-amber-50 border-amber-300 text-amber-900':t.type==='warning'}"
                 :style="'transition:opacity .35s,transform .35s;opacity:'+(t.visible?1:0)+';transform:translateY('+(t.visible?'0':'-8px')+')'">
-                <span x-text="t.type==='success'?'✅':'❌'"></span>
+                <span x-text="t.type==='success'?'✅':(t.type==='warning'?'⚠️':'❌')"></span>
                 <span class="flex-1" x-text="t.message"></span>
                 <button @click="removeToast(t.id)" class="opacity-60 hover:opacity-100 text-lg leading-none">&times;</button>
             </div>
         </template>
     </div>
 
-    {{-- ══ MAIN CONTENT ══ --}}
-    <div class="p-4 sm:p-6 max-w-screen-xl mx-auto">
+    <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 
-        @if($ujian->instrumens->isEmpty())
-            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-8 text-center">
-                <p class="text-4xl mb-3">⚠️</p>
-                <p class="text-amber-800 font-bold">Instrumen penilaian belum diset untuk ujian ini.</p>
-                <p class="text-amber-600 text-sm mt-1">Hubungi Kaprodi untuk menambahkan instrumen penilaian.</p>
+        {{-- ══ TOP HEADER CARD (NON-STICKY / NON-MELAYANG) ══ --}}
+        <div class="bg-white rounded-3xl p-6 border border-gray-200/80 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            {{-- Left: Student & Exam info --}}
+            <div class="flex items-center gap-4">
+                <a href="{{ route('guru-kelas.penilaian-ukk.show', $ujian->id) }}"
+                    class="w-11 h-11 rounded-2xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors text-slate-600 shrink-0"
+                    title="Kembali ke Daftar Peserta">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                </a>
+                <div class="w-12 h-12 rounded-2xl overflow-hidden bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-black text-lg shadow-md shrink-0">
+                    @if($siswa->user?->avatar)
+                        <img src="{{ $siswa->user->avatar }}" class="w-full h-full object-cover">
+                    @else
+                        <span>{{ strtoupper(substr($siswa->nama_lengkap,0,1)) }}</span>
+                    @endif
+                </div>
+                <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-xs font-black px-2.5 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100">
+                            {{ $ujian->jurusan }}
+                        </span>
+                        @if($ujian->tahunPelajaran)
+                            <span class="text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-600">
+                                TP {{ $ujian->tahunPelajaran->tahun }}
+                            </span>
+                        @endif
+                    </div>
+                    <h3 class="text-lg font-black text-slate-900 mt-1 flex items-center gap-2 flex-wrap">
+                        <span>{{ $siswa->nama_lengkap }}</span>
+                        <span class="text-xs font-normal text-slate-400">NIS: {{ $siswa->nis }}</span>
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-0.5">{{ $ujian->nama_ujian }} @if($ujian->nama_project) &middot; Project: {{ $ujian->nama_project }} @endif</p>
+                </div>
             </div>
-        @else
-            @foreach($ujian->instrumens as $instrumen)
-            <div class="mb-8">
-                {{-- Instrumen title --}}
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="w-8 h-8 bg-violet-600 text-white rounded-xl flex items-center justify-center font-black text-sm">{{ $loop->iteration }}</div>
-                    <h4 class="font-black text-gray-800 text-base">{{ $instrumen->nama_instrumen }}</h4>
-                    <div class="flex-1 h-px bg-gray-200"></div>
-                    <span class="text-xs text-gray-400 font-semibold shrink-0">
-                        Pengetahuan {{ $instrumen->bobot_pengetahuan }}% &middot;
-                        Keterampilan {{ 100 - $instrumen->bobot_pengetahuan }}%
-                    </span>
+
+            {{-- Right: Live Score Displays & Actions --}}
+            <div class="flex flex-wrap items-center gap-3 lg:self-center">
+                {{-- Score Pills --}}
+                <div class="flex items-center gap-2 bg-slate-50 p-1.5 rounded-2xl border border-slate-200">
+                    <div class="text-center px-3 py-1 bg-blue-50 rounded-xl border border-blue-100">
+                        <p class="text-[10px] uppercase tracking-wider text-blue-500 font-bold">Pengetahuan</p>
+                        <p class="text-sm font-black text-blue-700" x-text="skorPengetahuan.toFixed(1)"></p>
+                    </div>
+                    <div class="text-center px-3 py-1 bg-emerald-50 rounded-xl border border-emerald-100">
+                        <p class="text-[10px] uppercase tracking-wider text-emerald-500 font-bold">Keterampilan</p>
+                        <p class="text-sm font-black text-emerald-700" x-text="skorKeterampilan.toFixed(1)"></p>
+                    </div>
+                    <div class="text-center px-3.5 py-1 bg-violet-600 rounded-xl text-white shadow-sm">
+                        <p class="text-[10px] uppercase tracking-wider text-violet-200 font-bold">Nilai Akhir</p>
+                        <p class="text-base font-black text-white" x-text="nilaiAkhir.toFixed(1)"></p>
+                    </div>
                 </div>
 
-                <div class="grid grid-cols-1 xl:grid-cols-2 gap-5">
+                {{-- Save Button --}}
+                <button @click="simpan()" :disabled="saving"
+                    class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black rounded-2xl shadow-md hover:shadow-lg transition-all active:scale-95 text-xs disabled:opacity-50">
+                    <svg x-show="saving" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                    <span x-text="saving ? 'Menyimpan…' : '💾 Simpan Penilaian'"></span>
+                </button>
 
-                    {{-- ── PENGETAHUAN ── --}}
-                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                        <div class="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100">
-                            <div class="flex items-center gap-2">
-                                <div class="w-8 h-8 bg-blue-500 rounded-xl flex items-center justify-center text-white text-sm">📝</div>
+                {{-- Cetak PDF Button --}}
+                <button @click="isComplete && window.open('{{ route('guru-kelas.penilaian-ukk.pdf', [$ujian->id, $siswa->id]) }}', '_blank')"
+                    :disabled="!isComplete"
+                    :class="isComplete ? 'bg-violet-600 hover:bg-violet-700 text-white shadow-md' : 'bg-slate-200 text-slate-400 cursor-not-allowed'"
+                    class="inline-flex items-center gap-2 px-5 py-2.5 font-black rounded-2xl transition-all text-xs"
+                    :title="isComplete ? 'Cetak lembar PDF penilaian' : 'Selesaikan seluruh penilaian pengetahuan dan keterampilan terlebih dahulu'">
+                    🖨️ Cetak PDF
+                </button>
+            </div>
+        </div>
+
+        {{-- ══ VIEW TAB SELECTOR ══ --}}
+        <div class="bg-white rounded-2xl p-1.5 border border-gray-200/80 shadow-sm flex items-center gap-2">
+            <button type="button" @click="activeTab = 'pengetahuan'"
+                :class="activeTab === 'pengetahuan' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'"
+                class="flex-1 py-2.5 px-4 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2">
+                <span>📝</span> Aspek Pengetahuan (Esai Siswa)
+            </button>
+            <button type="button" @click="activeTab = 'keterampilan'"
+                :class="activeTab === 'keterampilan' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'"
+                class="flex-1 py-2.5 px-4 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2">
+                <span>⚙️</span> Aspek Keterampilan Praktik
+            </button>
+            <button type="button" @click="activeTab = 'all'"
+                :class="activeTab === 'all' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'"
+                class="py-2.5 px-5 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2">
+                <span>📋</span> Tampilkan Semua
+            </button>
+        </div>
+
+        @if($ujian->instrumens->isEmpty())
+            <div class="bg-amber-50 border border-amber-200 rounded-3xl p-12 text-center">
+                <p class="text-4xl mb-3">⚠️</p>
+                <p class="text-amber-900 font-bold text-base">Instrumen penilaian belum diset untuk ujian ini.</p>
+                <p class="text-amber-700 text-xs mt-1">Hubungi Kaprodi untuk menambahkan instrumen penilaian UKK.</p>
+            </div>
+        @else
+
+            {{-- ══ ASPEK PENGETAHUAN SECTION ══ --}}
+            <div x-show="activeTab === 'pengetahuan' || activeTab === 'all'" class="space-y-6">
+                @foreach($ujian->instrumens as $ins)
+                    @if($ins->soalPengetahuan->isNotEmpty())
+                    <div class="bg-white rounded-3xl border border-gray-200/80 shadow-sm overflow-hidden">
+                        {{-- Section Title --}}
+                        <div class="px-6 py-4 bg-gradient-to-r from-blue-50/70 to-indigo-50/70 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
+                            <div class="flex items-center gap-3">
+                                <span class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black text-xs shadow-sm">
+                                    {{ $loop->iteration }}
+                                </span>
                                 <div>
-                                    <p class="font-black text-gray-900 text-sm">Penilaian Pengetahuan</p>
-                                    <p class="text-[11px] text-gray-400">✓ Benar = 1 poin &nbsp;·&nbsp; ✗ Salah = 0 poin</p>
+                                    <h4 class="font-black text-slate-900 text-base">{{ $ins->nama_instrumen }} &mdash; Aspek Pengetahuan</h4>
+                                    <p class="text-xs text-slate-500">Bobot Pengetahuan: <strong class="text-blue-700">{{ $ins->bobot_pengetahuan }}%</strong> &middot; Koreksi esai siswa berdasarkan kunci jawaban acuan.</p>
                                 </div>
                             </div>
-                            <div class="text-right">
-                                <p class="text-xs text-blue-500 font-semibold">Bobot</p>
-                                <p class="font-black text-blue-700">{{ $instrumen->bobot_pengetahuan }}%</p>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold px-3 py-1 bg-white rounded-xl border border-blue-200 text-blue-700"
+                                    x-text="benarCount({{ json_encode($ins->soalPengetahuan->pluck('id')->all()) }}) + ' / {{ $ins->soalPengetahuan->count() }} Benar'">
+                                </span>
                             </div>
                         </div>
 
-                        @if($instrumen->soalPengetahuan->isEmpty())
-                            <div class="p-6 text-center text-gray-400 text-sm italic">Belum ada soal pengetahuan.</div>
-                        @else
-                        <div class="p-4 flex flex-col gap-2">
-                            @foreach($instrumen->soalPengetahuan as $soal)
-                            <div class="soal-card flex items-start gap-3">
-                                <div class="w-6 h-6 rounded-md bg-blue-500 text-white flex items-center justify-center text-[11px] font-black shrink-0 mt-0.5">
-                                    {{ $loop->iteration }}
+                        {{-- Soal Cards (Full Width & Spacious) --}}
+                        <div class="p-6 space-y-6">
+                            @foreach($ins->soalPengetahuan as $soal)
+                            @php
+                                $jSiswa = $jawabanP[$soal->id] ?? null;
+                                $hasAnswer = !empty(trim((string)$jSiswa));
+                            @endphp
+                            <div class="bg-slate-50/60 rounded-2xl border border-slate-200/90 p-5 space-y-4 hover:border-indigo-300 transition-all">
+                                {{-- Card Header --}}
+                                <div class="flex items-start justify-between gap-4">
+                                    <div class="flex items-start gap-3">
+                                        <span class="w-7 h-7 rounded-xl bg-slate-800 text-white font-black text-xs flex items-center justify-center shrink-0 mt-0.5">
+                                            {{ $loop->iteration }}
+                                        </span>
+                                        <div>
+                                            <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">Pertanyaan Soal Esai:</span>
+                                            <h5 class="text-base font-bold text-slate-900 leading-relaxed mt-0.5">
+                                                {{ $soal->pertanyaan }}
+                                            </h5>
+                                        </div>
+                                    </div>
+
+                                    {{-- Status Badge --}}
+                                    <div class="shrink-0">
+                                        <template x-if="nilaiP[{{ $soal->id }}] === 1">
+                                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                                <span>✓</span> Benar (1 Poin)
+                                            </span>
+                                        </template>
+                                        <template x-if="nilaiP[{{ $soal->id }}] === 0">
+                                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black bg-rose-100 text-rose-800 border border-rose-300">
+                                                <span>✗</span> Salah (0 Poin)
+                                            </span>
+                                        </template>
+                                        <template x-if="nilaiP[{{ $soal->id }}] === undefined || nilaiP[{{ $soal->id }}] === null">
+                                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-slate-200 text-slate-600">
+                                                Belum Dikoreksi
+                                            </span>
+                                        </template>
+                                    </div>
                                 </div>
-                                <p class="flex-1 text-sm text-gray-700 leading-relaxed">{{ $soal->pertanyaan }}</p>
-                                <div class="flex gap-1.5 shrink-0">
-                                    {{-- Benar --}}
-                                    <button type="button"
-                                        @click="togglePengetahuan({{ $soal->id }}, 1)"
-                                        :class="nilaiP[{{ $soal->id }}] === 1
-                                            ? 'bg-emerald-500 border-emerald-500 text-white'
-                                            : 'bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100'"
-                                        class="score-btn">
-                                        <span class="text-base">✓</span>
-                                        <span class="text-[9px] mt-0.5">Benar</span>
-                                    </button>
-                                    {{-- Salah --}}
-                                    <button type="button"
-                                        @click="togglePengetahuan({{ $soal->id }}, 0)"
-                                        :class="nilaiP[{{ $soal->id }}] === 0 && nilaiP[{{ $soal->id }}] !== undefined
-                                            ? 'bg-red-500 border-red-500 text-white'
-                                            : 'bg-red-50 border-red-200 text-red-500 hover:bg-red-100'"
-                                        class="score-btn">
-                                        <span class="text-base">✗</span>
-                                        <span class="text-[9px] mt-0.5">Salah</span>
-                                    </button>
+
+                                {{-- Panduan Kunci Jawaban dari Kaprodi --}}
+                                <div class="bg-indigo-50/80 border border-indigo-200 rounded-2xl p-4 text-xs">
+                                    <div class="flex items-center gap-1.5 font-bold text-indigo-900 mb-1">
+                                        <span>🔑</span>
+                                        <span>Panduan Kunci Jawaban / Rubrik Acuan Kaprodi:</span>
+                                    </div>
+                                    @if(!empty($soal->kunci_jawaban))
+                                        <p class="text-indigo-950 font-medium whitespace-pre-line leading-relaxed pl-5">{{ $soal->kunci_jawaban }}</p>
+                                    @else
+                                        <p class="text-indigo-400 italic pl-5">(Kaprodi belum menambahkan kunci jawaban untuk soal ini)</p>
+                                    @endif
+                                </div>
+
+                                {{-- Jawaban Siswa --}}
+                                <div class="bg-white border-2 border-slate-200 rounded-2xl p-4 text-xs shadow-sm">
+                                    <div class="flex items-center justify-between gap-2 mb-1.5">
+                                        <span class="font-bold text-slate-800 flex items-center gap-1.5">
+                                            <span>✍️</span> Jawaban Siswa ({{ $siswa->nama_lengkap }}):
+                                        </span>
+                                        @if($hasAnswer)
+                                            <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                                                Tersedia
+                                            </span>
+                                        @else
+                                            <span class="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                                                Belum Diisi Siswa
+                                            </span>
+                                        @endif
+                                    </div>
+                                    @if($hasAnswer)
+                                        <div class="text-slate-900 font-sans text-sm whitespace-pre-line leading-relaxed bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                                            {{ $jSiswa }}
+                                        </div>
+                                    @else
+                                        <p class="text-slate-400 italic py-2">(Siswa belum mengisi atau mengirimkan jawaban esai ini)</p>
+                                    @endif
+                                </div>
+
+                                {{-- Penilaian Penguji & Catatan --}}
+                                <div class="pt-2 border-t border-slate-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs font-bold text-slate-700">Koreksi Penguji:</span>
+                                        <button type="button"
+                                            @click="togglePengetahuan({{ $soal->id }}, 1)"
+                                            :class="nilaiP[{{ $soal->id }}] === 1
+                                                ? 'bg-emerald-600 border-emerald-600 text-white shadow-md'
+                                                : 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'"
+                                            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black border transition-all active:scale-95">
+                                            <span>✓</span> Benar (1)
+                                        </button>
+                                        <button type="button"
+                                            @click="togglePengetahuan({{ $soal->id }}, 0)"
+                                            :class="nilaiP[{{ $soal->id }}] === 0
+                                                ? 'bg-rose-600 border-rose-600 text-white shadow-md'
+                                                : 'bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100'"
+                                            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black border transition-all active:scale-95">
+                                            <span>✗</span> Salah (0)
+                                        </button>
+                                        <button type="button"
+                                            x-show="nilaiP[{{ $soal->id }}] !== undefined && nilaiP[{{ $soal->id }}] !== null"
+                                            @click="resetPengetahuan({{ $soal->id }})"
+                                            class="text-xs text-slate-400 hover:text-slate-600 underline ml-2">
+                                            Reset
+                                        </button>
+                                    </div>
+
+                                    {{-- Catatan Penguji (Input Text Singkat) --}}
+                                    <div class="flex-1 max-w-md">
+                                        <input type="text"
+                                            x-model="catatanP[{{ $soal->id }}]"
+                                            placeholder="Catatan koreksi untuk siswa (opsional)…"
+                                            class="w-full text-xs text-slate-800 bg-white border border-slate-200 rounded-xl px-3 py-2 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200">
+                                    </div>
                                 </div>
                             </div>
                             @endforeach
                         </div>
-
-                        {{-- Pengetahuan summary --}}
-                        <div class="px-4 pb-4">
-                            <div class="flex items-center justify-between text-xs font-semibold text-gray-500 mb-1.5">
-                                <span>Jawaban benar</span>
-                                <span class="text-blue-600 font-black"
-                                    x-text="benarCount({{ json_encode($instrumen->soalPengetahuan->pluck('id')->all()) }}) + ' / {{ $instrumen->soalPengetahuan->count() }}'">
-                                </span>
-                            </div>
-                            <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
-                                <div class="h-full bg-blue-400 rounded-full transition-all duration-300"
-                                    :style="'width:' + (benarCount({{ json_encode($instrumen->soalPengetahuan->pluck('id')->all()) }}) / {{ max(1, $instrumen->soalPengetahuan->count()) }} * 100) + '%'">
-                                </div>
-                            </div>
-                        </div>
-                        @endif
                     </div>
+                    @endif
+                @endforeach
+            </div>
 
-                    {{-- ── KETERAMPILAN ── --}}
-                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                        <div class="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-gray-100">
-                            <div class="flex items-center gap-2">
-                                <div class="w-8 h-8 bg-emerald-500 rounded-xl flex items-center justify-center text-white text-sm">⚙️</div>
+            {{-- ══ ASPEK KETERAMPILAN SECTION ══ --}}
+            <div x-show="activeTab === 'keterampilan' || activeTab === 'all'" class="space-y-6">
+                @foreach($ujian->instrumens as $ins)
+                    @if($ins->kategoriKeterampilan->isNotEmpty())
+                    <div class="bg-white rounded-3xl border border-gray-200/80 shadow-sm overflow-hidden">
+                        {{-- Section Title --}}
+                        <div class="px-6 py-4 bg-gradient-to-r from-emerald-50/70 to-teal-50/70 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
+                            <div class="flex items-center gap-3">
+                                <span class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black text-xs shadow-sm">
+                                    {{ $loop->iteration }}
+                                </span>
                                 <div>
-                                    <p class="font-black text-gray-900 text-sm">Penilaian Keterampilan</p>
-                                    <p class="text-[11px] text-gray-400">0 Belum · 1 Cukup · 2 Baik · 3 Sangat Baik</p>
+                                    <h4 class="font-black text-slate-900 text-base">{{ $ins->nama_instrumen }} &mdash; Aspek Keterampilan</h4>
+                                    <p class="text-xs text-slate-500">Bobot Keterampilan: <strong class="text-emerald-700">{{ 100 - $ins->bobot_pengetahuan }}%</strong> &middot; Skala: 0=Belum, 1=Cukup, 2=Baik, 3=Sangat Baik.</p>
                                 </div>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-xs text-emerald-500 font-semibold">Bobot</p>
-                                <p class="font-black text-emerald-700">{{ 100 - $instrumen->bobot_pengetahuan }}%</p>
                             </div>
                         </div>
 
-                        @if($instrumen->kategoriKeterampilan->isEmpty())
-                            <div class="p-6 text-center text-gray-400 text-sm italic">Belum ada kategori keterampilan.</div>
-                        @else
-                        <div class="p-4">
-                            @foreach($instrumen->kategoriKeterampilan as $kategori)
+                        {{-- Kategori List --}}
+                        <div class="p-6 space-y-5">
+                            @foreach($ins->kategoriKeterampilan as $kat)
                             <div class="kategori-block">
                                 <div class="kategori-head">
-                                    <div class="w-6 h-6 bg-violet-600 text-white rounded-md flex items-center justify-center text-[11px] font-black shrink-0">
+                                    <span class="w-6 h-6 bg-violet-600 text-white rounded-lg flex items-center justify-center text-xs font-black shrink-0">
                                         {{ $loop->iteration }}
-                                    </div>
-                                    <p class="font-black text-gray-800 text-sm flex-1">{{ $kategori->nama_kategori }}</p>
-                                    <span class="text-xs font-bold text-violet-600 shrink-0">{{ $kategori->bobot }}%</span>
+                                    </span>
+                                    <h5 class="font-black text-slate-900 text-sm flex-1">{{ $kat->nama_kategori }}</h5>
+                                    <span class="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-violet-100 text-violet-800">
+                                        Bobot {{ $kat->bobot }}%
+                                    </span>
                                 </div>
-                                <div class="p-3 flex flex-col gap-1.5 bg-white">
-                                    @foreach($kategori->indikator as $ind)
+                                <div class="p-4 space-y-2 bg-white">
+                                    @foreach($kat->indikator as $ind)
                                     <div class="indikator-row">
-                                        <div class="w-5 h-5 rounded bg-emerald-500 text-white flex items-center justify-center text-[10px] font-black shrink-0">
+                                        <span class="w-5 h-5 rounded bg-emerald-500 text-white flex items-center justify-center text-[10px] font-black shrink-0">
                                             {{ $loop->iteration }}
-                                        </div>
-                                        <p class="flex-1 text-sm text-gray-700 min-w-0">{{ $ind->nama_indikator }}</p>
-                                        {{-- 0/1/2/3 selector --}}
-                                        <div class="flex gap-1 shrink-0">
-                                            @foreach([0 => ['label'=>'Belum','color'=>'gray'], 1 => ['label'=>'Cukup','color'=>'amber'], 2 => ['label'=>'Baik','color'=>'blue'], 3 => ['label'=>'S.Baik','color'=>'emerald']] as $val => $cfg)
+                                        </span>
+                                        <p class="flex-1 text-sm text-slate-800 font-medium leading-relaxed">{{ $ind->nama_indikator }}</p>
+                                        {{-- 0 / 1 / 2 / 3 Selector Buttons --}}
+                                        <div class="flex gap-1.5 shrink-0">
+                                            @foreach([
+                                                0 => ['label'=>'Belum','bg'=>'bg-slate-50','border'=>'border-slate-300','text'=>'text-slate-700','active'=>'bg-slate-600 border-slate-600 text-white'],
+                                                1 => ['label'=>'Cukup','bg'=>'bg-amber-50','border'=>'border-amber-300','text'=>'text-amber-800','active'=>'bg-amber-500 border-amber-500 text-white'],
+                                                2 => ['label'=>'Baik','bg'=>'bg-blue-50','border'=>'border-blue-300','text'=>'text-blue-800','active'=>'bg-blue-600 border-blue-600 text-white'],
+                                                3 => ['label'=>'S.Baik','bg'=>'bg-emerald-50','border'=>'border-emerald-300','text'=>'text-emerald-800','active'=>'bg-emerald-600 border-emerald-600 text-white'],
+                                            ] as $val => $cfg)
                                             <button type="button"
                                                 @click="setKeterampilan({{ $ind->id }}, {{ $val }})"
-                                                :class="nilaiK[{{ $ind->id }}] === {{ $val }}
-                                                    ? 'bg-{{ $cfg['color'] }}-500 border-{{ $cfg['color'] }}-500 text-white'
-                                                    : 'bg-{{ $cfg['color'] }}-50 border-{{ $cfg['color'] }}-200 text-{{ $cfg['color'] }}-600 hover:bg-{{ $cfg['color'] }}-100'"
-                                                class="score-btn" style="width:2.4rem;height:2.4rem;font-size:.65rem">
-                                                <span class="font-black">{{ $val }}</span>
-                                                <span class="text-[8px]">{{ $cfg['label'] }}</span>
+                                                :class="nilaiK[{{ $ind->id }}] === {{ $val }} ? '{{ $cfg['active'] }} shadow-sm' : '{{ $cfg['bg'] }} {{ $cfg['border'] }} {{ $cfg['text'] }} hover:brightness-95'"
+                                                class="score-btn">
+                                                <span class="text-sm font-black">{{ $val }}</span>
+                                                <span class="text-[8px] font-bold mt-0.5">{{ $cfg['label'] }}</span>
                                             </button>
                                             @endforeach
                                         </div>
@@ -236,48 +336,47 @@
                             </div>
                             @endforeach
                         </div>
-                        @endif
                     </div>
+                    @endif
+                @endforeach
+            </div>
 
-                </div>{{-- /grid --}}
-            </div>{{-- /instrumen block --}}
-            @endforeach
-
-            {{-- ══ BOTTOM SUMMARY BAR ══ --}}
-            <div class="sticky bottom-0 z-30 bg-white border-t border-gray-200 shadow-lg px-4 py-3 max-w-screen-xl mx-auto rounded-t-2xl">
-                <div class="flex flex-wrap items-center gap-4 justify-between text-sm">
-                    <div class="flex gap-4 flex-wrap">
-                        <span class="flex items-center gap-2 text-blue-700 font-semibold">
-                            <span class="w-3 h-3 rounded-full bg-blue-500 inline-block"></span>
-                            Pengetahuan: <strong x-text="skorPengetahuan.toFixed(1)"></strong>
-                        </span>
-                        <span class="flex items-center gap-2 text-emerald-700 font-semibold">
-                            <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
-                            Keterampilan: <strong x-text="skorKeterampilan.toFixed(1)"></strong>
-                        </span>
-                        <span class="flex items-center gap-2 text-violet-700 font-black text-base">
-                            Nilai Akhir: <strong x-text="nilaiAkhir.toFixed(1)"></strong>
-                        </span>
-                    </div>
-                    <div class="flex gap-2">
-                        <button @click="simpan()" :disabled="saving"
-                            class="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-black rounded-xl shadow-md hover:from-orange-400 hover:to-amber-400 transition-all disabled:opacity-50 text-sm">
-                            <svg x-show="saving" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                            </svg>
-                            <span x-text="saving ? 'Menyimpan…' : '💾 Simpan Penilaian'"></span>
-                        </button>
-                        <button @click="isComplete && window.open('{{ route('guru-kelas.penilaian-ukk.pdf', [$ujian->id, $siswa->id]) }}', '_blank')"
-                            :disabled="!isComplete"
-                            :class="isComplete ? 'bg-violet-600 hover:bg-violet-500 text-white' : 'bg-gray-200 text-gray-400 cursor-not-allowed'"
-                            class="inline-flex items-center gap-2 px-5 py-2.5 font-black rounded-xl transition-all text-sm"
-                            :title="isComplete ? 'Cetak PDF' : 'Selesaikan penilaian 100% terlebih dahulu'">
-                            🖨️ Cetak PDF
-                        </button>
+            {{-- ══ BOTTOM SUMMARY & ACTIONS (NON-STICKY) ══ --}}
+            <div class="bg-white rounded-3xl p-6 border border-gray-200/80 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-6">
+                <div>
+                    <h4 class="font-black text-slate-900 text-base">Rekapitulasi Penilaian Siswa</h4>
+                    <div class="flex items-center gap-4 text-xs font-bold text-slate-600 mt-1 flex-wrap">
+                        <span>Pengetahuan: <strong class="text-blue-600 text-sm" x-text="skorPengetahuan.toFixed(1)"></strong></span>
+                        <span>&bull;</span>
+                        <span>Keterampilan: <strong class="text-emerald-600 text-sm" x-text="skorKeterampilan.toFixed(1)"></strong></span>
+                        <span>&bull;</span>
+                        <span>Nilai Akhir UKK: <strong class="text-violet-700 text-base font-black" x-text="nilaiAkhir.toFixed(1)"></strong></span>
                     </div>
                 </div>
+
+                <div class="flex items-center gap-3">
+                    <a href="{{ route('guru-kelas.penilaian-ukk.show', $ujian->id) }}"
+                        class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-xs transition-colors">
+                        Kembali ke Daftar
+                    </a>
+                    <button @click="simpan()" :disabled="saving"
+                        class="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black rounded-2xl shadow-md transition-all active:scale-95 text-xs disabled:opacity-50">
+                        <svg x-show="saving" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                        </svg>
+                        <span x-text="saving ? 'Menyimpan…' : '💾 Simpan Penilaian'"></span>
+                    </button>
+                    <button @click="isComplete && window.open('{{ route('guru-kelas.penilaian-ukk.pdf', [$ujian->id, $siswa->id]) }}', '_blank')"
+                        :disabled="!isComplete"
+                        :class="isComplete ? 'bg-violet-600 hover:bg-violet-700 text-white shadow-md' : 'bg-slate-200 text-slate-400 cursor-not-allowed'"
+                        class="inline-flex items-center gap-2 px-6 py-2.5 font-black rounded-2xl transition-all text-xs"
+                        :title="isComplete ? 'Cetak PDF' : 'Selesaikan seluruh penilaian pengetahuan dan keterampilan terlebih dahulu'">
+                        🖨️ Cetak PDF
+                    </button>
+                </div>
             </div>
+
         @endif
 
     </div>
@@ -301,25 +400,32 @@
 function penilaianForm() {
     const INSTRUMENS = @json($instrumensData);
     const INIT_P     = @json($nilaiP);
+    const INIT_CAT   = @json($catatanP ?? []);
     const INIT_K     = @json($nilaiK);
     const SAVE_URL   = '{{ route("guru-kelas.penilaian-ukk.simpan", [$ujian->id, $siswa->id]) }}';
 
     return {
         saving: false,
-        toasts: [], toastSeq: 0,
+        activeTab: 'pengetahuan',
+        toasts: [],
+        toastSeq: 0,
         nilaiP: { ...INIT_P },
+        catatanP: { ...INIT_CAT },
         nilaiK: { ...INIT_K },
 
         init() {},
 
-        // ── Scoring helpers ──
         togglePengetahuan(soalId, val) {
-            // Toggle off if same value clicked twice
             if (this.nilaiP[soalId] === val) {
                 delete this.nilaiP[soalId];
             } else {
                 this.nilaiP[soalId] = val;
             }
+            this.nilaiP = { ...this.nilaiP };
+        },
+
+        resetPengetahuan(soalId) {
+            delete this.nilaiP[soalId];
             this.nilaiP = { ...this.nilaiP };
         },
 
@@ -336,12 +442,11 @@ function penilaianForm() {
             if (!INSTRUMENS.length) return false;
             const allSoalIds = INSTRUMENS.flatMap(i => i.soal);
             const allIndIds  = INSTRUMENS.flatMap(i => i.kategori.flatMap(k => k.indikator));
-            const soalOk = allSoalIds.length === 0 || allSoalIds.every(id => this.nilaiP[id] !== undefined);
-            const indOk  = allIndIds.length === 0  || allIndIds.every(id => this.nilaiK[id] !== undefined);
+            const soalOk = allSoalIds.length === 0 || allSoalIds.every(id => this.nilaiP[id] !== undefined && this.nilaiP[id] !== null);
+            const indOk  = allIndIds.length === 0  || allIndIds.every(id => this.nilaiK[id] !== undefined && this.nilaiK[id] !== null);
             return soalOk && indOk;
         },
 
-        // ── Score calculation across all instrumens ──
         get skorPengetahuan() {
             let total = 0, count = 0;
             for (const ins of INSTRUMENS) {
@@ -394,7 +499,6 @@ function penilaianForm() {
             return total / INSTRUMENS.length;
         },
 
-        // ── Save ──
         async simpan() {
             this.saving = true;
             try {
@@ -407,23 +511,23 @@ function penilaianForm() {
                     },
                     body: JSON.stringify({
                         pengetahuan: this.nilaiP,
+                        catatan_pengetahuan: this.catatanP,
                         keterampilan: this.nilaiK,
                     }),
                 });
                 const data = await res.json();
                 if (!res.ok) {
-                    this.toast(data.message || 'Terjadi kesalahan.', 'error');
+                    this.toast(data.message || 'Terjadi kesalahan saat menyimpan.', 'error');
                     return;
                 }
-                this.toast(data.message, 'success');
+                this.toast(data.message || 'Penilaian berhasil disimpan.', 'success');
             } catch {
-                this.toast('Koneksi gagal.', 'error');
+                this.toast('Koneksi gagal saat menyimpan penilaian.', 'error');
             } finally {
                 this.saving = false;
             }
         },
 
-        // ── Toast ──
         toast(msg, type = 'success') {
             const id = ++this.toastSeq;
             this.toasts.push({ id, message: msg, type, visible: false });
