@@ -91,7 +91,16 @@
                             @forelse ($ujians as $i => $ujian)
                                 <tr class="bg-white hover:bg-gray-50/70 transition-colors">
                                     <td class="px-5 py-4 text-gray-400 font-mono text-xs">{{ $ujians->firstItem() + $i }}</td>
-                                    <td class="px-5 py-4 font-semibold text-gray-800 max-w-xs">{{ $ujian->nama_ujian }}</td>
+                                    <td class="px-5 py-4 font-semibold text-gray-800 max-w-xs">
+                                        <div class="flex items-center gap-1.5 flex-wrap">
+                                            <span>{{ $ujian->nama_ujian }}</span>
+                                            @if($ujian->is_bilingual)
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-100 text-purple-800 text-[10px] font-black border border-purple-200">
+                                                    🌐 Bilingual (Wawancara EN)
+                                                </span>
+                                            @endif
+                                        </div>
+                                    </td>
                                     <td class="px-5 py-4 whitespace-nowrap">
                                         @if($ujian->tahunPelajaran)
                                             <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-bold border border-indigo-100">
@@ -137,7 +146,8 @@
                                                     {{ json_encode($ujian->jurusan) }},
                                                     {{ json_encode($ujian->nama_project) }},
                                                     {{ json_encode($ujian->tanggal_pelaksanaan?->format('Y-m-d')) }},
-                                                    {{ json_encode($ujian->rombels->pluck('id')) }}
+                                                    {{ json_encode($ujian->rombels->pluck('id')) }},
+                                                    {{ $ujian->is_bilingual ? 'true' : 'false' }}
                                                 )"
                                                 class="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg text-xs font-bold hover:bg-amber-600 hover:text-white hover:border-amber-600 transition-all">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -344,6 +354,25 @@
                             class="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all">
                     </div>
 
+                    {{-- Setting Wawancara Bilingual --}}
+                    <div class="p-4 rounded-xl border-2 transition-all"
+                        :class="form.is_bilingual ? 'bg-purple-50/90 border-purple-300 shadow-sm' : 'bg-gray-50 border-gray-200'">
+                        <label class="flex items-start gap-3 cursor-pointer select-none">
+                            <input type="checkbox" x-model="form.is_bilingual"
+                                class="mt-0.5 w-5 h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500 shrink-0">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm font-black text-gray-900">🌐 Ujian Pengetahuan Bilingual (Wawancara Bahasa Inggris)</span>
+                                    <span x-show="form.is_bilingual" class="px-2 py-0.5 text-[10px] font-black rounded-md bg-purple-200 text-purple-800">Aktif</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1 leading-relaxed">
+                                    Gunakan untuk <strong>Kelas XI</strong> atau <strong>Kelas X</strong> dengan sistem wawancara lisan bahasa Inggris langsung oleh Penguji/Guru Bahasa Inggris.
+                                    Jika opsi ini dicentang, soal <strong>tidak akan muncul di akun siswa</strong> untuk dikerjakan mandiri, melainkan dinilai langsung oleh Penguji saat wawancara.
+                                </p>
+                            </div>
+                        </label>
+                    </div>
+
                 </div>
 
                 {{-- Modal Footer --}}
@@ -390,6 +419,7 @@
                 jurusan:             '',
                 nama_project:        '',
                 tanggal_pelaksanaan: '',
+                is_bilingual:        false,
                 rombel_ids:          [],
             },
             errors: {},
@@ -406,14 +436,14 @@
             openAdd() {
                 this.editMode  = false;
                 this.editId    = null;
-                this.form      = { nama_ujian:'', jurusan:'', nama_project:'', tanggal_pelaksanaan:'', rombel_ids:[] };
+                this.form      = { nama_ujian:'', jurusan:'', nama_project:'', tanggal_pelaksanaan:'', is_bilingual:false, rombel_ids:[] };
                 this.errors    = {};
                 this.rombels   = [];
                 this.modalPos  = { x: null, y: null };
                 this.showModal = true;
             },
 
-            openEdit(id, namaUjian, tahunPelajaranId, jurusan, namaProject, tanggalPelaksanaan, rombelIds) {
+            openEdit(id, namaUjian, tahunPelajaranId, jurusan, namaProject, tanggalPelaksanaan, rombelIds, isBilingual = false) {
                 this.editMode  = true;
                 this.editId    = id;
                 this.form      = {
@@ -421,6 +451,7 @@
                     jurusan:             jurusan,
                     nama_project:        namaProject || '',
                     tanggal_pelaksanaan: tanggalPelaksanaan || '',
+                    is_bilingual:        !!isBilingual,
                     rombel_ids:          rombelIds || [],
                 };
                 this.errors    = {};
@@ -501,6 +532,7 @@
                             jurusan:             this.form.jurusan,
                             nama_project:        this.form.nama_project || null,
                             tanggal_pelaksanaan: this.form.tanggal_pelaksanaan || null,
+                            is_bilingual:        this.form.is_bilingual ? 1 : 0,
                             rombel_ids:          this.form.rombel_ids,
                         }),
                     });

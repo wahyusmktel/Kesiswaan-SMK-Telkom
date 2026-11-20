@@ -1623,6 +1623,7 @@ Route::middleware(['auth', 'role:Kaprodi'])->prefix('kaprodi')->name('kaprodi.')
         // Set Penguji
         Route::get('/penguji', [\App\Http\Controllers\Kaprodi\PengujiController::class, 'index'])->name('penguji.index');
         Route::post('/penguji/{ujian}', [\App\Http\Controllers\Kaprodi\PengujiController::class, 'store'])->name('penguji.store');
+        Route::put('/penguji/{ujian}/{user}', [\App\Http\Controllers\Kaprodi\PengujiController::class, 'updatePeran'])->name('penguji.update-peran');
         Route::delete('/penguji/{ujian}/{user}', [\App\Http\Controllers\Kaprodi\PengujiController::class, 'destroy'])->name('penguji.destroy');
 
         // Rekapitulasi Nilai UKK (Kaprodi + Kurikulum)

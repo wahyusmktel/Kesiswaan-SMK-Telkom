@@ -37,6 +37,7 @@ class UkkController extends Controller
             'jurusan'             => 'required|string|max:255',
             'nama_project'        => 'nullable|string|max:255',
             'tanggal_pelaksanaan' => 'nullable|date',
+            'is_bilingual'        => 'nullable|boolean',
             'rombel_ids'          => 'nullable|array',
             'rombel_ids.*'        => 'exists:rombels,id',
         ]);
@@ -47,6 +48,7 @@ class UkkController extends Controller
             'jurusan'             => $validated['jurusan'],
             'nama_project'        => $validated['nama_project'] ?? null,
             'tanggal_pelaksanaan' => $validated['tanggal_pelaksanaan'] ?? null,
+            'is_bilingual'        => (bool) ($request->input('is_bilingual', false)),
         ]);
 
         if (!empty($validated['rombel_ids'])) {
@@ -67,6 +69,7 @@ class UkkController extends Controller
             'jurusan'             => 'required|string|max:255',
             'nama_project'        => 'nullable|string|max:255',
             'tanggal_pelaksanaan' => 'nullable|date',
+            'is_bilingual'        => 'nullable|boolean',
             'rombel_ids'          => 'nullable|array',
             'rombel_ids.*'        => 'exists:rombels,id',
         ]);
@@ -77,6 +80,7 @@ class UkkController extends Controller
             'jurusan'             => $validated['jurusan'],
             'nama_project'        => $validated['nama_project'] ?? null,
             'tanggal_pelaksanaan' => $validated['tanggal_pelaksanaan'] ?? null,
+            'is_bilingual'        => (bool) ($request->input('is_bilingual', false)),
         ]);
 
         $ujian->rombels()->sync($validated['rombel_ids'] ?? []);

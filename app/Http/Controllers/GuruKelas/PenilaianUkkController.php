@@ -61,6 +61,8 @@ class PenilaianUkkController extends Controller
     {
         $this->authorizeAsPenguji($ujian);
 
+        $peranPenguji = $ujian->penguji()->where('user_id', Auth::id())->first()?->pivot?->peran ?? 'semua';
+
         $ujian->load([
             'tahunPelajaran',
             'rombels.siswa',
@@ -96,14 +98,27 @@ class PenilaianUkkController extends Controller
             ->groupBy('master_siswa_id')
             ->pluck('cnt', 'master_siswa_id');
 
+        $pengujiPengetahuanMap = UkkNilaiPengetahuan::with('penguji.masterGuru')
+            ->whereIn('soal_id', $allSoalIds)
+            ->whereIn('master_siswa_id', $siswaIdList)
+            ->whereNotNull('penguji_id')
+            ->get()
+            ->groupBy('master_siswa_id')
+            ->map(function ($items) {
+                $p = $items->first()?->penguji;
+                return $p ? ($p->masterGuru?->nama_lengkap ?? $p->name) : null;
+            });
+
         return view('pages.guru-kelas.ukk.show', compact(
-            'ujian', 'siswas', 'totalSoal', 'totalIndikator', 'gradedP', 'gradedK'
+            'ujian', 'siswas', 'totalSoal', 'totalIndikator', 'gradedP', 'gradedK', 'peranPenguji', 'pengujiPengetahuanMap'
         ));
     }
 
     public function penilaian(UkkUjian $ujian, MasterSiswa $siswa)
     {
         $this->authorizeAsPenguji($ujian);
+
+        $peranPenguji = $ujian->penguji()->where('user_id', Auth::id())->first()?->pivot?->peran ?? 'semua';
 
         $ujian->load([
             'instrumens.soalPengetahuan',
@@ -129,13 +144,15 @@ class PenilaianUkkController extends Controller
             ->pluck('nilai', 'indikator_id');
 
         return view('pages.guru-kelas.ukk.penilaian', compact(
-            'ujian', 'siswa', 'nilaiP', 'jawabanP', 'catatanP', 'nilaiK'
+            'ujian', 'siswa', 'nilaiP', 'jawabanP', 'catatanP', 'nilaiK', 'peranPenguji'
         ));
     }
 
     public function simpan(Request $request, UkkUjian $ujian, MasterSiswa $siswa)
     {
         $this->authorizeAsPenguji($ujian);
+
+        $peranPenguji = $ujian->penguji()->where('user_id', Auth::id())->first()?->pivot?->peran ?? 'semua';
 
         $request->validate([
             'pengetahuan'               => 'nullable|array',
@@ -153,27 +170,34 @@ class PenilaianUkkController extends Controller
             DB::table('ukk_instrumen_kategoris')->whereIn('instrumen_id', $instrumenIds)->pluck('id')
         )->pluck('id');
 
-        DB::transaction(function () use ($request, $siswa, $validSoalIds, $validIndIds) {
-            foreach ($request->input('pengetahuan', []) as $soalId => $nilai) {
-                if (!$validSoalIds->contains((int) $soalId)) continue;
-                $catatan = $request->input("catatan_pengetahuan.{$soalId}");
-                $record  = UkkNilaiPengetahuan::firstOrNew([
-                    'master_siswa_id' => $siswa->id,
-                    'soal_id'         => (int) $soalId,
-                ]);
-                $record->penguji_id = Auth::id();
-                $record->nilai      = ($nilai !== null && $nilai !== '') ? (int) $nilai : null;
-                if ($catatan !== null) {
-                    $record->catatan_penguji = $catatan;
+        DB::transaction(function () use ($request, $siswa, $validSoalIds, $validIndIds, $peranPenguji) {
+            // Simpan penilaian pengetahuan jika peran penguji adalah 'semua' atau 'pengetahuan'
+            if (in_array($peranPenguji, ['semua', 'pengetahuan'])) {
+                foreach ($request->input('pengetahuan', []) as $soalId => $nilai) {
+                    if (!$validSoalIds->contains((int) $soalId)) continue;
+                    $catatan = $request->input("catatan_pengetahuan.{$soalId}");
+                    $record  = UkkNilaiPengetahuan::firstOrNew([
+                        'master_siswa_id' => $siswa->id,
+                        'soal_id'         => (int) $soalId,
+                    ]);
+                    $record->penguji_id = Auth::id();
+                    $record->nilai      = ($nilai !== null && $nilai !== '') ? (int) $nilai : null;
+                    if ($catatan !== null) {
+                        $record->catatan_penguji = $catatan;
+                    }
+                    $record->save();
                 }
-                $record->save();
             }
-            foreach ($request->input('keterampilan', []) as $indId => $nilai) {
-                if (!$validIndIds->contains((int) $indId)) continue;
-                UkkNilaiKeterampilan::updateOrCreate(
-                    ['master_siswa_id' => $siswa->id, 'indikator_id' => (int) $indId],
-                    ['nilai' => (int) $nilai, 'penguji_id' => Auth::id()]
-                );
+
+            // Simpan penilaian keterampilan jika peran penguji adalah 'semua' atau 'keterampilan'
+            if (in_array($peranPenguji, ['semua', 'keterampilan'])) {
+                foreach ($request->input('keterampilan', []) as $indId => $nilai) {
+                    if (!$validIndIds->contains((int) $indId)) continue;
+                    UkkNilaiKeterampilan::updateOrCreate(
+                        ['master_siswa_id' => $siswa->id, 'indikator_id' => (int) $indId],
+                        ['nilai' => (int) $nilai, 'penguji_id' => Auth::id()]
+                    );
+                }
             }
         });
 

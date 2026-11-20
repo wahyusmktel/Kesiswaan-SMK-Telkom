@@ -53,6 +53,21 @@
                                 TP {{ $ujian->tahunPelajaran->tahun }}
                             </span>
                         @endif
+                        @if($ujian->is_bilingual)
+                            <span class="text-xs font-black px-2.5 py-0.5 rounded-lg bg-purple-100 text-purple-800 border border-purple-200">
+                                🌐 Wawancara Bilingual (EN)
+                            </span>
+                        @endif
+                        <span class="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-amber-50 text-amber-800 border border-amber-200">
+                            Tugas Anda:
+                            @if($peranPenguji === 'pengetahuan')
+                                🌐 Penguji Pengetahuan (Bilingual)
+                            @elseif($peranPenguji === 'keterampilan')
+                                🛠️ Penguji Keterampilan
+                            @else
+                                👥 Semua Aspek
+                            @endif
+                        </span>
                     </div>
                     <h3 class="text-lg font-black text-slate-900 mt-1 flex items-center gap-2 flex-wrap">
                         <span>{{ $siswa->nama_lengkap }}</span>
@@ -106,12 +121,19 @@
             <button type="button" @click="activeTab = 'pengetahuan'"
                 :class="activeTab === 'pengetahuan' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'"
                 class="flex-1 py-2.5 px-4 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2">
-                <span>📝</span> Aspek Pengetahuan (Esai Siswa)
+                <span>{{ $ujian->is_bilingual ? '🌐' : '📝' }}</span>
+                <span>{{ $ujian->is_bilingual ? 'Aspek Pengetahuan (Wawancara Bilingual)' : 'Aspek Pengetahuan (Esai Siswa)' }}</span>
+                @if($peranPenguji === 'pengetahuan')
+                    <span class="px-2 py-0.5 rounded-md bg-white/20 text-white text-[10px] font-bold">Fokus Anda</span>
+                @endif
             </button>
             <button type="button" @click="activeTab = 'keterampilan'"
                 :class="activeTab === 'keterampilan' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'"
                 class="flex-1 py-2.5 px-4 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2">
                 <span>⚙️</span> Aspek Keterampilan Praktik
+                @if($peranPenguji === 'keterampilan')
+                    <span class="px-2 py-0.5 rounded-md bg-white/20 text-white text-[10px] font-bold">Fokus Anda</span>
+                @endif
             </button>
             <button type="button" @click="activeTab = 'all'"
                 :class="activeTab === 'all' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'"
@@ -140,8 +162,22 @@
                                     {{ $loop->iteration }}
                                 </span>
                                 <div>
-                                    <h4 class="font-black text-slate-900 text-base">{{ $ins->nama_instrumen }} &mdash; Aspek Pengetahuan</h4>
-                                    <p class="text-xs text-slate-500">Bobot Pengetahuan: <strong class="text-blue-700">{{ $ins->bobot_pengetahuan }}%</strong> &middot; Koreksi esai siswa berdasarkan kunci jawaban acuan.</p>
+                                    <h4 class="font-black text-slate-900 text-base">
+                                        {{ $ins->nama_instrumen }} &mdash;
+                                        @if($ujian->is_bilingual)
+                                            Aspek Pengetahuan (Wawancara Bilingual)
+                                        @else
+                                            Aspek Pengetahuan (Esai)
+                                        @endif
+                                    </h4>
+                                    <p class="text-xs text-slate-500">
+                                        Bobot Pengetahuan: <strong class="text-blue-700">{{ $ins->bobot_pengetahuan }}%</strong> &middot;
+                                        @if($ujian->is_bilingual)
+                                            Wawancara lisan langsung dalam bahasa Inggris berpedoman pada kunci jawaban acuan.
+                                        @else
+                                            Koreksi esai siswa berdasarkan kunci jawaban acuan.
+                                        @endif
+                                    </p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
@@ -166,7 +202,9 @@
                                             {{ $loop->iteration }}
                                         </span>
                                         <div>
-                                            <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">Pertanyaan Soal Esai:</span>
+                                            <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                                {{ $ujian->is_bilingual ? 'Pertanyaan Wawancara (English):' : 'Pertanyaan Soal Esai:' }}
+                                            </span>
                                             <h5 class="text-base font-bold text-slate-900 leading-relaxed mt-0.5">
                                                 {{ $soal->pertanyaan }}
                                             </h5>
@@ -206,30 +244,42 @@
                                     @endif
                                 </div>
 
-                                {{-- Jawaban Siswa --}}
-                                <div class="bg-white border-2 border-slate-200 rounded-2xl p-4 text-xs shadow-sm">
-                                    <div class="flex items-center justify-between gap-2 mb-1.5">
-                                        <span class="font-bold text-slate-800 flex items-center gap-1.5">
-                                            <span>✍️</span> Jawaban Siswa ({{ $siswa->nama_lengkap }}):
-                                        </span>
+                                {{-- Jawaban Siswa / Mode Wawancara --}}
+                                @if($ujian->is_bilingual)
+                                    <div class="bg-gradient-to-r from-purple-50/70 to-indigo-50/70 border border-purple-200 rounded-2xl p-4 text-xs shadow-sm">
+                                        <div class="flex items-center gap-1.5 font-bold text-purple-900 mb-1">
+                                            <span>🎙️</span>
+                                            <span>Wawancara Lisan Langsung (Bilingual / English Interview):</span>
+                                        </div>
+                                        <p class="text-purple-950 leading-relaxed pl-5 font-medium">
+                                            Ajukan pertanyaan di atas secara lisan dalam bahasa Inggris kepada siswa. Dengarkan respon/penjelasan siswa dan berikan penilaian <strong>Benar (1)</strong> atau <strong>Salah (0)</strong> di bawah. Anda juga dapat mengetikkan catatan respon siswa pada kolom catatan penguji.
+                                        </p>
+                                    </div>
+                                @else
+                                    <div class="bg-white border-2 border-slate-200 rounded-2xl p-4 text-xs shadow-sm">
+                                        <div class="flex items-center justify-between gap-2 mb-1.5">
+                                            <span class="font-bold text-slate-800 flex items-center gap-1.5">
+                                                <span>✍️</span> Jawaban Siswa ({{ $siswa->nama_lengkap }}):
+                                            </span>
+                                            @if($hasAnswer)
+                                                <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                                                    Tersedia
+                                                </span>
+                                            @else
+                                                <span class="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                                                    Belum Diisi Siswa
+                                                </span>
+                                            @endif
+                                        </div>
                                         @if($hasAnswer)
-                                            <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                                                Tersedia
-                                            </span>
+                                            <div class="text-slate-900 font-sans text-sm whitespace-pre-line leading-relaxed bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                                                {{ $jSiswa }}
+                                            </div>
                                         @else
-                                            <span class="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
-                                                Belum Diisi Siswa
-                                            </span>
+                                            <p class="text-slate-400 italic py-2">(Siswa belum mengisi atau mengirimkan jawaban esai ini)</p>
                                         @endif
                                     </div>
-                                    @if($hasAnswer)
-                                        <div class="text-slate-900 font-sans text-sm whitespace-pre-line leading-relaxed bg-slate-50/50 p-3 rounded-xl border border-slate-100">
-                                            {{ $jSiswa }}
-                                        </div>
-                                    @else
-                                        <p class="text-slate-400 italic py-2">(Siswa belum mengisi atau mengirimkan jawaban esai ini)</p>
-                                    @endif
-                                </div>
+                                @endif
 
                                 {{-- Penilaian Penguji & Catatan --}}
                                 <div class="pt-2 border-t border-slate-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -406,7 +456,7 @@ function penilaianForm() {
 
     return {
         saving: false,
-        activeTab: 'pengetahuan',
+        activeTab: '{{ $peranPenguji === "keterampilan" ? "keterampilan" : "pengetahuan" }}',
         toasts: [],
         toastSeq: 0,
         nilaiP: { ...INIT_P },

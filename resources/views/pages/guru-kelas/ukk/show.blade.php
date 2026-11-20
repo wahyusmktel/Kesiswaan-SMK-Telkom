@@ -19,10 +19,25 @@
                             </a>
                             <h3 class="text-xl font-black">👨‍🎓 Daftar Siswa</h3>
                         </div>
-                        <p class="text-orange-100 text-sm">
+                        <p class="text-orange-100 text-sm flex items-center gap-2 flex-wrap mt-0.5">
                             <span class="font-bold">{{ $ujian->nama_ujian }}</span>
                             &middot; {{ $ujian->jurusan }}
                             @if($ujian->tahunPelajaran) &middot; {{ $ujian->tahunPelajaran->tahun }} @endif
+                            @if($ujian->is_bilingual)
+                                <span class="px-2 py-0.5 rounded-lg bg-purple-700/80 text-purple-100 text-xs font-black border border-purple-400">
+                                    🌐 Wawancara Bilingual (EN)
+                                </span>
+                            @endif
+                            <span class="px-2 py-0.5 rounded-lg bg-white/20 text-white text-xs font-bold">
+                                Tugas:
+                                @if($peranPenguji === 'pengetahuan')
+                                    🌐 Penguji Pengetahuan (Bilingual)
+                                @elseif($peranPenguji === 'keterampilan')
+                                    🛠️ Penguji Keterampilan
+                                @else
+                                    👥 Semua Aspek
+                                @endif
+                            </span>
                         </p>
                     </div>
                     <div class="flex items-center gap-3 bg-white/20 rounded-xl px-4 py-2 shrink-0">
@@ -104,6 +119,11 @@
                                         </div>
                                         <span class="text-[10px] font-bold text-blue-600 w-8 text-right">{{ $pPct }}%</span>
                                     </div>
+                                    @if(!empty($pengujiPengetahuanMap[$siswa->id]))
+                                        <p class="text-[10px] text-purple-700 font-semibold pl-1">
+                                            🎙️ Diuji oleh: {{ $pengujiPengetahuanMap[$siswa->id] }}
+                                        </p>
+                                    @endif
                                     @endif
                                     @if($totalIndikator > 0)
                                     <div class="flex items-center gap-2">

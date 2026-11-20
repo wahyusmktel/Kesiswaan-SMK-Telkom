@@ -379,7 +379,7 @@
 
             {{-- 1. Aspek Pengetahuan --}}
             @if($ins->soalPengetahuan->isNotEmpty())
-            <div class="aspect-head p">1. Penilaian Aspek Pengetahuan</div>
+            <div class="aspect-head p">1. Penilaian Aspek Pengetahuan {{ $ujian->is_bilingual ? '(Wawancara Bilingual / English)' : '' }}</div>
             <table class="soal-table">
                 <thead>
                     <tr>

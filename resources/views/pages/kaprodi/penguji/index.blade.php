@@ -56,7 +56,7 @@
             @forelse($ujians as $ujian)
                 {{-- UJIAN CARD --}}
                 <div class="bg-white rounded-2xl border border-gray-200 shadow-sm mb-5 overflow-hidden hover:shadow-md transition-shadow"
-                    x-data="ujianCard({{ $ujian->id }}, {{ json_encode($ujian->penguji->map(fn($u) => ['id' => $u->id, 'nama' => $u->masterGuru?->nama_lengkap ?? $u->name, 'kode' => $u->masterGuru?->kode_guru ?? '—', 'avatar' => $u->avatar])->values()->all()) }})">
+                    x-data="ujianCard({{ $ujian->id }}, {{ json_encode($ujian->penguji->map(fn($u) => ['id' => $u->id, 'nama' => $u->masterGuru?->nama_lengkap ?? $u->name, 'kode' => $u->masterGuru?->kode_guru ?? '—', 'avatar' => $u->avatar, 'peran' => $u->pivot?->peran ?? 'semua'])->values()->all()) }}, {{ $ujian->is_bilingual ? 'true' : 'false' }})">
 
                     {{-- Card header --}}
                     <div class="flex flex-col sm:flex-row sm:items-center gap-4 p-5 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-slate-50">
@@ -66,6 +66,11 @@
                                 <span class="px-2 py-0.5 rounded-lg bg-orange-50 text-orange-700 text-xs font-bold border border-orange-100">
                                     {{ $ujian->jurusan }}
                                 </span>
+                                @if($ujian->is_bilingual)
+                                    <span class="px-2 py-0.5 rounded-lg bg-purple-100 text-purple-800 text-xs font-black border border-purple-200">
+                                        🌐 Wawancara Bilingual (EN)
+                                    </span>
+                                @endif
                                 @if($ujian->tanggal_pelaksanaan)
                                     <span class="px-2 py-0.5 rounded-lg bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-100">
                                         📅 {{ $ujian->tanggal_pelaksanaan->format('d M Y') }}
@@ -85,27 +90,46 @@
 
                     {{-- Penguji chips --}}
                     <div class="p-5">
-                        <div class="flex flex-wrap gap-2 mb-4 min-h-[2.5rem] items-center">
+                        <div class="flex flex-wrap gap-2.5 mb-4 min-h-[2.5rem] items-center">
                             <template x-if="penguji.length === 0">
                                 <span class="text-sm text-gray-400 italic">Belum ada penguji yang ditambahkan.</span>
                             </template>
                             <template x-for="p in penguji" :key="p.id">
-                                <div class="flex items-center gap-2 pl-1 pr-2 py-1 bg-orange-50 border border-orange-200 rounded-full">
+                                <div class="flex items-center gap-2 pl-1.5 pr-2 py-1.5 rounded-2xl border transition-all"
+                                    :class="{
+                                        'bg-purple-50/70 border-purple-200 text-purple-900': p.peran === 'pengetahuan',
+                                        'bg-amber-50/70 border-amber-200 text-amber-900':   p.peran === 'keterampilan',
+                                        'bg-slate-50 border-slate-200 text-slate-800':       p.peran === 'semua' || !p.peran
+                                    }">
                                     {{-- Avatar --}}
-                                    <div class="w-7 h-7 rounded-full overflow-hidden bg-orange-200 shrink-0 flex items-center justify-center">
+                                    <div class="w-8 h-8 rounded-full overflow-hidden bg-white shadow-sm shrink-0 flex items-center justify-center">
                                         <template x-if="p.avatar">
                                             <img :src="p.avatar" :alt="p.nama" class="w-full h-full object-cover">
                                         </template>
                                         <template x-if="!p.avatar">
-                                            <span class="text-orange-700 text-[10px] font-black" x-text="p.nama.charAt(0).toUpperCase()"></span>
+                                            <span class="text-slate-700 text-xs font-black" x-text="p.nama.charAt(0).toUpperCase()"></span>
                                         </template>
                                     </div>
                                     <div class="leading-tight">
-                                        <span class="text-xs font-bold text-orange-800" x-text="p.nama"></span>
-                                        <span class="text-[10px] text-orange-500 block" x-text="p.kode"></span>
+                                        <span class="text-xs font-black block" x-text="p.nama"></span>
+                                        <span class="text-[10px] text-gray-400 block" x-text="p.kode"></span>
                                     </div>
+
+                                    {{-- Dropdown / Select Peran --}}
+                                    <select :value="p.peran || 'semua'" @change="changePeran(p, $event.target.value)"
+                                        class="text-[11px] font-bold py-1 px-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-orange-400 cursor-pointer bg-white"
+                                        :class="{
+                                            'text-purple-700 font-extrabold border-purple-300': p.peran === 'pengetahuan',
+                                            'text-amber-700 font-extrabold border-amber-300':   p.peran === 'keterampilan',
+                                            'text-slate-700 font-bold':                         p.peran === 'semua' || !p.peran
+                                        }">
+                                        <option value="pengetahuan">🌐 Pengetahuan (Bilingual)</option>
+                                        <option value="keterampilan">🛠️ Keterampilan</option>
+                                        <option value="semua">👥 Semua Aspek</option>
+                                    </select>
+
                                     <button @click="removePenguji(p.id)"
-                                        class="ml-1 w-5 h-5 rounded-full bg-orange-200 hover:bg-red-400 text-orange-700 hover:text-white flex items-center justify-center text-xs font-black transition-colors"
+                                        class="w-6 h-6 rounded-full bg-black/5 hover:bg-red-500 hover:text-white flex items-center justify-center text-xs font-black transition-colors"
                                         title="Hapus penguji">
                                         &times;
                                     </button>
@@ -128,19 +152,47 @@
                         class="fixed inset-0 z-[1000] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
                         @click.self="modalOpen = false">
 
-                        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col max-h-[80vh]"
+                        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[85vh]"
                             @click.stop>
 
                             {{-- Modal header --}}
                             <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-amber-50 rounded-t-2xl shrink-0">
                                 <div>
-                                    <p class="font-black text-gray-900">Pilih Penguji</p>
-                                    <p class="text-xs text-gray-400">Pilih guru dari daftar Guru Kelas</p>
+                                    <p class="font-black text-gray-900">Pilih Penguji UKK</p>
+                                    <p class="text-xs text-gray-500">Pilih guru dan tentukan perannya pada ujian ini</p>
                                 </div>
                                 <button @click="modalOpen = false"
                                     class="w-8 h-8 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 font-bold transition-colors">
                                     &times;
                                 </button>
+                            </div>
+
+                            {{-- Role Selector for new penguji --}}
+                            <div class="px-5 py-3 border-b border-gray-100 bg-slate-50/50 shrink-0">
+                                <label class="block text-xs font-black text-gray-700 mb-2">Pilih Tugas / Peran Penguji:</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <label class="flex flex-col items-center justify-center p-2 rounded-xl border-2 text-center cursor-pointer transition-all text-xs"
+                                        :class="selectedPeran === 'pengetahuan' ? 'bg-purple-50 border-purple-500 text-purple-900 font-black shadow-sm' : 'bg-white border-gray-200 text-gray-600 font-semibold hover:border-gray-300'">
+                                        <input type="radio" value="pengetahuan" x-model="selectedPeran" class="sr-only">
+                                        <span class="text-base mb-0.5">🌐</span>
+                                        <span>Pengetahuan</span>
+                                        <span class="text-[10px] text-purple-600 font-normal">(Bilingual / B. Inggris)</span>
+                                    </label>
+                                    <label class="flex flex-col items-center justify-center p-2 rounded-xl border-2 text-center cursor-pointer transition-all text-xs"
+                                        :class="selectedPeran === 'keterampilan' ? 'bg-amber-50 border-amber-500 text-amber-900 font-black shadow-sm' : 'bg-white border-gray-200 text-gray-600 font-semibold hover:border-gray-300'">
+                                        <input type="radio" value="keterampilan" x-model="selectedPeran" class="sr-only">
+                                        <span class="text-base mb-0.5">🛠️</span>
+                                        <span>Keterampilan</span>
+                                        <span class="text-[10px] text-amber-600 font-normal">(Praktik Produktif)</span>
+                                    </label>
+                                    <label class="flex flex-col items-center justify-center p-2 rounded-xl border-2 text-center cursor-pointer transition-all text-xs"
+                                        :class="selectedPeran === 'semua' ? 'bg-emerald-50 border-emerald-500 text-emerald-900 font-black shadow-sm' : 'bg-white border-gray-200 text-gray-600 font-semibold hover:border-gray-300'">
+                                        <input type="radio" value="semua" x-model="selectedPeran" class="sr-only">
+                                        <span class="text-base mb-0.5">👥</span>
+                                        <span>Semua Aspek</span>
+                                        <span class="text-[10px] text-emerald-600 font-normal">(P &amp; K)</span>
+                                    </label>
+                                </div>
                             </div>
 
                             {{-- Search --}}
@@ -149,7 +201,7 @@
                                     <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
                                     </svg>
-                                    <input x-model="search" type="text" placeholder="Cari nama guru…"
+                                    <input x-model="search" type="text" placeholder="Cari nama guru (termasuk guru bahasa inggris)…"
                                         class="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 bg-gray-50">
                                 </div>
                             </div>
@@ -178,6 +230,32 @@
                                             <p class="text-sm font-bold text-gray-800 truncate" x-text="g.nama"></p>
                                             <p class="text-xs text-gray-400" x-text="g.kode"></p>
                                         </div>
+
+                                        <template x-if="isAssigned(g.id)">
+                                            <span class="text-xs font-bold text-emerald-600 shrink-0">✓ Sudah Ditugaskan</span>
+                                        </template>
+                                        <template x-if="!isAssigned(g.id)">
+                                            <span class="text-xs font-black text-orange-600 shrink-0">+ Tugaskan</span>
+                                        </template>
+                                    </button>
+                                </template>
+
+                                <div x-show="filteredGuru.length === 0" class="text-center py-8 text-gray-400 text-sm italic">
+                                    Tidak ada guru yang cocok.
+                                </div>
+                            </div>
+
+                            {{-- Modal footer --}}
+                            <div class="px-5 py-3 border-t border-gray-100 shrink-0 flex justify-end">
+                                <button @click="modalOpen = false"
+                                    class="px-5 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-sm font-bold text-gray-700 transition-colors">
+                                    Tutup
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
 
                                         <template x-if="isAssigned(g.id)">
                                             <span class="text-xs font-bold text-emerald-600 shrink-0">✓ Sudah</span>
@@ -238,13 +316,14 @@
         };
     }
 
-    function ujianCard(ujianId, initialPenguji) {
+    function ujianCard(ujianId, initialPenguji, isBilingual = false) {
         return {
             ujianId,
             penguji: initialPenguji,
             modalOpen: false,
             search: '',
             assigning: false,
+            selectedPeran: isBilingual ? 'pengetahuan' : 'semua',
 
             get filteredGuru() {
                 const q = this.search.toLowerCase().trim();
@@ -258,6 +337,7 @@
 
             openModal() {
                 this.search = '';
+                this.selectedPeran = isBilingual ? 'pengetahuan' : 'semua';
                 this.modalOpen = true;
             },
 
@@ -272,7 +352,7 @@
                             'Accept': 'application/json',
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                         },
-                        body: JSON.stringify({ user_id: guru.id }),
+                        body: JSON.stringify({ user_id: guru.id, peran: this.selectedPeran }),
                     });
                     const data = await res.json();
                     if (!res.ok) {
@@ -285,6 +365,29 @@
                     window.dispatchEvent(new CustomEvent('show-toast', {detail:{msg:'Koneksi gagal.', type:'error'}}));
                 } finally {
                     this.assigning = false;
+                }
+            },
+
+            async changePeran(pengujiItem, newPeran) {
+                try {
+                    const res = await fetch('/kaprodi/ukk/penguji/' + this.ujianId + '/' + pengujiItem.id, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        },
+                        body: JSON.stringify({ peran: newPeran }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok) {
+                        window.dispatchEvent(new CustomEvent('show-toast', {detail:{msg: data.message || 'Gagal mengubah peran.', type:'error'}}));
+                        return;
+                    }
+                    pengujiItem.peran = newPeran;
+                    window.dispatchEvent(new CustomEvent('show-toast', {detail:{msg: data.message, type:'success'}}));
+                } catch {
+                    window.dispatchEvent(new CustomEvent('show-toast', {detail:{msg:'Koneksi gagal.', type:'error'}}));
                 }
             },
 

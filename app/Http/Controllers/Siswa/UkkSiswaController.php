@@ -28,6 +28,8 @@ class UkkSiswaController extends Controller
 
     private function authorizeStudent(UkkUjian $ujian, MasterSiswa $siswa): void
     {
+        abort_if($ujian->is_bilingual, 403, 'Ujian ini menggunakan sistem wawancara bilingual langsung dengan penguji dan tidak dikerjakan secara mandiri di sini.');
+
         $rombelIds = $siswa->rombels->pluck('id');
         $isEligible = $ujian->rombels()->whereIn('rombels.id', $rombelIds)->exists();
 
@@ -44,6 +46,7 @@ class UkkSiswaController extends Controller
             'instrumens.soalPengetahuan',
             'rombels.kelas',
         ])
+        ->where('is_bilingual', false)
         ->whereHas('rombels', fn ($q) => $q->whereIn('rombels.id', $rombelIds))
         ->latest('tanggal_pelaksanaan')
         ->latest()
