@@ -10,6 +10,7 @@ use App\Models\UkkInstrumenIndikator;
 use App\Models\UkkInstrumenSoal;
 use App\Models\UkkNilaiKeterampilan;
 use App\Models\UkkNilaiPengetahuan;
+use App\Models\UkkNilaiSikap;
 use App\Models\UkkUjian;
 use App\Models\UserDigitalSignature;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -143,8 +144,12 @@ class PenilaianUkkController extends Controller
             ->whereIn('indikator_id', $allIndikatorIds)
             ->pluck('nilai', 'indikator_id');
 
+        $nilaiSikap = UkkNilaiSikap::where('ukk_ujian_id', $ujian->id)
+            ->where('master_siswa_id', $siswa->id)
+            ->first();
+
         return view('pages.guru-kelas.ukk.penilaian', compact(
-            'ujian', 'siswa', 'nilaiP', 'jawabanP', 'catatanP', 'nilaiK', 'peranPenguji'
+            'ujian', 'siswa', 'nilaiP', 'jawabanP', 'catatanP', 'nilaiK', 'peranPenguji', 'nilaiSikap'
         ));
     }
 
@@ -161,6 +166,14 @@ class PenilaianUkkController extends Controller
             'catatan_pengetahuan.*'     => 'nullable|string',
             'keterampilan'              => 'nullable|array',
             'keterampilan.*'            => 'integer|in:0,1,2,3',
+            'sikap'                     => 'nullable|array',
+            'sikap.kerapian'            => 'nullable|string|in:kurang,cukup,baik,sangat_baik',
+            'sikap.ketelitian'          => 'nullable|string|in:kurang,cukup,baik,sangat_baik',
+            'sikap.kedisiplinan'        => 'nullable|string|in:kurang,cukup,baik,sangat_baik',
+            'sikap.tanggung_jawab'      => 'nullable|string|in:kurang,cukup,baik,sangat_baik',
+            'sikap.inisiatif'           => 'nullable|string|in:kurang,cukup,baik,sangat_baik',
+            'sikap.kesimpulan'          => 'nullable|string|max:50',
+            'sikap.catatan'             => 'nullable|string',
         ]);
 
         // Verify soal & indikator belong to this ujian
@@ -170,7 +183,7 @@ class PenilaianUkkController extends Controller
             DB::table('ukk_instrumen_kategoris')->whereIn('instrumen_id', $instrumenIds)->pluck('id')
         )->pluck('id');
 
-        DB::transaction(function () use ($request, $siswa, $validSoalIds, $validIndIds, $peranPenguji) {
+        DB::transaction(function () use ($request, $ujian, $siswa, $validSoalIds, $validIndIds, $peranPenguji) {
             // Simpan penilaian pengetahuan jika peran penguji adalah 'semua' atau 'pengetahuan'
             if (in_array($peranPenguji, ['semua', 'pengetahuan'])) {
                 foreach ($request->input('pengetahuan', []) as $soalId => $nilai) {
@@ -197,6 +210,26 @@ class PenilaianUkkController extends Controller
                         ['master_siswa_id' => $siswa->id, 'indikator_id' => (int) $indId],
                         ['nilai' => (int) $nilai, 'penguji_id' => Auth::id()]
                     );
+                }
+            }
+
+            // Simpan penilaian sikap kerja (dilakukan oleh penguji keterampilan atau penguji semua)
+            if (in_array($peranPenguji, ['semua', 'keterampilan']) && $request->has('sikap')) {
+                $sikapInput = $request->input('sikap', []);
+                if (is_array($sikapInput)) {
+                    $recordSikap = UkkNilaiSikap::firstOrNew([
+                        'ukk_ujian_id'    => $ujian->id,
+                        'master_siswa_id' => $siswa->id,
+                    ]);
+                    $recordSikap->penguji_id     = Auth::id();
+                    $recordSikap->kerapian       = $sikapInput['kerapian'] ?? null;
+                    $recordSikap->ketelitian     = $sikapInput['ketelitian'] ?? null;
+                    $recordSikap->kedisiplinan   = $sikapInput['kedisiplinan'] ?? null;
+                    $recordSikap->tanggung_jawab = $sikapInput['tanggung_jawab'] ?? null;
+                    $recordSikap->inisiatif      = $sikapInput['inisiatif'] ?? null;
+                    $recordSikap->kesimpulan     = $sikapInput['kesimpulan'] ?? null;
+                    $recordSikap->catatan        = $sikapInput['catatan'] ?? null;
+                    $recordSikap->save();
                 }
             }
         });
@@ -307,8 +340,12 @@ class PenilaianUkkController extends Controller
             ? round($instrumenScores->avg('nilai_akhir'), 1)
             : 0;
 
+        $nilaiSikap = UkkNilaiSikap::where('ukk_ujian_id', $ujian->id)
+            ->where('master_siswa_id', $siswa->id)
+            ->first();
+
         $pdf = Pdf::loadView('pdf.penilaian-ukk', compact(
-            'ujian', 'siswa', 'nilaiP', 'nilaiK',
+            'ujian', 'siswa', 'nilaiP', 'nilaiK', 'nilaiSikap',
             'settings', 'logoBase64',
             'user', 'ttdBase64', 'digDoc', 'qrBase64',
             'instrumenScores', 'nilaiAkhirFinal'

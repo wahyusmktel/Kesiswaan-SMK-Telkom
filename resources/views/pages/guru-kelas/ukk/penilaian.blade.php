@@ -135,6 +135,11 @@
                     <span class="px-2 py-0.5 rounded-md bg-white/20 text-white text-[10px] font-bold">Fokus Anda</span>
                 @endif
             </button>
+            <button type="button" @click="activeTab = 'sikap'"
+                :class="activeTab === 'sikap' ? 'bg-amber-500 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'"
+                class="flex-1 py-2.5 px-4 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2">
+                <span>🌟</span> Aspek Sikap Kerja
+            </button>
             <button type="button" @click="activeTab = 'all'"
                 :class="activeTab === 'all' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'"
                 class="py-2.5 px-5 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2">
@@ -391,6 +396,156 @@
                 @endforeach
             </div>
 
+            {{-- ══ ASPEK SIKAP KERJA SECTION ══ --}}
+            <div x-show="activeTab === 'sikap' || activeTab === 'all'" class="space-y-6">
+                <div class="bg-white rounded-3xl border border-gray-200/80 shadow-sm overflow-hidden">
+                    {{-- Section Title --}}
+                    <div class="px-6 py-4 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
+                        <div class="flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-black text-xs shadow-sm">
+                                🌟
+                            </span>
+                            <div>
+                                <h4 class="font-black text-slate-900 text-base">Penilaian Aspek Sikap (Sikap Kerja)</h4>
+                                <p class="text-xs text-slate-500">Penilaian etos, disiplin, dan sikap kerja siswa selama pelaksanaan UKK berpedoman pada 5 indikator.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold px-3 py-1 bg-white rounded-xl border border-amber-200 text-amber-800"
+                                x-text="sikapCount() + ' / 5 Indikator Terisi'">
+                            </span>
+                        </div>
+                    </div>
+
+                    {{-- Form Table Sikap --}}
+                    <div class="p-6 space-y-6">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-700 text-xs uppercase font-extrabold">
+                                        <th class="py-3 px-4 w-12 text-center">No</th>
+                                        <th class="py-3 px-4">Indikator Pencapaian Kompetensi</th>
+                                        <th class="py-3 px-4 text-center" colspan="4">Tingkat Pencapaian Kompetensi</th>
+                                    </tr>
+                                    <tr class="bg-slate-100/60 border-b border-slate-200 text-slate-600 text-[11px] font-bold">
+                                        <th class="py-2 px-4"></th>
+                                        <th class="py-2 px-4"></th>
+                                        <th class="py-2 px-2 text-center w-28">Kurang (3)</th>
+                                        <th class="py-2 px-2 text-center w-28">Cukup (4)</th>
+                                        <th class="py-2 px-2 text-center w-28">Baik (5)</th>
+                                        <th class="py-2 px-2 text-center w-28">Sangat Baik (6)</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    @php
+                                        $indikatorSikapList = [
+                                            'kerapian'       => '1. Kerapian',
+                                            'ketelitian'     => '2. Ketelitian',
+                                            'kedisiplinan'   => '3. Kedisiplinan',
+                                            'tanggung_jawab' => '4. Tanggung Jawab',
+                                            'inisiatif'      => '5. Inisiatif',
+                                        ];
+                                    @endphp
+                                    @foreach($indikatorSikapList as $key => $label)
+                                    <tr class="hover:bg-slate-50/70 transition-colors">
+                                        <td class="py-3.5 px-4 text-center font-bold text-slate-400">{{ $loop->iteration }}</td>
+                                        <td class="py-3.5 px-4 font-bold text-slate-800">{{ str_replace($loop->iteration . '. ', '', $label) }}</td>
+                                        
+                                        {{-- Kurang --}}
+                                        <td class="py-2 px-2 text-center">
+                                            <button type="button" @click="setSikap('{{ $key }}', 'kurang')"
+                                                :class="sikap.{{ $key }} === 'kurang' ? 'bg-rose-600 border-rose-600 text-white shadow-sm' : 'bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100'"
+                                                class="w-full py-2 rounded-xl text-xs font-bold border transition-all active:scale-95">
+                                                Kurang
+                                            </button>
+                                        </td>
+                                        {{-- Cukup --}}
+                                        <td class="py-2 px-2 text-center">
+                                            <button type="button" @click="setSikap('{{ $key }}', 'cukup')"
+                                                :class="sikap.{{ $key }} === 'cukup' ? 'bg-amber-500 border-amber-500 text-white shadow-sm' : 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100'"
+                                                class="w-full py-2 rounded-xl text-xs font-bold border transition-all active:scale-95">
+                                                Cukup
+                                            </button>
+                                        </td>
+                                        {{-- Baik --}}
+                                        <td class="py-2 px-2 text-center">
+                                            <button type="button" @click="setSikap('{{ $key }}', 'baik')"
+                                                :class="sikap.{{ $key }} === 'baik' ? 'bg-blue-600 border-blue-600 text-white shadow-sm' : 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100'"
+                                                class="w-full py-2 rounded-xl text-xs font-bold border transition-all active:scale-95">
+                                                Baik
+                                            </button>
+                                        </td>
+                                        {{-- Sangat Baik --}}
+                                        <td class="py-2 px-2 text-center">
+                                            <button type="button" @click="setSikap('{{ $key }}', 'sangat_baik')"
+                                                :class="sikap.{{ $key }} === 'sangat_baik' ? 'bg-emerald-600 border-emerald-600 text-white shadow-sm' : 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'"
+                                                class="w-full py-2 rounded-xl text-xs font-bold border transition-all active:scale-95">
+                                                Sangat Baik
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                    {{-- Rata-Rata Row --}}
+                                    <tr class="bg-slate-50/80 font-black text-xs text-slate-700 border-t-2 border-slate-200">
+                                        <td class="py-3 px-4 text-center"></td>
+                                        <td class="py-3 px-4">Rata-rata Pencapaian Kompetensi</td>
+                                        <td class="py-3 px-2 text-center text-rose-700" x-text="sikapDist('kurang') || '-'"></td>
+                                        <td class="py-3 px-2 text-center text-amber-700" x-text="sikapDist('cukup') || '-'"></td>
+                                        <td class="py-3 px-2 text-center text-blue-700" x-text="sikapDist('baik') || '-'"></td>
+                                        <td class="py-3 px-2 text-center text-emerald-700" x-text="sikapDist('sangat_baik') || '-'"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {{-- Kesimpulan & Catatan Sikap Kerja --}}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 pt-4 border-t border-slate-200">
+                            {{-- Kesimpulan --}}
+                            <div class="bg-amber-50/60 border border-amber-200/80 rounded-2xl p-4 space-y-2">
+                                <label class="block text-xs font-black text-amber-900">
+                                    Kesimpulan Aspek Sikap:
+                                </label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button type="button" @click="sikap.kesimpulan = 'Kurang Baik'"
+                                        :class="sikap.kesimpulan === 'Kurang Baik' ? 'bg-rose-600 text-white font-black' : 'bg-white text-rose-700 border border-rose-200 hover:bg-rose-50 font-bold'"
+                                        class="py-2 px-3 rounded-xl text-xs transition-all">
+                                        Kurang Baik
+                                    </button>
+                                    <button type="button" @click="sikap.kesimpulan = 'Cukup Baik'"
+                                        :class="sikap.kesimpulan === 'Cukup Baik' ? 'bg-amber-500 text-white font-black' : 'bg-white text-amber-700 border border-amber-200 hover:bg-amber-50 font-bold'"
+                                        class="py-2 px-3 rounded-xl text-xs transition-all">
+                                        Cukup Baik
+                                    </button>
+                                    <button type="button" @click="sikap.kesimpulan = 'Baik'"
+                                        :class="sikap.kesimpulan === 'Baik' ? 'bg-blue-600 text-white font-black' : 'bg-white text-blue-700 border border-blue-200 hover:bg-blue-50 font-bold'"
+                                        class="py-2 px-3 rounded-xl text-xs transition-all">
+                                        Baik
+                                    </button>
+                                    <button type="button" @click="sikap.kesimpulan = 'Sangat Baik'"
+                                        :class="sikap.kesimpulan === 'Sangat Baik' ? 'bg-emerald-600 text-white font-black' : 'bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50 font-bold'"
+                                        class="py-2 px-3 rounded-xl text-xs transition-all">
+                                        Sangat Baik
+                                    </button>
+                                </div>
+                                <p class="text-[11px] text-amber-700 mt-1">
+                                    Otomatis disarankan berdasarkan mayoritas pencapaian indikator.
+                                </p>
+                            </div>
+
+                            {{-- Catatan Sikap --}}
+                            <div>
+                                <label class="block text-xs font-black text-slate-700 mb-1.5">
+                                    Catatan Sikap Kerja Penguji:
+                                </label>
+                                <textarea x-model="sikap.catatan" rows="3"
+                                    placeholder="Tuliskan catatan khusus terkait kerapian, ketelitian, kedisiplinan, dll (opsional)..."
+                                    class="w-full text-xs p-3 rounded-2xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {{-- ══ BOTTOM SUMMARY & ACTIONS (NON-STICKY) ══ --}}
             <div class="bg-white rounded-3xl p-6 border border-gray-200/80 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-6">
                 <div>
@@ -462,8 +617,50 @@ function penilaianForm() {
         nilaiP: { ...INIT_P },
         catatanP: { ...INIT_CAT },
         nilaiK: { ...INIT_K },
+        sikap: {
+            kerapian: '{{ $nilaiSikap?->kerapian ?? "" }}',
+            ketelitian: '{{ $nilaiSikap?->ketelitian ?? "" }}',
+            kedisiplinan: '{{ $nilaiSikap?->kedisiplinan ?? "" }}',
+            tanggung_jawab: '{{ $nilaiSikap?->tanggung_jawab ?? "" }}',
+            inisiatif: '{{ $nilaiSikap?->inisiatif ?? "" }}',
+            kesimpulan: '{{ $nilaiSikap?->kesimpulan ?? "" }}',
+            catatan: {!! json_encode($nilaiSikap?->catatan ?? '') !!},
+        },
 
         init() {},
+
+        setSikap(field, val) {
+            if (this.sikap[field] === val) {
+                this.sikap[field] = '';
+            } else {
+                this.sikap[field] = val;
+            }
+            this.autoSuggestKesimpulan();
+        },
+
+        sikapCount() {
+            return ['kerapian', 'ketelitian', 'kedisiplinan', 'tanggung_jawab', 'inisiatif']
+                .filter(f => !!this.sikap[f]).length;
+        },
+
+        sikapDist(val) {
+            const cnt = ['kerapian', 'ketelitian', 'kedisiplinan', 'tanggung_jawab', 'inisiatif']
+                .filter(f => this.sikap[f] === val).length;
+            return cnt > 0 ? cnt : '';
+        },
+
+        autoSuggestKesimpulan() {
+            const vals = ['kerapian', 'ketelitian', 'kedisiplinan', 'tanggung_jawab', 'inisiatif']
+                .map(f => this.sikap[f]).filter(Boolean);
+            if (vals.length === 0) return;
+            const scoreMap = { kurang: 1, cukup: 2, baik: 3, sangat_baik: 4 };
+            const sum = vals.reduce((acc, v) => acc + (scoreMap[v] || 0), 0);
+            const avg = sum / vals.length;
+            if (avg >= 3.5) this.sikap.kesimpulan = 'Sangat Baik';
+            else if (avg >= 2.5) this.sikap.kesimpulan = 'Baik';
+            else if (avg >= 1.7) this.sikap.kesimpulan = 'Cukup Baik';
+            else this.sikap.kesimpulan = 'Kurang Baik';
+        },
 
         togglePengetahuan(soalId, val) {
             if (this.nilaiP[soalId] === val) {
@@ -563,6 +760,7 @@ function penilaianForm() {
                         pengetahuan: this.nilaiP,
                         catatan_pengetahuan: this.catatanP,
                         keterampilan: this.nilaiK,
+                        sikap: this.sikap,
                     }),
                 });
                 const data = await res.json();

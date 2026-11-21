@@ -225,6 +225,42 @@
             border: 1px solid #86efac;
         }
 
+        /* ── SIKAP TABLE ── */
+        .sikap-table { width: 100%; border-collapse: collapse; font-size: 8pt; margin-bottom: 4px; page-break-inside: avoid; }
+        .sikap-table th {
+            background: #fffbeb;
+            color: #92400e;
+            border: 1px solid #cbd5e1;
+            padding: 4px 6px;
+            font-weight: 800;
+            text-align: center;
+            font-size: 8pt;
+        }
+        .sikap-table th.left { text-align: left; }
+        .sikap-table td {
+            border: 1px solid #cbd5e1;
+            padding: 4px 6px;
+            vertical-align: middle;
+        }
+        .sikap-table td.center { text-align: center; }
+        .sikap-table tbody tr:nth-child(even) td { background: #fefdf8; }
+        .sikap-table .rata-row td {
+            background: #fef3c7 !important;
+            font-weight: 800;
+            color: #78350f;
+            border: 1px solid #fde68a;
+        }
+        .sikap-box {
+            border: 1px solid #cbd5e1;
+            padding: 6px 10px;
+            border-radius: 4px;
+            background: #f8fafc;
+            font-size: 8pt;
+            margin-top: 4px;
+            margin-bottom: 10px;
+            page-break-inside: avoid;
+        }
+
         /* ── REKAP TABLE ── */
         .rekap-table { width: 100%; border-collapse: collapse; font-size: 8.5pt; page-break-inside: avoid; }
         .rekap-table th {
@@ -494,6 +530,104 @@
         </div>
     </div>
     @endforeach
+
+    {{-- ════════ ASPEK SIKAP (SIKAP KERJA) ════════ --}}
+    <div class="section-head" style="margin-top:10px;">Form Penilaian Aspek Sikap (Sikap Kerja)</div>
+    <table class="sikap-table">
+        <thead>
+            <tr>
+                <th rowspan="2" style="width:48%;" class="left">Indikator Pencapaian Kompetensi</th>
+                <th colspan="4">Tingkat Pencapaian Kompetensi</th>
+            </tr>
+            <tr>
+                <th style="width:13%;">Kurang</th>
+                <th style="width:13%;">Cukup</th>
+                <th style="width:13%;">Baik</th>
+                <th style="width:13%;">Sangat Baik</th>
+            </tr>
+            <tr style="background:#f8fafc;font-size:7pt;color:#64748b;">
+                <th class="left" style="padding:2px 6px;">2</th>
+                <th style="padding:2px;">3</th>
+                <th style="padding:2px;">4</th>
+                <th style="padding:2px;">5</th>
+                <th style="padding:2px;">6</th>
+            </tr>
+        </thead>
+        <tbody>
+            @php
+                $sikapItems = [
+                    'kerapian'       => 'Kerapian',
+                    'ketelitian'     => 'Ketelitian',
+                    'kedisiplinan'   => 'Kedisiplinan',
+                    'tanggung_jawab' => 'Tanggung Jawab',
+                    'inisiatif'      => 'Inisiatif',
+                ];
+                $counts = ['kurang' => 0, 'cukup' => 0, 'baik' => 0, 'sangat_baik' => 0];
+            @endphp
+            @foreach($sikapItems as $field => $label)
+            @php
+                $val = strtolower($nilaiSikap?->$field ?? '');
+                if (isset($counts[$val])) {
+                    $counts[$val]++;
+                }
+            @endphp
+            <tr>
+                <td style="text-align:left;font-weight:600;">{{ $label }}</td>
+                <td class="center">
+                    @if($val === 'kurang')
+                        <img src="{{ $checkIconGreen }}" class="chk-img" alt="✓">
+                    @endif
+                </td>
+                <td class="center">
+                    @if($val === 'cukup')
+                        <img src="{{ $checkIconGreen }}" class="chk-img" alt="✓">
+                    @endif
+                </td>
+                <td class="center">
+                    @if($val === 'baik')
+                        <img src="{{ $checkIconGreen }}" class="chk-img" alt="✓">
+                    @endif
+                </td>
+                <td class="center">
+                    @if($val === 'sangat_baik')
+                        <img src="{{ $checkIconGreen }}" class="chk-img" alt="✓">
+                    @endif
+                </td>
+            </tr>
+            @endforeach
+            <tr class="rata-row">
+                <td style="text-align:left;font-weight:800;">Rata-rata pencapaian kompetensi</td>
+                <td class="center">{{ $counts['kurang'] > 0 ? $counts['kurang'] : '' }}</td>
+                <td class="center">{{ $counts['cukup'] > 0 ? $counts['cukup'] : '' }}</td>
+                <td class="center">{{ $counts['baik'] > 0 ? $counts['baik'] : '' }}</td>
+                <td class="center">{{ $counts['sangat_baik'] > 0 ? $counts['sangat_baik'] : '' }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="sikap-box">
+        <div style="margin-bottom:3px;">
+            <strong>Kesimpulan :</strong>
+            @php
+                $kes = $nilaiSikap?->kesimpulan ?? '';
+            @endphp
+            <span style="{{ $kes === 'Kurang Baik' ? 'font-weight:900;text-decoration:underline;' : 'color:#64748b;' }}">Kurang Baik</span> /
+            <span style="{{ $kes === 'Cukup Baik' ? 'font-weight:900;text-decoration:underline;' : 'color:#64748b;' }}">Cukup Baik</span> /
+            <span style="{{ $kes === 'Baik' ? 'font-weight:900;text-decoration:underline;' : 'color:#64748b;' }}">Baik</span> /
+            <span style="{{ $kes === 'Sangat Baik' ? 'font-weight:900;text-decoration:underline;' : 'color:#64748b;' }}">Sangat Baik</span>*
+            @if($kes)
+                &nbsp;&mdash; <strong>Hasil: {{ $kes }}</strong>
+            @endif
+        </div>
+        <div>
+            <strong>Catatan :</strong>
+            @if(!empty($nilaiSikap?->catatan))
+                <span style="font-style:italic;">{{ $nilaiSikap->catatan }}</span>
+            @else
+                <span style="color:#94a3b8;font-style:italic;">.................................................................................................................................................................</span>
+            @endif
+        </div>
+    </div>
 
     {{-- ════════ REKAPITULASI ════════ --}}
     <div class="section-head">Rekapitulasi Nilai Akhir</div>

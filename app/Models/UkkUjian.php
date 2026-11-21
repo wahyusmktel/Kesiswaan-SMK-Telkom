@@ -35,6 +35,11 @@ class UkkUjian extends Model
         return $this->hasMany(UkkInstrumen::class, 'ukk_ujian_id');
     }
 
+    public function nilaiSikap()
+    {
+        return $this->hasMany(UkkNilaiSikap::class, 'ukk_ujian_id');
+    }
+
     public function penguji()
     {
         return $this->belongsToMany(User::class, 'ukk_penguji')
