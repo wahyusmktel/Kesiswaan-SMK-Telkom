@@ -62,6 +62,15 @@
                 </div>
             </div>
 
+            @if(!empty($hasBilingualPart))
+                <div class="bg-purple-50/80 border border-purple-200/90 rounded-2xl p-4 text-xs text-purple-950 flex items-start gap-3 shadow-sm">
+                    <span class="text-base shrink-0">🗣️</span>
+                    <div class="leading-relaxed">
+                        <strong class="font-black text-purple-900">Catatan Bagian Bilingual:</strong> Ujian UKK Anda juga mencakup <strong>Penilaian Wawancara Lisan Bilingual (English)</strong> yang akan diujikan dan dinilai secara tatap muka langsung oleh Guru Penguji Bahasa Inggris. Butir-butir soal di bawah ini adalah bagian <strong>Esai Tertulis</strong> yang dikerjakan secara mandiri.
+                    </div>
+                </div>
+            @endif
+
             {{-- Instrumen Sections --}}
             @php $globalNo = 1; @endphp
             @foreach($ujian->instrumens as $ins)

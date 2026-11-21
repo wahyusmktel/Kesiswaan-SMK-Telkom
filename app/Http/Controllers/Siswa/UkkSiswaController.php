@@ -28,7 +28,14 @@ class UkkSiswaController extends Controller
 
     private function authorizeStudent(UkkUjian $ujian, MasterSiswa $siswa): void
     {
-        abort_if($ujian->is_bilingual, 403, 'Ujian ini menggunakan sistem wawancara bilingual langsung dengan penguji dan tidak dikerjakan secara mandiri di sini.');
+        $hasSoalEsai = $ujian->instrumens
+            ->flatMap(fn ($i) => $i->soalPengetahuan)
+            ->where('jenis_soal', '!=', 'bilingual')
+            ->isNotEmpty();
+
+        if ($ujian->is_bilingual && !$hasSoalEsai) {
+            abort(403, 'Ujian ini menggunakan sistem wawancara bilingual langsung dengan penguji dan tidak dikerjakan secara mandiri di sini.');
+        }
 
         $rombelIds = $siswa->rombels->pluck('id');
         $isEligible = $ujian->rombels()->whereIn('rombels.id', $rombelIds)->exists();
@@ -46,14 +53,28 @@ class UkkSiswaController extends Controller
             'instrumens.soalPengetahuan',
             'rombels.kelas',
         ])
-        ->where('is_bilingual', false)
         ->whereHas('rombels', fn ($q) => $q->whereIn('rombels.id', $rombelIds))
         ->latest('tanggal_pelaksanaan')
         ->latest()
         ->get();
 
+        // Saring: tampilkan jika bukan full bilingual atau memiliki butir soal esai mandiri
+        $ujians = $ujians->filter(function ($ujian) {
+            $soalEsaiCount = $ujian->instrumens
+                ->flatMap(fn ($i) => $i->soalPengetahuan)
+                ->where('jenis_soal', '!=', 'bilingual')
+                ->count();
+
+            return !$ujian->is_bilingual || $soalEsaiCount > 0;
+        })->values();
+
         foreach ($ujians as $ujian) {
-            $allSoalIds = $ujian->instrumens->flatMap(fn ($i) => $i->soalPengetahuan->pluck('id'));
+            // Hanya hitung soal esai yang dikerjakan siswa
+            $allSoalIds = $ujian->instrumens
+                ->flatMap(fn ($i) => $i->soalPengetahuan)
+                ->where('jenis_soal', '!=', 'bilingual')
+                ->pluck('id');
+
             $ujian->total_soal = $allSoalIds->count();
 
             $existingNilai = UkkNilaiPengetahuan::where('master_siswa_id', $siswa->id)
@@ -85,6 +106,19 @@ class UkkSiswaController extends Controller
             'instrumens.soalPengetahuan' => fn ($q) => $q->orderBy('urutan'),
         ]);
 
+        $hasBilingualPart = $ujian->is_bilingual || $ujian->instrumens
+            ->flatMap(fn ($i) => $i->soalPengetahuan)
+            ->where('jenis_soal', 'bilingual')
+            ->isNotEmpty();
+
+        // Hanya tampilkan soal esai mandiri untuk siswa
+        foreach ($ujian->instrumens as $ins) {
+            $ins->setRelation(
+                'soalPengetahuan',
+                $ins->soalPengetahuan->where('jenis_soal', '!=', 'bilingual')->values()
+            );
+        }
+
         $allSoalIds = $ujian->instrumens->flatMap(fn ($i) => $i->soalPengetahuan->pluck('id'));
 
         $nilaiP = UkkNilaiPengetahuan::where('master_siswa_id', $siswa->id)
@@ -106,7 +140,7 @@ class UkkSiswaController extends Controller
             ];
         }
 
-        return view('pages.siswa.ukk.show', compact('ujian', 'siswa', 'jawabanMap', 'statusMap'));
+        return view('pages.siswa.ukk.show', compact('ujian', 'siswa', 'jawabanMap', 'statusMap', 'hasBilingualPart'));
     }
 
     public function simpanJawaban(Request $request, UkkUjian $ujian)
@@ -120,7 +154,9 @@ class UkkSiswaController extends Controller
         ]);
 
         $instrumenIds = $ujian->instrumens()->pluck('id');
-        $validSoalIds = UkkInstrumenSoal::whereIn('instrumen_id', $instrumenIds)->pluck('id');
+        $validSoalIds = UkkInstrumenSoal::whereIn('instrumen_id', $instrumenIds)
+            ->where('jenis_soal', '!=', 'bilingual')
+            ->pluck('id');
 
         DB::transaction(function () use ($request, $siswa, $validSoalIds) {
             foreach ($request->input('jawaban', []) as $soalId => $text) {

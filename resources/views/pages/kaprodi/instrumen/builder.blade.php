@@ -422,10 +422,16 @@
             <div id="soal-container" class="p-4 flex-1 flex flex-col gap-3 builder-scroll" style="height: 520px; max-height: 520px">
                 <template x-for="(soal, i) in form.soal_pengetahuan" :key="soal._key">
                     <div class="p-3 bg-slate-50 border border-slate-200 hover:border-indigo-300 rounded-xl flex flex-col gap-2 shrink-0 transition-all">
-                        <div class="flex items-center justify-between">
+                        <div class="flex items-center justify-between flex-wrap gap-2">
                             <div class="flex items-center gap-2">
                                 <div class="row-num" x-text="i+1"></div>
-                                <span class="text-xs font-black text-slate-700">Soal Esai #<span x-text="i+1"></span></span>
+                                <span class="text-xs font-black text-slate-700">Soal #<span x-text="i+1"></span></span>
+                                <select x-model="soal.jenis_soal"
+                                    class="text-[11px] font-bold rounded-lg border py-0.5 px-2 bg-white cursor-pointer focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                                    :class="soal.jenis_soal === 'bilingual' ? 'text-purple-700 bg-purple-50 border-purple-300' : 'text-blue-700 bg-blue-50 border-blue-300'">
+                                    <option value="esai">📝 Esai Mandiri (Siswa)</option>
+                                    <option value="bilingual">🗣️ Wawancara Bilingual (Penguji)</option>
+                                </select>
                             </div>
                             <button @click="removeSoal(i)" class="del-btn" title="Hapus Soal">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -434,7 +440,10 @@
                             </button>
                         </div>
                         <div>
-                            <label class="block text-[11px] font-bold text-gray-700 mb-1">Pertanyaan Esai (Dikerjakan Siswa):</label>
+                            <label class="block text-[11px] font-bold text-gray-700 mb-1">
+                                <span x-show="soal.jenis_soal !== 'bilingual'">Pertanyaan Esai (Dikerjakan Siswa):</span>
+                                <span x-show="soal.jenis_soal === 'bilingual'" class="text-purple-700 font-bold">Pertanyaan Wawancara (Lisan English / Penguji):</span>
+                            </label>
                             <textarea x-model="soal.pertanyaan"
                                 rows="2"
                                 :placeholder="'Tuliskan pertanyaan esai ' + (i+1) + '…'"
@@ -1078,7 +1087,7 @@ function instrumenBuilder() {
 
         // ── Soal Pengetahuan ──
         addSoal() {
-            this.form.soal_pengetahuan.push({ _key: mk(), id: null, pertanyaan: '', kunci_jawaban: '' });
+            this.form.soal_pengetahuan.push({ _key: mk(), id: null, pertanyaan: '', kunci_jawaban: '', jenis_soal: 'esai' });
             this.$nextTick(() => {
                 const container = document.getElementById('soal-container');
                 if (container) {
@@ -1278,9 +1287,9 @@ function instrumenBuilder() {
                 if (type === 'soal') {
                     const newSoal = items.map(p => {
                         if (typeof p === 'object' && p !== null) {
-                            return { _key: mk(), id: null, pertanyaan: p.pertanyaan || '', kunci_jawaban: p.kunci_jawaban || '' };
+                            return { _key: mk(), id: null, pertanyaan: p.pertanyaan || '', kunci_jawaban: p.kunci_jawaban || '', jenis_soal: 'esai' };
                         }
-                        return { _key: mk(), id: null, pertanyaan: p, kunci_jawaban: '' };
+                        return { _key: mk(), id: null, pertanyaan: p, kunci_jawaban: '', jenis_soal: 'esai' };
                     });
                     this.form.soal_pengetahuan.push(...newSoal);
                 } else {
@@ -1349,6 +1358,7 @@ function instrumenBuilder() {
                     id:            s.id || null,
                     pertanyaan:    s.pertanyaan,
                     kunci_jawaban: s.kunci_jawaban || '',
+                    jenis_soal:    s.jenis_soal || 'esai',
                 })),
                 kategori_keterampilan: this.form.kategori_keterampilan.map(k => ({
                     id:            k.id || null,

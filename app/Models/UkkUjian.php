@@ -62,4 +62,24 @@ class UkkUjian extends Model
             ->withPivot('peran')
             ->withTimestamps();
     }
+
+    public function hasSoalEsai(): bool
+    {
+        return $this->instrumens
+            ->flatMap(fn ($i) => $i->soalPengetahuan)
+            ->where('jenis_soal', '!=', 'bilingual')
+            ->isNotEmpty();
+    }
+
+    public function hasSoalBilingual(): bool
+    {
+        if ($this->is_bilingual) {
+            return true;
+        }
+
+        return $this->instrumens
+            ->flatMap(fn ($i) => $i->soalPengetahuan)
+            ->where('jenis_soal', 'bilingual')
+            ->isNotEmpty();
+    }
 }

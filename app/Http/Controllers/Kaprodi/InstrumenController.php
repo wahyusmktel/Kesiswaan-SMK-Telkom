@@ -51,6 +51,7 @@ class InstrumenController extends Controller
             'soal_pengetahuan.*.id'                              => 'nullable|integer',
             'soal_pengetahuan.*.pertanyaan'                      => 'required|string',
             'soal_pengetahuan.*.kunci_jawaban'                   => 'nullable|string',
+            'soal_pengetahuan.*.jenis_soal'                      => 'nullable|string|in:esai,bilingual',
             'kategori_keterampilan'                              => 'nullable|array',
             'kategori_keterampilan.*.id'                         => 'nullable|integer',
             'kategori_keterampilan.*.nama_kategori'              => 'required|string|max:255',
@@ -95,6 +96,7 @@ class InstrumenController extends Controller
                 'id'            => $s->id,
                 'pertanyaan'    => $s->pertanyaan,
                 'kunci_jawaban' => $s->kunci_jawaban,
+                'jenis_soal'    => $s->jenis_soal ?? 'esai',
             ])->values()->all(),
             'kategori_keterampilan' => $instrumen->kategoriKeterampilan->map(fn ($k) => [
                 'id'             => $k->id,
@@ -120,6 +122,7 @@ class InstrumenController extends Controller
             'soal_pengetahuan.*.id'                              => 'nullable|integer',
             'soal_pengetahuan.*.pertanyaan'                      => 'required|string',
             'soal_pengetahuan.*.kunci_jawaban'                   => 'nullable|string',
+            'soal_pengetahuan.*.jenis_soal'                      => 'nullable|string|in:esai,bilingual',
             'kategori_keterampilan'                              => 'nullable|array',
             'kategori_keterampilan.*.id'                         => 'nullable|integer',
             'kategori_keterampilan.*.nama_kategori'              => 'required|string|max:255',
@@ -250,6 +253,7 @@ class InstrumenController extends Controller
                 $existingSoal[$soalId]->update([
                     'pertanyaan'    => $soal['pertanyaan'],
                     'kunci_jawaban' => $soal['kunci_jawaban'] ?? null,
+                    'jenis_soal'    => $soal['jenis_soal'] ?? 'esai',
                     'urutan'        => $i + 1,
                 ]);
                 $keptSoalIds[] = $soalId;
@@ -257,6 +261,7 @@ class InstrumenController extends Controller
                 $newSoal = $instrumen->soalPengetahuan()->create([
                     'pertanyaan'    => $soal['pertanyaan'],
                     'kunci_jawaban' => $soal['kunci_jawaban'] ?? null,
+                    'jenis_soal'    => $soal['jenis_soal'] ?? 'esai',
                     'urutan'        => $i + 1,
                 ]);
                 $keptSoalIds[] = $newSoal->id;

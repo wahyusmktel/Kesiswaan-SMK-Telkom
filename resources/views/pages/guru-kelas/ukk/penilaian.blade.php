@@ -169,19 +169,17 @@
                                 <div>
                                     <h4 class="font-black text-slate-900 text-base">
                                         {{ $ins->nama_instrumen }} &mdash;
-                                        @if($ujian->is_bilingual)
+                                        @if($ins->soalPengetahuan->where('jenis_soal', 'bilingual')->isNotEmpty() && $ins->soalPengetahuan->where('jenis_soal', '!=', 'bilingual')->isNotEmpty())
+                                            Aspek Pengetahuan (Hybrid: Esai &amp; Wawancara Bilingual)
+                                        @elseif($ujian->is_bilingual || $ins->soalPengetahuan->every(fn($s) => $s->jenis_soal === 'bilingual'))
                                             Aspek Pengetahuan (Wawancara Bilingual)
                                         @else
-                                            Aspek Pengetahuan (Esai)
+                                            Aspek Pengetahuan (Esai Siswa)
                                         @endif
                                     </h4>
                                     <p class="text-xs text-slate-500">
                                         Bobot Pengetahuan: <strong class="text-blue-700">{{ $ins->bobot_pengetahuan }}%</strong> &middot;
-                                        @if($ujian->is_bilingual)
-                                            Wawancara lisan langsung dalam bahasa Inggris berpedoman pada kunci jawaban acuan.
-                                        @else
-                                            Koreksi esai siswa berdasarkan kunci jawaban acuan.
-                                        @endif
+                                        Penilaian mencakup butir soal esai siswa dan/atau wawancara lisan bilingual berpedoman pada kunci jawaban acuan.
                                     </p>
                                 </div>
                             </div>
@@ -198,6 +196,7 @@
                             @php
                                 $jSiswa = $jawabanP[$soal->id] ?? null;
                                 $hasAnswer = !empty(trim((string)$jSiswa));
+                                $isSoalBilingual = $soal->jenis_soal === 'bilingual' || ($ujian->is_bilingual && empty($soal->jenis_soal));
                             @endphp
                             <div class="bg-slate-50/60 rounded-2xl border border-slate-200/90 p-5 space-y-4 hover:border-indigo-300 transition-all">
                                 {{-- Card Header --}}
@@ -207,9 +206,17 @@
                                             {{ $loop->iteration }}
                                         </span>
                                         <div>
-                                            <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">
-                                                {{ $ujian->is_bilingual ? 'Pertanyaan Wawancara (English):' : 'Pertanyaan Soal Esai:' }}
-                                            </span>
+                                            <div class="mb-1">
+                                                @if($isSoalBilingual)
+                                                    <span class="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-purple-700 bg-purple-100/80 px-2 py-0.5 rounded-md border border-purple-200">
+                                                        🗣️ Wawancara Bilingual (English)
+                                                    </span>
+                                                @else
+                                                    <span class="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-blue-700 bg-blue-100/80 px-2 py-0.5 rounded-md border border-blue-200">
+                                                        📝 Esai Mandiri Siswa
+                                                    </span>
+                                                @endif
+                                            </div>
                                             <h5 class="text-base font-bold text-slate-900 leading-relaxed mt-0.5">
                                                 {{ $soal->pertanyaan }}
                                             </h5>
@@ -250,7 +257,7 @@
                                 </div>
 
                                 {{-- Jawaban Siswa / Mode Wawancara --}}
-                                @if($ujian->is_bilingual)
+                                @if($isSoalBilingual)
                                     <div class="bg-gradient-to-r from-purple-50/70 to-indigo-50/70 border border-purple-200 rounded-2xl p-4 text-xs shadow-sm">
                                         <div class="flex items-center gap-1.5 font-bold text-purple-900 mb-1">
                                             <span>🎙️</span>

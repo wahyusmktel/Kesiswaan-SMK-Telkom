@@ -415,7 +415,20 @@
 
             {{-- 1. Aspek Pengetahuan --}}
             @if($ins->soalPengetahuan->isNotEmpty())
-            <div class="aspect-head p">1. Penilaian Aspek Pengetahuan {{ $ujian->is_bilingual ? '(Wawancara Bilingual / English)' : '' }}</div>
+            @php
+                $hasBilingualSoal = $ins->soalPengetahuan->contains(fn($s) => $s->jenis_soal === 'bilingual');
+                $hasEsaiSoal      = $ins->soalPengetahuan->contains(fn($s) => $s->jenis_soal !== 'bilingual');
+            @endphp
+            <div class="aspect-head p">
+                1. Penilaian Aspek Pengetahuan
+                @if($hasBilingualSoal && $hasEsaiSoal)
+                    (Esai &amp; Wawancara Bilingual)
+                @elseif($hasBilingualSoal || $ujian->is_bilingual)
+                    (Wawancara Bilingual / English)
+                @else
+                    (Esai)
+                @endif
+            </div>
             <table class="soal-table">
                 <thead>
                     <tr>
@@ -438,7 +451,14 @@
                     @endphp
                     <tr>
                         <td class="center">{{ $loop->iteration }}</td>
-                        <td>{{ $soal->pertanyaan }}</td>
+                        <td>
+                            {{ $soal->pertanyaan }}
+                            @if($hasBilingualSoal && $hasEsaiSoal)
+                                <span style="font-size:7pt; color:#6b7280; font-style:italic;">
+                                    ({{ $soal->jenis_soal === 'bilingual' ? 'Wawancara Bilingual' : 'Esai Siswa' }})
+                                </span>
+                            @endif
+                        </td>
                         <td class="center">@if($isBenar)<img src="{{ $checkIcon }}" class="chk-img" alt="✓">@endif</td>
                         <td class="center">@if($isSalah)<img src="{{ $checkIcon }}" class="chk-img" alt="✓">@endif</td>
                         <td class="center">@if($vp !== null){{ $isBenar ? $poinSoal : 0 }}@endif</td>

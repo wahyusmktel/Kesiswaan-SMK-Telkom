@@ -10,6 +10,7 @@ class UkkInstrumenSoal extends Model
         'instrumen_id',
         'pertanyaan',
         'kunci_jawaban',
+        'jenis_soal',
         'urutan',
     ];
 
@@ -21,5 +22,28 @@ class UkkInstrumenSoal extends Model
     public function nilaiPengetahuan()
     {
         return $this->hasMany(UkkNilaiPengetahuan::class, 'soal_id');
+    }
+
+    public function isBilingual(): bool
+    {
+        return $this->jenis_soal === 'bilingual';
+    }
+
+    public function isEsai(): bool
+    {
+        return $this->jenis_soal !== 'bilingual';
+    }
+
+    public function scopeEsai($query)
+    {
+        return $query->where(function ($q) {
+            $q->where('jenis_soal', 'esai')
+              ->orWhereNull('jenis_soal');
+        });
+    }
+
+    public function scopeBilingual($query)
+    {
+        return $query->where('jenis_soal', 'bilingual');
     }
 }
