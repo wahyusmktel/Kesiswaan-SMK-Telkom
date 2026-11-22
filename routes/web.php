@@ -1630,13 +1630,19 @@ Route::middleware(['auth', 'role:Kaprodi'])->prefix('kaprodi')->name('kaprodi.')
         // Rekapitulasi Nilai UKK (Kaprodi + Kurikulum)
         Route::get('/rekap-nilai', [\App\Http\Controllers\Kaprodi\RekapNilaiUkkController::class, 'index'])->name('rekap-nilai.index');
         Route::get('/rekap-nilai/export', [\App\Http\Controllers\Kaprodi\RekapNilaiUkkController::class, 'export'])->name('rekap-nilai.export');
+
+        // Monitoring Aktivitas & Progres Penguji UKK
+        Route::get('/monitoring-penguji', [\App\Http\Controllers\Kaprodi\MonitoringPengujiUkkController::class, 'index'])->name('monitoring-penguji.index');
+        Route::get('/monitoring-penguji/export', [\App\Http\Controllers\Kaprodi\MonitoringPengujiUkkController::class, 'export'])->name('monitoring-penguji.export');
     });
 });
 
-// Rekapitulasi Nilai UKK untuk Kurikulum
+// Rekapitulasi & Monitoring UKK untuk Kurikulum
 Route::middleware(['auth', 'role:Kurikulum'])->prefix('kurikulum/ukk')->name('kurikulum.ukk.')->group(function () {
     Route::get('/rekap-nilai', [\App\Http\Controllers\Kaprodi\RekapNilaiUkkController::class, 'index'])->name('rekap-nilai.index');
     Route::get('/rekap-nilai/export', [\App\Http\Controllers\Kaprodi\RekapNilaiUkkController::class, 'export'])->name('rekap-nilai.export');
+    Route::get('/monitoring-penguji', [\App\Http\Controllers\Kaprodi\MonitoringPengujiUkkController::class, 'index'])->name('monitoring-penguji.index');
+    Route::get('/monitoring-penguji/export', [\App\Http\Controllers\Kaprodi\MonitoringPengujiUkkController::class, 'export'])->name('monitoring-penguji.export');
 });
 
 // KAUR SPMB

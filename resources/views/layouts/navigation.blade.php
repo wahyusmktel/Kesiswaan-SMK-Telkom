@@ -2074,6 +2074,17 @@
                         <span class="nav-text">Rekap Nilai UKK</span>
                     </a>
                 </li>
+                <li>
+                    <a href="{{ route('kurikulum.ukk.monitoring-penguji.index') }}"
+                        class="nav-link {{ request()->routeIs('kurikulum.ukk.monitoring-penguji.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+                        <div class="nav-icon-container">
+                            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                        </div>
+                        <span class="nav-text">Monitoring Penguji UKK</span>
+                    </a>
+                </li>
 
                 {{-- Menu Tanda Tangan Digital --}}
                 <li>
@@ -3916,6 +3927,11 @@
                 <span class="submenu-dot"></span>
                 Rekap Nilai UKK
             </a>
+            <a href="{{ route('kaprodi.ukk.monitoring-penguji.index') }}"
+                class="submenu-item {{ request()->routeIs('kaprodi.ukk.monitoring-penguji.*') ? 'submenu-item-active' : '' }}">
+                <span class="submenu-dot"></span>
+                Monitoring Penguji UKK
+            </a>
         </div>
 
         <!-- Flyout Submenu (Collapsed Sidebar) -->
@@ -3936,6 +3952,10 @@
             <a href="{{ route('kaprodi.ukk.rekap-nilai.index') }}"
                 class="submenu-item {{ request()->routeIs('kaprodi.ukk.rekap-nilai.*') ? 'submenu-item-active' : '' }}">
                 Rekap Nilai UKK
+            </a>
+            <a href="{{ route('kaprodi.ukk.monitoring-penguji.index') }}"
+                class="submenu-item {{ request()->routeIs('kaprodi.ukk.monitoring-penguji.*') ? 'submenu-item-active' : '' }}">
+                Monitoring Penguji UKK
             </a>
         </div>
 
