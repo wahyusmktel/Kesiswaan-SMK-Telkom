@@ -2,155 +2,73 @@
 
 namespace App\Exports;
 
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\WithColumnWidths;
-use Maatwebsite\Excel\Concerns\WithTitle;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use App\Exports\Sheets\UkkDetailInstrumenSheet;
+use App\Exports\Sheets\UkkRingkasanNilaiSheet;
+use App\Models\UkkUjian;
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\Exportable;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use PhpOffice\PhpSpreadsheet\Style\Alignment;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Style\Border;
+use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
-class RekapNilaiUkkExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithTitle
+class RekapNilaiUkkExport implements WithMultipleSheets
 {
     use Exportable;
 
-    private int $rowNumber = 0;
-
     public function __construct(
-        private readonly mixed $ujian,
-        private readonly mixed $rekap
+        private readonly UkkUjian $ujian,
+        private readonly Collection $siswas,
+        private readonly Collection $rekap,
+        private readonly Collection $allNilaiP,
+        private readonly Collection $allNilaiK,
+        private readonly ?string $rombelLabel = null
     ) {}
 
-    public function collection()
+    public function sheets(): array
     {
-        return $this->rekap;
-    }
+        $sheets = [];
+        $rombelText = $this->rombelLabel ?: 'Semua Kelas';
+        $instrumens = $this->ujian->instrumens;
 
-    public function title(): string
-    {
-        return 'Rekap UKK';
-    }
-
-    public function headings(): array
-    {
-        $heads = ['No', 'NIS', 'Nama Siswa', 'Kelas'];
-
-        foreach ($this->ujian->instrumens as $ins) {
-            $label = $ins->nama_instrumen;
-            $heads[] = $label . ' - Skor P';
-            $heads[] = $label . ' - Skor K';
-            $heads[] = $label . ' - Nilai';
-        }
-
-        $heads[] = 'Nilai Akhir';
-        $heads[] = 'Status';
-
-        return $heads;
-    }
-
-    public function map($row): array
-    {
-        $this->rowNumber++;
-
-        $cols = [
-            $this->rowNumber,
-            $row['siswa']->nis ?? '-',
-            $row['siswa']->nama_lengkap,
-            $row['rombel_label'],
-        ];
-
-        foreach ($row['instrumen_scores'] as $score) {
-            $cols[] = $score['skor_p'] !== null ? $score['skor_p'] : '-';
-            $cols[] = $score['skor_k'] !== null ? $score['skor_k'] : '-';
-            $cols[] = $score['nilai']  !== null ? $score['nilai']  : '-';
-        }
-
-        $cols[] = $row['nilai_akhir'] !== null ? $row['nilai_akhir'] : '-';
-        $cols[] = $row['is_complete'] ? 'Selesai' : 'Belum Selesai';
-
-        return $cols;
-    }
-
-    public function styles(Worksheet $sheet): array
-    {
-        $lastCol = $sheet->getHighestColumn();
-        $lastRow = $sheet->getHighestRow();
-
-        // Header row style
-        $sheet->getStyle('A1:' . $lastCol . '1')->applyFromArray([
-            'font' => [
-                'bold'  => true,
-                'color' => ['rgb' => 'FFFFFF'],
-                'size'  => 10,
-            ],
-            'fill' => [
-                'fillType'   => Fill::FILL_SOLID,
-                'startColor' => ['rgb' => 'C05621'],
-            ],
-            'alignment' => [
-                'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical'   => Alignment::VERTICAL_CENTER,
-                'wrapText'   => true,
-            ],
-            'borders' => [
-                'allBorders' => [
-                    'borderStyle' => Border::BORDER_THIN,
-                    'color'       => ['rgb' => 'FFFFFF'],
-                ],
-            ],
-        ]);
-
-        $sheet->getRowDimension(1)->setRowHeight(36);
-
-        // Data rows
-        if ($lastRow > 1) {
-            $sheet->getStyle('A2:' . $lastCol . $lastRow)->applyFromArray([
-                'borders' => [
-                    'allBorders' => [
-                        'borderStyle' => Border::BORDER_THIN,
-                        'color'       => ['rgb' => 'E2E8F0'],
-                    ],
-                ],
-                'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
-            ]);
-
-            // Alternate row shading
-            for ($row = 2; $row <= $lastRow; $row++) {
-                if ($row % 2 === 0) {
-                    $sheet->getStyle('A' . $row . ':' . $lastCol . $row)->getFill()
-                        ->setFillType(Fill::FILL_SOLID)
-                        ->getStartColor()->setRGB('FFF8F0');
-                }
+        if ($instrumens->count() <= 1) {
+            $ins = $instrumens->first();
+            if ($ins) {
+                $sheets[] = new UkkDetailInstrumenSheet(
+                    $this->ujian,
+                    $ins,
+                    $this->siswas,
+                    $this->allNilaiP,
+                    $this->allNilaiK,
+                    $rombelText,
+                    'Detail Nilai & Rekap UKK'
+                );
             }
+            $sheets[] = new UkkRingkasanNilaiSheet(
+                $this->ujian,
+                $this->rekap,
+                $rombelText,
+                'Ringkasan Nilai Akhir'
+            );
+        } else {
+            // Multi-instrument: summary first, then detailed sheets
+            $sheets[] = new UkkRingkasanNilaiSheet(
+                $this->ujian,
+                $this->rekap,
+                $rombelText,
+                'Ringkasan Nilai Akhir'
+            );
 
-            // Center No, NIS, Nilai columns
-            $sheet->getStyle('A2:B' . $lastRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-
-            // Style nilai akhir column (second to last)
-            $lastColIndex = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($lastCol);
-            $nilaiAkhirCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($lastColIndex - 1);
-            $sheet->getStyle($nilaiAkhirCol . '2:' . $nilaiAkhirCol . $lastRow)->applyFromArray([
-                'font' => ['bold' => true],
-                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
-            ]);
-
-            // Status column (last)
-            $sheet->getStyle($lastCol . '2:' . $lastCol . $lastRow)->applyFromArray([
-                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
-                'font' => ['bold' => true],
-            ]);
+            foreach ($instrumens as $idx => $ins) {
+                $sheets[] = new UkkDetailInstrumenSheet(
+                    $this->ujian,
+                    $ins,
+                    $this->siswas,
+                    $this->allNilaiP,
+                    $this->allNilaiK,
+                    $rombelText,
+                    'Detail - ' . mb_substr($ins->nama_instrumen, 0, 20)
+                );
+            }
         }
 
-        // Auto-width all columns
-        foreach (range('A', $lastCol) as $col) {
-            $sheet->getColumnDimension($col)->setAutoSize(true);
-        }
-
-        return [];
+        return $sheets;
     }
 }

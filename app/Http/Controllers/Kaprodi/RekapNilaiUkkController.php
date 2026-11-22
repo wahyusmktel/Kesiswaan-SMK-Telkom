@@ -103,7 +103,7 @@ class RekapNilaiUkkController extends Controller
                 }
             }
         }
-        $siswas   = $siswaMap->values();
+        $siswas   = $siswaMap->values()->sortBy('nama_lengkap')->values();
         $siswaIds = $siswas->pluck('id');
 
         $allSoalIds = $ujian->instrumens->flatMap(fn ($i) => $i->soalPengetahuan->pluck('id'));
@@ -121,10 +121,18 @@ class RekapNilaiUkkController extends Controller
             ->sortBy('siswa.nama_lengkap')
             ->values();
 
-        $suffix   = $rombelId ? ('_' . ($rombels->firstWhere('id', $rombelId)?->kelas->nama_kelas ?? $rombelId)) : '_Semua';
-        $filename = 'Rekap_UKK_' . str_replace(' ', '_', $ujian->nama_ujian) . $suffix . '.xlsx';
+        $rombelLabel = $rombelId ? ($rombels->firstWhere('id', $rombelId)?->kelas->nama_kelas ?? ('Rombel ' . $rombelId)) : 'Semua Kelas';
+        $suffix      = $rombelId ? ('_' . str_replace(' ', '_', $rombelLabel)) : '_Semua';
+        $filename    = 'Rekap_UKK_' . str_replace(' ', '_', $ujian->nama_ujian) . $suffix . '.xlsx';
 
-        return Excel::download(new RekapNilaiUkkExport($ujian, $rekap), $filename);
+        return Excel::download(new RekapNilaiUkkExport(
+            $ujian,
+            $siswas,
+            $rekap,
+            $allNilaiP,
+            $allNilaiK,
+            $rombelLabel
+        ), $filename);
     }
 
     private function computeSiswaRekap($siswa, $ujian, $allNilaiP, $allNilaiK): array
