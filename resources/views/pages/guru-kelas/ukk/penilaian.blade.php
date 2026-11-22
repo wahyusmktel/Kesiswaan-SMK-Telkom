@@ -53,7 +53,7 @@
                                 TP {{ $ujian->tahunPelajaran->tahun }}
                             </span>
                         @endif
-                        @if($ujian->is_bilingual)
+                        @if($ujian->is_bilingual && $peranPenguji === 'pengetahuan')
                             <span class="text-xs font-black px-2.5 py-0.5 rounded-lg bg-purple-100 text-purple-800 border border-purple-200">
                                 🌐 Wawancara Bilingual (EN)
                             </span>
@@ -64,6 +64,10 @@
                                 🌐 Penguji Pengetahuan (Bilingual)
                             @elseif($peranPenguji === 'keterampilan')
                                 🛠️ Penguji Keterampilan
+                            @elseif($ujian->is_bilingual && !$hasPengetahuanForExaminer)
+                                🛠️ Penguji Keterampilan Praktik
+                            @elseif($ujian->is_bilingual)
+                                👥 Penguji Praktik & Observasi
                             @else
                                 👥 Semua Aspek
                             @endif
@@ -81,13 +85,13 @@
             <div class="flex flex-wrap items-center gap-3 lg:self-center">
                 {{-- Score Pills --}}
                 <div class="flex items-center gap-2 bg-slate-50 p-1.5 rounded-2xl border border-slate-200">
-                    @if($peranPenguji !== 'keterampilan')
+                    @if($hasPengetahuanForExaminer)
                     <div class="text-center px-3 py-1 bg-blue-50 rounded-xl border border-blue-100">
                         <p class="text-[10px] uppercase tracking-wider text-blue-500 font-bold">Pengetahuan</p>
                         <p class="text-sm font-black text-blue-700" x-text="skorPengetahuan.toFixed(1)"></p>
                     </div>
                     @endif
-                    @if($peranPenguji !== 'pengetahuan')
+                    @if($hasKeterampilanForExaminer)
                     <div class="text-center px-3 py-1 bg-emerald-50 rounded-xl border border-emerald-100">
                         <p class="text-[10px] uppercase tracking-wider text-emerald-500 font-bold">Keterampilan</p>
                         <p class="text-sm font-black text-emerald-700" x-text="skorKeterampilan.toFixed(1)"></p>
@@ -122,24 +126,38 @@
 
         {{-- ══ VIEW TAB SELECTOR ══ --}}
         <div class="bg-white rounded-2xl p-1.5 border border-gray-200/80 shadow-sm flex items-center gap-2">
-            @if($peranPenguji !== 'keterampilan')
+            @if($hasPengetahuanForExaminer)
+            @php
+                $firstWithSoal = $ujian->instrumens->first(fn($i) => $i->filteredSoalPengetahuan->isNotEmpty());
+                $firstSoals = $firstWithSoal?->filteredSoalPengetahuan ?? collect();
+                $isOnlyBilingual = $firstSoals->every(fn($s) => $s->jenis_soal === 'bilingual' || ($ujian->is_bilingual && empty($s->jenis_soal)));
+                $isOnlyObservasi = $firstSoals->every(fn($s) => $s->jenis_soal === 'observasi');
+            @endphp
             <button type="button" @click="activeTab = 'pengetahuan'"
                 :class="activeTab === 'pengetahuan' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'"
                 class="flex-1 py-2.5 px-4 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2">
-                <span>{{ $ujian->is_bilingual ? '🌐' : '📝' }}</span>
-                <span>{{ $ujian->is_bilingual ? 'Aspek Pengetahuan (Wawancara Bilingual)' : 'Aspek Pengetahuan (Esai Siswa)' }}</span>
+                <span>{{ $isOnlyBilingual ? '🌐' : ($isOnlyObservasi ? '👁️' : '📝') }}</span>
+                <span>
+                    @if($isOnlyBilingual)
+                        Aspek Pengetahuan (Wawancara Bilingual)
+                    @elseif($isOnlyObservasi)
+                        Aspek Pengetahuan (Observasi Langsung)
+                    @else
+                        Aspek Pengetahuan (Esai Siswa)
+                    @endif
+                </span>
                 @if($peranPenguji === 'pengetahuan')
                     <span class="px-2 py-0.5 rounded-md bg-white/20 text-white text-[10px] font-bold">Fokus Anda</span>
                 @endif
             </button>
             @endif
 
-            @if($peranPenguji !== 'pengetahuan')
+            @if($hasKeterampilanForExaminer)
             <button type="button" @click="activeTab = 'keterampilan'"
                 :class="activeTab === 'keterampilan' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'"
                 class="flex-1 py-2.5 px-4 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2">
                 <span>⚙️</span> Aspek Keterampilan Praktik
-                @if($peranPenguji === 'keterampilan')
+                @if($peranPenguji === 'keterampilan' || !$hasPengetahuanForExaminer)
                     <span class="px-2 py-0.5 rounded-md bg-white/20 text-white text-[10px] font-bold">Fokus Anda</span>
                 @endif
             </button>
@@ -150,7 +168,7 @@
             </button>
             @endif
 
-            @if($peranPenguji === 'semua')
+            @if($hasPengetahuanForExaminer && $hasKeterampilanForExaminer)
             <button type="button" @click="activeTab = 'all'"
                 :class="activeTab === 'all' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'"
                 class="py-2.5 px-5 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2">
@@ -167,11 +185,11 @@
             </div>
         @else
 
-            @if($peranPenguji !== 'keterampilan')
+            @if($hasPengetahuanForExaminer)
             {{-- ══ ASPEK PENGETAHUAN SECTION ══ --}}
             <div x-show="activeTab === 'pengetahuan' || activeTab === 'all'" class="space-y-6">
                 @foreach($ujian->instrumens as $ins)
-                    @if($ins->soalPengetahuan->isNotEmpty())
+                    @if($ins->filteredSoalPengetahuan->isNotEmpty())
                     <div class="bg-white rounded-3xl border border-gray-200/80 shadow-sm overflow-hidden">
                         {{-- Section Title --}}
                         <div class="px-6 py-4 bg-gradient-to-r from-blue-50/70 to-indigo-50/70 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
@@ -180,9 +198,9 @@
                                     {{ $loop->iteration }}
                                 </span>
                                 @php
-                                    $hasBilingualSoal = $ins->soalPengetahuan->contains(fn($s) => $s->jenis_soal === 'bilingual');
-                                    $hasObservasiSoal = $ins->soalPengetahuan->contains(fn($s) => $s->jenis_soal === 'observasi');
-                                    $hasEsaiSoal      = $ins->soalPengetahuan->contains(fn($s) => empty($s->jenis_soal) || $s->jenis_soal === 'esai');
+                                    $hasBilingualSoal = $ins->filteredSoalPengetahuan->contains(fn($s) => $s->jenis_soal === 'bilingual' || ($ujian->is_bilingual && empty($s->jenis_soal)));
+                                    $hasObservasiSoal = $ins->filteredSoalPengetahuan->contains(fn($s) => $s->jenis_soal === 'observasi');
+                                    $hasEsaiSoal      = $ins->filteredSoalPengetahuan->contains(fn($s) => empty($s->jenis_soal) || $s->jenis_soal === 'esai');
                                     $typesCount       = ($hasBilingualSoal ? 1 : 0) + ($hasObservasiSoal ? 1 : 0) + ($hasEsaiSoal ? 1 : 0);
                                 @endphp
                                 <div>
@@ -190,7 +208,7 @@
                                         {{ $ins->nama_instrumen }} &mdash;
                                         @if($typesCount > 1)
                                             Aspek Pengetahuan (Model Kombinasi / Hybrid)
-                                        @elseif($hasBilingualSoal || $ujian->is_bilingual)
+                                        @elseif($hasBilingualSoal)
                                             Aspek Pengetahuan (Wawancara Bilingual)
                                         @elseif($hasObservasiSoal)
                                             Aspek Pengetahuan (Observasi Langsung)
@@ -200,20 +218,20 @@
                                     </h4>
                                     <p class="text-xs text-slate-500">
                                         Bobot Pengetahuan: <strong class="text-blue-700">{{ $ins->bobot_pengetahuan }}%</strong> &middot;
-                                        Penilaian mencakup butir soal esai siswa, observasi langsung, dan/atau wawancara bilingual berpedoman pada kunci jawaban acuan.
+                                        Penilaian berpedoman pada rubrik acuan Kaprodi.
                                     </p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
                                 <span class="text-xs font-bold px-3 py-1 bg-white rounded-xl border border-blue-200 text-blue-700"
-                                    x-text="benarCount({{ json_encode($ins->soalPengetahuan->pluck('id')->all()) }}) + ' / {{ $ins->soalPengetahuan->count() }} Benar'">
+                                    x-text="benarCount({{ json_encode($ins->filteredSoalPengetahuan->pluck('id')->all()) }}) + ' / {{ $ins->filteredSoalPengetahuan->count() }} Benar'">
                                 </span>
                             </div>
                         </div>
 
                         {{-- Soal Cards (Full Width & Spacious) --}}
                         <div class="p-6 space-y-6">
-                            @foreach($ins->soalPengetahuan as $soal)
+                            @foreach($ins->filteredSoalPengetahuan as $soal)
                             @php
                                 $jSiswa = $jawabanP[$soal->id] ?? null;
                                 $hasAnswer = !empty(trim((string)$jSiswa));
@@ -330,50 +348,41 @@
                                 @endif
 
                                 {{-- Penilaian Penguji & Catatan --}}
-                                @if($isBilingual && $peranPenguji === 'semua')
-                                    <div class="pt-2 border-t border-purple-200 bg-purple-50/70 rounded-xl p-3 flex items-center gap-3">
-                                        <span class="text-base">🔒</span>
-                                        <p class="text-xs text-purple-900 font-bold">
-                                            Penilaian Butir Wawancara Bilingual khusus dinilai oleh Guru Bahasa Inggris (Penguji Pengetahuan).
-                                        </p>
+                                <div class="pt-2 border-t border-slate-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs font-bold text-slate-700">Koreksi Penguji:</span>
+                                        <button type="button"
+                                            @click="togglePengetahuan({{ $soal->id }}, 1)"
+                                            :class="nilaiP[{{ $soal->id }}] === 1
+                                                ? 'bg-emerald-600 border-emerald-600 text-white shadow-md'
+                                                : 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'"
+                                            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black border transition-all active:scale-95">
+                                            <span>✓</span> Benar (1)
+                                        </button>
+                                        <button type="button"
+                                            @click="togglePengetahuan({{ $soal->id }}, 0)"
+                                            :class="nilaiP[{{ $soal->id }}] === 0
+                                                ? 'bg-rose-600 border-rose-600 text-white shadow-md'
+                                                : 'bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100'"
+                                            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black border transition-all active:scale-95">
+                                            <span>✗</span> Salah (0)
+                                        </button>
+                                        <button type="button"
+                                            x-show="nilaiP[{{ $soal->id }}] !== undefined && nilaiP[{{ $soal->id }}] !== null"
+                                            @click="resetPengetahuan({{ $soal->id }})"
+                                            class="text-xs text-slate-400 hover:text-slate-600 underline ml-2">
+                                            Reset
+                                        </button>
                                     </div>
-                                @else
-                                    <div class="pt-2 border-t border-slate-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-xs font-bold text-slate-700">Koreksi Penguji:</span>
-                                            <button type="button"
-                                                @click="togglePengetahuan({{ $soal->id }}, 1)"
-                                                :class="nilaiP[{{ $soal->id }}] === 1
-                                                    ? 'bg-emerald-600 border-emerald-600 text-white shadow-md'
-                                                    : 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'"
-                                                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black border transition-all active:scale-95">
-                                                <span>✓</span> Benar (1)
-                                            </button>
-                                            <button type="button"
-                                                @click="togglePengetahuan({{ $soal->id }}, 0)"
-                                                :class="nilaiP[{{ $soal->id }}] === 0
-                                                    ? 'bg-rose-600 border-rose-600 text-white shadow-md'
-                                                    : 'bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100'"
-                                                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black border transition-all active:scale-95">
-                                                <span>✗</span> Salah (0)
-                                            </button>
-                                            <button type="button"
-                                                x-show="nilaiP[{{ $soal->id }}] !== undefined && nilaiP[{{ $soal->id }}] !== null"
-                                                @click="resetPengetahuan({{ $soal->id }})"
-                                                class="text-xs text-slate-400 hover:text-slate-600 underline ml-2">
-                                                Reset
-                                            </button>
-                                        </div>
 
-                                        {{-- Catatan Penguji (Input Text Singkat) --}}
-                                        <div class="flex-1 max-w-md">
-                                            <input type="text"
-                                                x-model="catatanP[{{ $soal->id }}]"
-                                                placeholder="Catatan koreksi untuk siswa (opsional)…"
-                                                class="w-full text-xs text-slate-800 bg-white border border-slate-200 rounded-xl px-3 py-2 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200">
-                                        </div>
+                                    {{-- Catatan Penguji (Input Text Singkat) --}}
+                                    <div class="flex-1 max-w-md">
+                                        <input type="text"
+                                            x-model="catatanP[{{ $soal->id }}]"
+                                            placeholder="Catatan koreksi untuk siswa (opsional)…"
+                                            class="w-full text-xs text-slate-800 bg-white border border-slate-200 rounded-xl px-3 py-2 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200">
                                     </div>
-                                @endif
+                                </div>
                             </div>
                             @endforeach
                         </div>
@@ -383,7 +392,7 @@
             </div>
             @endif
 
-            @if($peranPenguji !== 'pengetahuan')
+            @if($hasKeterampilanForExaminer)
             {{-- ══ ASPEK KETERAMPILAN SECTION ══ --}}
             <div x-show="activeTab === 'keterampilan' || activeTab === 'all'" class="space-y-6">
                 @foreach($ujian->instrumens as $ins)
@@ -606,11 +615,11 @@
                 <div>
                     <h4 class="font-black text-slate-900 text-base">Rekapitulasi Penilaian Siswa</h4>
                     <div class="flex items-center gap-4 text-xs font-bold text-slate-600 mt-1 flex-wrap">
-                        @if($peranPenguji !== 'keterampilan')
+                        @if($hasPengetahuanForExaminer)
                         <span>Pengetahuan: <strong class="text-blue-600 text-sm" x-text="skorPengetahuan.toFixed(1)"></strong></span>
                         <span>&bull;</span>
                         @endif
-                        @if($peranPenguji !== 'pengetahuan')
+                        @if($hasKeterampilanForExaminer)
                         <span>Keterampilan: <strong class="text-emerald-600 text-sm" x-text="skorKeterampilan.toFixed(1)"></strong></span>
                         <span>&bull;</span>
                         @endif
@@ -650,12 +659,12 @@
     $instrumensData = $ujian->instrumens->map(fn($i) => [
         'id'                => $i->id,
         'bobot_pengetahuan' => $i->bobot_pengetahuan,
-        'soal'              => $i->soalPengetahuan->pluck('id')->all(),
-        'kategori'          => $i->kategoriKeterampilan->map(fn($k) => [
+        'soal'              => $i->filteredSoalPengetahuan->pluck('id')->all(),
+        'kategori'          => $hasKeterampilanForExaminer ? $i->kategoriKeterampilan->map(fn($k) => [
             'id'        => $k->id,
             'bobot'     => $k->bobot,
             'indikator' => $k->indikator->pluck('id')->all(),
-        ])->values()->all(),
+        ])->values()->all() : [],
     ])->values()->all();
 @endphp
 
@@ -670,7 +679,7 @@ function penilaianForm() {
 
     return {
         saving: false,
-        activeTab: '{{ $peranPenguji === "keterampilan" ? "keterampilan" : "pengetahuan" }}',
+        activeTab: '{{ $hasPengetahuanForExaminer && !$hasKeterampilanForExaminer ? "pengetahuan" : "keterampilan" }}',
         toasts: [],
         toastSeq: 0,
         nilaiP: { ...INIT_P },

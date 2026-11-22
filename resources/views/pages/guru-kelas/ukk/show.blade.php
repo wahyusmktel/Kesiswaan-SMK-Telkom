@@ -23,7 +23,7 @@
                             <span class="font-bold">{{ $ujian->nama_ujian }}</span>
                             &middot; {{ $ujian->jurusan }}
                             @if($ujian->tahunPelajaran) &middot; {{ $ujian->tahunPelajaran->tahun }} @endif
-                            @if($ujian->is_bilingual)
+                            @if($ujian->is_bilingual && $peranPenguji === 'pengetahuan')
                                 <span class="px-2 py-0.5 rounded-lg bg-purple-700/80 text-purple-100 text-xs font-black border border-purple-400">
                                     🌐 Wawancara Bilingual (EN)
                                 </span>
@@ -34,6 +34,10 @@
                                     🌐 Penguji Pengetahuan (Bilingual)
                                 @elseif($peranPenguji === 'keterampilan')
                                     🛠️ Penguji Keterampilan
+                                @elseif($ujian->is_bilingual && $totalSoal === 0)
+                                    🛠️ Penguji Keterampilan Praktik
+                                @elseif($ujian->is_bilingual)
+                                    👥 Penguji Praktik & Observasi
                                 @else
                                     👥 Semua Aspek
                                 @endif
@@ -52,15 +56,10 @@
                     </div>
                     <div class="flex items-center gap-3 bg-white/20 rounded-xl px-4 py-2 shrink-0">
                         @php
-                            $totalSelesai = $siswas->filter(function($s) use ($gradedP, $gradedK, $totalSoal, $totalIndikator, $peranPenguji) {
-                                $pDone = ($gradedP[$s->id] ?? 0) >= $totalSoal;
-                                $kDone = ($gradedK[$s->id] ?? 0) >= $totalIndikator;
-                                if ($peranPenguji === 'keterampilan') {
-                                    return $totalIndikator === 0 || $kDone;
-                                } elseif ($peranPenguji === 'pengetahuan') {
-                                    return $totalSoal === 0 || $pDone;
-                                }
-                                return ($totalSoal === 0 || $pDone) && ($totalIndikator === 0 || $kDone);
+                            $totalSelesai = $siswas->filter(function($s) use ($gradedP, $gradedK, $totalSoal, $totalIndikator) {
+                                $pDone = ($totalSoal === 0) || (($gradedP[$s->id] ?? 0) >= $totalSoal);
+                                $kDone = ($totalIndikator === 0) || (($gradedK[$s->id] ?? 0) >= $totalIndikator);
+                                return $pDone && $kDone;
                             })->count();
                         @endphp
                         <div class="text-center">
@@ -108,15 +107,9 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 mt-4">
                     @foreach($siswas as $siswa)
                         @php
-                            $pDone = ($gradedP[$siswa->id] ?? 0) >= $totalSoal;
-                            $kDone = ($gradedK[$siswa->id] ?? 0) >= $totalIndikator;
-                            if ($peranPenguji === 'keterampilan') {
-                                $isComplete = ($totalIndikator === 0 || $kDone);
-                            } elseif ($peranPenguji === 'pengetahuan') {
-                                $isComplete = ($totalSoal === 0 || $pDone);
-                            } else {
-                                $isComplete = ($totalSoal === 0 || $pDone) && ($totalIndikator === 0 || $kDone);
-                            }
+                            $pDone = ($totalSoal === 0) || (($gradedP[$siswa->id] ?? 0) >= $totalSoal);
+                            $kDone = ($totalIndikator === 0) || (($gradedK[$siswa->id] ?? 0) >= $totalIndikator);
+                            $isComplete = $pDone && $kDone;
                             $pPct = $totalSoal > 0 ? round(($gradedP[$siswa->id] ?? 0) / $totalSoal * 100) : 100;
                             $kPct = $totalIndikator > 0 ? round(($gradedK[$siswa->id] ?? 0) / $totalIndikator * 100) : 100;
                         @endphp
@@ -157,7 +150,7 @@
                                 {{-- Progress mini bars --}}
                                 @if($totalSoal > 0 || $totalIndikator > 0)
                                 <div class="mt-3 space-y-1.5">
-                                    @if($totalSoal > 0 && $peranPenguji !== 'keterampilan')
+                                    @if($totalSoal > 0)
                                     <div class="flex items-center gap-2">
                                         <span class="text-[10px] text-gray-400 w-20 shrink-0">Pengetahuan</span>
                                         <div class="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
@@ -171,7 +164,7 @@
                                         </p>
                                     @endif
                                     @endif
-                                    @if($totalIndikator > 0 && $peranPenguji !== 'pengetahuan')
+                                    @if($totalIndikator > 0)
                                     <div class="flex items-center gap-2">
                                         <span class="text-[10px] text-gray-400 w-20 shrink-0">Keterampilan</span>
                                         <div class="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
@@ -192,10 +185,12 @@
                                         : 'bg-orange-500 text-white hover:bg-orange-400' }}">
                                     @if($isComplete)
                                         ✏️ Edit Penilaian
+                                    @elseif($totalIndikator > 0 && $totalSoal === 0)
+                                        🛠️ Nilai Keterampilan
+                                    @elseif($totalSoal > 0 && $totalIndikator === 0)
+                                        🌐 Nilai Pengetahuan
                                     @elseif($peranPenguji === 'keterampilan')
                                         🛠️ Nilai Keterampilan
-                                    @elseif($peranPenguji === 'pengetahuan')
-                                        🌐 Nilai Pengetahuan
                                     @else
                                         📝 Nilai Sekarang
                                     @endif

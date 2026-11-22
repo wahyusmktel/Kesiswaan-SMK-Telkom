@@ -214,28 +214,55 @@ class PenilaianUkkController extends Controller
             $jadwalSesiLabel = '📅 ' . $tglStr . $jamStr . $ruangStr;
         }
 
-        $allSoalIds      = $ujian->instrumens->flatMap(fn ($i) => $i->soalPengetahuan->pluck('id'));
+        $isExamBilingual = (bool) $ujian->is_bilingual;
+
+        // Filter soal yang menjadi kewenangan penguji ini
+        $examinerSoals = $ujian->instrumens->flatMap(function ($i) use ($isExamBilingual, $peranPenguji) {
+            return $i->soalPengetahuan->filter(function ($soal) use ($isExamBilingual, $peranPenguji) {
+                $isBilingual = ($soal->jenis_soal === 'bilingual')
+                    || ($isExamBilingual && (empty($soal->jenis_soal) || $soal->jenis_soal === 'bilingual'));
+
+                if ($peranPenguji === 'keterampilan') {
+                    return false;
+                }
+                if ($peranPenguji === 'pengetahuan') {
+                    return $isExamBilingual ? $isBilingual : true;
+                }
+                // peran 'semua': Pada ujian bilingual, soal bilingual HANYA untuk penguji bilingual (pengetahuan)!
+                if ($isExamBilingual) {
+                    return !$isBilingual;
+                }
+                return true;
+            });
+        });
+
+        $examinerSoalIds = $examinerSoals->pluck('id');
+        $totalSoal       = $examinerSoalIds->count();
+
         $allIndikatorIds = $ujian->instrumens->flatMap(fn ($i) =>
             $i->kategoriKeterampilan->flatMap(fn ($k) => $k->indikator->pluck('id'))
         );
-
-        $totalSoal      = $allSoalIds->count();
-        $totalIndikator = $allIndikatorIds->count();
+        $totalIndikator = ($peranPenguji === 'pengetahuan') ? 0 : $allIndikatorIds->count();
 
         $siswaIdList = $siswas->pluck('id');
 
-        $gradedP = UkkNilaiPengetahuan::whereIn('soal_id', $allSoalIds)
-            ->whereIn('master_siswa_id', $siswaIdList)
-            ->selectRaw('master_siswa_id, count(*) as cnt')
-            ->groupBy('master_siswa_id')
-            ->pluck('cnt', 'master_siswa_id');
+        $gradedP = $examinerSoalIds->isNotEmpty()
+            ? UkkNilaiPengetahuan::whereIn('soal_id', $examinerSoalIds)
+                ->whereIn('master_siswa_id', $siswaIdList)
+                ->selectRaw('master_siswa_id, count(*) as cnt')
+                ->groupBy('master_siswa_id')
+                ->pluck('cnt', 'master_siswa_id')
+            : collect();
 
-        $gradedK = UkkNilaiKeterampilan::whereIn('indikator_id', $allIndikatorIds)
-            ->whereIn('master_siswa_id', $siswaIdList)
-            ->selectRaw('master_siswa_id, count(*) as cnt')
-            ->groupBy('master_siswa_id')
-            ->pluck('cnt', 'master_siswa_id');
+        $gradedK = $allIndikatorIds->isNotEmpty()
+            ? UkkNilaiKeterampilan::whereIn('indikator_id', $allIndikatorIds)
+                ->whereIn('master_siswa_id', $siswaIdList)
+                ->selectRaw('master_siswa_id, count(*) as cnt')
+                ->groupBy('master_siswa_id')
+                ->pluck('cnt', 'master_siswa_id')
+            : collect();
 
+        $allSoalIds = $ujian->instrumens->flatMap(fn ($i) => $i->soalPengetahuan->pluck('id'));
         $pengujiPengetahuanMap = UkkNilaiPengetahuan::with('penguji.masterGuru')
             ->whereIn('soal_id', $allSoalIds)
             ->whereIn('master_siswa_id', $siswaIdList)
@@ -276,6 +303,36 @@ class PenilaianUkkController extends Controller
             'instrumens.kategoriKeterampilan.indikator',
         ]);
 
+        $isExamBilingual = (bool) $ujian->is_bilingual;
+
+        // Filter butir soal yang menjadi kewenangan penguji ini
+        foreach ($ujian->instrumens as $ins) {
+            $ins->filteredSoalPengetahuan = $ins->soalPengetahuan->filter(function ($soal) use ($isExamBilingual, $peranPenguji) {
+                $isBilingual = ($soal->jenis_soal === 'bilingual')
+                    || ($isExamBilingual && (empty($soal->jenis_soal) || $soal->jenis_soal === 'bilingual'));
+
+                if ($peranPenguji === 'keterampilan') {
+                    return false;
+                }
+
+                if ($peranPenguji === 'pengetahuan') {
+                    // Penguji bilingual / pengetahuan hanya menguji soal bilingual pada ujian bilingual
+                    return $isExamBilingual ? $isBilingual : true;
+                }
+
+                // Penguji peran 'semua': Pada ujian bilingual, soal bilingual HANYA untuk penguji bilingual!
+                // Penguji 'semua' sama sekali TIDAK melihat soal bilingual.
+                if ($isExamBilingual) {
+                    return !$isBilingual;
+                }
+
+                return true;
+            })->values();
+        }
+
+        $hasPengetahuanForExaminer = $ujian->instrumens->contains(fn ($i) => $i->filteredSoalPengetahuan->isNotEmpty());
+        $hasKeterampilanForExaminer = $peranPenguji !== 'pengetahuan' && $ujian->instrumens->contains(fn ($i) => $i->kategoriKeterampilan->isNotEmpty());
+
         $allSoalIds      = $ujian->instrumens->flatMap(fn ($i) => $i->soalPengetahuan->pluck('id'));
         $allIndikatorIds = $ujian->instrumens->flatMap(fn ($i) =>
             $i->kategoriKeterampilan->flatMap(fn ($k) => $k->indikator->pluck('id'))
@@ -299,7 +356,8 @@ class PenilaianUkkController extends Controller
             ->first();
 
         return view('pages.guru-kelas.ukk.penilaian', compact(
-            'ujian', 'siswa', 'nilaiP', 'jawabanP', 'catatanP', 'nilaiK', 'peranPenguji', 'nilaiSikap'
+            'ujian', 'siswa', 'nilaiP', 'jawabanP', 'catatanP', 'nilaiK', 'peranPenguji', 'nilaiSikap',
+            'hasPengetahuanForExaminer', 'hasKeterampilanForExaminer'
         ));
     }
 
