@@ -15,6 +15,11 @@ class UkkPenguji extends Model
         'peran',
         'no_urut_mulai',
         'no_urut_selesai',
+        'siswa_ids',
+    ];
+
+    protected $casts = [
+        'siswa_ids' => 'array',
     ];
 
     public function ujian()

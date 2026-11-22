@@ -29,7 +29,7 @@
                     <div>
                         <h3 class="text-xl font-black">👨‍🏫 Set Penguji &amp; Jadwal Pelaksanaan UKK</h3>
                         <p class="text-orange-100 text-sm mt-1">
-                            Atur jadwal ujian (tanggal, waktu, ruangan) dan tentukan penguji per kelas &middot; Mendukung pembagian rentang nomor urut siswa
+                            Atur jadwal ujian (tanggal, waktu, ruangan) dan tentukan penguji per kelas &middot; Checklist langsung peserta ujian agar tidak tertukar
                             @if($tahunAktif)
                                 &middot; TP <span class="font-bold">{{ $tahunAktif->tahun }}</span>
                                 Semester <span class="font-bold">{{ $tahunAktif->semester }}</span>
@@ -182,15 +182,22 @@
                                                     <option value="semua">👥 Semua Aspek</option>
                                                 </select>
 
-                                                {{-- Rentang Siswa Pill Button (Click to Edit) --}}
+                                                {{-- Siswa Checklist / Rentang Button (Click to View & Edit) --}}
                                                 <button type="button" @click="openRentangModal(ujian, p, rombel)"
                                                     class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-bold border transition-colors cursor-pointer"
-                                                    :class="p.no_urut_mulai && p.no_urut_selesai
+                                                    :class="p.siswa_ids && p.siswa_ids.length > 0
                                                         ? 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200'
-                                                        : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200'"
-                                                    title="Klik untuk ubah pembagian nomor urut siswa">
+                                                        : (p.no_urut_mulai && p.no_urut_selesai
+                                                            ? 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200'
+                                                            : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200')"
+                                                    title="Klik untuk checklist / ubah peserta ujian yang diuji">
                                                     <span>🎯</span>
-                                                    <span x-text="p.no_urut_mulai && p.no_urut_selesai ? 'No. ' + p.no_urut_mulai + ' - ' + p.no_urut_selesai : 'Semua Siswa'"></span>
+                                                    <span x-text="p.siswa_ids && p.siswa_ids.length > 0
+                                                        ? p.siswa_ids.length + ' Siswa'
+                                                        : (p.no_urut_mulai && p.no_urut_selesai
+                                                            ? 'No. ' + p.no_urut_mulai + ' - ' + p.no_urut_selesai
+                                                            : 'Semua Siswa')">
+                                                    </span>
                                                 </button>
 
                                                 {{-- Delete Button --}}
@@ -233,17 +240,17 @@
             </template>
 
             {{-- ══════════════════════════════════════════════════════════════════ --}}
-            {{-- MODAL PILIH PENGUJI (SINGLE ROOT MODAL) --}}
+            {{-- MODAL PILIH PENGUJI (DENGAN CHECKLIST NAMA SISWA) --}}
             {{-- ══════════════════════════════════════════════════════════════════ --}}
             <div x-show="modalPengujiOpen" style="display:none"
                 class="fixed inset-0 z-[1000] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
                 @click.self="modalPengujiOpen = false">
 
-                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh] overflow-hidden"
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl flex flex-col max-h-[92vh] overflow-hidden"
                     @click.stop>
 
                     {{-- Modal Header --}}
-                    <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-amber-50 rounded-t-2xl shrink-0">
+                    <div class="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-amber-50 rounded-t-2xl shrink-0">
                         <div>
                             <p class="font-black text-gray-900 text-base">Pilih Penguji UKK</p>
                             <p class="text-xs text-gray-500">
@@ -259,23 +266,23 @@
 
                     {{-- Role Selector --}}
                     <div class="px-5 py-3 border-b border-gray-100 bg-slate-50/60 shrink-0">
-                        <label class="block text-xs font-black text-gray-700 mb-2">1. Pilih Tugas / Aspek yang Diuji:</label>
+                        <label class="block text-xs font-black text-gray-700 mb-1.5">1. Pilih Tugas / Aspek yang Diuji:</label>
                         <div class="grid grid-cols-3 gap-2">
-                            <label class="flex flex-col items-center justify-center p-2.5 rounded-xl border-2 text-center cursor-pointer transition-all text-xs"
+                            <label class="flex flex-col items-center justify-center p-2 rounded-xl border-2 text-center cursor-pointer transition-all text-xs"
                                 :class="selectedPeran === 'pengetahuan' ? 'bg-purple-50 border-purple-500 text-purple-900 font-black shadow-xs' : 'bg-white border-gray-200 text-gray-600 font-semibold hover:border-gray-300'">
                                 <input type="radio" value="pengetahuan" x-model="selectedPeran" class="sr-only">
                                 <span class="text-base mb-0.5">🌐</span>
                                 <span>Pengetahuan</span>
                                 <span class="text-[10px] text-purple-600 font-normal">(Bilingual / B. Inggris)</span>
                             </label>
-                            <label class="flex flex-col items-center justify-center p-2.5 rounded-xl border-2 text-center cursor-pointer transition-all text-xs"
+                            <label class="flex flex-col items-center justify-center p-2 rounded-xl border-2 text-center cursor-pointer transition-all text-xs"
                                 :class="selectedPeran === 'keterampilan' ? 'bg-amber-50 border-amber-500 text-amber-900 font-black shadow-xs' : 'bg-white border-gray-200 text-gray-600 font-semibold hover:border-gray-300'">
                                 <input type="radio" value="keterampilan" x-model="selectedPeran" class="sr-only">
                                 <span class="text-base mb-0.5">🛠️</span>
                                 <span>Keterampilan</span>
                                 <span class="text-[10px] text-amber-600 font-normal">(Praktik Produktif)</span>
                             </label>
-                            <label class="flex flex-col items-center justify-center p-2.5 rounded-xl border-2 text-center cursor-pointer transition-all text-xs"
+                            <label class="flex flex-col items-center justify-center p-2 rounded-xl border-2 text-center cursor-pointer transition-all text-xs"
                                 :class="selectedPeran === 'semua' ? 'bg-emerald-50 border-emerald-500 text-emerald-900 font-black shadow-xs' : 'bg-white border-gray-200 text-gray-600 font-semibold hover:border-gray-300'">
                                 <input type="radio" value="semua" x-model="selectedPeran" class="sr-only">
                                 <span class="text-base mb-0.5">👥</span>
@@ -285,62 +292,119 @@
                         </div>
                     </div>
 
-                    {{-- Rentang Siswa Selector --}}
+                    {{-- Checklist Nama Siswa --}}
                     <div class="px-5 py-3 border-b border-gray-100 bg-white shrink-0">
-                        <label class="block text-xs font-black text-gray-700 mb-1.5">2. Pembagian Siswa yang Diuji:</label>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="block text-xs font-black text-gray-700">2. Pembagian Peserta Siswa yang Diuji:</label>
+                            <span class="text-[11px] font-bold text-orange-600 bg-orange-50 px-2.5 py-0.5 rounded-lg border border-orange-200"
+                                x-text="(rentangMode === 'semua' ? (activeRombel ? activeRombel.total_siswa : 0) : selectedSiswaIds.length) + ' Siswa Terpilih'">
+                            </span>
+                        </div>
+
                         <div class="flex items-center gap-4 mb-2">
                             <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-gray-700">
                                 <input type="radio" value="semua" x-model="rentangMode" class="text-orange-500 focus:ring-orange-400">
                                 <span>Semua Siswa di Kelas Ini <span class="text-gray-400" x-text="'(1 - ' + (activeRombel ? activeRombel.total_siswa : 0) + ')'"></span></span>
                             </label>
                             <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-gray-700">
-                                <input type="radio" value="rentang" x-model="rentangMode" class="text-orange-500 focus:ring-orange-400">
-                                <span>Bagi Nomor Urut Siswa</span>
+                                <input type="radio" value="checklist" x-model="rentangMode" class="text-orange-500 focus:ring-orange-400">
+                                <span>Pilih / Checklist Siswa Tertentu</span>
                             </label>
                         </div>
 
-                        <div x-show="rentangMode === 'rentang'" class="grid grid-cols-2 gap-3 pt-1">
-                            <div>
-                                <label class="block text-[11px] font-bold text-gray-600 mb-1">No. Urut Mulai:</label>
-                                <input type="number" min="1" :max="activeRombel ? activeRombel.total_siswa : 100" x-model.number="noUrutMulai"
-                                    placeholder="Misal: 1"
-                                    class="w-full px-3 py-1.5 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 bg-gray-50">
+                        {{-- Checklist Box --}}
+                        <div x-show="rentangMode === 'checklist'" class="border border-slate-200 rounded-2xl p-2.5 bg-slate-50/70 space-y-2">
+                            {{-- Toolbar: Quick Range & Actions --}}
+                            <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-200/80 text-xs">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="font-bold text-slate-600 text-[11px]">Rentang Cepat:</span>
+                                    <input type="number" min="1" :max="activeRombel ? activeRombel.total_siswa : 100" x-model.number="quickMulai"
+                                        placeholder="1"
+                                        class="w-12 px-1.5 py-0.5 text-center text-xs border border-gray-300 rounded-lg bg-white font-bold">
+                                    <span class="text-slate-400 text-xs">s/d</span>
+                                    <input type="number" min="1" :max="activeRombel ? activeRombel.total_siswa : 100" x-model.number="quickSelesai"
+                                        placeholder="15"
+                                        class="w-12 px-1.5 py-0.5 text-center text-xs border border-gray-300 rounded-lg bg-white font-bold">
+                                    <button type="button" @click="applyQuickRange()"
+                                        class="px-2.5 py-1 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-bold text-[11px] shadow-xs transition-colors">
+                                        ✓ Centang Rentang
+                                    </button>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <button type="button" @click="selectAllSiswa()"
+                                        class="px-2 py-0.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-[10px] font-bold">
+                                        Pilih Semua
+                                    </button>
+                                    <button type="button" @click="clearAllSiswa()"
+                                        class="px-2 py-0.5 bg-white hover:bg-rose-50 text-rose-600 border border-slate-200 rounded-lg text-[10px] font-bold">
+                                        Kosongkan
+                                    </button>
+                                </div>
                             </div>
-                            <div>
-                                <label class="block text-[11px] font-bold text-gray-600 mb-1">No. Urut Selesai:</label>
-                                <input type="number" min="1" :max="activeRombel ? activeRombel.total_siswa : 100" x-model.number="noUrutSelesai"
-                                    placeholder="Misal: 15"
-                                    class="w-full px-3 py-1.5 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 bg-gray-50">
+
+                            {{-- Search in Siswa list --}}
+                            <div class="relative">
+                                <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
+                                </svg>
+                                <input type="text" x-model="siswaSearch" placeholder="Cari nama atau nomor urut siswa di kelas ini…"
+                                    class="w-full pl-8 pr-3 py-1.5 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-1 focus:ring-orange-400">
+                            </div>
+
+                            {{-- Student Items List --}}
+                            <div class="max-h-44 overflow-y-auto space-y-1 pr-1">
+                                <template x-for="s in filteredSiswaList" :key="s.id">
+                                    <label class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl border transition-all cursor-pointer text-xs"
+                                        :class="selectedSiswaIds.includes(s.id)
+                                            ? 'bg-orange-50/90 border-orange-300 text-orange-950 font-bold shadow-xs'
+                                            : 'bg-white border-slate-100 text-slate-700 hover:bg-slate-100/70'">
+                                        <input type="checkbox" :value="s.id" x-model="selectedSiswaIds"
+                                            class="rounded text-orange-500 focus:ring-orange-400 w-4 h-4">
+                                        <span class="w-7 text-center text-[10px] font-black rounded-md px-1 py-0.5 shrink-0"
+                                            :class="selectedSiswaIds.includes(s.id) ? 'bg-orange-200 text-orange-800' : 'bg-slate-100 text-slate-600'"
+                                            x-text="'#' + s.nomor_urut"></span>
+                                        <span class="truncate flex-1 font-bold" x-text="s.nama"></span>
+                                        <span class="text-[10px] text-gray-400 shrink-0 font-normal" x-text="'NIS: ' + s.nis"></span>
+                                        <template x-if="isSiswaAssignedToOtherInActive(s.id)">
+                                            <span class="text-[9px] font-bold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-200 shrink-0"
+                                                :title="'Sudah diuji oleh ' + isSiswaAssignedToOtherInActive(s.id)">
+                                                ⚠️ <span x-text="isSiswaAssignedToOtherInActive(s.id)"></span>
+                                            </span>
+                                        </template>
+                                    </label>
+                                </template>
+
+                                <div x-show="filteredSiswaList.length === 0" class="text-center py-4 text-xs text-gray-400 italic">
+                                    Tidak ada siswa yang cocok dengan pencarian.
+                                </div>
                             </div>
                         </div>
-                        <p x-show="rentangMode === 'rentang'" class="text-[10px] text-gray-400 mt-1 italic">
-                            * Contoh: Penguji A menguji siswa 1 - 15, Penguji B menguji siswa 16 - 30. Urutan sesuai absensi nama siswa.
-                        </p>
                     </div>
 
-                    {{-- Search Input --}}
-                    <div class="px-4 py-3 border-b border-gray-100 shrink-0">
+                    {{-- Search & Select Guru --}}
+                    <div class="px-4 py-2 border-b border-gray-100 shrink-0 bg-slate-50/40">
+                        <label class="block text-xs font-black text-gray-700 mb-1">3. Pilih Guru yang Bertugas:</label>
                         <div class="relative">
                             <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
                             </svg>
-                            <input x-model="guruSearch" type="text" placeholder="Cari nama atau kode guru (termasuk guru bahasa inggris)…"
-                                class="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 bg-gray-50">
+                            <input x-model="guruSearch" type="text" placeholder="Cari nama guru yang ditugaskan…"
+                                class="w-full pl-9 pr-4 py-1.5 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white">
                         </div>
                     </div>
 
                     {{-- Guru List --}}
-                    <div class="overflow-y-auto flex-1 p-3 flex flex-col gap-1.5">
+                    <div class="overflow-y-auto flex-1 p-3 flex flex-col gap-1.5 max-h-48">
                         <template x-for="g in filteredGuru" :key="g.id">
                             <button type="button" @click="assignPenguji(g)"
                                 :disabled="isAssignedInActiveRombel(g.id) || isSubmittingPenguji"
-                                class="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-left transition-all"
+                                class="flex items-center gap-3 w-full px-3 py-2 rounded-xl text-left transition-all text-xs"
                                 :class="isAssignedInActiveRombel(g.id)
                                     ? 'bg-emerald-50 border border-emerald-200 cursor-default opacity-75'
                                     : 'bg-gray-50 hover:bg-orange-50 hover:border-orange-200 border border-transparent'">
 
                                 {{-- Avatar --}}
-                                <div class="w-9 h-9 rounded-full overflow-hidden bg-orange-100 shrink-0 flex items-center justify-center font-black text-sm text-orange-600">
+                                <div class="w-8 h-8 rounded-full overflow-hidden bg-orange-100 shrink-0 flex items-center justify-center font-black text-xs text-orange-600">
                                     <template x-if="g.avatar">
                                         <img :src="g.avatar" :alt="g.nama" class="w-full h-full object-cover">
                                     </template>
@@ -350,28 +414,28 @@
                                 </div>
 
                                 <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-bold text-gray-800 truncate" x-text="g.nama"></p>
-                                    <p class="text-xs text-gray-400" x-text="g.kode"></p>
+                                    <p class="font-bold text-gray-800 truncate" x-text="g.nama"></p>
+                                    <p class="text-[10px] text-gray-400" x-text="g.kode"></p>
                                 </div>
 
                                 <template x-if="isAssignedInActiveRombel(g.id)">
-                                    <span class="text-xs font-bold text-emerald-600 shrink-0">✓ Sudah Ditugaskan</span>
+                                    <span class="text-[11px] font-bold text-emerald-600 shrink-0">✓ Sudah Ditugaskan</span>
                                 </template>
                                 <template x-if="!isAssignedInActiveRombel(g.id)">
-                                    <span class="text-xs font-black text-orange-600 shrink-0">+ Tugaskan</span>
+                                    <span class="text-[11px] font-black text-orange-600 shrink-0">+ Tugaskan Guru Ini</span>
                                 </template>
                             </button>
                         </template>
 
-                        <div x-show="filteredGuru.length === 0" class="text-center py-8 text-gray-400 text-sm italic">
+                        <div x-show="filteredGuru.length === 0" class="text-center py-4 text-gray-400 text-xs italic">
                             Tidak ada guru yang cocok dengan pencarian.
                         </div>
                     </div>
 
                     {{-- Modal Footer --}}
-                    <div class="px-5 py-3 border-t border-gray-100 shrink-0 flex justify-end">
+                    <div class="px-5 py-2.5 border-t border-gray-100 shrink-0 flex justify-end">
                         <button @click="modalPengujiOpen = false"
-                            class="px-5 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-sm font-bold text-gray-700 transition-colors">
+                            class="px-5 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-xs font-bold text-gray-700 transition-colors">
                             Tutup
                         </button>
                     </div>
@@ -379,17 +443,17 @@
             </div>
 
             {{-- ══════════════════════════════════════════════════════════════════ --}}
-            {{-- MODAL ATUR PEMBAGIAN SISWA PENGUJI (EDIT RENTANG) --}}
+            {{-- MODAL UBAH PEMBAGIAN SISWA PENGUJI (EDIT CHECKLIST NAMA SISWA) --}}
             {{-- ══════════════════════════════════════════════════════════════════ --}}
             <div x-show="modalRentangOpen" style="display:none"
                 class="fixed inset-0 z-[1000] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
                 @click.self="modalRentangOpen = false">
 
-                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden"
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[92vh] overflow-hidden"
                     @click.stop>
 
                     {{-- Modal Header --}}
-                    <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-amber-50 rounded-t-2xl shrink-0">
+                    <div class="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-amber-50 rounded-t-2xl shrink-0">
                         <div>
                             <p class="font-black text-gray-900 text-base">Atur Pembagian Siswa Penguji</p>
                             <p class="text-xs text-gray-500">
@@ -402,11 +466,11 @@
                         </button>
                     </div>
 
-                    <form @submit.prevent="submitRentang()" class="p-5 space-y-4">
+                    <form @submit.prevent="submitRentang()" class="p-5 space-y-3.5 overflow-y-auto flex-1">
                         <div>
                             <label class="block text-xs font-black text-gray-700 mb-1.5">Tugas / Aspek:</label>
                             <select x-model="editingPengujiPeran"
-                                class="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 bg-gray-50">
+                                class="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 bg-gray-50 font-bold">
                                 <option value="pengetahuan">🌐 Pengetahuan (Bilingual)</option>
                                 <option value="keterampilan">🛠️ Keterampilan</option>
                                 <option value="semua">👥 Semua Aspek</option>
@@ -414,42 +478,100 @@
                         </div>
 
                         <div>
-                            <label class="block text-xs font-black text-gray-700 mb-1.5">Cakupan Siswa:</label>
-                            <div class="space-y-2">
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label class="block text-xs font-black text-gray-700">Cakupan Siswa yang Diuji:</label>
+                                <span class="text-[11px] font-bold text-orange-600 bg-orange-50 px-2.5 py-0.5 rounded-lg border border-orange-200"
+                                    x-text="(editingRentangMode === 'semua' ? (editingRombel ? editingRombel.total_siswa : 0) : editingSelectedSiswaIds.length) + ' Siswa Terpilih'">
+                                </span>
+                            </div>
+
+                            <div class="space-y-1.5 mb-2.5">
                                 <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-gray-700">
                                     <input type="radio" value="semua" x-model="editingRentangMode" class="text-orange-500 focus:ring-orange-400">
                                     <span>Semua Siswa di Kelas Ini <span class="text-gray-400" x-text="'(1 - ' + (editingRombel ? editingRombel.total_siswa : 0) + ')'"></span></span>
                                 </label>
                                 <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-gray-700">
-                                    <input type="radio" value="rentang" x-model="editingRentangMode" class="text-orange-500 focus:ring-orange-400">
-                                    <span>Bagi Berdasarkan Nomor Urut Siswa</span>
+                                    <input type="radio" value="checklist" x-model="editingRentangMode" class="text-orange-500 focus:ring-orange-400">
+                                    <span>Pilih / Checklist Siswa Tertentu</span>
                                 </label>
                             </div>
-                        </div>
 
-                        <div x-show="editingRentangMode === 'rentang'" class="grid grid-cols-2 gap-3 pt-1">
-                            <div>
-                                <label class="block text-[11px] font-bold text-gray-600 mb-1">No. Urut Mulai:</label>
-                                <input type="number" min="1" :max="editingRombel ? editingRombel.total_siswa : 100" x-model.number="editingNoUrutMulai"
-                                    placeholder="Misal: 1"
-                                    class="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 bg-gray-50">
-                            </div>
-                            <div>
-                                <label class="block text-[11px] font-bold text-gray-600 mb-1">No. Urut Selesai:</label>
-                                <input type="number" min="1" :max="editingRombel ? editingRombel.total_siswa : 100" x-model.number="editingNoUrutSelesai"
-                                    placeholder="Misal: 15"
-                                    class="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 bg-gray-50">
+                            {{-- Checklist Box in Edit Modal --}}
+                            <div x-show="editingRentangMode === 'checklist'" class="border border-slate-200 rounded-2xl p-2.5 bg-slate-50/70 space-y-2">
+                                <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-200/80 text-xs">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span class="font-bold text-slate-600 text-[11px]">Rentang Cepat:</span>
+                                        <input type="number" min="1" :max="editingRombel ? editingRombel.total_siswa : 100" x-model.number="editingQuickMulai"
+                                            placeholder="1"
+                                            class="w-12 px-1.5 py-0.5 text-center text-xs border border-gray-300 rounded-lg bg-white font-bold">
+                                        <span class="text-slate-400 text-xs">s/d</span>
+                                        <input type="number" min="1" :max="editingRombel ? editingRombel.total_siswa : 100" x-model.number="editingQuickSelesai"
+                                            placeholder="15"
+                                            class="w-12 px-1.5 py-0.5 text-center text-xs border border-gray-300 rounded-lg bg-white font-bold">
+                                        <button type="button" @click="editingApplyQuickRange()"
+                                            class="px-2.5 py-1 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-bold text-[11px] shadow-xs transition-colors">
+                                            ✓ Centang Rentang
+                                        </button>
+                                    </div>
+                                    <div class="flex items-center gap-1">
+                                        <button type="button" @click="editingSelectAllSiswa()"
+                                            class="px-2 py-0.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-[10px] font-bold">
+                                            Pilih Semua
+                                        </button>
+                                        <button type="button" @click="editingClearAllSiswa()"
+                                            class="px-2 py-0.5 bg-white hover:bg-rose-50 text-rose-600 border border-slate-200 rounded-lg text-[10px] font-bold">
+                                            Kosongkan
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {{-- Search in Siswa list --}}
+                                <div class="relative">
+                                    <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
+                                    </svg>
+                                    <input type="text" x-model="editingSiswaSearch" placeholder="Cari nama atau nomor urut siswa…"
+                                        class="w-full pl-8 pr-3 py-1.5 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                </div>
+
+                                {{-- Student Items List --}}
+                                <div class="max-h-52 overflow-y-auto space-y-1 pr-1">
+                                    <template x-for="s in editingFilteredSiswaList" :key="s.id">
+                                        <label class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl border transition-all cursor-pointer text-xs"
+                                            :class="editingSelectedSiswaIds.includes(s.id)
+                                                ? 'bg-orange-50/90 border-orange-300 text-orange-950 font-bold shadow-xs'
+                                                : 'bg-white border-slate-100 text-slate-700 hover:bg-slate-100/70'">
+                                            <input type="checkbox" :value="s.id" x-model="editingSelectedSiswaIds"
+                                                class="rounded text-orange-500 focus:ring-orange-400 w-4 h-4">
+                                            <span class="w-7 text-center text-[10px] font-black rounded-md px-1 py-0.5 shrink-0"
+                                                :class="editingSelectedSiswaIds.includes(s.id) ? 'bg-orange-200 text-orange-800' : 'bg-slate-100 text-slate-600'"
+                                                x-text="'#' + s.nomor_urut"></span>
+                                            <span class="truncate flex-1 font-bold" x-text="s.nama"></span>
+                                            <span class="text-[10px] text-gray-400 shrink-0 font-normal" x-text="'NIS: ' + s.nis"></span>
+                                            <template x-if="isSiswaAssignedToOtherInEditing(s.id)">
+                                                <span class="text-[9px] font-bold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-200 shrink-0"
+                                                    :title="'Sudah diuji oleh ' + isSiswaAssignedToOtherInEditing(s.id)">
+                                                    ⚠️ <span x-text="isSiswaAssignedToOtherInEditing(s.id)"></span>
+                                                </span>
+                                            </template>
+                                        </label>
+                                    </template>
+
+                                    <div x-show="editingFilteredSiswaList.length === 0" class="text-center py-4 text-xs text-gray-400 italic">
+                                        Tidak ada siswa yang cocok dengan pencarian.
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
                         {{-- Footer --}}
-                        <div class="pt-3 border-t border-gray-100 flex items-center justify-end gap-2">
+                        <div class="pt-3 border-t border-gray-100 flex items-center justify-end gap-2 shrink-0">
                             <button type="button" @click="modalRentangOpen = false"
-                                class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-sm font-bold text-gray-700 transition-colors">
+                                class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-xs font-bold text-gray-700 transition-colors">
                                 Batal
                             </button>
                             <button type="submit" :disabled="isSubmittingRentang"
-                                class="px-5 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black text-sm shadow-md transition-all disabled:opacity-50">
+                                class="px-5 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black text-xs shadow-md transition-all disabled:opacity-50">
                                 <span x-text="isSubmittingRentang ? 'Menyimpan…' : '💾 Simpan Perubahan'"></span>
                             </button>
                         </div>
@@ -549,9 +671,11 @@
             activeRombel: null,
             activeRombelName: '',
             selectedPeran: 'semua',
-            rentangMode: 'semua',
-            noUrutMulai: 1,
-            noUrutSelesai: 15,
+            rentangMode: 'semua', // 'semua' | 'checklist'
+            selectedSiswaIds: [],
+            quickMulai: 1,
+            quickSelesai: 15,
+            siswaSearch: '',
             guruSearch: '',
             isSubmittingPenguji: false,
 
@@ -561,9 +685,11 @@
             editingRombel: null,
             editingPenguji: null,
             editingPengujiPeran: 'semua',
-            editingRentangMode: 'semua',
-            editingNoUrutMulai: null,
-            editingNoUrutSelesai: null,
+            editingRentangMode: 'semua', // 'semua' | 'checklist'
+            editingSelectedSiswaIds: [],
+            editingQuickMulai: 1,
+            editingQuickSelesai: 15,
+            editingSiswaSearch: '',
             isSubmittingRentang: false,
 
             // Modal Jadwal State
@@ -617,6 +743,94 @@
                 );
             },
 
+            get filteredSiswaList() {
+                if (!this.activeRombel || !this.activeRombel.siswas) return [];
+                const q = this.siswaSearch.toLowerCase().trim();
+                if (!q) return this.activeRombel.siswas;
+                return this.activeRombel.siswas.filter(s =>
+                    s.nama.toLowerCase().includes(q) ||
+                    (s.nis && String(s.nis).includes(q)) ||
+                    String(s.nomor_urut).includes(q)
+                );
+            },
+
+            selectAllSiswa() {
+                if (!this.activeRombel || !this.activeRombel.siswas) return;
+                this.selectedSiswaIds = this.activeRombel.siswas.map(s => s.id);
+            },
+
+            clearAllSiswa() {
+                this.selectedSiswaIds = [];
+            },
+
+            applyQuickRange() {
+                if (!this.activeRombel || !this.activeRombel.siswas) return;
+                const m = parseInt(this.quickMulai) || 1;
+                const s = parseInt(this.quickSelesai) || 1;
+                const min = Math.min(m, s);
+                const max = Math.max(m, s);
+                const rangeIds = this.activeRombel.siswas
+                    .filter(st => st.nomor_urut >= min && st.nomor_urut <= max)
+                    .map(st => st.id);
+                this.selectedSiswaIds = rangeIds;
+                this.toast(`Nomor urut ${min} s.d. ${max} terpilih (${rangeIds.length} siswa).`, 'success');
+            },
+
+            isSiswaAssignedToOtherInActive(siswaId) {
+                if (!this.activeUjian || !this.activeRombel) return null;
+                const otherPengujis = this.activeUjian.pengujis.filter(p => p.rombel_id === this.activeRombel.id);
+                for (const p of otherPengujis) {
+                    if (p.siswa_ids && p.siswa_ids.includes(siswaId)) {
+                        return p.nama;
+                    }
+                }
+                return null;
+            },
+
+            get editingFilteredSiswaList() {
+                if (!this.editingRombel || !this.editingRombel.siswas) return [];
+                const q = this.editingSiswaSearch.toLowerCase().trim();
+                if (!q) return this.editingRombel.siswas;
+                return this.editingRombel.siswas.filter(s =>
+                    s.nama.toLowerCase().includes(q) ||
+                    (s.nis && String(s.nis).includes(q)) ||
+                    String(s.nomor_urut).includes(q)
+                );
+            },
+
+            editingSelectAllSiswa() {
+                if (!this.editingRombel || !this.editingRombel.siswas) return;
+                this.editingSelectedSiswaIds = this.editingRombel.siswas.map(s => s.id);
+            },
+
+            editingClearAllSiswa() {
+                this.editingSelectedSiswaIds = [];
+            },
+
+            editingApplyQuickRange() {
+                if (!this.editingRombel || !this.editingRombel.siswas) return;
+                const m = parseInt(this.editingQuickMulai) || 1;
+                const s = parseInt(this.editingQuickSelesai) || 1;
+                const min = Math.min(m, s);
+                const max = Math.max(m, s);
+                const rangeIds = this.editingRombel.siswas
+                    .filter(st => st.nomor_urut >= min && st.nomor_urut <= max)
+                    .map(st => st.id);
+                this.editingSelectedSiswaIds = rangeIds;
+                this.toast(`Nomor urut ${min} s.d. ${max} terpilih (${rangeIds.length} siswa).`, 'success');
+            },
+
+            isSiswaAssignedToOtherInEditing(siswaId) {
+                if (!this.editingUjian || !this.editingRombel || !this.editingPenguji) return null;
+                const otherPengujis = this.editingUjian.pengujis.filter(p => p.rombel_id === this.editingRombel.id && p.id !== this.editingPenguji.id);
+                for (const p of otherPengujis) {
+                    if (p.siswa_ids && p.siswa_ids.includes(siswaId)) {
+                        return p.nama;
+                    }
+                }
+                return null;
+            },
+
             getPengujiForRombel(ujian, rombelId) {
                 if (!ujian || !ujian.pengujis) return [];
                 return ujian.pengujis.filter(p => p.rombel_id === rombelId || p.rombel_id === null);
@@ -635,8 +849,10 @@
                 this.activeRombelName = rombel.nama_kelas;
                 this.selectedPeran = ujian.is_bilingual ? 'pengetahuan' : 'semua';
                 this.rentangMode = 'semua';
-                this.noUrutMulai = 1;
-                this.noUrutSelesai = rombel ? rombel.total_siswa : 15;
+                this.selectedSiswaIds = rombel && rombel.siswas ? rombel.siswas.map(s => s.id) : [];
+                this.quickMulai = 1;
+                this.quickSelesai = rombel ? rombel.total_siswa : 15;
+                this.siswaSearch = '';
                 this.guruSearch = '';
                 this.modalPengujiOpen = true;
             },
@@ -644,8 +860,21 @@
             async assignPenguji(guru) {
                 if (this.isAssignedInActiveRombel(guru.id) || this.isSubmittingPenguji) return;
                 this.isSubmittingPenguji = true;
-                const mulai = this.rentangMode === 'rentang' ? this.noUrutMulai : null;
-                const selesai = this.rentangMode === 'rentang' ? this.noUrutSelesai : null;
+
+                let payloadSiswaIds = null;
+                let payloadMulai = null;
+                let payloadSelesai = null;
+
+                if (this.rentangMode === 'checklist') {
+                    payloadSiswaIds = this.selectedSiswaIds;
+                    if (this.activeRombel && this.activeRombel.siswas) {
+                        const selectedObjects = this.activeRombel.siswas.filter(st => this.selectedSiswaIds.includes(st.id));
+                        if (selectedObjects.length > 0) {
+                            payloadMulai = Math.min(...selectedObjects.map(st => st.nomor_urut));
+                            payloadSelesai = Math.max(...selectedObjects.map(st => st.nomor_urut));
+                        }
+                    }
+                }
 
                 try {
                     const res = await fetch('/kaprodi/ukk/penguji/' + this.activeUjian.id, {
@@ -659,8 +888,9 @@
                             user_id: guru.id,
                             rombel_id: this.activeRombel.id,
                             peran: this.selectedPeran,
-                            no_urut_mulai: mulai,
-                            no_urut_selesai: selesai,
+                            no_urut_mulai: payloadMulai,
+                            no_urut_selesai: payloadSelesai,
+                            siswa_ids: payloadSiswaIds,
                         }),
                     });
                     const data = await res.json();
@@ -670,6 +900,7 @@
                     }
                     this.activeUjian.pengujis.push(data.penguji);
                     this.toast(data.message, 'success');
+                    this.modalPengujiOpen = false;
                 } catch {
                     this.toast('Terjadi kesalahan jaringan.', 'error');
                 } finally {
@@ -682,14 +913,23 @@
                 this.editingRombel = rombel;
                 this.editingPenguji = penguji;
                 this.editingPengujiPeran = penguji.peran || 'semua';
-                if (penguji.no_urut_mulai && penguji.no_urut_selesai) {
-                    this.editingRentangMode = 'rentang';
-                    this.editingNoUrutMulai = penguji.no_urut_mulai;
-                    this.editingNoUrutSelesai = penguji.no_urut_selesai;
+                this.editingSiswaSearch = '';
+                this.editingQuickMulai = 1;
+                this.editingQuickSelesai = rombel ? rombel.total_siswa : 15;
+
+                if (penguji.siswa_ids && penguji.siswa_ids.length > 0) {
+                    this.editingRentangMode = 'checklist';
+                    this.editingSelectedSiswaIds = [...penguji.siswa_ids];
+                } else if (penguji.no_urut_mulai && penguji.no_urut_selesai && rombel && rombel.siswas) {
+                    this.editingRentangMode = 'checklist';
+                    this.editingQuickMulai = penguji.no_urut_mulai;
+                    this.editingQuickSelesai = penguji.no_urut_selesai;
+                    this.editingSelectedSiswaIds = rombel.siswas
+                        .filter(s => s.nomor_urut >= penguji.no_urut_mulai && s.nomor_urut <= penguji.no_urut_selesai)
+                        .map(s => s.id);
                 } else {
                     this.editingRentangMode = 'semua';
-                    this.editingNoUrutMulai = 1;
-                    this.editingNoUrutSelesai = rombel ? rombel.total_siswa : 15;
+                    this.editingSelectedSiswaIds = rombel && rombel.siswas ? rombel.siswas.map(s => s.id) : [];
                 }
                 this.modalRentangOpen = true;
             },
@@ -697,8 +937,21 @@
             async submitRentang() {
                 if (this.isSubmittingRentang) return;
                 this.isSubmittingRentang = true;
-                const mulai = this.editingRentangMode === 'rentang' ? this.editingNoUrutMulai : null;
-                const selesai = this.editingRentangMode === 'rentang' ? this.editingNoUrutSelesai : null;
+
+                let payloadSiswaIds = null;
+                let payloadMulai = null;
+                let payloadSelesai = null;
+
+                if (this.editingRentangMode === 'checklist') {
+                    payloadSiswaIds = this.editingSelectedSiswaIds;
+                    if (this.editingRombel && this.editingRombel.siswas) {
+                        const selectedObjects = this.editingRombel.siswas.filter(st => this.editingSelectedSiswaIds.includes(st.id));
+                        if (selectedObjects.length > 0) {
+                            payloadMulai = Math.min(...selectedObjects.map(st => st.nomor_urut));
+                            payloadSelesai = Math.max(...selectedObjects.map(st => st.nomor_urut));
+                        }
+                    }
+                }
 
                 try {
                     const res = await fetch('/kaprodi/ukk/penguji/' + this.editingUjian.id + '/' + this.editingPenguji.user_id, {
@@ -712,8 +965,9 @@
                             peran: this.editingPengujiPeran,
                             rombel_id: this.editingPenguji.rombel_id,
                             penguji_id: this.editingPenguji.id,
-                            no_urut_mulai: mulai,
-                            no_urut_selesai: selesai,
+                            no_urut_mulai: payloadMulai,
+                            no_urut_selesai: payloadSelesai,
+                            siswa_ids: payloadSiswaIds,
                         }),
                     });
                     const data = await res.json();
@@ -722,8 +976,9 @@
                         return;
                     }
                     this.editingPenguji.peran = this.editingPengujiPeran;
-                    this.editingPenguji.no_urut_mulai = mulai;
-                    this.editingPenguji.no_urut_selesai = selesai;
+                    this.editingPenguji.no_urut_mulai = payloadMulai;
+                    this.editingPenguji.no_urut_selesai = payloadSelesai;
+                    this.editingPenguji.siswa_ids = payloadSiswaIds || [];
                     this.toast(data.message, 'success');
                     this.modalRentangOpen = false;
                 } catch {

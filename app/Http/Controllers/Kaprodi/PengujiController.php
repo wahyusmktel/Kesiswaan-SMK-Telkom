@@ -54,15 +54,24 @@ class PengujiController extends Controller
                     if (is_string($tgl)) {
                         $tgl = \Carbon\Carbon::parse($tgl);
                     }
+                    $sortedSiswas = $r->siswa->sortBy('nama_lengkap')->values();
                     return [
                         'id'                  => $r->id,
                         'nama_kelas'          => $r->kelas?->nama_kelas ?? 'Kelas #' . $r->id,
-                        'total_siswa'         => $r->siswa->count(),
+                        'total_siswa'         => $sortedSiswas->count(),
                         'tanggal_pelaksanaan' => $tgl ? $tgl->format('Y-m-d') : '',
                         'tanggal_formatted'   => $tgl ? $tgl->translatedFormat('d M Y') : '',
                         'jam_mulai'           => $r->pivot->jam_mulai ? substr($r->pivot->jam_mulai, 0, 5) : '',
                         'jam_selesai'         => $r->pivot->jam_selesai ? substr($r->pivot->jam_selesai, 0, 5) : '',
                         'ruangan'             => $r->pivot->ruangan ?? '',
+                        'siswas'              => $sortedSiswas->map(function ($s, $idx) {
+                            return [
+                                'id'         => $s->id,
+                                'nomor_urut' => $idx + 1,
+                                'nama'       => $s->nama_lengkap,
+                                'nis'        => $s->nis,
+                            ];
+                        })->values(),
                     ];
                 })->values(),
                 'pengujis'     => $ujian->ukkPengujis->map(function ($p) {
@@ -73,6 +82,7 @@ class PengujiController extends Controller
                         'peran'           => $p->peran,
                         'no_urut_mulai'   => $p->no_urut_mulai,
                         'no_urut_selesai' => $p->no_urut_selesai,
+                        'siswa_ids'       => $p->siswa_ids ?: [],
                         'nama'            => $p->user?->masterGuru?->nama_lengkap ?? $p->user?->name,
                         'kode'            => $p->user?->masterGuru?->kode_guru ?? '—',
                         'avatar'          => $p->user?->avatar,
@@ -92,12 +102,17 @@ class PengujiController extends Controller
             'peran'           => 'nullable|string|in:semua,pengetahuan,keterampilan',
             'no_urut_mulai'   => 'nullable|integer|min:1',
             'no_urut_selesai' => 'nullable|integer',
+            'siswa_ids'       => 'nullable|array',
+            'siswa_ids.*'     => 'integer|exists:master_siswa,id',
         ]);
 
         $peran         = $request->input('peran', 'semua');
         $rombelId      = $request->input('rombel_id') ?: null;
         $noUrutMulai   = $request->filled('no_urut_mulai') ? (int) $request->no_urut_mulai : null;
         $noUrutSelesai = $request->filled('no_urut_selesai') ? (int) $request->no_urut_selesai : null;
+        $siswaIds      = $request->has('siswa_ids') && is_array($request->siswa_ids) && !empty($request->siswa_ids)
+            ? array_values(array_map('intval', $request->siswa_ids))
+            : null;
 
         if ($rombelId) {
             $isMapped = DB::table('ukk_rombel_mappings')
@@ -126,6 +141,7 @@ class PengujiController extends Controller
             'peran'           => $peran,
             'no_urut_mulai'   => $noUrutMulai,
             'no_urut_selesai' => $noUrutSelesai,
+            'siswa_ids'       => $siswaIds,
         ]);
 
         $user = User::with('masterGuru')->find($request->user_id);
@@ -144,6 +160,7 @@ class PengujiController extends Controller
                 'peran'           => $peran,
                 'no_urut_mulai'   => $noUrutMulai,
                 'no_urut_selesai' => $noUrutSelesai,
+                'siswa_ids'       => $siswaIds ?: [],
             ],
         ]);
     }
@@ -156,6 +173,8 @@ class PengujiController extends Controller
             'penguji_id'      => 'nullable|integer',
             'no_urut_mulai'   => 'nullable|integer|min:1',
             'no_urut_selesai' => 'nullable|integer',
+            'siswa_ids'       => 'nullable|array',
+            'siswa_ids.*'     => 'integer|exists:master_siswa,id',
         ]);
 
         $query = UkkPenguji::where('ukk_ujian_id', $ujian->id);
@@ -171,11 +190,17 @@ class PengujiController extends Controller
 
         $noUrutMulai   = $request->has('no_urut_mulai') ? ($request->no_urut_mulai ? (int) $request->no_urut_mulai : null) : null;
         $noUrutSelesai = $request->has('no_urut_selesai') ? ($request->no_urut_selesai ? (int) $request->no_urut_selesai : null) : null;
+        $siswaIds      = $request->has('siswa_ids')
+            ? (is_array($request->siswa_ids) && !empty($request->siswa_ids) ? array_values(array_map('intval', $request->siswa_ids)) : null)
+            : null;
 
         $updateData = ['peran' => $request->peran];
         if ($request->has('no_urut_mulai') || $request->has('no_urut_selesai')) {
             $updateData['no_urut_mulai']   = $noUrutMulai;
             $updateData['no_urut_selesai'] = $noUrutSelesai;
+        }
+        if ($request->has('siswa_ids')) {
+            $updateData['siswa_ids'] = $siswaIds;
         }
 
         $query->update($updateData);
@@ -185,6 +210,7 @@ class PengujiController extends Controller
             'peran'           => $request->peran,
             'no_urut_mulai'   => $noUrutMulai,
             'no_urut_selesai' => $noUrutSelesai,
+            'siswa_ids'       => $siswaIds ?: [],
         ]);
     }
 
