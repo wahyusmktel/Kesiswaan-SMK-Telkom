@@ -166,20 +166,28 @@
                                 <span class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black text-xs shadow-sm">
                                     {{ $loop->iteration }}
                                 </span>
+                                @php
+                                    $hasBilingualSoal = $ins->soalPengetahuan->contains(fn($s) => $s->jenis_soal === 'bilingual');
+                                    $hasObservasiSoal = $ins->soalPengetahuan->contains(fn($s) => $s->jenis_soal === 'observasi');
+                                    $hasEsaiSoal      = $ins->soalPengetahuan->contains(fn($s) => empty($s->jenis_soal) || $s->jenis_soal === 'esai');
+                                    $typesCount       = ($hasBilingualSoal ? 1 : 0) + ($hasObservasiSoal ? 1 : 0) + ($hasEsaiSoal ? 1 : 0);
+                                @endphp
                                 <div>
                                     <h4 class="font-black text-slate-900 text-base">
                                         {{ $ins->nama_instrumen }} &mdash;
-                                        @if($ins->soalPengetahuan->where('jenis_soal', 'bilingual')->isNotEmpty() && $ins->soalPengetahuan->where('jenis_soal', '!=', 'bilingual')->isNotEmpty())
-                                            Aspek Pengetahuan (Hybrid: Esai &amp; Wawancara Bilingual)
-                                        @elseif($ujian->is_bilingual || $ins->soalPengetahuan->every(fn($s) => $s->jenis_soal === 'bilingual'))
+                                        @if($typesCount > 1)
+                                            Aspek Pengetahuan (Model Kombinasi / Hybrid)
+                                        @elseif($hasBilingualSoal || $ujian->is_bilingual)
                                             Aspek Pengetahuan (Wawancara Bilingual)
+                                        @elseif($hasObservasiSoal)
+                                            Aspek Pengetahuan (Observasi Langsung)
                                         @else
                                             Aspek Pengetahuan (Esai Siswa)
                                         @endif
                                     </h4>
                                     <p class="text-xs text-slate-500">
                                         Bobot Pengetahuan: <strong class="text-blue-700">{{ $ins->bobot_pengetahuan }}%</strong> &middot;
-                                        Penilaian mencakup butir soal esai siswa dan/atau wawancara lisan bilingual berpedoman pada kunci jawaban acuan.
+                                        Penilaian mencakup butir soal esai siswa, observasi langsung, dan/atau wawancara bilingual berpedoman pada kunci jawaban acuan.
                                     </p>
                                 </div>
                             </div>
@@ -196,7 +204,8 @@
                             @php
                                 $jSiswa = $jawabanP[$soal->id] ?? null;
                                 $hasAnswer = !empty(trim((string)$jSiswa));
-                                $isSoalBilingual = $soal->jenis_soal === 'bilingual' || ($ujian->is_bilingual && empty($soal->jenis_soal));
+                                $isBilingual = $soal->jenis_soal === 'bilingual' || ($ujian->is_bilingual && empty($soal->jenis_soal));
+                                $isObservasi = $soal->jenis_soal === 'observasi';
                             @endphp
                             <div class="bg-slate-50/60 rounded-2xl border border-slate-200/90 p-5 space-y-4 hover:border-indigo-300 transition-all">
                                 {{-- Card Header --}}
@@ -207,9 +216,13 @@
                                         </span>
                                         <div>
                                             <div class="mb-1">
-                                                @if($isSoalBilingual)
+                                                @if($isBilingual)
                                                     <span class="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-purple-700 bg-purple-100/80 px-2 py-0.5 rounded-md border border-purple-200">
                                                         🗣️ Wawancara Bilingual (English)
+                                                    </span>
+                                                @elseif($isObservasi)
+                                                    <span class="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-amber-800 bg-amber-100/80 px-2 py-0.5 rounded-md border border-amber-300">
+                                                        👁️ Observasi / Tanya Jawab Langsung
                                                     </span>
                                                 @else
                                                     <span class="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-blue-700 bg-blue-100/80 px-2 py-0.5 rounded-md border border-blue-200">
@@ -256,8 +269,8 @@
                                     @endif
                                 </div>
 
-                                {{-- Jawaban Siswa / Mode Wawancara --}}
-                                @if($isSoalBilingual)
+                                {{-- Jawaban Siswa / Mode Observasi / Mode Wawancara --}}
+                                @if($isBilingual)
                                     <div class="bg-gradient-to-r from-purple-50/70 to-indigo-50/70 border border-purple-200 rounded-2xl p-4 text-xs shadow-sm">
                                         <div class="flex items-center gap-1.5 font-bold text-purple-900 mb-1">
                                             <span>🎙️</span>
@@ -265,6 +278,16 @@
                                         </div>
                                         <p class="text-purple-950 leading-relaxed pl-5 font-medium">
                                             Ajukan pertanyaan di atas secara lisan dalam bahasa Inggris kepada siswa. Dengarkan respon/penjelasan siswa dan berikan penilaian <strong>Benar (1)</strong> atau <strong>Salah (0)</strong> di bawah. Anda juga dapat mengetikkan catatan respon siswa pada kolom catatan penguji.
+                                        </p>
+                                    </div>
+                                @elseif($isObservasi)
+                                    <div class="bg-gradient-to-r from-amber-50/80 to-yellow-50/60 border border-amber-200 rounded-2xl p-4 text-xs shadow-sm">
+                                        <div class="flex items-center gap-1.5 font-bold text-amber-900 mb-1">
+                                            <span>👁️</span>
+                                            <span>Observasi / Tanya Jawab Langsung oleh Penguji:</span>
+                                        </div>
+                                        <p class="text-amber-950 leading-relaxed pl-5 font-medium">
+                                            Tanyakan atau amati aspek pengetahuan di atas secara tatap muka langsung kepada siswa saat ujian. Berikan penilaian <strong>Benar (1)</strong> atau <strong>Salah (0)</strong> di bawah sesuai pemahaman siswa.
                                         </p>
                                     </div>
                                 @else

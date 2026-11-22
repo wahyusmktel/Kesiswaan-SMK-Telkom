@@ -417,14 +417,18 @@
             @if($ins->soalPengetahuan->isNotEmpty())
             @php
                 $hasBilingualSoal = $ins->soalPengetahuan->contains(fn($s) => $s->jenis_soal === 'bilingual');
-                $hasEsaiSoal      = $ins->soalPengetahuan->contains(fn($s) => $s->jenis_soal !== 'bilingual');
+                $hasObservasiSoal = $ins->soalPengetahuan->contains(fn($s) => $s->jenis_soal === 'observasi');
+                $hasEsaiSoal      = $ins->soalPengetahuan->contains(fn($s) => empty($s->jenis_soal) || $s->jenis_soal === 'esai');
+                $distinctTypes    = ($hasBilingualSoal ? 1 : 0) + ($hasObservasiSoal ? 1 : 0) + ($hasEsaiSoal ? 1 : 0);
             @endphp
             <div class="aspect-head p">
                 1. Penilaian Aspek Pengetahuan
-                @if($hasBilingualSoal && $hasEsaiSoal)
-                    (Esai &amp; Wawancara Bilingual)
+                @if($distinctTypes > 1)
+                    (Kombinasi / Hybrid)
                 @elseif($hasBilingualSoal || $ujian->is_bilingual)
                     (Wawancara Bilingual / English)
+                @elseif($hasObservasiSoal)
+                    (Observasi Langsung)
                 @else
                     (Esai)
                 @endif
@@ -453,9 +457,15 @@
                         <td class="center">{{ $loop->iteration }}</td>
                         <td>
                             {{ $soal->pertanyaan }}
-                            @if($hasBilingualSoal && $hasEsaiSoal)
+                            @if($distinctTypes > 1)
                                 <span style="font-size:7pt; color:#6b7280; font-style:italic;">
-                                    ({{ $soal->jenis_soal === 'bilingual' ? 'Wawancara Bilingual' : 'Esai Siswa' }})
+                                    @if($soal->jenis_soal === 'bilingual')
+                                        (Wawancara Bilingual)
+                                    @elseif($soal->jenis_soal === 'observasi')
+                                        (Observasi Langsung)
+                                    @else
+                                        (Esai Siswa)
+                                    @endif
                                 </span>
                             @endif
                         </td>

@@ -407,7 +407,7 @@
             </div>
 
             <div class="flex gap-2 px-5 py-2.5 border-b border-gray-100 bg-gray-50/60 flex-wrap items-center">
-                <span class="bobot-pill bg-indigo-100 text-indigo-700">Soal Esai Siswa</span>
+                <span class="bobot-pill bg-indigo-100 text-indigo-700">Variasi: Esai / Bilingual / Observasi</span>
                 <span class="bobot-pill bg-emerald-100 text-emerald-700">Kunci Acuan Penguji</span>
                 <span class="text-xs text-gray-400 ml-auto self-center"><span class="font-bold text-blue-600" x-text="form.soal_pengetahuan.length"></span> soal</span>
                 {{-- Import button --}}
@@ -428,9 +428,14 @@
                                 <span class="text-xs font-black text-slate-700">Soal #<span x-text="i+1"></span></span>
                                 <select x-model="soal.jenis_soal"
                                     class="text-[11px] font-bold rounded-lg border py-0.5 px-2 bg-white cursor-pointer focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                                    :class="soal.jenis_soal === 'bilingual' ? 'text-purple-700 bg-purple-50 border-purple-300' : 'text-blue-700 bg-blue-50 border-blue-300'">
+                                    :class="{
+                                        'text-purple-700 bg-purple-50 border-purple-300': soal.jenis_soal === 'bilingual',
+                                        'text-amber-800 bg-amber-50 border-amber-300': soal.jenis_soal === 'observasi',
+                                        'text-blue-700 bg-blue-50 border-blue-300': !soal.jenis_soal || soal.jenis_soal === 'esai'
+                                    }">
                                     <option value="esai">📝 Esai Mandiri (Siswa)</option>
                                     <option value="bilingual">🗣️ Wawancara Bilingual (Penguji)</option>
+                                    <option value="observasi">👁️ Observasi / Tanya Jawab (Penguji)</option>
                                 </select>
                             </div>
                             <button @click="removeSoal(i)" class="del-btn" title="Hapus Soal">
@@ -441,8 +446,9 @@
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold text-gray-700 mb-1">
-                                <span x-show="soal.jenis_soal !== 'bilingual'">Pertanyaan Esai (Dikerjakan Siswa):</span>
+                                <span x-show="!soal.jenis_soal || soal.jenis_soal === 'esai'">Pertanyaan Esai (Dikerjakan Siswa):</span>
                                 <span x-show="soal.jenis_soal === 'bilingual'" class="text-purple-700 font-bold">Pertanyaan Wawancara (Lisan English / Penguji):</span>
+                                <span x-show="soal.jenis_soal === 'observasi'" class="text-amber-800 font-bold">Pertanyaan / Poin Observasi (Lisan Tatap Muka Penguji):</span>
                             </label>
                             <textarea x-model="soal.pertanyaan"
                                 rows="2"

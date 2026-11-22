@@ -29,9 +29,14 @@ class UkkInstrumenSoal extends Model
         return $this->jenis_soal === 'bilingual';
     }
 
+    public function isObservasi(): bool
+    {
+        return $this->jenis_soal === 'observasi';
+    }
+
     public function isEsai(): bool
     {
-        return $this->jenis_soal !== 'bilingual';
+        return empty($this->jenis_soal) || $this->jenis_soal === 'esai';
     }
 
     public function scopeEsai($query)
@@ -45,5 +50,10 @@ class UkkInstrumenSoal extends Model
     public function scopeBilingual($query)
     {
         return $query->where('jenis_soal', 'bilingual');
+    }
+
+    public function scopeObservasi($query)
+    {
+        return $query->where('jenis_soal', 'observasi');
     }
 }

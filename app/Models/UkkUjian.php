@@ -67,7 +67,7 @@ class UkkUjian extends Model
     {
         return $this->instrumens
             ->flatMap(fn ($i) => $i->soalPengetahuan)
-            ->where('jenis_soal', '!=', 'bilingual')
+            ->filter(fn ($s) => empty($s->jenis_soal) || $s->jenis_soal === 'esai')
             ->isNotEmpty();
     }
 
@@ -80,6 +80,14 @@ class UkkUjian extends Model
         return $this->instrumens
             ->flatMap(fn ($i) => $i->soalPengetahuan)
             ->where('jenis_soal', 'bilingual')
+            ->isNotEmpty();
+    }
+
+    public function hasSoalObservasi(): bool
+    {
+        return $this->instrumens
+            ->flatMap(fn ($i) => $i->soalPengetahuan)
+            ->where('jenis_soal', 'observasi')
             ->isNotEmpty();
     }
 }

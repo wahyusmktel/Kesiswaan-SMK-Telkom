@@ -71,6 +71,15 @@
                 </div>
             @endif
 
+            @if(!empty($hasObservasiPart))
+                <div class="bg-amber-50/80 border border-amber-200/90 rounded-2xl p-4 text-xs text-amber-950 flex items-start gap-3 shadow-sm">
+                    <span class="text-base shrink-0">👁️</span>
+                    <div class="leading-relaxed">
+                        <strong class="font-black text-amber-900">Catatan Bagian Observasi / Tanya Jawab Langsung:</strong> Ujian UKK Anda juga mencakup <strong>Penilaian Observasi / Tanya Jawab Lisan</strong> yang akan ditanyakan atau diamati langsung oleh Penguji Pengetahuan saat ujian tatap muka.
+                    </div>
+                </div>
+            @endif
+
             {{-- Instrumen Sections --}}
             @php $globalNo = 1; @endphp
             @foreach($ujian->instrumens as $ins)
