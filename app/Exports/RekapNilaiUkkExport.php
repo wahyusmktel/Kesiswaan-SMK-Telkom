@@ -39,7 +39,8 @@ class RekapNilaiUkkExport implements WithMultipleSheets
                     $this->allNilaiP,
                     $this->allNilaiK,
                     $rombelText,
-                    'Detail Nilai & Rekap UKK'
+                    'Detail Nilai & Rekap UKK',
+                    $this->allNilaiBilingual
                 );
             }
             $sheets[] = new UkkRingkasanNilaiSheet(
@@ -67,7 +68,8 @@ class RekapNilaiUkkExport implements WithMultipleSheets
                     $this->allNilaiP,
                     $this->allNilaiK,
                     $rombelText,
-                    'Detail - ' . mb_substr($ins->nama_instrumen, 0, 20)
+                    'Detail - ' . mb_substr($ins->nama_instrumen, 0, 20),
+                    $this->allNilaiBilingual
                 );
             }
         }

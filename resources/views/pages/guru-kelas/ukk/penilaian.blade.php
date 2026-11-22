@@ -325,6 +325,13 @@
                                 <span class="text-xs font-bold px-3 py-1 bg-white rounded-xl border border-blue-200 text-blue-700"
                                     x-text="benarCount({{ json_encode($ins->filteredSoalPengetahuan->pluck('id')->all()) }}) + ' / {{ $ins->filteredSoalPengetahuan->count() }} Benar'">
                                 </span>
+                                @if($ujian->is_bilingual && $peranPenguji === 'pengetahuan')
+                                <template x-if="skorBilingualKecakapan !== null">
+                                    <span class="text-xs font-black px-3 py-1 bg-indigo-50 rounded-xl border border-indigo-200 text-indigo-700">
+                                        Skor P: <span x-text="skorPengetahuan.toFixed(1)"></span> (50% Soal + 50% Bicara)
+                                    </span>
+                                </template>
+                                @endif
                             </div>
                         </div>
 
@@ -1047,24 +1054,47 @@ function penilaianForm() {
             return soalIds.filter(id => this.nilaiP[id] === 1).length;
         },
 
+        get skorBilingualKecakapan() {
+            const isBilingual = {{ $ujian->is_bilingual ? 'true' : 'false' }};
+            if (!isBilingual) return null;
+            const scoreMap = { kurang: 1, cukup: 2, baik: 3, sangat_baik: 4 };
+            const vals = ['fluency', 'pronunciation', 'vocabulary', 'comprehension']
+                .map(f => scoreMap[this.bilingual[f]] || null)
+                .filter(v => v !== null);
+            if (vals.length === 0) return null;
+            const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+            return (avg / 4) * 100;
+        },
+
         get isComplete() {
             if (!INSTRUMENS.length) return false;
             const allSoalIds = INSTRUMENS.flatMap(i => i.soal);
             const allIndIds  = INSTRUMENS.flatMap(i => i.kategori.flatMap(k => k.indikator));
             const peran      = '{{ $peranPenguji }}';
+            const isBilingual = {{ $ujian->is_bilingual ? 'true' : 'false' }};
             const soalOk = allSoalIds.length === 0 || allSoalIds.every(id => this.nilaiP[id] !== undefined && this.nilaiP[id] !== null);
             const indOk  = allIndIds.length === 0  || allIndIds.every(id => this.nilaiK[id] !== undefined && this.nilaiK[id] !== null);
+            const bilOk  = !isBilingual || (peran !== 'pengetahuan' && peran !== 'semua') || this.bilingualCount() === 4;
+
             if (peran === 'keterampilan') return indOk;
-            if (peran === 'pengetahuan') return soalOk;
-            return soalOk && indOk;
+            if (peran === 'pengetahuan') return soalOk && bilOk;
+            return soalOk && indOk && bilOk;
         },
 
         get skorPengetahuan() {
+            const isBilingual = {{ $ujian->is_bilingual ? 'true' : 'false' }};
+            const bilKecakapan = this.skorBilingualKecakapan;
+
             let total = 0, count = 0;
             for (const ins of INSTRUMENS) {
                 if (!ins.soal.length) continue;
                 const benar = ins.soal.filter(id => this.nilaiP[id] === 1).length;
-                total += (benar / ins.soal.length) * 100 * (ins.bobot_pengetahuan / 100);
+                const skorKonten = (benar / ins.soal.length) * 100;
+                let skorInsP = skorKonten;
+                if (isBilingual && bilKecakapan !== null) {
+                    skorInsP = (skorKonten * 0.5) + (bilKecakapan * 0.5);
+                }
+                total += skorInsP * (ins.bobot_pengetahuan / 100);
                 count++;
             }
             return count ? total / count * INSTRUMENS.length : total;
@@ -1088,6 +1118,9 @@ function penilaianForm() {
 
         get nilaiAkhir() {
             if (!INSTRUMENS.length) return 0;
+            const isBilingual = {{ $ujian->is_bilingual ? 'true' : 'false' }};
+            const bilKecakapan = this.skorBilingualKecakapan;
+
             let total = 0;
             for (const ins of INSTRUMENS) {
                 const bp = ins.bobot_pengetahuan / 100;
@@ -1095,7 +1128,11 @@ function penilaianForm() {
                 let p = 0, k = 0;
                 if (ins.soal.length) {
                     const benar = ins.soal.filter(id => this.nilaiP[id] === 1).length;
-                    p = (benar / ins.soal.length) * 100;
+                    const skorKonten = (benar / ins.soal.length) * 100;
+                    p = skorKonten;
+                    if (isBilingual && bilKecakapan !== null) {
+                        p = (skorKonten * 0.5) + (bilKecakapan * 0.5);
+                    }
                 }
                 if (ins.kategori.length) {
                     let kScore = 0;

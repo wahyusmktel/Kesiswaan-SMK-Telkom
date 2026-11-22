@@ -22,7 +22,8 @@ class UkkDetailInstrumenSheet implements WithEvents, WithTitle
         private Collection $allNilaiP,
         private Collection $allNilaiK,
         private string $rombelLabel,
-        private string $sheetTitle = 'Detail Penilaian & Rekap'
+        private string $sheetTitle = 'Detail Penilaian & Rekap',
+        private ?Collection $allNilaiBilingual = null
     ) {}
 
     public function title(): string
@@ -64,6 +65,13 @@ class UkkDetailInstrumenSheet implements WithEvents, WithTitle
                 $sheet->getStyle('E4:E6')->getFont()->setBold(true)->setSize(9.5);
                 $sheet->getStyle('C4:C6')->getFont()->setSize(9.5);
                 $sheet->getStyle('G4:G6')->getFont()->setSize(9.5);
+
+                if ($this->ujian->is_bilingual) {
+                    $sheet->setCellValue('E7', 'Model Pengetahuan');
+                    $sheet->setCellValue('G7', ": Bilingual (50% Soal + 50% Kecakapan Bicara)");
+                    $sheet->getStyle('E7')->getFont()->setBold(true)->setSize(9.5);
+                    $sheet->getStyle('G7')->getFont()->setSize(9.5);
+                }
 
                 // ══ 2. COLUMN MAPPING ══
                 $curCol = 1;
@@ -363,7 +371,17 @@ class UkkDetailInstrumenSheet implements WithEvents, WithTitle
                     }
 
                     $hasP = ($pGraded > 0);
-                    $skorP = ($hasP && $totalSoalCount > 0) ? round(($pBenar / $totalSoalCount) * 100, 1) : null;
+                    $skorPKonten = ($hasP && $totalSoalCount > 0) ? round(($pBenar / $totalSoalCount) * 100, 1) : null;
+                    $skorP = $skorPKonten;
+
+                    if ($this->ujian->is_bilingual && $skorPKonten !== null && $this->allNilaiBilingual) {
+                        $bilRecord = $this->allNilaiBilingual->get($s->id);
+                        if ($bilRecord && $bilRecord->getRataRataScore() !== null) {
+                            $skorPKecakapan = round(($bilRecord->getRataRataScore() / 4) * 100, 1);
+                            $skorP = round(($skorPKonten * 0.5) + ($skorPKecakapan * 0.5), 1);
+                        }
+                    }
+
                     $nilaiP = $skorP !== null ? round($skorP * ($bp / 100), 1) : null;
 
                     $colPBenar = Coordinate::stringFromColumnIndex($colMap['p_benar']);

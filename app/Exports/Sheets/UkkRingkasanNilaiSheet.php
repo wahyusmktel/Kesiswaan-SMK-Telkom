@@ -63,6 +63,12 @@ class UkkRingkasanNilaiSheet implements WithEvents, WithTitle
                 $sheet->getStyle('F4:F6')->getFont()->setSize(9.5);
 
                 $isBilingual = (bool) $this->ujian->is_bilingual;
+                if ($isBilingual) {
+                    $sheet->setCellValue('E7', 'Model Pengetahuan');
+                    $sheet->setCellValue('F7', ": Bilingual (50% Soal + 50% Kecakapan Bicara)");
+                    $sheet->getStyle('E7')->getFont()->setBold(true)->setSize(9.5);
+                    $sheet->getStyle('F7')->getFont()->setSize(9.5);
+                }
                 $lastColLetter = $isBilingual ? 'J' : 'I';
 
                 // ══ 2. KPI SUMMARY BANNER (ROW 8) ══

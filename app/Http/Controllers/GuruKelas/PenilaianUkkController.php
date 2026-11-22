@@ -562,12 +562,27 @@ class PenilaianUkkController extends Controller
             $qrBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
         }
 
+        $nilaiSikap = UkkNilaiSikap::where('ukk_ujian_id', $ujian->id)
+            ->where('master_siswa_id', $siswa->id)
+            ->first();
+
+        $nilaiBilingual = UkkNilaiBilingual::where('ukk_ujian_id', $ujian->id)
+            ->where('master_siswa_id', $siswa->id)
+            ->first();
+
         // Compute scores per instrumen
-        $instrumenScores = $ujian->instrumens->map(function ($ins) use ($nilaiP, $nilaiK) {
+        $instrumenScores = $ujian->instrumens->map(function ($ins) use ($nilaiP, $nilaiK, $ujian, $nilaiBilingual) {
             $soalIds     = $ins->soalPengetahuan->pluck('id');
             $totalSoal   = $soalIds->count();
             $benar       = $soalIds->filter(fn ($id) => ($nilaiP[$id] ?? null) === 1)->count();
-            $skorP       = $totalSoal > 0 ? round($benar / $totalSoal * 100, 1) : 0;
+            $skorPKonten = $totalSoal > 0 ? round($benar / $totalSoal * 100, 1) : 0;
+            $skorP       = $skorPKonten;
+
+            // Opsi B: Pada ujian bilingual, Skor Pengetahuan = 50% Konten Soal + 50% Kecakapan Bicara
+            if ($ujian->is_bilingual && $nilaiBilingual && $nilaiBilingual->getRataRataScore() !== null) {
+                $skorPKecakapan = round(($nilaiBilingual->getRataRataScore() / 4) * 100, 1);
+                $skorP = round(($skorPKonten * 0.5) + ($skorPKecakapan * 0.5), 1);
+            }
 
             $totalIndMax = 0;
             $totalIndVal = 0;
@@ -596,14 +611,6 @@ class PenilaianUkkController extends Controller
         $nilaiAkhirFinal = $instrumenScores->count()
             ? round($instrumenScores->avg('nilai_akhir'), 1)
             : 0;
-
-        $nilaiSikap = UkkNilaiSikap::where('ukk_ujian_id', $ujian->id)
-            ->where('master_siswa_id', $siswa->id)
-            ->first();
-
-        $nilaiBilingual = UkkNilaiBilingual::where('ukk_ujian_id', $ujian->id)
-            ->where('master_siswa_id', $siswa->id)
-            ->first();
 
         $pdf = Pdf::loadView('pdf.penilaian-ukk', compact(
             'ujian', 'siswa', 'nilaiP', 'nilaiK', 'nilaiSikap', 'nilaiBilingual',

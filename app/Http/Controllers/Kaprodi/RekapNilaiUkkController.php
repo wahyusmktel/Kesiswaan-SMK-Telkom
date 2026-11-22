@@ -163,7 +163,17 @@ class RekapNilaiUkkController extends Controller
             $totalSoal = $soalIds->count();
             $benar     = $soalIds->filter(fn ($id) => ($nilaiP[$id] ?? null) == 1)->count();
             $gradedP   = $soalIds->filter(fn ($id) => $nilaiP->has($id))->count();
-            $skorP     = $totalSoal > 0 ? round($benar / $totalSoal * 100, 1) : null;
+            $skorPKonten = $totalSoal > 0 ? round($benar / $totalSoal * 100, 1) : null;
+            $skorP       = $skorPKonten;
+
+            // Opsi B: Pada ujian bilingual, Skor Pengetahuan = 50% Konten Soal + 50% Kecakapan Bicara
+            if ($ujian->is_bilingual && $skorPKonten !== null) {
+                $bilRecord = $allNilaiBilingual?->get($siswa->id);
+                if ($bilRecord && $bilRecord->getRataRataScore() !== null) {
+                    $skorPKecakapan = round(($bilRecord->getRataRataScore() / 4) * 100, 1);
+                    $skorP = round(($skorPKonten * 0.5) + ($skorPKecakapan * 0.5), 1);
+                }
+            }
 
             $indIds   = $ins->kategoriKeterampilan->flatMap(fn ($k) => $k->indikator->pluck('id'));
             $totalInd = $indIds->count();
@@ -204,8 +214,12 @@ class RekapNilaiUkkController extends Controller
             ];
         }
 
+        $bilRecord = $allNilaiBilingual?->get($siswa->id);
+        $bilComplete = !$ujian->is_bilingual || ($bilRecord && !empty($bilRecord->fluency) && !empty($bilRecord->pronunciation) && !empty($bilRecord->vocabulary) && !empty($bilRecord->comprehension));
+
         $isComplete = ($totalSoalAll === 0 || $totalGradedP >= $totalSoalAll)
-                   && ($totalIndAll === 0  || $totalGradedK >= $totalIndAll);
+                   && ($totalIndAll === 0  || $totalGradedK >= $totalIndAll)
+                   && $bilComplete;
 
         $validNilais = collect($instrumenScores)->pluck('nilai')->filter(fn ($v) => $v !== null);
         $nilaiAkhir  = $validNilais->isNotEmpty() ? round($validNilais->avg(), 1) : null;

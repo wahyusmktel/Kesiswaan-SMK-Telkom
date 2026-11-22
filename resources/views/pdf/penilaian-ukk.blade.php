@@ -790,6 +790,12 @@
         </tbody>
     </table>
 
+    @if($ujian->is_bilingual)
+    <div style="font-size:7.5pt;color:#64748b;margin-top:3px;font-style:italic;">
+        * Catatan: Pada ujian bilingual, Skor Pengetahuan merupakan integrasi 50% ketepatan konten materi + 50% performa kecakapan komunikasi lisan (speaking proficiency).
+    </div>
+    @endif
+
     {{-- ════════ TANDA TANGAN ════════ --}}
     <div class="sig-section">
         <table class="sig-grid">
