@@ -50,7 +50,18 @@ class UkkUjian extends Model
     public function penguji()
     {
         return $this->belongsToMany(User::class, 'ukk_penguji')
-            ->withPivot(['id', 'rombel_id', 'peran', 'no_urut_mulai', 'no_urut_selesai', 'siswa_ids'])
+            ->withPivot([
+                'id',
+                'rombel_id',
+                'peran',
+                'no_urut_mulai',
+                'no_urut_selesai',
+                'siswa_ids',
+                'tanggal_pelaksanaan',
+                'jam_mulai',
+                'jam_selesai',
+                'ruangan',
+            ])
             ->withTimestamps();
     }
 

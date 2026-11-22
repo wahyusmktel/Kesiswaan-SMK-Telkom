@@ -200,6 +200,21 @@
                                                     </span>
                                                 </button>
 
+                                                {{-- Custom Jadwal Sesi Pill if Set --}}
+                                                <template x-if="p.tanggal_pelaksanaan">
+                                                    <button type="button" @click="openRentangModal(ujian, p, rombel)"
+                                                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 transition-colors cursor-pointer"
+                                                        title="Jadwal Khusus Sesi Ini (Klik untuk ubah)">
+                                                        <span x-text="'📅 ' + p.tanggal_formatted"></span>
+                                                        <template x-if="p.jam_mulai">
+                                                            <span x-text="'⏰ ' + p.jam_mulai"></span>
+                                                        </template>
+                                                        <template x-if="p.ruangan">
+                                                            <span x-text="'📍 ' + p.ruangan"></span>
+                                                        </template>
+                                                    </button>
+                                                </template>
+
                                                 {{-- Delete Button --}}
                                                 <button @click="removePenguji(ujian, p)"
                                                     class="w-5 h-5 rounded-full bg-black/5 hover:bg-red-500 hover:text-white flex items-center justify-center text-xs font-black transition-colors"
@@ -381,9 +396,53 @@
                         </div>
                     </div>
 
+                    {{-- Pengaturan Jadwal Sesi (Opsional) --}}
+                    <div class="px-5 py-3 border-b border-gray-100 bg-slate-50/40 shrink-0">
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="block text-xs font-black text-gray-700">3. Jadwal Sesi Penguji Ini (Opsional):</label>
+                            <span class="text-[10px] font-semibold text-gray-500" x-text="sesiJadwalMode === 'default' ? 'Mengikuti Jadwal Umum Kelas' : 'Jadwal Khusus Sesi Ini'"></span>
+                        </div>
+
+                        <div class="flex items-center gap-4 mb-2">
+                            <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-gray-700">
+                                <input type="radio" value="default" x-model="sesiJadwalMode" class="text-orange-500 focus:ring-orange-400">
+                                <span>Ikuti Jadwal Kelas</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-gray-700">
+                                <input type="radio" value="custom" x-model="sesiJadwalMode" class="text-orange-500 focus:ring-orange-400">
+                                <span>Jadwal Khusus Sesi Ini (Hari 2 / Sesi Lain)</span>
+                            </label>
+                        </div>
+
+                        <div x-show="sesiJadwalMode === 'custom'" class="border border-slate-200 rounded-2xl p-3 bg-white space-y-2.5">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                <div>
+                                    <label class="block text-[11px] font-bold text-gray-600 mb-1">Tanggal Ujian:</label>
+                                    <input type="date" x-model="sesiTanggal"
+                                        class="w-full px-2.5 py-1 text-xs border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-gray-600 mb-1">Jam Mulai:</label>
+                                    <input type="time" x-model="sesiJamMulai"
+                                        class="w-full px-2.5 py-1 text-xs border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-gray-600 mb-1">Jam Selesai:</label>
+                                    <input type="time" x-model="sesiJamSelesai"
+                                        class="w-full px-2.5 py-1 text-xs border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-600 mb-1">Ruangan / Lab:</label>
+                                <input type="text" x-model="sesiRuangan" placeholder="Contoh: Lab Komputer 1 / Lab Fiber Optik"
+                                    class="w-full px-2.5 py-1 text-xs border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                            </div>
+                        </div>
+                    </div>
+
                     {{-- Search & Select Guru --}}
                     <div class="px-4 py-2 border-b border-gray-100 shrink-0 bg-slate-50/40">
-                        <label class="block text-xs font-black text-gray-700 mb-1">3. Pilih Guru yang Bertugas:</label>
+                        <label class="block text-xs font-black text-gray-700 mb-1">4. Pilih Guru yang Bertugas:</label>
                         <div class="relative">
                             <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
@@ -397,10 +456,10 @@
                     <div class="overflow-y-auto flex-1 p-3 flex flex-col gap-1.5 max-h-48">
                         <template x-for="g in filteredGuru" :key="g.id">
                             <button type="button" @click="assignPenguji(g)"
-                                :disabled="isAssignedInActiveRombel(g.id) || isSubmittingPenguji"
+                                :disabled="isSubmittingPenguji"
                                 class="flex items-center gap-3 w-full px-3 py-2 rounded-xl text-left transition-all text-xs"
                                 :class="isAssignedInActiveRombel(g.id)
-                                    ? 'bg-emerald-50 border border-emerald-200 cursor-default opacity-75'
+                                    ? 'bg-amber-50/70 border border-amber-200 hover:bg-amber-100/70'
                                     : 'bg-gray-50 hover:bg-orange-50 hover:border-orange-200 border border-transparent'">
 
                                 {{-- Avatar --}}
@@ -419,7 +478,9 @@
                                 </div>
 
                                 <template x-if="isAssignedInActiveRombel(g.id)">
-                                    <span class="text-[11px] font-bold text-emerald-600 shrink-0">✓ Sudah Ditugaskan</span>
+                                    <span class="text-[11px] font-bold text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-md border border-amber-300 shrink-0">
+                                        + Tambah Sesi (Hari 2 / Sesi Lain)
+                                    </span>
                                 </template>
                                 <template x-if="!isAssignedInActiveRombel(g.id)">
                                     <span class="text-[11px] font-black text-orange-600 shrink-0">+ Tugaskan Guru Ini</span>
@@ -564,6 +625,50 @@
                             </div>
                         </div>
 
+                        {{-- Pengaturan Jadwal Sesi di Edit Modal --}}
+                        <div class="pt-2 border-t border-gray-100">
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-xs font-black text-gray-700">Jadwal Sesi Penguji Ini:</label>
+                                <span class="text-[10px] font-semibold text-gray-500" x-text="editingSesiJadwalMode === 'default' ? 'Mengikuti Jadwal Kelas' : 'Jadwal Khusus Sesi Ini'"></span>
+                            </div>
+
+                            <div class="flex items-center gap-4 mb-2">
+                                <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-gray-700">
+                                    <input type="radio" value="default" x-model="editingSesiJadwalMode" class="text-orange-500 focus:ring-orange-400">
+                                    <span>Ikuti Jadwal Kelas</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-gray-700">
+                                    <input type="radio" value="custom" x-model="editingSesiJadwalMode" class="text-orange-500 focus:ring-orange-400">
+                                    <span>Jadwal Khusus Sesi Ini (Hari 2 / Waktu Lain)</span>
+                                </label>
+                            </div>
+
+                            <div x-show="editingSesiJadwalMode === 'custom'" class="border border-slate-200 rounded-2xl p-3 bg-slate-50/70 space-y-2.5">
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-gray-600 mb-1">Tanggal Ujian:</label>
+                                        <input type="date" x-model="editingSesiTanggal"
+                                            class="w-full px-2.5 py-1 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-gray-600 mb-1">Jam Mulai:</label>
+                                        <input type="time" x-model="editingSesiJamMulai"
+                                            class="w-full px-2.5 py-1 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-gray-600 mb-1">Jam Selesai:</label>
+                                        <input type="time" x-model="editingSesiJamSelesai"
+                                            class="w-full px-2.5 py-1 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-gray-600 mb-1">Ruangan / Lab:</label>
+                                    <input type="text" x-model="editingSesiRuangan" placeholder="Contoh: Lab Komputer 1 / Lab Fiber Optik"
+                                        class="w-full px-2.5 py-1 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                </div>
+                            </div>
+                        </div>
+
                         {{-- Footer --}}
                         <div class="pt-3 border-t border-gray-100 flex items-center justify-end gap-2 shrink-0">
                             <button type="button" @click="modalRentangOpen = false"
@@ -677,6 +782,11 @@
             quickSelesai: 15,
             siswaSearch: '',
             guruSearch: '',
+            sesiJadwalMode: 'default', // 'default' | 'custom'
+            sesiTanggal: '',
+            sesiJamMulai: '',
+            sesiJamSelesai: '',
+            sesiRuangan: '',
             isSubmittingPenguji: false,
 
             // Modal Edit Rentang State
@@ -690,6 +800,11 @@
             editingQuickMulai: 1,
             editingQuickSelesai: 15,
             editingSiswaSearch: '',
+            editingSesiJadwalMode: 'default', // 'default' | 'custom'
+            editingSesiTanggal: '',
+            editingSesiJamMulai: '',
+            editingSesiJamSelesai: '',
+            editingSesiRuangan: '',
             isSubmittingRentang: false,
 
             // Modal Jadwal State
@@ -854,11 +969,19 @@
                 this.quickSelesai = rombel ? rombel.total_siswa : 15;
                 this.siswaSearch = '';
                 this.guruSearch = '';
+
+                // Sesi Jadwal Default
+                this.sesiJadwalMode = 'default';
+                this.sesiTanggal = rombel ? (rombel.tanggal_pelaksanaan || '') : '';
+                this.sesiJamMulai = rombel ? (rombel.jam_mulai || '') : '';
+                this.sesiJamSelesai = rombel ? (rombel.jam_selesai || '') : '';
+                this.sesiRuangan = rombel ? (rombel.ruangan || '') : '';
+
                 this.modalPengujiOpen = true;
             },
 
             async assignPenguji(guru) {
-                if (this.isAssignedInActiveRombel(guru.id) || this.isSubmittingPenguji) return;
+                if (this.isSubmittingPenguji) return;
                 this.isSubmittingPenguji = true;
 
                 let payloadSiswaIds = null;
@@ -876,6 +999,22 @@
                     }
                 }
 
+                const payload = {
+                    user_id: guru.id,
+                    rombel_id: this.activeRombel.id,
+                    peran: this.selectedPeran,
+                    no_urut_mulai: payloadMulai,
+                    no_urut_selesai: payloadSelesai,
+                    siswa_ids: payloadSiswaIds,
+                };
+
+                if (this.sesiJadwalMode === 'custom') {
+                    payload.tanggal_pelaksanaan = this.sesiTanggal || null;
+                    payload.jam_mulai = this.sesiJamMulai || null;
+                    payload.jam_selesai = this.sesiJamSelesai || null;
+                    payload.ruangan = this.sesiRuangan || null;
+                }
+
                 try {
                     const res = await fetch('/kaprodi/ukk/penguji/' + this.activeUjian.id, {
                         method: 'POST',
@@ -884,14 +1023,7 @@
                             'Accept': 'application/json',
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                         },
-                        body: JSON.stringify({
-                            user_id: guru.id,
-                            rombel_id: this.activeRombel.id,
-                            peran: this.selectedPeran,
-                            no_urut_mulai: payloadMulai,
-                            no_urut_selesai: payloadSelesai,
-                            siswa_ids: payloadSiswaIds,
-                        }),
+                        body: JSON.stringify(payload),
                     });
                     const data = await res.json();
                     if (!res.ok) {
@@ -916,6 +1048,13 @@
                 this.editingSiswaSearch = '';
                 this.editingQuickMulai = 1;
                 this.editingQuickSelesai = rombel ? rombel.total_siswa : 15;
+
+                // Jadwal Sesi State in Edit Modal
+                this.editingSesiJadwalMode = penguji.tanggal_pelaksanaan ? 'custom' : 'default';
+                this.editingSesiTanggal = penguji.tanggal_pelaksanaan || (rombel ? rombel.tanggal_pelaksanaan : '') || '';
+                this.editingSesiJamMulai = penguji.jam_mulai || (rombel ? rombel.jam_mulai : '') || '';
+                this.editingSesiJamSelesai = penguji.jam_selesai || (rombel ? rombel.jam_selesai : '') || '';
+                this.editingSesiRuangan = penguji.ruangan || (rombel ? rombel.ruangan : '') || '';
 
                 if (penguji.siswa_ids && penguji.siswa_ids.length > 0) {
                     this.editingRentangMode = 'checklist';
@@ -953,6 +1092,27 @@
                     }
                 }
 
+                const payload = {
+                    peran: this.editingPengujiPeran,
+                    rombel_id: this.editingPenguji.rombel_id,
+                    penguji_id: this.editingPenguji.id,
+                    no_urut_mulai: payloadMulai,
+                    no_urut_selesai: payloadSelesai,
+                    siswa_ids: payloadSiswaIds,
+                };
+
+                if (this.editingSesiJadwalMode === 'custom') {
+                    payload.tanggal_pelaksanaan = this.editingSesiTanggal || null;
+                    payload.jam_mulai = this.editingSesiJamMulai || null;
+                    payload.jam_selesai = this.editingSesiJamSelesai || null;
+                    payload.ruangan = this.editingSesiRuangan || null;
+                } else {
+                    payload.tanggal_pelaksanaan = null;
+                    payload.jam_mulai = null;
+                    payload.jam_selesai = null;
+                    payload.ruangan = null;
+                }
+
                 try {
                     const res = await fetch('/kaprodi/ukk/penguji/' + this.editingUjian.id + '/' + this.editingPenguji.user_id, {
                         method: 'PUT',
@@ -961,14 +1121,7 @@
                             'Accept': 'application/json',
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                         },
-                        body: JSON.stringify({
-                            peran: this.editingPengujiPeran,
-                            rombel_id: this.editingPenguji.rombel_id,
-                            penguji_id: this.editingPenguji.id,
-                            no_urut_mulai: payloadMulai,
-                            no_urut_selesai: payloadSelesai,
-                            siswa_ids: payloadSiswaIds,
-                        }),
+                        body: JSON.stringify(payload),
                     });
                     const data = await res.json();
                     if (!res.ok) {
@@ -979,6 +1132,11 @@
                     this.editingPenguji.no_urut_mulai = payloadMulai;
                     this.editingPenguji.no_urut_selesai = payloadSelesai;
                     this.editingPenguji.siswa_ids = payloadSiswaIds || [];
+                    this.editingPenguji.tanggal_pelaksanaan = data.tanggal_pelaksanaan || '';
+                    this.editingPenguji.tanggal_formatted = data.tanggal_formatted || '';
+                    this.editingPenguji.jam_mulai = data.jam_mulai || '';
+                    this.editingPenguji.jam_selesai = data.jam_selesai || '';
+                    this.editingPenguji.ruangan = data.ruangan || '';
                     this.toast(data.message, 'success');
                     this.modalRentangOpen = false;
                 } catch {

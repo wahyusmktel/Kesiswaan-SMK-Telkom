@@ -75,17 +75,26 @@ class PengujiController extends Controller
                     ];
                 })->values(),
                 'pengujis'     => $ujian->ukkPengujis->map(function ($p) {
+                    $tglP = $p->tanggal_pelaksanaan;
+                    if (is_string($tglP)) {
+                        $tglP = \Carbon\Carbon::parse($tglP);
+                    }
                     return [
-                        'id'              => $p->id,
-                        'user_id'         => $p->user_id,
-                        'rombel_id'       => $p->rombel_id,
-                        'peran'           => $p->peran,
-                        'no_urut_mulai'   => $p->no_urut_mulai,
-                        'no_urut_selesai' => $p->no_urut_selesai,
-                        'siswa_ids'       => $p->siswa_ids ?: [],
-                        'nama'            => $p->user?->masterGuru?->nama_lengkap ?? $p->user?->name,
-                        'kode'            => $p->user?->masterGuru?->kode_guru ?? '—',
-                        'avatar'          => $p->user?->avatar,
+                        'id'                  => $p->id,
+                        'user_id'             => $p->user_id,
+                        'rombel_id'           => $p->rombel_id,
+                        'peran'               => $p->peran,
+                        'no_urut_mulai'       => $p->no_urut_mulai,
+                        'no_urut_selesai'     => $p->no_urut_selesai,
+                        'siswa_ids'           => $p->siswa_ids ?: [],
+                        'tanggal_pelaksanaan' => $tglP ? $tglP->format('Y-m-d') : '',
+                        'tanggal_formatted'   => $tglP ? $tglP->translatedFormat('d M Y') : '',
+                        'jam_mulai'           => $p->jam_mulai ? substr($p->jam_mulai, 0, 5) : '',
+                        'jam_selesai'         => $p->jam_selesai ? substr($p->jam_selesai, 0, 5) : '',
+                        'ruangan'             => $p->ruangan ?? '',
+                        'nama'                => $p->user?->masterGuru?->nama_lengkap ?? $p->user?->name,
+                        'kode'                => $p->user?->masterGuru?->kode_guru ?? '—',
+                        'avatar'              => $p->user?->avatar,
                     ];
                 })->values(),
             ];
@@ -97,13 +106,17 @@ class PengujiController extends Controller
     public function store(Request $request, UkkUjian $ujian)
     {
         $request->validate([
-            'user_id'         => 'required|exists:users,id',
-            'rombel_id'       => 'nullable|exists:rombels,id',
-            'peran'           => 'nullable|string|in:semua,pengetahuan,keterampilan',
-            'no_urut_mulai'   => 'nullable|integer|min:1',
-            'no_urut_selesai' => 'nullable|integer',
-            'siswa_ids'       => 'nullable|array',
-            'siswa_ids.*'     => 'integer|exists:master_siswa,id',
+            'user_id'             => 'required|exists:users,id',
+            'rombel_id'           => 'nullable|exists:rombels,id',
+            'peran'               => 'nullable|string|in:semua,pengetahuan,keterampilan',
+            'no_urut_mulai'       => 'nullable|integer|min:1',
+            'no_urut_selesai'     => 'nullable|integer',
+            'siswa_ids'           => 'nullable|array',
+            'siswa_ids.*'         => 'integer|exists:master_siswa,id',
+            'tanggal_pelaksanaan' => 'nullable|date',
+            'jam_mulai'           => 'nullable|string|max:10',
+            'jam_selesai'         => 'nullable|string|max:10',
+            'ruangan'             => 'nullable|string|max:100',
         ]);
 
         $peran         = $request->input('peran', 'semua');
@@ -113,6 +126,11 @@ class PengujiController extends Controller
         $siswaIds      = $request->has('siswa_ids') && is_array($request->siswa_ids) && !empty($request->siswa_ids)
             ? array_values(array_map('intval', $request->siswa_ids))
             : null;
+
+        $tglPelaksanaan = $request->input('tanggal_pelaksanaan') ?: null;
+        $jamMulai       = $request->input('jam_mulai') ?: null;
+        $jamSelesai     = $request->input('jam_selesai') ?: null;
+        $ruangan        = $request->input('ruangan') ?: null;
 
         if ($rombelId) {
             $isMapped = DB::table('ukk_rombel_mappings')
@@ -125,42 +143,43 @@ class PengujiController extends Controller
             }
         }
 
-        $exists = UkkPenguji::where('ukk_ujian_id', $ujian->id)
-            ->where('user_id', $request->user_id)
-            ->where('rombel_id', $rombelId)
-            ->exists();
-
-        if ($exists) {
-            return response()->json(['message' => 'Penguji sudah ditugaskan untuk kelas ini.'], 422);
-        }
-
         $penguji = UkkPenguji::create([
-            'ukk_ujian_id'    => $ujian->id,
-            'user_id'         => $request->user_id,
-            'rombel_id'       => $rombelId,
-            'peran'           => $peran,
-            'no_urut_mulai'   => $noUrutMulai,
-            'no_urut_selesai' => $noUrutSelesai,
-            'siswa_ids'       => $siswaIds,
+            'ukk_ujian_id'        => $ujian->id,
+            'user_id'             => $request->user_id,
+            'rombel_id'           => $rombelId,
+            'peran'               => $peran,
+            'no_urut_mulai'       => $noUrutMulai,
+            'no_urut_selesai'     => $noUrutSelesai,
+            'siswa_ids'           => $siswaIds,
+            'tanggal_pelaksanaan' => $tglPelaksanaan,
+            'jam_mulai'           => $jamMulai,
+            'jam_selesai'         => $jamSelesai,
+            'ruangan'             => $ruangan,
         ]);
 
         $user = User::with('masterGuru')->find($request->user_id);
         $rombel = $rombelId ? Rombel::with('kelas')->find($rombelId) : null;
+        $tglObj = $penguji->tanggal_pelaksanaan;
 
         return response()->json([
             'message' => 'Penguji berhasil ditugaskan.',
             'penguji' => [
-                'id'              => $penguji->id,
-                'user_id'         => $user->id,
-                'rombel_id'       => $rombelId,
-                'rombel_name'     => $rombel?->kelas?->nama_kelas ?? 'Semua Kelas',
-                'nama'            => $user->masterGuru?->nama_lengkap ?? $user->name,
-                'kode'            => $user->masterGuru?->kode_guru ?? '—',
-                'avatar'          => $user->avatar,
-                'peran'           => $peran,
-                'no_urut_mulai'   => $noUrutMulai,
-                'no_urut_selesai' => $noUrutSelesai,
-                'siswa_ids'       => $siswaIds ?: [],
+                'id'                  => $penguji->id,
+                'user_id'             => $user->id,
+                'rombel_id'           => $rombelId,
+                'rombel_name'         => $rombel?->kelas?->nama_kelas ?? 'Semua Kelas',
+                'nama'                => $user->masterGuru?->nama_lengkap ?? $user->name,
+                'kode'                => $user->masterGuru?->kode_guru ?? '—',
+                'avatar'              => $user->avatar,
+                'peran'               => $peran,
+                'no_urut_mulai'       => $noUrutMulai,
+                'no_urut_selesai'     => $noUrutSelesai,
+                'siswa_ids'           => $siswaIds ?: [],
+                'tanggal_pelaksanaan' => $tglObj ? $tglObj->format('Y-m-d') : '',
+                'tanggal_formatted'   => $tglObj ? $tglObj->translatedFormat('d M Y') : '',
+                'jam_mulai'           => $penguji->jam_mulai ? substr($penguji->jam_mulai, 0, 5) : '',
+                'jam_selesai'         => $penguji->jam_selesai ? substr($penguji->jam_selesai, 0, 5) : '',
+                'ruangan'             => $penguji->ruangan ?? '',
             ],
         ]);
     }
@@ -168,13 +187,17 @@ class PengujiController extends Controller
     public function updatePeran(Request $request, UkkUjian $ujian, User $user)
     {
         $request->validate([
-            'peran'           => 'required|string|in:semua,pengetahuan,keterampilan',
-            'rombel_id'       => 'nullable|integer',
-            'penguji_id'      => 'nullable|integer',
-            'no_urut_mulai'   => 'nullable|integer|min:1',
-            'no_urut_selesai' => 'nullable|integer',
-            'siswa_ids'       => 'nullable|array',
-            'siswa_ids.*'     => 'integer|exists:master_siswa,id',
+            'peran'               => 'required|string|in:semua,pengetahuan,keterampilan',
+            'rombel_id'           => 'nullable|integer',
+            'penguji_id'          => 'nullable|integer',
+            'no_urut_mulai'       => 'nullable|integer|min:1',
+            'no_urut_selesai'     => 'nullable|integer',
+            'siswa_ids'           => 'nullable|array',
+            'siswa_ids.*'         => 'integer|exists:master_siswa,id',
+            'tanggal_pelaksanaan' => 'nullable|date',
+            'jam_mulai'           => 'nullable|string|max:10',
+            'jam_selesai'         => 'nullable|string|max:10',
+            'ruangan'             => 'nullable|string|max:100',
         ]);
 
         $query = UkkPenguji::where('ukk_ujian_id', $ujian->id);
@@ -202,15 +225,38 @@ class PengujiController extends Controller
         if ($request->has('siswa_ids')) {
             $updateData['siswa_ids'] = $siswaIds;
         }
+        if ($request->has('tanggal_pelaksanaan')) {
+            $updateData['tanggal_pelaksanaan'] = $request->tanggal_pelaksanaan ?: null;
+        }
+        if ($request->has('jam_mulai')) {
+            $updateData['jam_mulai'] = $request->jam_mulai ?: null;
+        }
+        if ($request->has('jam_selesai')) {
+            $updateData['jam_selesai'] = $request->jam_selesai ?: null;
+        }
+        if ($request->has('ruangan')) {
+            $updateData['ruangan'] = $request->ruangan ?: null;
+        }
 
         $query->update($updateData);
 
+        $tglStr = $request->input('tanggal_pelaksanaan');
+        $tglFormatted = '';
+        if ($tglStr) {
+            $tglFormatted = \Carbon\Carbon::parse($tglStr)->translatedFormat('d M Y');
+        }
+
         return response()->json([
-            'message'         => 'Data penugasan penguji berhasil diperbarui.',
-            'peran'           => $request->peran,
-            'no_urut_mulai'   => $noUrutMulai,
-            'no_urut_selesai' => $noUrutSelesai,
-            'siswa_ids'       => $siswaIds ?: [],
+            'message'             => 'Data penugasan penguji berhasil diperbarui.',
+            'peran'               => $request->peran,
+            'no_urut_mulai'       => $noUrutMulai,
+            'no_urut_selesai'     => $noUrutSelesai,
+            'siswa_ids'           => $siswaIds ?: [],
+            'tanggal_pelaksanaan' => $tglStr ?: '',
+            'tanggal_formatted'   => $tglFormatted,
+            'jam_mulai'           => $request->jam_mulai ? substr($request->jam_mulai, 0, 5) : '',
+            'jam_selesai'         => $request->jam_selesai ? substr($request->jam_selesai, 0, 5) : '',
+            'ruangan'             => $request->ruangan ?? '',
         ]);
     }
 
@@ -247,13 +293,16 @@ class PengujiController extends Controller
 
     public function destroy(Request $request, UkkUjian $ujian, User $user)
     {
+        if ($request->filled('penguji_id')) {
+            UkkPenguji::where('id', $request->penguji_id)->delete();
+            return response()->json(['message' => 'Penguji berhasil dihapus.']);
+        }
+
         $query = UkkPenguji::where('ukk_ujian_id', $ujian->id)
             ->where('user_id', $user->id);
 
         if ($request->filled('rombel_id')) {
             $query->where('rombel_id', $request->rombel_id);
-        } elseif ($request->filled('penguji_id')) {
-            $query = UkkPenguji::where('id', $request->penguji_id);
         }
 
         $query->delete();

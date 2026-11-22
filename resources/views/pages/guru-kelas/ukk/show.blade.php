@@ -43,6 +43,11 @@
                                     🎯 {{ $rentangLabel }}
                                 </span>
                             @endif
+                            @if(isset($jadwalSesiLabel) && $jadwalSesiLabel)
+                                <span class="px-2 py-0.5 rounded-lg bg-emerald-700/80 text-emerald-100 text-xs font-black border border-emerald-400">
+                                    {{ $jadwalSesiLabel }}
+                                </span>
+                            @endif
                         </p>
                     </div>
                     <div class="flex items-center gap-3 bg-white/20 rounded-xl px-4 py-2 shrink-0">

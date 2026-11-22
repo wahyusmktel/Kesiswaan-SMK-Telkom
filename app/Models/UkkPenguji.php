@@ -16,10 +16,15 @@ class UkkPenguji extends Model
         'no_urut_mulai',
         'no_urut_selesai',
         'siswa_ids',
+        'tanggal_pelaksanaan',
+        'jam_mulai',
+        'jam_selesai',
+        'ruangan',
     ];
 
     protected $casts = [
-        'siswa_ids' => 'array',
+        'siswa_ids'           => 'array',
+        'tanggal_pelaksanaan' => 'date',
     ];
 
     public function ujian()

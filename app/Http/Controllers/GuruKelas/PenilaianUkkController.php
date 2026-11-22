@@ -56,18 +56,32 @@ class PenilaianUkkController extends Controller
             $siswaIds = collect();
             foreach ($filteredRombels as $rombel) {
                 $rombelSiswas = $rombel->siswa->sortBy('nama_lengkap')->values();
-                $pengujiForRombel = $pengujiRecords->first(fn ($p) => $p->rombel_id === $rombel->id || is_null($p->rombel_id));
-                $siswaIdsExplicit = $pengujiForRombel?->siswa_ids;
-                $mulai   = $pengujiForRombel?->no_urut_mulai;
-                $selesai = $pengujiForRombel?->no_urut_selesai;
+                $pengujisForThisRombel = $pengujiRecords->filter(fn ($p) => $p->rombel_id === $rombel->id || is_null($p->rombel_id));
+
+                $hasUnlimited = false;
+                $allowedSiswaIds = collect();
+
+                foreach ($pengujisForThisRombel as $p) {
+                    if (is_array($p->siswa_ids) && !empty($p->siswa_ids)) {
+                        $allowedSiswaIds = $allowedSiswaIds->merge($p->siswa_ids);
+                    } elseif ($p->no_urut_mulai || $p->no_urut_selesai) {
+                        $m = $p->no_urut_mulai ?? 1;
+                        $s = $p->no_urut_selesai ?? 999;
+                        foreach ($rombelSiswas as $idx => $sw) {
+                            $no = $idx + 1;
+                            if ($no >= $m && $no <= $s) {
+                                $allowedSiswaIds->push($sw->id);
+                            }
+                        }
+                    } else {
+                        $hasUnlimited = true;
+                    }
+                }
 
                 foreach ($rombelSiswas as $idx => $s) {
                     $noUrut = $idx + 1;
-                    if (is_array($siswaIdsExplicit) && !empty($siswaIdsExplicit)) {
-                        if (!in_array($s->id, $siswaIdsExplicit)) continue;
-                    } else {
-                        if ($mulai && $noUrut < $mulai) continue;
-                        if ($selesai && $noUrut > $selesai) continue;
+                    if (!$hasUnlimited && $pengujisForThisRombel->isNotEmpty()) {
+                        if (!$allowedSiswaIds->contains($s->id)) continue;
                     }
                     $siswaIds->push($s->id);
                 }
@@ -127,27 +141,41 @@ class PenilaianUkkController extends Controller
         $siswas = collect();
         foreach ($activeRombels as $rombel) {
             $rombelSiswas = $rombel->siswa->sortBy('nama_lengkap')->values();
-            $pengujiForRombel = $pengujiRecords->first(fn ($p) => $p->rombel_id === $rombel->id || is_null($p->rombel_id));
-            $siswaIdsExplicit = $pengujiForRombel?->siswa_ids;
-            $mulai   = $pengujiForRombel?->no_urut_mulai;
-            $selesai = $pengujiForRombel?->no_urut_selesai;
+            $pengujisForThisRombel = $pengujiRecords->filter(fn ($p) => $p->rombel_id === $rombel->id || is_null($p->rombel_id));
+
+            $hasUnlimited = false;
+            $allowedSiswaIds = collect();
+
+            foreach ($pengujisForThisRombel as $p) {
+                if (is_array($p->siswa_ids) && !empty($p->siswa_ids)) {
+                    $allowedSiswaIds = $allowedSiswaIds->merge($p->siswa_ids);
+                } elseif ($p->no_urut_mulai || $p->no_urut_selesai) {
+                    $m = $p->no_urut_mulai ?? 1;
+                    $s = $p->no_urut_selesai ?? 999;
+                    foreach ($rombelSiswas as $idx => $sw) {
+                        $no = $idx + 1;
+                        if ($no >= $m && $no <= $s) {
+                            $allowedSiswaIds->push($sw->id);
+                        }
+                    }
+                } else {
+                    $hasUnlimited = true;
+                }
+            }
 
             foreach ($rombelSiswas as $idx => $s) {
                 $noUrut = $idx + 1;
                 $s->nomor_urut   = $noUrut;
                 $s->rombel_nama  = $rombel->kelas?->nama_kelas;
 
-                if (is_array($siswaIdsExplicit) && !empty($siswaIdsExplicit)) {
-                    if (!in_array($s->id, $siswaIdsExplicit)) continue;
-                } else {
-                    if ($mulai && $noUrut < $mulai) continue;
-                    if ($selesai && $noUrut > $selesai) continue;
+                if (!$hasUnlimited && $pengujisForThisRombel->isNotEmpty()) {
+                    if (!$allowedSiswaIds->contains($s->id)) continue;
                 }
 
                 $siswas->push($s);
             }
         }
-        $siswas = $siswas->values();
+        $siswas = $siswas->unique('id')->values();
 
         $activePenguji = $pengujiRecords->first(fn ($p) => $selectedRombelId ? $p->rombel_id == $selectedRombelId : true);
         $rentangLabel = null;
@@ -157,6 +185,26 @@ class PenilaianUkkController extends Controller
             } elseif ($activePenguji->no_urut_mulai || $activePenguji->no_urut_selesai) {
                 $rentangLabel = 'No. Urut ' . ($activePenguji->no_urut_mulai ?? 1) . ' s.d. ' . ($activePenguji->no_urut_selesai ?? 'Akhir');
             }
+        }
+
+        // Tentukan jadwal sesi aktif atau jadwal rombel
+        $activeRombelFirst = $activeRombels->first();
+        $rombelPivot = DB::table('ukk_rombel_mappings')
+            ->where('ukk_ujian_id', $ujian->id)
+            ->where('rombel_id', $activeRombelFirst?->id)
+            ->first();
+
+        $tgl = $activePenguji?->tanggal_pelaksanaan ?? $rombelPivot?->tanggal_pelaksanaan;
+        $jamMulai = $activePenguji?->jam_mulai ? substr($activePenguji->jam_mulai, 0, 5) : ($rombelPivot?->jam_mulai ? substr($rombelPivot->jam_mulai, 0, 5) : null);
+        $jamSelesai = $activePenguji?->jam_selesai ? substr($activePenguji->jam_selesai, 0, 5) : ($rombelPivot?->jam_selesai ? substr($rombelPivot->jam_selesai, 0, 5) : null);
+        $ruangan = $activePenguji?->ruangan ?? $rombelPivot?->ruangan;
+
+        $jadwalSesiLabel = null;
+        if ($tgl) {
+            $tglStr = \Carbon\Carbon::parse($tgl)->translatedFormat('d M Y');
+            $jamStr = $jamMulai ? (' · ⏰ ' . $jamMulai . ($jamSelesai ? ' - ' . $jamSelesai : '') . ' WIB') : '';
+            $ruangStr = $ruangan ? (' · 📍 ' . $ruangan) : '';
+            $jadwalSesiLabel = '📅 ' . $tglStr . $jamStr . $ruangStr;
         }
 
         $allSoalIds      = $ujian->instrumens->flatMap(fn ($i) => $i->soalPengetahuan->pluck('id'));
@@ -194,7 +242,7 @@ class PenilaianUkkController extends Controller
 
         return view('pages.guru-kelas.ukk.show', compact(
             'ujian', 'siswas', 'totalSoal', 'totalIndikator', 'gradedP', 'gradedK',
-            'peranPenguji', 'pengujiPengetahuanMap', 'availableRombels', 'selectedRombelId', 'rentangLabel'
+            'peranPenguji', 'pengujiPengetahuanMap', 'availableRombels', 'selectedRombelId', 'rentangLabel', 'jadwalSesiLabel'
         ));
     }
 
