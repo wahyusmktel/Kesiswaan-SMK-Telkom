@@ -256,32 +256,6 @@
                     </div>
 
                 </div>
-
-                                        <template x-if="isAssigned(g.id)">
-                                            <span class="text-xs font-bold text-emerald-600 shrink-0">✓ Sudah</span>
-                                        </template>
-                                        <template x-if="!isAssigned(g.id)">
-                                            <span class="text-xs font-semibold text-orange-500 shrink-0">Pilih</span>
-                                        </template>
-                                    </button>
-                                </template>
-
-                                <div x-show="filteredGuru.length === 0" class="text-center py-8 text-gray-400 text-sm italic">
-                                    Tidak ada guru yang cocok.
-                                </div>
-                            </div>
-
-                            {{-- Modal footer --}}
-                            <div class="px-5 py-3 border-t border-gray-100 shrink-0 flex justify-end">
-                                <button @click="modalOpen = false"
-                                    class="px-5 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-sm font-bold text-gray-700 transition-colors">
-                                    Tutup
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
             @empty
                 <div class="bg-white rounded-2xl border-2 border-dashed border-gray-200 p-16 text-center">
                     <p class="text-5xl mb-4">📋</p>
