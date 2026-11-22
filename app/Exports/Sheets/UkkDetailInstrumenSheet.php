@@ -96,6 +96,7 @@ class UkkDetailInstrumenSheet implements WithEvents, WithTitle
                 // Keterampilan items
                 $kStartCol = $curCol;
                 $kKatCols = [];
+                $globalIndNo = 1;
                 foreach ($ins->kategoriKeterampilan as $kat) {
                     $katData = [
                         'kat' => $kat,
@@ -105,8 +106,8 @@ class UkkDetailInstrumenSheet implements WithEvents, WithTitle
                     foreach ($kat->indikator as $i => $ind) {
                         $katData['ind_cols'][$ind->id] = [
                             'col' => $curCol++,
-                            'no'  => $i + 1,
-                            'indikator' => $ind->indikator_penilaian,
+                            'no'  => $globalIndNo++,
+                            'indikator' => $ind->nama_indikator ?? $ind->indikator ?? $ind->indikator_penilaian ?? '',
                         ];
                     }
                     $katData['subtotal_col'] = $curCol++;
