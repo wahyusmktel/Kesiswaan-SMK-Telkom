@@ -52,10 +52,16 @@
                     </div>
                     <div class="flex items-center gap-3 bg-white/20 rounded-xl px-4 py-2 shrink-0">
                         @php
-                            $totalSelesai = $siswas->filter(fn($s) =>
-                                ($gradedP[$s->id] ?? 0) >= $totalSoal &&
-                                ($gradedK[$s->id] ?? 0) >= $totalIndikator
-                            )->count();
+                            $totalSelesai = $siswas->filter(function($s) use ($gradedP, $gradedK, $totalSoal, $totalIndikator, $peranPenguji) {
+                                $pDone = ($gradedP[$s->id] ?? 0) >= $totalSoal;
+                                $kDone = ($gradedK[$s->id] ?? 0) >= $totalIndikator;
+                                if ($peranPenguji === 'keterampilan') {
+                                    return $totalIndikator === 0 || $kDone;
+                                } elseif ($peranPenguji === 'pengetahuan') {
+                                    return $totalSoal === 0 || $pDone;
+                                }
+                                return ($totalSoal === 0 || $pDone) && ($totalIndikator === 0 || $kDone);
+                            })->count();
                         @endphp
                         <div class="text-center">
                             <p class="text-2xl font-black">{{ $totalSelesai }}/{{ $siswas->count() }}</p>
@@ -104,7 +110,13 @@
                         @php
                             $pDone = ($gradedP[$siswa->id] ?? 0) >= $totalSoal;
                             $kDone = ($gradedK[$siswa->id] ?? 0) >= $totalIndikator;
-                            $isComplete = ($totalSoal === 0 || $pDone) && ($totalIndikator === 0 || $kDone);
+                            if ($peranPenguji === 'keterampilan') {
+                                $isComplete = ($totalIndikator === 0 || $kDone);
+                            } elseif ($peranPenguji === 'pengetahuan') {
+                                $isComplete = ($totalSoal === 0 || $pDone);
+                            } else {
+                                $isComplete = ($totalSoal === 0 || $pDone) && ($totalIndikator === 0 || $kDone);
+                            }
                             $pPct = $totalSoal > 0 ? round(($gradedP[$siswa->id] ?? 0) / $totalSoal * 100) : 100;
                             $kPct = $totalIndikator > 0 ? round(($gradedK[$siswa->id] ?? 0) / $totalIndikator * 100) : 100;
                         @endphp
@@ -145,7 +157,7 @@
                                 {{-- Progress mini bars --}}
                                 @if($totalSoal > 0 || $totalIndikator > 0)
                                 <div class="mt-3 space-y-1.5">
-                                    @if($totalSoal > 0)
+                                    @if($totalSoal > 0 && $peranPenguji !== 'keterampilan')
                                     <div class="flex items-center gap-2">
                                         <span class="text-[10px] text-gray-400 w-20 shrink-0">Pengetahuan</span>
                                         <div class="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
@@ -159,7 +171,7 @@
                                         </p>
                                     @endif
                                     @endif
-                                    @if($totalIndikator > 0)
+                                    @if($totalIndikator > 0 && $peranPenguji !== 'pengetahuan')
                                     <div class="flex items-center gap-2">
                                         <span class="text-[10px] text-gray-400 w-20 shrink-0">Keterampilan</span>
                                         <div class="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
@@ -178,7 +190,15 @@
                                     {{ $isComplete
                                         ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200'
                                         : 'bg-orange-500 text-white hover:bg-orange-400' }}">
-                                    {{ $isComplete ? '✏️ Edit Penilaian' : '📝 Nilai Sekarang' }}
+                                    @if($isComplete)
+                                        ✏️ Edit Penilaian
+                                    @elseif($peranPenguji === 'keterampilan')
+                                        🛠️ Nilai Keterampilan
+                                    @elseif($peranPenguji === 'pengetahuan')
+                                        🌐 Nilai Pengetahuan
+                                    @else
+                                        📝 Nilai Sekarang
+                                    @endif
                                 </a>
                                 @endif
                             </div>

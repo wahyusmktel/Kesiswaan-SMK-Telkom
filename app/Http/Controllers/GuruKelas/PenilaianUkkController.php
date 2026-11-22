@@ -112,7 +112,6 @@ class PenilaianUkkController extends Controller
             ->get();
 
         $perans = $pengujiRecords->pluck('peran')->unique();
-        $peranPenguji = $perans->contains('semua') ? 'semua' : ($perans->first() ?? 'semua');
 
         $ujian->load([
             'tahunPelajaran',
@@ -133,9 +132,17 @@ class PenilaianUkkController extends Controller
         $selectedRombelId = $request->query('rombel');
         if ($selectedRombelId && $availableRombels->contains('id', (int) $selectedRombelId)) {
             $activeRombels = $availableRombels->where('id', (int) $selectedRombelId);
+            $matchedP = $pengujiRecords->first(fn ($p) => $p->rombel_id == $selectedRombelId);
+            $peranPenguji = $matchedP?->peran ?? 'semua';
         } else {
             $activeRombels = $availableRombels;
             $selectedRombelId = null;
+            $specificRoles = $pengujiRecords->pluck('peran')->unique();
+            if ($specificRoles->count() === 1) {
+                $peranPenguji = $specificRoles->first();
+            } else {
+                $peranPenguji = $perans->contains('semua') ? 'semua' : ($perans->first() ?? 'semua');
+            }
         }
 
         $siswas = collect();
@@ -254,8 +261,15 @@ class PenilaianUkkController extends Controller
             ->where('user_id', Auth::id())
             ->get();
 
-        $perans = $pengujiRecords->pluck('peran')->unique();
-        $peranPenguji = $perans->contains('semua') ? 'semua' : ($perans->first() ?? 'semua');
+        // Cari rombel siswa untuk ujian ini agar peran penguji tepat sesuai rombel
+        $ujianRombelIds = $ujian->rombels()->pluck('rombels.id')->all();
+        $siswaRombelId  = $siswa->rombels()->whereIn('rombels.id', $ujianRombelIds)->value('rombels.id');
+
+        $activePenguji = $pengujiRecords->first(fn ($p) => $siswaRombelId && (int)$p->rombel_id === (int)$siswaRombelId)
+            ?? $pengujiRecords->first(fn ($p) => !is_null($p->rombel_id))
+            ?? $pengujiRecords->first();
+
+        $peranPenguji = $activePenguji?->peran ?? 'semua';
 
         $ujian->load([
             'instrumens.soalPengetahuan',
@@ -297,8 +311,15 @@ class PenilaianUkkController extends Controller
             ->where('user_id', Auth::id())
             ->get();
 
-        $perans = $pengujiRecords->pluck('peran')->unique();
-        $peranPenguji = $perans->contains('semua') ? 'semua' : ($perans->first() ?? 'semua');
+        // Cari rombel siswa untuk ujian ini agar peran penguji tepat sesuai rombel
+        $ujianRombelIds = $ujian->rombels()->pluck('rombels.id')->all();
+        $siswaRombelId  = $siswa->rombels()->whereIn('rombels.id', $ujianRombelIds)->value('rombels.id');
+
+        $activePenguji = $pengujiRecords->first(fn ($p) => $siswaRombelId && (int)$p->rombel_id === (int)$siswaRombelId)
+            ?? $pengujiRecords->first(fn ($p) => !is_null($p->rombel_id))
+            ?? $pengujiRecords->first();
+
+        $peranPenguji = $activePenguji?->peran ?? 'semua';
 
         $request->validate([
             'pengetahuan'               => 'nullable|array',
