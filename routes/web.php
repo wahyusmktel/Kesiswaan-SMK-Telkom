@@ -1620,9 +1620,10 @@ Route::middleware(['auth', 'role:Kaprodi'])->prefix('kaprodi')->name('kaprodi.')
         Route::put('/instrumen/{instrumen}', [\App\Http\Controllers\Kaprodi\InstrumenController::class, 'update'])->name('instrumen.update');
         Route::delete('/instrumen/{instrumen}', [\App\Http\Controllers\Kaprodi\InstrumenController::class, 'destroy'])->name('instrumen.destroy');
 
-        // Set Penguji
+        // Set Penguji & Jadwal
         Route::get('/penguji', [\App\Http\Controllers\Kaprodi\PengujiController::class, 'index'])->name('penguji.index');
         Route::post('/penguji/{ujian}', [\App\Http\Controllers\Kaprodi\PengujiController::class, 'store'])->name('penguji.store');
+        Route::put('/penguji/{ujian}/jadwal/{rombel}', [\App\Http\Controllers\Kaprodi\PengujiController::class, 'updateJadwal'])->name('penguji.update-jadwal');
         Route::put('/penguji/{ujian}/{user}', [\App\Http\Controllers\Kaprodi\PengujiController::class, 'updatePeran'])->name('penguji.update-peran');
         Route::delete('/penguji/{ujian}/{user}', [\App\Http\Controllers\Kaprodi\PengujiController::class, 'destroy'])->name('penguji.destroy');
 

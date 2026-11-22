@@ -27,7 +27,14 @@ class UkkUjian extends Model
 
     public function rombels()
     {
-        return $this->belongsToMany(Rombel::class, 'ukk_rombel_mappings');
+        return $this->belongsToMany(Rombel::class, 'ukk_rombel_mappings')
+            ->withPivot(['id', 'tanggal_pelaksanaan', 'jam_mulai', 'jam_selesai', 'ruangan'])
+            ->withTimestamps();
+    }
+
+    public function rombelMappings()
+    {
+        return $this->hasMany(UkkRombelMapping::class, 'ukk_ujian_id');
     }
 
     public function instrumens()
@@ -43,8 +50,13 @@ class UkkUjian extends Model
     public function penguji()
     {
         return $this->belongsToMany(User::class, 'ukk_penguji')
-            ->withPivot('peran')
+            ->withPivot(['id', 'rombel_id', 'peran'])
             ->withTimestamps();
+    }
+
+    public function ukkPengujis()
+    {
+        return $this->hasMany(UkkPenguji::class, 'ukk_ujian_id');
     }
 
     public function pengujiPengetahuan()

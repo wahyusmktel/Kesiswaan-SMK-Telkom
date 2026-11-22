@@ -11,6 +11,7 @@ use App\Models\UkkInstrumenSoal;
 use App\Models\UkkNilaiKeterampilan;
 use App\Models\UkkNilaiPengetahuan;
 use App\Models\UkkNilaiSikap;
+use App\Models\UkkPenguji;
 use App\Models\UkkUjian;
 use App\Models\UserDigitalSignature;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -24,8 +25,13 @@ class PenilaianUkkController extends Controller
 {
     private function authorizeAsPenguji(UkkUjian $ujian): void
     {
+        $isPenguji = UkkPenguji::where('ukk_ujian_id', $ujian->id)
+            ->where('user_id', Auth::id())
+            ->exists()
+            || DB::table('ukk_penguji')->where('ukk_ujian_id', $ujian->id)->where('user_id', Auth::id())->exists();
+
         abort_unless(
-            $ujian->penguji()->where('user_id', Auth::id())->exists(),
+            $isPenguji,
             403,
             'Anda tidak terdaftar sebagai penguji untuk ujian ini.'
         );
@@ -33,13 +39,21 @@ class PenilaianUkkController extends Controller
 
     public function index()
     {
-        $ujians = UkkUjian::with(['tahunPelajaran', 'rombels', 'instrumens'])
-            ->whereHas('penguji', fn ($q) => $q->where('user_id', Auth::id()))
+        $ujians = UkkUjian::with(['tahunPelajaran', 'rombels.siswa', 'instrumens.soalPengetahuan', 'ukkPengujis'])
+            ->whereHas('ukkPengujis', fn ($q) => $q->where('user_id', Auth::id()))
             ->latest()
             ->get();
 
         foreach ($ujians as $ujian) {
-            $siswaIds = $ujian->rombels
+            $pengujiRecords = $ujian->ukkPengujis->where('user_id', Auth::id());
+            $hasGlobalAssignment = $pengujiRecords->contains(fn ($p) => is_null($p->rombel_id));
+            $assignedRombelIds = $pengujiRecords->pluck('rombel_id')->filter()->unique();
+
+            $filteredRombels = ($hasGlobalAssignment || $assignedRombelIds->isEmpty())
+                ? $ujian->rombels
+                : $ujian->rombels->whereIn('id', $assignedRombelIds);
+
+            $siswaIds = $filteredRombels
                 ->flatMap(fn ($r) => $r->siswa->pluck('id'))
                 ->unique();
 
@@ -58,20 +72,42 @@ class PenilaianUkkController extends Controller
         return view('pages.guru-kelas.ukk.index', compact('ujians'));
     }
 
-    public function show(UkkUjian $ujian)
+    public function show(Request $request, UkkUjian $ujian)
     {
         $this->authorizeAsPenguji($ujian);
 
-        $peranPenguji = $ujian->penguji()->where('user_id', Auth::id())->first()?->pivot?->peran ?? 'semua';
+        $pengujiRecords = UkkPenguji::where('ukk_ujian_id', $ujian->id)
+            ->where('user_id', Auth::id())
+            ->get();
+
+        $perans = $pengujiRecords->pluck('peran')->unique();
+        $peranPenguji = $perans->contains('semua') ? 'semua' : ($perans->first() ?? 'semua');
 
         $ujian->load([
             'tahunPelajaran',
+            'rombels.kelas',
             'rombels.siswa',
             'instrumens.soalPengetahuan',
             'instrumens.kategoriKeterampilan.indikator',
         ]);
 
-        $siswas = $ujian->rombels
+        $hasGlobalAssignment = $pengujiRecords->contains(fn ($p) => is_null($p->rombel_id));
+        $assignedRombelIds = $pengujiRecords->pluck('rombel_id')->filter()->unique();
+
+        $availableRombels = ($hasGlobalAssignment || $assignedRombelIds->isEmpty())
+            ? $ujian->rombels
+            : $ujian->rombels->whereIn('id', $assignedRombelIds);
+
+        // Filter by selected rombel if requested
+        $selectedRombelId = $request->query('rombel');
+        if ($selectedRombelId && $availableRombels->contains('id', (int) $selectedRombelId)) {
+            $activeRombels = $availableRombels->where('id', (int) $selectedRombelId);
+        } else {
+            $activeRombels = $availableRombels;
+            $selectedRombelId = null;
+        }
+
+        $siswas = $activeRombels
             ->flatMap(fn ($r) => $r->siswa)
             ->unique('id')
             ->sortBy('nama_lengkap')
@@ -111,7 +147,8 @@ class PenilaianUkkController extends Controller
             });
 
         return view('pages.guru-kelas.ukk.show', compact(
-            'ujian', 'siswas', 'totalSoal', 'totalIndikator', 'gradedP', 'gradedK', 'peranPenguji', 'pengujiPengetahuanMap'
+            'ujian', 'siswas', 'totalSoal', 'totalIndikator', 'gradedP', 'gradedK',
+            'peranPenguji', 'pengujiPengetahuanMap', 'availableRombels', 'selectedRombelId'
         ));
     }
 
@@ -119,7 +156,12 @@ class PenilaianUkkController extends Controller
     {
         $this->authorizeAsPenguji($ujian);
 
-        $peranPenguji = $ujian->penguji()->where('user_id', Auth::id())->first()?->pivot?->peran ?? 'semua';
+        $pengujiRecords = UkkPenguji::where('ukk_ujian_id', $ujian->id)
+            ->where('user_id', Auth::id())
+            ->get();
+
+        $perans = $pengujiRecords->pluck('peran')->unique();
+        $peranPenguji = $perans->contains('semua') ? 'semua' : ($perans->first() ?? 'semua');
 
         $ujian->load([
             'instrumens.soalPengetahuan',
@@ -157,7 +199,12 @@ class PenilaianUkkController extends Controller
     {
         $this->authorizeAsPenguji($ujian);
 
-        $peranPenguji = $ujian->penguji()->where('user_id', Auth::id())->first()?->pivot?->peran ?? 'semua';
+        $pengujiRecords = UkkPenguji::where('ukk_ujian_id', $ujian->id)
+            ->where('user_id', Auth::id())
+            ->get();
+
+        $perans = $pengujiRecords->pluck('peran')->unique();
+        $peranPenguji = $perans->contains('semua') ? 'semua' : ($perans->first() ?? 'semua');
 
         $request->validate([
             'pengetahuan'               => 'nullable|array',
@@ -177,17 +224,30 @@ class PenilaianUkkController extends Controller
         ]);
 
         // Verify soal & indikator belong to this ujian
-        $instrumenIds    = $ujian->instrumens()->pluck('id');
-        $validSoalIds    = UkkInstrumenSoal::whereIn('instrumen_id', $instrumenIds)->pluck('id');
-        $validIndIds     = UkkInstrumenIndikator::whereIn('kategori_id',
+        $instrumenIds = $ujian->instrumens()->pluck('id');
+        $allSoals     = UkkInstrumenSoal::whereIn('instrumen_id', $instrumenIds)->get()->keyBy('id');
+        $validSoalIds = $allSoals->pluck('id');
+        $validIndIds  = UkkInstrumenIndikator::whereIn('kategori_id',
             DB::table('ukk_instrumen_kategoris')->whereIn('instrumen_id', $instrumenIds)->pluck('id')
         )->pluck('id');
 
-        DB::transaction(function () use ($request, $ujian, $siswa, $validSoalIds, $validIndIds, $peranPenguji) {
+        DB::transaction(function () use ($request, $ujian, $siswa, $allSoals, $validSoalIds, $validIndIds, $peranPenguji) {
             // Simpan penilaian pengetahuan jika peran penguji adalah 'semua' atau 'pengetahuan'
             if (in_array($peranPenguji, ['semua', 'pengetahuan'])) {
                 foreach ($request->input('pengetahuan', []) as $soalId => $nilai) {
                     if (!$validSoalIds->contains((int) $soalId)) continue;
+
+                    $soal = $allSoals->get((int) $soalId);
+                    $isBilingual = ($soal && $soal->jenis_soal === 'bilingual')
+                        || ($ujian->is_bilingual && (!$soal || !in_array($soal->jenis_soal, ['observasi', 'esai'])));
+
+                    // ATURAN BILINGUAL:
+                    // Butir soal wawancara bilingual HANYA dinilai oleh penguji dengan peran 'pengetahuan' (Guru B. Inggris).
+                    // Penguji dengan peran 'semua' (Guru Kejuruan) TIDAK menilai / menimpa soal bilingual.
+                    if ($isBilingual && $peranPenguji === 'semua') {
+                        continue;
+                    }
+
                     $catatan = $request->input("catatan_pengetahuan.{$soalId}");
                     $record  = UkkNilaiPengetahuan::firstOrNew([
                         'master_siswa_id' => $siswa->id,

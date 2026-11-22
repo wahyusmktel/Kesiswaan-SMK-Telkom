@@ -61,6 +61,23 @@
                 @endif
             </div>
 
+            @if(isset($availableRombels) && $availableRombels->count() > 1)
+                {{-- Filter Kelas Tabs --}}
+                <div class="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
+                    <a href="{{ route('guru-kelas.penilaian-ukk.show', $ujian->id) }}"
+                        class="px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 {{ empty($selectedRombelId) ? 'bg-orange-500 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200' }}">
+                        🏫 Semua Kelas Ditugaskan
+                    </a>
+                    @foreach($availableRombels as $rombel)
+                        <a href="{{ route('guru-kelas.penilaian-ukk.show', [$ujian->id, 'rombel' => $rombel->id]) }}"
+                            class="px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 {{ (string)$selectedRombelId === (string)$rombel->id ? 'bg-orange-500 text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200' }}">
+                            {{ $rombel->kelas?->nama_kelas ?? 'Kelas #' . $rombel->id }}
+                            <span class="ml-1 opacity-75 text-[10px]">({{ $rombel->siswa->count() }} siswa)</span>
+                        </a>
+                    @endforeach
+                </div>
+            @endif
+
             {{-- Search --}}
             <div class="mb-4" x-data="{ search: '' }">
                 <div class="relative max-w-sm">
