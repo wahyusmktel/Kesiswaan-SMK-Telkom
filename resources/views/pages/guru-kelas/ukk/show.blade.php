@@ -38,6 +38,11 @@
                                     👥 Semua Aspek
                                 @endif
                             </span>
+                            @if(isset($rentangLabel) && $rentangLabel)
+                                <span class="px-2 py-0.5 rounded-lg bg-blue-700/80 text-blue-100 text-xs font-black border border-blue-400">
+                                    🎯 {{ $rentangLabel }}
+                                </span>
+                            @endif
                         </p>
                     </div>
                     <div class="flex items-center gap-3 bg-white/20 rounded-xl px-4 py-2 shrink-0">
@@ -115,8 +120,15 @@
                                         @endif
                                     </div>
                                     <div class="flex-1 min-w-0">
-                                        <p class="font-black text-gray-900 text-sm truncate">{{ $siswa->nama_lengkap }}</p>
-                                        <p class="text-xs text-gray-400">NIS: {{ $siswa->nis }}</p>
+                                        <div class="flex items-center gap-1.5">
+                                            <p class="font-black text-gray-900 text-sm truncate">{{ $siswa->nama_lengkap }}</p>
+                                            @if(isset($siswa->nomor_urut))
+                                                <span class="px-1.5 py-0.2 rounded-md bg-blue-50 text-blue-700 text-[10px] font-black border border-blue-200 shrink-0" title="Nomor Urut Siswa">
+                                                    #{{ $siswa->nomor_urut }}
+                                                </span>
+                                            @endif
+                                        </div>
+                                        <p class="text-xs text-gray-400">NIS: {{ $siswa->nis }} @if(isset($siswa->rombel_nama)) &middot; {{ $siswa->rombel_nama }} @endif</p>
                                     </div>
                                     @if($isComplete)
                                         <span class="px-2 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-black rounded-lg border border-emerald-200 shrink-0">✓ Selesai</span>

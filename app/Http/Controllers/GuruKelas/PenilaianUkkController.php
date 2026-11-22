@@ -53,9 +53,21 @@ class PenilaianUkkController extends Controller
                 ? $ujian->rombels
                 : $ujian->rombels->whereIn('id', $assignedRombelIds);
 
-            $siswaIds = $filteredRombels
-                ->flatMap(fn ($r) => $r->siswa->pluck('id'))
-                ->unique();
+            $siswaIds = collect();
+            foreach ($filteredRombels as $rombel) {
+                $rombelSiswas = $rombel->siswa->sortBy('nama_lengkap')->values();
+                $pengujiForRombel = $pengujiRecords->first(fn ($p) => $p->rombel_id === $rombel->id || is_null($p->rombel_id));
+                $mulai   = $pengujiForRombel?->no_urut_mulai;
+                $selesai = $pengujiForRombel?->no_urut_selesai;
+
+                foreach ($rombelSiswas as $idx => $s) {
+                    $noUrut = $idx + 1;
+                    if ($mulai && $noUrut < $mulai) continue;
+                    if ($selesai && $noUrut > $selesai) continue;
+                    $siswaIds->push($s->id);
+                }
+            }
+            $siswaIds = $siswaIds->unique();
 
             $ujian->total_siswa = $siswaIds->count();
 
@@ -107,11 +119,31 @@ class PenilaianUkkController extends Controller
             $selectedRombelId = null;
         }
 
-        $siswas = $activeRombels
-            ->flatMap(fn ($r) => $r->siswa)
-            ->unique('id')
-            ->sortBy('nama_lengkap')
-            ->values();
+        $siswas = collect();
+        foreach ($activeRombels as $rombel) {
+            $rombelSiswas = $rombel->siswa->sortBy('nama_lengkap')->values();
+            $pengujiForRombel = $pengujiRecords->first(fn ($p) => $p->rombel_id === $rombel->id || is_null($p->rombel_id));
+            $mulai   = $pengujiForRombel?->no_urut_mulai;
+            $selesai = $pengujiForRombel?->no_urut_selesai;
+
+            foreach ($rombelSiswas as $idx => $s) {
+                $noUrut = $idx + 1;
+                $s->nomor_urut   = $noUrut;
+                $s->rombel_nama  = $rombel->kelas?->nama_kelas;
+
+                if ($mulai && $noUrut < $mulai) continue;
+                if ($selesai && $noUrut > $selesai) continue;
+
+                $siswas->push($s);
+            }
+        }
+        $siswas = $siswas->values();
+
+        $activePenguji = $pengujiRecords->first(fn ($p) => $selectedRombelId ? $p->rombel_id == $selectedRombelId : true);
+        $rentangLabel = null;
+        if ($activePenguji && ($activePenguji->no_urut_mulai || $activePenguji->no_urut_selesai)) {
+            $rentangLabel = 'No. Urut ' . ($activePenguji->no_urut_mulai ?? 1) . ' s.d. ' . ($activePenguji->no_urut_selesai ?? 'Akhir');
+        }
 
         $allSoalIds      = $ujian->instrumens->flatMap(fn ($i) => $i->soalPengetahuan->pluck('id'));
         $allIndikatorIds = $ujian->instrumens->flatMap(fn ($i) =>
@@ -148,7 +180,7 @@ class PenilaianUkkController extends Controller
 
         return view('pages.guru-kelas.ukk.show', compact(
             'ujian', 'siswas', 'totalSoal', 'totalIndikator', 'gradedP', 'gradedK',
-            'peranPenguji', 'pengujiPengetahuanMap', 'availableRombels', 'selectedRombelId'
+            'peranPenguji', 'pengujiPengetahuanMap', 'availableRombels', 'selectedRombelId', 'rentangLabel'
         ));
     }
 

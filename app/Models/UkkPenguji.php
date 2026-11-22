@@ -13,6 +13,8 @@ class UkkPenguji extends Model
         'rombel_id',
         'user_id',
         'peran',
+        'no_urut_mulai',
+        'no_urut_selesai',
     ];
 
     public function ujian()

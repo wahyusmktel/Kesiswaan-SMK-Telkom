@@ -67,13 +67,15 @@ class PengujiController extends Controller
                 })->values(),
                 'pengujis'     => $ujian->ukkPengujis->map(function ($p) {
                     return [
-                        'id'        => $p->id,
-                        'user_id'   => $p->user_id,
-                        'rombel_id' => $p->rombel_id,
-                        'peran'     => $p->peran,
-                        'nama'      => $p->user?->masterGuru?->nama_lengkap ?? $p->user?->name,
-                        'kode'      => $p->user?->masterGuru?->kode_guru ?? '—',
-                        'avatar'    => $p->user?->avatar,
+                        'id'              => $p->id,
+                        'user_id'         => $p->user_id,
+                        'rombel_id'       => $p->rombel_id,
+                        'peran'           => $p->peran,
+                        'no_urut_mulai'   => $p->no_urut_mulai,
+                        'no_urut_selesai' => $p->no_urut_selesai,
+                        'nama'            => $p->user?->masterGuru?->nama_lengkap ?? $p->user?->name,
+                        'kode'            => $p->user?->masterGuru?->kode_guru ?? '—',
+                        'avatar'          => $p->user?->avatar,
                     ];
                 })->values(),
             ];
@@ -85,13 +87,17 @@ class PengujiController extends Controller
     public function store(Request $request, UkkUjian $ujian)
     {
         $request->validate([
-            'user_id'   => 'required|exists:users,id',
-            'rombel_id' => 'nullable|exists:rombels,id',
-            'peran'     => 'nullable|string|in:semua,pengetahuan,keterampilan',
+            'user_id'         => 'required|exists:users,id',
+            'rombel_id'       => 'nullable|exists:rombels,id',
+            'peran'           => 'nullable|string|in:semua,pengetahuan,keterampilan',
+            'no_urut_mulai'   => 'nullable|integer|min:1',
+            'no_urut_selesai' => 'nullable|integer',
         ]);
 
-        $peran    = $request->input('peran', 'semua');
-        $rombelId = $request->input('rombel_id') ?: null;
+        $peran         = $request->input('peran', 'semua');
+        $rombelId      = $request->input('rombel_id') ?: null;
+        $noUrutMulai   = $request->filled('no_urut_mulai') ? (int) $request->no_urut_mulai : null;
+        $noUrutSelesai = $request->filled('no_urut_selesai') ? (int) $request->no_urut_selesai : null;
 
         if ($rombelId) {
             $isMapped = DB::table('ukk_rombel_mappings')
@@ -110,14 +116,16 @@ class PengujiController extends Controller
             ->exists();
 
         if ($exists) {
-            return response()->json(['message' => 'Penguji sudah ditugaskan untuk kelas/aspek ini.'], 422);
+            return response()->json(['message' => 'Penguji sudah ditugaskan untuk kelas ini.'], 422);
         }
 
         $penguji = UkkPenguji::create([
-            'ukk_ujian_id' => $ujian->id,
-            'user_id'      => $request->user_id,
-            'rombel_id'    => $rombelId,
-            'peran'        => $peran,
+            'ukk_ujian_id'    => $ujian->id,
+            'user_id'         => $request->user_id,
+            'rombel_id'       => $rombelId,
+            'peran'           => $peran,
+            'no_urut_mulai'   => $noUrutMulai,
+            'no_urut_selesai' => $noUrutSelesai,
         ]);
 
         $user = User::with('masterGuru')->find($request->user_id);
@@ -126,14 +134,16 @@ class PengujiController extends Controller
         return response()->json([
             'message' => 'Penguji berhasil ditugaskan.',
             'penguji' => [
-                'id'         => $penguji->id,
-                'user_id'    => $user->id,
-                'rombel_id'  => $rombelId,
-                'rombel_name'=> $rombel?->kelas?->nama_kelas ?? 'Semua Kelas',
-                'nama'       => $user->masterGuru?->nama_lengkap ?? $user->name,
-                'kode'       => $user->masterGuru?->kode_guru ?? '—',
-                'avatar'     => $user->avatar,
-                'peran'      => $peran,
+                'id'              => $penguji->id,
+                'user_id'         => $user->id,
+                'rombel_id'       => $rombelId,
+                'rombel_name'     => $rombel?->kelas?->nama_kelas ?? 'Semua Kelas',
+                'nama'            => $user->masterGuru?->nama_lengkap ?? $user->name,
+                'kode'            => $user->masterGuru?->kode_guru ?? '—',
+                'avatar'          => $user->avatar,
+                'peran'           => $peran,
+                'no_urut_mulai'   => $noUrutMulai,
+                'no_urut_selesai' => $noUrutSelesai,
             ],
         ]);
     }
@@ -141,22 +151,40 @@ class PengujiController extends Controller
     public function updatePeran(Request $request, UkkUjian $ujian, User $user)
     {
         $request->validate([
-            'peran'     => 'required|string|in:semua,pengetahuan,keterampilan',
-            'rombel_id' => 'nullable|integer',
+            'peran'           => 'required|string|in:semua,pengetahuan,keterampilan',
+            'rombel_id'       => 'nullable|integer',
+            'penguji_id'      => 'nullable|integer',
+            'no_urut_mulai'   => 'nullable|integer|min:1',
+            'no_urut_selesai' => 'nullable|integer',
         ]);
 
-        $query = UkkPenguji::where('ukk_ujian_id', $ujian->id)
-            ->where('user_id', $user->id);
+        $query = UkkPenguji::where('ukk_ujian_id', $ujian->id);
 
-        if ($request->filled('rombel_id')) {
-            $query->where('rombel_id', $request->rombel_id);
+        if ($request->filled('penguji_id')) {
+            $query->where('id', $request->penguji_id);
+        } else {
+            $query->where('user_id', $user->id);
+            if ($request->filled('rombel_id')) {
+                $query->where('rombel_id', $request->rombel_id);
+            }
         }
 
-        $query->update(['peran' => $request->peran]);
+        $noUrutMulai   = $request->has('no_urut_mulai') ? ($request->no_urut_mulai ? (int) $request->no_urut_mulai : null) : null;
+        $noUrutSelesai = $request->has('no_urut_selesai') ? ($request->no_urut_selesai ? (int) $request->no_urut_selesai : null) : null;
+
+        $updateData = ['peran' => $request->peran];
+        if ($request->has('no_urut_mulai') || $request->has('no_urut_selesai')) {
+            $updateData['no_urut_mulai']   = $noUrutMulai;
+            $updateData['no_urut_selesai'] = $noUrutSelesai;
+        }
+
+        $query->update($updateData);
 
         return response()->json([
-            'message' => 'Peran penguji berhasil diperbarui.',
-            'peran'   => $request->peran,
+            'message'         => 'Data penugasan penguji berhasil diperbarui.',
+            'peran'           => $request->peran,
+            'no_urut_mulai'   => $noUrutMulai,
+            'no_urut_selesai' => $noUrutSelesai,
         ]);
     }
 

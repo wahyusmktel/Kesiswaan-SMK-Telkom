@@ -29,9 +29,9 @@
                     <div>
                         <h3 class="text-xl font-black">👨‍🏫 Set Penguji &amp; Jadwal Pelaksanaan UKK</h3>
                         <p class="text-orange-100 text-sm mt-1">
-                            Atur jadwal ujian (tanggal, waktu, ruangan) dan tentukan guru penguji spesifik per kelas
+                            Atur jadwal ujian (tanggal, waktu, ruangan) dan tentukan penguji per kelas &middot; Mendukung pembagian rentang nomor urut siswa
                             @if($tahunAktif)
-                                &middot; Tahun Pelajaran <span class="font-bold">{{ $tahunAktif->tahun }}</span>
+                                &middot; TP <span class="font-bold">{{ $tahunAktif->tahun }}</span>
                                 Semester <span class="font-bold">{{ $tahunAktif->semester }}</span>
                             @endif
                         </p>
@@ -182,6 +182,17 @@
                                                     <option value="semua">👥 Semua Aspek</option>
                                                 </select>
 
+                                                {{-- Rentang Siswa Pill Button (Click to Edit) --}}
+                                                <button type="button" @click="openRentangModal(ujian, p, rombel)"
+                                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-bold border transition-colors cursor-pointer"
+                                                    :class="p.no_urut_mulai && p.no_urut_selesai
+                                                        ? 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200'
+                                                        : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200'"
+                                                    title="Klik untuk ubah pembagian nomor urut siswa">
+                                                    <span>🎯</span>
+                                                    <span x-text="p.no_urut_mulai && p.no_urut_selesai ? 'No. ' + p.no_urut_mulai + ' - ' + p.no_urut_selesai : 'Semua Siswa'"></span>
+                                                </button>
+
                                                 {{-- Delete Button --}}
                                                 <button @click="removePenguji(ujian, p)"
                                                     class="w-5 h-5 rounded-full bg-black/5 hover:bg-red-500 hover:text-white flex items-center justify-center text-xs font-black transition-colors"
@@ -228,7 +239,7 @@
                 class="fixed inset-0 z-[1000] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
                 @click.self="modalPengujiOpen = false">
 
-                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[85vh] overflow-hidden"
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh] overflow-hidden"
                     @click.stop>
 
                     {{-- Modal Header --}}
@@ -237,6 +248,7 @@
                             <p class="font-black text-gray-900 text-base">Pilih Penguji UKK</p>
                             <p class="text-xs text-gray-500">
                                 Penugasan untuk kelas: <strong class="text-orange-700" x-text="activeRombelName"></strong>
+                                <span class="text-gray-400" x-text="'(Total ' + (activeRombel ? activeRombel.total_siswa : 0) + ' Siswa)'"></span>
                             </p>
                         </div>
                         <button @click="modalPengujiOpen = false"
@@ -247,7 +259,7 @@
 
                     {{-- Role Selector --}}
                     <div class="px-5 py-3 border-b border-gray-100 bg-slate-50/60 shrink-0">
-                        <label class="block text-xs font-black text-gray-700 mb-2">Pilih Tugas / Aspek yang Diuji:</label>
+                        <label class="block text-xs font-black text-gray-700 mb-2">1. Pilih Tugas / Aspek yang Diuji:</label>
                         <div class="grid grid-cols-3 gap-2">
                             <label class="flex flex-col items-center justify-center p-2.5 rounded-xl border-2 text-center cursor-pointer transition-all text-xs"
                                 :class="selectedPeran === 'pengetahuan' ? 'bg-purple-50 border-purple-500 text-purple-900 font-black shadow-xs' : 'bg-white border-gray-200 text-gray-600 font-semibold hover:border-gray-300'">
@@ -271,6 +283,39 @@
                                 <span class="text-[10px] text-emerald-600 font-normal">(P &amp; K Produktif)</span>
                             </label>
                         </div>
+                    </div>
+
+                    {{-- Rentang Siswa Selector --}}
+                    <div class="px-5 py-3 border-b border-gray-100 bg-white shrink-0">
+                        <label class="block text-xs font-black text-gray-700 mb-1.5">2. Pembagian Siswa yang Diuji:</label>
+                        <div class="flex items-center gap-4 mb-2">
+                            <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-gray-700">
+                                <input type="radio" value="semua" x-model="rentangMode" class="text-orange-500 focus:ring-orange-400">
+                                <span>Semua Siswa di Kelas Ini <span class="text-gray-400" x-text="'(1 - ' + (activeRombel ? activeRombel.total_siswa : 0) + ')'"></span></span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-gray-700">
+                                <input type="radio" value="rentang" x-model="rentangMode" class="text-orange-500 focus:ring-orange-400">
+                                <span>Bagi Nomor Urut Siswa</span>
+                            </label>
+                        </div>
+
+                        <div x-show="rentangMode === 'rentang'" class="grid grid-cols-2 gap-3 pt-1">
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-600 mb-1">No. Urut Mulai:</label>
+                                <input type="number" min="1" :max="activeRombel ? activeRombel.total_siswa : 100" x-model.number="noUrutMulai"
+                                    placeholder="Misal: 1"
+                                    class="w-full px-3 py-1.5 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 bg-gray-50">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-600 mb-1">No. Urut Selesai:</label>
+                                <input type="number" min="1" :max="activeRombel ? activeRombel.total_siswa : 100" x-model.number="noUrutSelesai"
+                                    placeholder="Misal: 15"
+                                    class="w-full px-3 py-1.5 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 bg-gray-50">
+                            </div>
+                        </div>
+                        <p x-show="rentangMode === 'rentang'" class="text-[10px] text-gray-400 mt-1 italic">
+                            * Contoh: Penguji A menguji siswa 1 - 15, Penguji B menguji siswa 16 - 30. Urutan sesuai absensi nama siswa.
+                        </p>
                     </div>
 
                     {{-- Search Input --}}
@@ -334,6 +379,85 @@
             </div>
 
             {{-- ══════════════════════════════════════════════════════════════════ --}}
+            {{-- MODAL ATUR PEMBAGIAN SISWA PENGUJI (EDIT RENTANG) --}}
+            {{-- ══════════════════════════════════════════════════════════════════ --}}
+            <div x-show="modalRentangOpen" style="display:none"
+                class="fixed inset-0 z-[1000] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+                @click.self="modalRentangOpen = false">
+
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden"
+                    @click.stop>
+
+                    {{-- Modal Header --}}
+                    <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-amber-50 rounded-t-2xl shrink-0">
+                        <div>
+                            <p class="font-black text-gray-900 text-base">Atur Pembagian Siswa Penguji</p>
+                            <p class="text-xs text-gray-500">
+                                Penguji: <strong class="text-orange-700" x-text="editingPenguji?.nama"></strong> &middot; Kelas: <span class="font-bold" x-text="editingRombel?.nama_kelas"></span>
+                            </p>
+                        </div>
+                        <button @click="modalRentangOpen = false"
+                            class="w-8 h-8 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 font-bold transition-colors">
+                            &times;
+                        </button>
+                    </div>
+
+                    <form @submit.prevent="submitRentang()" class="p-5 space-y-4">
+                        <div>
+                            <label class="block text-xs font-black text-gray-700 mb-1.5">Tugas / Aspek:</label>
+                            <select x-model="editingPengujiPeran"
+                                class="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 bg-gray-50">
+                                <option value="pengetahuan">🌐 Pengetahuan (Bilingual)</option>
+                                <option value="keterampilan">🛠️ Keterampilan</option>
+                                <option value="semua">👥 Semua Aspek</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-black text-gray-700 mb-1.5">Cakupan Siswa:</label>
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-gray-700">
+                                    <input type="radio" value="semua" x-model="editingRentangMode" class="text-orange-500 focus:ring-orange-400">
+                                    <span>Semua Siswa di Kelas Ini <span class="text-gray-400" x-text="'(1 - ' + (editingRombel ? editingRombel.total_siswa : 0) + ')'"></span></span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-gray-700">
+                                    <input type="radio" value="rentang" x-model="editingRentangMode" class="text-orange-500 focus:ring-orange-400">
+                                    <span>Bagi Berdasarkan Nomor Urut Siswa</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div x-show="editingRentangMode === 'rentang'" class="grid grid-cols-2 gap-3 pt-1">
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-600 mb-1">No. Urut Mulai:</label>
+                                <input type="number" min="1" :max="editingRombel ? editingRombel.total_siswa : 100" x-model.number="editingNoUrutMulai"
+                                    placeholder="Misal: 1"
+                                    class="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 bg-gray-50">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-600 mb-1">No. Urut Selesai:</label>
+                                <input type="number" min="1" :max="editingRombel ? editingRombel.total_siswa : 100" x-model.number="editingNoUrutSelesai"
+                                    placeholder="Misal: 15"
+                                    class="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 bg-gray-50">
+                            </div>
+                        </div>
+
+                        {{-- Footer --}}
+                        <div class="pt-3 border-t border-gray-100 flex items-center justify-end gap-2">
+                            <button type="button" @click="modalRentangOpen = false"
+                                class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-sm font-bold text-gray-700 transition-colors">
+                                Batal
+                            </button>
+                            <button type="submit" :disabled="isSubmittingRentang"
+                                class="px-5 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black text-sm shadow-md transition-all disabled:opacity-50">
+                                <span x-text="isSubmittingRentang ? 'Menyimpan…' : '💾 Simpan Perubahan'"></span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {{-- ══════════════════════════════════════════════════════════════════ --}}
             {{-- MODAL ATUR JADWAL ROMBEL (SINGLE ROOT MODAL) --}}
             {{-- ══════════════════════════════════════════════════════════════════ --}}
             <div x-show="modalJadwalOpen" style="display:none"
@@ -380,7 +504,7 @@
 
                         <div>
                             <label class="block text-xs font-black text-gray-700 mb-1.5">Ruangan / Tempat Ujian:</label>
-                            <input type="text" x-model="jadwalForm.ruangan" placeholder="Contoh: Lab Jaringan 1 / Bengkel Otomotif"
+                            <input type="text" x-model="jadwalForm.ruangan" placeholder="Contoh: Lab Jaringan 1 / Bengkel TKJ"
                                 class="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 bg-gray-50">
                         </div>
 
@@ -425,8 +549,22 @@
             activeRombel: null,
             activeRombelName: '',
             selectedPeran: 'semua',
+            rentangMode: 'semua',
+            noUrutMulai: 1,
+            noUrutSelesai: 15,
             guruSearch: '',
             isSubmittingPenguji: false,
+
+            // Modal Edit Rentang State
+            modalRentangOpen: false,
+            editingUjian: null,
+            editingRombel: null,
+            editingPenguji: null,
+            editingPengujiPeran: 'semua',
+            editingRentangMode: 'semua',
+            editingNoUrutMulai: null,
+            editingNoUrutSelesai: null,
+            isSubmittingRentang: false,
 
             // Modal Jadwal State
             modalJadwalOpen: false,
@@ -481,7 +619,6 @@
 
             getPengujiForRombel(ujian, rombelId) {
                 if (!ujian || !ujian.pengujis) return [];
-                // Penguji spesifik rombel ini ATAU penguji umum (rombel_id === null)
                 return ujian.pengujis.filter(p => p.rombel_id === rombelId || p.rombel_id === null);
             },
 
@@ -497,6 +634,9 @@
                 this.activeRombel = rombel;
                 this.activeRombelName = rombel.nama_kelas;
                 this.selectedPeran = ujian.is_bilingual ? 'pengetahuan' : 'semua';
+                this.rentangMode = 'semua';
+                this.noUrutMulai = 1;
+                this.noUrutSelesai = rombel ? rombel.total_siswa : 15;
                 this.guruSearch = '';
                 this.modalPengujiOpen = true;
             },
@@ -504,6 +644,9 @@
             async assignPenguji(guru) {
                 if (this.isAssignedInActiveRombel(guru.id) || this.isSubmittingPenguji) return;
                 this.isSubmittingPenguji = true;
+                const mulai = this.rentangMode === 'rentang' ? this.noUrutMulai : null;
+                const selesai = this.rentangMode === 'rentang' ? this.noUrutSelesai : null;
+
                 try {
                     const res = await fetch('/kaprodi/ukk/penguji/' + this.activeUjian.id, {
                         method: 'POST',
@@ -516,6 +659,8 @@
                             user_id: guru.id,
                             rombel_id: this.activeRombel.id,
                             peran: this.selectedPeran,
+                            no_urut_mulai: mulai,
+                            no_urut_selesai: selesai,
                         }),
                     });
                     const data = await res.json();
@@ -532,6 +677,62 @@
                 }
             },
 
+            openRentangModal(ujian, penguji, rombel) {
+                this.editingUjian = ujian;
+                this.editingRombel = rombel;
+                this.editingPenguji = penguji;
+                this.editingPengujiPeran = penguji.peran || 'semua';
+                if (penguji.no_urut_mulai && penguji.no_urut_selesai) {
+                    this.editingRentangMode = 'rentang';
+                    this.editingNoUrutMulai = penguji.no_urut_mulai;
+                    this.editingNoUrutSelesai = penguji.no_urut_selesai;
+                } else {
+                    this.editingRentangMode = 'semua';
+                    this.editingNoUrutMulai = 1;
+                    this.editingNoUrutSelesai = rombel ? rombel.total_siswa : 15;
+                }
+                this.modalRentangOpen = true;
+            },
+
+            async submitRentang() {
+                if (this.isSubmittingRentang) return;
+                this.isSubmittingRentang = true;
+                const mulai = this.editingRentangMode === 'rentang' ? this.editingNoUrutMulai : null;
+                const selesai = this.editingRentangMode === 'rentang' ? this.editingNoUrutSelesai : null;
+
+                try {
+                    const res = await fetch('/kaprodi/ukk/penguji/' + this.editingUjian.id + '/' + this.editingPenguji.user_id, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        },
+                        body: JSON.stringify({
+                            peran: this.editingPengujiPeran,
+                            rombel_id: this.editingPenguji.rombel_id,
+                            penguji_id: this.editingPenguji.id,
+                            no_urut_mulai: mulai,
+                            no_urut_selesai: selesai,
+                        }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok) {
+                        this.toast(data.message || 'Gagal menyimpan perubahan.', 'error');
+                        return;
+                    }
+                    this.editingPenguji.peran = this.editingPengujiPeran;
+                    this.editingPenguji.no_urut_mulai = mulai;
+                    this.editingPenguji.no_urut_selesai = selesai;
+                    this.toast(data.message, 'success');
+                    this.modalRentangOpen = false;
+                } catch {
+                    this.toast('Gagal memperbarui pembagian siswa.', 'error');
+                } finally {
+                    this.isSubmittingRentang = false;
+                }
+            },
+
             async changePeran(ujian, pengujiItem, newPeran) {
                 try {
                     const res = await fetch('/kaprodi/ukk/penguji/' + ujian.id + '/' + pengujiItem.user_id, {
@@ -544,6 +745,7 @@
                         body: JSON.stringify({
                             peran: newPeran,
                             rombel_id: pengujiItem.rombel_id,
+                            penguji_id: pengujiItem.id,
                         }),
                     });
                     const data = await res.json();
