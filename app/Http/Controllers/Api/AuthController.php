@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\UkkPenguji;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -32,6 +33,8 @@ class AuthController extends Controller
         $deviceName = $request->device_name ?? 'mobile_app';
         $token = $user->createToken($deviceName)->plainTextToken;
         $roles = $user->getRoleNames()->values();
+        $isPengujiUkk = UkkPenguji::where('user_id', $user->id)->exists()
+            || $user->hasAnyRole(['Guru Kelas', 'Kaprodi', 'Kaprodi PPLGIM ANIMASI', 'Kaprodi TJKT', 'Kurikulum', 'Super Admin', 'adminup']);
 
         return response()->json([
             'success' => true,
@@ -45,6 +48,8 @@ class AuthController extends Controller
                     'role' => $roles->first(),
                     'roles' => $roles,
                     'avatar' => $user->avatar,
+                    'can_assess_ukk' => $isPengujiUkk,
+                    'is_security' => $user->hasRole('Security'),
                 ],
             ],
         ]);
@@ -57,6 +62,8 @@ class AuthController extends Controller
     {
         $user = $request->user();
         $roles = $user->getRoleNames()->values();
+        $isPengujiUkk = UkkPenguji::where('user_id', $user->id)->exists()
+            || $user->hasAnyRole(['Guru Kelas', 'Kaprodi', 'Kaprodi PPLGIM ANIMASI', 'Kaprodi TJKT', 'Kurikulum', 'Super Admin', 'adminup']);
 
         return response()->json([
             'success' => true,
@@ -67,6 +74,8 @@ class AuthController extends Controller
                 'role' => $roles->first(),
                 'roles' => $roles,
                 'avatar' => $user->avatar,
+                'can_assess_ukk' => $isPengujiUkk,
+                'is_security' => $user->hasRole('Security'),
                 'siswa_data' => $user->masterSiswa ? [
                     'nis' => $user->masterSiswa->nis,
                     'kelas' => $user->masterSiswa->kelas,

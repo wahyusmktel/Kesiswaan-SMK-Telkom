@@ -5,6 +5,7 @@ class AppUser {
     required this.email,
     required this.roles,
     this.avatar,
+    this.canAssessUkkExplicit,
   });
 
   final int id;
@@ -12,8 +13,20 @@ class AppUser {
   final String email;
   final List<String> roles;
   final String? avatar;
+  final bool? canAssessUkkExplicit;
 
   bool get isSecurity => roles.any((role) => role.toLowerCase() == 'security');
+
+  bool get canAssessUkk {
+    if (canAssessUkkExplicit != null) return canAssessUkkExplicit!;
+    return roles.any((role) {
+      final r = role.toLowerCase();
+      return r.contains('guru') ||
+          r.contains('kaprodi') ||
+          r.contains('kurikulum') ||
+          r.contains('admin');
+    });
+  }
 
   String get primaryRole => roles.isEmpty ? '-' : roles.first;
 
@@ -29,6 +42,7 @@ class AppUser {
       email: json['email']?.toString() ?? '-',
       roles: roles,
       avatar: json['avatar']?.toString(),
+      canAssessUkkExplicit: json['can_assess_ukk'] as bool?,
     );
   }
 }

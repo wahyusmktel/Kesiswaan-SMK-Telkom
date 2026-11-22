@@ -31,12 +31,12 @@ class AuthService {
     final token = data['token'].toString();
     final user = AppUser.fromJson(data['user'] as Map<String, dynamic>);
 
-    if (!user.isSecurity) {
+    if (!user.isSecurity && !user.canAssessUkk) {
       _api.setToken(token);
       await _api.post('/logout');
       _api.setToken(null);
       throw const ApiException(
-        'Versi awal aplikasi mobile baru tersedia untuk role Security.',
+        'Akun Anda belum memiliki akses untuk Security maupun Penilaian UKK.',
         statusCode: 403,
       );
     }
@@ -55,7 +55,7 @@ class AuthService {
     try {
       final response = await _api.get('/me');
       final user = AppUser.fromJson(response['data'] as Map<String, dynamic>);
-      if (!user.isSecurity) {
+      if (!user.isSecurity && !user.canAssessUkk) {
         await clearLocalSession();
         return null;
       }

@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\SecurityController;
 use App\Http\Controllers\Api\SiswaController;
 use App\Http\Controllers\Api\TeacherController;
+use App\Http\Controllers\Api\UkkMobileController;
 use App\Http\Controllers\Api\CctvGatewayAuthController;
 use App\Http\Controllers\Api\SsoUserInfoController;
 use App\Http\Controllers\Api\SpmbFeeApiController;
@@ -37,6 +38,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/students/scan', [SecurityController::class, 'scanStudent']);
         Route::post('/lateness', [SecurityController::class, 'storeLateness']);
         Route::get('/lateness/today', [SecurityController::class, 'todayHistory']);
+    });
+
+    // UKK Mobile Routes (Penilaian Penguji)
+    Route::prefix('ukk')->group(function () {
+        Route::get('/ujians', [UkkMobileController::class, 'ujians']);
+        Route::get('/ujians/{ujian}/siswas', [UkkMobileController::class, 'siswas']);
+        Route::get('/ujians/{ujian}/siswas/{siswa}', [UkkMobileController::class, 'showSiswa']);
+        Route::post('/ujians/{ujian}/siswas/{siswa}', [UkkMobileController::class, 'simpanPenilaian']);
     });
 
     // Profile Routes

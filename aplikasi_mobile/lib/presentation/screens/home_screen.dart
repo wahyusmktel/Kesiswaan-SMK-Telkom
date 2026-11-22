@@ -9,6 +9,7 @@ import '../../data/services/security_service.dart';
 import 'late_student_scan_screen.dart';
 import 'lateness_history_screen.dart';
 import 'profile_screen.dart';
+import 'ukk/ukk_home_screen.dart';
 
 class SecurityHomeScreen extends StatefulWidget {
   const SecurityHomeScreen({required this.user, super.key});
@@ -149,6 +150,43 @@ class _SecurityDashboardViewState extends State<SecurityDashboardView> {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
               children: [
+                if (widget.user.canAssessUkk) ...[
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF2F2),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFFCA5A5)),
+                    ),
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute<void>(
+                            builder: (_) => UkkHomeScreen(user: widget.user),
+                          ),
+                        );
+                      },
+                      child: Row(
+                        children: const [
+                          Icon(Icons.assignment_ind_rounded, color: AppTheme.red, size: 20),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Anda terdaftar sebagai Penguji UKK. Ketuk untuk membuka Portal UKK.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF991B1B),
+                              ),
+                            ),
+                          ),
+                          Icon(Icons.chevron_right_rounded, color: AppTheme.red, size: 20),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
                 Text(
                   'Selamat bertugas, ${widget.user.name}',
                   style: Theme.of(context).textTheme.titleLarge,

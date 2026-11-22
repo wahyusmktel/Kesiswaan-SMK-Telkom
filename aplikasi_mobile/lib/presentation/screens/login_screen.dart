@@ -4,6 +4,7 @@ import '../../core/theme/app_theme.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/auth_service.dart';
 import 'home_screen.dart';
+import 'ukk/ukk_home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -42,8 +43,16 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text,
       );
       if (!mounted) return;
+      Widget targetHome;
+      if (user.canAssessUkk && !user.isSecurity) {
+        targetHome = UkkHomeScreen(user: user);
+      } else if (user.isSecurity && !user.canAssessUkk) {
+        targetHome = SecurityHomeScreen(user: user);
+      } else {
+        targetHome = UkkHomeScreen(user: user);
+      }
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute<void>(builder: (_) => SecurityHomeScreen(user: user)),
+        MaterialPageRoute<void>(builder: (_) => targetHome),
         (_) => false,
       );
     } on ApiException catch (error) {
@@ -97,7 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Gunakan akun SISFO sekolah untuk membuka layanan operasional Security.',
+                      'Gunakan akun SISFO sekolah untuk membuka layanan UKK dan operasional sekolah.',
                       style: TextStyle(
                         color: Color(0xFF64748B),
                         height: 1.5,

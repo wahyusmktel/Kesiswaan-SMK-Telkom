@@ -4,6 +4,7 @@ import '../../core/theme/app_theme.dart';
 import '../../data/services/auth_service.dart';
 import 'home_screen.dart';
 import 'login_screen.dart';
+import 'ukk/ukk_home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -24,11 +25,19 @@ class _SplashScreenState extends State<SplashScreen> {
     try {
       final user = await AuthService.instance.restoreSession();
       if (!mounted) return;
+      Widget targetHome = const LoginScreen();
+      if (user != null) {
+        if (user.canAssessUkk && !user.isSecurity) {
+          targetHome = UkkHomeScreen(user: user);
+        } else if (user.isSecurity && !user.canAssessUkk) {
+          targetHome = SecurityHomeScreen(user: user);
+        } else {
+          targetHome = UkkHomeScreen(user: user);
+        }
+      }
       Navigator.of(context).pushReplacement(
         MaterialPageRoute<void>(
-          builder: (_) => user == null
-              ? const LoginScreen()
-              : SecurityHomeScreen(user: user),
+          builder: (_) => targetHome,
         ),
       );
     } catch (_) {
