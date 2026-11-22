@@ -42,7 +42,7 @@ class UkkDetailInstrumenSheet implements WithEvents, WithTitle
 
                 // ══ 1. DOCUMENT HEADER & METADATA ══
                 $sheet->setCellValue('A1', 'LEGER & REKAPITULASI PENILAIAN UJI KOMPETENSI KEAHLIAN (UKK)');
-                $sheet->setCellValue('A2', 'SMK TELKOM MAKASSAR');
+                $sheet->setCellValue('A2', 'SMK TELKOM LAMPUNG');
                 $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('1E293B'));
                 $sheet->getStyle('A2')->getFont()->setBold(true)->setSize(11)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('475569'));
 
@@ -554,7 +554,7 @@ class UkkDetailInstrumenSheet implements WithEvents, WithTitle
 
                 $todayStr = now()->translatedFormat('d F Y');
                 $sheet->setCellValue("{$sigColLeft}{$r}", "Mengetahui,");
-                $sheet->setCellValue("{$sigColRight}{$r}", "Makassar, " . $todayStr);
+                $sheet->setCellValue("{$sigColRight}{$r}", "Lampung, " . $todayStr);
 
                 $sheet->setCellValue("{$sigColLeft}" . ($r + 1), "Kepala Program Keahlian,");
                 $sheet->setCellValue("{$sigColRight}" . ($r + 1), "Guru Penguji UKK,");

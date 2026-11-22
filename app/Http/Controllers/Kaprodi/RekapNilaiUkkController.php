@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Kaprodi;
 
 use App\Exports\RekapNilaiUkkExport;
 use App\Http\Controllers\Controller;
+use App\Models\UkkNilaiBilingual;
 use App\Models\UkkNilaiKeterampilan;
 use App\Models\UkkNilaiPengetahuan;
 use App\Models\UkkUjian;
@@ -65,8 +66,13 @@ class RekapNilaiUkkController extends Controller
                 ->get()
                 ->groupBy('master_siswa_id');
 
-            $rekap = $siswas->map(function ($siswa) use ($ujian, $allNilaiP, $allNilaiK) {
-                return $this->computeSiswaRekap($siswa, $ujian, $allNilaiP, $allNilaiK);
+            $allNilaiBilingual = UkkNilaiBilingual::whereIn('master_siswa_id', $siswaIds)
+                ->where('ukk_ujian_id', $ujian->id)
+                ->get()
+                ->keyBy('master_siswa_id');
+
+            $rekap = $siswas->map(function ($siswa) use ($ujian, $allNilaiP, $allNilaiK, $allNilaiBilingual) {
+                return $this->computeSiswaRekap($siswa, $ujian, $allNilaiP, $allNilaiK, $allNilaiBilingual);
             })->sortBy('siswa.nama_lengkap')->values();
         }
 
@@ -117,7 +123,12 @@ class RekapNilaiUkkController extends Controller
             ->whereIn('indikator_id', $allIndIds)
             ->get()->groupBy('master_siswa_id');
 
-        $rekap = $siswas->map(fn ($s) => $this->computeSiswaRekap($s, $ujian, $allNilaiP, $allNilaiK))
+        $allNilaiBilingual = UkkNilaiBilingual::whereIn('master_siswa_id', $siswaIds)
+            ->where('ukk_ujian_id', $ujian->id)
+            ->get()
+            ->keyBy('master_siswa_id');
+
+        $rekap = $siswas->map(fn ($s) => $this->computeSiswaRekap($s, $ujian, $allNilaiP, $allNilaiK, $allNilaiBilingual))
             ->sortBy('siswa.nama_lengkap')
             ->values();
 
@@ -131,11 +142,12 @@ class RekapNilaiUkkController extends Controller
             $rekap,
             $allNilaiP,
             $allNilaiK,
-            $rombelLabel
+            $rombelLabel,
+            $allNilaiBilingual
         ), $filename);
     }
 
-    private function computeSiswaRekap($siswa, $ujian, $allNilaiP, $allNilaiK): array
+    private function computeSiswaRekap($siswa, $ujian, $allNilaiP, $allNilaiK, $allNilaiBilingual = null): array
     {
         $nilaiP = $allNilaiP->get($siswa->id, collect())->pluck('nilai', 'soal_id');
         $nilaiK = $allNilaiK->get($siswa->id, collect())->pluck('nilai', 'indikator_id');
@@ -204,6 +216,7 @@ class RekapNilaiUkkController extends Controller
             'instrumen_scores' => $instrumenScores,
             'nilai_akhir'      => $nilaiAkhir,
             'is_complete'      => $isComplete,
+            'nilai_bilingual'  => $allNilaiBilingual?->get($siswa->id),
         ];
     }
 }

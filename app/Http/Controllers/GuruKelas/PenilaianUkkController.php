@@ -8,6 +8,7 @@ use App\Models\DigitalDocument;
 use App\Models\MasterSiswa;
 use App\Models\UkkInstrumenIndikator;
 use App\Models\UkkInstrumenSoal;
+use App\Models\UkkNilaiBilingual;
 use App\Models\UkkNilaiKeterampilan;
 use App\Models\UkkNilaiPengetahuan;
 use App\Models\UkkNilaiSikap;
@@ -355,8 +356,12 @@ class PenilaianUkkController extends Controller
             ->where('master_siswa_id', $siswa->id)
             ->first();
 
+        $nilaiBilingual = UkkNilaiBilingual::where('ukk_ujian_id', $ujian->id)
+            ->where('master_siswa_id', $siswa->id)
+            ->first();
+
         return view('pages.guru-kelas.ukk.penilaian', compact(
-            'ujian', 'siswa', 'nilaiP', 'jawabanP', 'catatanP', 'nilaiK', 'peranPenguji', 'nilaiSikap',
+            'ujian', 'siswa', 'nilaiP', 'jawabanP', 'catatanP', 'nilaiK', 'peranPenguji', 'nilaiSikap', 'nilaiBilingual',
             'hasPengetahuanForExaminer', 'hasKeterampilanForExaminer'
         ));
     }
@@ -463,6 +468,25 @@ class PenilaianUkkController extends Controller
                     $recordSikap->kesimpulan     = $sikapInput['kesimpulan'] ?? null;
                     $recordSikap->catatan        = $sikapInput['catatan'] ?? null;
                     $recordSikap->save();
+                }
+            }
+
+            // Simpan penilaian performa wawancara bilingual (dilakukan oleh penguji bilingual/pengetahuan)
+            if ($ujian->is_bilingual && in_array($peranPenguji, ['pengetahuan', 'semua']) && $request->has('bilingual')) {
+                $bilingualInput = $request->input('bilingual', []);
+                if (is_array($bilingualInput)) {
+                    $recordBilingual = UkkNilaiBilingual::firstOrNew([
+                        'ukk_ujian_id'    => $ujian->id,
+                        'master_siswa_id' => $siswa->id,
+                    ]);
+                    $recordBilingual->penguji_id    = Auth::id();
+                    $recordBilingual->fluency       = $bilingualInput['fluency'] ?? null;
+                    $recordBilingual->pronunciation = $bilingualInput['pronunciation'] ?? null;
+                    $recordBilingual->vocabulary    = $bilingualInput['vocabulary'] ?? null;
+                    $recordBilingual->comprehension = $bilingualInput['comprehension'] ?? null;
+                    $recordBilingual->kesimpulan    = $bilingualInput['kesimpulan'] ?? null;
+                    $recordBilingual->catatan       = $bilingualInput['catatan'] ?? null;
+                    $recordBilingual->save();
                 }
             }
         });
@@ -577,8 +601,12 @@ class PenilaianUkkController extends Controller
             ->where('master_siswa_id', $siswa->id)
             ->first();
 
+        $nilaiBilingual = UkkNilaiBilingual::where('ukk_ujian_id', $ujian->id)
+            ->where('master_siswa_id', $siswa->id)
+            ->first();
+
         $pdf = Pdf::loadView('pdf.penilaian-ukk', compact(
-            'ujian', 'siswa', 'nilaiP', 'nilaiK', 'nilaiSikap',
+            'ujian', 'siswa', 'nilaiP', 'nilaiK', 'nilaiSikap', 'nilaiBilingual',
             'settings', 'logoBase64',
             'user', 'ttdBase64', 'digDoc', 'qrBase64',
             'instrumenScores', 'nilaiAkhirFinal'

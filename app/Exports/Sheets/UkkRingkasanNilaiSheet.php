@@ -17,7 +17,8 @@ class UkkRingkasanNilaiSheet implements WithEvents, WithTitle
         private UkkUjian $ujian,
         private Collection $rekap,
         private string $rombelLabel,
-        private string $sheetTitle = 'Ringkasan Nilai Akhir'
+        private string $sheetTitle = 'Ringkasan Nilai Akhir',
+        private ?Collection $allNilaiBilingual = null
     ) {}
 
     public function title(): string
@@ -37,7 +38,7 @@ class UkkRingkasanNilaiSheet implements WithEvents, WithTitle
 
                 // ══ 1. DOCUMENT HEADER ══
                 $sheet->setCellValue('A1', 'RINGKASAN NILAI AKHIR UJI KOMPETENSI KEAHLIAN (UKK)');
-                $sheet->setCellValue('A2', 'SMK TELKOM MAKASSAR');
+                $sheet->setCellValue('A2', 'SMK TELKOM LAMPUNG');
                 $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('1E293B'));
                 $sheet->getStyle('A2')->getFont()->setBold(true)->setSize(11)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('475569'));
 
@@ -61,6 +62,9 @@ class UkkRingkasanNilaiSheet implements WithEvents, WithTitle
                 $sheet->getStyle('C4:C6')->getFont()->setSize(9.5);
                 $sheet->getStyle('F4:F6')->getFont()->setSize(9.5);
 
+                $isBilingual = (bool) $this->ujian->is_bilingual;
+                $lastColLetter = $isBilingual ? 'J' : 'I';
+
                 // ══ 2. KPI SUMMARY BANNER (ROW 8) ══
                 $totalSiswa   = $this->rekap->count();
                 $selesai      = $this->rekap->filter(fn ($r) => $r['is_complete'])->count();
@@ -78,9 +82,9 @@ class UkkRingkasanNilaiSheet implements WithEvents, WithTitle
                 $sheet->mergeCells('A8:B8');
                 $sheet->mergeCells('C8:D8');
                 $sheet->mergeCells('E8:F8');
-                $sheet->mergeCells('H8:I8');
+                $sheet->mergeCells("H8:{$lastColLetter}8");
 
-                $sheet->getStyle('A8:I8')->applyFromArray([
+                $sheet->getStyle("A8:{$lastColLetter}8")->applyFromArray([
                     'font' => ['bold' => true, 'size' => 9.5, 'color' => ['rgb' => '1E293B']],
                     'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F1F5F9']],
                     'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
@@ -101,13 +105,17 @@ class UkkRingkasanNilaiSheet implements WithEvents, WithTitle
                     'I' => ['title' => 'STATUS KELULUSAN', 'width' => 20],
                 ];
 
+                if ($isBilingual) {
+                    $headers['J'] = ['title' => "KECAKAPAN BILINGUAL (EN)\n(Speaking Proficiency)", 'width' => 25];
+                }
+
                 foreach ($headers as $col => $info) {
                     $sheet->setCellValue($col . '10', $info['title']);
                     $sheet->getColumnDimension($col)->setWidth($info['width']);
                 }
 
                 $sheet->getRowDimension(10)->setRowHeight(32);
-                $sheet->getStyle('A10:I10')->applyFromArray([
+                $sheet->getStyle("A10:{$lastColLetter}10")->applyFromArray([
                     'font' => ['bold' => true, 'size' => 9.5, 'color' => ['rgb' => 'FFFFFF']],
                     'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '0F172A']], // Slate 900
                     'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true],
@@ -182,7 +190,22 @@ class UkkRingkasanNilaiSheet implements WithEvents, WithTitle
                         ]);
                     }
 
-                    $sheet->getStyle("A{$r}:I{$r}")->applyFromArray([
+                    // Bilingual proficiency column
+                    if ($isBilingual) {
+                        $bil = $item['nilai_bilingual'] ?? null;
+                        $bilText = $bil?->kesimpulan ?: '-';
+                        $sheet->setCellValue('J' . $r, $bilText);
+                        $sheet->getStyle('J' . $r)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                        $sheet->getStyle('J' . $r)->getFont()->setBold(true);
+                        if ($bil?->kesimpulan) {
+                            $sheet->getStyle('J' . $r)->applyFromArray([
+                                'font' => ['color' => ['rgb' => '4338CA']],
+                                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'EEF2FF']],
+                            ]);
+                        }
+                    }
+
+                    $sheet->getStyle("A{$r}:{$lastColLetter}{$r}")->applyFromArray([
                         'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'E2E8F0']]],
                         'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => $bgHex]],
                     ]);
@@ -215,7 +238,7 @@ class UkkRingkasanNilaiSheet implements WithEvents, WithTitle
                             $sheet->getStyle($col . $r)->getFont()->setBold(true);
                         }
 
-                        $sheet->getStyle("A{$r}:I{$r}")->applyFromArray([
+                        $sheet->getStyle("A{$r}:{$lastColLetter}{$r}")->applyFromArray([
                             'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'CBD5E1']]],
                             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F1F5F9']],
                         ]);
@@ -227,22 +250,24 @@ class UkkRingkasanNilaiSheet implements WithEvents, WithTitle
                 // ══ 6. SIGNATURES ══
                 $r += 2;
                 $todayStr = now()->translatedFormat('d F Y');
+                $sigColRight = $isBilingual ? 'H' : 'G';
+
                 $sheet->setCellValue("C{$r}", "Mengetahui,");
-                $sheet->setCellValue("G{$r}", "Makassar, " . $todayStr);
+                $sheet->setCellValue("{$sigColRight}{$r}", "Lampung, " . $todayStr);
 
                 $sheet->setCellValue("C" . ($r + 1), "Kepala Program Keahlian,");
-                $sheet->setCellValue("G" . ($r + 1), "Guru Penguji UKK,");
+                $sheet->setCellValue("{$sigColRight}" . ($r + 1), "Guru Penguji UKK,");
 
                 $sheet->setCellValue("C" . ($r + 5), "( ........................................................... )");
-                $sheet->setCellValue("G" . ($r + 5), "( ........................................................... )");
+                $sheet->setCellValue("{$sigColRight}" . ($r + 5), "( ........................................................... )");
 
                 $sheet->setCellValue("C" . ($r + 6), "NIP. ");
-                $sheet->setCellValue("G" . ($r + 6), "NIP. ");
+                $sheet->setCellValue("{$sigColRight}" . ($r + 6), "NIP. ");
 
                 $sheet->getStyle("C{$r}:C" . ($r + 6))->getFont()->setSize(9.5);
-                $sheet->getStyle("G{$r}:G" . ($r + 6))->getFont()->setSize(9.5);
+                $sheet->getStyle("{$sigColRight}{$r}:{$sigColRight}" . ($r + 6))->getFont()->setSize(9.5);
                 $sheet->getStyle("C{$r}:C" . ($r + 6))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                $sheet->getStyle("G{$r}:G" . ($r + 6))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle("{$sigColRight}{$r}:{$sigColRight}" . ($r + 6))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
                 $sheet->freezePane('E11');
             },

@@ -144,6 +144,11 @@
                                 <th class="px-4 py-2.5 text-center text-xs font-black text-orange-600 uppercase tracking-wide border-l border-gray-200" rowspan="2">
                                     Nilai Akhir
                                 </th>
+                                @if($ujian->is_bilingual)
+                                <th class="px-3 py-2.5 text-center text-xs font-black text-indigo-700 uppercase tracking-wide border-l border-gray-200" rowspan="2">
+                                    🌐 Bilingual (EN)
+                                </th>
+                                @endif
                                 <th class="px-4 py-2.5 text-center text-xs font-black text-gray-500 uppercase tracking-wide" rowspan="2">Status</th>
                             </tr>
                             <tr class="bg-gray-50 border-b border-gray-200 text-[10px] font-bold text-gray-400 uppercase">
@@ -163,6 +168,9 @@
                                 <th class="px-4 py-3 text-center text-xs font-black text-blue-600 uppercase tracking-wide">Skor Pengetahuan</th>
                                 <th class="px-4 py-3 text-center text-xs font-black text-emerald-600 uppercase tracking-wide">Skor Keterampilan</th>
                                 <th class="px-4 py-3 text-center text-xs font-black text-orange-600 uppercase tracking-wide">Nilai Akhir</th>
+                                @if($ujian->is_bilingual)
+                                <th class="px-4 py-3 text-center text-xs font-black text-indigo-700 uppercase tracking-wide">🌐 Bilingual (EN)</th>
+                                @endif
                                 <th class="px-4 py-3 text-center text-xs font-black text-gray-500 uppercase tracking-wide">Status</th>
                             </tr>
                             @endif
@@ -223,6 +231,19 @@
                                     @endif
                                 </td>
 
+                                {{-- Bilingual --}}
+                                @if($ujian->is_bilingual)
+                                <td class="px-3 py-3 text-center border-l border-gray-100">
+                                    @if(!empty($row['nilai_bilingual']?->kesimpulan))
+                                        <span class="inline-block px-2.5 py-1 rounded-lg border font-bold text-xs bg-indigo-50 text-indigo-800 border-indigo-200">
+                                            {{ $row['nilai_bilingual']->kesimpulan }}
+                                        </span>
+                                    @else
+                                        <span class="text-gray-300 text-xs">—</span>
+                                    @endif
+                                </td>
+                                @endif
+
                                 {{-- Status --}}
                                 <td class="px-4 py-3 text-center">
                                     @if($row['is_complete'])
@@ -271,6 +292,9 @@
                                         {{ $nilaiRataAll !== null ? number_format($nilaiRataAll, 1) : '—' }}
                                     </span>
                                 </td>
+                                @if($ujian->is_bilingual)
+                                <td class="border-l border-orange-200"></td>
+                                @endif
                                 <td class="px-4 py-3 text-center text-xs font-semibold text-gray-500">
                                     {{ $selesai }}/{{ $totalSiswa }}
                                 </td>

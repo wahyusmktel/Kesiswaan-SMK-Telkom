@@ -19,7 +19,8 @@ class RekapNilaiUkkExport implements WithMultipleSheets
         private readonly Collection $rekap,
         private readonly Collection $allNilaiP,
         private readonly Collection $allNilaiK,
-        private readonly ?string $rombelLabel = null
+        private readonly ?string $rombelLabel = null,
+        private readonly ?Collection $allNilaiBilingual = null
     ) {}
 
     public function sheets(): array
@@ -45,7 +46,8 @@ class RekapNilaiUkkExport implements WithMultipleSheets
                 $this->ujian,
                 $this->rekap,
                 $rombelText,
-                'Ringkasan Nilai Akhir'
+                'Ringkasan Nilai Akhir',
+                $this->allNilaiBilingual
             );
         } else {
             // Multi-instrument: summary first, then detailed sheets
@@ -53,7 +55,8 @@ class RekapNilaiUkkExport implements WithMultipleSheets
                 $this->ujian,
                 $this->rekap,
                 $rombelText,
-                'Ringkasan Nilai Akhir'
+                'Ringkasan Nilai Akhir',
+                $this->allNilaiBilingual
             );
 
             foreach ($instrumens as $idx => $ins) {

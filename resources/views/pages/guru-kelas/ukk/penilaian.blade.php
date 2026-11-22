@@ -188,6 +188,105 @@
             @if($hasPengetahuanForExaminer)
             {{-- ══ ASPEK PENGETAHUAN SECTION ══ --}}
             <div x-show="activeTab === 'pengetahuan' || activeTab === 'all'" class="space-y-6">
+
+                @if($ujian->is_bilingual && $peranPenguji === 'pengetahuan')
+                {{-- ══ PANDUAN RUBRIK PENILAIAN WAWANCARA BILINGUAL (ACCORDION / GUIDE) ══ --}}
+                <div class="bg-gradient-to-br from-indigo-900 via-indigo-800 to-slate-900 rounded-3xl p-6 text-white shadow-md border border-indigo-700/50">
+                    <div class="flex items-center justify-between flex-wrap gap-4">
+                        <div class="flex items-center gap-3.5">
+                            <div class="w-10 h-10 rounded-2xl bg-indigo-500/30 border border-indigo-400/40 flex items-center justify-center text-xl shrink-0">
+                                🌐
+                            </div>
+                            <div>
+                                <h4 class="font-black text-white text-base tracking-wide flex items-center gap-2">
+                                    Panduan &amp; Rubrik Penilaian Wawancara Bilingual (English Speaking Guide)
+                                </h4>
+                                <p class="text-xs text-indigo-200 mt-0.5">
+                                    Pedoman acuan penilaian kompetensi berbicara bahasa Inggris kejuruan untuk Penguji Bilingual.
+                                </p>
+                            </div>
+                        </div>
+                        <button type="button" @click="showPanduanBilingual = !showPanduanBilingual"
+                            class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/20 transition-all flex items-center gap-2">
+                            <span x-text="showPanduanBilingual ? '▲ Sembunyikan Panduan' : '▼ Buka Panduan Rubrik'"></span>
+                        </button>
+                    </div>
+
+                    {{-- Expanded Rubric Descriptors --}}
+                    <div x-show="showPanduanBilingual" class="mt-5 pt-5 border-t border-indigo-700/60 space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {{-- Fluency --}}
+                            <div class="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <h5 class="font-extrabold text-sm text-indigo-200 flex items-center gap-2">
+                                        <span>🗣️</span> 1. Kelancaran (Fluency)
+                                    </h5>
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-500/30 text-indigo-100">Alur Bicara</span>
+                                </div>
+                                <ul class="text-xs text-slate-300 space-y-1.5 leading-relaxed">
+                                    <li><strong class="text-emerald-400">Sangat Baik (4):</strong> Berbicara lancar, spontan, percaya diri, tanpa keraguan atau jeda yang mengganggu makna.</li>
+                                    <li><strong class="text-blue-400">Baik (3):</strong> Berbicara cukup lancar, ada jeda wajar untuk memilih kata namun kalimat tetap mengalir teratur.</li>
+                                    <li><strong class="text-amber-400">Cukup (2):</strong> Sering terhenti/ragu, kecepatan bicara lambat, namun pesan kalimat masih dapat terselesaikan.</li>
+                                    <li><strong class="text-rose-400">Kurang (1):</strong> Terbata-bata berat, kalimat terputus-putus, sangat sulit menyusun rangkaian kalimat.</li>
+                                </ul>
+                            </div>
+
+                            {{-- Pronunciation --}}
+                            <div class="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <h5 class="font-extrabold text-sm text-indigo-200 flex items-center gap-2">
+                                        <span>🎙️</span> 2. Pelafalan &amp; Intonasi (Pronunciation)
+                                    </h5>
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-500/30 text-indigo-100">Artikulasi</span>
+                                </div>
+                                <ul class="text-xs text-slate-300 space-y-1.5 leading-relaxed">
+                                    <li><strong class="text-emerald-400">Sangat Baik (4):</strong> Artikulasi sangat jernih, intonasi tepat &amp; alami, sangat mudah dipahami.</li>
+                                    <li><strong class="text-blue-400">Baik (3):</strong> Pengucapan jelas secara umum, sedikit aksen lokal tetapi tidak menimbulkan kerancuan makna.</li>
+                                    <li><strong class="text-amber-400">Cukup (2):</strong> Sering salah pengucapan bunyi kata dasar/teknis, penguji perlu konsentrasi ekstra.</li>
+                                    <li><strong class="text-rose-400">Kurang (1):</strong> Pelafalan sangat rancu atau keliru fatal sehingga maksud kata sulit ditangkap.</li>
+                                </ul>
+                            </div>
+
+                            {{-- Vocabulary --}}
+                            <div class="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <h5 class="font-extrabold text-sm text-indigo-200 flex items-center gap-2">
+                                        <span>📖</span> 3. Kosakata &amp; Istilah Teknis (Vocabulary)
+                                    </h5>
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-500/30 text-indigo-100">Terminologi</span>
+                                </div>
+                                <ul class="text-xs text-slate-300 space-y-1.5 leading-relaxed">
+                                    <li><strong class="text-emerald-400">Sangat Baik (4):</strong> Menguasai istilah teknis kejuruan dengan sangat tepat, diksi variatif dan kontekstual.</li>
+                                    <li><strong class="text-blue-400">Baik (3):</strong> Menggunakan istilah teknis dasar kejuruan dengan benar sesuai pertanyaan.</li>
+                                    <li><strong class="text-amber-400">Cukup (2):</strong> Kosakata terbatas pada bahasa umum, sesekali beralih bahasa jika tidak tahu istilah.</li>
+                                    <li><strong class="text-rose-400">Kurang (1):</strong> Kosakata sangat minim, tidak menguasai istilah kejuruan dalam bahasa Inggris.</li>
+                                </ul>
+                            </div>
+
+                            {{-- Comprehension --}}
+                            <div class="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <h5 class="font-extrabold text-sm text-indigo-200 flex items-center gap-2">
+                                        <span>🎯</span> 4. Pemahaman &amp; Respon (Comprehension)
+                                    </h5>
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-500/30 text-indigo-100">Daya Tanggap</span>
+                                </div>
+                                <ul class="text-xs text-slate-300 space-y-1.5 leading-relaxed">
+                                    <li><strong class="text-emerald-400">Sangat Baik (4):</strong> Cepat menangkap pertanyaan lisan penguji dan langsung menjawab secara tepat, tuntas &amp; logis.</li>
+                                    <li><strong class="text-blue-400">Baik (3):</strong> Memahami pertanyaan dengan baik dan memberikan jawaban relevan dengan materi.</li>
+                                    <li><strong class="text-amber-400">Cukup (2):</strong> Memerlukan pengulangan pertanyaan atau petunjuk tambahan sebelum bisa menjawab.</li>
+                                    <li><strong class="text-rose-400">Kurang (1):</strong> Tidak memahami pertanyaan atau respon yang diberikan menyimpang jauh dari topik.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="bg-indigo-950/60 border border-indigo-500/30 rounded-2xl p-3.5 flex items-center gap-3 text-xs text-indigo-200">
+                            <span class="text-base">💡</span>
+                            <span><strong>Tips Penguji:</strong> Pertanyaan nomor 1 s/d selesai dinilai benar (1) / salah (0) atas ketepatan konten jawaban. Form rubrik di bawah digunakan untuk menilai performa kecakapan berbicara bahasa Inggris siswa secara holistik.</span>
+                        </div>
+                    </div>
+                </div>
+                @endif
                 @foreach($ujian->instrumens as $ins)
                     @if($ins->filteredSoalPengetahuan->isNotEmpty())
                     <div class="bg-white rounded-3xl border border-gray-200/80 shadow-sm overflow-hidden">
@@ -389,6 +488,155 @@
                     </div>
                     @endif
                 @endforeach
+
+                @if($ujian->is_bilingual && $peranPenguji === 'pengetahuan')
+                {{-- ══ FORM PENILAIAN PERFORMA KECAKAPAN BAHASA INGGRIS (HOLISTIC SPEAKING RUBRIC) ══ --}}
+                <div class="bg-white rounded-3xl border border-gray-200/80 shadow-sm overflow-hidden">
+                    {{-- Section Title --}}
+                    <div class="px-6 py-4 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-blue-500/10 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
+                        <div class="flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-xs shadow-sm">
+                                🌐
+                            </span>
+                            <div>
+                                <h4 class="font-black text-slate-900 text-base">Penilaian Performa Kecakapan Bahasa Inggris (Speaking Assessment)</h4>
+                                <p class="text-xs text-slate-500">Evaluasi menyeluruh kemampuan berbicara dan komunikasi teknis siswa berpedoman pada 4 indikator kecakapan.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold px-3 py-1 bg-white rounded-xl border border-indigo-200 text-indigo-800"
+                                x-text="bilingualCount() + ' / 4 Indikator Terisi'">
+                            </span>
+                        </div>
+                    </div>
+
+                    {{-- Form Table Bilingual Speaking --}}
+                    <div class="p-6 space-y-6">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-700 text-xs uppercase font-extrabold">
+                                        <th class="py-3 px-4 w-12 text-center">No</th>
+                                        <th class="py-3 px-4">Indikator Kecakapan Berbicara (Speaking Skill)</th>
+                                        <th class="py-3 px-4 text-center" colspan="4">Tingkat Pencapaian Kecakapan</th>
+                                    </tr>
+                                    <tr class="bg-slate-100/60 border-b border-slate-200 text-slate-600 text-[11px] font-bold">
+                                        <th class="py-2 px-4"></th>
+                                        <th class="py-2 px-4"></th>
+                                        <th class="py-2 px-2 text-center w-28">Kurang (1)</th>
+                                        <th class="py-2 px-2 text-center w-28">Cukup (2)</th>
+                                        <th class="py-2 px-2 text-center w-28">Baik (3)</th>
+                                        <th class="py-2 px-2 text-center w-28">Sangat Baik (4)</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    @php
+                                        $indikatorBilingualList = [
+                                            'fluency'       => '1. Kelancaran Berbicara (Fluency)',
+                                            'pronunciation' => '2. Pengucapan & Intonasi (Pronunciation & Intonation)',
+                                            'vocabulary'    => '3. Kosakata & Istilah Teknis (Technical Vocabulary)',
+                                            'comprehension' => '4. Pemahaman & Ketepatan Respon (Comprehension & Response)',
+                                        ];
+                                    @endphp
+                                    @foreach($indikatorBilingualList as $bKey => $bLabel)
+                                    <tr class="hover:bg-slate-50/70 transition-colors">
+                                        <td class="py-3.5 px-4 text-center font-bold text-slate-400">{{ $loop->iteration }}</td>
+                                        <td class="py-3.5 px-4 font-bold text-slate-800">{{ str_replace($loop->iteration . '. ', '', $bLabel) }}</td>
+                                        
+                                        {{-- Kurang --}}
+                                        <td class="py-2 px-2 text-center">
+                                            <button type="button" @click="setBilingual('{{ $bKey }}', 'kurang')"
+                                                :class="bilingual.{{ $bKey }} === 'kurang' ? 'bg-rose-600 border-rose-600 text-white shadow-sm' : 'bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100'"
+                                                class="w-full py-2 rounded-xl text-xs font-bold border transition-all active:scale-95">
+                                                Kurang
+                                            </button>
+                                        </td>
+                                        {{-- Cukup --}}
+                                        <td class="py-2 px-2 text-center">
+                                            <button type="button" @click="setBilingual('{{ $bKey }}', 'cukup')"
+                                                :class="bilingual.{{ $bKey }} === 'cukup' ? 'bg-amber-500 border-amber-500 text-white shadow-sm' : 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100'"
+                                                class="w-full py-2 rounded-xl text-xs font-bold border transition-all active:scale-95">
+                                                Cukup
+                                            </button>
+                                        </td>
+                                        {{-- Baik --}}
+                                        <td class="py-2 px-2 text-center">
+                                            <button type="button" @click="setBilingual('{{ $bKey }}', 'baik')"
+                                                :class="bilingual.{{ $bKey }} === 'baik' ? 'bg-blue-600 border-blue-600 text-white shadow-sm' : 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100'"
+                                                class="w-full py-2 rounded-xl text-xs font-bold border transition-all active:scale-95">
+                                                Baik
+                                            </button>
+                                        </td>
+                                        {{-- Sangat Baik --}}
+                                        <td class="py-2 px-2 text-center">
+                                            <button type="button" @click="setBilingual('{{ $bKey }}', 'sangat_baik')"
+                                                :class="bilingual.{{ $bKey }} === 'sangat_baik' ? 'bg-emerald-600 border-emerald-600 text-white shadow-sm' : 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'"
+                                                class="w-full py-2 rounded-xl text-xs font-bold border transition-all active:scale-95">
+                                                Sangat Baik
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                    {{-- Rata-Rata Row --}}
+                                    <tr class="bg-slate-50/80 font-black text-xs text-slate-700 border-t-2 border-slate-200">
+                                        <td class="py-3 px-4 text-center"></td>
+                                        <td class="py-3 px-4">Distribusi Pencapaian Kecakapan</td>
+                                        <td class="py-3 px-2 text-center text-rose-700" x-text="bilingualDist('kurang') || '-'"></td>
+                                        <td class="py-3 px-2 text-center text-amber-700" x-text="bilingualDist('cukup') || '-'"></td>
+                                        <td class="py-3 px-2 text-center text-blue-700" x-text="bilingualDist('baik') || '-'"></td>
+                                        <td class="py-3 px-2 text-center text-emerald-700" x-text="bilingualDist('sangat_baik') || '-'"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {{-- Kesimpulan Predikat & Catatan Penguji Bilingual --}}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 pt-4 border-t border-slate-200">
+                            {{-- Kesimpulan Predikat --}}
+                            <div class="bg-indigo-50/60 border border-indigo-200/80 rounded-2xl p-4 space-y-2">
+                                <label class="block text-xs font-black text-indigo-950">
+                                    Kesimpulan Predikat Kecakapan Bilingual:
+                                </label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button type="button" @click="bilingual.kesimpulan = 'Perlu Pendalaman'"
+                                        :class="bilingual.kesimpulan === 'Perlu Pendalaman' ? 'bg-rose-600 text-white font-black' : 'bg-white text-rose-700 border border-rose-200 hover:bg-rose-50 font-bold'"
+                                        class="py-2 px-3 rounded-xl text-xs transition-all">
+                                        Perlu Pendalaman
+                                    </button>
+                                    <button type="button" @click="bilingual.kesimpulan = 'Cukup Lancar'"
+                                        :class="bilingual.kesimpulan === 'Cukup Lancar' ? 'bg-amber-500 text-white font-black' : 'bg-white text-amber-700 border border-amber-200 hover:bg-amber-50 font-bold'"
+                                        class="py-2 px-3 rounded-xl text-xs transition-all">
+                                        Cukup Lancar
+                                    </button>
+                                    <button type="button" @click="bilingual.kesimpulan = 'Fasih & Kompeten'"
+                                        :class="bilingual.kesimpulan === 'Fasih & Kompeten' ? 'bg-blue-600 text-white font-black' : 'bg-white text-blue-700 border border-blue-200 hover:bg-blue-50 font-bold'"
+                                        class="py-2 px-3 rounded-xl text-xs transition-all">
+                                        Fasih &amp; Kompeten
+                                    </button>
+                                    <button type="button" @click="bilingual.kesimpulan = 'Sangat Fasih'"
+                                        :class="bilingual.kesimpulan === 'Sangat Fasih' ? 'bg-emerald-600 text-white font-black' : 'bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50 font-bold'"
+                                        class="py-2 px-3 rounded-xl text-xs transition-all">
+                                        Sangat Fasih
+                                    </button>
+                                </div>
+                                <p class="text-[11px] text-indigo-700 mt-1">
+                                    Otomatis disarankan berdasarkan rata-rata 4 indikator kecakapan berbicara.
+                                </p>
+                            </div>
+
+                            {{-- Catatan Penguji Bilingual --}}
+                            <div>
+                                <label class="block text-xs font-black text-slate-700 mb-1.5">
+                                    Catatan / Saran Penguji Bahasa Inggris:
+                                </label>
+                                <textarea x-model="bilingual.catatan" rows="3"
+                                    placeholder="Tuliskan catatan khusus terkait artikulasi, penguasaan istilah teknis, atau feedback untuk siswa (opsional)..."
+                                    class="w-full text-xs p-3 rounded-2xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @endif
             </div>
             @endif
 
@@ -623,6 +871,10 @@
                         <span>Keterampilan: <strong class="text-emerald-600 text-sm" x-text="skorKeterampilan.toFixed(1)"></strong></span>
                         <span>&bull;</span>
                         @endif
+                        @if($ujian->is_bilingual && $peranPenguji === 'pengetahuan')
+                        <span>Bilingual: <strong class="text-indigo-600 text-sm" x-text="bilingual.kesimpulan || 'Belum Diset'"></strong></span>
+                        <span>&bull;</span>
+                        @endif
                         <span>Nilai Akhir UKK: <strong class="text-violet-700 text-base font-black" x-text="nilaiAkhir.toFixed(1)"></strong></span>
                     </div>
                 </div>
@@ -682,6 +934,7 @@ function penilaianForm() {
         activeTab: '{{ $hasPengetahuanForExaminer && !$hasKeterampilanForExaminer ? "pengetahuan" : "keterampilan" }}',
         toasts: [],
         toastSeq: 0,
+        showPanduanBilingual: false,
         nilaiP: { ...INIT_P },
         catatanP: { ...INIT_CAT },
         nilaiK: { ...INIT_K },
@@ -694,8 +947,49 @@ function penilaianForm() {
             kesimpulan: '{{ $nilaiSikap?->kesimpulan ?? "" }}',
             catatan: {!! json_encode($nilaiSikap?->catatan ?? '') !!},
         },
+        bilingual: {
+            fluency: '{{ $nilaiBilingual?->fluency ?? "" }}',
+            pronunciation: '{{ $nilaiBilingual?->pronunciation ?? "" }}',
+            vocabulary: '{{ $nilaiBilingual?->vocabulary ?? "" }}',
+            comprehension: '{{ $nilaiBilingual?->comprehension ?? "" }}',
+            kesimpulan: '{{ $nilaiBilingual?->kesimpulan ?? "" }}',
+            catatan: {!! json_encode($nilaiBilingual?->catatan ?? '') !!},
+        },
 
         init() {},
+
+        setBilingual(field, val) {
+            if (this.bilingual[field] === val) {
+                this.bilingual[field] = '';
+            } else {
+                this.bilingual[field] = val;
+            }
+            this.autoSuggestKesimpulanBilingual();
+        },
+
+        bilingualCount() {
+            return ['fluency', 'pronunciation', 'vocabulary', 'comprehension']
+                .filter(f => !!this.bilingual[f]).length;
+        },
+
+        bilingualDist(val) {
+            const cnt = ['fluency', 'pronunciation', 'vocabulary', 'comprehension']
+                .filter(f => this.bilingual[f] === val).length;
+            return cnt > 0 ? cnt : '';
+        },
+
+        autoSuggestKesimpulanBilingual() {
+            const vals = ['fluency', 'pronunciation', 'vocabulary', 'comprehension']
+                .map(f => this.bilingual[f]).filter(Boolean);
+            if (vals.length === 0) return;
+            const scoreMap = { kurang: 1, cukup: 2, baik: 3, sangat_baik: 4 };
+            const sum = vals.reduce((acc, v) => acc + (scoreMap[v] || 0), 0);
+            const avg = sum / vals.length;
+            if (avg >= 3.5) this.bilingual.kesimpulan = 'Sangat Fasih';
+            else if (avg >= 2.5) this.bilingual.kesimpulan = 'Fasih & Kompeten';
+            else if (avg >= 1.7) this.bilingual.kesimpulan = 'Cukup Lancar';
+            else this.bilingual.kesimpulan = 'Perlu Pendalaman';
+        },
 
         setSikap(field, val) {
             if (this.sikap[field] === val) {
@@ -832,6 +1126,7 @@ function penilaianForm() {
                         catatan_pengetahuan: this.catatanP,
                         keterampilan: this.nilaiK,
                         sikap: this.sikap,
+                        bilingual: this.bilingual,
                     }),
                 });
                 const data = await res.json();

@@ -659,6 +659,105 @@
         </div>
     </div>
 
+    {{-- ════════ ASPEK KEMAMPUAN BILINGUAL (ENGLISH SPEAKING ASSESSMENT) ════════ --}}
+    @if($ujian->is_bilingual)
+    <div class="section-head" style="margin-top:10px;">Form Penilaian Kecakapan Bahasa Inggris (Bilingual Speaking Assessment)</div>
+    <table class="sikap-table">
+        <thead>
+            <tr>
+                <th rowspan="2" style="width:48%;" class="left">Indikator Kecakapan Bicara (Speaking Skill)</th>
+                <th colspan="4">Tingkat Pencapaian Kecakapan</th>
+            </tr>
+            <tr>
+                <th style="width:13%;">Kurang</th>
+                <th style="width:13%;">Cukup</th>
+                <th style="width:13%;">Baik</th>
+                <th style="width:13%;">Sangat Baik</th>
+            </tr>
+            <tr style="background:#f8fafc;font-size:7pt;color:#64748b;">
+                <th class="left" style="padding:2px 6px;">2</th>
+                <th style="padding:2px;">3</th>
+                <th style="padding:2px;">4</th>
+                <th style="padding:2px;">5</th>
+                <th style="padding:2px;">6</th>
+            </tr>
+        </thead>
+        <tbody>
+            @php
+                $bilingualItems = [
+                    'fluency'       => '1. Kelancaran Berbicara (Fluency)',
+                    'pronunciation' => '2. Pengucapan & Intonasi (Pronunciation & Intonation)',
+                    'vocabulary'    => '3. Kosakata & Istilah Teknis (Technical Vocabulary)',
+                    'comprehension' => '4. Pemahaman & Ketepatan Respon (Comprehension & Response)',
+                ];
+                $bilingualCounts = ['kurang' => 0, 'cukup' => 0, 'baik' => 0, 'sangat_baik' => 0];
+            @endphp
+            @foreach($bilingualItems as $field => $label)
+            @php
+                $val = strtolower($nilaiBilingual?->$field ?? '');
+                if (isset($bilingualCounts[$val])) {
+                    $bilingualCounts[$val]++;
+                }
+            @endphp
+            <tr>
+                <td style="text-align:left;font-weight:600;">{{ $label }}</td>
+                <td class="center">
+                    @if($val === 'kurang')
+                        <img src="{{ $checkIconGreen }}" class="chk-img" alt="✓">
+                    @endif
+                </td>
+                <td class="center">
+                    @if($val === 'cukup')
+                        <img src="{{ $checkIconGreen }}" class="chk-img" alt="✓">
+                    @endif
+                </td>
+                <td class="center">
+                    @if($val === 'baik')
+                        <img src="{{ $checkIconGreen }}" class="chk-img" alt="✓">
+                    @endif
+                </td>
+                <td class="center">
+                    @if($val === 'sangat_baik')
+                        <img src="{{ $checkIconGreen }}" class="chk-img" alt="✓">
+                    @endif
+                </td>
+            </tr>
+            @endforeach
+            <tr class="rata-row">
+                <td style="text-align:left;font-weight:800;">Rata-rata pencapaian kecakapan</td>
+                <td class="center">{{ $bilingualCounts['kurang'] > 0 ? $bilingualCounts['kurang'] : '' }}</td>
+                <td class="center">{{ $bilingualCounts['cukup'] > 0 ? $bilingualCounts['cukup'] : '' }}</td>
+                <td class="center">{{ $bilingualCounts['baik'] > 0 ? $bilingualCounts['baik'] : '' }}</td>
+                <td class="center">{{ $bilingualCounts['sangat_baik'] > 0 ? $bilingualCounts['sangat_baik'] : '' }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="sikap-box">
+        <div style="margin-bottom:3px;">
+            <strong>Kesimpulan Kecakapan :</strong>
+            @php
+                $bkes = $nilaiBilingual?->kesimpulan ?? '';
+            @endphp
+            <span style="{{ str_contains($bkes, 'Perlu') || $bkes === 'Kurang' ? 'font-weight:900;text-decoration:underline;' : 'color:#64748b;' }}">Perlu Pendalaman</span> /
+            <span style="{{ str_contains($bkes, 'Cukup') ? 'font-weight:900;text-decoration:underline;' : 'color:#64748b;' }}">Cukup Lancar</span> /
+            <span style="{{ str_contains($bkes, 'Fasih &') || $bkes === 'Baik' ? 'font-weight:900;text-decoration:underline;' : 'color:#64748b;' }}">Fasih &amp; Kompeten</span> /
+            <span style="{{ str_contains($bkes, 'Sangat Fasih') ? 'font-weight:900;text-decoration:underline;' : 'color:#64748b;' }}">Sangat Fasih</span>*
+            @if($bkes)
+                &nbsp;&mdash; <strong>Predikat: {{ $bkes }}</strong>
+            @endif
+        </div>
+        <div>
+            <strong>Catatan Penguji Bahasa Inggris :</strong>
+            @if(!empty($nilaiBilingual?->catatan))
+                <span style="font-style:italic;">{{ $nilaiBilingual->catatan }}</span>
+            @else
+                <span style="color:#94a3b8;font-style:italic;">.................................................................................................................................................................</span>
+            @endif
+        </div>
+    </div>
+    @endif
+
     {{-- ════════ REKAPITULASI ════════ --}}
     <div class="section-head">Rekapitulasi Nilai Akhir</div>
     <table class="rekap-table">
