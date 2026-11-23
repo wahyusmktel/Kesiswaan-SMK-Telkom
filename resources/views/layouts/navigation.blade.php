@@ -633,6 +633,30 @@
             <span class="nav-badge bg-rose-100 text-rose-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">PKL</span>
         </a>
     </li>
+    <li>
+        <a href="{{ route('kepala-sekolah.ukk.monitoring-penguji.index') }}" title="Monitoring Penguji UKK"
+            class="nav-link {{ request()->routeIs('kepala-sekolah.ukk.monitoring-penguji.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+            </div>
+            <span class="nav-text">Monitoring Penguji UKK</span>
+            <span class="nav-badge bg-blue-100 text-blue-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">UKK</span>
+        </a>
+    </li>
+    <li>
+        <a href="{{ route('kepala-sekolah.ukk.rekap-nilai.index') }}" title="Rekap Nilai UKK"
+            class="nav-link {{ request()->routeIs('kepala-sekolah.ukk.rekap-nilai.*') ? 'nav-link-active' : 'nav-link-inactive' }}">
+            <div class="nav-icon-container">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+            </div>
+            <span class="nav-text">Rekap Nilai UKK</span>
+            <span class="nav-badge bg-blue-100 text-blue-700 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto">UKK</span>
+        </a>
+    </li>
 
     <div class="section-title">Layanan Pimpinan</div>
     <li>

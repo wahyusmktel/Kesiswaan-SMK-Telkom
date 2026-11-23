@@ -1645,6 +1645,14 @@ Route::middleware(['auth', 'role:Kurikulum'])->prefix('kurikulum/ukk')->name('ku
     Route::get('/monitoring-penguji/export', [\App\Http\Controllers\Kaprodi\MonitoringPengujiUkkController::class, 'export'])->name('monitoring-penguji.export');
 });
 
+// Rekapitulasi & Monitoring UKK untuk Kepala Sekolah
+Route::middleware(['auth', 'role:Kepala Sekolah'])->prefix('kepala-sekolah/ukk')->name('kepala-sekolah.ukk.')->group(function () {
+    Route::get('/monitoring-penguji', [\App\Http\Controllers\Kaprodi\MonitoringPengujiUkkController::class, 'index'])->name('monitoring-penguji.index');
+    Route::get('/monitoring-penguji/export', [\App\Http\Controllers\Kaprodi\MonitoringPengujiUkkController::class, 'export'])->name('monitoring-penguji.export');
+    Route::get('/rekap-nilai', [\App\Http\Controllers\Kaprodi\RekapNilaiUkkController::class, 'index'])->name('rekap-nilai.index');
+    Route::get('/rekap-nilai/export', [\App\Http\Controllers\Kaprodi\RekapNilaiUkkController::class, 'export'])->name('rekap-nilai.export');
+});
+
 // KAUR SPMB
 Route::middleware(['auth', 'role:Kaur SPMB|KAUR SPMB|Super Admin'])->prefix('kaur-spmb')->name('kaur-spmb.')->group(function () {
     Route::prefix('jadwal-piket')->name('jadwal-piket.')->group(function () {
@@ -1773,6 +1781,8 @@ Route::middleware(['auth', 'verified', 'role:Kepala Sekolah', 'permission:view e
         Route::get('/monitoring/{section}', [\App\Http\Controllers\KepalaSekolah\MonitoringController::class, 'index'])
             ->whereIn('section', array_keys(\App\Http\Controllers\KepalaSekolah\MonitoringController::SECTIONS))
             ->name('monitoring.index');
+        Route::get('/monitoring-penguji', fn () => redirect()->route('kepala-sekolah.ukk.monitoring-penguji.index'));
+        Route::get('/rekap-nilai', fn () => redirect()->route('kepala-sekolah.ukk.rekap-nilai.index'));
         Route::post('/fingerprint/tarik-hari-ini', [\App\Http\Controllers\KepalaSekolah\FingerprintSyncController::class, 'store'])
             ->middleware('throttle:1,2')->name('fingerprint-sync.store');
         Route::get('/fingerprint/progres/{batch}', [\App\Http\Controllers\KepalaSekolah\FingerprintSyncController::class, 'show'])

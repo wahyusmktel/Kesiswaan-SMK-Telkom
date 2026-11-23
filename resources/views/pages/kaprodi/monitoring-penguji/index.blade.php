@@ -25,8 +25,13 @@
                 {{-- Export Button --}}
                 @if($ujian && $pengujisData->isNotEmpty())
                 @php
-                    $isKurikulum = request()->routeIs('kurikulum.*');
-                    $exportRoute = $isKurikulum ? route('kurikulum.ukk.monitoring-penguji.export') : route('kaprodi.ukk.monitoring-penguji.export');
+                    if (request()->routeIs('kepala-sekolah.*')) {
+                        $exportRoute = route('kepala-sekolah.ukk.monitoring-penguji.export');
+                    } elseif (request()->routeIs('kurikulum.*')) {
+                        $exportRoute = route('kurikulum.ukk.monitoring-penguji.export');
+                    } else {
+                        $exportRoute = route('kaprodi.ukk.monitoring-penguji.export');
+                    }
                 @endphp
                 <a href="{{ $exportRoute }}?{{ http_build_query(['ujian_id' => $selectedUjianId, 'rombel_id' => $selectedRombelId, 'status' => $selectedStatus]) }}"
                     class="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold rounded-2xl text-xs sm:text-sm transition-all shadow-lg shadow-emerald-900/20 shrink-0">
@@ -109,7 +114,11 @@
                 <div class="bg-white rounded-3xl border border-gray-200/80 p-12 text-center shadow-sm">
                     <p class="text-4xl mb-3">👥</p>
                     <p class="text-gray-800 font-bold text-base">Belum ada penguji yang ditugaskan untuk filter ini.</p>
-                    <p class="text-gray-400 text-xs mt-1">Kaprodi dapat mengatur penugasan penguji pada menu <a href="{{ route('kaprodi.ukk.penguji.index') }}" class="text-indigo-600 font-bold underline">Set Penguji</a>.</p>
+                    @if(auth()->user()->hasAnyRole(['Kaprodi', 'Kaprodi PPLGIM ANIMASI', 'Kaprodi TJKT']))
+                        <p class="text-gray-400 text-xs mt-1">Kaprodi dapat mengatur penugasan penguji pada menu <a href="{{ route('kaprodi.ukk.penguji.index') }}" class="text-indigo-600 font-bold underline">Set Penguji</a>.</p>
+                    @else
+                        <p class="text-gray-400 text-xs mt-1">Penugasan penguji diatur oleh masing-masing Kaprodi kejuruan.</p>
+                    @endif
                 </div>
             @else
 
